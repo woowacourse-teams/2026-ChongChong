@@ -1,6 +1,6 @@
 ## 연관 이슈
 
-close #
+Closes #
 
 ## As-Is
 
