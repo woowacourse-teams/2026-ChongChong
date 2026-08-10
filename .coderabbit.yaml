@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: ko-KR
+tone_instructions: 존중하는 한국어로 문제의 영향과 개선 방향을 간결하고 구체적으로 설명하세요.
+
+reviews:
+  profile: chill
+  poem: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches:
+      - dev
+      - prod
+  path_instructions:
+    - path: frontend/**
+      instructions: |
+        React와 TypeScript 코드의 사용자 경험과 브라우저 동작을 중심으로 리뷰하세요.
+        - 타입 안정성, 컴포넌트 책임, 상태 소유권이 명확한지 확인하세요.
+        - Hook 의존성과 생명주기, 불필요한 렌더링과 번들 크기 문제를 확인하세요.
+        - 시맨틱 HTML, 키보드 사용성, 접근성 속성을 확인하세요.
+        - 사용자에게 실제로 발생할 수 있는 실패 시나리오와 재현 조건을 구체적으로 설명하세요.
+        - 포매터가 처리할 표현 차이보다 동작, 유지보수성, 테스트 가능성을 우선하세요.
+    - path: backend/**
+      instructions: |
+        Java와 Spring 코드의 도메인 정확성과 서버 안정성을 중심으로 리뷰하세요.
+        - 객체의 책임과 캡슐화, 계층 간 역할 분리가 명확한지 확인하세요.
+        - 입력 검증, 예외 처리, API 계약과 오류 응답의 일관성을 확인하세요.
+        - 트랜잭션 경계, 동시성, 데이터 정합성, 영속성 성능 문제를 확인하세요.
+        - 인증과 인가, 민감 정보 노출 등 보안 위험을 확인하세요.
+        - 데이터 손상이나 장애로 이어지는 문제를 우선하고 구체적인 테스트 관점을 제안하세요.
