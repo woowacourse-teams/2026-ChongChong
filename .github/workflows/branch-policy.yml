@@ -1,13 +1,8 @@
 name: Branch policy
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, edited, synchronize, reopened]
-  push:
-    branches-ignore:
-      - main
-      - dev
-      - prod
 
 permissions:
   contents: read
@@ -20,6 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
 
       - name: Test branch policy
@@ -27,6 +23,6 @@ jobs:
 
       - name: Validate branch name and pull request target
         env:
-          HEAD_BRANCH: ${{ github.head_ref || github.ref_name }}
-          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         run: .github/scripts/validate-branch-policy.sh "$HEAD_BRANCH" "$BASE_BRANCH"
