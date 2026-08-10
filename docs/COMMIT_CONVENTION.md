@@ -74,4 +74,5 @@ Refs #12
 | 커밋 | `<type>(<scope>): <subject>` | `chore(common): CodeRabbit 리뷰 설정 추가` |
 | PR   | `[<type>] <summary>`         | `[chore] CodeRabbit 리뷰 설정 추가`        |
 
-작업 브랜치는 `dev`에 Squash merge하므로 PR 제목이 `dev`에 남는 최종 커밋 제목이 됩니다. PR 제목의 타입과 내용도 실제 변경 범위를 대표해야 합니다.
+PR 제목의 타입과 내용은 실제 변경 범위를 대표해야 합니다. `dev`에 Squash merge할 때는 GitHub의 최종 커밋 제목을
+`<type>(<scope>): <subject>` 형식으로 수정한 뒤 병합합니다. PR 제목의 대괄호 형식을 그대로 커밋 제목으로 사용하지 않습니다.

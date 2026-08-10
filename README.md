@@ -4,10 +4,10 @@
 
 ## 기술 구성
 
-| 영역     | 기술                                       |
-| -------- | ------------------------------------------ |
-| Frontend | React 19, TypeScript 6, Webpack 5, pnpm 11 |
-| Backend  | Java 25, Spring Boot 4, Gradle             |
+| 영역     | 기술                                                                   |
+| -------- | ---------------------------------------------------------------------- |
+| Frontend | React 19, TypeScript 6, Webpack 5, pnpm 11 (React Native 앱 배포 예정) |
+| Backend  | Java 25, Spring Boot 4, Gradle                                         |
 
 ## 저장소 구조
 
@@ -58,6 +58,9 @@ fe/*      ─┐
 be/*      ─┼→ dev → prod
 common/*  ─┘
 ```
+
+`dev`와 `prod`는 프론트엔드와 백엔드 소스를 함께 검증하는 통합 브랜치입니다. 실제 배포는 브랜치를 더 나누지 않고
+`fe-v<버전>`, `be-v<버전>` 태그와 영역별 배포 워크플로로 독립 운영합니다.
 
 ## 협업 문서
 
