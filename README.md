@@ -54,9 +54,9 @@ cd backend
 ## 브랜치 흐름
 
 ```text
-fe/*      → fe/dev → fe/prod
-be/*      → be/dev → be/prod
-common/*  → main
+fe/*      ─┐
+be/*      ─┼→ dev → prod
+common/*  ─┘
 ```
 
 브랜치 이름, PR 타깃, 머지 방식과 보호 규칙은 [기여 가이드](docs/CONTRIBUTING.md)를 참고해 주세요.

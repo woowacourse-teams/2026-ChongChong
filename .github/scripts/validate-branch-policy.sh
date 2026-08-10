@@ -8,11 +8,8 @@ base_branch="${2:-}"
 branch_pattern='^(fe|be|common)/[a-z]+/([1-9][0-9]*-)?[a-z][a-z0-9]*(-[a-z0-9]+)*$'
 
 case "$head_branch" in
-  fe/dev)
-    expected_base="fe/prod"
-    ;;
-  be/dev)
-    expected_base="be/prod"
+  dev)
+    expected_base="prod"
     ;;
   *)
     if [[ ! "$head_branch" =~ $branch_pattern ]]; then
@@ -21,12 +18,7 @@ case "$head_branch" in
       exit 1
     fi
 
-    area="${head_branch%%/*}"
-    if [[ "$area" == "common" ]]; then
-      expected_base="main"
-    else
-      expected_base="$area/dev"
-    fi
+    expected_base="dev"
     ;;
 esac
 

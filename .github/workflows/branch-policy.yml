@@ -6,10 +6,8 @@ on:
   push:
     branches-ignore:
       - main
-      - fe/dev
-      - fe/prod
-      - be/dev
-      - be/prod
+      - dev
+      - prod
 
 permissions:
   contents: read

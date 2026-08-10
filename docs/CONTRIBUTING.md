@@ -28,11 +28,10 @@ common/chore/branch-policy
 
 | PR 브랜치 | 타깃 브랜치 |
 | --- | --- |
-| `fe/<타입>/[<이슈번호>-]<작업명>` | `fe/dev` |
-| `be/<타입>/[<이슈번호>-]<작업명>` | `be/dev` |
-| `common/<타입>/[<이슈번호>-]<작업명>` | `main` |
-| `fe/dev` | `fe/prod` |
-| `be/dev` | `be/prod` |
+| `fe/<타입>/[<이슈번호>-]<작업명>` | `dev` |
+| `be/<타입>/[<이슈번호>-]<작업명>` | `dev` |
+| `common/<타입>/[<이슈번호>-]<작업명>` | `dev` |
+| `dev` | `prod` |
 
 다른 조합으로 PR을 생성하면 `Branch policy / branch-policy` 검사가 실패합니다.
 
@@ -40,14 +39,14 @@ common/chore/branch-policy
 
 | 타깃 브랜치 | 머지 방식 |
 | --- | --- |
-| `main`, `fe/dev`, `be/dev` | Squash merge |
-| `fe/prod`, `be/prod` | Merge commit |
+| `dev` | Squash merge |
+| `prod` | Merge commit |
 
 작업 브랜치의 커밋은 하나로 정리하고, 개발 브랜치에서 운영 브랜치로 승격한 시점은 머지 커밋으로 남깁니다.
 
 ## 브랜치 보호 규칙
 
-`main`, `fe/dev`, `be/dev`, `fe/prod`, `be/prod`에는 다음 보호 규칙을 적용합니다.
+`dev`, `prod`에는 다음 보호 규칙을 적용합니다.
 
 - Pull Request를 통해서만 병합
 - 병합 전 `branch-policy` 상태 검사 통과 필수
