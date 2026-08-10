@@ -1,0 +1,29 @@
+name: Branch policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches-ignore:
+      - main
+      - fe/dev
+      - fe/prod
+      - be/dev
+      - be/prod
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: branch-policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate branch name and pull request target
+        env:
+          HEAD_BRANCH: ${{ github.head_ref || github.ref_name }}
+          BASE_BRANCH: ${{ github.base_ref }}
+        run: .github/scripts/validate-branch-policy.sh "$HEAD_BRANCH" "$BASE_BRANCH"
