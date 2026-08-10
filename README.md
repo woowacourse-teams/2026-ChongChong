@@ -4,10 +4,10 @@
 
 ## 기술 구성
 
-| 영역 | 기술 |
-| --- | --- |
+| 영역     | 기술                                       |
+| -------- | ------------------------------------------ |
 | Frontend | React 19, TypeScript 6, Webpack 5, pnpm 11 |
-| Backend | Java 25, Spring Boot 4, Gradle |
+| Backend  | Java 25, Spring Boot 4, Gradle             |
 
 ## 저장소 구조
 
@@ -59,4 +59,7 @@ be/*      ─┼→ dev → prod
 common/*  ─┘
 ```
 
-브랜치 이름, PR 타깃, 머지 방식과 보호 규칙은 [기여 가이드](docs/CONTRIBUTING.md)를 참고해 주세요.
+## 협업 문서
+
+- 브랜치 이름, PR 타깃, 머지 방식과 보호 규칙: [기여 가이드](docs/CONTRIBUTING.md)
+- 커밋 메시지와 PR 제목 형식: [커밋 컨벤션](docs/COMMIT_CONVENTION.md)
