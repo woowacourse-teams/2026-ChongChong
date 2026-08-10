@@ -12,7 +12,7 @@
 
 - 영역: `fe`, `be`, `common`
   - `common`: CI, GitHub 설정, 공통 문서 등 저장소 전체 작업
-- 타입: 영문 소문자(예: `feat`, `fix`, `chore`)
+- 타입: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 - 이슈 번호(선택): 0으로 시작하지 않는 양의 정수
 - 작업명: 영문 소문자로 시작하고 소문자와 숫자를 사용하며, 여러 단어는 하이픈(`-`)으로 구분
 
