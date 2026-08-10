@@ -6,6 +6,11 @@ tone_instructions: 존중하는 한국어로 문제의 영향과 개선 방향�
 reviews:
   profile: chill
   poem: false
+  high_level_summary: true
+  high_level_summary_instructions: |
+    PR 변경 요약을 반드시 한국어로 작성하세요.
+    핵심 변경 사항과 검증 결과를 간결한 글머리표로 정리하세요.
+    파일명과 코드 식별자를 제외하고 영어 표현을 사용하지 마세요.
   auto_review:
     enabled: true
     auto_incremental_review: true
