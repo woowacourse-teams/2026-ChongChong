@@ -18,7 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Test branch policy
+        run: .github/scripts/validate-branch-policy-test.sh
 
       - name: Validate branch name and pull request target
         env:
