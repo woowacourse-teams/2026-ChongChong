@@ -11,14 +11,7 @@ export default {
     rules: [
       {
         test: /\.(ts|tsx)$/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
-            },
-          },
-        ],
+        use: 'babel-loader',
         exclude: /node_modules/,
       },
       {
@@ -49,9 +42,14 @@ export default {
     }),
   ],
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'dist'),
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'dist'),
+      },
+      {
+        directory: path.join(__dirname, 'public'),
+      },
+    ],
     port: 3005,
     open: true,
     hot: true,
