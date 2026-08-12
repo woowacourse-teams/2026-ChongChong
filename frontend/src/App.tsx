@@ -1,6 +1,7 @@
 import { css } from '@emotion/react';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, queryOptions } from '@tanstack/react-query';
+import { typography } from './styles/global';
 
 const queryClient = new QueryClient();
 
@@ -15,11 +16,15 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div
-        css={css`
-          color: green;
-        `}
+        css={[
+          typography.headline,
+          css`
+            color: var(--text-brand);
+            font-size: 64px;
+          `,
+        ]}
       >
-        chong chong
+        총총 총총 총총 씨없는팀
         <button type="button" onClick={() => setCount((c) => c + 1)}>
           {count}
         </button>
