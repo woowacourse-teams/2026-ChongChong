@@ -29,10 +29,10 @@
       "<rootDir>/jest.setup.ts"
     ],
     "transform": {
-      "^.+\\.[mc]?[jt]sx?$": "babel-jest"
+      "^.+\\.[mc]?[jt]sx?$": "<rootDir>/node_modules/babel-jest"
     },
     "transformIgnorePatterns": [
-      "/node_modules/.pnpm/(?!(rettime|until-async|outvariant|strict-event-emitter|headers-polyfill|is-node-process|@open-draft\\+[^@]+|@bundled-es-modules\\+[^@]+|@mswjs\\+[^@]+)@)"
+      "/node_modules/.pnpm/(?!(ky|rettime|until-async|outvariant|strict-event-emitter|headers-polyfill|is-node-process|@open-draft\\+[^@]+|@bundled-es-modules\\+[^@]+|@mswjs\\+[^@]+)@)"
     ]
   },
   "msw": {
@@ -79,6 +79,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@tanstack/react-query": "^5.101.4",
+    "ky": "^2.0.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.0"

@@ -2,13 +2,22 @@ import { css } from '@emotion/react';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, queryOptions } from '@tanstack/react-query';
 import { typography } from './styles/global';
+import api from './client';
 
 const queryClient = new QueryClient();
+
+interface Repo {
+  name: string;
+  description: string;
+  subscribers_count: number;
+  stargazers_count: number;
+  forks_count: number;
+}
 
 const exampleOptions = () =>
   queryOptions({
     queryKey: ['example'],
-    queryFn: () => fetch('https://api.github.com/repos/TanStack/query').then((res) => res.json()),
+    queryFn: () => api.get('repos/TanStack/query').json<Repo>(),
   });
 
 export default function App() {
