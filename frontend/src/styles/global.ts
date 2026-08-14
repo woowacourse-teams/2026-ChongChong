@@ -132,6 +132,133 @@ export const globalStyles = css`
   ${modernNormalize}
 `;
 
+export const tokens = {
+  color: {
+    /* Primitive Ink */
+    mainBlack: 'var(--main-black)',
+    ink900: 'var(--ink-900)',
+
+    /* Primitive Green */
+    green50: 'var(--green-50)',
+    green500: 'var(--green-500)',
+
+    /* Primitive Gray */
+    gray50: 'var(--gray-50)',
+    gray200: 'var(--gray-200)',
+
+    /* Primitive Red */
+    red500: 'var(--red-500)',
+
+    /* Primitive Social */
+    socialKakao: 'var(--social-kakao)',
+
+    /* Figma Color Tokens */
+    cardLine8: 'var(--card-line-8)',
+    optionSub6: 'var(--option-sub-6)',
+    optionPlaceholder40: 'var(--option-placeholder-40)',
+    optionSubFontColor55: 'var(--option-sub-font-color-55)',
+    optionSub70: 'var(--option-sub-70)',
+    optionGrayBackgroundIcon: 'var(--option-gray-background-icon)',
+    optionDeactivate: 'var(--option-deactivate)',
+    googleLoginLine: 'var(--google-login-line)',
+  },
+
+  bg: {
+    default: 'var(--bg-default)',
+    subtle: 'var(--bg-subtle)',
+    brand: 'var(--bg-brand)',
+    brandSubtle: 'var(--bg-brand-subtle)',
+    chip: 'var(--bg-chip)',
+    disabled: 'var(--bg-disabled)',
+    dim: 'var(--bg-dim)',
+  },
+
+  border: {
+    default: 'var(--border-default)',
+    subtle: 'var(--border-subtle)',
+    brand: 'var(--border-brand)',
+    danger: 'var(--border-danger)',
+    google: 'var(--border-google)',
+  },
+
+  text: {
+    default: 'var(--text-default)',
+    secondary: 'var(--text-secondary)',
+    muted: 'var(--text-muted)',
+    placeholder: 'var(--text-placeholder)',
+    brand: 'var(--text-brand)',
+    danger: 'var(--text-danger)',
+    onBrand: 'var(--text-on-brand)',
+    onBrandStrong: 'var(--text-on-brand-strong)',
+  },
+
+  layout: {
+    gutter: 'var(--layout-gutter)',
+    headerHeight: 'var(--layout-header-height)',
+    tabBarHeight: 'var(--layout-tab-bar-height)',
+    safeTop: 'var(--safe-top)',
+    safeBottom: 'var(--safe-bottom)',
+  },
+
+  spacing: {
+    0: 'var(--spacing-0)',
+    1: 'var(--spacing-1)',
+    2: 'var(--spacing-2)',
+    3: 'var(--spacing-3)',
+    4: 'var(--spacing-4)',
+    5: 'var(--spacing-5)',
+    6: 'var(--spacing-6)',
+    8: 'var(--spacing-8)',
+    10: 'var(--spacing-10)',
+    20: 'var(--spacing-20)',
+  },
+
+  radius: {
+    sm: 'var(--radius-sm)',
+    md: 'var(--radius-md)',
+    lg: 'var(--radius-lg)',
+    xl: 'var(--radius-xl)',
+    full: 'var(--radius-full)',
+  },
+
+  shadow: {
+    1: 'var(--shadow-1)',
+    2: 'var(--shadow-2)',
+    3: 'var(--shadow-3)',
+  },
+
+  fontFamily: {
+    base: 'var(--font-family-base)',
+  },
+
+  fontWeight: {
+    regular: 'var(--font-weight-regular)',
+    medium: 'var(--font-weight-medium)',
+    semibold: 'var(--font-weight-semibold)',
+  },
+
+  fontSize: {
+    24: 'var(--font-size-24)',
+    18: 'var(--font-size-18)',
+    16: 'var(--font-size-16)',
+    14: 'var(--font-size-14)',
+    13: 'var(--font-size-13)',
+    12: 'var(--font-size-12)',
+  },
+
+  lineHeight: {
+    34: 'var(--line-height-34)',
+    28: 'var(--line-height-28)',
+    24: 'var(--line-height-24)',
+    20: 'var(--line-height-20)',
+    18: 'var(--line-height-18)',
+  },
+
+  letterSpacing: {
+    default: 'var(--letter-spacing-default)',
+  },
+} as const;
+
 export const typography = {
   headline: css`
     font-size: var(--font-size-24);
