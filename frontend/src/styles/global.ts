@@ -3,74 +3,80 @@ import { modernNormalize } from './normalize';
 
 export const globalStyles = css`
   :root {
+    /* Primitive Ink */
+
+    --main-black: #111111;
+    --ink-900: #0f172a;
+
     /* Primitive Green */
 
-    --green-50: #e5f9f0;
-    --green-500: #00c472;
-    --green-600: #00aa63;
-    --green-800: #007544;
+    --green-50: #e6f9f0;
+    --green-500: #00c471;
 
     /* Primitive Gray */
 
     --gray-50: #f9f9f9;
-    --gray-100: #f4f4f4;
-    --gray-200: #ededed;
-    --gray-300: #d0d0d0;
-    --gray-400: #adadad;
-    --gray-500: #9fa2ab;
-    --gray-600: #6b7079;
-    --gray-700: #4a4f58;
-    --gray-800: #2e323a;
-    --gray-900: #1f2229;
+    --gray-200: #ececee;
 
     /* Primitive Red */
 
-    --red-500: #de5e55;
-    --red-600: #c74a42;
+    --red-500: #de5e56;
 
     /* Primitive Social */
 
     --social-kakao: #fee500;
-    --social-apple: #000000;
-    --social-google: #ffffff;
+
+    /* Figma Color Tokens */
+
+    --card-line-8: rgba(15, 23, 42, 0.08);
+    --option-sub-6: rgba(15, 23, 42, 0.06);
+    --option-placeholder-40: rgba(15, 23, 42, 0.4);
+    --option-sub-font-color-55: rgba(15, 23, 42, 0.55);
+    --option-sub-70: rgba(15, 23, 42, 0.7);
+    --option-gray-background-icon: #ececee;
+    --option-deactivate: rgba(0, 0, 0, 0.32);
+    --google-login-line: rgba(116, 119, 117, 0.7);
 
     /* Semantic Background */
 
-    --bg-default: white;
+    --bg-default: #ffffff;
     --bg-subtle: var(--gray-50);
     --bg-brand: var(--green-500);
     --bg-brand-subtle: var(--green-50);
-    --bg-chip: var(--gray-100);
-    --bg-disabled: var(--gray-500);
-    --bg-dim: rgba(0, 0, 0, 0.4);
+    --bg-chip: var(--option-gray-background-icon);
+    --bg-disabled: var(--option-deactivate);
+    --bg-dim: rgba(0, 0, 0, 0.42);
 
     /* Semantic Border */
 
-    --border-default: var(--gray-300);
-    --border-subtle: var(--gray-200);
+    --border-default: var(--card-line-8);
+    --border-subtle: var(--card-line-8);
     --border-brand: var(--green-500);
     --border-danger: var(--red-500);
+    --border-google: var(--google-login-line);
 
     /* Semantic Text */
 
-    --text-default: var(--gray-900);
-    --text-secondary: var(--gray-600);
-    --text-placeholder: var(--gray-400);
-    --text-brand: var(--green-800);
+    --text-default: #172033;
+    --text-secondary: var(--option-sub-70);
+    --text-muted: var(--option-sub-font-color-55);
+    --text-placeholder: var(--option-placeholder-40);
+    --text-brand: var(--green-500);
     --text-danger: var(--red-500);
-    --text-on-brand: white;
-    --text-on-brand-strong: var(--gray-900);
+    --text-on-brand: #ffffff;
+    --text-on-brand-strong: var(--main-black);
 
     /* Layout */
 
-    --layout-gutter: 16px;
-    --layout-header-height: 48px;
-    --layout-tab-bar-height: 56px;
+    --layout-gutter: 20px;
+    --layout-header-height: 64px;
+    --layout-tab-bar-height: 64px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
 
     /* Spacing */
 
+    --spacing-0: 0px;
     --spacing-1: 4px;
     --spacing-2: 8px;
     --spacing-3: 12px;
@@ -79,22 +85,21 @@ export const globalStyles = css`
     --spacing-6: 24px;
     --spacing-8: 32px;
     --spacing-10: 40px;
-    --spacing-12: 48px;
-    --spacing-16: 64px;
+    --spacing-20: 80px;
 
     /* Radius */
 
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --radius-full: 9999px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 999px;
 
     /* Elevation */
 
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.16);
+    --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-2: 0 1px 2px rgba(29, 41, 57, 0.04), 0 3px 8px rgba(29, 41, 57, 0.06);
+    --shadow-3: 0 12px 32px rgba(15, 23, 42, 0.16);
 
     /* Typography Family */
     --font-family-base:
@@ -105,26 +110,24 @@ export const globalStyles = css`
     --font-weight-regular: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
-    --font-weight-bold: 700;
 
     /* Typography Size */
     --font-size-24: 24px;
-    --font-size-20: 20px;
     --font-size-18: 18px;
     --font-size-16: 16px;
     --font-size-14: 14px;
     --font-size-13: 13px;
     --font-size-12: 12px;
-    --font-size-11: 11px;
 
     /* Typography Line height */
-    --line-height-tight: 1.3;
-    --line-height-normal: 1.5;
-    --line-height-relaxed: 1.7;
+    --line-height-34: 34px;
+    --line-height-28: 28px;
+    --line-height-24: 24px;
+    --line-height-20: 20px;
+    --line-height-18: 18px;
 
     /* Typography Letter spacing */
-    --letter-spacing-tight: -0.02em;
-    --letter-spacing-normal: -0.01em;
+    --letter-spacing-default: -0.025em;
   }
   ${modernNormalize}
 `;
@@ -132,77 +135,77 @@ export const globalStyles = css`
 export const typography = {
   headline: css`
     font-size: var(--font-size-24);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-tight);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-34);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   title: css`
-    font-size: var(--font-size-20);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-tight);
+    font-size: var(--font-size-18);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-28);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   subtitle: css`
-    font-size: var(--font-size-18);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-tight);
+    font-size: var(--font-size-16);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-24);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   sectionLabel: css`
     font-size: var(--font-size-16);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-24);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   button: css`
     font-size: var(--font-size-16);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-24);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   body: css`
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    line-height: var(--line-height-20);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   bodyStrong: css`
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    line-height: var(--line-height-20);
+    letter-spacing: var(--letter-spacing-default);
   `,
   paragraph: css`
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-relaxed);
-    letter-spacing: var(--letter-spacing-normal);
+    line-height: var(--line-height-20);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   caption: css`
     font-size: var(--font-size-13);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    line-height: var(--line-height-18);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   label: css`
     font-size: var(--font-size-12);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-18);
+    letter-spacing: var(--letter-spacing-default);
   `,
 
   footnote: css`
-    font-size: var(--font-size-11);
+    font-size: var(--font-size-12);
     font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
-    letter-spacing: var(--letter-spacing-normal);
+    line-height: var(--line-height-18);
+    letter-spacing: var(--letter-spacing-default);
   `,
 };
