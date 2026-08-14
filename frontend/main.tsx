@@ -3,16 +3,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
-import Antoliny from './src/Antoliny';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
-  },
-  {
-    path: '/antoliny',
-    element: <Antoliny />,
   },
 ]);
 
