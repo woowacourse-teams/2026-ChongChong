@@ -52,17 +52,18 @@ export const globalStyles = css`
     --border-default: var(--card-line-8);
     --border-subtle: var(--card-line-8);
     --border-brand: var(--green-500);
-    --border-danger: var(--red-500);
+    --border-critical: var(--red-500);
     --border-google: var(--google-login-line);
 
     /* Semantic Text */
 
+    --text-critical: --text-primary: #172033;
     --text-default: #172033;
     --text-secondary: var(--option-sub-70);
     --text-muted: var(--option-sub-font-color-55);
     --text-placeholder: var(--option-placeholder-40);
     --text-brand: var(--green-500);
-    --text-danger: var(--red-500);
+    --text-critical: var(--red-500);
     --text-on-brand: #ffffff;
     --text-on-brand-strong: var(--main-black);
 
@@ -171,23 +172,26 @@ export const tokens = {
     chip: 'var(--bg-chip)',
     disabled: 'var(--bg-disabled)',
     dim: 'var(--bg-dim)',
+    critical: 'var(--red-500)',
   },
 
   border: {
-    default: 'var(--border-default)',
-    subtle: 'var(--border-subtle)',
-    brand: 'var(--border-brand)',
-    danger: 'var(--border-danger)',
-    google: 'var(--border-google)',
+    default: '1px solid var(--border-default)',
+    subtle: '1px solid var(--border-subtle)',
+    brand: '1px solid var(--border-brand)',
+    critical: '1px solid var(--border-critical)',
+    neutral: '1px solid var(--card-line-8)',
+    google: '1px solid var(--border-google)',
   },
 
   text: {
+    primary: 'var(--text-primary)',
     default: 'var(--text-default)',
     secondary: 'var(--text-secondary)',
     muted: 'var(--text-muted)',
     placeholder: 'var(--text-placeholder)',
     brand: 'var(--text-brand)',
-    danger: 'var(--text-danger)',
+    critical: 'var(--text-critical)',
     onBrand: 'var(--text-on-brand)',
     onBrandStrong: 'var(--text-on-brand-strong)',
   },
@@ -260,79 +264,80 @@ export const tokens = {
 } as const;
 
 export const typography = {
-  headline: css`
-    font-size: var(--font-size-24);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-34);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  headline: {
+    fontSize: 'var(--font-size-24)',
+    fontWeight: 'var(--font-weight-semibold)',
+    lineHeight: 'var(--line-height-34)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  title: css`
-    font-size: var(--font-size-18);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-28);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  title: {
+    fontSize: 'var(--font-size-18)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-28)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  subtitle: css`
-    font-size: var(--font-size-16);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-24);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  subtitle: {
+    fontSize: 'var(--font-size-16)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-24)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  sectionLabel: css`
-    font-size: var(--font-size-16);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-24);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  sectionLabel: {
+    fontSize: 'var(--font-size-16)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-24)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  button: css`
-    font-size: var(--font-size-16);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-24);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  button: {
+    fontSize: 'var(--font-size-16)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-24)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  body: css`
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-20);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  body: {
+    fontSize: 'var(--font-size-14)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-20)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  bodyStrong: css`
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-20);
-    letter-spacing: var(--letter-spacing-default);
-  `,
-  paragraph: css`
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-20);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  bodyStrong: {
+    fontSize: 'var(--font-size-14)',
+    fontWeight: 'var(--font-weight-semibold)',
+    lineHeight: 'var(--line-height-20)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  caption: css`
-    font-size: var(--font-size-13);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-18);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  paragraph: {
+    fontSize: 'var(--font-size-14)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-20)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  label: css`
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-18);
-    letter-spacing: var(--letter-spacing-default);
-  `,
+  caption: {
+    fontSize: 'var(--font-size-13)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-18)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
 
-  footnote: css`
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-18);
-    letter-spacing: var(--letter-spacing-default);
-  `,
-};
+  label: {
+    fontSize: 'var(--font-size-12)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-18)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
+
+  footnote: {
+    fontSize: 'var(--font-size-12)',
+    fontWeight: 'var(--font-weight-regular)',
+    lineHeight: 'var(--line-height-18)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
+} as const;
