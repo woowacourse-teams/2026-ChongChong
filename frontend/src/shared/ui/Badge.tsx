@@ -45,10 +45,11 @@ const SizeStyle = {
   },
 };
 
-export default function Badge({ variant, size, children }: BadgeProps) {
+export default function Badge({ variant, size, children, ...rest }: BadgeProps) {
   return (
     <span
       css={{ ...typography.caption, ...BadgeStyle, ...VariantStyle[variant], ...SizeStyle[size] }}
+      {...rest}
     >
       {children}
     </span>
