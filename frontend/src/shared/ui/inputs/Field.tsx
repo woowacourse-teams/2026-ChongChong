@@ -1,7 +1,7 @@
 import Label from './Label';
 import HelpText from './HelpText';
 import ErrorText from './ErrorText';
-import type { CSSObject } from '@emotion/react';
+import type { CSSProperties } from 'react';
 
 interface InputSectionProps {
   id: string;
@@ -17,7 +17,7 @@ const inputSectionStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
-} satisfies CSSObject;
+} satisfies CSSProperties;
 
 export default function InputSection({
   id,
