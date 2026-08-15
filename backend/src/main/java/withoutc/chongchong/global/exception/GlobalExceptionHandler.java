@@ -34,18 +34,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ErrorResponse> handleMethodValidationException(HandlerMethodValidationException e) {
+        if (e.isForReturnValue()) {
+            return handleException(e);
+        }
+
         ErrorCode errorCode = CommonErrorCode.INVALID_INPUT_VALUE;
 
-        List<FieldErrorDetail> errors = e.getParameterValidationResults()
-                .stream()
-                .flatMap(result -> result.getResolvableErrors()
-                        .stream()
-                        .map(error -> FieldErrorDetail.of(
-                                result.getMethodParameter().getParameterName(), error.getDefaultMessage()
-                        )))
-                .toList();
-
-        return ResponseEntity.status(errorCode.getHttpStatus()).body(ErrorResponse.of(errorCode, errors));
+        return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(ErrorResponse.from(errorCode));
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class,
