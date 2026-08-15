@@ -1,0 +1,41 @@
+import { tokens, typography } from '../../../styles/global';
+import Dialog, { DialogDescription, DialogProps, DialogTitle } from './Dialog';
+
+interface AlertDialogProps extends Omit<DialogProps, 'actions'> {
+  closeButton: React.ReactNode;
+}
+
+const closeButtonStyle = {
+  ...typography.button,
+  fontWeight: tokens.fontWeight.semibold,
+  display: 'flex',
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: `${tokens.spacing[3]} ${tokens.spacing[5]}`,
+  background: 'transparent',
+  border: 'none',
+  borderRadius: `0 0 ${tokens.radius.lg} ${tokens.radius.lg}`,
+  color: tokens.text.brand,
+  cursor: 'pointer',
+} as const;
+
+function AlertDialogRoot({ ref, title, description, closeButton }: AlertDialogProps) {
+  return <Dialog ref={ref} title={title} description={description} actions={closeButton}></Dialog>;
+}
+
+function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
+  return (
+    <button type="button" css={{ ...closeButtonStyle }} {...props}>
+      {children}
+    </button>
+  );
+}
+
+const AlertDialog = Object.assign(AlertDialogRoot, {
+  Title: DialogTitle,
+  Description: DialogDescription,
+  CloseButton,
+});
+
+export default AlertDialog;
