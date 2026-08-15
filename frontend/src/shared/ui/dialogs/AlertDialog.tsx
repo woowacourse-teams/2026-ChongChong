@@ -1,7 +1,7 @@
 import { tokens, typography } from '../../../styles/global';
-import Dialog, { DialogDescription, DialogProps, DialogTitle } from './Dialog';
+import Dialog, { DialogProps } from './Dialog';
 
-interface AlertDialogProps extends Omit<DialogProps, 'actions'> {
+interface AlertDialogProps extends Omit<DialogProps, 'actions' | 'role'> {
   closeButton: React.ReactNode;
 }
 
@@ -21,7 +21,15 @@ const closeButtonStyle = {
 } as const;
 
 function AlertDialogRoot({ ref, title, description, closeButton }: AlertDialogProps) {
-  return <Dialog ref={ref} title={title} description={description} actions={closeButton}></Dialog>;
+  return (
+    <Dialog
+      ref={ref}
+      role="alertdialog"
+      title={title}
+      description={description}
+      actions={closeButton}
+    />
+  );
 }
 
 function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
@@ -33,8 +41,6 @@ function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
 }
 
 const AlertDialog = Object.assign(AlertDialogRoot, {
-  Title: DialogTitle,
-  Description: DialogDescription,
   CloseButton,
 });
 

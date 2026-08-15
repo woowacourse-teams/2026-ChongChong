@@ -1,10 +1,12 @@
+import { useId } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
 export interface DialogProps {
   ref: React.RefObject<HTMLDialogElement | null>;
-  title: React.ReactNode;
-  description: React.ReactNode;
+  title: string;
+  description?: string;
   actions: React.ReactNode;
+  role?: 'dialog' | 'alertdialog';
 }
 
 const dialogStyle = {
@@ -57,20 +59,28 @@ const descriptionStyle = {
   margin: 0,
 } as const;
 
-export function DialogTitle({ children }: { children: React.ReactNode }) {
-  return <h3 css={{ ...titleStyle }}>{children}</h3>;
-}
+export default function Dialog({ ref, title, description, actions, role = 'dialog' }: DialogProps) {
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
 
-export function DialogDescription({ children }: { children: React.ReactNode }) {
-  return <p css={{ ...descriptionStyle }}>{children}</p>;
-}
-
-export default function Dialog({ ref, title, description, actions }: DialogProps) {
   return (
-    <dialog ref={ref} css={{ ...dialogStyle }}>
+    <dialog
+      ref={ref}
+      role={role}
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      css={{ ...dialogStyle }}
+    >
       <div css={{ ...bodyStyle }}>
-        {title}
-        {description}
+        <h2 id={titleId} css={{ ...titleStyle }}>
+          {title}
+        </h2>
+        {description && (
+          <p id={descriptionId} css={{ ...descriptionStyle }}>
+            {description}
+          </p>
+        )}
       </div>
       <div css={{ ...actionsStyle }}>{actions}</div>
     </dialog>

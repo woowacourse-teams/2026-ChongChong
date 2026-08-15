@@ -1,7 +1,7 @@
 import { tokens, typography } from '../../../styles/global';
-import Dialog, { DialogDescription, DialogProps, DialogTitle } from './Dialog';
+import Dialog, { DialogProps } from './Dialog';
 
-interface ConfirmDialogProps extends Omit<DialogProps, 'actions'> {
+interface ConfirmDialogProps extends Omit<DialogProps, 'actions' | 'role'> {
   closeButton: React.ReactNode;
   confirmButton: React.ReactNode;
 }
@@ -42,6 +42,7 @@ function ConfirmDialogRoot({
   return (
     <Dialog
       ref={ref}
+      role="alertdialog"
       title={title}
       description={description}
       actions={
@@ -50,7 +51,7 @@ function ConfirmDialogRoot({
           {confirmButton}
         </>
       }
-    ></Dialog>
+    />
   );
 }
 
@@ -71,8 +72,6 @@ function ConfirmButton({ children, ...props }: React.ComponentProps<'button'>) {
 }
 
 const ConfirmDialog = Object.assign(ConfirmDialogRoot, {
-  Title: DialogTitle,
-  Description: DialogDescription,
   CloseButton,
   ConfirmButton,
 });
