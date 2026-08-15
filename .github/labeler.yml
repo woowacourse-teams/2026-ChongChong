@@ -1,0 +1,23 @@
+FE:
+  - head-branch: ["^fe/"]
+
+BE:
+  - head-branch: ["^be/"]
+
+":sparkles: feature":
+  - head-branch: ["^(fe|be|common)/feat/"]
+
+"🐛 fix":
+  - head-branch: ["^(fe|be|common)/fix/"]
+
+"📄 documentation":
+  - head-branch: ["^(fe|be|common)/docs/"]
+
+":art: style":
+  - head-branch: ["^(fe|be|common)/style/"]
+
+":recycle: refactor":
+  - head-branch: ["^(fe|be|common)/refactor/"]
+
+"⚙️ chore":
+  - head-branch: ["^(fe|be|common)/chore/"]
