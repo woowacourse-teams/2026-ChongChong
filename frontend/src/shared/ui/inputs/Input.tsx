@@ -1,9 +1,8 @@
 import { tokens, typography } from '../../../styles/global';
+import type { ComponentPropsWithoutRef } from 'react';
+import type { CSSObject } from '@emotion/react';
 
-interface InputProps {
-  onChange: () => void;
-  placeholder: string;
-}
+type InputProps = ComponentPropsWithoutRef<'input'>;
 
 const inputStyle = {
   width: '100%',
@@ -18,10 +17,12 @@ const inputStyle = {
     border: tokens.border.brand,
     outline: 'none',
   },
-};
 
-export default function Input({ onChange, placeholder }: InputProps) {
-  return (
-    <input type="text" css={{ ...inputStyle }} onChange={onChange} placeholder={placeholder} />
-  );
+  '&[aria-invalid="true"]': {
+    border: tokens.border.critical,
+  },
+} satisfies CSSObject;
+
+export default function Input(props: InputProps) {
+  return <input type="text" css={inputStyle} {...props} />;
 }

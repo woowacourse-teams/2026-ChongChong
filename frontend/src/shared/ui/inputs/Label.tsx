@@ -1,14 +1,23 @@
 import { tokens, typography } from '../../../styles/global';
 
 interface LabelProps {
+  htmlFor: string;
   text: string;
-  isRequired: boolean;
+  isRequired?: boolean;
 }
 
-export default function Label({ text, isRequired }: LabelProps) {
+export default function Label({ htmlFor, text, isRequired = false }: LabelProps) {
   return (
-    <label css={{ ...typography.sectionLabel, color: tokens.text.primary, marginBottom: '4px' }}>
-      {text} {isRequired && <span css={{ color: tokens.text.brand }}>*</span>}
+    <label
+      htmlFor={htmlFor}
+      css={{ ...typography.sectionLabel, color: tokens.text.primary, marginBottom: '4px' }}
+    >
+      {text}{' '}
+      {isRequired && (
+        <span aria-hidden="true" css={{ color: tokens.text.brand }}>
+          *
+        </span>
+      )}
     </label>
   );
 }

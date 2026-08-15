@@ -1,10 +1,8 @@
 import { tokens, typography } from '../../../styles/global';
 import type { CSSObject } from '@emotion/react';
+import type { ComponentPropsWithoutRef } from 'react';
 
-interface TextAreaProps {
-  onChange: () => void;
-  placeholder: string;
-}
+type TextAreaProps = ComponentPropsWithoutRef<'textarea'>;
 
 const textAreaStyle = {
   width: '100%',
@@ -20,8 +18,12 @@ const textAreaStyle = {
     border: tokens.border.brand,
     outline: 'none',
   },
+
+  '&[aria-invalid="true"]': {
+    border: tokens.border.critical,
+  },
 } satisfies CSSObject;
 
-export default function TextArea({ onChange, placeholder }: TextAreaProps) {
-  return <textarea css={{ ...textAreaStyle }} onChange={onChange} placeholder={placeholder} />;
+export default function TextArea(props: TextAreaProps) {
+  return <textarea css={textAreaStyle} {...props} />;
 }

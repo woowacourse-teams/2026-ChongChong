@@ -4,11 +4,12 @@ import ErrorText from './ErrorText';
 import type { CSSObject } from '@emotion/react';
 
 interface InputSectionProps {
+  id: string;
   label: string;
-  isRequired: boolean;
-  helpText: string;
-  isError: boolean;
-  errorText: string;
+  isRequired?: boolean;
+  helpText?: string;
+  isError?: boolean;
+  errorText?: string;
   children: React.ReactNode;
 }
 
@@ -19,19 +20,34 @@ const inputSectionStyle = {
 } satisfies CSSObject;
 
 export default function InputSection({
+  id,
   label,
-  isRequired,
+  isRequired = false,
   helpText,
-  isError,
+  isError = false,
   errorText,
   children,
 }: InputSectionProps) {
-  const bottomText = isError ? <ErrorText>{errorText}</ErrorText> : <HelpText>{helpText}</HelpText>;
+  const messageId = `${id}-message`;
+  let message: React.ReactNode = null;
+
+  if (isError) {
+    if (errorText) {
+      message = (
+        <ErrorText id={messageId} role="alert">
+          {errorText}
+        </ErrorText>
+      );
+    }
+  } else if (helpText) {
+    message = <HelpText id={messageId}>{helpText}</HelpText>;
+  }
+
   return (
-    <div css={{ ...inputSectionStyle }}>
-      <Label text={label} isRequired={isRequired} />
+    <div css={inputSectionStyle}>
+      <Label htmlFor={id} text={label} isRequired={isRequired} />
       {children}
-      {bottomText}
+      {message}
     </div>
   );
 }
