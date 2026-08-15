@@ -65,14 +65,16 @@ Refs #12
 
 호환성을 깨는 변경은 `BREAKING CHANGE:`로 시작합니다. 이전 커밋을 되돌릴 때는 `revert: <되돌릴 커밋의 header>` 형식을 사용하고 Body에 `This reverts commit <SHA>.`를 포함합니다.
 
-## PR 제목과의 차이
+## 작업 커밋, PR과 Squash 커밋 제목
 
-커밋 메시지와 PR 제목은 서로 다른 형식을 사용합니다.
+작업 브랜치의 커밋, PR과 `dev`의 Squash 커밋 제목은 서로 다른 형식을 사용합니다.
 
-| 구분 | 형식                         | 예시                                       |
-| ---- | ---------------------------- | ------------------------------------------ |
-| 커밋 | `<type>(<scope>): <subject>` | `chore(common): CodeRabbit 리뷰 설정 추가` |
-| PR   | `[<type>] <summary>`         | `[chore] CodeRabbit 리뷰 설정 추가`        |
+| 구분              | 형식                              | 예시                                       |
+| ----------------- | --------------------------------- | ------------------------------------------ |
+| 작업 브랜치 커밋  | `<type>(<scope>): <subject>`      | `chore(common): CodeRabbit 리뷰 설정 추가` |
+| PR 제목           | `[<type>] <summary>`              | `[chore] CodeRabbit 리뷰 설정 추가`        |
+| `dev` Squash 커밋 | `[<type>] <summary> (#<PR 번호>)` | `[chore] CodeRabbit 리뷰 설정 추가 (#11)`  |
 
-PR 제목의 타입과 내용은 실제 변경 범위를 대표해야 합니다. `dev`에 Squash merge할 때는 GitHub의 최종 커밋 제목을
-`<type>(<scope>): <subject>` 형식으로 수정한 뒤 병합합니다. PR 제목의 대괄호 형식을 그대로 커밋 제목으로 사용하지 않습니다.
+PR 제목의 타입과 내용은 실제 변경 범위를 대표해야 합니다. 저장소의 Squash merge 기본 제목은 PR 제목으로 설정되어
+있으므로 `dev`에 병합하면 GitHub가 PR 제목 뒤에 PR 번호를 붙여 커밋 제목을 자동 생성합니다. Squash merge 화면에서
+제목을 수동으로 수정하지 않습니다.

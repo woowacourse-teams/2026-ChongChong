@@ -45,8 +45,9 @@ common/chore/branch-policy
 | `prod`      | Merge commit |
 
 작업 브랜치의 커밋은 하나로 정리하고, 개발 브랜치에서 운영 브랜치로 승격한 시점은 머지 커밋으로 남깁니다.
-Squash merge 화면의 최종 커밋 제목은 [커밋 컨벤션](COMMIT_CONVENTION.md)의
-`<type>(<scope>): <subject>` 형식으로 수정합니다.
+`dev`로 Squash merge할 때는 저장소의 기본 설정에 따라 PR 제목을 커밋 제목으로 사용하고 GitHub가 PR 번호를
+덧붙입니다. Squash merge 화면에서 제목을 수동으로 수정하지 않습니다. 자세한 형식은
+[커밋 컨벤션](COMMIT_CONVENTION.md)을 따릅니다.
 
 ## 배포 단위
 
