@@ -8,11 +8,9 @@ type Variant =
 // width + height
 type Size = 'Small' | 'Large';
 
-interface Props {
+interface Props extends React.ComponentProps<'button'> {
   variant: Variant;
   size: Size;
-  props?: React.ButtonHTMLAttributes<HTMLButtonElement>;
-  children: React.ReactNode;
 }
 
 const variantStyle = {
@@ -63,9 +61,10 @@ const ButtonStyle = {
   alignSelf: 'stretch',
 };
 
-export default function Button({ variant, size, children, props = {} }: Props) {
+export default function Button({ variant, size, children, ...props }: Props) {
   return (
     <button
+      type="button"
       css={{ ...typography.button, ...ButtonStyle, ...variantStyle[variant], ...sizeStyle[size] }}
       {...props}
     >
