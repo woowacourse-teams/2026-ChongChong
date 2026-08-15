@@ -3,6 +3,7 @@ package withoutc.chongchong.global.exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
+import org.springframework.validation.FieldError;
 
 @JsonPropertyOrder({"code", "message", "errors"})
 public record ErrorResponse(
@@ -23,6 +24,10 @@ public record ErrorResponse(
             String field,
             String reason
     ) {
+        public static FieldErrorDetail from(FieldError fieldError) {
+            return new FieldErrorDetail(fieldError.getField(), fieldError.getDefaultMessage());
+        }
+
         public static FieldErrorDetail of(String field, String reason) {
             return new FieldErrorDetail(field, reason);
         }

@@ -37,8 +37,10 @@
   외부의 리스트 변경이 응답에 영향을 주지 않게 한다.
 - `errors`의 항목은 `ErrorResponse.FieldErrorDetail` 공개 중첩 record로 정의한다. `FieldErrorDetail`은 독립적인 응답이나
   도메인 개념이 아니라 `ErrorResponse`의 `errors` 안에서만 의미가 있으므로 소유 타입과 가까이 둔다.
-- 전역 예외 처리기가 Spring의 필드 검증 실패를 `FieldErrorDetail`로 변환한다. `ErrorResponse`는 Spring 검증 타입을 직접
-  입력받지 않고 완성된 `FieldErrorDetail` 목록만 받는다.
+- `FieldErrorDetail`은 Spring의 `FieldError`를 자신의 응답 형태로 변환하는 `from` 팩터리 메서드를 제공한다. 전역 예외
+  처리기는 검증 오류 목록을 순회하며 이 변환을 호출한다.
+- `ErrorResponse`는 Spring의 `BindingResult`나 `FieldError` 목록을 직접 입력받지 않고 완성된 `FieldErrorDetail` 목록만
+  받아 최종 응답을 조립한다.
 - `FieldErrorDetail`이 다른 응답에서도 재사용되거나 독립적인 동작과 변경 책임을 갖게 되면 별도 최상위 타입으로 분리한다.
 
 ## 선택 이유
@@ -51,8 +53,9 @@
 수 있다.
 
 `FieldErrorDetail`을 중첩 타입으로 두면 `ErrorResponse`에 종속된 사용 범위와 소유 관계가 이름에 드러난다. 동시에 공개
-중첩 타입으로 정의하여 전역 예외 처리기가 검증 실패를 응답 값으로 변환할 수 있다. Spring 검증 객체를 응답 DTO에 직접
-전달하지 않으므로 프레임워크 예외 해석 책임은 전역 예외 처리기에 남는다.
+중첩 타입으로 정의하여 전역 예외 처리기에서 사용할 수 있게 한다. `FieldErrorDetail`이 자신의 생성 규칙을 가지므로 전역
+예외 처리기는 Spring 검증 오류의 순회와 응답 조립만 담당하고 필드 이름과 실패 이유를 옮기는 세부 로직을 반복하지 않는다.
+Spring 의존성은 필드 오류 변환 팩터리에 한정하고 `ErrorResponse` 전체가 `BindingResult`를 해석하지 않게 한다.
 
 ## 검토한 대안
 
@@ -76,10 +79,10 @@
 다른 클래스에서 짧은 이름으로 참조할 수 있지만 현재는 `ErrorResponse` 밖에서 독립적인 의미나 재사용 요구가 없다. 필요한
 시점에 분리할 수 있으므로 중첩 타입으로 소유 관계를 먼저 표현한다.
 
-### `ErrorResponse`가 Spring 검증 오류를 직접 변환
+### 전역 예외 처리기에서 필드 오류 값을 직접 조립
 
-전역 예외 처리기의 매핑 코드를 줄일 수 있지만 응답 데이터 타입이 Spring 검증 타입에 의존한다. Spring 예외 해석과 API
-응답 변환은 전역 예외 처리기에 두고 `ErrorResponse`는 응답 값만 표현한다.
+응답 DTO가 Spring 검증 타입에 의존하지 않지만 전역 예외 처리기가 `field`와 `reason`을 꺼내는 생성 규칙까지 담당한다.
+변환을 `FieldErrorDetail.from`에 두어 해당 타입의 생성 책임을 모으고 전역 예외 처리기는 변환 흐름만 조율한다.
 
 ## 영향
 
@@ -95,6 +98,7 @@
 - enum 이름과 외부 에러 코드를 각각 작성하므로 두 값이 불필요하게 달라질 수 있다.
 - 도메인마다 에러 코드 enum과 구체 비즈니스 예외 타입이 추가된다.
 - 다른 클래스에서 필드 에러 타입을 참조할 때 `ErrorResponse.FieldErrorDetail`이라는 이름을 사용해야 한다.
+- `FieldErrorDetail`의 변환 팩터리가 Spring의 `FieldError`에 의존한다.
 
 ## 미확정 사항
 
