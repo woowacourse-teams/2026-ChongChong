@@ -172,6 +172,7 @@ export const tokens = {
     chip: 'var(--bg-chip)',
     disabled: 'var(--bg-disabled)',
     dim: 'var(--bg-dim)',
+    neutral: 'var(--gray-200)',
     critical: 'var(--red-500)',
   },
 
