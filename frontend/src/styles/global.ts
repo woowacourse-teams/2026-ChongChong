@@ -57,7 +57,7 @@ export const globalStyles = css`
 
     /* Semantic Text */
 
-    --text-critical: --text-primary: #172033;
+    --text-primary: #172033;
     --text-default: #172033;
     --text-secondary: var(--option-sub-70);
     --text-muted: var(--option-sub-font-color-55);
@@ -172,6 +172,7 @@ export const tokens = {
     chip: 'var(--bg-chip)',
     disabled: 'var(--bg-disabled)',
     dim: 'var(--bg-dim)',
+    neutral: 'var(--gray-200)',
     critical: 'var(--red-500)',
   },
 

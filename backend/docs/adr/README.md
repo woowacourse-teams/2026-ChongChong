@@ -22,3 +22,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0003](0003-define-backend-test-strategy.md)          | 백엔드 테스트 범위와 역할을 정의한다        |
 | [0004](0004-standardize-error-response.md)            | 에러 응답과 에러 코드 형식을 통일한다       |
 | [0005](0005-transfer-data-across-layer-boundaries.md) | 레이어 경계에서 전용 데이터 객체를 사용한다 |
+| [0006](0006-design-common-exception-types.md)         | 공통 예외 처리 타입의 책임을 분리한다       |
