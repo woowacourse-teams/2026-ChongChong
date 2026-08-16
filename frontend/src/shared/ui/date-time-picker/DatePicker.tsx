@@ -10,6 +10,7 @@ import {
   weekdayRowStyle,
 } from './dateTimePicker.styles';
 import {
+  clampToMinimumTime,
   formatDate,
   getCalendarDays,
   isSameDay,
@@ -23,10 +24,28 @@ export interface DatePickerProps {
   onChange: (value: Date) => void;
 }
 
+interface CalendarView {
+  selectedMonthKey: number;
+  date: Date;
+}
+
 export default function DatePicker({ value, minDate = new Date(), onChange }: DatePickerProps) {
-  const [viewDate, setViewDate] = useState(
-    () => new Date(value.getFullYear(), value.getMonth(), 1),
-  );
+  const selectedYear = value.getFullYear();
+  const selectedMonth = value.getMonth();
+  const selectedMonthKey = selectedYear * 12 + selectedMonth;
+  const [calendarView, setCalendarView] = useState<CalendarView>(() => ({
+    selectedMonthKey,
+    date: new Date(selectedYear, selectedMonth, 1),
+  }));
+  const viewDate =
+    calendarView.selectedMonthKey === selectedMonthKey
+      ? calendarView.date
+      : new Date(selectedYear, selectedMonth, 1);
+
+  if (calendarView.selectedMonthKey !== selectedMonthKey) {
+    setCalendarView({ selectedMonthKey, date: viewDate });
+  }
+
   const minimumDate = startOfDay(minDate);
   const minimumMonth = new Date(minimumDate.getFullYear(), minimumDate.getMonth(), 1);
   const calendarDays = getCalendarDays(viewDate, minimumDate);
@@ -35,7 +54,7 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
   const selectDate = (date: Date) => {
     const nextValue = new Date(value);
     nextValue.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-    onChange(nextValue);
+    onChange(clampToMinimumTime(nextValue, minDate));
   };
 
   return (
@@ -49,7 +68,10 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
           aria-label="이전 달"
           disabled={isPreviousMonthDisabled}
           onClick={() =>
-            setViewDate((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
+            setCalendarView((current) => ({
+              ...current,
+              date: new Date(current.date.getFullYear(), current.date.getMonth() - 1, 1),
+            }))
           }
         >
           ‹
@@ -62,7 +84,10 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
           css={monthButtonStyle}
           aria-label="다음 달"
           onClick={() =>
-            setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
+            setCalendarView((current) => ({
+              ...current,
+              date: new Date(current.date.getFullYear(), current.date.getMonth() + 1, 1),
+            }))
           }
         >
           ›

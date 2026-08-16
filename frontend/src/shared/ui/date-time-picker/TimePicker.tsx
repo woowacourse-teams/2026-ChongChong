@@ -7,10 +7,16 @@ import {
   wheelPickerStyle,
   wheelSelectionStyle,
 } from './dateTimePicker.styles';
-import { formatTime, getTimeMinutes, TIME_INTERVAL_MINUTES } from './dateTimePicker.utils';
+import {
+  clampToMinimumTime,
+  formatTime,
+  getTimeMinutes,
+  TIME_INTERVAL_MINUTES,
+} from './dateTimePicker.utils';
 
 export interface TimePickerProps {
   value: Date;
+  minDate: Date;
   onChange: (value: Date) => void;
 }
 
@@ -28,7 +34,7 @@ function clampIndex(index: number, length: number) {
   return Math.min(Math.max(index, 0), length - 1);
 }
 
-export default function TimePicker({ value, onChange }: TimePickerProps) {
+export default function TimePicker({ value, minDate, onChange }: TimePickerProps) {
   const periodRef = useRef<HTMLDivElement>(null);
   const hourRef = useRef<HTMLDivElement>(null);
   const minuteRef = useRef<HTMLDivElement>(null);
@@ -54,7 +60,7 @@ export default function TimePicker({ value, onChange }: TimePickerProps) {
 
   useEffect(() => clearScrollTimers, []);
 
-  const selectIndex = (type: WheelType, index: number) => {
+  const getValueForIndex = (type: WheelType, index: number) => {
     const nextValue = new Date(value);
 
     if (type === 'period') {
@@ -66,7 +72,15 @@ export default function TimePicker({ value, onChange }: TimePickerProps) {
       nextValue.setMinutes(MINUTES[index], 0, 0);
     }
 
-    onChange(nextValue);
+    return nextValue;
+  };
+
+  const selectIndex = (type: WheelType, index: number) => {
+    onChange(clampToMinimumTime(getValueForIndex(type, index), minDate));
+  };
+
+  const isOptionDisabled = (type: WheelType, index: number) => {
+    return getValueForIndex(type, index).getTime() < minDate.getTime();
   };
 
   const handleScroll = (type: WheelType, event: UIEvent<HTMLDivElement>, itemCount: number) => {
@@ -92,17 +106,25 @@ export default function TimePicker({ value, onChange }: TimePickerProps) {
           aria-label="오전 오후"
           onScroll={(event) => handleScroll('period', event, PERIODS.length)}
         >
-          {PERIODS.map((period, index) => (
-            <button
-              key={period}
-              type="button"
-              css={[wheelOptionStyle, { opacity: periodIndex === index ? 1 : 0.48 }]}
-              aria-pressed={periodIndex === index}
-              onClick={() => selectIndex('period', index)}
-            >
-              {period}
-            </button>
-          ))}
+          {PERIODS.map((period, index) => {
+            const isDisabled = isOptionDisabled('period', index);
+
+            return (
+              <button
+                key={period}
+                type="button"
+                css={[
+                  wheelOptionStyle,
+                  { opacity: isDisabled ? 0.24 : periodIndex === index ? 1 : 0.48 },
+                ]}
+                aria-pressed={periodIndex === index}
+                disabled={isDisabled}
+                onClick={() => selectIndex('period', index)}
+              >
+                {period}
+              </button>
+            );
+          })}
         </div>
 
         <div
@@ -111,18 +133,26 @@ export default function TimePicker({ value, onChange }: TimePickerProps) {
           aria-label="시"
           onScroll={(event) => handleScroll('hour', event, HOURS.length)}
         >
-          {HOURS.map((hour, index) => (
-            <button
-              key={hour}
-              type="button"
-              css={[wheelOptionStyle, { opacity: hourIndex === index ? 1 : 0.48 }]}
-              aria-label={`${hour}시`}
-              aria-pressed={hourIndex === index}
-              onClick={() => selectIndex('hour', index)}
-            >
-              {hour}
-            </button>
-          ))}
+          {HOURS.map((hour, index) => {
+            const isDisabled = isOptionDisabled('hour', index);
+
+            return (
+              <button
+                key={hour}
+                type="button"
+                css={[
+                  wheelOptionStyle,
+                  { opacity: isDisabled ? 0.24 : hourIndex === index ? 1 : 0.48 },
+                ]}
+                aria-label={`${hour}시`}
+                aria-pressed={hourIndex === index}
+                disabled={isDisabled}
+                onClick={() => selectIndex('hour', index)}
+              >
+                {hour}
+              </button>
+            );
+          })}
         </div>
 
         <div
@@ -131,18 +161,26 @@ export default function TimePicker({ value, onChange }: TimePickerProps) {
           aria-label="분"
           onScroll={(event) => handleScroll('minute', event, MINUTES.length)}
         >
-          {MINUTES.map((minute, index) => (
-            <button
-              key={minute}
-              type="button"
-              css={[wheelOptionStyle, { opacity: minuteIndex === index ? 1 : 0.48 }]}
-              aria-label={`${minute}분`}
-              aria-pressed={minuteIndex === index}
-              onClick={() => selectIndex('minute', index)}
-            >
-              {String(minute).padStart(2, '0')}
-            </button>
-          ))}
+          {MINUTES.map((minute, index) => {
+            const isDisabled = isOptionDisabled('minute', index);
+
+            return (
+              <button
+                key={minute}
+                type="button"
+                css={[
+                  wheelOptionStyle,
+                  { opacity: isDisabled ? 0.24 : minuteIndex === index ? 1 : 0.48 },
+                ]}
+                aria-label={`${minute}분`}
+                aria-pressed={minuteIndex === index}
+                disabled={isDisabled}
+                onClick={() => selectIndex('minute', index)}
+              >
+                {String(minute).padStart(2, '0')}
+              </button>
+            );
+          })}
         </div>
       </div>
     </>

@@ -1,6 +1,5 @@
 export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 export const TIME_INTERVAL_MINUTES = 5;
-export const TIME_OPTION_COUNT = (24 * 60) / TIME_INTERVAL_MINUTES;
 
 export interface CalendarDay {
   date: Date;
@@ -22,11 +21,27 @@ export function isSameDay(a: Date, b: Date) {
 
 export function normalizeTime(value: Date) {
   const normalized = new Date(value);
-  const totalMinutes = normalized.getHours() * 60 + normalized.getMinutes();
-  const roundedMinutes = Math.round(totalMinutes / TIME_INTERVAL_MINUTES) * TIME_INTERVAL_MINUTES;
+  const minuteRemainder = normalized.getMinutes() % TIME_INTERVAL_MINUTES;
+  const hasPartialMinute = normalized.getSeconds() > 0 || normalized.getMilliseconds() > 0;
+  const minutesToAdd =
+    minuteRemainder === 0
+      ? hasPartialMinute
+        ? TIME_INTERVAL_MINUTES
+        : 0
+      : TIME_INTERVAL_MINUTES - minuteRemainder;
 
-  normalized.setHours(0, roundedMinutes, 0, 0);
+  normalized.setSeconds(0, 0);
+  normalized.setMinutes(normalized.getMinutes() + minutesToAdd);
   return normalized;
+}
+
+export function clampToMinimumTime(value: Date, minDate: Date) {
+  return normalizeTime(value.getTime() < minDate.getTime() ? minDate : value);
+}
+
+export function getMinimumDateTime(minDate?: Date, now = new Date()) {
+  const minimum = minDate && minDate.getTime() > now.getTime() ? minDate : now;
+  return normalizeTime(minimum);
 }
 
 export function formatDate(value: Date) {

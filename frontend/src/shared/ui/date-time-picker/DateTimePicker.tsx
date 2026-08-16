@@ -4,7 +4,7 @@ import Button from '../Button';
 import BottomSheet from './BottomSheet';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
-import { normalizeTime } from './dateTimePicker.utils';
+import { clampToMinimumTime, getMinimumDateTime } from './dateTimePicker.utils';
 
 type PickerStep = 'date' | 'time';
 
@@ -21,20 +21,26 @@ export default function DateTimePicker({
   triggerLabel = '리마인드 시각 설정',
   onChange,
 }: DateTimePickerProps) {
-  const [draftValue, setDraftValue] = useState(() => normalizeTime(value ?? new Date()));
+  const [minimumDateTime, setMinimumDateTime] = useState(() => getMinimumDateTime(minDate));
+  const [draftValue, setDraftValue] = useState(() =>
+    clampToMinimumTime(value ?? minimumDateTime, minimumDateTime),
+  );
   const [step, setStep] = useState<PickerStep>('date');
   const [isOpen, setIsOpen] = useState(false);
 
   const closePicker = useCallback(() => setIsOpen(false), []);
 
   const openPicker = () => {
-    setDraftValue(normalizeTime(value ?? new Date()));
+    const nextMinimumDateTime = getMinimumDateTime(minDate);
+
+    setMinimumDateTime(nextMinimumDateTime);
+    setDraftValue(clampToMinimumTime(value ?? nextMinimumDateTime, nextMinimumDateTime));
     setStep('date');
     setIsOpen(true);
   };
 
   const complete = () => {
-    const completedValue = new Date(draftValue);
+    const completedValue = clampToMinimumTime(draftValue, getMinimumDateTime(minDate));
 
     onChange(completedValue);
     closePicker();
@@ -60,9 +66,9 @@ export default function DateTimePicker({
         onClose={closePicker}
       >
         {step === 'date' ? (
-          <DatePicker value={draftValue} minDate={minDate} onChange={setDraftValue} />
+          <DatePicker value={draftValue} minDate={minimumDateTime} onChange={setDraftValue} />
         ) : (
-          <TimePicker value={draftValue} onChange={setDraftValue} />
+          <TimePicker value={draftValue} minDate={minimumDateTime} onChange={setDraftValue} />
         )}
       </BottomSheet>
     </>
