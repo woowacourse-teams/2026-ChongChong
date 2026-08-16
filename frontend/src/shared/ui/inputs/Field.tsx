@@ -2,6 +2,7 @@ import Label from './Label';
 import HelpText from './HelpText';
 import ErrorText from './ErrorText';
 import type { CSSProperties } from 'react';
+import { tokens } from '../../../styles/global';
 
 interface InputSectionProps {
   id: string;
@@ -16,7 +17,7 @@ interface InputSectionProps {
 const inputSectionStyle = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
+  gap: tokens.spacing[1],
 } satisfies CSSProperties;
 
 export default function InputSection({

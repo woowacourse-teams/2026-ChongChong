@@ -10,7 +10,11 @@ export default function Label({ htmlFor, text, isRequired = false }: LabelProps)
   return (
     <label
       htmlFor={htmlFor}
-      css={{ ...typography.sectionLabel, color: tokens.text.primary, marginBottom: '4px' }}
+      css={{
+        ...typography.sectionLabel,
+        color: tokens.text.primary,
+        marginBottom: tokens.spacing[1],
+      }}
     >
       {text}{' '}
       {isRequired && (
