@@ -6,13 +6,13 @@ import type { ComponentPropsWithoutRef } from 'react';
 type TextAreaProps = ComponentPropsWithoutRef<'textarea'>;
 
 const textAreaBaseStyle = {
+  ...typography.label,
   width: '100%',
   minHeight: '96px',
   padding: tokens.spacing[4],
   alignItems: 'flex-start',
   borderRadius: tokens.radius.md,
   resize: 'none',
-  ...typography.label,
   border: tokens.border.default,
 } satisfies CSSProperties;
 

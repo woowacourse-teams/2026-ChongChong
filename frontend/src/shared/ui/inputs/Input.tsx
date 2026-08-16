@@ -6,12 +6,12 @@ import type { CSSProperties } from 'react';
 type InputProps = ComponentPropsWithoutRef<'input'>;
 
 const inputBaseStyle = {
+  ...typography.label,
   width: '100%',
   minHeight: '52px',
   padding: tokens.spacing[4],
   alignItems: 'flex-start',
   borderRadius: tokens.radius.md,
-  ...typography.label,
   border: tokens.border.default,
 } satisfies CSSProperties;
 
