@@ -1,6 +1,6 @@
 import { tokens, typography } from '../../styles/global';
 
-interface Props {
+interface TopHeaderProps {
   left?: React.ReactNode;
   middle?: React.ReactNode;
   right?: React.ReactNode;
@@ -67,7 +67,7 @@ function Subtitle({ children }: { children: React.ReactNode }) {
   return <p css={{ ...subtitleStyle }}>{children}</p>;
 }
 
-function TopHeaderRoot({ left, middle, right }: Props) {
+function TopHeaderRoot({ left, middle, right }: TopHeaderProps) {
   return (
     <header css={TopNavigationStyle}>
       <div css={leftStyle}>{left}</div>
