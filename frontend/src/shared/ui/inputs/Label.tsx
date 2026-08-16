@@ -16,9 +16,10 @@ export default function Label({ htmlFor, text, isRequired = false }: LabelProps)
         marginBottom: tokens.spacing[1],
       }}
     >
-      {text}{' '}
+      {text}
       {isRequired && (
         <span aria-hidden="true" css={{ color: tokens.text.brand }}>
+          {' '}
           *
         </span>
       )}
