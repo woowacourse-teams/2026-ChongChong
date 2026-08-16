@@ -1,4 +1,5 @@
 import { tokens, typography } from '../../../styles/global';
+import { CSSProperties } from 'react';
 import Dialog, { DialogProps } from './Dialog';
 
 interface ConfirmDialogProps extends Omit<DialogProps, 'actions' | 'role'> {
@@ -16,13 +17,13 @@ const actionButtonStyle = {
   background: 'transparent',
   border: 'none',
   cursor: 'pointer',
-} as const;
+} satisfies CSSProperties;
 
 const closeButtonStyle = {
   ...actionButtonStyle,
   borderRadius: `0 0 0 ${tokens.radius.lg}`,
   color: tokens.text.secondary,
-} as const;
+} satisfies CSSProperties;
 
 const confirmButtonStyle = {
   ...actionButtonStyle,
@@ -30,7 +31,7 @@ const confirmButtonStyle = {
   borderLeft: tokens.border.neutral,
   borderRadius: `0 0 ${tokens.radius.lg} 0`,
   color: tokens.text.critical,
-} as const;
+} satisfies CSSProperties;
 
 function ConfirmDialogRoot({
   ref,

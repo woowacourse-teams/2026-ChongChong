@@ -1,5 +1,6 @@
-import { useId } from 'react';
+import { CSSProperties, useId } from 'react';
 import { tokens, typography } from '../../../styles/global';
+import { CSSObject } from '@emotion/react';
 
 export interface DialogProps {
   ref: React.RefObject<HTMLDialogElement | null>;
@@ -22,11 +23,11 @@ const dialogStyle = {
   '&[open]': {
     display: 'flex',
     flexDirection: 'column',
-  },
+  } satisfies CSSProperties,
   '&::backdrop': {
     background: tokens.bg.dim,
-  },
-} as const;
+  } satisfies CSSProperties,
+} satisfies CSSObject;
 
 const bodyStyle = {
   display: 'flex',
@@ -37,12 +38,12 @@ const bodyStyle = {
   gap: tokens.spacing[2],
   padding: `${tokens.spacing[6]} ${tokens.spacing[5]}`,
   textAlign: 'center',
-} as const;
+} satisfies CSSProperties;
 
 const actionsStyle = {
   display: 'flex',
   borderTop: tokens.border.neutral,
-} as const;
+} satisfies CSSProperties;
 
 const titleStyle = {
   ...typography.subtitle,
@@ -50,14 +51,14 @@ const titleStyle = {
   color: tokens.text.default,
   whiteSpace: 'pre-line',
   margin: 0,
-} as const;
+} satisfies CSSProperties;
 
 const descriptionStyle = {
   ...typography.body,
   color: tokens.text.muted,
   whiteSpace: 'pre-line',
   margin: 0,
-} as const;
+} satisfies CSSProperties;
 
 export default function Dialog({ ref, title, description, actions, role = 'dialog' }: DialogProps) {
   const id = useId();

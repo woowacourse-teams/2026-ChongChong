@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react';
 import { tokens, typography } from '../../styles/global';
 
 interface TopHeaderProps {
@@ -23,15 +24,15 @@ const topHeaderStyle = {
   background: tokens.bg.default,
   color: tokens.text.default,
   fontFamily: tokens.fontFamily.base,
-} as const;
+} satisfies CSSProperties;
 
 const sideStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: tokens.spacing[1],
-} as const;
+} satisfies CSSProperties;
 
-const leftStyle = { ...sideStyle };
+const leftStyle = { ...sideStyle } satisfies CSSProperties;
 
 const middleStyle = {
   display: 'flex',
@@ -39,25 +40,25 @@ const middleStyle = {
   justifyContent: 'center',
   minWidth: 0,
   textAlign: 'center',
-} as const;
+} satisfies CSSProperties;
 
 const rightStyle = {
   ...sideStyle,
   justifyContent: 'flex-end',
-} as const;
+} satisfies CSSProperties;
 
 const titleStyle = {
   ...typography.subtitle,
   fontWeight: tokens.fontWeight.semibold,
   color: tokens.text.default,
   margin: 0,
-} as const;
+} satisfies CSSProperties;
 
 const subtitleStyle = {
   ...typography.footnote,
   color: tokens.text.muted,
   margin: 0,
-} as const;
+} satisfies CSSProperties;
 
 function Title({ children }: { children: React.ReactNode }) {
   return <h1 css={{ ...titleStyle }}>{children}</h1>;

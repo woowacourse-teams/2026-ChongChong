@@ -1,4 +1,5 @@
 import { tokens, typography } from '../../../styles/global';
+import { CSSProperties } from 'react';
 import Dialog, { DialogProps } from './Dialog';
 
 interface AlertDialogProps extends Omit<DialogProps, 'actions' | 'role'> {
@@ -18,7 +19,7 @@ const closeButtonStyle = {
   borderRadius: `0 0 ${tokens.radius.lg} ${tokens.radius.lg}`,
   color: tokens.text.brand,
   cursor: 'pointer',
-} as const;
+} satisfies CSSProperties;
 
 function AlertDialogRoot({ ref, title, description, closeButton }: AlertDialogProps) {
   return (

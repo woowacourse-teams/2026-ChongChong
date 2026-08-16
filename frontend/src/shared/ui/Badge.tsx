@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react';
 import { tokens } from '../../styles/global';
 import { typography } from '../../styles/global';
 
@@ -11,14 +12,14 @@ interface BadgeProps {
   children: React.ReactNode;
 }
 
-const BadgeStyle = {
+const badgeStyle = {
   display: 'inline-flex',
   justifyContent: 'center',
   alignItems: 'center',
   borderRadius: tokens.radius.full,
-};
+} as CSSProperties;
 
-const VariantStyle = {
+const variantStyle = {
   BrandSolid: {
     background: tokens.bg.brand,
     color: tokens.text.onBrand,
@@ -34,7 +35,7 @@ const VariantStyle = {
   },
 };
 
-const SizeStyle = {
+const sizeStyle = {
   Small: {
     padding: `3px ${tokens.spacing[2]}`,
     gap: tokens.spacing[1],
@@ -48,7 +49,7 @@ const SizeStyle = {
 export default function Badge({ variant, size, children, ...rest }: BadgeProps) {
   return (
     <span
-      css={{ ...typography.caption, ...BadgeStyle, ...VariantStyle[variant], ...SizeStyle[size] }}
+      css={{ ...typography.caption, ...badgeStyle, ...variantStyle[variant], ...sizeStyle[size] }}
       {...rest}
     >
       {children}
