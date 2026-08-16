@@ -6,7 +6,7 @@ interface TopHeaderProps {
   right?: React.ReactNode;
 }
 
-const TopNavigationStyle = {
+const topHeaderStyle = {
   position: 'sticky',
   top: 0,
   zIndex: 10,
@@ -69,7 +69,7 @@ function Subtitle({ children }: { children: React.ReactNode }) {
 
 function TopHeaderRoot({ left, middle, right }: TopHeaderProps) {
   return (
-    <header css={TopNavigationStyle}>
+    <header css={topHeaderStyle}>
       <div css={leftStyle}>{left}</div>
       <div css={middleStyle}>{middle}</div>
       <div css={rightStyle}>{right}</div>
