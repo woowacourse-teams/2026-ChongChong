@@ -5,15 +5,23 @@ import Badge from '../Badge';
 type TitleSize = 'default' | 'large';
 type MetaTone = 'muted' | 'brand';
 
-interface TitleProps extends React.ComponentProps<'h3'> {
+interface ChildrenProps {
+  children: ReactNode;
+}
+
+interface ContentCardProps extends ChildrenProps {
+  onClick?: () => void;
+}
+
+interface TitleProps extends ChildrenProps {
   size?: TitleSize;
 }
 
-interface FooterProps extends React.ComponentProps<'footer'> {
+interface FooterProps extends ChildrenProps {
   direction?: 'row' | 'column';
 }
 
-interface MetaProps extends React.ComponentProps<'span'> {
+interface MetaProps extends ChildrenProps {
   tone?: MetaTone;
   icon?: ReactNode;
 }
@@ -84,7 +92,6 @@ const descriptionStyle = {
   ...typography.body,
   display: '-webkit-box',
   margin: `${tokens.spacing[1]} 0 0`,
-  overflow: 'hidden',
   color: tokens.text.muted,
   WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 2,
@@ -94,7 +101,7 @@ const footerStyle = {
   display: 'flex',
   alignItems: 'flex-start',
   gap: tokens.spacing[2],
-  marginTop: tokens.spacing[1],
+  marginTop: 'auto',
 } satisfies CSSProperties;
 
 const metaStyle = {
@@ -105,63 +112,43 @@ const metaStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-function ContentCardRoot({ children, ...props }: React.ComponentProps<'article'>) {
+function ContentCardRoot({ children, onClick }: ContentCardProps) {
   return (
-    <article css={baseStyle} {...props}>
+    <article css={baseStyle} onClick={onClick}>
       {children}
     </article>
   );
 }
 
-function Badges({ children, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div css={badgesStyle} {...props}>
-      {children}
-    </div>
-  );
+function Badges({ children }: ChildrenProps) {
+  return <div css={badgesStyle}>{children}</div>;
 }
 
-function TitleRow({ children, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div css={titleRowStyle} {...props}>
-      {children}
-    </div>
-  );
+function TitleRow({ children }: ChildrenProps) {
+  return <div css={titleRowStyle}>{children}</div>;
 }
 
-function Title({ size = 'default', children, ...props }: TitleProps) {
-  return (
-    <h3 css={{ ...titleStyle, ...(size === 'large' ? largeTitleStyle : {}) }} {...props}>
-      {children}
-    </h3>
-  );
+function Title({ size = 'default', children }: TitleProps) {
+  return <h3 css={{ ...titleStyle, ...(size === 'large' ? largeTitleStyle : {}) }}>{children}</h3>;
 }
 
-function Accessory({ children, ...props }: React.ComponentProps<'span'>) {
+function Accessory({ children }: ChildrenProps) {
+  return <span css={accessoryStyle}>{children}</span>;
+}
+
+function Trailing({ children }: ChildrenProps) {
   return (
-    <span css={accessoryStyle} {...props}>
+    <span css={trailingStyle} aria-hidden="true">
       {children}
     </span>
   );
 }
 
-function Trailing({ children, ...props }: React.ComponentProps<'span'>) {
-  return (
-    <span css={trailingStyle} aria-hidden="true" {...props}>
-      {children}
-    </span>
-  );
+function Description({ children }: ChildrenProps) {
+  return <p css={descriptionStyle}>{children}</p>;
 }
 
-function Description({ children, ...props }: React.ComponentProps<'p'>) {
-  return (
-    <p css={descriptionStyle} {...props}>
-      {children}
-    </p>
-  );
-}
-
-function Footer({ direction = 'row', children, ...props }: FooterProps) {
+function Footer({ direction = 'row', children }: FooterProps) {
   return (
     <footer
       css={{
@@ -169,19 +156,15 @@ function Footer({ direction = 'row', children, ...props }: FooterProps) {
         flexDirection: direction,
         gap: direction === 'column' ? 0 : footerStyle.gap,
       }}
-      {...props}
     >
       {children}
     </footer>
   );
 }
 
-function Meta({ tone = 'muted', icon, children, ...props }: MetaProps) {
+function Meta({ tone = 'muted', icon, children }: MetaProps) {
   return (
-    <span
-      css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}
-      {...props}
-    >
+    <span css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}>
       {icon && <>{icon}</>}
       {children}
     </span>
