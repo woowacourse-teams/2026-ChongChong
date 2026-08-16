@@ -10,7 +10,7 @@ const divStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: tokens.spacing[1],
-  justifyItems: 'center',
+  justifyContent: 'center',
   alignItems: 'center',
 } satisfies CSSProperties;
 
