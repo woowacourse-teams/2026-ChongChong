@@ -61,11 +61,11 @@ const subtitleStyle = {
 } satisfies CSSProperties;
 
 function Title({ children }: { children: React.ReactNode }) {
-  return <h1 css={{ ...titleStyle }}>{children}</h1>;
+  return <h1 css={titleStyle}>{children}</h1>;
 }
 
 function Subtitle({ children }: { children: React.ReactNode }) {
-  return <p css={{ ...subtitleStyle }}>{children}</p>;
+  return <p css={subtitleStyle}>{children}</p>;
 }
 
 function TopHeaderRoot({ left, middle, right }: TopHeaderProps) {

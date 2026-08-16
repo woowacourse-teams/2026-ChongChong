@@ -58,7 +58,7 @@ function ConfirmDialogRoot({
 
 function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
   return (
-    <button type="button" css={{ ...closeButtonStyle }} {...props}>
+    <button type="button" css={closeButtonStyle} {...props}>
       {children}
     </button>
   );
@@ -66,7 +66,7 @@ function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
 
 function ConfirmButton({ children, ...props }: React.ComponentProps<'button'>) {
   return (
-    <button type="button" css={{ ...confirmButtonStyle }} {...props}>
+    <button type="button" css={confirmButtonStyle} {...props}>
       {children}
     </button>
   );

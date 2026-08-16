@@ -71,19 +71,19 @@ export default function Dialog({ ref, title, description, actions, role = 'dialo
       role={role}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
-      css={{ ...dialogStyle }}
+      css={dialogStyle}
     >
-      <div css={{ ...bodyStyle }}>
-        <h2 id={titleId} css={{ ...titleStyle }}>
+      <div css={bodyStyle}>
+        <h2 id={titleId} css={titleStyle}>
           {title}
         </h2>
         {description && (
-          <p id={descriptionId} css={{ ...descriptionStyle }}>
+          <p id={descriptionId} css={descriptionStyle}>
             {description}
           </p>
         )}
       </div>
-      <div css={{ ...actionsStyle }}>{actions}</div>
+      <div css={actionsStyle}>{actions}</div>
     </dialog>
   );
 }

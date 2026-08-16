@@ -35,7 +35,7 @@ function AlertDialogRoot({ ref, title, description, closeButton }: AlertDialogPr
 
 function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
   return (
-    <button type="button" css={{ ...closeButtonStyle }} {...props}>
+    <button type="button" css={closeButtonStyle} {...props}>
       {children}
     </button>
   );
