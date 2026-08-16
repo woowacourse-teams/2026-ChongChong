@@ -6,7 +6,7 @@ type Variant = 'BrandSolid' | 'NeutralSolid' | 'BrandOutline';
 
 type Size = 'Small' | 'Large';
 
-interface BadgeProps {
+interface BadgeProps extends React.ComponentProps<'span'> {
   variant: Variant;
   size: Size;
   children: React.ReactNode;
@@ -17,7 +17,7 @@ const badgeStyle = {
   justifyContent: 'center',
   alignItems: 'center',
   borderRadius: tokens.radius.full,
-} as CSSProperties;
+} satisfies CSSProperties;
 
 const variantStyle = {
   BrandSolid: {
