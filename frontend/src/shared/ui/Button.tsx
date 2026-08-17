@@ -43,11 +43,11 @@ const variantStyle = {
 
 const sizeStyle = {
   Small: {
-    width: '171px',
+    width: '50%',
     height: '44px',
   },
   Large: {
-    width: '350px',
+    width: '100%',
     height: '52px',
   },
 };
