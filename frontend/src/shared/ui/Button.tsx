@@ -17,12 +17,12 @@ const variantStyle = {
   BrandSolid: {
     background: tokens.bg.brand,
     border: 'none',
-    color: tokens.text.default,
+    color: tokens.text.onBrand,
   },
   CriticalSolid: {
     background: tokens.bg.critical,
     border: 'none',
-    color: tokens.text.default,
+    color: tokens.text.onBrand,
   },
   BrandOutline: {
     background: tokens.bg.default,
