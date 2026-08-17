@@ -26,7 +26,7 @@ enableMocking().then(() => {
   ReactDOM.createRoot(root).render(
     <>
       <Global styles={globalStyles} />
-      <RouterProvider router={router} />,
+      <RouterProvider router={router} />
     </>,
   );
 });

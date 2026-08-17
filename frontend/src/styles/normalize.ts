@@ -148,6 +148,10 @@ export const modernNormalize = css`
     padding: 0;
   }
 
+  p {
+    margin: 0;
+  }
+
   /**
   Add the correct vertical alignment in Chrome and Firefox.
   */
