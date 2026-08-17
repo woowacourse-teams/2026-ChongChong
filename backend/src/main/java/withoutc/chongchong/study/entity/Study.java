@@ -24,7 +24,6 @@ public class Study extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     public static Study create(
