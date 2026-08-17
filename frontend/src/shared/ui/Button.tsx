@@ -41,7 +41,7 @@ const variantStyle = {
   },
 };
 
-const sizeStyle = {
+const SizeStyle = {
   Small: {
     width: '171px',
     height: '44px',
@@ -65,7 +65,7 @@ export default function Button({ variant, size, children, ...props }: Props) {
   return (
     <button
       type="button"
-      css={{ ...typography.button, ...ButtonStyle, ...variantStyle[variant], ...sizeStyle[size] }}
+      css={{ ...typography.button, ...ButtonStyle, ...variantStyle[variant], ...SizeStyle[size] }}
       {...props}
     >
       {children}
