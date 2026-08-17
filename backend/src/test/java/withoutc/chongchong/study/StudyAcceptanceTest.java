@@ -6,6 +6,11 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.hamcrest.Matchers.isEmptyString;
 
 import io.restassured.http.ContentType;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,5 +61,23 @@ class StudyAcceptanceTest {
         assertThat(studyRepository.findAll())
                 .extracting(Study::getName, Study::getDescription)
                 .contains(tuple("자바 스터디", "매주 월요일에 진행한다."));
+    }
+
+    @Test
+    @DisplayName("스터디 초대 링크 조회 요청을 보내면 초대 링크를 반환한다")
+    void getInviteLinkTest() throws IOException, InterruptedException {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        assertThat(study.getId()).isNotNull();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/studies/" + study.getId() + "/invite-link"))
+                .GET()
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("\"inviteLink\":\"https://chongchong.app/join?token=");
     }
 }
