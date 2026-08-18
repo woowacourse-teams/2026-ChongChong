@@ -78,6 +78,6 @@ class StudyAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body())
-                .contains("\"inviteLink\":\"https://chongchong.app/join?token=");
+                .contains("\"inviteLink\":\"https://test.chongchong.app/join?token=");
     }
 }

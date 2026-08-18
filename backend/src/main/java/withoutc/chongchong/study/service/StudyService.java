@@ -1,16 +1,13 @@
 package withoutc.chongchong.study.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 
 @Service
 @RequiredArgsConstructor
@@ -18,10 +15,7 @@ import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 public class StudyService {
 
     private final StudyRepository studyRepository;
-    private final StudyInviteTokenProvider studyInviteTokenProvider;
-
-    @Value("${frontend.base-url}")
-    private String frontendBaseUrl;
+    private final StudyInviteLinkGenerator studyInviteLinkGenerator;
 
     // TODO: User, StudyMember 구현 후 User Id로 StudyMember(LEADER) 생성
     @Transactional
@@ -36,11 +30,6 @@ public class StudyService {
         studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
-        return UriComponentsBuilder
-                .fromUriString(frontendBaseUrl)
-                .path("/join")
-                .queryParam("token", studyInviteTokenProvider.generate(studyId))
-                .build()
-                .toUriString();
+        return studyInviteLinkGenerator.generate(studyId);
     }
 }

@@ -12,4 +12,4 @@ jwt:
   study-invite-secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
 
 frontend:
-  base-url: https://chongchong.app
+  base-url: https://test.chongchong.app

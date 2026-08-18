@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.BeforeEach;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,14 +14,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-import java.util.Optional;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 
 @ExtendWith(MockitoExtension.class)
 class StudyServiceTest {
@@ -30,15 +27,10 @@ class StudyServiceTest {
     private StudyRepository studyRepository;
 
     @Mock
-    private StudyInviteTokenProvider studyInviteTokenProvider;
+    private StudyInviteLinkGenerator studyInviteLinkGenerator;
 
     @InjectMocks
     private StudyService studyService;
-
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(studyService, "frontendBaseUrl", "https://chongchong.app");
-    }
 
     @Test
     @DisplayName("스터디 생성 요청으로 Study를 저장한다")
@@ -60,12 +52,13 @@ class StudyServiceTest {
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyInviteTokenProvider.generate(studyId)).thenReturn("invite-token");
+        when(studyInviteLinkGenerator.generate(studyId))
+                .thenReturn("https://test.chongchong.app/join?token=invite-token");
 
         String inviteLink = studyService.getInviteLink(studyId);
 
-        assertThat(inviteLink).isEqualTo("https://chongchong.app/join?token=invite-token");
-        verify(studyInviteTokenProvider).generate(studyId);
+        assertThat(inviteLink).isEqualTo("https://test.chongchong.app/join?token=invite-token");
+        verify(studyInviteLinkGenerator).generate(studyId);
     }
 
     @Test
@@ -79,6 +72,6 @@ class StudyServiceTest {
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
 
-        verifyNoInteractions(studyInviteTokenProvider);
+        verifyNoInteractions(studyInviteLinkGenerator);
     }
 }
