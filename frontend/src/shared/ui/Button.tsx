@@ -3,10 +3,10 @@ import { tokens } from '../../styles/global';
 
 // bg + border
 type Variant =
-  'BrandSolid' | 'CriticalSolid' | 'BrandOutline' | 'CriticalOutline' | 'NeutralOutline';
+  'brandSolid' | 'criticalSolid' | 'brandOutline' | 'criticalOutline' | 'neutralOutline';
 
 // width + height
-type Size = 'Small' | 'Large';
+type Size = 'small' | 'large';
 
 interface Props extends React.ComponentProps<'button'> {
   variant: Variant;
@@ -14,27 +14,27 @@ interface Props extends React.ComponentProps<'button'> {
 }
 
 const variantStyle = {
-  BrandSolid: {
+  brandSolid: {
     background: tokens.bg.brand,
     border: 'none',
-    color: tokens.text.default,
+    color: tokens.text.onBrand,
   },
-  CriticalSolid: {
+  criticalSolid: {
     background: tokens.bg.critical,
     border: 'none',
-    color: tokens.text.default,
+    color: tokens.text.onBrand,
   },
-  BrandOutline: {
+  brandOutline: {
     background: tokens.bg.default,
     border: tokens.border.brand,
     color: tokens.text.brand,
   },
-  CriticalOutline: {
+  criticalOutline: {
     background: tokens.bg.default,
     border: tokens.border.critical,
     color: tokens.text.critical,
   },
-  NeutralOutline: {
+  neutralOutline: {
     background: tokens.bg.default,
     border: tokens.border.neutral,
     color: tokens.text.primary,
@@ -42,17 +42,17 @@ const variantStyle = {
 };
 
 const sizeStyle = {
-  Small: {
-    width: '171px',
+  small: {
+    width: '50%',
     height: '44px',
   },
-  Large: {
-    width: '350px',
+  large: {
+    width: '100%',
     height: '52px',
   },
 };
 
-const ButtonStyle = {
+const buttonStyle = {
   display: 'flex',
   padding: `${tokens.spacing[0]} ${tokens.spacing[6]}`,
   borderRadius: tokens.radius.md,
@@ -65,7 +65,7 @@ export default function Button({ variant, size, children, ...props }: Props) {
   return (
     <button
       type="button"
-      css={{ ...typography.button, ...ButtonStyle, ...variantStyle[variant], ...sizeStyle[size] }}
+      css={{ ...typography.button, ...buttonStyle, ...variantStyle[variant], ...sizeStyle[size] }}
       {...props}
     >
       {children}
