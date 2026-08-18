@@ -7,7 +7,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import withoutc.chongchong.auth.security.AuthenticatedUserJwtAuthenticationConverter;
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
@@ -29,7 +29,10 @@ public class SecurityConfig {
     private static final int MINIMUM_HMAC_KEY_BYTES = 32;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            AuthenticatedUserJwtAuthenticationConverter jwtAuthenticationConverter
+    ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -37,8 +40,15 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
+                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)
+                ))
                 .build();
+    }
+
+    @Bean
+    AuthenticatedUserJwtAuthenticationConverter jwtAuthenticationConverter() {
+        return new AuthenticatedUserJwtAuthenticationConverter();
     }
 
     @Bean
