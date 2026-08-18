@@ -37,3 +37,6 @@ out/
 .vscode/
 
 .env
+
+.wiki/
+AGENTS.md
