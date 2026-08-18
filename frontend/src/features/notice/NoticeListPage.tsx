@@ -4,7 +4,7 @@ import alarmIcon from '../../shared/assets/alarm.svg';
 import { tokens } from '../../styles/global';
 import Button from '../../shared/ui/Button';
 import TopHeader from '../../shared/ui/TopHeader';
-import NoticeList from './NoticeList';
+import NoticeList from './components/NoticeList';
 
 const pageStyle = {
   display: 'flex',

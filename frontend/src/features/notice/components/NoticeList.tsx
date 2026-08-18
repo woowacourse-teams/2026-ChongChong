@@ -1,8 +1,8 @@
-import clock from '../../shared/assets/clock-black.svg';
-import rightArrow from '../../shared/assets/right-arrow.svg';
-import Badge from '../../shared/ui/Badge';
-import ContentCard from '../../shared/ui/card/ContentCard';
-import List from '../../shared/ui/List';
+import clock from '../../../shared/assets/clock-black.svg';
+import rightArrow from '../../../shared/assets/right-arrow.svg';
+import Badge from '../../../shared/ui/Badge';
+import ContentCard from '../../../shared/ui/card/ContentCard';
+import List from '../../../shared/ui/List';
 
 export default function NoticeList() {
   return (
