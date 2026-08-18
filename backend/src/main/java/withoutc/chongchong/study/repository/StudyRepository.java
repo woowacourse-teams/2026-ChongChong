@@ -8,7 +8,7 @@ import withoutc.chongchong.study.exception.StudyException;
 
 @Repository
 public interface StudyRepository extends JpaRepository<Study, Long> {
-    default Study findByIdOrThrow(Long id) {
+    default Study getByIdOrThrow(Long id) {
         return findById(id).orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
     }
 }

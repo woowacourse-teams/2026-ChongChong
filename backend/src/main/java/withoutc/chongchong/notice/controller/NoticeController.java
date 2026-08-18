@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,5 +33,14 @@ public class NoticeController {
         NoticeCreateResponse response = noticeService.create(user, studyId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @DeleteMapping("/{noticeId}")
+    public ResponseEntity<Void> deleteNotice(@PathVariable Long studyId,
+                                             @PathVariable Long noticeId) {
+        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
+        noticeService.delete(user, studyId, noticeId);
+
+        return ResponseEntity.ok().build();
     }
 }

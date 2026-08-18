@@ -16,21 +16,33 @@ import withoutc.chongchong.user.entity.User;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Service
+// TODO : 스터디 리드만 공지 생성-수정-삭제 가능하도록 권한 로직 추가 필요
 public class NoticeService {
-
     private final StudyRepository studyRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
 
     @Transactional
     public NoticeCreateResponse create(User user, Long studyId, NoticeCreateRequest request) {
-        Study study = studyRepository.findByIdOrThrow(studyId);
-        StudyMember writer = studyMemberRepository.findByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        Study study = studyRepository.getByIdOrThrow(studyId);
+        StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
 
         Notice notice = Notice.create(study, writer, request.title(), request.content());
         noticeRepository.save(notice);
 
         return new NoticeCreateResponse(notice.getId());
+    }
+
+    @Transactional
+    public void delete(User user, Long studyId, Long noticeId) {
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        if (!member.isAdmin()) {
+            // TODO throw 403
+        }
+
+        noticeRepository.delete(notice);
     }
 
 }

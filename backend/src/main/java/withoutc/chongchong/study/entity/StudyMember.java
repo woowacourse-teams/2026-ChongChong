@@ -68,4 +68,8 @@ public class StudyMember extends BaseEntity {
         this.profileImageUrl = profileImageUrl;
         this.role = role;
     }
+
+    public boolean isAdmin() {
+        return role.equals(StudyMemberRole.LEADER);
+    }
 }
