@@ -4,6 +4,7 @@ import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
 import NoticeListPage from './src/features/notice/NoticeListPage';
+import NoticeDetailPage from './src/features/notice/NoticeDetailPage';
 import CreateNoticePage from './src/features/notice/CreateNoticePage';
 import EditNoticePage from './src/features/notice/EditNoticePage';
 
@@ -19,6 +20,10 @@ const router = createBrowserRouter([
   {
     path: '/studies/:studyId/notices/create',
     element: <CreateNoticePage />,
+  },
+  {
+    path: '/studies/:studyId/notices/:noticeId',
+    element: <NoticeDetailPage />,
   },
   {
     path: '/studies/:studyId/notices/:noticeId/modify',
