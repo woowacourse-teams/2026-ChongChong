@@ -48,8 +48,7 @@ const rightStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.subtitle,
-  fontWeight: tokens.fontWeight.semibold,
+  ...typography.title,
   color: tokens.text.default,
   margin: 0,
 } satisfies CSSProperties;
