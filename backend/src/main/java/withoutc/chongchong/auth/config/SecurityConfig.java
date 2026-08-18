@@ -20,7 +20,10 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.auth.security.AuthenticatedUserJwtAuthenticationConverter;
+import withoutc.chongchong.auth.security.RestAccessDeniedHandler;
+import withoutc.chongchong.auth.security.RestAuthenticationEntryPoint;
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
@@ -31,7 +34,9 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            AuthenticatedUserJwtAuthenticationConverter jwtAuthenticationConverter
+            AuthenticatedUserJwtAuthenticationConverter jwtAuthenticationConverter,
+            RestAuthenticationEntryPoint authenticationEntryPoint,
+            RestAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -40,15 +45,31 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
-                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)
-                ))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
+                .oauth2ResourceServer(resourceServer -> resourceServer
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                )
                 .build();
     }
 
     @Bean
     AuthenticatedUserJwtAuthenticationConverter jwtAuthenticationConverter() {
         return new AuthenticatedUserJwtAuthenticationConverter();
+    }
+
+    @Bean
+    RestAuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
+        return new RestAuthenticationEntryPoint(objectMapper);
+    }
+
+    @Bean
+    RestAccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper) {
+        return new RestAccessDeniedHandler(objectMapper);
     }
 
     @Bean
