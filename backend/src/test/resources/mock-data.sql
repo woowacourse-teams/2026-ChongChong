@@ -1,4 +1,4 @@
-TRUNCATE TABLE notice, assignments, study_members, studies, users RESTART IDENTITY CASCADE;
+TRUNCATE TABLE notices, assignments, study_members, studies, users RESTART IDENTITY CASCADE;
 
 INSERT INTO users (name, profile_image_url)
 VALUES ('바니', 'https://example.com/profiles/bunny.png'),
@@ -20,7 +20,7 @@ VALUES (1, '1주차 자바 과제', '객체지향 생활 체조 원칙을 적용
        (1, '2주차 자바 과제', '컬렉션 프레임워크를 활용한 기능을 구현한다.', 'GitHub PR', TIMESTAMP '2026-08-31 23:59:59'),
        (2, 'Spring Data JPA 과제', '연관관계 매핑과 조회 기능을 구현한다.', 'GitHub Repository', TIMESTAMP '2026-09-07 23:59:59');
 
-INSERT INTO notice (study_id, member_id, title, content)
+INSERT INTO notices (study_id, member_id, title, content)
 VALUES (1, 1, '첫 모임 안내', '첫 모임은 월요일 오후 8시에 진행합니다.'),
        (1, 2, '과제 제출 안내', '과제는 일요일 자정까지 제출해 주세요.'),
        (2, 3, '스터디 일정 변경', '이번 주만 화요일 오후 9시에 진행합니다.'),

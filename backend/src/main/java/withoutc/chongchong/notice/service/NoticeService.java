@@ -38,6 +38,7 @@ public class NoticeService {
 
     @Transactional
     public void delete(User user, Long studyId, Long noticeId) {
+        // TODO 이 스터디의 공지가 맞는지 검증 필요
         StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
         validateLeader(leader);
 
@@ -48,6 +49,7 @@ public class NoticeService {
 
     @Transactional
     public void update(User user, Long studyId, Long noticeId, NoticeUpdateRequest request) {
+        // TODO 이 스터디의 공지가 맞는지 검증 필요
         StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
         validateLeader(leader);
 
@@ -58,6 +60,7 @@ public class NoticeService {
     }
 
     public NoticeDetailResponse detail(User user, Long studyId, Long noticeId) {
+        // TODO 이 스터디의 공지가 맞는지 검증 필요
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
@@ -69,5 +72,4 @@ public class NoticeService {
             // TODO throw 403
         }
     }
-
 }
