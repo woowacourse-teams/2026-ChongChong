@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
+import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -16,7 +17,6 @@ import withoutc.chongchong.user.entity.User;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Service
-// TODO : 스터디 리드만 공지 생성-수정-삭제 가능하도록 권한 로직 추가 필요
 public class NoticeService {
     private final StudyRepository studyRepository;
     private final StudyMemberRepository studyMemberRepository;
@@ -38,11 +38,26 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
 
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        validateAdmin(member);
+
+        noticeRepository.delete(notice);
+    }
+
+    @Transactional
+    public void update(User user, Long studyId, Long noticeId, NoticeUpdateRequest request) {
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        validateAdmin(member);
+
+        notice.update(request.title(), request.content());
+        noticeRepository.save(notice);
+    }
+
+    private void validateAdmin(StudyMember member) {
         if (!member.isAdmin()) {
             // TODO throw 403
         }
-
-        noticeRepository.delete(notice);
     }
 
 }

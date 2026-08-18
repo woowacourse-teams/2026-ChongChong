@@ -44,6 +44,15 @@ public class Notice extends BaseEntity {
         return new Notice(study, member, title, content);
     }
 
+    public void update(String title, String content) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (content != null) {
+            this.content = content;
+        }
+    }
+
     private Notice(Study study, StudyMember writer, String title, String content) {
         validateTitle(title);
         validateContent(content);
