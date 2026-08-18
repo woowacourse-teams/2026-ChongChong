@@ -1,7 +1,6 @@
 spring:
   application:
     name: chong-chong
-
   config:
     import: optional:file:./.env[.properties]
 
@@ -19,3 +18,9 @@ jwt:
 
 frontend:
   base-url: ${FRONTEND_BASE_URL}
+
+auth:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER}
+    audience: ${AUTH_JWT_AUDIENCE}
+    secret-base64: ${AUTH_JWT_SECRET_BASE64}

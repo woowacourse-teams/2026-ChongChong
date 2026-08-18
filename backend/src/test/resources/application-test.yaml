@@ -13,3 +13,9 @@ jwt:
 
 frontend:
   base-url: https://test.chongchong.app
+
+auth:
+  jwt:
+    issuer: chongchong-test
+    audience: chongchong-test-api
+    secret-base64: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
