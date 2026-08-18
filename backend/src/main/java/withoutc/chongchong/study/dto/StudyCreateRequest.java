@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Size;
 import withoutc.chongchong.study.entity.Study;
 
 public record StudyCreateRequest(
-
         // TBD: 스터디 이름에 허용할 문자 범위 결정
         @NotBlank
         @Size(max = 15)
