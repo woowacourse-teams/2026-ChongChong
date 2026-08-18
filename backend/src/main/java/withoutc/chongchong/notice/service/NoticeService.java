@@ -25,7 +25,7 @@ public class NoticeService {
     @Transactional
     public NoticeCreateResponse create(User user, Long studyId, NoticeCreateRequest request) {
         Study study = studyRepository.findByIdOrThrow(studyId);
-        StudyMember writer = studyMemberRepository.findByIdOrThrow(user.getId());
+        StudyMember writer = studyMemberRepository.findByStudyIdAndUserIdOrThrow(studyId, user.getId());
 
         Notice notice = Notice.create(study, writer, request.title(), request.content());
         noticeRepository.save(notice);

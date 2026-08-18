@@ -1,5 +1,6 @@
 package withoutc.chongchong.notice.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,15 +20,15 @@ import withoutc.chongchong.user.repository.UserRepository;
 @RestController
 public class NoticeController {
 
-    private NoticeService noticeService;
-    private UserRepository userRepository;
+    private static final long MOCK_USER_ID = 1L;
 
-    private final User mockUser = User.create("바니", "https://avatars.githubusercontent.com/u/156324288?v=4&size=64");
+    private final NoticeService noticeService;
+    private final UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<NoticeCreateResponse> createNotice(@RequestBody NoticeCreateRequest request,
+    public ResponseEntity<NoticeCreateResponse> createNotice(@Valid @RequestBody NoticeCreateRequest request,
                                                              @PathVariable Long studyId) {
-        User user = userRepository.save(mockUser);
+        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
         NoticeCreateResponse response = noticeService.create(user, studyId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
