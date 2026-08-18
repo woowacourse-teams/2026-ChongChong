@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
+import withoutc.chongchong.notice.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
@@ -25,9 +26,11 @@ public class NoticeService {
     @Transactional
     public NoticeCreateResponse create(User user, Long studyId, NoticeCreateRequest request) {
         Study study = studyRepository.getByIdOrThrow(studyId);
-        StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
 
-        Notice notice = Notice.create(study, writer, request.title(), request.content());
+        StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        validateLeader(leader);
+
+        Notice notice = Notice.create(study, leader, request.title(), request.content());
         noticeRepository.save(notice);
 
         return new NoticeCreateResponse(notice.getId());
@@ -35,27 +38,34 @@ public class NoticeService {
 
     @Transactional
     public void delete(User user, Long studyId, Long noticeId) {
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        validateLeader(leader);
 
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
-        validateAdmin(member);
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
 
         noticeRepository.delete(notice);
     }
 
     @Transactional
     public void update(User user, Long studyId, Long noticeId, NoticeUpdateRequest request) {
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        validateLeader(leader);
 
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
-        validateAdmin(member);
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
 
         notice.update(request.title(), request.content());
         noticeRepository.save(notice);
     }
 
-    private void validateAdmin(StudyMember member) {
-        if (!member.isAdmin()) {
+    public NoticeDetailResponse detail(User user, Long studyId, Long noticeId) {
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        return NoticeDetailResponse.from(notice);
+    }
+
+    private void validateLeader(StudyMember member) {
+        if (!member.isLeader()) {
             // TODO throw 403
         }
     }

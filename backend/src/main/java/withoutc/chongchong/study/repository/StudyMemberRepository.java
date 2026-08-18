@@ -9,14 +9,10 @@ import withoutc.chongchong.study.exception.StudyMemberException;
 
 @Repository
 public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> {
-    default StudyMember getByIdOrThrow(Long id) {
-        return findById(id).orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
-    }
-
     Optional<StudyMember> findByStudyIdAndUserId(Long studyId, Long userId);
 
     default StudyMember getByStudyIdAndUserIdOrThrow(Long studyId, Long userId) {
         return findByStudyIdAndUserId(studyId, userId)
-                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
     }
 }

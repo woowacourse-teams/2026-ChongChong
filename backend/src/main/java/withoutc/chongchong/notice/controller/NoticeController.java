@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
+import withoutc.chongchong.notice.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 import withoutc.chongchong.user.entity.User;
@@ -36,6 +38,16 @@ public class NoticeController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/{noticeId}")
+    public ResponseEntity<NoticeDetailResponse> getNoticeDetail(@PathVariable Long studyId,
+                                                                @PathVariable Long noticeId) {
+        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
+        NoticeDetailResponse response = noticeService.detail(user, studyId, noticeId);
+
+        return ResponseEntity.ok(response);
+    }
+
 
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Void> updateNotice(@Valid @RequestBody NoticeUpdateRequest request,

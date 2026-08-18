@@ -69,7 +69,7 @@ public class StudyMember extends BaseEntity {
         this.role = role;
     }
 
-    public boolean isAdmin() {
+    public boolean isLeader() {
         return role.equals(StudyMemberRole.LEADER);
     }
 }

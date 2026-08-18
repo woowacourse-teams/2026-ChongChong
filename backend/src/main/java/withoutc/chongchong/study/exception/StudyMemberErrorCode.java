@@ -8,7 +8,7 @@ import withoutc.chongchong.global.exception.code.ErrorCode;
 @Getter
 @RequiredArgsConstructor
 public enum StudyMemberErrorCode implements ErrorCode {
-    STUDY_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY_MEMBER_NOT_FOUND", "존재하지 않는 스터디원입니다.");
+    STUDY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STUDY_ACCESS_DENIED", "해당 스터디에 대한 접근 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
