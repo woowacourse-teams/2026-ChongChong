@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom/client';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
@@ -29,11 +30,15 @@ async function enableMocking() {
   return worker.start();
 }
 
+const queryClient = new QueryClient();
+
 enableMocking().then(() => {
   ReactDOM.createRoot(root).render(
     <>
-      <Global styles={globalStyles} />
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <Global styles={globalStyles} />
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </>,
   );
 });

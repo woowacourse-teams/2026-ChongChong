@@ -1,7 +1,7 @@
 import ky from 'ky';
 
 const api = ky.create({
-  baseUrl: 'https://api.github.com/',
+  baseUrl: 'https://mock.chongchong.com',
   hooks: {},
 });
 

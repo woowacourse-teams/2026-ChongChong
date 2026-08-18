@@ -6,10 +6,10 @@ import assignIcon from '../../shared/assets/assign.svg';
 import rightArrowIcon from '../../shared/assets/right-arrow.svg';
 import { Study } from './types';
 
-export default function StudyList({ studies }: { studies: { studies: Study[] } }) {
+export default function StudyList({ studies }: { studies: Study[] }) {
   return (
     <List>
-      {studies.studies.map((study) => {
+      {studies.map((study) => {
         return (
           <List.Item key={study.id}>
             <ContentCard>

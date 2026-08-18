@@ -1,3 +1,4 @@
+import { useSuspenseQuery } from '@tanstack/react-query';
 import TopHeader from '../../shared/ui/TopHeader';
 import { CSSProperties } from 'react';
 import logo from '../../shared/assets/icons/header-icon.svg';
@@ -7,31 +8,7 @@ import Button from '../../shared/ui/Button';
 import footerIcon from '../../shared/assets/icons/footer-icon.svg';
 import { tokens } from '../../styles/global';
 import Main from '../../shared/ui/Main';
-import { Study } from './types';
-
-const studies: { studies: Study[] } = {
-  studies: [
-    // 스터디 목록
-    {
-      id: '1',
-      role: 'STUDY_LEADER',
-      title: '리액트 스터디',
-      description: '매주 화요일 10시에 진행하는 리액트 스터디',
-      memberCount: 3,
-      noticeCount: 2,
-      assignmentCount: 2,
-    },
-    {
-      id: '2',
-      role: 'SOME',
-      title: '우테코 8기 FE 스터디',
-      description: '매주 화요일 저녁 9시, 프론트엔드 CS와 코드 리뷰',
-      memberCount: 5,
-      noticeCount: 2,
-      assignmentCount: 1,
-    },
-  ],
-};
+import studyQueries from './queries';
 
 const pageStyle = {
   display: 'flex',
@@ -48,6 +25,11 @@ const actionsStyle = {
 } satisfies CSSProperties;
 
 export default function StudyListPage() {
+  const { data: studies } = useSuspenseQuery({
+    ...studyQueries.list(),
+    select: (data) => data.studies,
+  });
+
   return (
     <div css={pageStyle}>
       <TopHeader
