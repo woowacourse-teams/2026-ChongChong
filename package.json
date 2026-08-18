@@ -1,0 +1,5 @@
+{
+	"dependencies": {
+		"react-error-boundary": "^6.1.3"
+	}
+}
