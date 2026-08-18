@@ -1,4 +1,4 @@
-package withoutc.chongchong.global.exception;
+package withoutc.chongchong.global.exception.handler;
 
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import withoutc.chongchong.global.exception.ErrorResponse.FieldErrorDetail;
+import withoutc.chongchong.global.exception.BusinessException;
+import withoutc.chongchong.global.exception.response.ErrorResponse;
+import withoutc.chongchong.global.exception.response.ErrorResponse.FieldErrorDetail;
+import withoutc.chongchong.global.exception.code.CommonErrorCode;
+import withoutc.chongchong.global.exception.code.ErrorCode;
 
 @RestControllerAdvice
 @Slf4j

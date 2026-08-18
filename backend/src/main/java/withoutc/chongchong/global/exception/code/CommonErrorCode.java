@@ -1,4 +1,4 @@
-package withoutc.chongchong.global.exception;
+package withoutc.chongchong.global.exception.code;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
