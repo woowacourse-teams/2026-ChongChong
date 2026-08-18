@@ -1,9 +1,9 @@
 import { RouteObject } from 'react-router';
-import StudyListPage from './StudyListPage';
+import MyStudiesPage from './MyStudiesPage';
 
 export const routes: RouteObject[] = [
   {
     path: '/studies',
-    element: <StudyListPage />,
+    element: <MyStudiesPage />,
   },
 ];

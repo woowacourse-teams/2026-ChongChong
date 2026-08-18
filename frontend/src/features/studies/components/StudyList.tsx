@@ -1,10 +1,10 @@
-import List from '../../shared/ui/List';
-import ContentCard from '../../shared/ui/card/ContentCard';
-import Badge from '../../shared/ui/Badge';
-import noticeIcon from '../../shared/assets/notice.svg';
-import assignIcon from '../../shared/assets/assign.svg';
-import rightArrowIcon from '../../shared/assets/right-arrow.svg';
-import { Study } from './types';
+import List from '../../../shared/ui/List';
+import ContentCard from '../../../shared/ui/card/ContentCard';
+import Badge from '../../../shared/ui/Badge';
+import noticeIcon from '../../../shared/assets/notice.svg';
+import assignIcon from '../../../shared/assets/assign.svg';
+import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
+import { Study } from '../types';
 
 export default function StudyList({ studies }: { studies: Study[] }) {
   return (

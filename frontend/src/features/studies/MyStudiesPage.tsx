@@ -1,14 +1,13 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { Suspense, CSSProperties } from 'react';
+import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import TopHeader from '../../shared/ui/TopHeader';
-import { CSSProperties } from 'react';
 import logo from '../../shared/assets/icons/header-icon.svg';
-import { typography } from '../../styles/global';
-import StudyList from './StudyList';
-import Button from '../../shared/ui/Button';
+import MyStudies from './components/MyStudies';
+import Main from '../../shared/ui/Main';
 import footerIcon from '../../shared/assets/icons/footer-icon.svg';
 import { tokens } from '../../styles/global';
-import Main from '../../shared/ui/Main';
-import studyQueries from './queries';
+import { typography } from '../../styles/global';
+import Button from '../../shared/ui/Button';
 
 const pageStyle = {
   display: 'flex',
@@ -25,11 +24,6 @@ const actionsStyle = {
 } satisfies CSSProperties;
 
 export default function StudyListPage() {
-  const { data: studies } = useSuspenseQuery({
-    ...studyQueries.list(),
-    select: (data) => data.studies,
-  });
-
   return (
     <div css={pageStyle}>
       <TopHeader
@@ -41,21 +35,20 @@ export default function StudyListPage() {
         right={<a href="#">My</a>}
       />
       <Main>
-        <section aria-labelledby="my-studies-heading">
-          <h2 id="my-studies-heading" css={typography.subtitle}>
-            내 스터디
-          </h2>
-          <StudyList studies={studies} />
-          <div css={actionsStyle}>
-            {/* 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더의 링크에 안잡힘 */}
-            <Button role="link" variant="brandSolid" size="large">
-              스터디 만들기
-            </Button>
-            <Button role="link" variant="neutralOutline" size="large">
-              스터디 참여하기
-            </Button>
-          </div>
-        </section>
+        <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
+          <Suspense fallback={<p>loading ...</p>}>
+            <MyStudies />
+          </Suspense>
+        </ErrorBoundary>
+        <div css={actionsStyle}>
+          {/* 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더의 링크에 안잡힘 */}
+          <Button role="link" variant="brandSolid" size="large">
+            스터디 만들기
+          </Button>
+          <Button role="link" variant="neutralOutline" size="large">
+            스터디 참여하기
+          </Button>
+        </div>
         <aside css={{ display: 'flex', alignItems: 'center' }}>
           <img src={footerIcon} css={{ height: '52px', width: '52px' }} alt="" />
           <div css={{ display: 'flex', gap: tokens.spacing[1], flexDirection: 'column' }}>
