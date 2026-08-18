@@ -49,8 +49,8 @@ export default function DateTimePicker({
   return (
     <>
       <Button
-        variant="BrandSolid"
-        size="Small"
+        variant="brandSolid"
+        size="small"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         onClick={openPicker}
