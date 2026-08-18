@@ -3,11 +3,16 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
+import NoticeListPage from './src/features/notice/NoticeListPage';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
+  },
+  {
+    path: '/studies/:studyId/notices',
+    element: <NoticeListPage />,
   },
 ]);
 
