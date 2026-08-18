@@ -104,14 +104,36 @@ const submitAreaStyle = {
   marginTop: tokens.spacing[8],
 } satisfies CSSProperties;
 
+export interface NoticeFormValues {
+  title: string;
+  content: string;
+  reminders: Date[];
+}
+
+interface NoticeFormProps {
+  initialValues?: NoticeFormValues;
+  submitLabel: string;
+  onSubmit?: (values: NoticeFormValues) => void;
+}
+
+const emptyValues: NoticeFormValues = {
+  title: '',
+  content: '',
+  reminders: [],
+};
+
 function formatReminder(value: Date) {
   return `${value.getFullYear()}년 ${value.getMonth() + 1}월 ${value.getDate()}일 ${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function CreateNoticeForm() {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [reminders, setReminders] = useState<Date[]>([]);
+export default function NoticeForm({
+  initialValues = emptyValues,
+  submitLabel,
+  onSubmit,
+}: NoticeFormProps) {
+  const [title, setTitle] = useState(initialValues.title);
+  const [content, setContent] = useState(initialValues.content);
+  const [reminders, setReminders] = useState<Date[]>(initialValues.reminders);
 
   const removeReminder = (indexToRemove: number) => {
     setReminders((current) => current.filter((_, index) => index !== indexToRemove));
@@ -119,6 +141,7 @@ export default function CreateNoticeForm() {
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
+    onSubmit?.({ title, content, reminders });
   };
 
   return (
@@ -190,7 +213,7 @@ export default function CreateNoticeForm() {
 
       <div css={submitAreaStyle}>
         <Button type="submit" variant="brandSolid" size="large">
-          공지 올리기
+          {submitLabel}
         </Button>
       </div>
     </form>
