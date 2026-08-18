@@ -37,7 +37,7 @@ const variantStyle = {
   neutralOutline: {
     background: tokens.bg.default,
     border: tokens.border.neutral,
-    color: tokens.text.primary,
+    color: tokens.text.brand,
   },
 };
 
