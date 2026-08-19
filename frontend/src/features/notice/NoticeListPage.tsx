@@ -100,11 +100,7 @@ export default function NoticeListPage() {
         {notices.length === 0 ? (
           <EmptyState message="아직 공지가 없어요" />
         ) : (
-          <NoticeList
-            notices={notices}
-            isLeader={isLeader}
-            onSelect={(noticeId) => navigate(`/studies/${studyId}/notices/${noticeId}`)}
-          />
+          <NoticeList notices={notices} isLeader={isLeader} studyId={studyId} />
         )}
 
         {isLeader && notices.length > 0 && (
