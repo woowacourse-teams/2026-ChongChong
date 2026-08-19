@@ -2,12 +2,15 @@ package withoutc.chongchong.study.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import withoutc.chongchong.study.dto.MyStudyListResponse;
+import withoutc.chongchong.study.dto.MyStudyListResponse.MyStudyResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.entity.Study;
@@ -47,6 +52,50 @@ class StudyServiceTest {
 
     @InjectMocks
     private StudyService studyService;
+
+    @Test
+    @DisplayName("내가 가입한 스터디 목록을 가입 순서와 집계 정보와 함께 반환한다")
+    void getMyStudiesTest() {
+        Long userId = 1L;
+        User user = User.create("사용자", "profile-image-url");
+        Study leaderStudy = mock(Study.class);
+        Study memberStudy = mock(Study.class);
+        when(leaderStudy.getId()).thenReturn(1L);
+        when(leaderStudy.getName()).thenReturn("리더 스터디");
+        when(leaderStudy.getDescription()).thenReturn("리더 스터디 설명");
+        when(memberStudy.getId()).thenReturn(2L);
+        when(memberStudy.getName()).thenReturn("멤버 스터디");
+        when(memberStudy.getDescription()).thenReturn("멤버 스터디 설명");
+
+        StudyMember leader = StudyMember.create(
+                leaderStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER);
+        StudyMember member = StudyMember.create(
+                memberStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER);
+        when(studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId))
+                .thenReturn(List.of(leader, member));
+        when(studyMemberRepository.countByStudyId(1L)).thenReturn(3);
+        when(studyMemberRepository.countByStudyId(2L)).thenReturn(2);
+
+        MyStudyListResponse response = studyService.getMyStudies(userId);
+
+        assertThat(response.studyCount()).isEqualTo(2);
+        assertThat(response.studies())
+                .extracting(
+                        MyStudyResponse::id,
+                        MyStudyResponse::role,
+                        MyStudyResponse::name,
+                        MyStudyResponse::description,
+                        MyStudyResponse::memberCount,
+                        MyStudyResponse::noticeCount,
+                        MyStudyResponse::assignmentCount
+                )
+                .containsExactly(
+                        tuple(1L, StudyMemberRole.LEADER, "리더 스터디", "리더 스터디 설명", 3, 5, 5),
+                        tuple(2L, StudyMemberRole.MEMBER, "멤버 스터디", "멤버 스터디 설명", 2, 1, 1)
+                );
+        verify(studyMemberRepository).countByStudyId(1L);
+        verify(studyMemberRepository).countByStudyId(2L);
+    }
 
     @Test
     @DisplayName("스터디를 생성하고 생성자를 리더로 등록한다")

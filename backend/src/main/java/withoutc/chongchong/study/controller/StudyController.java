@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.study.dto.MyStudyListResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.dto.StudyCreateResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
@@ -35,6 +36,16 @@ public class StudyController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MyStudyListResponse> getMyStudies(
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        MyStudyListResponse response = studyService.getMyStudies(user.id());
+
+        return ResponseEntity
+                .ok(response);
     }
 
     @GetMapping("/{studyId}/invite-link")

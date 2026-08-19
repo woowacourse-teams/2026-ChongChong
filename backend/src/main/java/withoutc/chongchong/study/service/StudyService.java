@@ -1,8 +1,12 @@
 package withoutc.chongchong.study.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.study.dto.MyStudyListResponse;
+import withoutc.chongchong.study.dto.MyStudyListResponse.MyStudyResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.dto.StudyCreateResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
@@ -30,6 +34,7 @@ public class StudyService {
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
     private final StudyMemberRepository studyMemberRepository;
+
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
 
     @Transactional
@@ -52,6 +57,39 @@ public class StudyService {
         if (studyMemberRepository.countByUserId(userId) >= MAX_JOINED_STUDY_COUNT) {
             throw new StudyMemberException(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
         }
+    }
+
+    public MyStudyListResponse getMyStudies(Long userId) {
+        List<StudyMember> members = studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+
+        List<MyStudyResponse> responses = new ArrayList<>();
+        for (StudyMember member : members) {
+            Study study = member.getStudy();
+
+            int memberCount = studyMemberRepository.countByStudyId(study.getId());
+            int noticeCount = unReadNoticeCount(member.getRole());
+            int assignmentCount = unFinishedAssignmentCount(member.getRole());
+
+            responses.add(MyStudyResponse.from(study, member.getRole(), memberCount, noticeCount, assignmentCount));
+        }
+
+        return new MyStudyListResponse(responses.size(), responses);
+    }
+
+    // TODO: 현재 Mock 데이터. NoticeRecipient 구현되면 변경
+    private int unReadNoticeCount(StudyMemberRole role) {
+        if (role == StudyMemberRole.LEADER) {
+            return 5;
+        }
+        return 1;
+    }
+
+    // TODO: 현재 Mock 데이터. Submission 구현되면 변경
+    private int unFinishedAssignmentCount(StudyMemberRole role) {
+        if (role == StudyMemberRole.LEADER) {
+            return 5;
+        }
+        return 1;
     }
 
     public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {

@@ -7,12 +7,15 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.http.ContentType;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.study.entity.Study;
@@ -42,6 +45,9 @@ class StudyAcceptanceTest {
 
     @Autowired
     private TestAuthRequest testAuthRequest;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @LocalServerPort
     private int port;
@@ -87,6 +93,57 @@ class StudyAcceptanceTest {
     }
 
     @Test
+    @DisplayName("내 스터디 목록 조회 요청을 보내면 가입 순서와 집계 정보를 반환한다")
+    void getMyStudiesTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+        User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", "other-profile-image-url"));
+        Study olderStudy = studyRepository.saveAndFlush(Study.create("이전 스터디", "이전 스터디 설명"));
+        Study newerStudy = studyRepository.saveAndFlush(Study.create("최근 스터디", "최근 스터디 설명"));
+
+        StudyMember olderMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(olderStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(
+                        olderStudy,
+                        otherUser,
+                        otherUser.getName(),
+                        otherUser.getProfileImageUrl(),
+                        StudyMemberRole.MEMBER
+                )
+        );
+        StudyMember newerMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(newerStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(
+                        newerStudy,
+                        otherUser,
+                        otherUser.getName(),
+                        otherUser.getProfileImageUrl(),
+                        StudyMemberRole.MEMBER
+                )
+        );
+        setCreatedAt(olderMember.getId(), LocalDateTime.of(2026, 1, 1, 0, 0));
+        setCreatedAt(newerMember.getId(), LocalDateTime.of(2026, 1, 2, 0, 0));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/me")
+                .then()
+                .statusCode(200)
+                .body("studyCount", equalTo(2))
+                .body("studies.size()", equalTo(2))
+                .body("studies[0].id", equalTo(newerStudy.getId().intValue()))
+                .body("studies[0].role", equalTo("LEADER"))
+                .body("studies[0].memberCount", equalTo(2))
+                .body("studies[1].id", equalTo(olderStudy.getId().intValue()))
+                .body("studies[1].role", equalTo("MEMBER"))
+                .body("studies[1].memberCount", equalTo(2));
+    }
+
+    @Test
     @DisplayName("스터디 초대 링크 조회 요청을 보내면 초대 링크를 반환한다")
     void getInviteLinkTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
@@ -121,5 +178,13 @@ class StudyAcceptanceTest {
                 .then()
                 .statusCode(403)
                 .body("code", equalTo("NOT_STUDY_MEMBER"));
+    }
+
+    private void setCreatedAt(Long studyMemberId, LocalDateTime createdAt) {
+        jdbcTemplate.update(
+                "UPDATE study_members SET created_at = ? WHERE id = ?",
+                Timestamp.valueOf(createdAt),
+                studyMemberId
+        );
     }
 }
