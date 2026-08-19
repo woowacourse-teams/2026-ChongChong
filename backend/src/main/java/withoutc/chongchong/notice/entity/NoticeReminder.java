@@ -37,4 +37,22 @@ public class NoticeReminder extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NoticeReminderStatus status;
+
+    public static NoticeReminder create(Notice notice, LocalDateTime remindAt) {
+        return new NoticeReminder(notice, remindAt, NoticeReminderStatus.PENDING);
+    }
+
+    public void markAsSent() {
+        this.status = NoticeReminderStatus.SENT;
+    }
+
+    public boolean isPending() {
+        return status == NoticeReminderStatus.PENDING;
+    }
+
+    private NoticeReminder(Notice notice, LocalDateTime remindAt, NoticeReminderStatus status) {
+        this.notice = notice;
+        this.remindAt = remindAt;
+        this.status = status;
+    }
 }

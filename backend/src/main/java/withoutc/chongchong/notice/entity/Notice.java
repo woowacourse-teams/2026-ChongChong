@@ -1,5 +1,6 @@
 package withoutc.chongchong.notice.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,7 +9,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,8 +47,30 @@ public class Notice extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<NoticeReminder> reminders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<NoticeRecipient> recipients = new ArrayList<>();
+
     public static Notice create(Study study, StudyMember member, String title, String content) {
         return new Notice(study, member, title, content);
+    }
+
+    public void addRecipients(List<StudyMember> members) {
+        members.stream()
+                .map(member -> NoticeRecipient.create(member, this))
+                .forEach(this.recipients::add);
+    }
+
+    public void addReminders(List<LocalDateTime> remindAts) {
+        if (remindAts == null) {
+            return;
+        }
+
+        remindAts.stream()
+                .map(remindAt -> NoticeReminder.create(this, remindAt))
+                .forEach(this.reminders::add);
     }
 
     public void update(String title, String content) {
@@ -53,6 +80,28 @@ public class Notice extends BaseEntity {
         if (content != null) {
             this.content = content;
         }
+    }
+
+    public int getRecipientsCount() {
+        return this.recipients.size();
+    }
+
+    public int getReadCount() {
+        return Math.toIntExact(this.recipients.stream()
+                .filter(NoticeRecipient::isRead)
+                .count()
+        );
+    }
+
+    public LocalDateTime getLastRemindAt() {
+        if (reminders.isEmpty()) {
+            return null;
+        }
+
+        return reminders.stream()
+                .map(NoticeReminder::getRemindAt)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
     }
 
     private Notice(Study study, StudyMember writer, String title, String content) {

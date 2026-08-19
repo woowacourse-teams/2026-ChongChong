@@ -15,8 +15,13 @@ public record NoticeSummaryResponse(
         LocalDateTime remindAt,
         boolean isComplete
 ) {
-    public static NoticeSummaryResponse toLeader(Notice notice, int memberCount, int completeCount,
-                                                 LocalDateTime remindAt, boolean isComplete) {
+    public static NoticeSummaryResponse toLeader(Notice notice) {
+
+        int memberCount = notice.getRecipientsCount();
+        int completeCount = notice.getReadCount();
+
+        boolean isComplete = (memberCount == completeCount);
+
         return new NoticeSummaryResponse(
                 notice.getId(),
                 notice.getTitle(),
@@ -24,7 +29,7 @@ public record NoticeSummaryResponse(
                 notice.getCreatedAt(),
                 memberCount,
                 completeCount,
-                remindAt,
+                notice.getLastRemindAt(),
                 isComplete
         );
     }
