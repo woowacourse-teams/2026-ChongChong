@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 
@@ -115,6 +116,18 @@ class TestJwtSupportTest {
                 .body(equalTo("public"));
     }
 
+    @Test
+    @DisplayName("토큰 재발급 공개 경로는 Access Token 없이 Security를 통과한다")
+    void allowRefreshPathWithoutAccessToken() {
+        given()
+                .port(port)
+                .when()
+                .post("/auth/refresh")
+                .then()
+                .statusCode(200)
+                .body(equalTo("refresh-public"));
+    }
+
     @RestController
     static class TestController {
 
@@ -126,6 +139,11 @@ class TestJwtSupportTest {
         @GetMapping("/auth/login")
         String publicEndpoint() {
             return "public";
+        }
+
+        @PostMapping("/auth/refresh")
+        String refreshPublicEndpoint() {
+            return "refresh-public";
         }
     }
 }
