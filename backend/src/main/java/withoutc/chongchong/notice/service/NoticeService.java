@@ -1,11 +1,16 @@
 package withoutc.chongchong.notice.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.dto.NoticeDetailResponse;
+import withoutc.chongchong.notice.dto.NoticeListResponse;
+import withoutc.chongchong.notice.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
@@ -57,6 +62,20 @@ public class NoticeService {
 
         notice.update(request.title(), request.content());
         noticeRepository.save(notice);
+    }
+
+    public NoticeListResponse list(User user, Long studyId, Long cursor, int size) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+
+        Pageable pageable = PageRequest.of(0, size + 1);
+        List<Notice> notices = noticeRepository.findByCursor(studyId, cursor, pageable);
+
+        if (member.isLeader()) {
+            // 리더 전용 dto 변환 로직
+        } else {
+            // 멤버 전용 dto 변환 로직
+        }
+        return null;
     }
 
     public NoticeDetailResponse detail(User user, Long studyId, Long noticeId) {
