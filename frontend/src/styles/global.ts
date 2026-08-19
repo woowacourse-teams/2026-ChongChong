@@ -192,7 +192,7 @@ export const tokens = {
     muted: 'var(--text-muted)',
     placeholder: 'var(--text-placeholder)',
     brand: 'var(--text-brand)',
-    critical: 'var(--text-critical)',
+    neutral: 'var(--text-)',
     onBrand: 'var(--text-on-brand)',
     onBrandStrong: 'var(--text-on-brand-strong)',
   },

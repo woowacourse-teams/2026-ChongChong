@@ -3,6 +3,7 @@ import studyQueries from '../queries';
 import StudyList from './StudyList';
 import EmptyState from '../../../shared/ui/EmptyState';
 import { typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 
 export default function MyStudies() {
   const { data: studies } = useSuspenseQuery({
@@ -16,7 +17,9 @@ export default function MyStudies() {
         내 스터디
       </h2>
       {studies.length === 0 ? (
-        <EmptyState message="아직 스터디가 없어요" />
+        <div css={{ margin: `${tokens.spacing[8]} 0` }}>
+          <EmptyState message="아직 스터디가 없어요" />
+        </div>
       ) : (
         <StudyList studies={studies} />
       )}

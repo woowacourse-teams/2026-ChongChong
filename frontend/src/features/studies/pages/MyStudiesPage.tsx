@@ -23,6 +23,13 @@ const actionsStyle = {
   margin: `${tokens.spacing[3]} 0`,
 } satisfies CSSProperties;
 
+const footerBannerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: tokens.spacing[1],
+} satisfies CSSProperties;
+
 export default function StudyListPage() {
   return (
     <div css={pageStyle}>
@@ -49,7 +56,7 @@ export default function StudyListPage() {
             스터디 참여하기
           </Button>
         </div>
-        <aside css={{ display: 'flex', alignItems: 'center' }}>
+        <aside css={footerBannerStyle}>
           <img src={footerIcon} css={{ height: '52px', width: '52px' }} alt="" />
           <div css={{ display: 'flex', gap: tokens.spacing[1], flexDirection: 'column' }}>
             <p css={typography.paragraph}>리마인드는 총총이 보낼게요.</p>
