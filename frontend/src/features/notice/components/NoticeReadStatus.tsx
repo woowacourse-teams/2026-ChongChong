@@ -210,13 +210,13 @@ export default function NoticeReadStatus({
 
       <div css={readGroupStyle}>
         <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>
-          <img src={checkIcon} alt="읽음" width={18} height={18} />
+          <img src={checkIcon} alt="" width={18} height={18} />
           확인 {readCount}명
         </p>
         <div css={badgeRowStyle}>
           {readMemberNames.map((name) => (
             <Badge key={name} variant="NeutralSolid" size="Large">
-              <img src={profileIcon} alt={`${name} 프로필`} css={profileStyle} />
+              <img src={profileIcon} alt="" css={profileStyle} />
               {name}
             </Badge>
           ))}
@@ -225,7 +225,7 @@ export default function NoticeReadStatus({
 
       <div css={unreadGroupStyle}>
         <p css={{ ...groupLabelStyle, color: tokens.text.muted }}>
-          <img src={clockIcon} alt="미확인" width={18} height={18} />
+          <img src={clockIcon} alt="" width={18} height={18} />
           미확인 {unreadMembers.length}명
         </p>
 
@@ -233,7 +233,7 @@ export default function NoticeReadStatus({
           <List>
             {unreadMembers.map((member) => (
               <List.Item key={member.id} css={memberStyle}>
-                <img src={profileIcon} alt={`${member.name} 프로필`} width={28} height={28} />
+                <img src={profileIcon} alt="" width={28} height={28} />
                 <span css={memberTextStyle}>
                   <span css={memberNameStyle}>{member.name}</span>
                   <span css={sentAtStyle}>{member.remindedAt}</span>
@@ -243,7 +243,7 @@ export default function NoticeReadStatus({
                   css={sendButtonStyle}
                   onClick={() => onSendReminder?.(member.id)}
                 >
-                  <img src={sendIcon} alt="리마인드 보내기" width={16} height={16} />
+                  <img src={sendIcon} alt="" width={16} height={16} />
                   보내기
                 </button>
               </List.Item>

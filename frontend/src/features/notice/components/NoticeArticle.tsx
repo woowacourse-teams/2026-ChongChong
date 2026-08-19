@@ -52,7 +52,7 @@ export default function NoticeArticle({
     <article css={{ ...articleStyle, marginTop: hasTopMargin ? articleStyle.marginTop : 0 }}>
       <h2 css={titleStyle}>{title}</h2>
       <div css={authorRowStyle}>
-        <img src={profileIcon} alt={`${author} 프로필`} width={28} height={28} />
+        <img src={profileIcon} alt="" width={28} height={28} />
         <span css={authorStyle}>
           {author} · {createdAt}
         </span>

@@ -83,7 +83,7 @@ export default function MemberNoticeReadState({ progress, readAt }: MemberNotice
         <div css={toastStyle} role="status">
           <img
             src={checkIcon}
-            alt="읽음 완료"
+            alt=""
             width={16}
             height={16}
             css={{ filter: 'brightness(0) invert(1)' }}
