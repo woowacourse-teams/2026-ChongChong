@@ -53,8 +53,9 @@ public class NoticeService {
         validateLeader(leader);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-
         noticeRepository.delete(notice);
+
+        noticeRecipientRepository.deleteAllByNoticeId(noticeId);
     }
 
     @Transactional
