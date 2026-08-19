@@ -25,3 +25,5 @@ auth:
     audience: ${AUTH_JWT_AUDIENCE}
     secret-base64: ${AUTH_JWT_SECRET_BASE64}
     access-token-validity: ${AUTH_JWT_ACCESS_TOKEN_VALIDITY:30m}
+  refresh-token:
+    validity: ${AUTH_REFRESH_TOKEN_VALIDITY:30d}
