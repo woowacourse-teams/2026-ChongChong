@@ -3,32 +3,14 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
-import NoticeListPage from './src/features/notice/NoticeListPage';
-import NoticeDetailPage from './src/features/notice/NoticeDetailPage';
-import CreateNoticePage from './src/features/notice/CreateNoticePage';
-import EditNoticePage from './src/features/notice/EditNoticePage';
+import { routes as noticeRoutes } from './src/features/notice/routes/route';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
   },
-  {
-    path: '/studies/:studyId/notices',
-    element: <NoticeListPage />,
-  },
-  {
-    path: '/studies/:studyId/notices/create',
-    element: <CreateNoticePage />,
-  },
-  {
-    path: '/studies/:studyId/notices/:noticeId',
-    element: <NoticeDetailPage />,
-  },
-  {
-    path: '/studies/:studyId/notices/:noticeId/modify',
-    element: <EditNoticePage />,
-  },
+  ...noticeRoutes,
 ]);
 
 const root = document.getElementById('root')!;
