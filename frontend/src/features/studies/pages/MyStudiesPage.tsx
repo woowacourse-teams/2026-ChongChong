@@ -1,10 +1,10 @@
 import { Suspense, CSSProperties } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import TopHeader from '../../../shared/ui/TopHeader';
-import logo from '../../shared/assets/icons/header-icon.svg';
+import logo from '../../../shared/assets/icons/header-icon.svg';
 import MyStudies from '../components/MyStudies';
 import Main from '../../../shared/ui/Main';
-import footerIcon from '../../shared/assets/icons/footer-icon.svg';
+import footerIcon from '../../../shared/assets/icons/footer-icon.svg';
 import { tokens } from '../../../styles/global';
 import { typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
