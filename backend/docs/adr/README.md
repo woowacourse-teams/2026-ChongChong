@@ -26,3 +26,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0007](0007-establish-access-token-authentication-boundary.md) | Access Token 인증 경계를 구성한다 |
 | [0008](0008-establish-auth-token-and-session-lifecycle.md) | 인증 토큰 발급과 세션 생명주기를 정의한다 |
 | [0009](0009-establish-provider-independent-social-login-boundary.md) | 제공자 독립 소셜 로그인 경계를 구성한다 |
+| [0010](0010-choose-per-study-count-queries-for-my-study-list.md) | 내 스터디 목록에서 스터디별 집계 쿼리를 사용한다 |
