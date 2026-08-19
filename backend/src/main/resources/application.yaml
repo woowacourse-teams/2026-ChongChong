@@ -8,3 +8,19 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+jwt:
+  study-invite-secret: ${STUDY_INVITE_JWT_SECRET}
+
+frontend:
+  base-url: ${FRONTEND_BASE_URL}
+
+auth:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER}
+    audience: ${AUTH_JWT_AUDIENCE}
+    secret-base64: ${AUTH_JWT_SECRET_BASE64}

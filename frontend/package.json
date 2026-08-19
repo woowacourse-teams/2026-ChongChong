@@ -33,7 +33,10 @@
     },
     "transformIgnorePatterns": [
       "/node_modules/.pnpm/(?!(ky|rettime|until-async|outvariant|strict-event-emitter|headers-polyfill|is-node-process|@open-draft\\+[^@]+|@bundled-es-modules\\+[^@]+|@mswjs\\+[^@]+)@)"
-    ]
+    ],
+    "moduleNameMapper": {
+      "\\.(png|svg|jpg|jpeg|gif|woff2?|eot|ttf|otf)$": "<rootDir>/src/test/stub.ts"
+    }
   },
   "msw": {
     "workerDirectory": [
@@ -82,6 +85,7 @@
     "ky": "^2.0.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-error-boundary": "^6.1.3",
     "react-router": "^8.3.0"
   }
 }
