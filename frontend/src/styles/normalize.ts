@@ -209,4 +209,9 @@ export const modernNormalize = css`
   summary {
     display: list-item;
   }
+
+  a {
+    text-decoration: none;
+    color: black;
+  }
 `;

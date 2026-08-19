@@ -26,7 +26,7 @@ const variantStyle = {
   },
   NeutralSolid: {
     background: tokens.bg.neutral,
-    color: tokens.text.onBrandStrong,
+    color: tokens.text.muted,
   },
   BrandOutline: {
     background: tokens.bg.default,
