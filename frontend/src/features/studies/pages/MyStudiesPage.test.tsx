@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { createWrapper, mockResponse } from '../../test/render';
+import { createWrapper, mockResponse } from '../../../test/render';
 import { http, HttpResponse } from 'msw';
-import { server } from '../../mocks/msw-node';
+import { server } from '../../../mocks/msw-node';
 import MyStudiesPage from './MyStudiesPage';
-import { Study } from './types';
+import { BASE_URL } from '../../../../config';
+import { STUDY_URLS } from '../urls';
+import { Study } from '../types';
 
 const studies: Study[] = [
   {
@@ -26,7 +28,7 @@ const studies: Study[] = [
   },
 ];
 
-const STUDIES_URL = 'https://mock.chongchong.com/studies/me';
+const STUDIES_URL = `${BASE_URL}${STUDY_URLS.list}`;
 
 test('응답으로 받은 스터디들을 렌더링 한다', async () => {
   mockResponse(STUDIES_URL, studies);

@@ -1,7 +1,9 @@
 import { http, HttpResponse } from 'msw';
+import { BASE_URL } from '../../../../config';
+import { STUDY_URLS } from '../urls';
 
 export const handlers = [
-  http.get('https://mock.chongchong.com/studies/me', () => {
+  http.get(`${BASE_URL}${STUDY_URLS.list}`, () => {
     return HttpResponse.json({
       studies: [
         {
