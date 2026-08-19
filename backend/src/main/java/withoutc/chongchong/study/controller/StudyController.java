@@ -29,7 +29,7 @@ public class StudyController {
     @PostMapping
     public ResponseEntity<StudyCreateResponse> create(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @Valid @RequestBody StudyCreateRequest request
+            @RequestBody @Valid StudyCreateRequest request
     ) {
         StudyCreateResponse response = studyService.create(user.id(), request);
 
