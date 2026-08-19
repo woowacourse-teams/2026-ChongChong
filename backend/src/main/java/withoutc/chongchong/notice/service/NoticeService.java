@@ -1,6 +1,7 @@
 package withoutc.chongchong.notice.service;
 
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,8 @@ import withoutc.chongchong.notice.dto.NoticeListResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
+import withoutc.chongchong.notice.exception.NoticeErrorCode;
+import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -48,23 +51,23 @@ public class NoticeService {
 
     @Transactional
     public void delete(User user, Long studyId, Long noticeId) {
-        // TODO 이 스터디의 공지가 맞는지 검증 필요
         StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
         validateLeader(leader);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        noticeRepository.delete(notice);
+        validateNoticeBelongsToStudy(studyId, notice);
 
+        noticeRepository.delete(notice);
         noticeRecipientRepository.deleteAllByNoticeId(noticeId);
     }
 
     @Transactional
     public void update(User user, Long studyId, Long noticeId, NoticeUpdateRequest request) {
-        // TODO 이 스터디의 공지가 맞는지 검증 필요
         StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
         validateLeader(leader);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
 
         notice.update(request.title(), request.content());
         noticeRepository.save(notice);
@@ -85,16 +88,23 @@ public class NoticeService {
     }
 
     public NoticeDetailResponse detail(User user, Long studyId, Long noticeId) {
-        // TODO 이 스터디의 공지가 맞는지 검증 필요
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
+
         return NoticeDetailResponse.from(notice);
     }
 
     private void validateLeader(StudyMember member) {
         if (!member.isLeader()) {
             // TODO throw 403
+        }
+    }
+
+    private void validateNoticeBelongsToStudy(Long studyId, Notice notice) {
+        if (!Objects.equals(notice.getStudy().getId(), studyId)) {
+            throw new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND);
         }
     }
 
