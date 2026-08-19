@@ -10,9 +10,10 @@ import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.dto.NoticeListResponse;
-import withoutc.chongchong.notice.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeRecipient;
+import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -27,6 +28,7 @@ public class NoticeService {
     private final StudyRepository studyRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
+    private final NoticeRecipientRepository noticeRecipientRepository;
 
     @Transactional
     public NoticeCreateResponse create(User user, Long studyId, NoticeCreateRequest request) {
@@ -36,7 +38,10 @@ public class NoticeService {
         validateLeader(leader);
 
         Notice notice = Notice.create(study, leader, request.title(), request.content());
-        noticeRepository.save(notice);
+        notice = noticeRepository.save(notice);
+
+        List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId);
+        createNoticeRecipients(notice, members);
 
         return new NoticeCreateResponse(notice.getId());
     }
@@ -90,5 +95,13 @@ public class NoticeService {
         if (!member.isLeader()) {
             // TODO throw 403
         }
+    }
+
+    private void createNoticeRecipients(Notice notice, List<StudyMember> members) {
+        List<NoticeRecipient> noticeRecipients = members.stream()
+                .map(member -> NoticeRecipient.create(member, notice))
+                .toList();
+
+        noticeRecipientRepository.saveAll(noticeRecipients);
     }
 }
