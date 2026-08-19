@@ -194,7 +194,7 @@ export default function NoticeForm({
                       aria-label={`${formatReminder(reminder)} 리마인드 삭제`}
                       onClick={() => removeReminder(index)}
                     >
-                      <img src={deleteIcon} alt="" width={20} height={20} />
+                      <img src={deleteIcon} alt="리마인드 삭제" width={20} height={20} />
                     </button>
                   </List.Item>
                 ))}

@@ -45,7 +45,7 @@ export default function CreateNoticePage() {
             aria-label="뒤로 가기"
             onClick={() => navigate(-1)}
           >
-            <img src={backIcon} alt="" width={24} height={24} />
+            <img src={backIcon} alt="뒤로 가기" width={24} height={24} />
           </button>
         }
         middle={<TopHeader.Title>공지</TopHeader.Title>}
