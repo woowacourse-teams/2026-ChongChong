@@ -11,15 +11,21 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
+import withoutc.chongchong.study.exception.StudyMemberErrorCode;
+import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.user.entity.User;
+import withoutc.chongchong.user.exception.UserErrorCode;
+import withoutc.chongchong.user.exception.UserException;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StudyService {
+
+    private static final int MAX_JOINED_STUDY_COUNT = 50;
 
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
@@ -28,26 +34,35 @@ public class StudyService {
 
     @Transactional
     public StudyCreateResponse create(Long userId, StudyCreateRequest request) {
-        // TODO: 나중에 UserException으로 변경
         User user = userRepository.findById(userId)
-                .orElseThrow();
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        validateStudyCountLimit(userId);
 
         Study study = studyRepository.save(request.toStudy());
 
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.LEADER);
 
-        // TODO: StudyMemberService에서 멤버 생성 시 사용자별 가입 스터디 50개 제한 검증
-        // TODO: 스터디 생성 시 리더 등록과, 스터디 참가 모두 StudyMemberService 사용
         studyMemberRepository.save(studyMember);
 
         return StudyCreateResponse.from(study);
     }
 
-    // TODO: 인증, 인가 구현 후 사용자가 해당 스터디에 속해 있는지 확인
-    public StudyInviteLinkResponse getInviteLink(Long studyId) {
-        studyRepository.findById(studyId)
+    private void validateStudyCountLimit(Long userId) {
+        if (studyMemberRepository.countByUserId(userId) >= MAX_JOINED_STUDY_COUNT) {
+            throw new StudyMemberException(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
+        }
+    }
+
+    public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        Study study = studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+
+        studyMemberRepository.findByStudyIdAndUserId(study.getId(), user.getId())
+                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_MEMBER));
 
         return new StudyInviteLinkResponse(studyInviteLinkGenerator.generate(studyId));
     }

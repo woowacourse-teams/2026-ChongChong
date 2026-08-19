@@ -3,6 +3,7 @@ package withoutc.chongchong.study.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,8 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
+import withoutc.chongchong.study.exception.StudyMemberErrorCode;
+import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.user.entity.User;
@@ -46,7 +49,7 @@ class StudyServiceTest {
     private StudyService studyService;
 
     @Test
-    @DisplayName("스터디 생성 요청으로 Study를 저장한다")
+    @DisplayName("스터디를 생성하고 생성자를 리더로 등록한다")
     void createTest() {
         Long userId = 1L;
         StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "매주 월요일에 진행한다.");
@@ -74,31 +77,79 @@ class StudyServiceTest {
     }
 
     @Test
+    @DisplayName("가입한 스터디가 50개 이상이면 스터디를 생성할 수 없다")
+    void createStudyWhenJoinedStudyCountLimitExceededTest() {
+        Long userId = 1L;
+        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "설명");
+        User user = User.create("사용자", "profile-image-url");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
+
+        assertThatThrownBy(() -> studyService.create(userId, request))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
+
+        verify(studyRepository, never()).save(any(Study.class));
+        verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
     @DisplayName("존재하는 스터디의 초대 링크를 반환한다")
     void getInviteLinkTest() {
+        Long userId = 1L;
         Long studyId = 1L;
+        User user = User.create("사용자", "profile-image-url");
         Study study = Study.create("자바 스터디", "설명");
+        StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
+                StudyMemberRole.MEMBER);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(any(), any()))
+                .thenReturn(Optional.of(studyMember));
         when(studyInviteLinkGenerator.generate(studyId))
                 .thenReturn("https://test.chongchong.app/join?token=invite-token");
 
-        StudyInviteLinkResponse response = studyService.getInviteLink(studyId);
+        StudyInviteLinkResponse response = studyService.getInviteLink(userId, studyId);
 
         assertThat(response.inviteLink()).isEqualTo("https://test.chongchong.app/join?token=invite-token");
         verify(studyInviteLinkGenerator).generate(studyId);
     }
 
     @Test
+    @DisplayName("스터디 멤버가 아니면 초대 링크를 조회할 수 없다")
+    void getInviteLinkForNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        User user = User.create("사용자", "profile-image-url");
+        Study study = Study.create("자바 스터디", "설명");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(any(), any()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studyService.getInviteLink(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+
+        verifyNoInteractions(studyInviteLinkGenerator);
+    }
+
+    @Test
     @DisplayName("존재하지 않는 스터디의 초대 링크를 요청하면 예외가 발생한다")
     void getInviteLinkForMissingStudyTest() {
+        Long userId = 1L;
         Long studyId = 1L;
+        User user = User.create("사용자", "profile-image-url");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> studyService.getInviteLink(studyId))
+        assertThatThrownBy(() -> studyService.getInviteLink(userId, studyId))
                 .isInstanceOf(StudyException.class)
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
 
-        verifyNoInteractions(studyInviteLinkGenerator, userRepository, studyMemberRepository);
+        verifyNoInteractions(studyInviteLinkGenerator, studyMemberRepository);
     }
 }
