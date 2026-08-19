@@ -1,9 +1,11 @@
 import ReactDOM from 'react-dom/client';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
 import NoticeListPage from './src/features/notice/NoticeListPage';
+import { routes as studiesRoutes } from './src/features/studies/routes';
 
 const router = createBrowserRouter([
   {
@@ -14,6 +16,7 @@ const router = createBrowserRouter([
     path: '/studies/:studyId/notices',
     element: <NoticeListPage />,
   },
+  ...studiesRoutes,
 ]);
 
 const root = document.getElementById('root')!;
@@ -27,11 +30,15 @@ async function enableMocking() {
   return worker.start();
 }
 
+const queryClient = new QueryClient();
+
 enableMocking().then(() => {
   ReactDOM.createRoot(root).render(
     <>
-      <Global styles={globalStyles} />
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <Global styles={globalStyles} />
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </>,
   );
 });
