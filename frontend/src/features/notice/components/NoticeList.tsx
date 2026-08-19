@@ -65,11 +65,10 @@ export default function NoticeList({ notices, isLeader, onSelect }: NoticeListPr
 
             <ContentCard.TitleRow>
               <ContentCard.Title>{notice.title}</ContentCard.Title>
-              {isLeader && (
-                <ContentCard.Trailing>
-                  <img src={rightArrow} alt="공지 상세 보기" width={20} height={20} />
-                </ContentCard.Trailing>
-              )}
+
+              <ContentCard.Trailing>
+                <img src={rightArrow} alt="공지 상세 보기" width={20} height={20} />
+              </ContentCard.Trailing>
             </ContentCard.TitleRow>
 
             <ContentCard.Description>{notice.description}</ContentCard.Description>
