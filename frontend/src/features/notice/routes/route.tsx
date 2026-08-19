@@ -18,7 +18,7 @@ export const routes: RouteObject[] = [
     element: <NoticeDetailPage />,
   },
   {
-    path: '/studies/:studyId/notices/:noticeId/modify',
+    path: '/studies/:studyId/notices/:noticeId/edit',
     element: <EditNoticePage />,
   },
 ];
