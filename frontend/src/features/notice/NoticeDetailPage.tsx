@@ -85,16 +85,17 @@ export default function NoticeDetailPage() {
   const [readProgress, setReadProgress] = useState(startsCompleted ? 100 : 38);
 
   useEffect(() => {
-    if (startsCompleted && contentRef.current) {
-      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    const content = contentRef.current;
+    if (!isLeader && content && content.scrollHeight <= content.clientHeight) {
+      setReadProgress(100);
     }
-  }, [startsCompleted]);
+  }, [isLeader]);
 
   const openDeleteDialog = () => deleteDialogRef.current?.showModal();
   const closeDeleteDialog = () => deleteDialogRef.current?.close();
 
   const editNotice = () => {
-    navigate(`/studies/${studyId}/notices/${noticeId}/modify`);
+    navigate(`/studies/${studyId}/notices/${noticeId}/edit`);
   };
 
   const updateReadProgress = (event: UIEvent<HTMLElement>) => {
