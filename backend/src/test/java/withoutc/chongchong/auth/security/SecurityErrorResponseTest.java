@@ -3,6 +3,7 @@ package withoutc.chongchong.auth.security;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,6 +51,12 @@ class SecurityErrorResponseTest {
     @DisplayName("보호 경로에 Access Token이 없으면 공통 JSON 형식의 401을 반환한다")
     void respondUnauthorizedWhenAccessTokenIsMissing() throws Exception {
         expectAuthenticationRequired(mockMvc.perform(get("/test/security/protected")));
+    }
+
+    @Test
+    @DisplayName("기본 로그아웃 경로에 Access Token 없이 요청하면 공통 JSON 형식의 401을 반환한다")
+    void respondUnauthorizedWhenDefaultLogoutPathIsRequestedWithoutAccessToken() throws Exception {
+        expectAuthenticationRequired(mockMvc.perform(post("/logout")));
     }
 
     @Test
