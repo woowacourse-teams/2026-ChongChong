@@ -239,14 +239,6 @@ Access/Refresh Token을 발급한다는 1차 결정과 맞지 않아 선택하�
 
 ## 후속 작업
 
-- Access/Refresh Token 만료 시간을 설정 값으로 추가한다.
-- 발급기와 검증기가 공유할 HMAC `SecretKey` 구성을 분리한다.
-- Spring Security `JwtEncoder`와 Access Token 발급기를 구현한다.
-- Refresh Token 생성기와 SHA-256 해시 컴포넌트를 구현한다.
-- `AuthSession` Entity와 Repository 및 데이터베이스 제약을 구현한다.
-- 사용자 행 잠금을 사용하는 Token 쌍 발급 서비스를 구현한다.
-- Claim, 만료, 해시, Session 교체와 동시 발급을 테스트한다.
-- 발급한 Access Token이 기존 `JwtDecoder`를 통과하는지 검증한다.
 - 후속 이슈에서 소셜 로그인과 자동 회원가입을 구현한다.
 - 후속 이슈에서 Rotation, 재발급, 로그아웃과 Cookie/CSRF 정책을 구현한다.
 
