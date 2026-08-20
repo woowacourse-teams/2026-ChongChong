@@ -3,7 +3,7 @@ package withoutc.chongchong.user.exception;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import withoutc.chongchong.global.exception.ErrorCode;
+import withoutc.chongchong.global.exception.code.ErrorCode;
 
 @Getter
 @RequiredArgsConstructor

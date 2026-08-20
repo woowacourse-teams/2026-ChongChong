@@ -238,7 +238,7 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
         );
@@ -274,7 +274,7 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
                         StudyMemberRole.MEMBER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
         );
@@ -356,7 +356,7 @@ class StudyAcceptanceTest {
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
-        noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
         assignmentRepository.saveAndFlush(
                 Assignment.create(leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
         );

@@ -1,9 +1,10 @@
-package withoutc.chongchong.global.exception;
+package withoutc.chongchong.global.exception.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import org.springframework.validation.FieldError;
+import withoutc.chongchong.global.exception.code.ErrorCode;
 
 @JsonPropertyOrder({"code", "message", "errors"})
 public record ErrorResponse(

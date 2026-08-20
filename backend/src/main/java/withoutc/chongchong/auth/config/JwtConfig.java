@@ -1,6 +1,5 @@
 package withoutc.chongchong.auth.config;
 
-import java.time.Clock;
 import java.util.Base64;
 import java.util.List;
 import javax.crypto.SecretKey;
@@ -67,10 +66,5 @@ public class JwtConfig {
 
         jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator));
         return jwtDecoder;
-    }
-
-    @Bean
-    public Clock clock() {
-        return Clock.systemUTC();
     }
 }

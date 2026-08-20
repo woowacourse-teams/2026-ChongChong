@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import withoutc.chongchong.global.exception.code.ErrorCode;
+import withoutc.chongchong.global.exception.handler.GlobalExceptionHandler;
 
 @WebMvcTest(controllers = GlobalExceptionHandlerTest.TestController.class)
 @Import({GlobalExceptionHandler.class, GlobalExceptionHandlerTest.TestController.class})
@@ -49,14 +51,15 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("메서드 파라미터 검증 실패 시 공통 입력값 오류를 반환한다")
+    @DisplayName("메서드 파라미터 검증 실패 시 요청 파라미터 오류와 검증 사유를 반환한다")
     void handleMethodValidationException() throws Exception {
         mockMvc.perform(get("/test/parameter-validation")
                         .param("page", "0"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
-                .andExpect(jsonPath("$.message").value("입력값이 올바르지 않습니다."))
-                .andExpect(jsonPath("$.errors").doesNotExist());
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST_PARAMETER"))
+                .andExpect(jsonPath("$.message").value("요청 파라미터가 올바르지 않습니다."))
+                .andExpect(jsonPath("$.errors[0].field").value("page"))
+                .andExpect(jsonPath("$.errors[0].reason").value("페이지는 양수여야 합니다."));
     }
 
     @Test

@@ -3,13 +3,13 @@ package withoutc.chongchong.study.exception;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import withoutc.chongchong.global.exception.ErrorCode;
+import withoutc.chongchong.global.exception.code.ErrorCode;
 
 @Getter
 @RequiredArgsConstructor
 public enum StudyErrorCode implements ErrorCode {
 
-    STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY_NOT_FOUND", "해당 스터디를 찾을 수 없습니다."),
+    STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY_NOT_FOUND", "존재하지 않는 스터디입니다."),
 
     INVALID_STUDY_ID(HttpStatus.BAD_REQUEST, "INVALID_STUDY_ID", "유효하지 않은 스터디 ID입니다."),
 
