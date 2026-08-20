@@ -19,9 +19,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.study.dto.LeaderStudyDetailResponse;
+import withoutc.chongchong.study.dto.MemberStudyDetailResponse;
 import withoutc.chongchong.study.dto.MyStudyListResponse;
 import withoutc.chongchong.study.dto.MyStudyListResponse.MyStudyResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
+import withoutc.chongchong.study.dto.StudyDetailResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -46,6 +53,12 @@ class StudyServiceTest {
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
+
+    @Mock
+    private NoticeRepository noticeRepository;
+
+    @Mock
+    private AssignmentRepository assignmentRepository;
 
     @Mock
     private StudyInviteLinkGenerator studyInviteLinkGenerator;
@@ -141,6 +154,101 @@ class StudyServiceTest {
 
         verify(studyRepository, never()).save(any(Study.class));
         verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 리더는 멤버 수와 공지·과제 완료 수를 포함한 상세 정보를 조회한다")
+    void getStudyDetailForLeaderTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = mock(Study.class);
+        User user = User.create("리더", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER);
+        Notice notice = mock(Notice.class);
+        Assignment assignment = mock(Assignment.class);
+        when(study.getId()).thenReturn(studyId);
+        when(notice.getId()).thenReturn(10L);
+        when(notice.getTitle()).thenReturn("공지");
+        when(assignment.getId()).thenReturn(20L);
+        when(assignment.getTitle()).thenReturn("과제");
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.of(studyMember));
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(3);
+        when(noticeRepository.findAllByStudyId(studyId)).thenReturn(List.of(notice));
+        when(assignmentRepository.findAllByStudyId(studyId)).thenReturn(List.of(assignment));
+
+        StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
+
+        assertThat(response).isInstanceOf(LeaderStudyDetailResponse.class);
+        LeaderStudyDetailResponse leaderResponse = (LeaderStudyDetailResponse) response;
+        assertThat(leaderResponse.memberCount()).isEqualTo(3);
+        assertThat(leaderResponse.notices().count()).isEqualTo(1);
+        assertThat(leaderResponse.notices().items())
+                .extracting(LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::id,
+                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::title,
+                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::completeCount)
+                .containsExactly(tuple(10L, "공지", 2));
+        assertThat(leaderResponse.assignments().count()).isEqualTo(1);
+        assertThat(leaderResponse.assignments().items())
+                .extracting(LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::id,
+                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::title,
+                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::completeCount)
+                .containsExactly(tuple(20L, "과제", 2));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버는 공지·과제 목록과 전체 미완료 개수를 포함한 상세 정보를 조회한다")
+    void getStudyDetailForMemberTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = mock(Study.class);
+        User user = User.create("멤버", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER);
+        Notice notice = mock(Notice.class);
+        Assignment assignment = mock(Assignment.class);
+        when(study.getId()).thenReturn(studyId);
+        when(notice.getId()).thenReturn(10L);
+        when(notice.getTitle()).thenReturn("공지");
+        when(assignment.getId()).thenReturn(20L);
+        when(assignment.getTitle()).thenReturn("과제");
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.of(studyMember));
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(noticeRepository.findAllByStudyId(studyId)).thenReturn(List.of(notice));
+        when(assignmentRepository.findAllByStudyId(studyId)).thenReturn(List.of(assignment));
+
+        StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
+
+        assertThat(response).isInstanceOf(MemberStudyDetailResponse.class);
+        MemberStudyDetailResponse memberResponse = (MemberStudyDetailResponse) response;
+        assertThat(memberResponse.totalCount()).isEqualTo(4);
+        assertThat(memberResponse.notices().items())
+                .extracting(MemberStudyDetailResponse.MemberNoticeSummaryResponse::id,
+                        MemberStudyDetailResponse.MemberNoticeSummaryResponse::title)
+                .containsExactly(tuple(10L, "공지"));
+        assertThat(memberResponse.assignments().items())
+                .extracting(MemberStudyDetailResponse.MemberAssignmentSummaryResponse::id,
+                        MemberStudyDetailResponse.MemberAssignmentSummaryResponse::title)
+                .containsExactly(tuple(20L, "과제"));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디 상세 정보를 조회할 수 없다")
+    void getStudyDetailForNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studyService.getStudyDetail(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+
+        verifyNoInteractions(studyRepository, noticeRepository, assignmentRepository);
     }
 
     @Test

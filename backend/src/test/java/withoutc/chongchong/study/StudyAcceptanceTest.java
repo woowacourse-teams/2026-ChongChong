@@ -18,6 +18,10 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
+import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -39,6 +43,12 @@ class StudyAcceptanceTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NoticeRepository noticeRepository;
+
+    @Autowired
+    private AssignmentRepository assignmentRepository;
 
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
@@ -141,6 +151,84 @@ class StudyAcceptanceTest {
                 .body("studies[1].id", equalTo(olderStudy.getId().intValue()))
                 .body("studies[1].role", equalTo("MEMBER"))
                 .body("studies[1].memberCount", equalTo(2));
+    }
+
+    @Test
+    @DisplayName("리더가 스터디 상세 조회를 요청하면 멤버 수와 공지·과제 완료 수를 반환한다")
+    void getStudyDetailForLeaderTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leaderMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
+        Assignment assignment = assignmentRepository.saveAndFlush(
+                Assignment.create(study, leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(200)
+                .body("memberCount", equalTo(1))
+                .body("notices.count", equalTo(1))
+                .body("notices.items[0].id", equalTo(notice.getId().intValue()))
+                .body("notices.items[0].title", equalTo("공지"))
+                .body("notices.items[0].completeCount", equalTo(2))
+                .body("assignments.count", equalTo(1))
+                .body("assignments.items[0].id", equalTo(assignment.getId().intValue()))
+                .body("assignments.items[0].title", equalTo("과제"))
+                .body("assignments.items[0].completeCount", equalTo(2));
+    }
+
+    @Test
+    @DisplayName("멤버가 스터디 상세 조회를 요청하면 공지·과제 목록과 전체 개수를 반환한다")
+    void getStudyDetailForMemberTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leaderMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
+                        StudyMemberRole.MEMBER)
+        );
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
+        Assignment assignment = assignmentRepository.saveAndFlush(
+                Assignment.create(study, leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
+        );
+
+        testAuthRequest.givenAuthenticatedUser(member.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(200)
+                .body("totalCount", equalTo(4))
+                .body("notices.items[0].id", equalTo(notice.getId().intValue()))
+                .body("notices.items[0].title", equalTo("공지"))
+                .body("assignments.items[0].id", equalTo(assignment.getId().intValue()))
+                .body("assignments.items[0].title", equalTo("과제"));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디 상세 조회 시 403을 반환한다")
+    void getStudyDetailForNonMemberTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_MEMBER"));
     }
 
     @Test

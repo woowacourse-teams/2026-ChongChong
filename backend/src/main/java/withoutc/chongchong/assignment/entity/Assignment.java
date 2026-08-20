@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.study.entity.Study;
+import withoutc.chongchong.study.entity.StudyMember;
 
 @Entity
 @Table(name = "assignments")
@@ -30,6 +31,10 @@ public class Assignment extends BaseEntity {
     @JoinColumn(name = "study_id", nullable = false)
     private Study study;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "member_id", nullable = false)
+    private StudyMember member;
+
     @Column(nullable = false)
     private String title;
 
@@ -44,22 +49,25 @@ public class Assignment extends BaseEntity {
 
     public static Assignment create(
             Study study,
+            StudyMember member,
             String title,
             String content,
             String submissionMethod,
             LocalDateTime closeAt
     ) {
-        return new Assignment(study, title, content, submissionMethod, closeAt);
+        return new Assignment(study, member, title, content, submissionMethod, closeAt);
     }
 
     private Assignment(
             Study study,
+            StudyMember member,
             String title,
             String content,
             String submissionMethod,
             LocalDateTime closeAt
     ) {
         this.study = study;
+        this.member = member;
         this.title = title;
         this.content = content;
         this.submissionMethod = submissionMethod;

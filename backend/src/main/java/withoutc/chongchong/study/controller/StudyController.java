@@ -16,6 +16,7 @@ import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.study.dto.MyStudyListResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.dto.StudyCreateResponse;
+import withoutc.chongchong.study.dto.StudyDetailResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.service.StudyService;
 
@@ -36,6 +37,16 @@ public class StudyController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @GetMapping("/{studyId}")
+    public ResponseEntity<StudyDetailResponse> getStudyDetail(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        StudyDetailResponse response = studyService.getStudyDetail(user.id(), studyId);
+        return ResponseEntity
+                .ok(response);
     }
 
     @GetMapping("/me")
