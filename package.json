@@ -1,0 +1,5 @@
+{
+	"devDependencies": {
+		"@msw/data": "^1.1.7"
+	}
+}
