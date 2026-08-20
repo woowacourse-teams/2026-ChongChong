@@ -29,6 +29,7 @@ import withoutc.chongchong.study.dto.MyStudyListResponse;
 import withoutc.chongchong.study.dto.MyStudyListResponse.MyStudyResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.dto.StudyDetailResponse;
+import withoutc.chongchong.study.dto.StudyInfoResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -157,6 +158,57 @@ class StudyServiceTest {
     }
 
     @Test
+    @DisplayName("스터디 정보를 조회하면 스터디명과 현재 사용자의 역할·이름을 반환한다")
+    void getStudyInfoTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명");
+        User user = User.create("테스트 사용자", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, "스터디 내 이름", user.getProfileImageUrl(), StudyMemberRole.MEMBER);
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.of(studyMember));
+
+        StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
+
+        assertThat(response.studyName()).isEqualTo("자바 스터디");
+        assertThat(response.role()).isEqualTo(StudyMemberRole.MEMBER);
+        assertThat(response.userName()).isEqualTo("스터디 내 이름");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디 정보를 조회하면 스터디 없음 예외가 발생한다")
+    void getStudyInfoForMissingStudyTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studyService.getStudyInfo(userId, studyId))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
+
+        verifyNoInteractions(studyMemberRepository);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디 정보를 조회할 수 없다")
+    void getStudyInfoForNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명");
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studyService.getStudyInfo(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+    }
+
+    @Test
     @DisplayName("스터디 리더는 멤버 수와 공지·과제 완료 수를 포함한 상세 정보를 조회한다")
     void getStudyDetailForLeaderTest() {
         Long userId = 1L;
@@ -240,6 +292,8 @@ class StudyServiceTest {
     void getStudyDetailForNonMemberTest() {
         Long userId = 1L;
         Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명");
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
                 .thenReturn(Optional.empty());
 
@@ -248,7 +302,7 @@ class StudyServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
 
-        verifyNoInteractions(studyRepository, noticeRepository, assignmentRepository);
+        verifyNoInteractions(noticeRepository, assignmentRepository);
     }
 
     @Test
@@ -260,7 +314,6 @@ class StudyServiceTest {
         Study study = Study.create("자바 스터디", "설명");
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.MEMBER);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(studyMemberRepository.findByStudyIdAndUserId(any(), any()))
                 .thenReturn(Optional.of(studyMember));
@@ -278,9 +331,7 @@ class StudyServiceTest {
     void getInviteLinkForNonMemberTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        User user = User.create("사용자", "profile-image-url");
         Study study = Study.create("자바 스터디", "설명");
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(studyMemberRepository.findByStudyIdAndUserId(any(), any()))
                 .thenReturn(Optional.empty());
@@ -298,8 +349,6 @@ class StudyServiceTest {
     void getInviteLinkForMissingStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        User user = User.create("사용자", "profile-image-url");
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> studyService.getInviteLink(userId, studyId))

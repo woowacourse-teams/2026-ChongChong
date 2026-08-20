@@ -154,6 +154,55 @@ class StudyAcceptanceTest {
     }
 
     @Test
+    @DisplayName("스터디 정보 조회 요청을 보내면 스터디명과 내 역할·이름을 반환한다")
+    void getStudyInfoTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, user, "스터디 내 이름", user.getProfileImageUrl(), StudyMemberRole.MEMBER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/info", study.getId())
+                .then()
+                .statusCode(200)
+                .body("studyName", equalTo("자바 스터디"))
+                .body("role", equalTo("MEMBER"))
+                .body("userName", equalTo("스터디 내 이름"));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디 정보를 조회하면 404를 반환한다")
+    void getStudyInfoForMissingStudyTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/info", 999L)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디 정보 조회 시 403을 반환한다")
+    void getStudyInfoForNonMemberTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/info", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_MEMBER"));
+    }
+
+    @Test
     @DisplayName("리더가 스터디 상세 조회를 요청하면 멤버 수와 공지·과제 완료 수를 반환한다")
     void getStudyDetailForLeaderTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));

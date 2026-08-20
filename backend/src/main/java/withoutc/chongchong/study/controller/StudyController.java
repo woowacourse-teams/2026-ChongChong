@@ -17,6 +17,7 @@ import withoutc.chongchong.study.dto.MyStudyListResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
 import withoutc.chongchong.study.dto.StudyCreateResponse;
 import withoutc.chongchong.study.dto.StudyDetailResponse;
+import withoutc.chongchong.study.dto.StudyInfoResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.service.StudyService;
 
@@ -48,6 +49,17 @@ public class StudyController {
         return ResponseEntity
                 .ok(response);
     }
+
+    @GetMapping("/{studyId}/info")
+    public ResponseEntity<StudyInfoResponse> getStudyInfo(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        StudyInfoResponse response = studyService.getStudyInfo(user.id(), studyId);
+        return ResponseEntity
+                .ok(response);
+    }
+
 
     @GetMapping("/me")
     public ResponseEntity<MyStudyListResponse> getMyStudies(
