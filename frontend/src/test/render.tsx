@@ -8,7 +8,7 @@ export function mockResponse<T>(url: string, studies: T[]) {
   server.use(http.get(url, () => HttpResponse.json({ studies })));
 }
 
-export function createWrapper() {
+export function createWrapper({ initialEntries }: { initialEntries?: string[] } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -20,7 +20,7 @@ export function createWrapper() {
   return function Wrapper({ children }: PropsWithChildren) {
     return (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
       </QueryClientProvider>
     );
   };

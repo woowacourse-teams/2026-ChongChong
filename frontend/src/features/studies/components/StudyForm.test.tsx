@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Route, Routes } from 'react-router';
 
 import { createWrapper } from '../../../test/render';
+import { STUDY_URLS } from '../urls';
 import StudyForm from './StudyForm';
 
 describe('StudyForm 테스트', () => {
@@ -21,5 +23,23 @@ describe('StudyForm 테스트', () => {
     await user.type(nameInput, '치킨');
     const button = screen.getByRole('button', { name: '스터디 만들기' });
     expect(button).toBeEnabled();
+  });
+
+  test('스터디를 생성하면 해당 스터디 페이지로 이동한다.', async () => {
+    const user = userEvent.setup();
+    render(
+      <Routes>
+        <Route path={STUDY_URLS.create} element={<StudyForm />} />
+        <Route path="/studies/:studyId" element={<p>스터디 디테일 페이지</p>} />
+      </Routes>,
+      { wrapper: createWrapper({ initialEntries: [STUDY_URLS.create] }) },
+    );
+
+    const nameInput = screen.getByRole('textbox', { name: '스터디 이름' });
+    await user.type(nameInput, '피자');
+    const button = screen.getByRole('button', { name: '스터디 만들기' });
+    await user.click(button);
+
+    expect(await screen.findByText('스터디 디테일 페이지')).toBeInTheDocument();
   });
 });
