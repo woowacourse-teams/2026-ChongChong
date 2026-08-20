@@ -32,3 +32,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0013](0013-unify-application-time-source.md) | 애플리케이션 기준 시각을 Clock으로 통일한다 |
 | [0014](0014-introduce-cursor-page-request.md) | 커서 페이지 요청을 값 객체로 관리한다 |
 | [0015](0015-use-records-for-read-projections.md) | 조회 Projection을 record로 정의한다 |
+| [0016](0016-establish-backend-ci-cd-pipeline.md) | AWS 관리형 서비스로 백엔드 CI/CD 파이프라인을 구성한다 |
