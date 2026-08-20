@@ -1,7 +1,5 @@
-import type { CSSProperties } from 'react';
-import clock from '../../../shared/assets/clock-black.svg';
+import type { ReactNode } from 'react';
 import rightArrow from '../../../shared/assets/right-arrow.svg';
-import Badge from '../../../shared/ui/Badge';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
 import { Link } from 'react-router';
@@ -19,50 +17,24 @@ export interface NoticeListItem {
 
 interface NoticeListProps {
   notices: NoticeListItem[];
-  isLeader: boolean;
   studyId: string;
+  detailSearch?: string;
+  children: (notice: NoticeListItem) => ReactNode;
 }
 
-const listStyle = {
-  flex: 'initial',
-} satisfies CSSProperties;
-
-export default function NoticeList({ notices, isLeader, studyId }: NoticeListProps) {
+export default function NoticeList({ notices, studyId, detailSearch, children }: NoticeListProps) {
   return (
-    <List css={listStyle}>
+    <List>
       {notices.map((notice) => (
         <List.Item key={notice.id}>
           <Link
             to={{
               pathname: `/studies/${studyId}/notices/${notice.id}`,
-              search: isLeader ? '?role=leader' : '',
-            }}
-            css={{
-              display: 'block',
-              color: 'inherit',
-              textDecoration: 'none',
+              search: detailSearch,
             }}
           >
             <ContentCard>
-              <ContentCard.Badges>
-                {isLeader ? (
-                  <>
-                    <Badge variant="BrandOutline" size="Small">
-                      {notice.readCount}/{notice.totalCount} 읽음
-                    </Badge>
-                    {notice.reminderText && (
-                      <Badge variant="NeutralSolid" size="Small">
-                        <img src={clock} alt="리마인드 시각" width={12} height={12} />
-                        {notice.reminderText}
-                      </Badge>
-                    )}
-                  </>
-                ) : (
-                  <Badge variant={notice.isRead ? 'BrandOutline' : 'BrandSolid'} size="Small">
-                    {notice.isRead ? '읽음' : '읽지 않음'}
-                  </Badge>
-                )}
-              </ContentCard.Badges>
+              <ContentCard.Badges>{children(notice)}</ContentCard.Badges>
 
               <ContentCard.TitleRow>
                 <ContentCard.Title>{notice.title}</ContentCard.Title>

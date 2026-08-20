@@ -1,8 +1,8 @@
 import type { RouteObject } from 'react-router';
-import CreateNoticePage from '../CreateNoticePage';
-import EditNoticePage from '../EditNoticePage';
-import NoticeDetailPage from '../NoticeDetailPage';
-import NoticeListPage from '../NoticeListPage';
+import CreateNoticePage from '../pages/CreateNoticePage';
+import EditNoticePage from '../pages/EditNoticePage';
+import NoticeDetailPage from '../pages/NoticeDetailPage';
+import NoticeListPage from '../pages/NoticeListPage';
 
 export const routes: RouteObject[] = [
   {

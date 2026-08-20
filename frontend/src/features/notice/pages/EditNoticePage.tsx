@@ -1,10 +1,17 @@
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import backIcon from '../../shared/assets/left-arrow.svg';
-import TopHeader from '../../shared/ui/TopHeader';
-import { tokens } from '../../styles/global';
-import NoticeForm from './components/NoticeForm';
-import Main from '../../shared/ui/Main';
+import backIcon from '../../../shared/assets/left-arrow.svg';
+import TopHeader from '../../../shared/ui/TopHeader';
+import { tokens } from '../../../styles/global';
+import NoticeForm from '../components/NoticeForm';
+import type { NoticeFormValues } from '../components/NoticeForm';
+import Main from '../../../shared/ui/Main';
+
+// TODO: API 연동 후 optional 제거
+interface EditNoticePageProps {
+  notice?: NoticeFormValues;
+  onSubmit?: (values: NoticeFormValues) => void;
+}
 
 const pageStyle = {
   display: 'flex',
@@ -24,7 +31,7 @@ const backButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-export default function CreateNoticePage() {
+export default function EditNoticePage({ notice, onSubmit }: EditNoticePageProps) {
   const navigate = useNavigate();
 
   return (
@@ -42,8 +49,9 @@ export default function CreateNoticePage() {
         }
         middle={<TopHeader.Title>공지</TopHeader.Title>}
       />
+
       <Main>
-        <NoticeForm submitLabel="공지 올리기" />
+        <NoticeForm initialValues={notice} submitLabel="수정하기" onSubmit={onSubmit} />
       </Main>
     </div>
   );

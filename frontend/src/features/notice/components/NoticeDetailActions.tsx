@@ -25,7 +25,7 @@ export default function NoticeDetailActions({ onEdit, onDelete }: NoticeDetailAc
   return (
     <div css={actionsStyle}>
       <Button variant="neutralOutline" size="small" onClick={onEdit}>
-        <span css={buttonContentStyle}>
+        <span css={{ ...buttonContentStyle, color: tokens.text.primary }}>
           <img src={modifyIcon} alt="" width={18} height={18} />
           수정
         </span>
