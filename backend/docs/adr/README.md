@@ -29,3 +29,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0010](0010-choose-per-study-count-queries-for-my-study-list.md) | 내 스터디 목록에서 스터디별 집계 쿼리를 사용한다 |
 | [0011](0011-explicitly-delete-study-dependencies.md) | 스터디 삭제 시 하위 데이터를 서비스에서 명시적으로 삭제한다 |
 | [0012](0012-standardize-backend-code-conventions.md) | 백엔드 코드의 이름과 생성 형식을 통일한다 |
+| [0013](0013-unify-application-time-source.md) | 애플리케이션 기준 시각을 Clock으로 통일한다 |
