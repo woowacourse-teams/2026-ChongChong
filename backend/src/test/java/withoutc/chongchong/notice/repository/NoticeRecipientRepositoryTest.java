@@ -1,6 +1,7 @@
 package withoutc.chongchong.notice.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.LocalDateTime;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +75,22 @@ class NoticeRecipientRepositoryTest {
                         tuple(readNotice.getId(), true),
                         tuple(unreadNotice.getId(), false)
                 );
+    }
+
+    @Test
+    @DisplayName("같은 공지와 스터디원으로 수신자를 중복 저장할 수 없다")
+    void rejectDuplicateNoticeRecipientTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember writer = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember recipient = createMember(study, "스터디원", StudyMemberRole.MEMBER);
+        Notice notice = noticeRepository.saveAndFlush(
+                Notice.create(study, writer, "공지", "공지 내용")
+        );
+        noticeRecipientRepository.saveAndFlush(NoticeRecipient.create(recipient, notice));
+
+        assertThatThrownBy(() -> noticeRecipientRepository.saveAndFlush(
+                NoticeRecipient.create(recipient, notice)
+        )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private StudyMember createMemberWithIdDifferentFromUserId(Study study) {

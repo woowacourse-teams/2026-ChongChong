@@ -13,8 +13,11 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -59,7 +62,13 @@ public class Notice extends BaseEntity {
     }
 
     public void addRecipients(List<StudyMember> members) {
+        Set<Long> recipientMemberIds = recipients.stream()
+                .map(recipient -> recipient.getMember().getId())
+                .collect(Collectors.toCollection(HashSet::new));
+
         members.stream()
+                .filter(member -> member.getId() != null)
+                .filter(member -> recipientMemberIds.add(member.getId()))
                 .map(member -> NoticeRecipient.create(member, this))
                 .forEach(this.recipients::add);
     }

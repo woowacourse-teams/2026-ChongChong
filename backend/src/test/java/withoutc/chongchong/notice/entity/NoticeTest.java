@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -61,6 +62,41 @@ class NoticeTest {
                 .isInstanceOf(NoticeException.class)
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_CONTENT);
+    }
+
+    @Test
+    @DisplayName("같은 member id의 공지 수신자는 한 번만 추가한다")
+    void addDistinctRecipientsByMemberIdTest() {
+        StudyMember firstMember = mock(StudyMember.class);
+        StudyMember duplicateMember = mock(StudyMember.class);
+        when(firstMember.getId()).thenReturn(1L);
+        when(duplicateMember.getId()).thenReturn(1L);
+        Notice notice = Notice.create(study, writer, "공지 제목", "공지 내용");
+
+        notice.addRecipients(List.of(firstMember, duplicateMember));
+        notice.addRecipients(List.of(duplicateMember));
+
+        assertThat(notice.getRecipients())
+                .singleElement()
+                .extracting(NoticeRecipient::getMember)
+                .isSameAs(firstMember);
+    }
+
+    @Test
+    @DisplayName("member id가 없는 스터디원은 공지 수신자에서 제외한다")
+    void excludeRecipientWithoutMemberIdTest() {
+        StudyMember unsavedMember = mock(StudyMember.class);
+        StudyMember savedMember = mock(StudyMember.class);
+        when(unsavedMember.getId()).thenReturn(null);
+        when(savedMember.getId()).thenReturn(1L);
+        Notice notice = Notice.create(study, writer, "공지 제목", "공지 내용");
+
+        notice.addRecipients(List.of(unsavedMember, savedMember));
+
+        assertThat(notice.getRecipients())
+                .singleElement()
+                .extracting(NoticeRecipient::getMember)
+                .isSameAs(savedMember);
     }
 
     @Test

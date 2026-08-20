@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,7 +20,13 @@ import withoutc.chongchong.study.entity.StudyMember;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "notice_recipients")
+@Table(
+        name = "notice_recipients",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_notice_recipients_notice_member",
+                columnNames = {"notice_id", "member_id"}
+        )
+)
 public class NoticeRecipient extends BaseEntity {
 
     @Id

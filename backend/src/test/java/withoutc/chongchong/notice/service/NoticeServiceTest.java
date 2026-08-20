@@ -99,6 +99,7 @@ class NoticeServiceTest {
         when(leader.isLeader()).thenReturn(true);
         when(studyMemberRepository.findAllByStudyId(STUDY_ID)).thenReturn(List.of(leader, member));
         when(member.isLeader()).thenReturn(false);
+        when(member.getId()).thenReturn(MEMBER_ID);
         when(noticeRepository.save(any(Notice.class))).thenAnswer(invocation -> {
             Notice notice = invocation.getArgument(0);
             ReflectionTestUtils.setField(notice, "id", NOTICE_ID);
