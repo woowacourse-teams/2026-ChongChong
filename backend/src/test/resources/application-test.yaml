@@ -19,3 +19,6 @@ auth:
     issuer: chongchong-test
     audience: chongchong-test-api
     secret-base64: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+    access-token-validity: 30m
+  refresh-token:
+    validity: 30d

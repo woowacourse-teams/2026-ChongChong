@@ -24,3 +24,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0005](0005-transfer-data-across-layer-boundaries.md) | 레이어 경계에서 전용 데이터 객체를 사용한다 |
 | [0006](0006-design-common-exception-types.md)         | 공통 예외 처리 타입의 책임을 분리한다       |
 | [0007](0007-establish-access-token-authentication-boundary.md) | Access Token 인증 경계를 구성한다 |
+| [0008](0008-establish-auth-token-and-session-lifecycle.md) | 인증 토큰 발급과 세션 생명주기를 정의한다 |
