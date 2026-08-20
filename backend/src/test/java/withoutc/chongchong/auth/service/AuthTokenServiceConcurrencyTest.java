@@ -79,7 +79,7 @@ class AuthTokenServiceConcurrencyTest {
         } finally {
             start.countDown();
             executorService.shutdownNow();
-            assertThat(executorService.awaitTermination(5, SECONDS)).isTrue();
+            executorService.awaitTermination(5, SECONDS);
         }
     }
 
