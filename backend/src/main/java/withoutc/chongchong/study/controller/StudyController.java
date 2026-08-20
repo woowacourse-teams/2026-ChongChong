@@ -5,13 +5,20 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.study.dto.MyStudyListResponse;
 import withoutc.chongchong.study.dto.StudyCreateRequest;
+import withoutc.chongchong.study.dto.StudyCreateResponse;
+import withoutc.chongchong.study.dto.StudyDetailResponse;
+import withoutc.chongchong.study.dto.StudyInfoResponse;
 import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.service.StudyService;
 
@@ -22,25 +29,66 @@ public class StudyController {
 
     private final StudyService studyService;
 
-    // TODO: 인증, 인가 및 StudyMember 구현 후 현재 사용자 정보 전달
     @PostMapping
-    public ResponseEntity<Void> create(
-            @Valid @RequestBody StudyCreateRequest request
+    public ResponseEntity<StudyCreateResponse> createStudy(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestBody @Valid StudyCreateRequest request
     ) {
-        studyService.create(request);
+        StudyCreateResponse response = studyService.createStudy(user.id(), request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @GetMapping("/{studyId}")
+    public ResponseEntity<StudyDetailResponse> getStudyDetail(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        StudyDetailResponse response = studyService.getStudyDetail(user.id(), studyId);
+        return ResponseEntity
+                .ok(response);
+    }
+
+    @DeleteMapping("/{studyId}")
+    public ResponseEntity<Void> deleteStudy(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        studyService.deleteStudy(user.id(), studyId);
+        return ResponseEntity
+                .noContent()
                 .build();
     }
 
-    // TODO: 인증, 인가 및 StudyMember 구현 후 현재 사용자 정보 전달
-    @GetMapping("/{studyId}/invite-link")
-    public ResponseEntity<StudyInviteLinkResponse> getInviteLink(
+    @GetMapping("/{studyId}/info")
+    public ResponseEntity<StudyInfoResponse> getStudyInfo(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
     ) {
-        String inviteLink = studyService.getInviteLink(studyId);
-        StudyInviteLinkResponse response = new StudyInviteLinkResponse(inviteLink);
+        StudyInfoResponse response = studyService.getStudyInfo(user.id(), studyId);
+        return ResponseEntity
+                .ok(response);
+    }
+
+
+    @GetMapping("/me")
+    public ResponseEntity<MyStudyListResponse> getMyStudies(
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        MyStudyListResponse response = studyService.getMyStudies(user.id());
+
+        return ResponseEntity
+                .ok(response);
+    }
+
+    @GetMapping("/{studyId}/invite-link")
+    public ResponseEntity<StudyInviteLinkResponse> getInviteLink(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        StudyInviteLinkResponse response = studyService.getInviteLink(user.id(), studyId);
 
         return ResponseEntity
                 .ok(response);

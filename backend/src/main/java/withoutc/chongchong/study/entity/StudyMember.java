@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,13 @@ import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.user.entity.User;
 
 @Entity
-@Table(name = "study_members")
+@Table(
+        name = "study_members",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_study_members_study_user",
+                columnNames = {"study_id", "user_id"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StudyMember extends BaseEntity {

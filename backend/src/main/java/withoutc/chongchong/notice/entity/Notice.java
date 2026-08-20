@@ -39,21 +39,19 @@ public class Notice extends BaseEntity {
     private String content;
 
     public static Notice create(
-            Study study,
             StudyMember member,
             String title,
             String content
     ) {
-        return new Notice(study, member, title, content);
+        return new Notice(member, title, content);
     }
 
     private Notice(
-            Study study,
             StudyMember member,
             String title,
             String content
     ) {
-        this.study = study;
+        this.study = member.getStudy();
         this.member = member;
         this.title = title;
         this.content = content;
