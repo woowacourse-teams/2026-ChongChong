@@ -42,10 +42,19 @@ public class GlobalExceptionHandler {
             return handleException(e);
         }
 
-        ErrorCode errorCode = CommonErrorCode.INVALID_INPUT_VALUE;
+        ErrorCode errorCode = CommonErrorCode.INVALID_REQUEST_PARAMETER;
+
+        List<FieldErrorDetail> errors = e.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> FieldErrorDetail.of(
+                                result.getMethodParameter().getParameterName(),
+                                error.getDefaultMessage())
+                        )
+                )
+                .toList();
 
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ErrorResponse.from(errorCode));
+                .body(ErrorResponse.of(errorCode, errors));
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class,
