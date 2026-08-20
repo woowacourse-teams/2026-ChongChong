@@ -150,8 +150,9 @@ class AuthTokenServiceTest {
     @DisplayName("양수가 아닌 사용자 ID로 Token을 발급하지 않는다")
     void rejectInvalidUserId(Long userId) {
         assertThatThrownBy(() -> authTokenService.issue(userId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("사용자 ID는 양수여야 합니다.");
+                .isInstanceOf(AuthException.class)
+                .extracting(exception -> ((AuthException) exception).getErrorCode())
+                .isEqualTo(AuthErrorCode.INVALID_USER_ID);
 
         assertThat(authSessionRepository.count()).isZero();
     }

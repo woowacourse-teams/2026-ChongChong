@@ -57,7 +57,7 @@ public class AuthTokenService {
 
     private void validateUserId(Long userId) {
         if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("사용자 ID는 양수여야 합니다.");
+            throw new AuthException(AuthErrorCode.INVALID_USER_ID);
         }
     }
 }
