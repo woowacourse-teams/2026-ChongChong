@@ -9,6 +9,7 @@ import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import List from '../../../shared/ui/List';
 import { tokens, typography } from '../../../styles/global';
+import type { NoticeFormValues } from '../types';
 
 const formStyle = {
   display: 'flex',
@@ -41,12 +42,6 @@ const iconButtonStyle = {
   background: 'transparent',
   cursor: 'pointer',
 } satisfies CSSProperties;
-
-export interface NoticeFormValues {
-  title: string;
-  content: string;
-  reminders: Date[];
-}
 
 interface NoticeFormProps {
   initialValues?: NoticeFormValues;

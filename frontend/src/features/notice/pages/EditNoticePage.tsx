@@ -4,7 +4,7 @@ import backIcon from '../../../shared/assets/left-arrow.svg';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { tokens } from '../../../styles/global';
 import NoticeForm from '../components/NoticeForm';
-import type { NoticeFormValues } from '../components/NoticeForm';
+import type { NoticeFormValues } from '../types';
 import Main from '../../../shared/ui/Main';
 
 // TODO: API 연동 후 optional 제거
