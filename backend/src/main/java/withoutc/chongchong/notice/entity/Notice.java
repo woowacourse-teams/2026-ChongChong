@@ -114,14 +114,11 @@ public class Notice extends BaseEntity {
         );
     }
 
-    public LocalDateTime getLatestRemindAt() {
-        if (reminders.isEmpty()) {
-            return null;
-        }
-
+    public LocalDateTime getNextRemindAt() {
         return reminders.stream()
+                .filter(NoticeReminder::isPending)
                 .map(NoticeReminder::getRemindAt)
-                .max(LocalDateTime::compareTo)
+                .min(LocalDateTime::compareTo)
                 .orElse(null);
     }
 

@@ -29,7 +29,7 @@ public record NoticeSummaryResponse(
                 notice.getCreatedAt(),
                 recipientCount,
                 readRecipientCount,
-                notice.getLatestRemindAt(),
+                notice.getNextRemindAt(),
                 isComplete
         );
     }

@@ -19,7 +19,7 @@
 - 공지 수신자는 `recipient`로 표현한다.
 - 수신자 수는 `recipientCount`, 읽은 수신자 수는 `readRecipientCount`로 표현한다.
 - 컬렉션의 개수를 반환하는 메서드는 단수 명사 뒤에 `Count`를 붙인다. 예를 들어 `getRecipientCount`를 사용한다.
-- 여러 리마인더 중 가장 늦은 시각은 `latestRemindAt`으로 표현한다.
+- 아직 발송하지 않은 리마인더 중 가장 빠른 예정 시각은 `nextRemindAt`으로 표현한다.
 
 ### DTO 생성 메서드
 
