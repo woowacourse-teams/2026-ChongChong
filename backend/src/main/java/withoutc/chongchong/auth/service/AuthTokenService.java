@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.auth.config.RefreshTokenProperties;
 import withoutc.chongchong.auth.entity.AuthSession;
@@ -32,7 +33,7 @@ public class AuthTokenService {
     private final RefreshTokenProperties refreshTokenProperties;
     private final Clock clock;
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public IssuedTokenPair issue(Long userId) {
         validateUserId(userId);
         User user = userRepository.findByIdForUpdate(userId)
