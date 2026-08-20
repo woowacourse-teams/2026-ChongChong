@@ -63,8 +63,8 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
-        noticeRepository.delete(notice);
         noticeRecipientRepository.deleteAllByNoticeId(noticeId);
+        noticeRepository.delete(notice);
     }
 
     @Transactional

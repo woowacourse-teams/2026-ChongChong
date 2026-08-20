@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.dto.NoticeDetailResponse;
+import withoutc.chongchong.notice.dto.NoticeListResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 import withoutc.chongchong.user.entity.User;
@@ -48,6 +50,15 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping
+    public ResponseEntity<NoticeListResponse> getNotices(@PathVariable Long studyId,
+                                                         @RequestParam(required = false) Long cursor,
+                                                         @RequestParam(defaultValue = "10") int size) {
+        User user = userRepository.findById(MOCK_USER_ID).orElseThrow();
+        NoticeListResponse response = noticeService.list(user, studyId, cursor, size);
+
+        return ResponseEntity.ok(response);
+    }
 
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Void> updateNotice(@Valid @RequestBody NoticeUpdateRequest request,
