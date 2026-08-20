@@ -39,7 +39,7 @@ public class Notice extends BaseEntity {
     private Study study;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "writer_id", nullable = false)
     private StudyMember writer;
 
     @Column(nullable = false)
@@ -54,8 +54,8 @@ public class Notice extends BaseEntity {
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<NoticeRecipient> recipients = new ArrayList<>();
 
-    public static Notice create(Study study, StudyMember member, String title, String content) {
-        return new Notice(study, member, title, content);
+    public static Notice create(Study study, StudyMember writer, String title, String content) {
+        return new Notice(study, writer, title, content);
     }
 
     public void addRecipients(List<StudyMember> members) {
@@ -103,18 +103,18 @@ public class Notice extends BaseEntity {
         reminders.addAll(newReminders);
     }
 
-    public int getRecipientsCount() {
+    public int getRecipientCount() {
         return this.recipients.size();
     }
 
-    public int getReadCount() {
+    public int getReadRecipientCount() {
         return Math.toIntExact(this.recipients.stream()
                 .filter(NoticeRecipient::isRead)
                 .count()
         );
     }
 
-    public LocalDateTime getLastRemindAt() {
+    public LocalDateTime getLatestRemindAt() {
         if (reminders.isEmpty()) {
             return null;
         }

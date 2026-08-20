@@ -32,8 +32,8 @@ public class NoticeController {
 
     @PostMapping
     public ResponseEntity<NoticeCreateResponse> createNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
-                                                             @Valid @RequestBody NoticeCreateRequest request,
-                                                             @PathVariable Long studyId) {
+                                                             @PathVariable Long studyId,
+                                                             @Valid @RequestBody NoticeCreateRequest request) {
         NoticeCreateResponse response = noticeService.create(currentUser.id(), studyId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -43,7 +43,7 @@ public class NoticeController {
     public ResponseEntity<NoticeDetailResponse> getNoticeDetail(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                                 @PathVariable Long studyId,
                                                                 @PathVariable Long noticeId) {
-        NoticeDetailResponse response = noticeService.detail(currentUser.id(), studyId, noticeId);
+        NoticeDetailResponse response = noticeService.getDetail(currentUser.id(), studyId, noticeId);
 
         return ResponseEntity.ok(response);
     }
@@ -53,15 +53,16 @@ public class NoticeController {
                                                          @PathVariable Long studyId,
                                                          @RequestParam(required = false) @Positive(message = "cursor는 양수여야 합니다.") Long cursor,
                                                          @RequestParam(defaultValue = "10") @Positive(message = "size는 양수여야 합니다.") int size) {
-        NoticeListResponse response = noticeService.list(currentUser.id(), studyId, cursor, size);
+        NoticeListResponse response = noticeService.getList(currentUser.id(), studyId, cursor, size);
 
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Void> updateNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
-                                             @Valid @RequestBody NoticeUpdateRequest request,
-                                             @PathVariable Long studyId, @PathVariable Long noticeId) {
+                                             @PathVariable Long studyId,
+                                             @PathVariable Long noticeId,
+                                             @Valid @RequestBody NoticeUpdateRequest request) {
         noticeService.update(currentUser.id(), studyId, noticeId, request);
 
         return ResponseEntity.noContent().build();
@@ -73,6 +74,6 @@ public class NoticeController {
                                              @PathVariable Long noticeId) {
         noticeService.delete(currentUser.id(), studyId, noticeId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

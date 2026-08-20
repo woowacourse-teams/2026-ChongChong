@@ -50,16 +50,16 @@ public class NoticeService {
                 .filter(studyMember -> !studyMember.isLeader())
                 .toList();
 
-        StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Notice notice = Notice.create(study, leader, request.title(), request.content());
+        Notice notice = Notice.create(study, writer, request.title(), request.content());
         LocalDateTime now = LocalDateTime.now(clock);
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
 
         noticeRepository.save(notice);
 
-        return new NoticeCreateResponse(notice.getId());
+        return NoticeCreateResponse.of(notice.getId());
     }
 
     @Transactional
@@ -69,7 +69,6 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
-        noticeRecipientRepository.deleteAllByNoticeId(noticeId);
         noticeRepository.delete(notice);
     }
 
@@ -85,7 +84,7 @@ public class NoticeService {
         noticeRepository.save(notice);
     }
 
-    public NoticeListResponse list(Long userId, Long studyId, Long cursor, int size) {
+    public NoticeListResponse getList(Long userId, Long studyId, Long cursor, int size) { // N+1 문제 해결 필요
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Pageable pageable = PageRequest.of(0, size + 1);
@@ -99,17 +98,17 @@ public class NoticeService {
 
     private List<NoticeSummaryResponse> createNoticeSummaries(StudyMember member, List<Notice> notices) {
         if (member.isLeader()) {
-            return notices.stream().map(NoticeSummaryResponse::toLeader).toList();
+            return notices.stream().map(NoticeSummaryResponse::forLeader).toList();
         }
 
         return notices.stream()
                 .map(notice -> {
                     boolean isRead = isRead(member, notice);
-                    return NoticeSummaryResponse.toMember(notice, isRead);
+                    return NoticeSummaryResponse.forMember(notice, isRead);
                 }).toList();
     }
 
-    public NoticeDetailResponse detail(Long userId, Long studyId, Long noticeId) {
+    public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
@@ -119,7 +118,8 @@ public class NoticeService {
     }
 
     private boolean isRead(StudyMember member, Notice notice) {
-        NoticeRecipient recipient = noticeRecipientRepository.findByMemberIdAndNoticeId(member.getId(), notice.getId());
+        NoticeRecipient recipient = noticeRecipientRepository.findByNoticeIdAndMemberId(notice.getId(), member.getId())
+                .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND));
 
         return recipient.isRead();
     }

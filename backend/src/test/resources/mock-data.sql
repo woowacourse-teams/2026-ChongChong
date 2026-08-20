@@ -61,7 +61,7 @@ VALUES (1, '1주차 JVM 구조', 'JVM 메모리 구조와 클래스 로딩 과�
        (3, '동적 계획법 10문제', '점화식 도출 과정을 포함해 풀이합니다.', '문제 풀이 링크', TIMESTAMP '2026-08-21 23:59:59', TIMESTAMP '2026-08-07 11:00:00', TIMESTAMP '2026-08-07 11:00:00'),
        (4, '주간 회고', '한 주 동안 학습한 내용을 짧게 회고합니다.', NULL, TIMESTAMP '2026-08-23 23:59:59', TIMESTAMP '2026-08-16 12:00:00', TIMESTAMP '2026-08-16 12:00:00');
 
-INSERT INTO notices (study_id, member_id, title, content, created_at, updated_at)
+INSERT INTO notices (study_id, writer_id, title, content, created_at, updated_at)
 VALUES (1, 1, '첫 모임 안내', '첫 모임은 월요일 오후 8시, 온라인으로 진행합니다.', TIMESTAMP '2026-08-01 09:00:00', TIMESTAMP '2026-08-01 09:00:00'),
        (1, 1, '개발 환경 설정', 'JDK 25와 IntelliJ 프로젝트 설정을 확인해 주세요.', TIMESTAMP '2026-08-02 09:00:00', TIMESTAMP '2026-08-02 09:00:00'),
        (1, 1, '1주차 발표 순서', '바니, 총총, 코코, 모카, 두부 순서로 발표합니다.', TIMESTAMP '2026-08-03 09:00:00', TIMESTAMP '2026-08-03 09:00:00'),

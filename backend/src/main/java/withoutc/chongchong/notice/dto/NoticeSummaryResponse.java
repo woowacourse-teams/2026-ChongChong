@@ -10,31 +10,31 @@ public record NoticeSummaryResponse(
         String title,
         String content,
         LocalDateTime createdAt,
-        Integer totalMemberCount,
-        Integer readMemberCount,
+        Integer recipientCount,
+        Integer readRecipientCount,
         LocalDateTime remindAt,
         boolean isComplete
 ) {
-    public static NoticeSummaryResponse toLeader(Notice notice) {
+    public static NoticeSummaryResponse forLeader(Notice notice) {
 
-        int memberCount = notice.getRecipientsCount();
-        int completeCount = notice.getReadCount();
+        int recipientCount = notice.getRecipientCount();
+        int readRecipientCount = notice.getReadRecipientCount();
 
-        boolean isComplete = (memberCount == completeCount);
+        boolean isComplete = (recipientCount == readRecipientCount);
 
         return new NoticeSummaryResponse(
                 notice.getId(),
                 notice.getTitle(),
                 notice.getContent(),
                 notice.getCreatedAt(),
-                memberCount,
-                completeCount,
-                notice.getLastRemindAt(),
+                recipientCount,
+                readRecipientCount,
+                notice.getLatestRemindAt(),
                 isComplete
         );
     }
 
-    public static NoticeSummaryResponse toMember(Notice notice, boolean isComplete) {
+    public static NoticeSummaryResponse forMember(Notice notice, boolean isComplete) {
         return new NoticeSummaryResponse(
                 notice.getId(),
                 notice.getTitle(),
