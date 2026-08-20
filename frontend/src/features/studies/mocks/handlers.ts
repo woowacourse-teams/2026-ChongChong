@@ -1,4 +1,6 @@
 import { http, HttpResponse } from 'msw';
+import { study } from './db';
+import { validateStudy } from './validators';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 
@@ -28,5 +30,16 @@ export const handlers = [
     });
   }),
 
-  http.post(`${BASE_URL}${STUDY_URLS.create}`, () => {}),
+  http.post(`${BASE_URL}${STUDY_URLS.create}`, async ({ request }) => {
+    const body = (await request.json()) as { name: string; description: string };
+
+    const invalidInput = validateStudy(body);
+    if (invalidInput) {
+      return HttpResponse.json(invalidInput, { status: 400 });
+    }
+
+    const studyId = Date.now();
+    await study.create({ id: studyId, ...body });
+    return HttpResponse.json({ studyId }, { status: 201 });
+  }),
 ];
