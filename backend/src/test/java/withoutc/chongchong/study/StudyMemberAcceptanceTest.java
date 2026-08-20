@@ -79,6 +79,26 @@ class StudyMemberAcceptanceTest {
     }
 
     @Test
+    @DisplayName("스터디 참여 요청의 토큰 검증에 실패하면 한글 검증 사유를 반환한다")
+    void joinStudyWithInvalidRequestTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"token": ""}
+                        """)
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"))
+                .body("errors[0].field", equalTo("token"))
+                .body("errors[0].reason", equalTo("초대 토큰은 필수입니다."));
+    }
+
+    @Test
     @DisplayName("이미 가입한 스터디에 참여하면 409를 반환한다")
     void joinAlreadyJoinedStudyTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));

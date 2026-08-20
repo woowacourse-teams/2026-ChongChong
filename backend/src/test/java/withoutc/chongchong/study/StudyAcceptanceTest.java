@@ -2,6 +2,7 @@ package withoutc.chongchong.study;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -100,6 +101,32 @@ class StudyAcceptanceTest {
                     assertThat(studyMember.getName()).isEqualTo(user.getName());
                     assertThat(studyMember.getProfileImageUrl()).isEqualTo(user.getProfileImageUrl());
                 });
+    }
+
+    @Test
+    @DisplayName("스터디 생성 요청의 검증에 실패하면 한글 검증 사유를 반환한다")
+    void createStudyWithInvalidRequestTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "",
+                          "description": "1234567890123456789012345678901"
+                        }
+                        """)
+                .when()
+                .post("/studies")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"))
+                .body("errors.field", containsInAnyOrder("name", "description"))
+                .body("errors.reason", containsInAnyOrder(
+                        "스터디 이름은 필수입니다.",
+                        "스터디 설명은 30자 이내여야 합니다."
+                ));
     }
 
     @Test
