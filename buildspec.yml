@@ -1,0 +1,37 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto25
+
+  pre_build:
+    commands:
+      - test -n "${DOCKERHUB_USERNAME:-}" || (echo "DOCKERHUB_USERNAME is required" && exit 1)
+      - test -n "${DOCKERHUB_TOKEN:-}" || (echo "DOCKERHUB_TOKEN is required" && exit 1)
+      - test -n "${DOCKERHUB_REPOSITORY:-}" || (echo "DOCKERHUB_REPOSITORY is required" && exit 1)
+      - export IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+      - test -n "${IMAGE_TAG}" || (echo "CODEBUILD_RESOLVED_SOURCE_VERSION is required" && exit 1)
+      - printf '%s' "${DOCKERHUB_TOKEN}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
+
+  build:
+    commands:
+      - cd backend
+      - ./gradlew bootJar
+      - cd ..
+      - docker build --platform linux/arm64 --tag "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" backend
+
+  post_build:
+    commands:
+      - docker push "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}"
+      - docker tag "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" "${DOCKERHUB_REPOSITORY}:dev"
+      - docker push "${DOCKERHUB_REPOSITORY}:dev"
+      - printf 'BACKEND_IMAGE=%s\nBACKEND_IMAGE_TAG=%s\n' "${DOCKERHUB_REPOSITORY}" "${IMAGE_TAG}" > deploy/image.env
+
+artifacts:
+  files:
+    - appspec.yml
+    - deploy/**/*
