@@ -27,4 +27,6 @@ export const handlers = [
       ],
     });
   }),
+
+  http.post(`${BASE_URL}${STUDY_URLS.create}`, () => {}),
 ];

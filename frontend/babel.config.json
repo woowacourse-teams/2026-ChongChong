@@ -1,7 +1,0 @@
-{
-  "presets": [
-    ["@babel/preset-env", { "targets": "defaults, not dead" }],
-    ["@babel/preset-react", { "runtime": "automatic", "importSource": "@emotion/react" }],
-    "@babel/preset-typescript"
-  ]
-}
