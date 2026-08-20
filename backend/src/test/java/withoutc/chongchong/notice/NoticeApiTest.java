@@ -494,6 +494,42 @@ class NoticeApiTest {
     }
 
     @Test
+    @DisplayName("공지 목록의 size는 최대 100까지 허용한다")
+    void getNoticesWithMaximumSizeTest() {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .queryParam("size", 100)
+                .when()
+                .get("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @DisplayName("공지 목록의 size가 최대값을 초과하면 파라미터 오류 응답을 반환한다")
+    void getNoticesWithSizeOverMaximumTest() {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .queryParam("size", 101)
+                .when()
+                .get("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.field", hasItem("size"));
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .queryParam("size", Integer.MAX_VALUE)
+                .when()
+                .get("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.field", hasItem("size"));
+    }
+
+    @Test
     @DisplayName("스터디에 참여하지 않은 사용자가 공지 목록을 조회하면 접근 거부 응답을 반환한다")
     void getNoticesByNonParticipantTest() {
         User outsider = userRepository.saveAndFlush(User.create("외부 사용자", null));

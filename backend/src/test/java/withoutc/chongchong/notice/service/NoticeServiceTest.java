@@ -19,6 +19,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -199,6 +201,17 @@ class NoticeServiceTest {
                 PageRequest.of(0, 3)
         );
         verifyNoInteractions(noticeRecipientRepository);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {101, Integer.MAX_VALUE})
+    @DisplayName("페이지 크기가 최대값을 초과하면 저장소를 조회하지 않는다")
+    void rejectPageSizeOverMaximumTest(int size) {
+        assertThatThrownBy(() -> noticeService.getList(USER_ID, STUDY_ID, null, size))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("페이지 크기는 1 이상 100 이하여야 합니다.");
+
+        verifyNoInteractions(studyMemberRepository, noticeRepository, noticeRecipientRepository);
     }
 
     @Test

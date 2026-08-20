@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
@@ -87,12 +88,13 @@ public class NoticeService {
     }
 
     public NoticeListResponse getList(Long userId, Long studyId, Long cursor, int size) {
+        CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Pageable pageable = PageRequest.of(0, size + 1);
-        List<Notice> notices = noticeRepository.findByCursor(studyId, cursor, pageable);
+        Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
+        List<Notice> notices = noticeRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
 
-        CursorPageResponse<Notice> noticePage = CursorPageResponse.of(notices, size, Notice::getId);
+        CursorPageResponse<Notice> noticePage = CursorPageResponse.of(notices, pageRequest, Notice::getId);
 
         List<NoticeSummaryResponse> noticeSummaries = createNoticeSummaries(member, noticePage.content());
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);

@@ -1,6 +1,7 @@
 package withoutc.chongchong.notice.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.dto.NoticeDetailResponse;
@@ -52,7 +54,9 @@ public class NoticeController {
     public ResponseEntity<NoticeListResponse> getNotices(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                          @PathVariable Long studyId,
                                                          @RequestParam(required = false) @Positive(message = "cursor는 양수여야 합니다.") Long cursor,
-                                                         @RequestParam(defaultValue = "10") @Positive(message = "size는 양수여야 합니다.") int size) {
+                                                         @RequestParam(defaultValue = "10")
+                                                         @Positive(message = "size는 양수여야 합니다.")
+                                                         @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.") int size) {
         NoticeListResponse response = noticeService.getList(currentUser.id(), studyId, cursor, size);
 
         return ResponseEntity.ok(response);

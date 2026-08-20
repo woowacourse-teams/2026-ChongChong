@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 class CursorPageResponseTest {
 
@@ -21,7 +19,7 @@ class CursorPageResponseTest {
                 new TestItem(8L)
         );
 
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, 2, TestItem::id);
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, pageRequest(), TestItem::id);
 
         assertThat(response.content()).containsExactly(results.get(0), results.get(1));
         assertThat(response.nextCursor()).isEqualTo(9L);
@@ -33,7 +31,7 @@ class CursorPageResponseTest {
     void createLastPageWhenResultSizeEqualsRequestedSize() {
         List<TestItem> results = List.of(new TestItem(10L), new TestItem(9L));
 
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, 2, TestItem::id);
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, pageRequest(), TestItem::id);
 
         assertThat(response.content()).containsExactlyElementsOf(results);
         assertThat(response.nextCursor()).isNull();
@@ -45,7 +43,7 @@ class CursorPageResponseTest {
     void createLastPageWhenResultSizeIsLessThanRequestedSize() {
         List<TestItem> results = List.of(new TestItem(10L));
 
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, 2, TestItem::id);
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, pageRequest(), TestItem::id);
 
         assertThat(response.content()).containsExactlyElementsOf(results);
         assertThat(response.nextCursor()).isNull();
@@ -55,7 +53,7 @@ class CursorPageResponseTest {
     @Test
     @DisplayName("조회 결과가 비어 있으면 빈 마지막 페이지를 만든다")
     void createEmptyLastPage() {
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(List.of(), 2, TestItem::id);
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(List.of(), pageRequest(), TestItem::id);
 
         assertThat(response.content()).isEmpty();
         assertThat(response.nextCursor()).isNull();
@@ -67,7 +65,7 @@ class CursorPageResponseTest {
     void copyContentAsImmutableSnapshot() {
         TestItem originalFirstItem = new TestItem(10L);
         List<TestItem> results = new ArrayList<>(List.of(originalFirstItem, new TestItem(9L)));
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, 2, TestItem::id);
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, pageRequest(), TestItem::id);
 
         results.set(0, new TestItem(1L));
 
@@ -76,13 +74,8 @@ class CursorPageResponseTest {
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {0, -1})
-    @DisplayName("페이지 크기가 1보다 작으면 예외가 발생한다")
-    void rejectNonPositivePageSize(int size) {
-        assertThatThrownBy(() -> CursorPageResponse.of(List.of(), size, TestItem::id))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("페이지 크기는 1 이상이어야 합니다.");
+    private CursorPageRequest pageRequest() {
+        return CursorPageRequest.of(null, 2);
     }
 
     private record TestItem(Long id) {

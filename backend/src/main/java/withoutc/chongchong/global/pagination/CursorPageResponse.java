@@ -8,9 +8,13 @@ public record CursorPageResponse<T>(
         Long nextCursor,
         boolean hasNext
 ) {
-    public static <T> CursorPageResponse<T> of(List<T> results, int size, Function<T, Long> cursorExtractor) {
+    public static <T> CursorPageResponse<T> of(
+            List<T> results,
+            CursorPageRequest pageRequest,
+            Function<T, Long> cursorExtractor
+    ) {
+        int size = pageRequest.size();
 
-        validateSize(size);
         boolean hasNext = results.size() > size;
 
         int contentSize = Math.min(size, results.size());
@@ -24,11 +28,5 @@ public record CursorPageResponse<T>(
         Long nextCursor = cursorExtractor.apply(lastContent);
 
         return new CursorPageResponse<>(content, nextCursor, true);
-    }
-
-    private static void validateSize(int size) {
-        if (size < 1) {
-            throw new IllegalArgumentException("페이지 크기는 1 이상이어야 합니다.");
-        }
     }
 }
