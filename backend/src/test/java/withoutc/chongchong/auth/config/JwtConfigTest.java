@@ -3,6 +3,7 @@ package withoutc.chongchong.auth.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
@@ -15,21 +16,23 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
-class SecurityConfigTest {
+class JwtConfigTest {
 
     private static final String ISSUER = "chongchong-test";
     private static final String AUDIENCE = "chongchong-test-api";
     private static final byte[] SECRET = "01234567890123456789012345678901".getBytes();
     private static final String ENCODED_SECRET = Base64.getEncoder().encodeToString(SECRET);
+    private static final Duration ACCESS_TOKEN_VALIDITY = Duration.ofMinutes(30);
 
-    private final SecurityConfig securityConfig = new SecurityConfig();
-    private final JwtDecoder jwtDecoder = securityConfig.jwtDecoder(properties(ENCODED_SECRET));
+    private final JwtConfig jwtConfig = new JwtConfig();
+    private final JwtProperties properties = properties(ENCODED_SECRET);
+    private final JwtDecoder jwtDecoder = jwtConfig.jwtDecoder(jwtConfig.authJwtSecretKey(properties), properties);
 
     @Test
     @DisplayName("서명과 표준 Claim이 유효한 Access Token을 검증한다")
@@ -81,9 +84,9 @@ class SecurityConfigTest {
     @Test
     @DisplayName("Base64 형식이 아닌 JWT 서명 키를 거부한다")
     void rejectInvalidBase64Secret() {
-        JwtProperties properties = properties("not-base64-secret!");
+        JwtProperties invalidProperties = properties("not-base64-secret!");
 
-        assertThatThrownBy(() -> securityConfig.jwtDecoder(properties))
+        assertThatThrownBy(() -> jwtConfig.authJwtSecretKey(invalidProperties))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("JWT 서명 키는 Base64 형식이어야 합니다.");
     }
@@ -92,15 +95,23 @@ class SecurityConfigTest {
     @DisplayName("256비트보다 짧은 JWT 서명 키를 거부한다")
     void rejectShortSecret() {
         String shortSecret = Base64.getEncoder().encodeToString("short-secret".getBytes());
-        JwtProperties properties = properties(shortSecret);
+        JwtProperties invalidProperties = properties(shortSecret);
 
-        assertThatThrownBy(() -> securityConfig.jwtDecoder(properties))
+        assertThatThrownBy(() -> jwtConfig.authJwtSecretKey(invalidProperties))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("JWT 서명 키는 256비트 이상이어야 합니다.");
     }
 
+    @Test
+    @DisplayName("Access Token 유효 시간은 0보다 커야 한다")
+    void rejectNonPositiveAccessTokenValidity() {
+        assertThatThrownBy(() -> new JwtProperties(ISSUER, AUDIENCE, ENCODED_SECRET, Duration.ZERO))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Access Token 유효 시간은 0보다 커야 합니다.");
+    }
+
     private JwtProperties properties(String encodedSecret) {
-        return new JwtProperties(ISSUER, AUDIENCE, encodedSecret);
+        return new JwtProperties(ISSUER, AUDIENCE, encodedSecret, ACCESS_TOKEN_VALIDITY);
     }
 
     private String token(

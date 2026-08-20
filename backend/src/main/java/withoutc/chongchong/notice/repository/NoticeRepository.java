@@ -26,4 +26,8 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
     default Notice getByIdOrThrow(Long noticeId) {
         return findById(noticeId).orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
+
+    List<Notice> findAllByStudyId(Long studyId);
+
+    void deleteAllByStudyId(Long studyId);
 }
