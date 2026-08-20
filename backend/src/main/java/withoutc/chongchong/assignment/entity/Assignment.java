@@ -48,25 +48,23 @@ public class Assignment extends BaseEntity {
     private LocalDateTime closeAt;
 
     public static Assignment create(
-            Study study,
             StudyMember member,
             String title,
             String content,
             String submissionMethod,
             LocalDateTime closeAt
     ) {
-        return new Assignment(study, member, title, content, submissionMethod, closeAt);
+        return new Assignment(member, title, content, submissionMethod, closeAt);
     }
 
     private Assignment(
-            Study study,
             StudyMember member,
             String title,
             String content,
             String submissionMethod,
             LocalDateTime closeAt
     ) {
-        this.study = study;
+        this.study = member.getStudy();
         this.member = member;
         this.title = title;
         this.content = content;
