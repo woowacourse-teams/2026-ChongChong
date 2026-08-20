@@ -5,7 +5,7 @@ set -euo pipefail
 head_branch="${1:?검사할 브랜치 이름을 입력해야 합니다.}"
 base_branch="${2:-}"
 
-branch_pattern='^(fe|be|common)/(feat|fix|docs|style|refactor|perf|test|chore)/([1-9][0-9]*-)?[a-z][a-z0-9]*(-[a-z0-9]+)*$'
+branch_pattern='^(fe|be|common)/[a-z][a-z0-9]*(-[a-z0-9]+)*/([1-9][0-9]*-)?[a-z][a-z0-9]*(-[a-z0-9]+)*$'
 
 case "$head_branch" in
   dev)
@@ -14,8 +14,8 @@ case "$head_branch" in
   *)
     if [[ ! "$head_branch" =~ $branch_pattern ]]; then
       echo "유효하지 않은 브랜치 이름입니다: $head_branch" >&2
-      echo "형식: <fe|be|common>/<타입>/[<이슈번호>-]<작업명>" >&2
-      echo "타입: feat, fix, docs, style, refactor, perf, test, chore" >&2
+      echo "형식: <fe|be|common>/<작업성격>/[<이슈번호>-]<작업명>" >&2
+      echo "작업성격과 작업명: 소문자로 시작하는 kebab-case" >&2
       exit 1
     fi
 
