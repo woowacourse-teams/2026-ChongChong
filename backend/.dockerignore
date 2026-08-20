@@ -1,0 +1,9 @@
+.gradle
+build/*
+!build/libs/
+!build/libs/*.jar
+src
+gradle
+gradlew
+gradlew.bat
+*.gradle
