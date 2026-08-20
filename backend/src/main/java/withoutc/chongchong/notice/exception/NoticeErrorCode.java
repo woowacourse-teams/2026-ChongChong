@@ -13,6 +13,8 @@ public enum NoticeErrorCode implements ErrorCode {
 
     INVALID_CONTENT(HttpStatus.BAD_REQUEST, "INVALID_CONTENT", "공지 내용이 올바르지 않습니다."),
 
+    INVALID_REMIND_AT(HttpStatus.BAD_REQUEST, "INVALID_REMIND_AT", "리마인드 시각이 올바르지 않습니다."),
+
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE_NOT_FOUND", "존재하지 않는 공지입니다.");
 
 

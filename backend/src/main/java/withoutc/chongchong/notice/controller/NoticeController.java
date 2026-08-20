@@ -22,7 +22,6 @@ import withoutc.chongchong.notice.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.dto.NoticeListResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
-import withoutc.chongchong.user.repository.UserRepository;
 
 @RequiredArgsConstructor
 @RequestMapping("/studies/{studyId}/notices")
@@ -30,7 +29,6 @@ import withoutc.chongchong.user.repository.UserRepository;
 public class NoticeController {
 
     private final NoticeService noticeService;
-    private final UserRepository userRepository;
 
     @PostMapping
     public ResponseEntity<NoticeCreateResponse> createNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,

@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -63,23 +64,43 @@ public class Notice extends BaseEntity {
                 .forEach(this.recipients::add);
     }
 
-    public void addReminders(List<LocalDateTime> remindAts) {
+    public void addReminders(List<LocalDateTime> remindAts, LocalDateTime now) {
         if (remindAts == null) {
             return;
         }
 
         remindAts.stream()
-                .map(remindAt -> NoticeReminder.create(this, remindAt))
+                .distinct()
+                .map(remindAt -> NoticeReminder.create(this, remindAt, now))
                 .forEach(this.reminders::add);
     }
 
-    public void update(String title, String content) {
+    public void update(String title, String content, List<LocalDateTime> remindAts, LocalDateTime now) {
         if (title != null) {
+            validateTitle(title);
             this.title = title;
         }
         if (content != null) {
+            validateContent(content);
             this.content = content;
         }
+        if (remindAts != null) {
+            replacePendingReminders(remindAts, now);
+        }
+    }
+
+    public void replacePendingReminders(List<LocalDateTime> remindAts, LocalDateTime now) {
+        if (remindAts.stream().anyMatch(Objects::isNull)) {
+            throw new NoticeException(NoticeErrorCode.INVALID_REMIND_AT);
+        }
+
+        List<NoticeReminder> newReminders = remindAts.stream()
+                .distinct()
+                .map(remindAt -> NoticeReminder.create(this, remindAt, now))
+                .toList();
+
+        reminders.removeIf(NoticeReminder::isPending);
+        reminders.addAll(newReminders);
     }
 
     public int getRecipientsCount() {

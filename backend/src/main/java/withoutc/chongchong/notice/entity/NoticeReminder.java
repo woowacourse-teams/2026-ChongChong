@@ -16,6 +16,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
+import withoutc.chongchong.notice.exception.NoticeErrorCode;
+import withoutc.chongchong.notice.exception.NoticeException;
 
 @Entity
 @Getter
@@ -38,7 +40,9 @@ public class NoticeReminder extends BaseEntity {
     @Column(nullable = false)
     private NoticeReminderStatus status;
 
-    public static NoticeReminder create(Notice notice, LocalDateTime remindAt) {
+    public static NoticeReminder create(Notice notice, LocalDateTime remindAt, LocalDateTime now) {
+        validateRemindAt(remindAt, now);
+
         return new NoticeReminder(notice, remindAt, NoticeReminderStatus.PENDING);
     }
 
@@ -48,6 +52,12 @@ public class NoticeReminder extends BaseEntity {
 
     public boolean isPending() {
         return status == NoticeReminderStatus.PENDING;
+    }
+
+    private static void validateRemindAt(LocalDateTime remindAt, LocalDateTime now) {
+        if (remindAt == null || !remindAt.isAfter(now)) {
+            throw new NoticeException(NoticeErrorCode.INVALID_REMIND_AT);
+        }
     }
 
     private NoticeReminder(Notice notice, LocalDateTime remindAt, NoticeReminderStatus status) {

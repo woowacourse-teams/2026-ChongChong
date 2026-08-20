@@ -1,5 +1,7 @@
 package withoutc.chongchong.notice.service;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,8 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final NoticeRecipientRepository noticeRecipientRepository;
 
+    private final Clock clock;
+
     @Transactional
     public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
         Study study = studyRepository.getByIdOrThrow(studyId);
@@ -49,7 +53,8 @@ public class NoticeService {
         StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Notice notice = Notice.create(study, leader, request.title(), request.content());
-        notice.addReminders(request.remindAts());
+        LocalDateTime now = LocalDateTime.now(clock);
+        notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
 
         noticeRepository.save(notice);
@@ -75,7 +80,8 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
-        notice.update(request.title(), request.content());
+        LocalDateTime now = LocalDateTime.now(clock);
+        notice.update(request.title(), request.content(), request.remindAts(), now);
         noticeRepository.save(notice);
     }
 
