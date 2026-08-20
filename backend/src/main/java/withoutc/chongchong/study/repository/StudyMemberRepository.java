@@ -18,4 +18,6 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
     int countByUserId(Long userId);
 
     int countByStudyId(Long studyId);
+
+    void deleteAllByStudyId(Long studyId);
 }

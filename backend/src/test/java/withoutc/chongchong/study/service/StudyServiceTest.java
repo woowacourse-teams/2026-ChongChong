@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -113,7 +115,7 @@ class StudyServiceTest {
 
     @Test
     @DisplayName("스터디를 생성하고 생성자를 리더로 등록한다")
-    void createTest() {
+    void createStudyTest() {
         Long userId = 1L;
         StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "매주 월요일에 진행한다.");
         User user = User.create("사용자", "profile-image-url");
@@ -123,7 +125,7 @@ class StudyServiceTest {
         when(studyRepository.save(any(Study.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        studyService.create(userId, request);
+        studyService.createStudy(userId, request);
 
         verify(studyRepository).save(studyCaptor.capture());
         verify(studyMemberRepository).save(studyMemberCaptor.capture());
@@ -141,20 +143,101 @@ class StudyServiceTest {
 
     @Test
     @DisplayName("가입한 스터디가 50개 이상이면 스터디를 생성할 수 없다")
-    void createStudyWhenJoinedStudyCountLimitExceededTest() {
+    void createStudyStudyWhenJoinedStudyCountLimitExceededTest() {
         Long userId = 1L;
         StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "설명");
         User user = User.create("사용자", "profile-image-url");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
 
-        assertThatThrownBy(() -> studyService.create(userId, request))
+        assertThatThrownBy(() -> studyService.createStudy(userId, request))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
 
         verify(studyRepository, never()).save(any(Study.class));
         verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 스터디를 삭제하면 하위 데이터를 먼저 삭제한다")
+    void deleteStudyTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명");
+        User user = User.create("리더", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
+        );
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.of(studyMember));
+
+        studyService.deleteStudy(userId, studyId);
+
+        InOrder inOrder = inOrder(assignmentRepository, noticeRepository, studyMemberRepository, studyRepository);
+        inOrder.verify(assignmentRepository).deleteAllByStudyId(studyId);
+        inOrder.verify(noticeRepository).deleteAllByStudyId(studyId);
+        inOrder.verify(studyMemberRepository).deleteAllByStudyId(studyId);
+        inOrder.verify(studyRepository).delete(study);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디는 삭제할 수 없다")
+    void deleteStudyForMissingStudyTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
+
+        verifyNoInteractions(studyMemberRepository, assignmentRepository, noticeRepository);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디를 삭제할 수 없다")
+    void deleteStudyForNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명");
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+
+        verifyNoInteractions(assignmentRepository, noticeRepository);
+        verify(studyRepository, never()).delete(any(Study.class));
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아니면 스터디를 삭제할 수 없다")
+    void deleteStudyForNonLeaderTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명");
+        User user = User.create("멤버", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
+        );
+        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
+                .thenReturn(Optional.of(studyMember));
+
+        assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_LEADER);
+
+        verifyNoInteractions(assignmentRepository, noticeRepository);
+        verify(studyMemberRepository, never()).deleteAllByStudyId(studyId);
+        verify(studyRepository, never()).delete(any(Study.class));
     }
 
     @Test

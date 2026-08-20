@@ -9,4 +9,6 @@ import withoutc.chongchong.notice.entity.Notice;
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     List<Notice> findAllByStudyId(Long studyId);
+
+    void deleteAllByStudyId(Long studyId);
 }

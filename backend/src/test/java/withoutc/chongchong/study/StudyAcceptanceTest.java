@@ -317,6 +317,95 @@ class StudyAcceptanceTest {
                 .body("code", equalTo("NOT_STUDY_MEMBER"));
     }
 
+    @Test
+    @DisplayName("스터디 리더가 삭제 요청을 보내면 스터디와 하위 데이터가 모두 삭제된다")
+    void deleteStudyTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leaderMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(), StudyMemberRole.MEMBER)
+        );
+        noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
+        assignmentRepository.saveAndFlush(
+                Assignment.create(study, leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyRepository.findById(study.getId())).isEmpty();
+        assertThat(studyMemberRepository.findAll()).isEmpty();
+        assertThat(noticeRepository.findAll()).isEmpty();
+        assertThat(assignmentRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아닌 사용자는 스터디를 삭제할 수 없다")
+    void deleteStudyForNonMemberTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_MEMBER"));
+
+        assertThat(studyRepository.findById(study.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아닌 멤버는 스터디를 삭제할 수 없다")
+    void deleteStudyForNonLeaderTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(), StudyMemberRole.MEMBER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(member.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_LEADER"));
+
+        assertThat(studyRepository.findById(study.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디는 삭제할 수 없다")
+    void deleteStudyForMissingStudyTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}", 999L)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_NOT_FOUND"));
+    }
+
     private void setCreatedAt(Long studyMemberId, LocalDateTime createdAt) {
         jdbcTemplate.update(
                 "UPDATE study_members SET created_at = ? WHERE id = ?",

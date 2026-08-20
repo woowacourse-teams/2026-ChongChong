@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,11 +30,11 @@ public class StudyController {
     private final StudyService studyService;
 
     @PostMapping
-    public ResponseEntity<StudyCreateResponse> create(
+    public ResponseEntity<StudyCreateResponse> createStudy(
             @AuthenticationPrincipal AuthenticatedUser user,
             @RequestBody @Valid StudyCreateRequest request
     ) {
-        StudyCreateResponse response = studyService.create(user.id(), request);
+        StudyCreateResponse response = studyService.createStudy(user.id(), request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -48,6 +49,17 @@ public class StudyController {
         StudyDetailResponse response = studyService.getStudyDetail(user.id(), studyId);
         return ResponseEntity
                 .ok(response);
+    }
+
+    @DeleteMapping("/{studyId}")
+    public ResponseEntity<Void> deleteStudy(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        studyService.deleteStudy(user.id(), studyId);
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
     @GetMapping("/{studyId}/info")

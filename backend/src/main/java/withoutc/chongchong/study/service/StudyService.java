@@ -56,7 +56,7 @@ public class StudyService {
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
 
     @Transactional
-    public StudyCreateResponse create(Long userId, StudyCreateRequest request) {
+    public StudyCreateResponse createStudy(Long userId, StudyCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         validateStudyCountLimit(userId);
@@ -69,6 +69,24 @@ public class StudyService {
         studyMemberRepository.save(studyMember);
 
         return StudyCreateResponse.from(study);
+    }
+
+    @Transactional
+    public void deleteStudy(Long userId, Long studyId) {
+        Study study = studyRepository.findById(studyId)
+                .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+
+        StudyMember studyMember = studyMemberRepository.findByStudyIdAndUserId(studyId, userId)
+                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_MEMBER));
+
+        if (studyMember.getRole() != StudyMemberRole.LEADER) {
+            throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
+        }
+
+        assignmentRepository.deleteAllByStudyId(studyId);
+        noticeRepository.deleteAllByStudyId(studyId);
+        studyMemberRepository.deleteAllByStudyId(studyId);
+        studyRepository.delete(study);
     }
 
     private void validateStudyCountLimit(Long userId) {
@@ -179,7 +197,7 @@ public class StudyService {
     }
 
     public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
-        Study study = studyRepository.findById(studyId)
+        studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
         studyMemberRepository.findByStudyIdAndUserId(studyId, userId)

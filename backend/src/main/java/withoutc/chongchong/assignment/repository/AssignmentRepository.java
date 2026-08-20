@@ -9,4 +9,6 @@ import withoutc.chongchong.assignment.entity.Assignment;
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     List<Assignment> findAllByStudyId(Long studyId);
+
+    void deleteAllByStudyId(Long studyId);
 }
