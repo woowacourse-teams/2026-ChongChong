@@ -15,7 +15,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,11 +33,11 @@ import withoutc.chongchong.notice.dto.NoticeListResponse;
 import withoutc.chongchong.notice.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.entity.NoticeRecipient;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -203,31 +202,39 @@ class NoticeServiceTest {
     }
 
     @Test
-    @DisplayName("스터디원이 공지 목록을 조회하면 자신의 읽음 여부만 포함한다")
+    @DisplayName("스터디원이 공지 목록을 조회하면 읽음 상태를 한 번에 조회한다")
     void getListForMemberTest() {
         StudyMember member = mock(StudyMember.class);
-        NoticeRecipient recipient = mock(NoticeRecipient.class);
-        Notice notice = noticeWithId(NOTICE_ID);
+        NoticeReadStatusProjection readStatus = readStatus(NOTICE_ID, NOW);
+        NoticeReadStatusProjection unreadStatus = readStatus(200L, null);
+        Notice firstNotice = noticeWithId(NOTICE_ID);
+        Notice secondNotice = noticeWithId(200L);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
         when(noticeRepository.findByCursor(
                 STUDY_ID,
                 null,
                 PageRequest.of(0, 11)
-        )).thenReturn(List.of(notice));
-        when(noticeRecipientRepository.findByNoticeIdAndMemberId(NOTICE_ID, MEMBER_ID))
-                .thenReturn(Optional.of(recipient));
-        when(recipient.isRead()).thenReturn(true);
+        )).thenReturn(List.of(firstNotice, secondNotice));
+        when(noticeRecipientRepository.findReadStatusesByNoticeIdsAndMemberId(
+                List.of(NOTICE_ID, 200L),
+                MEMBER_ID
+        )).thenReturn(List.of(readStatus, unreadStatus));
 
         NoticeListResponse response = noticeService.getList(USER_ID, STUDY_ID, null, 10);
 
         assertThat(response.hasNext()).isFalse();
         assertThat(response.nextCursor()).isNull();
-        assertThat(response.notices()).hasSize(1);
+        assertThat(response.notices()).hasSize(2);
         assertThat(response.notices().getFirst().recipientCount()).isNull();
         assertThat(response.notices().getFirst().readRecipientCount()).isNull();
         assertThat(response.notices().getFirst().remindAt()).isNull();
         assertThat(response.notices().getFirst().isComplete()).isTrue();
+        assertThat(response.notices().getLast().isComplete()).isFalse();
+        verify(noticeRecipientRepository).findReadStatusesByNoticeIdsAndMemberId(
+                List.of(NOTICE_ID, 200L),
+                MEMBER_ID
+        );
     }
 
     @Test
@@ -242,8 +249,10 @@ class NoticeServiceTest {
                 null,
                 PageRequest.of(0, 11)
         )).thenReturn(List.of(notice));
-        when(noticeRecipientRepository.findByNoticeIdAndMemberId(NOTICE_ID, MEMBER_ID))
-                .thenReturn(Optional.empty());
+        when(noticeRecipientRepository.findReadStatusesByNoticeIdsAndMemberId(
+                List.of(NOTICE_ID),
+                MEMBER_ID
+        )).thenReturn(List.of());
 
         assertThatThrownBy(() -> noticeService.getList(USER_ID, STUDY_ID, null, 10))
                 .isInstanceOf(NoticeException.class)
@@ -316,6 +325,14 @@ class NoticeServiceTest {
 
         assertNoticeNotFound(() -> noticeService.delete(USER_ID, STUDY_ID, NOTICE_ID));
         verify(noticeRepository, never()).delete(any(Notice.class));
+    }
+
+    private NoticeReadStatusProjection readStatus(Long noticeId, LocalDateTime readAt) {
+        NoticeReadStatusProjection projection = mock(NoticeReadStatusProjection.class);
+        when(projection.getNoticeId()).thenReturn(noticeId);
+        when(projection.getReadAt()).thenReturn(readAt);
+        when(projection.isRead()).thenCallRealMethod();
+        return projection;
     }
 
     private Notice noticeWithId(Long noticeId) {
