@@ -6,5 +6,5 @@ import withoutc.chongchong.notice.entity.NoticeRecipient;
 public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient, Long> {
     void deleteAllByNoticeId(Long noticeId);
 
-    NoticeRecipient findByUserIdAndNoticeId(Long userId, Long noticeId);
+    NoticeRecipient findByMemberIdAndNoticeId(Long memberId, Long noticeId);
 }

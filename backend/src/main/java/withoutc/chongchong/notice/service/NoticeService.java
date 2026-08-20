@@ -97,7 +97,7 @@ public class NoticeService {
 
         return notices.stream()
                 .map(notice -> {
-                    boolean isRead = isRead(user, notice);
+                    boolean isRead = isRead(member, notice);
                     return NoticeSummaryResponse.toMember(notice, isRead);
                 }).toList();
     }
@@ -111,8 +111,8 @@ public class NoticeService {
         return NoticeDetailResponse.from(notice);
     }
 
-    private boolean isRead(User user, Notice notice) {
-        NoticeRecipient recipient = noticeRecipientRepository.findByUserIdAndNoticeId(user.getId(), notice.getId());
+    private boolean isRead(StudyMember member, Notice notice) {
+        NoticeRecipient recipient = noticeRecipientRepository.findByMemberIdAndNoticeId(member.getId(), notice.getId());
 
         return recipient.isRead();
     }
