@@ -115,13 +115,13 @@ public class Notice extends BaseEntity {
     }
 
     private static void validateTitle(String title) {
-        if (title.isBlank()) {
+        if (title.isBlank() || title.length() > 15) {
             throw new NoticeException(NoticeErrorCode.INVALID_TITLE);
         }
     }
 
     private static void validateContent(String content) {
-        if (content.isBlank() || content.length() >= 10000) {
+        if (content.isBlank() || content.length() > 10000) {
             throw new NoticeException(NoticeErrorCode.INVALID_CONTENT);
         }
     }
