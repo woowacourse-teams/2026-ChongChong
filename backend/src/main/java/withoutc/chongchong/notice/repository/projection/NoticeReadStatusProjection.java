@@ -2,13 +2,11 @@ package withoutc.chongchong.notice.repository.projection;
 
 import java.time.LocalDateTime;
 
-public interface NoticeReadStatusProjection {
-
-    Long getNoticeId();
-
-    LocalDateTime getReadAt();
-
-    default boolean isRead() {
-        return getReadAt() != null;
+public record NoticeReadStatusProjection(
+        Long noticeId,
+        LocalDateTime readAt
+) {
+    public boolean isRead() {
+        return readAt != null;
     }
 }

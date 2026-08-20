@@ -342,11 +342,7 @@ class NoticeServiceTest {
     }
 
     private NoticeReadStatusProjection readStatus(Long noticeId, LocalDateTime readAt) {
-        NoticeReadStatusProjection projection = mock(NoticeReadStatusProjection.class);
-        when(projection.getNoticeId()).thenReturn(noticeId);
-        when(projection.getReadAt()).thenReturn(readAt);
-        when(projection.isRead()).thenCallRealMethod();
-        return projection;
+        return new NoticeReadStatusProjection(noticeId, readAt);
     }
 
     private Notice noticeWithId(Long noticeId) {

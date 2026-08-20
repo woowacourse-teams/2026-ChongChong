@@ -116,7 +116,7 @@ public class NoticeService {
                 .findReadStatusesByNoticeIdsAndMemberId(noticeIds, member.getId())
                 .stream()
                 .collect(Collectors.toMap(
-                        NoticeReadStatusProjection::getNoticeId,
+                        NoticeReadStatusProjection::noticeId,
                         NoticeReadStatusProjection::isRead
                 ));
 

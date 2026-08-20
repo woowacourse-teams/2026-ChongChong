@@ -70,7 +70,7 @@ class NoticeRecipientRepositoryTest {
                 List.of(readNotice.getId(), unreadNotice.getId(), otherNotice.getId()),
                 recipient.getId()
         ))
-                .extracting(NoticeReadStatusProjection::getNoticeId, NoticeReadStatusProjection::isRead)
+                .extracting(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::isRead)
                 .containsExactlyInAnyOrder(
                         tuple(readNotice.getId(), true),
                         tuple(unreadNotice.getId(), false)

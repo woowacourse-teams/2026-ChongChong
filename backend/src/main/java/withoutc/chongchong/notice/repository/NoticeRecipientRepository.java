@@ -10,8 +10,10 @@ import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjecti
 public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient, Long> {
 
     @Query("""
-            SELECT recipient.notice.id AS noticeId,
-                   recipient.readAt AS readAt
+            SELECT new withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection(
+                       recipient.notice.id,
+                       recipient.readAt
+                   )
             FROM NoticeRecipient recipient
             WHERE recipient.notice.id IN :noticeIds
               AND recipient.member.id = :memberId
