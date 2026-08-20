@@ -9,8 +9,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
-import withoutc.chongchong.global.exception.ErrorCode;
-import withoutc.chongchong.global.exception.ErrorResponse;
+import withoutc.chongchong.global.exception.response.ErrorResponse;
 
 public final class RestAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -26,7 +25,7 @@ public final class RestAccessDeniedHandler implements AccessDeniedHandler {
             HttpServletResponse response,
             AccessDeniedException accessDeniedException
     ) throws IOException {
-        ErrorCode errorCode = AuthErrorCode.ACCESS_DENIED;
+        AuthErrorCode errorCode = AuthErrorCode.ACCESS_DENIED;
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

@@ -10,8 +10,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
-import withoutc.chongchong.global.exception.ErrorCode;
-import withoutc.chongchong.global.exception.ErrorResponse;
+import withoutc.chongchong.global.exception.response.ErrorResponse;
 
 public final class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
@@ -27,7 +26,7 @@ public final class RestAuthenticationEntryPoint implements AuthenticationEntryPo
             HttpServletResponse response,
             AuthenticationException authenticationException
     ) throws IOException {
-        ErrorCode errorCode = AuthErrorCode.AUTHENTICATION_REQUIRED;
+        AuthErrorCode errorCode = AuthErrorCode.AUTHENTICATION_REQUIRED;
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
