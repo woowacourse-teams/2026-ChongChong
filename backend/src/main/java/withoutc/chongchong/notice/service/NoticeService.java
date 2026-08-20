@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.auth.exception.AuthErrorCode;
+import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.dto.NoticeCreateResponse;
@@ -24,7 +26,6 @@ import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.user.entity.User;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -36,16 +37,16 @@ public class NoticeService {
     private final NoticeRecipientRepository noticeRecipientRepository;
 
     @Transactional
-    public NoticeCreateResponse create(User user, Long studyId, NoticeCreateRequest request) {
+    public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
         Study study = studyRepository.getByIdOrThrow(studyId);
 
-        validateLeader(studyId, user);
+        validateLeader(studyId, userId);
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader())
                 .toList();
 
-        StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+        StudyMember leader = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Notice notice = Notice.create(study, leader, request.title(), request.content());
         notice.addReminders(request.remindAts());
@@ -57,8 +58,8 @@ public class NoticeService {
     }
 
     @Transactional
-    public void delete(User user, Long studyId, Long noticeId) {
-        validateLeader(studyId, user);
+    public void delete(Long userId, Long studyId, Long noticeId) {
+        validateLeader(studyId, userId);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
@@ -68,8 +69,8 @@ public class NoticeService {
     }
 
     @Transactional
-    public void update(User user, Long studyId, Long noticeId, NoticeUpdateRequest request) {
-        validateLeader(studyId, user);
+    public void update(Long userId, Long studyId, Long noticeId, NoticeUpdateRequest request) {
+        validateLeader(studyId, userId);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
@@ -78,19 +79,19 @@ public class NoticeService {
         noticeRepository.save(notice);
     }
 
-    public NoticeListResponse list(User user, Long studyId, Long cursor, int size) {
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+    public NoticeListResponse list(Long userId, Long studyId, Long cursor, int size) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Pageable pageable = PageRequest.of(0, size + 1);
         List<Notice> notices = noticeRepository.findByCursor(studyId, cursor, pageable);
 
         CursorPageResponse<Notice> noticePage = CursorPageResponse.of(notices, size, Notice::getId);
 
-        List<NoticeSummaryResponse> noticeSummaries = createNoticeSummaries(user, member, noticePage.content());
+        List<NoticeSummaryResponse> noticeSummaries = createNoticeSummaries(member, noticePage.content());
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);
     }
 
-    private List<NoticeSummaryResponse> createNoticeSummaries(User user, StudyMember member, List<Notice> notices) {
+    private List<NoticeSummaryResponse> createNoticeSummaries(StudyMember member, List<Notice> notices) {
         if (member.isLeader()) {
             return notices.stream().map(NoticeSummaryResponse::toLeader).toList();
         }
@@ -102,8 +103,8 @@ public class NoticeService {
                 }).toList();
     }
 
-    public NoticeDetailResponse detail(User user, Long studyId, Long noticeId) {
-        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+    public NoticeDetailResponse detail(Long userId, Long studyId, Long noticeId) {
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
@@ -117,10 +118,10 @@ public class NoticeService {
         return recipient.isRead();
     }
 
-    private void validateLeader(Long studyId, User user) {
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, user.getId());
+    private void validateLeader(Long studyId, Long userId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         if (!member.isLeader()) {
-            // TODO throw 403
+            throw new AuthException(AuthErrorCode.ACCESS_DENIED);
         }
     }
 
