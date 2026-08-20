@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 import io.restassured.http.ContentType;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -181,7 +182,7 @@ class NoticeApiTest {
                 .body("notices[0].id", equalTo(notice.getId().intValue()))
                 .body("notices[0].recipientCount", equalTo(2))
                 .body("notices[0].readRecipientCount", equalTo(0))
-                .body("notices[0].remindAt", equalTo(remindAt.toString()))
+                .body("notices[0].remindAt", equalTo(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("notices[0].isComplete", equalTo(false));
     }
 
