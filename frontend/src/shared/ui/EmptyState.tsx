@@ -12,6 +12,7 @@ const divStyle = {
   gap: tokens.spacing[1],
   justifyContent: 'center',
   alignItems: 'center',
+  marginBottom: tokens.spacing[6],
 } satisfies CSSProperties;
 
 const messageStyle = {

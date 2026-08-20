@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
 type InputProps = ComponentPropsWithoutRef<'input'>;
 
 const inputBaseStyle = {
-  ...typography.label,
+  ...typography.subtitle,
   width: '100%',
   minHeight: '52px',
   padding: tokens.spacing[4],
