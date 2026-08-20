@@ -9,12 +9,12 @@ import MemberNoticeReadState from './components/MemberNoticeReadState';
 import NoticeArticle from './components/NoticeArticle';
 import NoticeDetailActions from './components/NoticeDetailActions';
 import NoticeReadStatus from './components/NoticeReadStatus';
+import Main from '../../shared/ui/Main';
 
 const pageStyle = {
   display: 'flex',
   height: '100dvh',
   flexDirection: 'column',
-  overflow: 'hidden',
   background: tokens.bg.default,
 } satisfies CSSProperties;
 
@@ -122,7 +122,7 @@ export default function NoticeDetailPage() {
         middle={<TopHeader.Title>공지</TopHeader.Title>}
       />
 
-      <main
+      <Main
         ref={contentRef}
         css={isLeader ? contentStyle : memberContentStyle}
         onScroll={isLeader ? undefined : updateReadProgress}
@@ -145,7 +145,7 @@ export default function NoticeDetailPage() {
         />
 
         {isLeader && <NoticeDetailActions onEdit={editNotice} onDelete={openDeleteDialog} />}
-      </main>
+      </Main>
 
       {!isLeader && <MemberNoticeReadState progress={readProgress} readAt="8월 3일 21:14" />}
 

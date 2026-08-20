@@ -5,6 +5,7 @@ import TopHeader from '../../shared/ui/TopHeader';
 import { tokens } from '../../styles/global';
 import NoticeForm from './components/NoticeForm';
 import type { NoticeFormValues } from './components/NoticeForm';
+import Main from '../../shared/ui/Main';
 
 // TODO: API 연동 후 optional 제거
 interface EditNoticePageProps {
@@ -30,15 +31,6 @@ const backButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-const contentStyle = {
-  display: 'flex',
-  width: '100%',
-  margin: '0 auto',
-  padding: `${tokens.spacing[4]} ${tokens.layout.gutter} calc(${tokens.spacing[8]} + ${tokens.layout.safeBottom})`,
-  flex: 1,
-  flexDirection: 'column',
-} satisfies CSSProperties;
-
 export default function EditNoticePage({ notice, onSubmit }: EditNoticePageProps) {
   const navigate = useNavigate();
 
@@ -58,9 +50,9 @@ export default function EditNoticePage({ notice, onSubmit }: EditNoticePageProps
         middle={<TopHeader.Title>공지</TopHeader.Title>}
       />
 
-      <main css={contentStyle}>
+      <Main>
         <NoticeForm initialValues={notice} submitLabel="수정하기" onSubmit={onSubmit} />
-      </main>
+      </Main>
     </div>
   );
 }

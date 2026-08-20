@@ -4,6 +4,7 @@ import backIcon from '../../shared/assets/left-arrow.svg';
 import TopHeader from '../../shared/ui/TopHeader';
 import { tokens } from '../../styles/global';
 import NoticeForm from './components/NoticeForm';
+import Main from '../../shared/ui/Main';
 
 const pageStyle = {
   display: 'flex',
@@ -21,15 +22,6 @@ const backButtonStyle = {
   border: 0,
   background: 'transparent',
   cursor: 'pointer',
-} satisfies CSSProperties;
-
-const contentStyle = {
-  display: 'flex',
-  width: '100%',
-  margin: '0 auto',
-  padding: `${tokens.spacing[4]} ${tokens.layout.gutter} calc(${tokens.spacing[8]} + ${tokens.layout.safeBottom})`,
-  flex: 1,
-  flexDirection: 'column',
 } satisfies CSSProperties;
 
 export default function CreateNoticePage() {
@@ -50,9 +42,9 @@ export default function CreateNoticePage() {
         }
         middle={<TopHeader.Title>공지</TopHeader.Title>}
       />
-      <main css={contentStyle}>
+      <Main>
         <NoticeForm submitLabel="공지 올리기" />
-      </main>
+      </Main>
     </div>
   );
 }
