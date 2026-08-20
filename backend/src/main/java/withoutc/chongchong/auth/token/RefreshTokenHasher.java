@@ -12,14 +12,18 @@ public final class RefreshTokenHasher {
     private static final String HASH_ALGORITHM = "SHA-256";
 
     public HashedRefreshToken hash(RawRefreshToken rawRefreshToken) {
-        if (rawRefreshToken == null) {
-            throw new IllegalArgumentException("Refresh Token 원문은 필수입니다.");
-        }
+        validateRawRefreshToken(rawRefreshToken);
 
         byte[] hashBytes = messageDigest().digest(rawRefreshToken.value().getBytes(StandardCharsets.UTF_8));
         String hashValue = HexFormat.of().formatHex(hashBytes);
 
         return new HashedRefreshToken(hashValue);
+    }
+
+    private void validateRawRefreshToken(RawRefreshToken rawRefreshToken) {
+        if (rawRefreshToken == null) {
+            throw new IllegalArgumentException("Refresh Token 원문은 필수입니다.");
+        }
     }
 
     private MessageDigest messageDigest() {

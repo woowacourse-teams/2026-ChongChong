@@ -79,10 +79,14 @@ public class AuthSession extends BaseEntity {
     }
 
     public boolean isExpiredAt(Instant referenceTime) {
+        validateReferenceTime(referenceTime);
+        return !referenceTime.isBefore(expiresAt);
+    }
+
+    private void validateReferenceTime(Instant referenceTime) {
         if (referenceTime == null) {
             throw new IllegalArgumentException("만료 여부를 확인할 기준 시각은 필수입니다.");
         }
-        return !referenceTime.isBefore(expiresAt);
     }
 
     private static void validate(
@@ -90,11 +94,15 @@ public class AuthSession extends BaseEntity {
             HashedRefreshToken refreshTokenHash,
             Instant expiresAt
     ) {
+        validateUser(user);
+        validateRefreshTokenHash(refreshTokenHash);
+        validateExpiresAt(expiresAt);
+    }
+
+    private static void validateUser(User user) {
         if (user == null) {
             throw new IllegalArgumentException("인증 세션의 사용자는 필수입니다.");
         }
-        validateRefreshTokenHash(refreshTokenHash);
-        validateExpiresAt(expiresAt);
     }
 
     private static void validateRefreshTokenHash(HashedRefreshToken refreshTokenHash) {

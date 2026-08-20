@@ -12,6 +12,10 @@ public record RefreshTokenProperties(
 ) {
 
     public RefreshTokenProperties {
+        validateValidity(validity);
+    }
+
+    private void validateValidity(Duration validity) {
         if (validity == null || validity.isZero() || validity.isNegative()) {
             throw new IllegalArgumentException("Refresh Token 유효 시간은 0보다 커야 합니다.");
         }

@@ -16,6 +16,10 @@ public record JwtProperties(
 ) {
 
     public JwtProperties {
+        validateAccessTokenValidity(accessTokenValidity);
+    }
+
+    private void validateAccessTokenValidity(Duration accessTokenValidity) {
         if (accessTokenValidity == null
                 || accessTokenValidity.isZero()
                 || accessTokenValidity.isNegative()) {
