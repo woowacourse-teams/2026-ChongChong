@@ -76,8 +76,10 @@ CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`,
 4. 배포 실패 시 자동 rollback을 활성화한다.
 5. CodeDeploy Service Role과 EC2 Instance Profile을 연결한다.
 
-EC2 Instance Profile은 CodeDeploy 명령 수신과 Pipeline artifact S3 읽기에 필요한 최소 권한을 가져야 한다.
-CodeDeploy Service Role은 대상 EC2 tag와 배포 상태를 관리하는 데 필요한 권한을 가져야 한다.
+EC2 Instance Profile은 Pipeline artifact S3 읽기에 필요한 최소 권한을 가져야 한다. 현재처럼 공개 CodeDeploy
+Endpoint를 사용하는 Agent에는 별도의 `codedeploy-commands-secure` 권한이 필요하지 않으며, 이 권한은 CodeDeploy용
+VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service Role은 대상 EC2 tag와 배포 상태를 관리하는 데
+필요한 권한을 가져야 한다.
 
 ## 5. CodePipeline V2를 구성한다
 

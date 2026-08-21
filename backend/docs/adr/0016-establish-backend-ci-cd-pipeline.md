@@ -2,6 +2,7 @@
 
 - 날짜: 2026-08-21
 - 관련 이슈: [#83](https://github.com/woowacourse-teams/2026-ChongChong/issues/83)
+- 후속 ADR: [0017. 개인 AWS 계정에 임시 개발 배포 환경을 구성한다](0017-use-personal-aws-account-for-temporary-development-deployment.md)
 
 ## 배경
 
