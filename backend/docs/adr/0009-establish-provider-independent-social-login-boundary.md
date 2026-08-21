@@ -2,7 +2,7 @@
 
 - 날짜: 2026-08-20
 - 관련 이슈: [#72](https://github.com/woowacourse-teams/2026-ChongChong/issues/72)
-- 후속 결정: [0016. RN 소셜 로그인 HTTP 계약을 정의한다](0016-define-rn-social-login-http-contract.md)
+- 후속 결정: [0018. RN 소셜 로그인 HTTP 계약을 정의한다](0018-define-rn-social-login-http-contract.md)
 
 ## 배경
 

@@ -8,13 +8,7 @@ import footerIcon from '../../../shared/assets/icons/footer-icon.svg';
 import { tokens } from '../../../styles/global';
 import { typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
-
-const pageStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: '100dvh',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const actionsStyle = {
   display: 'flex',
@@ -32,7 +26,7 @@ const footerBannerStyle = {
 
 export default function StudyListPage() {
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         middle={
           <div>
@@ -66,6 +60,6 @@ export default function StudyListPage() {
           </div>
         </aside>
       </Main>
-    </div>
+    </Page>
   );
 }

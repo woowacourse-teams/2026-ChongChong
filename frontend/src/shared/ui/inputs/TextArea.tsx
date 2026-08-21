@@ -6,7 +6,7 @@ import type { ComponentPropsWithoutRef } from 'react';
 type TextAreaProps = ComponentPropsWithoutRef<'textarea'>;
 
 const textAreaBaseStyle = {
-  ...typography.label,
+  ...typography.subtitle,
   width: '100%',
   minHeight: '96px',
   padding: tokens.spacing[4],
