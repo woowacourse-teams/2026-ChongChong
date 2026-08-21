@@ -129,6 +129,7 @@ export default function NoticeForm({
         </List>
 
         <DateTimePicker
+          id="notice-reminder"
           triggerLabel={<img src={addIcon} alt="리마인드 시각 추가" width={24} height={24} />}
           onChange={(value) => setReminders((current) => [...current, value])}
         />
