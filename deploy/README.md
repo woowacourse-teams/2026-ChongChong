@@ -58,12 +58,12 @@ CodeBuild 환경에는 다음 변수를 설정한다.
 
 | 변수 | 용도 | 저장 방식 |
 | --- | --- | --- |
-| `DOCKERHUB_USERNAME` | Docker Hub push 사용자 | 일반 변수 가능 |
+| `DOCKERHUB_USERNAME` | Docker Hub push 사용자 | Parameter Store `/chongchong/dev/dockerhub/username` |
 | `DOCKERHUB_REPOSITORY` | 예: `docker.io/team/chongchong-backend` | 일반 변수 가능 |
-| `DOCKERHUB_TOKEN` | Docker Hub push Token | Secrets Manager 또는 Parameter Store 참조 |
+| `DOCKERHUB_TOKEN` | Docker Hub push Token | Parameter Store `/chongchong/dev/dockerhub/token` |
 
-`DOCKERHUB_TOKEN`을 plaintext 환경 변수나 저장소 파일에 넣지 않는다. 현재 권한 범위에서 비밀 저장소를 사용할 수
-없다면 인프라 담당자가 안전한 주입 수단을 제공하기 전에는 파이프라인을 활성화하지 않는다.
+CodeBuild Service Role에는 위 두 파라미터에 대한 `ssm:GetParameters` 권한만 부여한다. `DOCKERHUB_TOKEN`을
+plaintext 환경 변수나 저장소 파일에 넣지 않는다.
 
 CodeBuild는 Corretto 25로 `bootJar`를 실행하고 AMD64 이미지를 Docker Hub에 commit SHA와 `dev` 태그로 push한다.
 CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`, Compose, Nginx, 스크립트와 확정된 `image.env`만
