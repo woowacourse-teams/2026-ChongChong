@@ -25,6 +25,8 @@ CodeDeploy Agent가 설치되지 않은 EC2에는 CodeDeploy가 명령을 전달
   구성한다.
 - EC2 Instance Profile에는 초기 파이프라인 검증 속도를 위해 AWS 관리형 `AmazonS3ReadOnlyAccess`를 임시로 사용한다.
   최초 자동 배포가 확인되면 CodePipeline artifact 버킷과 서울 리전 CodeDeploy 버킷만 읽는 정책으로 축소한다.
+- CodeBuild의 Docker Hub username은 표준 `String` 파라미터 `/chongchong/dev/dockerhub/username`, push Token은 표준
+  `SecureString` 파라미터 `/chongchong/dev/dockerhub/token`으로 저장한다.
 - 개인 계정에 PostgreSQL RDS를 만들고 EC2와 같은 VPC에서 사용한다.
 - RDS는 공개 접근을 비활성화하고 5432번 inbound source를 백엔드 EC2의 Security Group으로 제한한다.
 - 개인 계정의 EC2는 Ubuntu 26.04 LTS `x86_64` 환경을 사용한다.
@@ -46,6 +48,9 @@ ARM64로 되돌린다.
 
 `AmazonS3ReadOnlyAccess` 사용도 운영 권한 모델로 확정한 결정이 아니다. 개인 개발 환경의 초기 연결 문제를 줄이기
 위한 임시 예외이며, 배포 경로가 확인되면 최소 권한 정책으로 교체한다.
+
+Parameter Store 표준 파라미터는 개발 환경에서 추가 저장 비용 없이 CodeBuild에 비밀을 주입할 수 있다. CodeBuild가
+직접 Parameter Store API를 호출하므로 개인 EC2를 Systems Manager 관리형 노드로 등록하지 않는다.
 
 ## 선택 이유
 
@@ -118,7 +123,6 @@ Ubuntu 26.04와 x86_64를 지원하고 Ruby 의존성을 제거했으므로 v1�
 ## 미확정 사항
 
 - EC2에 Elastic IP를 연결할지, 변경 가능한 공개 IP와 `nip.io` 주소를 사용할지
-- Docker Hub push Token을 Secrets Manager와 Parameter Store 중 어디에 저장할지
 - 개인 계정 리소스의 월간 비용 한도와 비용 알림 기준
 - 팀 계정으로 이전할 수 있다고 판단할 IAM, 네트워크와 운영 권한의 완료 조건
 
@@ -128,6 +132,8 @@ Ubuntu 26.04와 x86_64를 지원하고 Ruby 의존성을 제거했으므로 v1�
 - 개인 계정에서 PostgreSQL RDS를 생성하고 EC2 Security Group만 5432번 source로 허용한다.
 - 비밀 저장 방식을 결정하고 배포 환경 변수의 실제 값을 준비한다.
 - Docker Hub Repository와 push/pull Token을 준비한다.
+- Parameter Store에 Docker Hub username과 push Token을 생성하고 CodeBuild Role의 조회 범위를 두 파라미터로
+  제한한다.
 - EC2를 bootstrap하고 CodeBuild, CodeDeploy와 CodePipeline을 순서대로 연결한다.
 - 최초 `dev` 배포와 HTTPS health check를 확인한다.
 - 최초 자동 배포 후 EC2의 `AmazonS3ReadOnlyAccess`를 배포 버킷 전용 읽기 정책으로 교체한다.

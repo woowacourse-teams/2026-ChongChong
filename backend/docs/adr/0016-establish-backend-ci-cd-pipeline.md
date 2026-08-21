@@ -52,9 +52,13 @@ CI와 CodeBuild에서 JAR을 각각 만드는 중복을 허용한다. PR에서 �
 - EC2는 pull에 필요한 최소 권한의 Docker Hub Access Token을 사용한다.
 - `latest`만으로 배포하지 않고 CodeBuild가 제공하는 Git commit SHA를 이미지 태그와 배포 변수로 전달한다.
 - Registry 자격 증명은 Git에 저장하지 않는다.
+- CodeBuild용 Docker Hub username과 push Token은 Systems Manager Parameter Store의 표준 파라미터로 저장한다.
+- username은 `String`, Token은 `SecureString`으로 저장하고 CodeBuild Service Role에는 해당 파라미터를 읽는
+  `ssm:GetParameters` 권한만 부여한다.
 
-CodeBuild의 Docker Hub 자격 증명은 배포 전에 인프라에서 제공하는 비밀 저장 수단으로 주입한다. EC2의 런타임
-환경 변수와 pull 자격 증명은 `/opt/chongchong/.env`에 두고 파일 권한을 제한한다.
+Parameter Store 조회는 CodeBuild가 AWS API로 수행하므로 EC2를 Systems Manager 관리형 노드로 등록하거나 SSM
+Agent를 설치할 필요가 없다. EC2의 런타임 환경 변수와 pull 자격 증명은 `/opt/chongchong/.env`에 두고 파일 권한을
+제한한다.
 
 ### CodeDeploy Agent가 배포 명령을 실행한다
 
@@ -119,6 +123,12 @@ ECR은 AWS 권한과 수명 짧은 인증을 활용할 수 있지만 현재 사�
 GHCR은 소스와 이미지를 GitHub에서 함께 관리할 수 있지만 GitHub PAT의 수명과 권한 변경이 배포에 미치는 영향을
 피하고자 선택하지 않았다.
 
+### Docker Hub Token을 Secrets Manager에 저장
+
+Secret 수명 주기와 교체 관리 기능이 더 풍부하지만 개발 환경의 Docker Hub Token 하나를 위해 Secret 저장 비용과
+별도 권한 구성을 추가해야 한다. 현재는 자동 교체가 필요하지 않고 비용을 낮추는 것이 더 중요하므로 표준
+Parameter Store `SecureString`을 사용한다.
+
 ### 지금 무중단 배포 구성
 
 Blue/Green 배포나 두 컨테이너 전환은 중단을 줄이지만 단일 `t4g.micro`의 자원을 더 사용하고 초기 운영 복잡도를
@@ -151,7 +161,6 @@ Blue/Green 배포나 두 컨테이너 전환은 중단을 줄이지만 단일 `t
 ## 미확정 사항
 
 - 인프라 담당자가 제공할 CodePipeline, CodeBuild, CodeDeploy Service Role과 EC2 Instance Profile의 정확한 이름
-- CodeBuild의 Docker Hub push Token을 주입할 비밀 저장 수단
 - EC2의 Docker Hub pull Token을 개인 계정과 조직 계정 중 어디에서 발급할지
 - EC2 공개 IP와 이에 대응하는 `nip.io` 서버 이름
 - RDS Security Group의 5432번 source가 EC2 Security Group으로 제한되어 있는지
