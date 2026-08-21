@@ -1,6 +1,6 @@
 import { RouteObject } from 'react-router';
 import MyStudiesPage from './pages/MyStudiesPage';
-import NewStudyPage from './pages/NewStudyPage';
+import CreateStudyPage from './pages/CreateStudyPage';
 import StudyDetailPage from './pages/StudyDetailPage';
 
 export const routes: RouteObject[] = [
@@ -10,7 +10,7 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/studies/new',
-    element: <NewStudyPage />,
+    element: <CreateStudyPage />,
   },
   {
     path: '/studies/:studyId',
