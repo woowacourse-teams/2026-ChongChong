@@ -104,7 +104,7 @@ VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service 
 - Provider: CodeBuild
 - Input: Source artifact
 - Output: Build artifact
-- Project: 3단계에서 만든 ARM CodeBuild Project
+- Project: 3단계에서 만든 x86_64 CodeBuild Project
 
 ### Deploy
 
