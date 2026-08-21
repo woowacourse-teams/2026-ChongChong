@@ -23,8 +23,9 @@ CodeDeploy Agent가 설치되지 않은 EC2에는 CodeDeploy가 명령을 전달
   저장소의 배포 파일을 그대로 사용한다.
 - 개인 계정에서는 CodeDeploy Service Role, CodeBuild Service Role과 CodePipeline Service Role을 최소 권한으로 직접
   구성한다.
-- EC2 Instance Profile에는 초기 파이프라인 검증 속도를 위해 AWS 관리형 `AmazonS3ReadOnlyAccess`를 임시로 사용한다.
-  최초 자동 배포가 확인되면 CodePipeline artifact 버킷과 서울 리전 CodeDeploy 버킷만 읽는 정책으로 축소한다.
+- EC2 Instance Profile은 첫 배포부터 AWS 관리형 `AmazonS3ReadOnlyAccess`를 사용하지 않는다.
+- CodePipeline artifact 버킷과 CodeDeploy가 실제로 읽는 서울 리전 S3 리소스만 허용하는 사용자 지정 읽기 정책을
+  연결한다.
 - CodeBuild의 Docker Hub username은 표준 `String` 파라미터 `/chongchong/dev/dockerhub/username`, push Token은 표준
   `SecureString` 파라미터 `/chongchong/dev/dockerhub/token`으로 저장한다.
 - 개인 계정에 PostgreSQL RDS를 만들고 EC2와 같은 VPC에서 사용한다.
@@ -46,8 +47,8 @@ IAM Role 이름은 저장소에 고정하지 않고 AWS 리소스 설정으로 �
 파이프라인 검증을 먼저 완료하기 위한 임시 예외이며, 팀 환경 이전 시 CodeBuild 이미지와 Docker platform을 함께
 ARM64로 되돌린다.
 
-`AmazonS3ReadOnlyAccess` 사용도 운영 권한 모델로 확정한 결정이 아니다. 개인 개발 환경의 초기 연결 문제를 줄이기
-위한 임시 예외이며, 배포 경로가 확인되면 최소 권한 정책으로 교체한다.
+EC2의 S3 읽기 권한은 배포 아티팩트 수신에 필요한 경로로 제한한다. 버킷이나 객체 경로가 바뀌면 사용자 지정 정책도
+함께 갱신하고, 배포와 무관한 S3 리소스는 허용하지 않는다.
 
 Parameter Store 표준 파라미터는 개발 환경에서 추가 저장 비용 없이 CodeBuild에 비밀을 주입할 수 있다. CodeBuild가
 직접 Parameter Store API를 호출하므로 개인 EC2를 Systems Manager 관리형 노드로 등록하지 않는다.
@@ -118,7 +119,7 @@ Ubuntu 26.04와 x86_64를 지원하고 Ruby 의존성을 제거했으므로 v1�
 - 임시 개발 환경을 위해 별도 RDS 비용이 발생하고 팀 계정 데이터와 자동으로 동기화되지 않는다.
 - 임시 환경이 운영 환경처럼 장기간 유지되지 않도록 종료 조건과 리소스 제거 시점을 관리해야 한다.
 - 개인 환경과 팀 환경의 CPU 아키텍처가 달라 이전 시 Docker platform과 CodeBuild 이미지를 함께 변경해야 한다.
-- EC2가 개인 계정의 모든 S3 버킷을 읽을 수 있어, EC2가 침해되면 배포와 무관한 S3 데이터까지 노출될 수 있다.
+- 사용자 지정 S3 정책의 버킷이나 객체 경로가 실제 배포 경로와 다르면 CodeDeploy가 아티팩트를 받지 못한다.
 
 ## 미확정 사항
 
@@ -136,5 +137,5 @@ Ubuntu 26.04와 x86_64를 지원하고 Ruby 의존성을 제거했으므로 v1�
   제한한다.
 - EC2를 bootstrap하고 CodeBuild, CodeDeploy와 CodePipeline을 순서대로 연결한다.
 - 최초 `dev` 배포와 HTTPS health check를 확인한다.
-- 최초 자동 배포 후 EC2의 `AmazonS3ReadOnlyAccess`를 배포 버킷 전용 읽기 정책으로 교체한다.
+- EC2의 사용자 지정 S3 읽기 정책이 실제 배포 버킷과 객체 경로로 제한되는지 정기적으로 확인한다.
 - 개인 계정에서 발생하는 비용과 팀 계정 이전 조건을 운영 문서에 기록한다.
