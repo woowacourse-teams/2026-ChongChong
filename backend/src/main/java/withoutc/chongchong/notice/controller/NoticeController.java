@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
-import withoutc.chongchong.notice.dto.NoticeCreateRequest;
-import withoutc.chongchong.notice.dto.NoticeCreateResponse;
-import withoutc.chongchong.notice.dto.NoticeDetailResponse;
-import withoutc.chongchong.notice.dto.NoticeListResponse;
-import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
+import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
+import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 
 @RequiredArgsConstructor
