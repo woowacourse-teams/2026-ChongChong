@@ -22,7 +22,7 @@ phases:
       - cd backend
       - ./gradlew bootJar
       - cd ..
-      - docker build --platform linux/arm64 --tag "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" backend
+      - docker build --platform linux/amd64 --tag "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" backend
 
   post_build:
     commands:

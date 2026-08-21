@@ -5,8 +5,9 @@
 
 ## 1. 배포 전 확인
 
-- EC2는 CodeDeploy Agent가 공식 지원하는 Ubuntu 22.04 LTS인지 확인한다.
-- EC2 Architecture는 `arm64`, Instance Type은 `t4g.micro`를 사용한다.
+- 개인 AWS 개발 EC2는 Ubuntu 26.04 LTS `x86_64`를 사용한다.
+- CodeDeploy Agent는 Ubuntu 26.04와 Ruby 없는 실행을 지원하는 v2를 설치한다.
+- 팀 AWS 환경으로 이전할 때는 ADR-0016에 따라 `t4g.micro`와 `arm64` 이미지로 다시 전환한다.
 - EC2 outbound HTTPS 443 통신을 허용한다.
 - EC2 inbound 80과 443을 인터넷에 허용하고 22는 기존 관리 IP로만 제한한다.
 - RDS 5432 inbound source가 EC2의 Security Group인지 확인한다.
@@ -47,8 +48,8 @@ bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 
 | --- | --- |
 | Source | CodePipeline |
 | Artifacts | CodePipeline |
-| Environment | Managed image, ARM |
-| Image | `aws/codebuild/amazonlinux-aarch64-standard:3.0` |
+| Environment | Managed image, x86_64 |
+| Image | `aws/codebuild/amazonlinux-x86_64-standard:6.0` |
 | Compute | `BUILD_GENERAL1_SMALL` |
 | Privileged mode | 활성화 |
 | Buildspec | `buildspec.yml` |
@@ -64,7 +65,7 @@ CodeBuild 환경에는 다음 변수를 설정한다.
 `DOCKERHUB_TOKEN`을 plaintext 환경 변수나 저장소 파일에 넣지 않는다. 현재 권한 범위에서 비밀 저장소를 사용할 수
 없다면 인프라 담당자가 안전한 주입 수단을 제공하기 전에는 파이프라인을 활성화하지 않는다.
 
-CodeBuild는 Corretto 25로 `bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA와 `dev` 태그로 push한다.
+CodeBuild는 Corretto 25로 `bootJar`를 실행하고 AMD64 이미지를 Docker Hub에 commit SHA와 `dev` 태그로 push한다.
 CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`, Compose, Nginx, 스크립트와 확정된 `image.env`만
 포함한다.
 
