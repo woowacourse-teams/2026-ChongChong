@@ -23,11 +23,13 @@ SSH로 접속해 준비할 수 있다.
 ### CI와 CD의 책임을 분리한다
 
 - GitHub Actions는 백엔드 변경의 CI를 담당한다.
-- CI는 테스트 없이 `./gradlew bootJar`만 실행하여 실행 가능한 JAR 생성 여부를 확인한다.
+- CI는 `./gradlew test bootJar`를 실행하여 Gradle 테스트와 실행 가능한 JAR 생성 여부를 함께 확인한다.
 - CI는 Docker 이미지를 만들거나 AWS와 Docker Hub 배포 자격 증명을 사용하지 않는다.
 - AWS CodePipeline은 `dev` 브랜치 push를 배포 시작점으로 사용한다.
 - CodePipeline은 GitHub Connection으로 변경을 감지하고 CodeBuild와 CodeDeploy를 순서대로 실행한다.
-- CodeBuild는 `dev`에 확정된 커밋으로 JAR과 `linux/arm64` Docker 이미지를 다시 만든다.
+- CodeBuild는 `dev`에 확정된 커밋으로 테스트와 JAR 빌드를 다시 수행하고 Docker 이미지를 만든다.
+- 팀 AWS의 `t4g.micro`에서는 `linux/arm64` 이미지를 사용한다. 개인 AWS의 임시 x86_64 환경에서는
+  ADR-0017에 따라 `linux/amd64` 이미지를 사용하며, 빌드 platform은 배포 대상 EC2 아키텍처와 일치시킨다.
 - 배포 이미지는 변경 불가능한 Git commit SHA와 추적하기 쉬운 `dev` 태그를 Docker Hub에 push한다.
 - CodeDeploy는 단일 EC2에서 기존 컨테이너를 새 이미지로 교체하는 in-place 배포를 수행한다.
 
@@ -65,7 +67,8 @@ Agent를 설치할 필요가 없다. EC2의 런타임 환경 변수와 pull 자�
 - EC2에는 Docker Engine, Docker Compose Plugin과 CodeDeploy Agent를 최초 한 번 설치한다.
 - EC2에 CodeDeploy용 Instance Profile을 연결하고 필요한 S3 읽기 권한만 부여한다.
 - CodeDeploy Agent가 AWS 서비스로 outbound HTTPS 통신하므로 GitHub나 AWS 빌드 서버를 위해 22번 포트를 열지 않는다.
-- 배포 스크립트는 Docker Hub 로그인, 이미지 pull, Compose 교체와 HTTP health check를 수행한다.
+- 배포 스크립트는 Docker Hub 로그인, 이미지 pull, Compose 교체와 HTTPS health check를 수행한다.
+- health check는 Nginx의 TLS 종료를 거친 `/actuator/health`가 2xx로 응답하는 경우에만 성공 처리한다.
 - health check가 실패하면 배포를 실패 처리하고 직전에 실행하던 이미지 태그로 복구를 시도한다.
 
 ### Nginx와 인증서의 책임을 분리한다
@@ -88,9 +91,10 @@ CodePipeline, CodeBuild와 CodeDeploy를 사용하면 GitHub-hosted runner의 �
 병합부터 배포까지 자동화할 수 있다. 배포 Agent는 EC2에서 AWS로 나가는 통신을 사용하므로 현재의 제한된 SSH 정책을
 유지할 수 있다. GitHub 연결과 배포 상태도 AWS에서 함께 추적할 수 있다.
 
-CI에는 비밀이 필요 없는 빠른 JAR 빌드만 남겨 PR 피드백을 제공한다. 배포 이미지는 CodeBuild에서 다시 만들어
-`dev` 커밋과 이미지 SHA의 대응을 보장한다. ARM64 환경에서 이미지를 만들면 `t4g.micro`가 에뮬레이션 없이 실행할 수
-있다.
+CI에는 비밀이 필요 없는 Gradle 테스트와 JAR 빌드를 남겨 PR 피드백을 제공한다. 배포 이미지는 CodeBuild에서 테스트와
+JAR 빌드를 다시 수행해 `dev` 커밋과 이미지 SHA의 대응을 보장한다. 팀 AWS에서는 ARM64 이미지를 만들면
+`t4g.micro`가 에뮬레이션 없이 실행할 수 있고, 개인 AWS의 임시 환경에서는 AMD64 이미지를 만들어 x86_64 EC2와
+호환한다.
 
 Docker Hub는 별도의 AWS Registry 권한을 추가하지 않아도 되고 현재 팀이 사용할 수 있는 외부 Registry다. 이미지와
 소스가 서로 다른 서비스에 존재하고 토큰을 관리해야 하는 비용은 감수한다.
@@ -168,8 +172,8 @@ Blue/Green 배포나 두 컨테이너 전환은 중단을 줄이지만 단일 `t
 
 ## 후속 작업
 
-- 백엔드 `bootJar` 전용 GitHub Actions workflow를 추가한다.
-- ARM64 백엔드 Dockerfile과 Nginx Docker 구성을 추가한다.
+- 백엔드 테스트와 `bootJar`를 실행하는 GitHub Actions workflow를 추가한다.
+- 대상 EC2 아키텍처에 맞는 백엔드 Docker 이미지와 Nginx Docker 구성을 추가한다.
 - 개발 서버용 Docker Compose와 EC2 bootstrap·배포 스크립트를 추가한다.
 - CodeBuild `buildspec.yml`과 CodeDeploy `appspec.yml`을 추가한다.
 - CodePipeline의 GitHub Connection, `dev` 브랜치와 경로 필터를 AWS에서 구성한다.

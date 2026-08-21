@@ -126,7 +126,16 @@ sudo docker compose \
   --env-file /opt/chongchong/deploy/image.env \
   --file /opt/chongchong/deploy/docker-compose.yml \
   ps
-curl --fail --resolve "${SERVER_NAME}:443:127.0.0.1" "https://${SERVER_NAME}/actuator/health"
+sudo bash -c '
+  set -Eeuo pipefail
+  set -a
+  source /opt/chongchong/.env
+  set +a
+  status_code="$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+    --resolve "${SERVER_NAME}:443:127.0.0.1" \
+    "https://${SERVER_NAME}/actuator/health")"
+  [[ "${status_code}" =~ ^2[0-9]{2}$ ]]
+'
 ```
 
 배포 스크립트는 backend와 Nginx 컨테이너가 실행되고 Nginx에서 backend 8080 포트로 연결할 수 있는지 확인한 뒤,

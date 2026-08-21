@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
@@ -35,5 +37,5 @@ jobs:
           cache-dependency-path: |
             backend/*.gradle
             backend/gradle/wrapper/gradle-wrapper.properties
-      - name: Build executable JAR
-        run: ./gradlew bootJar
+      - name: Test and build executable JAR
+        run: ./gradlew test bootJar
