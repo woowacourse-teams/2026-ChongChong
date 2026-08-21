@@ -1,7 +1,7 @@
 package withoutc.chongchong.auth.support;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.auth.social.SocialLoginClient;
@@ -12,7 +12,7 @@ import withoutc.chongchong.auth.social.SocialUserInfo;
 public final class FakeSocialLoginClient implements SocialLoginClient {
 
     private final SocialProvider provider;
-    private final Map<String, SocialUserInfo> successfulResponses = new HashMap<>();
+    private final Map<String, SocialUserInfo> successfulResponses = new ConcurrentHashMap<>();
 
     public FakeSocialLoginClient(SocialProvider provider) {
         this.provider = provider;
@@ -24,6 +24,10 @@ public final class FakeSocialLoginClient implements SocialLoginClient {
 
     public void willFail(String credential) {
         successfulResponses.remove(credential);
+    }
+
+    public void clear() {
+        successfulResponses.clear();
     }
 
     @Override
