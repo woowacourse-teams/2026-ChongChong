@@ -100,11 +100,23 @@ class SecurityErrorResponseTest {
     }
 
     @Test
-    @DisplayName("공개 경로는 Access Token 없이 Security를 통과한다")
-    void allowPublicPathWithoutAccessToken() throws Exception {
+    @DisplayName("로그인 경로는 Access Token 없이 Security를 통과한다")
+    void allowLoginPathWithoutAccessToken() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
+                .andExpect(jsonPath("$.message").value("입력값이 올바르지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 GET 로그인 요청은 허용하지 않는 HTTP 메서드로 처리한다")
+    void rejectUnsupportedLoginGetRequest() throws Exception {
         mockMvc.perform(get("/auth/login"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("public"));
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_HTTP_METHOD"))
+                .andExpect(jsonPath("$.message").value("지원하지 않는 HTTP 메서드입니다."));
     }
 
     private ResultActions expectAuthenticationRequired(ResultActions resultActions) throws Exception {
@@ -121,11 +133,6 @@ class SecurityErrorResponseTest {
 
     @RestController
     static class TestController {
-
-        @GetMapping("/auth/login")
-        String publicEndpoint() {
-            return "public";
-        }
 
         @GetMapping("/test/security/protected")
         String protectedEndpoint() {

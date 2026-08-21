@@ -41,7 +41,9 @@ import withoutc.chongchong.user.repository.UserRepository;
 @Import(AuthTokenServiceTest.FixedClockConfig.class)
 class AuthTokenServiceTest {
 
-    private static final Instant NOW = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    private static final Instant NOW = Instant.now()
+            .truncatedTo(ChronoUnit.SECONDS)
+            .plusNanos(123_456_789);
 
     @Autowired
     private AuthTokenService authTokenService;
@@ -83,8 +85,10 @@ class AuthTokenServiceTest {
         String storedHash = findStoredRefreshTokenHash(authSession.getId());
 
         assertThat(accessToken.getSubject()).isEqualTo(user.getId().toString());
-        assertThat(tokenPair.accessToken().expiresAt()).isEqualTo(NOW.plus(Duration.ofMinutes(30)));
-        assertThat(tokenPair.refreshTokenExpiresAt()).isEqualTo(NOW.plus(Duration.ofDays(30)));
+        assertThat(tokenPair.accessToken().expiresAt())
+                .isEqualTo(NOW.truncatedTo(ChronoUnit.SECONDS).plus(Duration.ofMinutes(30)));
+        assertThat(tokenPair.refreshTokenExpiresAt())
+                .isEqualTo(NOW.plus(Duration.ofDays(30)).truncatedTo(ChronoUnit.MICROS));
         assertThat(authSession.getRefreshTokenHash()).isEqualTo(expectedHash);
         assertThat(authSession.getExpiresAt()).isEqualTo(tokenPair.refreshTokenExpiresAt());
         assertThat(storedHash)

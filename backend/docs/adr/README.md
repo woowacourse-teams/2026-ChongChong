@@ -15,22 +15,23 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 ## ADR 목록
 
-| 번호                                                  | 제목                                        |
-| ----------------------------------------------------- | ------------------------------------------- |
-| [0001](0001-adopt-architecture-decision-records.md)   | Architecture Decision Record를 도입한다     |
-| [0002](0002-organize-packages-by-domain.md)           | 도메인 중심으로 패키지를 구성한다           |
-| [0003](0003-define-backend-test-strategy.md)          | 백엔드 테스트 범위와 역할을 정의한다        |
-| [0004](0004-standardize-error-response.md)            | 에러 응답과 에러 코드 형식을 통일한다       |
-| [0005](0005-transfer-data-across-layer-boundaries.md) | 레이어 경계에서 전용 데이터 객체를 사용한다 |
-| [0006](0006-design-common-exception-types.md)         | 공통 예외 처리 타입의 책임을 분리한다       |
-| [0007](0007-establish-access-token-authentication-boundary.md) | Access Token 인증 경계를 구성한다 |
-| [0008](0008-establish-auth-token-and-session-lifecycle.md) | 인증 토큰 발급과 세션 생명주기를 정의한다 |
-| [0009](0009-establish-provider-independent-social-login-boundary.md) | 제공자 독립 소셜 로그인 경계를 구성한다 |
-| [0010](0010-choose-per-study-count-queries-for-my-study-list.md) | 내 스터디 목록에서 스터디별 집계 쿼리를 사용한다 |
-| [0011](0011-explicitly-delete-study-dependencies.md) | 스터디 삭제 시 하위 데이터를 서비스에서 명시적으로 삭제한다 |
-| [0012](0012-standardize-backend-code-conventions.md) | 백엔드 코드의 이름과 생성 형식을 통일한다 |
-| [0013](0013-unify-application-time-source.md) | 애플리케이션 기준 시각을 Clock으로 통일한다 |
-| [0014](0014-introduce-cursor-page-request.md) | 커서 페이지 요청을 값 객체로 관리한다 |
-| [0015](0015-use-records-for-read-projections.md) | 조회 Projection을 record로 정의한다 |
-| [0016](0016-establish-backend-ci-cd-pipeline.md) | AWS 관리형 서비스로 백엔드 CI/CD 파이프라인을 구성한다 |
+| 번호                                                                            | 제목                                        |
+|-------------------------------------------------------------------------------| ------------------------------------------- |
+| [0001](0001-adopt-architecture-decision-records.md)                           | Architecture Decision Record를 도입한다     |
+| [0002](0002-organize-packages-by-domain.md)                                   | 도메인 중심으로 패키지를 구성한다           |
+| [0003](0003-define-backend-test-strategy.md)                                  | 백엔드 테스트 범위와 역할을 정의한다        |
+| [0004](0004-standardize-error-response.md)                                    | 에러 응답과 에러 코드 형식을 통일한다       |
+| [0005](0005-transfer-data-across-layer-boundaries.md)                         | 레이어 경계에서 전용 데이터 객체를 사용한다 |
+| [0006](0006-design-common-exception-types.md)                                 | 공통 예외 처리 타입의 책임을 분리한다       |
+| [0007](0007-establish-access-token-authentication-boundary.md)                | Access Token 인증 경계를 구성한다 |
+| [0008](0008-establish-auth-token-and-session-lifecycle.md)                    | 인증 토큰 발급과 세션 생명주기를 정의한다 |
+| [0009](0009-establish-provider-independent-social-login-boundary.md)          | 제공자 독립 소셜 로그인 경계를 구성한다 |
+| [0010](0010-choose-per-study-count-queries-for-my-study-list.md)              | 내 스터디 목록에서 스터디별 집계 쿼리를 사용한다 |
+| [0011](0011-explicitly-delete-study-dependencies.md)                          | 스터디 삭제 시 하위 데이터를 서비스에서 명시적으로 삭제한다 |
+| [0012](0012-standardize-backend-code-conventions.md)                          | 백엔드 코드의 이름과 생성 형식을 통일한다 |
+| [0013](0013-unify-application-time-source.md)                                 | 애플리케이션 기준 시각을 Clock으로 통일한다 |
+| [0014](0014-introduce-cursor-page-request.md)                                 | 커서 페이지 요청을 값 객체로 관리한다 |
+| [0015](0015-use-records-for-read-projections.md)                              | 조회 Projection을 record로 정의한다 |
+| [0016](0016-establish-backend-ci-cd-pipeline.md)                              | AWS 관리형 서비스로 백엔드 CI/CD 파이프라인을 구성한다 |
 | [0017](0017-use-personal-aws-account-for-temporary-development-deployment.md) | 개인 AWS 계정에 임시 개발 배포 환경을 구성한다 |
+| [0018](0018-define-rn-social-login-http-contract.md)                          | RN 소셜 로그인 HTTP 계약을 정의한다 |

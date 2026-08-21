@@ -2,6 +2,7 @@ package withoutc.chongchong.auth.token;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,9 @@ public final class AccessTokenIssuer {
     public IssuedAccessToken issue(Long userId) {
         validateUserId(userId);
 
-        Instant issuedAt = clock.instant();
-        Instant expiresAt = issuedAt.plus(properties.accessTokenValidity());
+        Instant issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
+        Instant expiresAt = issuedAt.plus(properties.accessTokenValidity())
+                .truncatedTo(ChronoUnit.SECONDS);
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(properties.issuer())
                 .audience(List.of(properties.audience()))
