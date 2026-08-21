@@ -73,6 +73,25 @@ class AccessTokenIssuerTest {
     }
 
     @Test
+    @DisplayName("발급 결과와 JWT Claim의 만료 시각을 초 단위로 일치시킨다")
+    void matchIssuedAndClaimExpirationAtSecondPrecision() {
+        Instant subsecondNow = NOW.plusNanos(123_456_000);
+        AccessTokenIssuer issuer = new AccessTokenIssuer(
+                jwtEncoder,
+                properties,
+                Clock.fixed(subsecondNow, ZoneOffset.UTC)
+        );
+
+        IssuedAccessToken issuedAccessToken = issuer.issue(1L);
+        Jwt jwt = jwtDecoder.decode(issuedAccessToken.value());
+
+        Instant expectedExpiresAt = subsecondNow.truncatedTo(ChronoUnit.SECONDS)
+                .plus(ACCESS_TOKEN_VALIDITY);
+        assertThat(issuedAccessToken.expiresAt()).isEqualTo(expectedExpiresAt);
+        assertThat(jwt.getExpiresAt()).isEqualTo(expectedExpiresAt);
+    }
+
+    @Test
     @DisplayName("Access Token을 발급할 때마다 다른 jti를 사용한다")
     void issueUniqueJwtId() {
         Jwt first = jwtDecoder.decode(accessTokenIssuer.issue(1L).value());
