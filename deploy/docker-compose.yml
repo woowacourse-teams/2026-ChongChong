@@ -1,0 +1,42 @@
+services:
+  backend:
+    image: "${BACKEND_IMAGE}:${BACKEND_IMAGE_TAG}"
+    container_name: chongchong-backend
+    restart: unless-stopped
+    environment:
+      DB_URL: "${DB_URL}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      STUDY_INVITE_JWT_SECRET: "${STUDY_INVITE_JWT_SECRET}"
+      FRONTEND_BASE_URL: "${FRONTEND_BASE_URL}"
+      AUTH_JWT_ISSUER: "${AUTH_JWT_ISSUER}"
+      AUTH_JWT_AUDIENCE: "${AUTH_JWT_AUDIENCE}"
+      AUTH_JWT_SECRET_BASE64: "${AUTH_JWT_SECRET_BASE64}"
+      AUTH_JWT_ACCESS_TOKEN_VALIDITY: "${AUTH_JWT_ACCESS_TOKEN_VALIDITY:-30m}"
+      AUTH_REFRESH_TOKEN_VALIDITY: "${AUTH_REFRESH_TOKEN_VALIDITY:-30d}"
+    expose:
+      - "8080"
+    networks:
+      - application
+
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: chongchong-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      SERVER_NAME: "${SERVER_NAME}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    networks:
+      - application
+
+networks:
+  application:
+    name: chongchong-application

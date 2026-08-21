@@ -37,6 +37,14 @@ class AuthenticatedUserAuthenticationTest {
     private TestJwtFactory testJwtFactory;
 
     @Test
+    @DisplayName("배포 상태 확인은 인증 없이 호출할 수 있다")
+    void allowHealthCheckWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
     @DisplayName("Controller는 인증된 총총 내부 사용자 ID를 전달받는다")
     void provideAuthenticatedUserToController() throws Exception {
         mockMvc.perform(get("/test/authenticated-user")
