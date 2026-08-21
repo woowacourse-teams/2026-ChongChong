@@ -1,21 +1,14 @@
 import TopHeader from '../../../shared/ui/TopHeader';
 import { tokens } from '../../../styles/global';
-import { CSSProperties } from 'react';
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import Page from '../../../shared/ui/Page';
 import headerIcon from '../../../shared/assets/icons/header-icon.svg';
 import StudyForm from '../components/StudyForm';
 
-const pageStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: '100dvh',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
-
 export default function NewStudyPage() {
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={<PrevButton />}
         middle={<div>스터디 만들기</div>}
@@ -36,6 +29,6 @@ export default function NewStudyPage() {
         </div>
         <StudyForm />
       </Main>
-    </div>
+    </Page>
   );
 }
