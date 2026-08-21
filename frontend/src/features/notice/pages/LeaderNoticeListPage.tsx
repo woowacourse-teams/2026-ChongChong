@@ -9,13 +9,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import { tokens } from '../../../styles/global';
 import LeaderNoticeList from '../components/LeaderNoticeList';
 import { notices as allNotices } from '../noticeData';
-
-const pageStyle = {
-  display: 'flex',
-  minHeight: '100dvh',
-  flexDirection: 'column',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const emptyContentStyle = {
   alignItems: 'center',
@@ -47,7 +41,7 @@ export default function LeaderNoticeListPage() {
   const notices = searchParams.get('empty') === 'true' ? [] : allNotices;
 
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={
           <button
@@ -85,6 +79,6 @@ export default function LeaderNoticeListPage() {
           </Button>
         </div>
       </Main>
-    </div>
+    </Page>
   );
 }

@@ -2,16 +2,9 @@ import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { tokens } from '../../../styles/global';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
-
-const pageStyle = {
-  display: 'flex',
-  minHeight: '100dvh',
-  flexDirection: 'column',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const backButtonStyle = {
   display: 'grid',
@@ -28,7 +21,7 @@ export default function CreateNoticePage() {
   const navigate = useNavigate();
 
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={
           <button
@@ -45,6 +38,6 @@ export default function CreateNoticePage() {
       <Main>
         <NoticeForm submitLabel="공지 올리기" />
       </Main>
-    </div>
+    </Page>
   );
 }

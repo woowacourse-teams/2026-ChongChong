@@ -5,18 +5,11 @@ import backIcon from '../../../shared/assets/left-arrow.svg';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { tokens } from '../../../styles/global';
 import NoticeArticle from '../components/NoticeArticle';
 import NoticeDetailActions from '../components/NoticeDetailActions';
 import NoticeReadStatus from '../components/NoticeReadStatus';
 import { notice } from '../noticeData';
-
-const pageStyle = {
-  display: 'flex',
-  height: '100dvh',
-  flexDirection: 'column',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const backButtonStyle = {
   display: 'grid',
@@ -39,7 +32,7 @@ export default function LeaderNoticeDetailPage() {
   const editNotice = () => navigate(`/studies/${studyId}/notices/${noticeId}/edit`);
 
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={
           <button
@@ -85,6 +78,6 @@ export default function LeaderNoticeDetailPage() {
           </ConfirmDialog.ConfirmButton>
         }
       />
-    </div>
+    </Page>
   );
 }

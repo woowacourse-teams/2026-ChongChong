@@ -5,16 +5,9 @@ import backIcon from '../../../shared/assets/left-arrow.svg';
 import EmptyState from '../../../shared/ui/EmptyState';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { tokens } from '../../../styles/global';
 import MemberNoticeList from '../components/MemberNoticeList';
 import { notices as allNotices } from '../noticeData';
-
-const pageStyle = {
-  display: 'flex',
-  minHeight: '100dvh',
-  flexDirection: 'column',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const emptyContentStyle = {
   alignItems: 'center',
@@ -39,7 +32,7 @@ export default function MemberNoticeListPage() {
   const notices = searchParams.get('empty') === 'true' ? [] : allNotices;
 
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={
           <button
@@ -67,6 +60,6 @@ export default function MemberNoticeListPage() {
           <MemberNoticeList notices={notices} studyId={studyId} />
         )}
       </Main>
-    </div>
+    </Page>
   );
 }

@@ -8,13 +8,7 @@ import { tokens } from '../../../styles/global';
 import MemberNoticeReadState from '../components/MemberNoticeReadState';
 import NoticeArticle from '../components/NoticeArticle';
 import { notice } from '../noticeData';
-
-const pageStyle = {
-  display: 'flex',
-  height: '100dvh',
-  flexDirection: 'column',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const backButtonStyle = {
   display: 'grid',
@@ -61,7 +55,7 @@ export default function MemberNoticeDetailPage() {
   };
 
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={
           <button
@@ -87,6 +81,6 @@ export default function MemberNoticeDetailPage() {
       </Main>
 
       <MemberNoticeReadState progress={readProgress} readAt="8월 3일 21:14" />
-    </div>
+    </Page>
   );
 }

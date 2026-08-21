@@ -2,23 +2,16 @@ import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { tokens } from '../../../styles/global';
 import NoticeForm from '../components/NoticeForm';
 import type { NoticeFormValues } from '../types';
 import Main from '../../../shared/ui/Main';
+import Page from '../../../shared/ui/Page';
 
 // TODO: API 연동 후 optional 제거
 interface EditNoticePageProps {
   notice?: NoticeFormValues;
   onSubmit?: (values: NoticeFormValues) => void;
 }
-
-const pageStyle = {
-  display: 'flex',
-  minHeight: '100dvh',
-  flexDirection: 'column',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
 
 const backButtonStyle = {
   display: 'grid',
@@ -35,7 +28,7 @@ export default function EditNoticePage({ notice, onSubmit }: EditNoticePageProps
   const navigate = useNavigate();
 
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         left={
           <button
@@ -53,6 +46,6 @@ export default function EditNoticePage({ notice, onSubmit }: EditNoticePageProps
       <Main>
         <NoticeForm initialValues={notice} submitLabel="수정하기" onSubmit={onSubmit} />
       </Main>
-    </div>
+    </Page>
   );
 }
