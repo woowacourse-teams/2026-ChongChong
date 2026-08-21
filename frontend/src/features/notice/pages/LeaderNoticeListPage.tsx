@@ -76,7 +76,11 @@ export default function LeaderNoticeListPage() {
         )}
 
         <div css={buttonAreaStyle}>
-          <Button variant="brandSolid" size="large">
+          <Button
+            variant="brandSolid"
+            size="large"
+            onClick={() => navigate(`/studies/${studyId}/notices/create`)}
+          >
             공지 작성하기
           </Button>
         </div>
