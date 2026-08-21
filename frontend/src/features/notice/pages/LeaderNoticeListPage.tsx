@@ -20,7 +20,6 @@ const pageStyle = {
 const emptyContentStyle = {
   alignItems: 'center',
   justifyContent: 'center',
-  marginBottom: '64px',
 } satisfies CSSProperties;
 
 const buttonAreaStyle = {
