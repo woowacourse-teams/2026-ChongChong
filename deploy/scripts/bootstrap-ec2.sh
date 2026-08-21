@@ -35,7 +35,7 @@ if [[ "${ID:-}" != "ubuntu" ]]; then
 fi
 
 apt-get update
-apt-get install --yes ca-certificates curl gnupg certbot ruby-full wget
+apt-get install --yes ca-certificates curl gnupg certbot wget
 
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
@@ -57,7 +57,7 @@ chmod 0600 "${APP_ENV}"
 
 codedeploy_installer="/tmp/chongchong-codedeploy-install"
 curl -fsSL \
-    "https://aws-codedeploy-${AWS_REGION}.s3.${AWS_REGION}.amazonaws.com/latest/install" \
+    "https://aws-codedeploy-${AWS_REGION}.s3.${AWS_REGION}.amazonaws.com/latestv2/install" \
     --output "${codedeploy_installer}"
 chmod 0700 "${codedeploy_installer}"
 "${codedeploy_installer}" auto
