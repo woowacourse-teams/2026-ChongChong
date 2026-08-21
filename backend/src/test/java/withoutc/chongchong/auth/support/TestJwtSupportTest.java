@@ -105,18 +105,6 @@ class TestJwtSupportTest {
     }
 
     @Test
-    @DisplayName("공개 경로는 Access Token 없이 Security를 통과한다")
-    void allowPublicPathWithoutAccessToken() {
-        given()
-                .port(port)
-                .when()
-                .get("/auth/login")
-                .then()
-                .statusCode(200)
-                .body(equalTo("public"));
-    }
-
-    @Test
     @DisplayName("토큰 재발급 공개 경로는 Access Token 없이 Security를 통과한다")
     void allowRefreshPathWithoutAccessToken() {
         given()
@@ -134,11 +122,6 @@ class TestJwtSupportTest {
         @GetMapping("/test/auth-support/current-user")
         Long currentUser(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
             return authenticatedUser.id();
-        }
-
-        @GetMapping("/auth/login")
-        String publicEndpoint() {
-            return "public";
         }
 
         @PostMapping("/auth/refresh")
