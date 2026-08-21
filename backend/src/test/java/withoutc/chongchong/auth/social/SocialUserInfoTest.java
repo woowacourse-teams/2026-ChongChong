@@ -42,7 +42,7 @@ class SocialUserInfoTest {
     }
 
     @Test
-    @DisplayName("검증 결과에는 Provider Token과 Authorization Code가 포함되지 않는다")
+    @DisplayName("검증 결과에는 Provider Token과 인증 정보가 포함되지 않는다")
     void containOnlyVerifiedUserInformation() {
         assertThat(Arrays.stream(SocialUserInfo.class.getRecordComponents())
                 .map(component -> component.getName()))

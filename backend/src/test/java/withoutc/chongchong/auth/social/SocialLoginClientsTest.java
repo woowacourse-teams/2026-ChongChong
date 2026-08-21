@@ -16,17 +16,17 @@ class SocialLoginClientsTest {
     @Test
     @DisplayName("요청한 제공자에 해당하는 Client로 사용자를 인증한다")
     void authenticateWithRequestedProviderClient() {
-        String authorizationCode = "same-authorization-code";
+        String credential = "same-credential";
         FakeSocialLoginClient googleClient = new FakeSocialLoginClient(SocialProvider.GOOGLE);
         FakeSocialLoginClient kakaoClient = new FakeSocialLoginClient(SocialProvider.KAKAO);
-        googleClient.willSucceed(authorizationCode, createSocialUserInfo(SocialProvider.GOOGLE, "google-id"));
+        googleClient.willSucceed(credential, createSocialUserInfo(SocialProvider.GOOGLE, "google-id"));
         SocialUserInfo expected = createSocialUserInfo(SocialProvider.KAKAO, "kakao-id");
-        kakaoClient.willSucceed(authorizationCode, expected);
+        kakaoClient.willSucceed(credential, expected);
         SocialLoginClients clients = new SocialLoginClients(List.of(googleClient, kakaoClient));
 
         SocialUserInfo actual = clients.authenticate(new SocialLoginCommand(
                 SocialProvider.KAKAO,
-                authorizationCode
+                credential
         ));
 
         assertThat(actual).isEqualTo(expected);
@@ -42,7 +42,7 @@ class SocialLoginClientsTest {
         AuthException exception = catchThrowableOfType(
                 () -> clients.authenticate(new SocialLoginCommand(
                         SocialProvider.APPLE,
-                        "authorization-code"
+                        "credential"
                 )),
                 AuthException.class
         );
@@ -54,13 +54,13 @@ class SocialLoginClientsTest {
     @DisplayName("Provider 인증 실패를 공통 Auth 오류로 반환한다")
     void rejectInvalidProviderAuthentication() {
         FakeSocialLoginClient googleClient = new FakeSocialLoginClient(SocialProvider.GOOGLE);
-        googleClient.willFail("invalid-authorization-code");
+        googleClient.willFail("invalid-credential");
         SocialLoginClients clients = new SocialLoginClients(List.of(googleClient));
 
         AuthException exception = catchThrowableOfType(
                 () -> clients.authenticate(new SocialLoginCommand(
                         SocialProvider.GOOGLE,
-                        "invalid-authorization-code"
+                        "invalid-credential"
                 )),
                 AuthException.class
         );
@@ -82,17 +82,17 @@ class SocialLoginClientsTest {
     @Test
     @DisplayName("Client가 요청과 다른 제공자의 결과를 반환하면 실패한다")
     void rejectMismatchedProviderResult() {
-        String authorizationCode = "authorization-code";
+        String credential = "credential";
         FakeSocialLoginClient googleClient = new FakeSocialLoginClient(SocialProvider.GOOGLE);
         googleClient.willSucceed(
-                authorizationCode,
+                credential,
                 createSocialUserInfo(SocialProvider.KAKAO, "kakao-id")
         );
         SocialLoginClients clients = new SocialLoginClients(List.of(googleClient));
 
         assertThatThrownBy(() -> clients.authenticate(new SocialLoginCommand(
                 SocialProvider.GOOGLE,
-                authorizationCode
+                credential
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("소셜 로그인 Client가 요청한 제공자와 다른 결과를 반환했습니다.");
@@ -116,7 +116,7 @@ class SocialLoginClientsTest {
         AuthException exception = catchThrowableOfType(
                 () -> clients.authenticate(new SocialLoginCommand(
                         SocialProvider.GOOGLE,
-                        "authorization-code"
+                        "credential"
                 )),
                 AuthException.class
         );
