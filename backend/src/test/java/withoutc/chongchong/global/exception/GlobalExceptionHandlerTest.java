@@ -46,6 +46,7 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"))
                 .andExpect(jsonPath("$.message").value("입력값이 올바르지 않습니다."))
+                .andExpect(jsonPath("$.errors[0].code").value("REQUEST_VALIDATION_NOT_BLANK"))
                 .andExpect(jsonPath("$.errors[0].field").value("name"))
                 .andExpect(jsonPath("$.errors[0].reason").value("이름은 필수입니다."));
     }
@@ -58,6 +59,7 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST_PARAMETER"))
                 .andExpect(jsonPath("$.message").value("요청 파라미터가 올바르지 않습니다."))
+                .andExpect(jsonPath("$.errors[0].code").value("REQUEST_VALIDATION_POSITIVE"))
                 .andExpect(jsonPath("$.errors[0].field").value("page"))
                 .andExpect(jsonPath("$.errors[0].reason").value("페이지는 양수여야 합니다."));
     }

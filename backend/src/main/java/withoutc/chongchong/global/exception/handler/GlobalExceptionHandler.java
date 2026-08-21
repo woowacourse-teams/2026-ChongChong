@@ -15,10 +15,10 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import withoutc.chongchong.global.exception.BusinessException;
-import withoutc.chongchong.global.exception.response.ErrorResponse;
-import withoutc.chongchong.global.exception.response.ErrorResponse.FieldErrorDetail;
 import withoutc.chongchong.global.exception.code.CommonErrorCode;
 import withoutc.chongchong.global.exception.code.ErrorCode;
+import withoutc.chongchong.global.exception.response.ErrorResponse;
+import withoutc.chongchong.global.exception.response.ErrorResponse.FieldErrorDetail;
 
 @RestControllerAdvice
 @Slf4j
@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
 
         List<FieldErrorDetail> errors = e.getFieldErrors()
                 .stream()
-                .map(FieldErrorDetail::from)
+                .map(error -> FieldErrorDetail.of(error.getField(), error))
                 .toList();
 
         return ResponseEntity.status(errorCode.getHttpStatus()).body(ErrorResponse.of(errorCode, errors));
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
                 .flatMap(result -> result.getResolvableErrors().stream()
                         .map(error -> FieldErrorDetail.of(
                                 result.getMethodParameter().getParameterName(),
-                                error.getDefaultMessage())
+                                error)
                         )
                 )
                 .toList();
