@@ -2,6 +2,7 @@
 
 - 날짜: 2026-08-20
 - 관련 이슈: [#72](https://github.com/woowacourse-teams/2026-ChongChong/issues/72)
+- 후속 결정: [0016. RN 소셜 로그인 HTTP 계약을 정의한다](0016-define-rn-social-login-http-contract.md)
 
 ## 배경
 
@@ -143,6 +144,9 @@ Fake는 “Provider가 신원을 검증했다”는 경계 뒤의 총총 내부 
 정확한 외부 오류 코드와 메시지는 Controller 구현 전에 기존 `AuthErrorCode` 형식에 맞춰 확정한다.
 
 ### 로그인 HTTP 응답과 Refresh Token 전달은 후속 결정
+
+> 2026-08-21: RN 로그인 요청·응답과 Token 전달 책임은 ADR 0016에서 확정했다. 아래 내용은 이 ADR을 작성할 당시의
+> 미확정 배경을 보존한다.
 
 이번 결정은 제공자 독립 로그인 Core와 자동 회원가입 경계를 정의한다. 로그인 HTTP 응답에서 원문 Refresh Token을
 전달하는 방식은 다음 항목이 확정된 뒤 구현한다.
