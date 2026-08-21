@@ -170,8 +170,8 @@ class StudyServiceTest {
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
         );
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.of(studyMember));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
 
         studyService.deleteStudy(userId, studyId);
 
@@ -204,13 +204,13 @@ class StudyServiceTest {
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.empty());
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
         assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
-                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verifyNoInteractions(assignmentRepository, noticeRepository);
         verify(studyRepository, never()).delete(any(Study.class));
@@ -227,8 +227,8 @@ class StudyServiceTest {
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
         );
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.of(studyMember));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
 
         assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
                 .isInstanceOf(StudyMemberException.class)
@@ -250,8 +250,8 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, "스터디 내 이름", user.getProfileImageUrl(), StudyMemberRole.MEMBER);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.of(studyMember));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
 
         StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
 
@@ -282,13 +282,13 @@ class StudyServiceTest {
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.empty());
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
         assertThatThrownBy(() -> studyService.getStudyInfo(userId, studyId))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
-                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
     }
 
     @Test
@@ -307,8 +307,8 @@ class StudyServiceTest {
         when(notice.getTitle()).thenReturn("공지");
         when(assignment.getId()).thenReturn(20L);
         when(assignment.getTitle()).thenReturn("과제");
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.of(studyMember));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(3);
         when(noticeRepository.findAllByStudyId(studyId)).thenReturn(List.of(notice));
@@ -349,8 +349,8 @@ class StudyServiceTest {
         when(notice.getTitle()).thenReturn("공지");
         when(assignment.getId()).thenReturn(20L);
         when(assignment.getTitle()).thenReturn("과제");
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.of(studyMember));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(noticeRepository.findAllByStudyId(studyId)).thenReturn(List.of(notice));
         when(assignmentRepository.findAllByStudyId(studyId)).thenReturn(List.of(assignment));
@@ -377,13 +377,13 @@ class StudyServiceTest {
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId))
-                .thenReturn(Optional.empty());
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
         assertThatThrownBy(() -> studyService.getStudyDetail(userId, studyId))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
-                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verifyNoInteractions(noticeRepository, assignmentRepository);
     }
@@ -398,8 +398,8 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.MEMBER);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(any(), any()))
-                .thenReturn(Optional.of(studyMember));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(any(), any()))
+                .thenReturn(studyMember);
         when(studyInviteLinkGenerator.generate(studyId))
                 .thenReturn("https://test.chongchong.app/join?token=invite-token");
 
@@ -416,13 +416,13 @@ class StudyServiceTest {
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.findByStudyIdAndUserId(any(), any()))
-                .thenReturn(Optional.empty());
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(any(), any()))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
         assertThatThrownBy(() -> studyService.getInviteLink(userId, studyId))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
-                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_MEMBER);
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verifyNoInteractions(studyInviteLinkGenerator);
     }

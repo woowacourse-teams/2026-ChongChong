@@ -44,7 +44,7 @@ public class StudyController {
     @GetMapping("/{studyId}")
     public ResponseEntity<StudyDetailResponse> getStudyDetail(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable @Positive Long studyId
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
     ) {
         StudyDetailResponse response = studyService.getStudyDetail(user.id(), studyId);
         return ResponseEntity
@@ -54,7 +54,7 @@ public class StudyController {
     @DeleteMapping("/{studyId}")
     public ResponseEntity<Void> deleteStudy(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable @Positive Long studyId
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
     ) {
         studyService.deleteStudy(user.id(), studyId);
         return ResponseEntity
@@ -65,7 +65,7 @@ public class StudyController {
     @GetMapping("/{studyId}/info")
     public ResponseEntity<StudyInfoResponse> getStudyInfo(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable @Positive Long studyId
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
     ) {
         StudyInfoResponse response = studyService.getStudyInfo(user.id(), studyId);
         return ResponseEntity
@@ -86,7 +86,7 @@ public class StudyController {
     @GetMapping("/{studyId}/invite-link")
     public ResponseEntity<StudyInviteLinkResponse> getInviteLink(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable @Positive Long studyId
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
     ) {
         StudyInviteLinkResponse response = studyService.getInviteLink(user.id(), studyId);
 

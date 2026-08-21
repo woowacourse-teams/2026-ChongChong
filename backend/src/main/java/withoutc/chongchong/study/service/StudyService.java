@@ -76,8 +76,7 @@ public class StudyService {
         Study study = studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
-        StudyMember studyMember = studyMemberRepository.findByStudyIdAndUserId(studyId, userId)
-                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_MEMBER));
+        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         if (studyMember.getRole() != StudyMemberRole.LEADER) {
             throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
@@ -99,8 +98,7 @@ public class StudyService {
         Study study = studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
-        StudyMember studyMember = studyMemberRepository.findByStudyIdAndUserId(studyId, userId)
-                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_MEMBER));
+        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         return new StudyInfoResponse(study.getName(), studyMember.getRole(), studyMember.getName());
     }
@@ -109,8 +107,7 @@ public class StudyService {
         Study study = studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
-        StudyMember studyMember = studyMemberRepository.findByStudyIdAndUserId(studyId, userId)
-                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_MEMBER));
+        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         if (studyMember.getRole() == StudyMemberRole.LEADER) {
             return makeLeaderStudyDetailResponse(study);
@@ -200,8 +197,7 @@ public class StudyService {
         studyRepository.findById(studyId)
                 .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
-        studyMemberRepository.findByStudyIdAndUserId(studyId, userId)
-                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_MEMBER));
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         return new StudyInviteLinkResponse(studyInviteLinkGenerator.generate(studyId));
     }
