@@ -1,4 +1,4 @@
-# 0016. RN 소셜 로그인 HTTP 계약을 정의한다
+# 0018. RN 소셜 로그인 HTTP 계약을 정의한다
 
 - 날짜: 2026-08-21
 - 관련 이슈: [#86](https://github.com/woowacourse-teams/2026-ChongChong/issues/86)
