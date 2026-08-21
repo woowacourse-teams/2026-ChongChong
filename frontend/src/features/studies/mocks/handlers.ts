@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { study } from './db';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 
@@ -26,5 +27,17 @@ export const handlers = [
         },
       ],
     });
+  }),
+
+  http.post(`${BASE_URL}${STUDY_URLS.create}`, async ({ request }) => {
+    const body = (await request.json()) as { name: string; description: string };
+    // msw 로직은 실제 backend API 로 대체될 예정입니다.
+    // if (invalidInput) {
+    //   return HttpResponse.json(invalidInput, { status: 400 });
+    // }
+
+    const studyId = Date.now();
+    await study.create({ id: studyId, ...body });
+    return HttpResponse.json({ studyId }, { status: 201 });
   }),
 ];
