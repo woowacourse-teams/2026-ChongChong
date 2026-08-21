@@ -126,9 +126,10 @@ sudo docker compose \
   --env-file /opt/chongchong/deploy/image.env \
   --file /opt/chongchong/deploy/docker-compose.yml \
   ps
-curl --resolve "${SERVER_NAME}:443:127.0.0.1" "https://${SERVER_NAME}/"
+curl --fail --resolve "${SERVER_NAME}:443:127.0.0.1" "https://${SERVER_NAME}/actuator/health"
 ```
 
-배포 스크립트는 backend와 Nginx 컨테이너가 실행되고 Nginx에서 backend 8080 포트로 연결할 수 있는지 확인한다.
+배포 스크립트는 backend와 Nginx 컨테이너가 실행되고 Nginx에서 backend 8080 포트로 연결할 수 있는지 확인한 뒤,
+Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
 새 컨테이너 시작에 실패하면 직전 backend 이미지로 복구를 시도한다. 단일 EC2를 사용하므로 배포 중 짧은 중단은
 허용하며, 운영 전 무중단 전환은 별도 결정으로 다룬다.

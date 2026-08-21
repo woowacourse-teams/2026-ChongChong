@@ -10,8 +10,9 @@ load_deployment_environment
 wait_for_application
 
 curl \
+    --fail \
     --silent \
     --show-error \
     --output /dev/null \
     --resolve "${SERVER_NAME}:443:127.0.0.1" \
-    "https://${SERVER_NAME}/"
+    "https://${SERVER_NAME}/actuator/health"
