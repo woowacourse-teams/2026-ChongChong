@@ -36,7 +36,7 @@ export const modernNormalize = css`
     margin: 0;
     font-family: var(--font-family-base);
     color: var(--text-default);
-    background: var(--bg-default);
+    background: var(--bg-chip);
   }
 
   /*

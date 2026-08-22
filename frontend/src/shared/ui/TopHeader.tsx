@@ -21,7 +21,6 @@ const topHeaderStyle = {
   paddingTop: tokens.layout.safeTop,
   paddingRight: tokens.layout.gutter,
   paddingLeft: tokens.layout.gutter,
-  background: tokens.bg.default,
   color: tokens.text.default,
   fontFamily: tokens.fontFamily.base,
 } satisfies CSSProperties;

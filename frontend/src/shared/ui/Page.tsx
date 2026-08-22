@@ -11,6 +11,8 @@ const pageStyle = {
   minHeight: '100dvh',
   flexDirection: 'column',
   background: tokens.bg.default,
+  width: '448px',
+  margin: '0 auto',
 } satisfies CSSProperties;
 
 export default function Page({ children }: PageProps) {
