@@ -44,7 +44,7 @@ export default function BottomTab() {
       </Link>
       <Link to={`${basePath}/notices`}>
         <img src={isNotice ? ActiveNoticeIcon : NoticeIcon} width={22} height={22} alt="" />
-        <p css={[textStyle, isNotice && { color: tokens.text.brand }]}>과제</p>
+        <p css={[textStyle, isNotice && { color: tokens.text.brand }]}>공지</p>
       </Link>
       <Link to={`${basePath}/assignments`}>
         <img
