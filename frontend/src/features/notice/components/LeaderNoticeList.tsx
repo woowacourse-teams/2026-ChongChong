@@ -1,15 +1,16 @@
 import clock from '../../../shared/assets/clock-black.svg';
 import Badge from '../../../shared/ui/Badge';
-import NoticeList, { type NoticeListItem } from './NoticeList';
+import { Notice } from '../types';
+import NoticeList from './NoticeList';
 
 interface LeaderNoticeListProps {
-  notices: NoticeListItem[];
+  notices: Notice[];
   studyId: string;
 }
 
 export default function LeaderNoticeList({ notices, studyId }: LeaderNoticeListProps) {
   return (
-    <NoticeList notices={notices} studyId={studyId} detailSearch="?role=leader">
+    <NoticeList notices={notices} studyId={studyId} role="leader">
       {(notice) => (
         <>
           <Badge variant="brandOutline" size="small">
