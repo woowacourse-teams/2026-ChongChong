@@ -27,6 +27,9 @@ public record ErrorResponse(
             String field,
             String reason
     ) {
+
+        private static final String REQUEST_VALIDATION_PREFIX = "REQUEST_VALIDATION_";
+
         public static FieldErrorDetail from(FieldError fieldError) {
             return new FieldErrorDetail(toRequestValidationCode(fieldError), fieldError.getField(),
                     fieldError.getDefaultMessage());
@@ -44,12 +47,12 @@ public record ErrorResponse(
             String[] codes = error.getCodes();
 
             if (codes == null || codes.length == 0) {
-                return "REQUEST_VALIDATION_UNKNOWN";
+                return REQUEST_VALIDATION_PREFIX + "UNKNOWN";
             }
 
             String code = codes[codes.length - 1];
 
-            return "REQUEST_VALIDATION_" + toUpperSnakeCase(code);
+            return REQUEST_VALIDATION_PREFIX + toUpperSnakeCase(code);
         }
 
         private static String toUpperSnakeCase(String code) {
