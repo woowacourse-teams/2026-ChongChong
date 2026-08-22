@@ -7,6 +7,7 @@ import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
 import MemberNoticeList from '../components/MemberNoticeList';
 import { notices as allNotices } from '../noticeData';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 import Page from '../../../shared/ui/Page';
 
 const emptyContentStyle = {
@@ -60,6 +61,7 @@ export default function MemberNoticeListPage() {
           <MemberNoticeList notices={notices} studyId={studyId} />
         )}
       </Main>
+      <BottomTab />
     </Page>
   );
 }
