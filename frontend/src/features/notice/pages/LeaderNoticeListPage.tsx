@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import alarmIcon from '../../../shared/assets/alarm.svg';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import Button from '../../../shared/ui/Button';
-import EmptyState from '../../../shared/ui/EmptyState';
+import EmptyContent from '../../../shared/ui/EmptyContent';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { tokens } from '../../../styles/global';
@@ -64,7 +64,7 @@ export default function LeaderNoticeListPage() {
 
       <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
         {notices.length === 0 ? (
-          <EmptyState message="아직 공지가 없어요" />
+          <EmptyContent message="아직 공지가 없어요" />
         ) : (
           <LeaderNoticeList notices={notices} studyId={studyId} />
         )}
