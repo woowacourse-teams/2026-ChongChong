@@ -141,28 +141,30 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
   const todoCount = data.notices.length + data.assignments.length;
 
   return (
-    <>
+    <div>
       <StudyMemberWelcomeBanner username={username} todoCount={todoCount} />
-      <section>
-        <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
-        <List>
-          {data.notices.map((notice) => (
-            <List.Item key={`notice-${notice.id}`}>
-              <MemberActiveNoticeCard title={notice.title} />
-            </List.Item>
-          ))}
-        </List>
-      </section>
-      <section>
-        <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
-        <List>
-          {data.assignments.map((assignment) => (
-            <List.Item key={`assignment-${assignment.id}`}>
-              <MemberActiveAssignmentCard title={assignment.title} />
-            </List.Item>
-          ))}
-        </List>
-      </section>
-    </>
+      <div css={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing[6] }}>
+        <section>
+          <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
+          <List>
+            {data.notices.map((notice) => (
+              <List.Item key={`notice-${notice.id}`}>
+                <MemberActiveNoticeCard title={notice.title} />
+              </List.Item>
+            ))}
+          </List>
+        </section>
+        <section>
+          <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
+          <List>
+            {data.assignments.map((assignment) => (
+              <List.Item key={`assignment-${assignment.id}`}>
+                <MemberActiveAssignmentCard title={assignment.title} />
+              </List.Item>
+            ))}
+          </List>
+        </section>
+      </div>
+    </div>
   );
 }
