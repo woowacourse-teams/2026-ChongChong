@@ -23,6 +23,7 @@ import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 
@@ -55,9 +56,7 @@ public class NoticeController {
     public ResponseEntity<NoticeListResponse> getNotices(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                          @PathVariable Long studyId,
                                                          @RequestParam(required = false) @Positive(message = "cursor는 양수여야 합니다.") Long cursor,
-                                                         @RequestParam(defaultValue = "10")
-                                                         @Positive(message = "size는 양수여야 합니다.")
-                                                         @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.") int size) {
+                                                         @RequestParam(defaultValue = "10") @Positive(message = "size는 양수여야 합니다.") @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.") int size) {
         NoticeListResponse response = noticeService.getList(currentUser.id(), studyId, cursor, size);
 
         return ResponseEntity.ok(response);
@@ -65,8 +64,7 @@ public class NoticeController {
 
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Void> updateNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
-                                             @PathVariable Long studyId,
-                                             @PathVariable Long noticeId,
+                                             @PathVariable Long studyId, @PathVariable Long noticeId,
                                              @Valid @RequestBody NoticeUpdateRequest request) {
         noticeService.update(currentUser.id(), studyId, noticeId, request);
 
@@ -75,8 +73,7 @@ public class NoticeController {
 
     @DeleteMapping("/{noticeId}")
     public ResponseEntity<Void> deleteNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
-                                             @PathVariable Long studyId,
-                                             @PathVariable Long noticeId) {
+                                             @PathVariable Long studyId, @PathVariable Long noticeId) {
         noticeService.delete(currentUser.id(), studyId, noticeId);
 
         return ResponseEntity.noContent().build();
@@ -84,9 +81,17 @@ public class NoticeController {
 
     @PatchMapping("/{noticeId}/read")
     public ResponseEntity<NoticeReadResponse> readNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
-                                                         @PathVariable Long studyId,
-                                                         @PathVariable Long noticeId) {
+                                                         @PathVariable Long studyId, @PathVariable Long noticeId) {
         NoticeReadResponse response = noticeService.markAsRead(currentUser.id(), studyId, noticeId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{noticeId}/read-status/me")
+    public ResponseEntity<NoticeReadStatusResponse> getReadStatus(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long noticeId) {
+        NoticeReadStatusResponse response = noticeService.getReadStatus(currentUser.id(), studyId, noticeId);
 
         return ResponseEntity.ok(response);
     }
