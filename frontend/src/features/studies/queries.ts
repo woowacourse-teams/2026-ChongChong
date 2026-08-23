@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchStudies } from './api';
+import { fetchStudies, fetchStudyInfo } from './api';
 
 const studyQueries = {
   all: () => ['studies'],
@@ -8,6 +8,13 @@ const studyQueries = {
     queryOptions({
       queryKey: [...studyQueries.lists()],
       queryFn: () => fetchStudies(),
+    }),
+  details: () => [...studyQueries.all(), 'detail'],
+  detail: (studyId: string) => [...studyQueries.details(), studyId],
+  info: (studyId: string) =>
+    queryOptions({
+      queryKey: [...studyQueries.detail(studyId), 'info'],
+      queryFn: () => fetchStudyInfo(studyId),
     }),
 };
 

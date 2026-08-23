@@ -1,4 +1,7 @@
+import { useParams } from 'react-router';
 import { CSSProperties } from 'react';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import studyQueries from '../queries';
 import Main from '../../../shared/ui/Main';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -108,14 +111,21 @@ const data = {
 };
 
 export default function StudyDetailPage() {
+  const { studyId } = useParams();
+  const {
+    data: { studyName, role, memberName },
+  } = useSuspenseQuery(studyQueries.info(studyId as string));
+
   return (
     <Page>
       <TopHeader
         left={<PrevButton />}
         middle={
           <>
-            <TopHeader.Title>우테코 8기 FE 스터디</TopHeader.Title>
-            <TopHeader.Subtitle>바니 · 리드</TopHeader.Subtitle>
+            <TopHeader.Title>{studyName}</TopHeader.Title>
+            <TopHeader.Subtitle>
+              {memberName} · {role === 'LEADER' ? '리드' : '스터디원'}
+            </TopHeader.Subtitle>
           </>
         }
       />

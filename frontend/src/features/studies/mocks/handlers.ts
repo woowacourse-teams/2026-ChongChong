@@ -40,4 +40,15 @@ export const handlers = [
     await study.create({ id: studyId, ...body });
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
+
+  http.get(`${BASE_URL}${STUDY_URLS.info}`, async ({ params }) => {
+    const { studyId } = params;
+    const found = await study.findFirst((q) => q.where({ id: Number(studyId) }));
+    if (!found) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json({
+      studyName: found.name,
+      role: 'LEADER',
+      memberName: '바니',
+    });
+  }),
 ];
