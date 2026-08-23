@@ -2,16 +2,17 @@
 import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
-import Badge from '../../../shared/ui/Badge';
 import { Link } from 'react-router';
 import { Assignment } from '../types';
+import { ReactNode } from 'react';
 
 interface AssigmentListProps {
   assignments: Assignment[];
   studyId: number;
+  children: (assignment: Assignment) => ReactNode;
 }
 
-export default function AssigmentList({ assignments, studyId }: AssigmentListProps) {
+export default function AssigmentList({ assignments, studyId, children }: AssigmentListProps) {
   return (
     <List>
       {assignments.map((assignment) => (
@@ -23,9 +24,10 @@ export default function AssigmentList({ assignments, studyId }: AssigmentListPro
           >
             <ContentCard>
               <ContentCard.Badges>
-                <Badge variant="BrandOutline" size="Small">
+                {/* <Badge variant="BrandOutline" size="Small">
                   {assignment.completeCount}/{assignment.memberCount} 제출
-                </Badge>
+                </Badge> */}
+                {children(assignment)}
               </ContentCard.Badges>
               <ContentCard.TitleRow>
                 <ContentCard.Title>{assignment.title}</ContentCard.Title>

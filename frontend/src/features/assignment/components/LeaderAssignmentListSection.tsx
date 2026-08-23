@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router';
 import EmptyState from '../../../shared/ui/EmptyState';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
+import Badge from '../../../shared/ui/Badge';
+import clock from '../../../shared/assets/clock.svg';
 
 interface Props {
   studyId: number;
@@ -32,7 +34,28 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
         <EmptyState message="아직 공지가 없어요" />
       ) : (
         <>
-          <AssignmentList assignments={assignments} studyId={studyId} />
+          <AssignmentList assignments={assignments} studyId={studyId}>
+            {(assignment) => (
+              <>
+                {assignment.isComplete ? (
+                  <Badge variant="BrandSolid" size="Small">
+                    모두 제출
+                  </Badge>
+                ) : (
+                  <Badge variant="BrandOutline" size="Small">
+                    {assignment.completeCount}/{assignment.memberCount} 제출
+                  </Badge>
+                )}
+
+                {assignment.remindAt && (
+                  <Badge variant="NeutralSolid" size="Small">
+                    <img src={clock} alt="리마인드 시각" width={12} height={12} />
+                    {assignment.remindAt}
+                  </Badge>
+                )}
+              </>
+            )}
+          </AssignmentList>
           <div css={buttonAreaStyle}>
             <Button
               variant="brandSolid"
