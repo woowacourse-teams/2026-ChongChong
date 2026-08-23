@@ -10,7 +10,7 @@ export default function MemberNoticeList({ notices, studyId }: MemberNoticeListP
   return (
     <NoticeList notices={notices} studyId={studyId}>
       {(notice) => (
-        <Badge variant={notice.isRead ? 'BrandOutline' : 'BrandSolid'} size="Small">
+        <Badge variant={notice.isRead ? 'brandOutline' : 'brandSolid'} size="small">
           {notice.isRead ? '읽음' : '읽지 않음'}
         </Badge>
       )}
