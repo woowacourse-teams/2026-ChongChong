@@ -32,6 +32,7 @@ export async function fetchStudyInfo(studyId: string) {
       memberName: string;
     }>();
   } catch {
+    // TODO: 에러코드별로 에러 분기가 필요합니다.
     throw new Error('스터디 정보를 불러오는데 실패했습니다.');
   }
 }
