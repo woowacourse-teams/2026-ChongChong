@@ -32,7 +32,7 @@ public class Assignment extends BaseEntity {
     private Study study;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "writer_id", nullable = false)
     private StudyMember member;
 
     @Column(nullable = false)
