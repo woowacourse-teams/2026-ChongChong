@@ -22,6 +22,7 @@ import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 
@@ -79,5 +80,14 @@ public class NoticeController {
         noticeService.delete(currentUser.id(), studyId, noticeId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{noticeId}/read")
+    public ResponseEntity<NoticeReadResponse> readNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                         @PathVariable Long studyId,
+                                                         @PathVariable Long noticeId) {
+        NoticeReadResponse response = noticeService.markAsRead(currentUser.id(), studyId, noticeId);
+
+        return ResponseEntity.ok(response);
     }
 }
