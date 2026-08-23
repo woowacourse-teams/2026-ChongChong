@@ -20,6 +20,7 @@ import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
@@ -111,6 +112,15 @@ public class NoticeService {
         recipient.markAsRead(clock);
 
         return NoticeReadResponse.from(recipient);
+    }
+
+    public NoticeReadStatusResponse getReadStatus(Long userId, Long studyId, Long noticeId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
+
+        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(noticeId, member.getId());
+        return NoticeReadStatusResponse.from(recipient);
     }
 
     private List<NoticeSummaryResponse> createNoticeSummaries(StudyMember member, List<Notice> notices) {
