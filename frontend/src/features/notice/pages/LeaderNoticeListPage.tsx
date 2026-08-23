@@ -10,6 +10,7 @@ import { tokens } from '../../../styles/global';
 import LeaderNoticeList from '../components/LeaderNoticeList';
 import { notices as allNotices } from '../noticeData';
 import Page from '../../../shared/ui/Page';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const emptyContentStyle = {
   alignItems: 'center',
@@ -79,6 +80,7 @@ export default function LeaderNoticeListPage() {
           </Button>
         </div>
       </Main>
+      <BottomTab />
     </Page>
   );
 }
