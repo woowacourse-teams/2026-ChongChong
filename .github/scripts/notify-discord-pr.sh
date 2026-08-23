@@ -23,9 +23,10 @@ jq \
     def truncate(max):
       if length > max then .[0:(max - 3)] + "..." else . end;
     def preview:
-      gsub("\\r"; "")
-      | gsub("[[:space:]]+"; " ")
-      | if length == 0 then "본문 없음" else truncate(500) end;
+      gsub("\\r\\n?"; "\n")
+      | sub("^\n+"; "")
+      | sub("\n+$"; "")
+      | if test("^[[:space:]]*$") then "본문 없음" else truncate(500) end;
 
     (
       if $action == "opened" then {text: "열림", color: 5763719}
