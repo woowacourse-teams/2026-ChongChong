@@ -6,19 +6,27 @@ import { tokens, typography } from '../../../styles/global';
 interface ActiveStudyCardProps {
   icon: string;
   title: string;
-  status: string;
+  status: React.ReactNode;
 }
 
-interface ActiveNoticeCardProps {
+interface LeaderActiveNoticeCardProps {
   title: string;
   completeCount: number;
   memberCount: number;
 }
 
-interface ActiveAssignmentCardProps {
+interface LeaderActiveAssignmentCardProps {
   title: string;
   completeCount: number;
   memberCount: number;
+}
+
+interface MemberActiveNoticeCardProps {
+  title: string;
+}
+
+interface MemberActiveAssignmentCardProps {
+  title: string;
 }
 
 const ActiveStudyCardStyle = {
@@ -57,31 +65,55 @@ function ActiveStudyCard({ icon, title, status }: ActiveStudyCardProps) {
     <div css={ActiveStudyCardStyle}>
       <img css={IconStyle} src={icon} alt="" />
       <h3 css={TitleStyle}>{title}</h3>
-      <span css={StatusStyle}>{status}</span>
+      {status}
     </div>
   );
 }
 
-export function ActiveNoticeCard({ title, completeCount, memberCount }: ActiveNoticeCardProps) {
+export function LeaderActiveNoticeCard({
+  title,
+  completeCount,
+  memberCount,
+}: LeaderActiveNoticeCardProps) {
   return (
     <ActiveStudyCard
       icon={noticeLogo}
       title={title}
-      status={`${completeCount}/${memberCount} 읽음`}
+      status={<span css={StatusStyle}>{`${completeCount}/${memberCount} 읽음`}</span>}
     />
   );
 }
 
-export function ActiveAssignmentCard({
+export function LeaderActiveAssignmentCard({
   title,
   completeCount,
   memberCount,
-}: ActiveAssignmentCardProps) {
+}: LeaderActiveAssignmentCardProps) {
   return (
     <ActiveStudyCard
       icon={assignmentLogo}
       title={title}
-      status={`${completeCount}/${memberCount} 제출`}
+      status={<span css={StatusStyle}>{`${completeCount}/${memberCount} 제출`}</span>}
+    />
+  );
+}
+
+export function MemberActiveNoticeCard({ title }: MemberActiveNoticeCardProps) {
+  return (
+    <ActiveStudyCard
+      icon={noticeLogo}
+      title={title}
+      status={<span css={StatusStyle}>읽지 않음</span>}
+    />
+  );
+}
+
+export function MemberActiveAssignmentCard({ title }: MemberActiveAssignmentCardProps) {
+  return (
+    <ActiveStudyCard
+      icon={assignmentLogo}
+      title={title}
+      status={<span css={StatusStyle}>미제출</span>}
     />
   );
 }
