@@ -19,9 +19,11 @@ import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeRecipient;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
@@ -50,8 +52,7 @@ public class NoticeService {
         validateLeader(studyId, userId);
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
-                .filter(studyMember -> !studyMember.isLeader())
-                .toList();
+                .filter(studyMember -> !studyMember.isLeader()).toList();
 
         StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
@@ -100,6 +101,18 @@ public class NoticeService {
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);
     }
 
+    @Transactional
+    public NoticeReadResponse markAsRead(Long userId, Long studyId, Long noticeId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
+
+        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(noticeId, member.getId());
+        recipient.markAsRead(clock);
+
+        return NoticeReadResponse.from(recipient);
+    }
+
     private List<NoticeSummaryResponse> createNoticeSummaries(StudyMember member, List<Notice> notices) {
         if (member.isLeader()) {
             return notices.stream().map(NoticeSummaryResponse::forLeader).toList();
@@ -109,23 +122,14 @@ public class NoticeService {
             return List.of();
         }
 
-        List<Long> noticeIds = notices.stream()
-                .map(Notice::getId)
-                .toList();
-        Map<Long, Boolean> readStatusByNoticeId = noticeRecipientRepository
-                .findReadStatusesByNoticeIdsAndMemberId(noticeIds, member.getId())
-                .stream()
-                .collect(Collectors.toMap(
-                        NoticeReadStatusProjection::noticeId,
-                        NoticeReadStatusProjection::isRead
-                ));
+        List<Long> noticeIds = notices.stream().map(Notice::getId).toList();
 
-        return notices.stream()
-                .map(notice -> NoticeSummaryResponse.forMember(
-                        notice,
-                        getReadStatus(readStatusByNoticeId, notice.getId())
-                ))
-                .toList();
+        Map<Long, Boolean> readStatusByNoticeId = noticeRecipientRepository.findReadStatusesByNoticeIdsAndMemberId(
+                        noticeIds, member.getId()).stream()
+                .collect(Collectors.toMap(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::isRead));
+
+        return notices.stream().map(notice -> NoticeSummaryResponse.forMember(notice,
+                getReadStatus(readStatusByNoticeId, notice.getId()))).toList();
     }
 
     public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
