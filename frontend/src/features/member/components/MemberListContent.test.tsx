@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import userEvent from '@testing-library/user-event';
 import { InviteLinkBox } from './MemberListContent';
-import { createWrapper } from '../../../test/render';
 import { server } from '../../../mocks/msw-node';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../../studies/urls';
@@ -26,7 +25,7 @@ describe('초대 링크 테스트', () => {
 
     const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
 
-    render(<InviteLinkBox studyId={1} />, { wrapper: createWrapper() });
+    render(<InviteLinkBox inviteLink={'mock-chongchong-invite-link123'} />);
 
     const copyButton = await screen.findByRole('button', {
       name: '링크 복사',

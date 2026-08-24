@@ -48,11 +48,7 @@ const actionButtonStyle = {
   margin: `${tokens.spacing[5]} 0`,
 } satisfies CSSProperties;
 
-export function InviteLinkBox({ studyId }: { studyId: number }) {
-  const {
-    data: { inviteLink },
-  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
-
+export function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
   };
@@ -72,6 +68,9 @@ export function InviteLinkBox({ studyId }: { studyId: number }) {
 
 function LeaderContent() {
   const { studyId } = useStudyId();
+  const {
+    data: { inviteLink },
+  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
   const { data: members } = useSuspenseQuery({
     ...memberQueries.list(studyId),
     select: (data) => data.members,
@@ -88,7 +87,7 @@ function LeaderContent() {
             </List.Item>
           ))}
         </List>
-        <InviteLinkBox studyId={studyId} />
+        <InviteLinkBox inviteLink={inviteLink} />
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={() => {}}>
         스터디 삭제하기
@@ -99,6 +98,9 @@ function LeaderContent() {
 
 function MemberContent() {
   const { studyId } = useStudyId();
+  const {
+    data: { inviteLink },
+  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
   const { data: members } = useSuspenseQuery({
     ...memberQueries.list(Number(studyId)),
     select: (data) => data.members,
@@ -115,7 +117,7 @@ function MemberContent() {
             </List.Item>
           ))}
         </List>
-        <InviteLinkBox studyId={studyId} />
+        <InviteLinkBox inviteLink={inviteLink} />
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={() => {}}>
         스터디 탈퇴하기
