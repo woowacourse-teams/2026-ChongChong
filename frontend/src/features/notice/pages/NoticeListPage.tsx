@@ -5,7 +5,7 @@ import MemberNoticeListPage from './MemberNoticeListPage';
 export default function NoticeListPage() {
   const [searchParams] = useSearchParams();
 
-  return searchParams.get('role') === 'leader' ? (
+  return searchParams.get('role') === 'member' ? (
     <LeaderNoticeListPage />
   ) : (
     <MemberNoticeListPage />

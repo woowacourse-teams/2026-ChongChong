@@ -10,6 +10,7 @@ import NoticeDetailActions from '../components/NoticeDetailActions';
 import NoticeReadStatus from '../components/NoticeReadStatus';
 import { notice } from '../noticeData';
 import Page from '../../../shared/ui/Page';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const backButtonStyle = {
   display: 'grid',
@@ -78,6 +79,7 @@ export default function LeaderNoticeDetailPage() {
           </ConfirmDialog.ConfirmButton>
         }
       />
+      <BottomTab />
     </Page>
   );
 }
