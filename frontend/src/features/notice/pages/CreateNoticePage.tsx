@@ -5,6 +5,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const backButtonStyle = {
   display: 'grid',
@@ -38,6 +39,7 @@ export default function CreateNoticePage() {
       <Main>
         <NoticeForm submitLabel="공지 올리기" />
       </Main>
+      <BottomTab />
     </Page>
   );
 }

@@ -12,12 +12,18 @@ import ActiveMemberIcon from '../../assets/user-green.svg';
 import { tokens, typography } from '../../../styles/global';
 
 const tabStyle = {
+  position: 'sticky',
+  bottom: 0,
+  zIndex: 100,
+  background: tokens.bg.default,
+  width: '448px',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: `${tokens.spacing[2]} ${tokens.spacing[10]}`,
   borderTop: tokens.border.neutral,
-  borderRadius: tokens.radius.lg,
+  borderTopLeftRadius: tokens.radius.lg,
+  borderTopRightRadius: tokens.radius.lg,
 } satisfies CSSProperties;
 
 const textStyle = {

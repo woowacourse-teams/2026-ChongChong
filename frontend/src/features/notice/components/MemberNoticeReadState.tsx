@@ -10,9 +10,7 @@ interface MemberNoticeReadStateProps {
 }
 
 const footerStyle = {
-  position: 'sticky',
   bottom: 0,
-  zIndex: 10,
   display: 'flex',
   minHeight: '85px',
   alignItems: 'center',

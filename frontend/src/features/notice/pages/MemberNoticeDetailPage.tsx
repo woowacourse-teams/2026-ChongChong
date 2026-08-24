@@ -9,6 +9,7 @@ import MemberNoticeReadState from '../components/MemberNoticeReadState';
 import NoticeArticle from '../components/NoticeArticle';
 import { notice } from '../noticeData';
 import Page from '../../../shared/ui/Page';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const backButtonStyle = {
   display: 'grid',
@@ -81,6 +82,7 @@ export default function MemberNoticeDetailPage() {
       </Main>
 
       <MemberNoticeReadState progress={readProgress} readAt="8월 3일 21:14" />
+      <BottomTab />
     </Page>
   );
 }
