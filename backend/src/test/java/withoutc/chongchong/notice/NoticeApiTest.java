@@ -68,6 +68,7 @@ class NoticeApiTest {
     private Study study;
     private StudyMember leader;
     private StudyMember member;
+    private StudyMember secondMember;
     private Notice notice;
     private LocalDateTime remindAt;
 
@@ -85,7 +86,7 @@ class NoticeApiTest {
         member = studyMemberRepository.save(
                 StudyMember.create(study, memberUser, "스터디원", null, StudyMemberRole.MEMBER)
         );
-        StudyMember secondMember = studyMemberRepository.save(
+        secondMember = studyMemberRepository.save(
                 StudyMember.create(study, secondMemberUser, "두 번째 스터디원", null, StudyMemberRole.MEMBER)
         );
         remindAt = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
@@ -580,6 +581,116 @@ class NoticeApiTest {
                 .then()
                 .statusCode(403)
                 .body("code", equalTo("ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("수신자가 공지를 읽으면 읽음 시각을 응답하고 저장한다")
+    void markNoticeAsReadTest() {
+        String readAt = testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .patch("/studies/{studyId}/notices/{noticeId}/read", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("readAt", notNullValue())
+                .extract()
+                .jsonPath()
+                .getString("readAt");
+
+        LocalDateTime persistedReadAt = jdbcTemplate.queryForObject(
+                "SELECT read_at FROM notice_recipients WHERE notice_id = ? AND member_id = ?",
+                LocalDateTime.class,
+                notice.getId(),
+                member.getId()
+        );
+
+        assertThat(persistedReadAt).isNotNull();
+        assertThat(readAt).isEqualTo(persistedReadAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    }
+
+    @Test
+    @DisplayName("수신자가 자신의 공지 읽음 상태를 조회하면 읽지 않음 상태를 반환한다")
+    void getMyNoticeReadStatusTest() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}/status/me", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("isRead", equalTo(false))
+                .body("readAt", nullValue());
+    }
+
+    @Test
+    @DisplayName("리더가 공지 읽음 현황을 조회하면 읽음 여부와 가장 최근 리마인드 시각을 반환한다")
+    void getNoticeStatusesByLeaderTest() {
+        LocalDateTime readAt = LocalDateTime.of(2026, 8, 24, 10, 0);
+        LocalDateTime lastRemindAt = LocalDateTime.of(2026, 8, 24, 10, 5);
+        jdbcTemplate.update(
+                "UPDATE notice_recipients SET read_at = ? WHERE notice_id = ? AND member_id = ?",
+                readAt,
+                notice.getId(),
+                member.getId()
+        );
+        insertNotification(secondMember.getId(), notice.getId(), "NOTICE", lastRemindAt);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}/status", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("id", equalTo(notice.getId().intValue()))
+                .body("memberCount", equalTo(2))
+                .body("readCount", equalTo(1))
+                .body("remindAt", equalTo(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+                .body("readMembers", hasSize(1))
+                .body("readMembers[0].id", equalTo(member.getId().intValue()))
+                .body("readMembers[0].name", equalTo("스터디원"))
+                .body("unreadMembers", hasSize(1))
+                .body("unreadMembers[0].id", equalTo(secondMember.getId().intValue()))
+                .body("unreadMembers[0].name", equalTo("두 번째 스터디원"))
+                .body("unreadMembers[0].lastRemindAt",
+                        equalTo(lastRemindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
+    }
+
+    @Test
+    @DisplayName("스터디원이 공지 읽음 현황을 조회하면 접근 거부 응답을 반환한다")
+    void getNoticeStatusesByMemberTest() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}/status", study.getId(), notice.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 공지 읽음 현황을 조회하면 인증 실패 응답을 반환한다")
+    void getNoticeStatusesWithoutAuthenticationTest() {
+        io.restassured.RestAssured.given()
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}/status", study.getId(), notice.getId())
+                .then()
+                .statusCode(401);
+    }
+
+    private void insertNotification(Long recipientId, Long resourceId, String resourceType, LocalDateTime createdAt) {
+        jdbcTemplate.update(
+                """
+                        INSERT INTO notification (
+                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
+                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                        """,
+                study.getId(),
+                recipientId,
+                resourceId,
+                resourceType,
+                createdAt,
+                createdAt
+        );
     }
 
     private int countRows(String tableName, Long noticeId) {
