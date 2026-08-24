@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchAssignments } from './api';
+import { fetchAssignmentList, fetchAssignmentSubmitStatus, fetchAssignment } from './api';
 
 const assignmentQueries = {
   all: () => ['studies'] as const,
@@ -11,7 +11,19 @@ const assignmentQueries = {
   list: (studyId: number) =>
     queryOptions({
       queryKey: assignmentQueries.lists(studyId),
-      queryFn: () => fetchAssignments(studyId),
+      queryFn: () => fetchAssignmentList(studyId),
+    }),
+
+  detail: (studyId: number, assignmentId: number) =>
+    queryOptions({
+      queryKey: [...assignmentQueries.lists(studyId), assignmentId, 'detail'],
+      queryFn: () => fetchAssignment(studyId, assignmentId),
+    }),
+
+  submitStatus: (studyId: number, assignmentId: number) =>
+    queryOptions({
+      queryKey: [...assignmentQueries.lists(studyId), assignmentId, 'submit-status'],
+      queryFn: () => fetchAssignmentSubmitStatus(studyId, assignmentId),
     }),
 };
 
