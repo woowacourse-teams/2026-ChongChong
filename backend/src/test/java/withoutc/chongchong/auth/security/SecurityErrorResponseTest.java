@@ -60,6 +60,13 @@ class SecurityErrorResponseTest {
     }
 
     @Test
+    @DisplayName("운영 테스트 토큰 발급 경로는 인증 없이 접근할 수 없다")
+    void rejectPublicTestTokenIssuancePath() throws Exception {
+        expectAuthenticationRequired(mockMvc.perform(get("/auth/token")
+                .param("userId", "1")));
+    }
+
+    @Test
     @DisplayName("서명이 올바르지 않은 Access Token이면 공통 JSON 형식의 401을 반환한다")
     void respondUnauthorizedWhenAccessTokenHasInvalidSignature() throws Exception {
         String invalidToken = testJwtFactory.invalidSignatureAccessToken(1L);
