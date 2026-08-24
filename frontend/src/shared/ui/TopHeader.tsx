@@ -9,6 +9,7 @@ interface TopHeaderProps {
 
 const topHeaderStyle = {
   position: 'sticky',
+  background: tokens.bg.default,
   top: 0,
   zIndex: 10,
   display: 'grid',
@@ -23,6 +24,7 @@ const topHeaderStyle = {
   paddingLeft: tokens.layout.gutter,
   color: tokens.text.default,
   fontFamily: tokens.fontFamily.base,
+  boxShadow: tokens.shadow[2],
 } satisfies CSSProperties;
 
 const sideStyle = {
