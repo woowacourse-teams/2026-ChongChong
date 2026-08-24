@@ -15,7 +15,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
             <List.Item key={study.id}>
               <ContentCard>
                 <ContentCard.Badges>
-                  <Badge variant="BrandSolid" size="Small">
+                  <Badge variant="brandSolid" size="small">
                     {study.role === 'STUDY_LEADER' ? '스터디 리드' : '스터디원'}
                   </Badge>
                 </ContentCard.Badges>
@@ -30,11 +30,11 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                 <ContentCard.Description>{study.description}</ContentCard.Description>
 
                 <ContentCard.Footer>
-                  <ContentCard.Badge variant="NeutralSolid" size="Small">
+                  <ContentCard.Badge variant="neutralSolid" size="small">
                     <img src={noticeIcon} alt="" css={{ width: '12px', height: '12px' }} />
                     공지 {study.noticeCount}
                   </ContentCard.Badge>
-                  <ContentCard.Badge variant="NeutralSolid" size="Small">
+                  <ContentCard.Badge variant="neutralSolid" size="small">
                     <img src={assignIcon} alt="" css={{ width: '12px', height: '12px' }} />
                     과제 {study.assignmentCount}
                   </ContentCard.Badge>

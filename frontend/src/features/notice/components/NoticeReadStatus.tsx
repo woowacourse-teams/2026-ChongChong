@@ -215,7 +215,7 @@ export default function NoticeReadStatus({
         </p>
         <div css={badgeRowStyle}>
           {readMemberNames.map((name) => (
-            <Badge key={name} variant="NeutralSolid" size="Large">
+            <Badge key={name} variant="neutralSolid" size="large">
               <img src={profileIcon} alt="" css={profileStyle} />
               {name}
             </Badge>
