@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -37,6 +38,18 @@ class NoticeRecipientTest {
 
         assertThat(recipient.getReadAt()).isEqualTo(expectedReadAt);
         assertThat(recipient.isRead()).isTrue();
+    }
+
+    @Test
+    @DisplayName("공지 수신자의 읽음 시각은 데이터베이스 정밀도인 마이크로초로 기록한다")
+    void markAsReadTruncatesToMicrosecondsTest() {
+        NoticeRecipient recipient = NoticeRecipient.create(mock(StudyMember.class), mock(Notice.class));
+        LocalDateTime now = LocalDateTime.of(2026, 8, 24, 12, 30, 0, 123_456_789);
+        Clock clock = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+
+        recipient.markAsRead(clock);
+
+        assertThat(recipient.getReadAt()).isEqualTo(now.truncatedTo(ChronoUnit.MICROS));
     }
 
     @Test
