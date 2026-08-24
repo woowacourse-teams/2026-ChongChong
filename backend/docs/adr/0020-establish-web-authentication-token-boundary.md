@@ -179,6 +179,16 @@ Spring Security는 상태를 저장하지 않는 API에서도 Cookie 같은 브�
 한다. OAuth2 Resource Server의 `SessionCreationPolicy.STATELESS`는 유지하며, CSRF Token 저장을 위해 `JSESSIONID` 기반
 로그인 Session을 도입하지 않는다.
 
+구현 결과 `/auth/csrf`는 `Cache-Control: no-store`와 함께 `headerName`, `token` JSON을 반환한다. 검증 기준값은
+`XSRF-TOKEN` Cookie에 `Path=/auth`, `Secure`, `HttpOnly`, `SameSite=Lax`로 저장하며, JavaScript는 Cookie를 읽지 않고
+응답의 마스킹된 `token`을 메모리에 보관해 `X-XSRF-TOKEN` Header로 전송한다. Spring Security의 기본 CSRF 응답
+마스킹과 검증을 유지하므로 응답 Token과 Cookie 원문은 서로 다르지만 올바른 한 쌍으로 검증된다.
+
+CSRF Matcher는 `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`에만 적용한다. Bearer Access Token을
+사용하는 도메인 API는 브라우저가 자격 증명을 자동 첨부하지 않으므로 기존 401·403 인증 경계를 유지하고 CSRF Token을
+추가로 요구하지 않는다. 누락과 불일치 CSRF Token은 외부에서 구분하지 않고 공통 `403 INVALID_CSRF_TOKEN`으로
+응답한다.
+
 ### same-origin 배포를 우선하고 CORS는 정확한 Origin만 허용한다
 
 - 웹 정적 자원과 API는 가능하면 Reverse Proxy를 통해 same-origin으로 제공한다.
@@ -191,6 +201,11 @@ Spring Security는 상태를 저장하지 않는 API에서도 Cookie 같은 브�
 - CORS는 다른 Origin의 응답 읽기를 제한하는 브라우저 정책이며 사용자 인증과 CSRF 검증을 대신하지 않는다.
 
 실제 배포 주소는 환경 설정에 두고 ADR, Git 기본값과 테스트 Fixture에 운영 주소를 하드코딩하지 않는다.
+
+현재 배포 Origin은 아직 확정되지 않아 Stage 6에서는 `CorsConfigurationSource`나 허용 Origin 목록을 추가하지 않는다.
+이는 모든 Origin을 허용한다는 뜻이 아니라 same-origin을 안전한 기본값으로 유지한다는 뜻이다. 신뢰하지 않는 Origin의
+사전 요청에 `Access-Control-Allow-Origin`을 반환하지 않는 테스트를 두었으며, 분리 Origin 배포가 확정되면 그 환경의
+정확한 Origin만 설정하고 credential wildcard를 사용하지 않는다.
 
 ### 웹 전달 방식은 HTTP Adapter 책임이다
 

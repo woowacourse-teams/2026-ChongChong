@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ import withoutc.chongchong.auth.security.AuthenticatedUser;
 @Import(TestJwtSupportTest.TestController.class)
 @ActiveProfiles("test")
 class TestJwtSupportTest {
+
+    private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
+    private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
 
     @LocalServerPort
     private int port;
@@ -108,8 +113,7 @@ class TestJwtSupportTest {
     @Test
     @DisplayName("토큰 재발급 공개 경로는 Access Token 없이 Security를 통과한다")
     void allowRefreshPathWithoutAccessToken() {
-        given()
-                .port(port)
+        givenWithCsrf()
                 .when()
                 .post("/auth/refresh")
                 .then()
@@ -120,13 +124,24 @@ class TestJwtSupportTest {
     @Test
     @DisplayName("로그아웃 공개 경로는 Access Token 없이 Security를 통과한다")
     void allowLogoutPathWithoutAccessToken() {
-        given()
-                .port(port)
+        givenWithCsrf()
                 .when()
                 .post("/auth/logout")
                 .then()
                 .statusCode(204)
                 .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"));
+    }
+
+    private RequestSpecification givenWithCsrf() {
+        Response csrfResponse = given()
+                .port(port)
+                .when()
+                .get("/auth/csrf");
+
+        return given()
+                .port(port)
+                .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
+                .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));
     }
 
     @RestController

@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.AfterEach;
@@ -59,6 +60,8 @@ class SocialLoginAcceptanceTest {
     private static final String PROVIDER_USER_ID = "kakao-user-id";
     private static final String SECOND_KAKAO_AUTHORIZATION_CODE = "second-kakao-authorization-code";
     private static final String SECOND_PROVIDER_USER_ID = "second-kakao-user-id";
+    private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
+    private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
 
     @LocalServerPort
     private int port;
@@ -563,8 +566,7 @@ class SocialLoginAcceptanceTest {
     }
 
     private Response requestLoginBody(String body) {
-        return given()
-                .port(port)
+        return givenWithCsrf()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
@@ -572,33 +574,41 @@ class SocialLoginAcceptanceTest {
     }
 
     private Response requestRefresh(String refreshToken) {
-        return given()
-                .port(port)
+        return givenWithCsrf()
                 .cookie("refresh_token", refreshToken)
                 .when()
                 .post("/auth/refresh");
     }
 
     private Response requestRefreshWithoutCookie() {
-        return given()
-                .port(port)
+        return givenWithCsrf()
                 .when()
                 .post("/auth/refresh");
     }
 
     private Response requestLogout(String refreshToken) {
-        return given()
-                .port(port)
+        return givenWithCsrf()
                 .cookie("refresh_token", refreshToken)
                 .when()
                 .post("/auth/logout");
     }
 
     private Response requestLogoutWithoutCookie() {
-        return given()
-                .port(port)
+        return givenWithCsrf()
                 .when()
                 .post("/auth/logout");
+    }
+
+    private RequestSpecification givenWithCsrf() {
+        Response csrfResponse = given()
+                .port(port)
+                .when()
+                .get("/auth/csrf");
+
+        return given()
+                .port(port)
+                .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
+                .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));
     }
 
     private void assertDatabaseEmpty() {

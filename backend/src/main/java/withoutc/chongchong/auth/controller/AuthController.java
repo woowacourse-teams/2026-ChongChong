@@ -6,12 +6,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.dto.SocialLoginRequest;
 import withoutc.chongchong.auth.dto.SocialLoginResponse;
+import withoutc.chongchong.auth.dto.WebCsrfTokenResponse;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.auth.http.WebRefreshCookie;
@@ -30,6 +33,13 @@ public class AuthController {
     private final AuthTokenService authTokenService;
     private final WebRefreshCookieReader webRefreshCookieReader;
     private final WebRefreshCookieWriter webRefreshCookieWriter;
+
+    @GetMapping("/csrf")
+    public ResponseEntity<WebCsrfTokenResponse> csrf(CsrfToken csrfToken) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(WebCsrfTokenResponse.from(csrfToken));
+    }
 
     @PostMapping("/login")
     public ResponseEntity<SocialLoginResponse> login(

@@ -13,6 +13,8 @@ public enum AuthErrorCode implements ErrorCode {
 
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "요청한 작업을 수행할 권한이 없습니다."),
 
+    INVALID_CSRF_TOKEN(HttpStatus.FORBIDDEN, "INVALID_CSRF_TOKEN", "유효하지 않은 CSRF Token입니다."),
+
     SOCIAL_AUTHENTICATION_FAILED(
             HttpStatus.UNAUTHORIZED,
             "SOCIAL_AUTHENTICATION_FAILED",

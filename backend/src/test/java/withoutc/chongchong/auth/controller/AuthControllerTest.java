@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -71,6 +72,7 @@ class AuthControllerTest {
         when(socialLoginFacade.login(any())).thenReturn(createIssuedTokenPair());
 
         mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -110,6 +112,7 @@ class AuthControllerTest {
     @DisplayName("provider가 누락되면 공통 입력 오류를 반환한다")
     void rejectMissingProvider() throws Exception {
         expectInvalidInput(mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -125,6 +128,7 @@ class AuthControllerTest {
     @DisplayName("authorizationCode가 누락되면 공통 입력 오류를 반환한다")
     void rejectMissingAuthorizationCode() throws Exception {
         expectInvalidInput(mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -139,6 +143,7 @@ class AuthControllerTest {
     @DisplayName("authorizationCode가 공백이면 공통 입력 오류를 반환한다")
     void rejectBlankAuthorizationCode() throws Exception {
         expectInvalidInput(mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -154,6 +159,7 @@ class AuthControllerTest {
     @DisplayName("알 수 없는 provider 문자열이면 공통 잘못된 요청 오류를 반환한다")
     void rejectUnknownProvider() throws Exception {
         mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -179,6 +185,7 @@ class AuthControllerTest {
 
         expectAuthError(
                 mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -200,6 +207,7 @@ class AuthControllerTest {
 
         expectAuthError(
                 mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -220,6 +228,7 @@ class AuthControllerTest {
                 .thenReturn(createIssuedTokenPair());
 
         mockMvc.perform(post("/auth/refresh")
+                        .with(csrf())
                         .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -242,7 +251,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Cookie가 없으면 공통 401 오류를 반환한다")
     void rejectMissingRefreshCookie() throws Exception {
-        expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh")));
+        expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh").with(csrf())));
 
         verifyNoInteractions(authTokenService, socialLoginFacade);
     }
@@ -254,6 +263,7 @@ class AuthControllerTest {
                 .thenThrow(new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
 
         expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh")
+                        .with(csrf())
                         .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN))))
                 .andExpect(content().string(not(containsString(CURRENT_REFRESH_TOKEN))))
                 .andExpect(content().string(not(containsString(REFRESH_TOKEN))));
@@ -266,6 +276,7 @@ class AuthControllerTest {
     @DisplayName("Refresh Cookie로 로그아웃하고 같은 범위의 Cookie를 만료시킨다")
     void logoutWithRefreshCookie() throws Exception {
         mockMvc.perform(post("/auth/logout")
+                        .with(csrf())
                         .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN)))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""))
@@ -283,7 +294,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Cookie가 없어도 로그아웃은 멱등하게 성공하고 Cookie를 만료시킨다")
     void logoutIdempotentlyWithoutRefreshCookie() throws Exception {
-        mockMvc.perform(post("/auth/logout"))
+        mockMvc.perform(post("/auth/logout").with(csrf()))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refresh_token=")))
