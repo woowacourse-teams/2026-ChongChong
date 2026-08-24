@@ -30,6 +30,8 @@ OAuth `state`, Spring Security CSRF Token, Kakao Provider Token과 총총 Token�
 - Token 요청은 `application/x-www-form-urlencoded`로 `grant_type=authorization_code`, REST API 키, Redirect URI,
   Authorization Code와 Client Secret을 전달한다.
 - 백엔드는 Kakao Access Token으로 `GET https://kapi.kakao.com/v2/user/me`를 호출한다.
+- 사용자 정보 요청은 `Authorization: Bearer <Kakao Access Token>`을 사용하고 `secure_resource=true`로 HTTPS 프로필
+  이미지 URL을 요청한다.
 - Kakao 회원번호 `id`는 문자열 `providerUserId`, `kakao_account.profile.nickname`은 `displayName`으로 변환한다.
 - 프로필 이미지 URL은 선택값이며 없으면 `null`을 사용한다.
 - Kakao OpenID Connect와 ID Token은 활성화하거나 검증하지 않는다.
@@ -82,6 +84,8 @@ auth:
   노출하지 않는다.
 - 외부에는 기존 `SOCIAL_AUTHENTICATION_FAILED` 경계를 사용한다.
 - Provider 호출은 DB Transaction 밖에서 끝내고, 성공한 `SocialUserInfo`만 기존 Transaction Core에 전달한다.
+- 운영 Kakao Adapter는 `test`가 아닌 프로필에서 `SocialProvider.KAKAO` 구현으로 등록한다. 기존 인수 테스트의 `test`
+  프로필은 같은 Provider의 Fake만 명시적으로 등록해 중복 Client를 만들지 않는다.
 - 이번 이슈에서는 재시도, Circuit Breaker, Provider Token 갱신과 프로필 주기적 동기화를 구현하지 않는다.
 
 ## 선택 이유
@@ -143,7 +147,6 @@ Token 검증을 추가하면 nonce, 공개키, Claim 검증 책임이 늘어난�
 
 ## 후속 작업
 
-- Kakao 사용자 정보를 `SocialUserInfo`로 변환하는 운영 `SocialLoginClient`를 구현한다.
 - Stub Kakao 서버를 사용해 성공·4xx·5xx·Timeout·잘못된 응답을 검증한다.
 - 실제 Kakao 개발 앱으로 로컬 로그인·보호 API·재발급·로그아웃을 수동 검증한다.
 - PKCE, 서버 측 `state`, OIDC, 재시도와 Circuit Breaker는 실제 요구가 생기면 별도 이슈와 ADR로 검토한다.

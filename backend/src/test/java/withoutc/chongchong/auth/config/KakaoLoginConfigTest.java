@@ -6,7 +6,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.web.client.RestClient;
+import withoutc.chongchong.auth.social.SocialLoginClient;
+import withoutc.chongchong.auth.social.kakao.KakaoSocialLoginClient;
 import withoutc.chongchong.auth.social.kakao.KakaoTokenClient;
+import withoutc.chongchong.auth.social.kakao.KakaoUserInfoClient;
 
 class KakaoLoginConfigTest {
 
@@ -30,7 +33,22 @@ class KakaoLoginConfigTest {
             assertThat(context).hasSingleBean(KakaoLoginProperties.class);
             assertThat(context).hasSingleBean(RestClient.class);
             assertThat(context).hasSingleBean(KakaoTokenClient.class);
+            assertThat(context).hasSingleBean(KakaoUserInfoClient.class);
+            assertThat(context).hasSingleBean(KakaoSocialLoginClient.class);
+            assertThat(context).hasSingleBean(SocialLoginClient.class);
         });
+    }
+
+    @Test
+    @DisplayName("test 프로필에서는 운영 Kakao 로그인 Client를 등록하지 않는다")
+    void excludeProductionSocialLoginClientFromTestProfile() {
+        contextRunner
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("test"))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).doesNotHaveBean(KakaoSocialLoginClient.class);
+                    assertThat(context).doesNotHaveBean(SocialLoginClient.class);
+                });
     }
 
     @Test
