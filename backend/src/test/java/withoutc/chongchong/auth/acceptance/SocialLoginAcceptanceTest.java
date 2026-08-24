@@ -161,14 +161,7 @@ class SocialLoginAcceptanceTest {
         assertThat(jwt.getAudience()).containsExactly(jwtProperties.audience());
         assertThat(jwt.getExpiresAt()).isEqualTo(accessTokenExpiresAt);
 
-        given()
-                .port(port)
-                .auth().oauth2(accessToken)
-                .when()
-                .get("/test/auth-login/current-user")
-                .then()
-                .statusCode(200)
-                .body(equalTo(user.getId().toString()));
+        assertProtectedApiAccessible(accessToken, user.getId());
     }
 
     @Test
@@ -216,8 +209,8 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
-    @DisplayName("Refresh Cookie를 회전하고 새 Access Token으로 보호 API에 접근한다")
-    void rotateRefreshCookieAndAuthenticateWithNewAccessToken() {
+    @DisplayName("웹 로그인부터 보호 API, 재발급과 로그아웃까지 전체 인증 생명주기를 수행한다")
+    void completeWebAuthenticationLifecycle() {
         fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
                 SocialProvider.KAKAO,
                 PROVIDER_USER_ID,
@@ -225,8 +218,20 @@ class SocialLoginAcceptanceTest {
                 null
         ));
         Response loginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        loginResponse.then()
+                .statusCode(200)
+                .body("tokenType", equalTo("Bearer"))
+                .body("accessToken", notNullValue())
+                .body("$", not(hasKey("refreshToken")))
+                .header(HttpHeaders.CACHE_CONTROL, containsString("no-store"))
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"));
+
+        String originalAccessToken = loginResponse.jsonPath().getString("accessToken");
         String originalRefreshToken = loginResponse.getCookie("refresh_token");
         User user = userRepository.findAll().getFirst();
+        assertProtectedApiAccessible(originalAccessToken, user.getId());
+
         AuthSession originalSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
         Long sessionId = originalSession.getId();
         HashedRefreshToken originalHash = originalSession.getRefreshTokenHash();
@@ -254,6 +259,7 @@ class SocialLoginAcceptanceTest {
         AuthSession rotatedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
 
         assertThat(rotatedRefreshToken).isNotEqualTo(originalRefreshToken);
+        assertThat(rotatedAccessToken).isNotEqualTo(originalAccessToken);
         assertThat(rotatedSession.getId()).isEqualTo(sessionId);
         assertThat(rotatedSession.getRefreshTokenHash())
                 .isEqualTo(rotatedHash)
@@ -261,21 +267,36 @@ class SocialLoginAcceptanceTest {
         assertThat(rotatedSession.getRefreshTokenHash().value())
                 .isNotEqualTo(rotatedRefreshToken);
 
-        requestRefresh(originalRefreshToken)
-                .then()
+        Response reusedRefreshResponse = requestRefresh(originalRefreshToken);
+        reusedRefreshResponse.then()
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
+        assertThat(reusedRefreshResponse.asString()).doesNotContain(originalRefreshToken);
 
-        given()
-                .port(port)
-                .auth().oauth2(rotatedAccessToken)
-                .when()
-                .get("/test/auth-login/current-user")
-                .then()
-                .statusCode(200)
-                .body(equalTo(user.getId().toString()));
+        assertProtectedApiAccessible(rotatedAccessToken, user.getId());
+
+        Response logoutResponse = requestLogout(rotatedRefreshToken);
+        logoutResponse.then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"));
+        assertThat(logoutResponse.asString()).isEmpty();
+        assertThat(authSessionRepository.findByUserId(user.getId())).isEmpty();
+
+        Response refreshAfterLogoutResponse = requestRefresh(rotatedRefreshToken);
+        refreshAfterLogoutResponse.then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+        assertThat(refreshAfterLogoutResponse.asString())
+                .doesNotContain(rotatedRefreshToken)
+                .doesNotContain(rotatedAccessToken);
+        assertThat(userRepository.count()).isOne();
+        assertThat(socialAccountRepository.count()).isOne();
+        assertThat(authSessionRepository.count()).isZero();
     }
 
     @Test
@@ -609,6 +630,17 @@ class SocialLoginAcceptanceTest {
                 .port(port)
                 .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
                 .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));
+    }
+
+    private void assertProtectedApiAccessible(String accessToken, Long expectedUserId) {
+        given()
+                .port(port)
+                .auth().oauth2(accessToken)
+                .when()
+                .get("/test/auth-login/current-user")
+                .then()
+                .statusCode(200)
+                .body(equalTo(expectedUserId.toString()));
     }
 
     private void assertDatabaseEmpty() {
