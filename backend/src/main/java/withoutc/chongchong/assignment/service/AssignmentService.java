@@ -3,15 +3,21 @@ package withoutc.chongchong.assignment.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
+import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.exception.NoticeErrorCode;
+import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
@@ -46,11 +52,27 @@ public class AssignmentService {
         return AssignmentCreateResponse.from(assignment);
     }
 
+    @Transactional
+    public void delete(Long userId, Long studyId, Long assignmentId) {
+        validateLeader(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getAssignmentById(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        assignmentRepository.delete(assignment);
+    }
+
 
     private void validateLeader(Long studyId, Long userId) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         if (!member.isLeader()) {
             throw new AuthException(AuthErrorCode.ACCESS_DENIED);
+        }
+    }
+
+    private void validateAssignmentBelongsToStudy(Long studyId, Assignment assignment) {
+        if (!Objects.equals(assignment.getStudy().getId(), studyId)) {
+            throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND);
         }
     }
 }
