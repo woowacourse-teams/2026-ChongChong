@@ -147,5 +147,6 @@ Token 검증을 추가하면 nonce, 공개키, Claim 검증 책임이 늘어난�
 
 ## 후속 작업
 
-- 실제 Kakao 개발 앱으로 로컬 로그인·보호 API·재발급·로그아웃을 수동 검증한다.
+- 2026-08-24 실제 Kakao 개발 앱으로 로컬 로그인·보호 API·재발급·로그아웃 수동 검증을 완료했다.
+- 운영 프론트엔드 주소가 확정되면 Kakao Developers와 운영 환경의 Redirect URI를 같은 HTTPS 주소로 등록한다.
 - PKCE, 서버 측 `state`, OIDC, 재시도와 Circuit Breaker는 실제 요구가 생기면 별도 이슈와 ADR로 검토한다.
