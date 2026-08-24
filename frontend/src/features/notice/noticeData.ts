@@ -1,6 +1,6 @@
-import type { NoticeListItem } from './components/NoticeList';
+import type { Notice } from './types';
 
-export const notices: NoticeListItem[] = [
+export const notices: Notice[] = [
   {
     id: 1,
     title: '8월 스터디 운영 방식이 바뀝니다',

@@ -3,26 +3,16 @@ import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
 import { Link } from 'react-router';
-
-export interface NoticeListItem {
-  id: number;
-  title: string;
-  description: string;
-  createdAt: string;
-  isRead?: boolean;
-  readCount?: number;
-  totalCount?: number;
-  reminderText?: string;
-}
+import { Notice } from '../types';
 
 interface NoticeListProps {
-  notices: NoticeListItem[];
+  notices: Notice[];
   studyId: string;
-  detailSearch?: string;
-  children: (notice: NoticeListItem) => ReactNode;
+  role: 'leader' | 'member';
+  children: (notice: Notice) => ReactNode;
 }
 
-export default function NoticeList({ notices, studyId, detailSearch, children }: NoticeListProps) {
+export default function NoticeList({ notices, studyId, role, children }: NoticeListProps) {
   return (
     <List>
       {notices.map((notice) => (
@@ -30,8 +20,8 @@ export default function NoticeList({ notices, studyId, detailSearch, children }:
           <Link
             to={{
               pathname: `/studies/${studyId}/notices/${notice.id}`,
-              search: detailSearch,
             }}
+            state={{ role: role }}
           >
             <ContentCard>
               <ContentCard.Badges>{children(notice)}</ContentCard.Badges>

@@ -6,6 +6,7 @@ import { globalStyles } from './src/styles/global';
 import App from './src/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/studies/routes';
+import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 
 const router = createBrowserRouter([
   {
@@ -14,6 +15,7 @@ const router = createBrowserRouter([
   },
   ...studiesRoutes,
   ...noticeRoutes,
+  ...AssignmentRoutes,
 ]);
 
 const root = document.getElementById('root')!;
