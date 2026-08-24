@@ -11,18 +11,21 @@ import assignmentQueries from '../queries';
 import { useSuspenseQueries } from '@tanstack/react-query';
 import SubmitStatusSection from '../components/SubmitStatusSection';
 import AssignmentArticle from '../components/AssignmentArticle';
+import SubmissionList from '../components/SubmissionList';
 
 export default function LeaderAssignmentDetailpage() {
   const navigate = useNavigate();
   const { studyId, assignmentId } = useParams();
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
 
-  const [{ data: assignment }, { data: submitStatusResponse }] = useSuspenseQueries({
-    queries: [
-      assignmentQueries.detail(Number(studyId), Number(assignmentId)),
-      assignmentQueries.submitStatus(Number(studyId), Number(assignmentId)),
-    ],
-  });
+  const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
+    useSuspenseQueries({
+      queries: [
+        assignmentQueries.detail(Number(studyId), Number(assignmentId)),
+        assignmentQueries.submitStatus(Number(studyId), Number(assignmentId)),
+        assignmentQueries.submissions(Number(studyId), Number(assignmentId)),
+      ],
+    });
 
   const openDeleteDialog = () => deleteDialogRef.current?.showModal();
   const closeDeleteDialog = () => deleteDialogRef.current?.close();
@@ -35,6 +38,7 @@ export default function LeaderAssignmentDetailpage() {
       <Main>
         <SubmitStatusSection status={submitStatusResponse} />
         <AssignmentArticle assignment={assignment} />
+        <SubmissionList submissions={submissions.submissions} />
 
         <NoticeDetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
       </Main>

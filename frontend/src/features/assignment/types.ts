@@ -34,3 +34,15 @@ export interface AssignmentDetail {
   submissionType: string;
   closeAt: string;
 }
+
+export interface Submission {
+  id: number;
+  name: string;
+  profileImage: string;
+  createdAt: string;
+}
+
+export interface SubmissionDetail extends Submission {
+  content: string;
+  link: string;
+}

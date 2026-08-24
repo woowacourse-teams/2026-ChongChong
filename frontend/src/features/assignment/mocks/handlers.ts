@@ -78,4 +78,29 @@ export const handlers = [
         'GitHub 저장소에 문제 번호로 폴더를 만들어 올린 뒤, 저장소나 PR 링크를 제출해주세요.',
     });
   }),
+
+  http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () => {
+    return HttpResponse.json({
+      submissions: [
+        {
+          id: 1,
+          name: '피즈',
+          profileImage: 'http://localhost:8080',
+          createdAt: '2025-04-16 16:44:10',
+        },
+        {
+          id: 2,
+          name: '이든',
+          profileImage: 'http://localhost:8080',
+          createdAt: '2025-04-16 16:44:10',
+        },
+        {
+          id: 3,
+          name: '바니',
+          profileImage: 'http://localhost:8080',
+          createdAt: '2025-04-16 16:44:10',
+        },
+      ],
+    });
+  }),
 ];
