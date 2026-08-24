@@ -7,6 +7,7 @@ import App from './src/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/studies/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
+import { routes as memberRoutes } from './src/features/member/routes';
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
   ...studiesRoutes,
   ...noticeRoutes,
   ...AssignmentRoutes,
+  ...memberRoutes,
 ]);
 
 const root = document.getElementById('root')!;
