@@ -22,6 +22,15 @@ auth:
     access-token-validity: 30m
   refresh-token:
     validity: 30d
+  social:
+    kakao:
+      rest-api-key: test-kakao-rest-api-key
+      client-secret: test-kakao-client-secret
+      redirect-uri: http://localhost:3005/auth/kakao/callback
+      token-uri: https://kauth.kakao.com/oauth/token
+      user-info-uri: https://kapi.kakao.com/v2/user/me
+      connect-timeout: 1s
+      read-timeout: 1s
   web:
     refresh-cookie:
       name: refresh_token
