@@ -6,6 +6,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import MemberAssignmentListSection from '../components/MemberAssignmentListSectiont';
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const studyId = 1;
 
@@ -28,6 +29,7 @@ export default function MemberAssignmentListPage() {
           </Main>
         </Suspense>
       </ErrorBoundary>
+      <BottomTab />
     </Page>
   );
 }

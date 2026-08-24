@@ -6,6 +6,7 @@ import LeaderAssignmentListSection from '../components/LeaderAssignmentListSecti
 import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import ErrorState from '../../../shared/ui/ErrorState';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const studyId = 1;
 
@@ -29,6 +30,7 @@ export default function LeaderAssignmentListPage() {
           </Main>
         </Suspense>
       </ErrorBoundary>
+      <BottomTab />
     </Page>
   );
 }
