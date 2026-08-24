@@ -262,6 +262,37 @@ class AuthControllerTest {
         verifyNoInteractions(socialLoginFacade);
     }
 
+    @Test
+    @DisplayName("Refresh Cookie로 로그아웃하고 같은 범위의 Cookie를 만료시킨다")
+    void logoutWithRefreshCookie() throws Exception {
+        mockMvc.perform(post("/auth/logout")
+                        .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN)))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refresh_token=")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/auth")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax")));
+
+        verify(authTokenService).logout(new RawRefreshToken(CURRENT_REFRESH_TOKEN));
+        verifyNoInteractions(socialLoginFacade);
+    }
+
+    @Test
+    @DisplayName("Refresh Cookie가 없어도 로그아웃은 멱등하게 성공하고 Cookie를 만료시킨다")
+    void logoutIdempotentlyWithoutRefreshCookie() throws Exception {
+        mockMvc.perform(post("/auth/logout"))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refresh_token=")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/auth")));
+
+        verifyNoInteractions(authTokenService, socialLoginFacade);
+    }
+
     private ResultActions expectInvalidRefreshToken(ResultActions resultActions) throws Exception {
         return resultActions
                 .andExpect(status().isUnauthorized())

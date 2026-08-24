@@ -74,6 +74,13 @@ public class AuthTokenService {
         return tokenPair;
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void logout(RawRefreshToken currentRefreshToken) {
+        HashedRefreshToken currentRefreshTokenHash = refreshTokenHasher.hash(currentRefreshToken);
+        authSessionRepository.findByRefreshTokenHashForUpdate(currentRefreshTokenHash)
+                .ifPresent(authSessionRepository::delete);
+    }
+
     private IssuedTokenPair createTokenPair(Long userId) {
         IssuedAccessToken accessToken = accessTokenIssuer.issue(userId);
         RawRefreshToken refreshToken = refreshTokenGenerator.generate();

@@ -48,6 +48,17 @@ public class AuthController {
         return tokenResponse(tokenPair);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        webRefreshCookieReader.read(request)
+                .ifPresent(authTokenService::logout);
+        WebRefreshCookie expiredRefreshCookie = webRefreshCookieWriter.expire();
+
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.headerValue())
+                .build();
+    }
+
     private ResponseEntity<SocialLoginResponse> tokenResponse(IssuedTokenPair tokenPair) {
         WebRefreshCookie refreshCookie = webRefreshCookieWriter.issue(
                 tokenPair.refreshToken(),

@@ -2,6 +2,7 @@ package withoutc.chongchong.auth.support;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -113,6 +115,18 @@ class TestJwtSupportTest {
                 .then()
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"));
+    }
+
+    @Test
+    @DisplayName("로그아웃 공개 경로는 Access Token 없이 Security를 통과한다")
+    void allowLogoutPathWithoutAccessToken() {
+        given()
+                .port(port)
+                .when()
+                .post("/auth/logout")
+                .then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"));
     }
 
     @RestController

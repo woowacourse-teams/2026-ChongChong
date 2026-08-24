@@ -57,6 +57,8 @@ class SocialLoginAcceptanceTest {
 
     private static final String KAKAO_AUTHORIZATION_CODE = "fake-kakao-authorization-code";
     private static final String PROVIDER_USER_ID = "kakao-user-id";
+    private static final String SECOND_KAKAO_AUTHORIZATION_CODE = "second-kakao-authorization-code";
+    private static final String SECOND_PROVIDER_USER_ID = "second-kakao-user-id";
 
     @LocalServerPort
     private int port;
@@ -336,6 +338,118 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
+    @DisplayName("로그아웃하면 Session과 Refresh Cookie를 정리하고 기존 Access Token은 만료까지 유지한다")
+    void logoutAndKeepIssuedAccessTokenUntilExpiration() {
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID,
+                "총총이",
+                null
+        ));
+        Response loginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        String accessToken = loginResponse.jsonPath().getString("accessToken");
+        String refreshToken = loginResponse.getCookie("refresh_token");
+        User user = userRepository.findAll().getFirst();
+
+        Response logoutResponse = requestLogout(refreshToken);
+
+        logoutResponse.then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Secure"))
+                .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"))
+                .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
+        assertThat(logoutResponse.asString()).isEmpty();
+        assertThat(authSessionRepository.count()).isZero();
+
+        requestRefresh(refreshToken)
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+
+        given()
+                .port(port)
+                .auth().oauth2(accessToken)
+                .when()
+                .get("/test/auth-login/current-user")
+                .then()
+                .statusCode(200)
+                .body(equalTo(user.getId().toString()));
+
+        requestLogout(refreshToken)
+                .then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"));
+        assertThat(authSessionRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("Refresh Cookie가 없어도 로그아웃은 멱등하게 성공하고 Cookie를 만료시킨다")
+    void logoutIdempotentlyWithoutRefreshCookie() {
+        Response response = requestLogoutWithoutCookie();
+
+        response.then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"));
+        assertThat(response.asString()).isEmpty();
+        assertDatabaseEmpty();
+    }
+
+    @Test
+    @DisplayName("한 사용자의 로그아웃은 다른 사용자의 Session에 영향을 주지 않는다")
+    void logoutWithoutChangingOtherUserSession() {
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID,
+                "첫 번째 사용자",
+                null
+        ));
+        fakeSocialLoginClient.willSucceed(SECOND_KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                SECOND_PROVIDER_USER_ID,
+                "두 번째 사용자",
+                null
+        ));
+        Response firstLoginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        Response secondLoginResponse = requestLogin("KAKAO", SECOND_KAKAO_AUTHORIZATION_CODE);
+        String firstRefreshToken = firstLoginResponse.getCookie("refresh_token");
+        String secondRefreshToken = secondLoginResponse.getCookie("refresh_token");
+        SocialAccount firstSocialAccount = socialAccountRepository.findByProviderAndProviderUserId(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID
+        ).orElseThrow();
+        SocialAccount secondSocialAccount = socialAccountRepository.findByProviderAndProviderUserId(
+                SocialProvider.KAKAO,
+                SECOND_PROVIDER_USER_ID
+        ).orElseThrow();
+        Long firstUserId = firstSocialAccount.getUser().getId();
+        Long secondUserId = secondSocialAccount.getUser().getId();
+        HashedRefreshToken secondSessionHash = authSessionRepository.findByUserId(secondUserId)
+                .orElseThrow()
+                .getRefreshTokenHash();
+
+        requestLogout(firstRefreshToken)
+                .then()
+                .statusCode(204);
+
+        assertThat(authSessionRepository.findByUserId(firstUserId)).isEmpty();
+        assertThat(authSessionRepository.findByUserId(secondUserId))
+                .hasValueSatisfying(session -> assertThat(session.getRefreshTokenHash())
+                        .isEqualTo(secondSessionHash));
+        assertThat(authSessionRepository.count()).isOne();
+
+        requestRefresh(secondRefreshToken)
+                .then()
+                .statusCode(200)
+                .body("accessToken", notNullValue());
+    }
+
+    @Test
     @DisplayName("Provider 인증에 실패하면 Token을 반환하거나 로그인 데이터를 저장하지 않는다")
     void rejectProviderAuthenticationFailure() {
         fakeSocialLoginClient.willFail(KAKAO_AUTHORIZATION_CODE);
@@ -470,6 +584,21 @@ class SocialLoginAcceptanceTest {
                 .port(port)
                 .when()
                 .post("/auth/refresh");
+    }
+
+    private Response requestLogout(String refreshToken) {
+        return given()
+                .port(port)
+                .cookie("refresh_token", refreshToken)
+                .when()
+                .post("/auth/logout");
+    }
+
+    private Response requestLogoutWithoutCookie() {
+        return given()
+                .port(port)
+                .when()
+                .post("/auth/logout");
     }
 
     private void assertDatabaseEmpty() {
