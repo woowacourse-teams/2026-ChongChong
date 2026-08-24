@@ -10,6 +10,7 @@ import Main from '../../../shared/ui/Main';
 import assignmentQueries from '../queries';
 import { useSuspenseQueries } from '@tanstack/react-query';
 import SubmitStatusSection from '../components/SubmitStatusSection';
+import AssignmentArticle from '../components/AssignmentArticle';
 
 export default function LeaderAssignmentDetailpage() {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export default function LeaderAssignmentDetailpage() {
 
       <Main>
         <SubmitStatusSection status={submitStatusResponse} />
+        <AssignmentArticle assignment={assignment} />
 
         <NoticeDetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
       </Main>
