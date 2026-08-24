@@ -2,6 +2,7 @@
 
 - 날짜: 2026-08-21
 - 관련 이슈: [#86](https://github.com/woowacourse-teams/2026-ChongChong/issues/86)
+- 상태: [0020. 웹 인증 토큰 전달 경계를 구성한다](0020-establish-web-authentication-token-boundary.md)로 대체됨
 - 관련 ADR: [0008. 인증 토큰 발급과 세션 생명주기를 정의한다](0008-establish-auth-token-and-session-lifecycle.md),
   [0009. 제공자 독립 소셜 로그인 경계를 구성한다](0009-establish-provider-independent-social-login-boundary.md)
 
