@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,11 +23,20 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
 
     @PostMapping
-    public ResponseEntity<AssignmentCreateResponse> createAssignment(@AuthenticationPrincipal AuthenticatedUser currentUser,
-                                                                     @PathVariable Long studyId,
-                                                                     @Valid @RequestBody AssignmentCreateRequest request) {
+    public ResponseEntity<AssignmentCreateResponse> createAssignment(
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
+            @PathVariable Long studyId,
+            @Valid @RequestBody AssignmentCreateRequest request) {
         AssignmentCreateResponse response = assignmentService.create(currentUser.id(), studyId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @DeleteMapping("{assignmentId}")
+    public ResponseEntity<Void> deleteAssignment(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                 @PathVariable Long studyId, @PathVariable Long assignmentId) {
+        assignmentService.delete(currentUser.id(), studyId, assignmentId);
+
+        return ResponseEntity.noContent().build();
     }
 }
