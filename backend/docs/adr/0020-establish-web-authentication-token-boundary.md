@@ -27,18 +27,20 @@ CSRF를 전체 비활성화하고 있으므로 Cookie 기반 인증 상태 변�
 
 ## 결정
 
-### 기존 인증 Core와 OAuth 2.0/OIDC 구조를 유지한다
+### 기존 인증 Core와 OAuth 2.0 구조를 유지한다
 
-- 첫 소셜 로그인 제공자는 Google을 유지한다.
-- 웹은 Google 로그인 결과로 얻은 Google ID Token을 백엔드에 전달한다.
-- 백엔드는 Google ID Token을 검증한 뒤 총총 자체 Access Token과 Refresh Token을 발급한다.
-- Google ID Token 검증은 OIDC 사용자 인증 경계이고, 총총 보호 API는 Spring Security OAuth2 Resource Server와 Bearer
-  Access Token을 사용한다.
+- 첫 소셜 로그인 제공자는 Kakao로 변경한다.
+- 웹은 Kakao 로그인 Redirect에서 받은 일회성 Authorization Code를 백엔드에 전달한다.
+- 백엔드는 Authorization Code를 Kakao Token으로 교환하고 Kakao 사용자 정보를 조회한 뒤 총총 자체 Access Token과
+  Refresh Token을 발급한다.
+- Kakao 로그인은 OAuth 2.0 Authorization Code 흐름을 사용한다. OpenID Connect와 Kakao ID Token은 현재 로그인에
+  필수로 도입하지 않는다.
+- 총총 보호 API는 Spring Security OAuth2 Resource Server와 Bearer Access Token을 사용한다.
 - `User`, `SocialAccount`, `AuthSession`, 자동 가입 Transaction과 JWT `sub` 기반 `AuthenticatedUser` 전달 방식은
   변경하지 않는다.
 - 보호 API는 Cookie가 아니라 기존 `Authorization: Bearer <access-token>` 형식을 유지한다.
 
-### 웹 로그인 요청은 기존 형식을 유지한다
+### 웹 로그인 요청은 Kakao Authorization Code 형식으로 전환한다
 
 ```http
 GET /auth/csrf
@@ -55,16 +57,21 @@ X-XSRF-TOKEN: <csrf-token>
 
 ```json
 {
-  "provider": "GOOGLE",
-  "idToken": "google-id-token"
+  "provider": "KAKAO",
+  "authorizationCode": "kakao-authorization-code"
 }
 ```
 
 - `/auth/csrf`와 `/auth/login`은 총총 Access Token 없이 접근할 수 있다.
-- `provider`와 `idToken`의 Validation과 기존 오류 규격을 유지한다.
-- 웹 프론트엔드가 Google ID Token을 얻는 방식만 RN 라이브러리에서 Google 웹 로그인 도구로 변경된다.
-- Google ID Token 원문은 로그, 예외 메시지, 문자열 표현과 DB에 저장하지 않는다.
-- 실제 Google 공개키 서명과 Claim 검증 Adapter는 후속 이슈에서 구현한다.
+- `provider`와 `authorizationCode`는 필수이며 기존 오류 응답 규격을 유지한다.
+- 웹 프론트엔드는 Kakao JavaScript SDK 또는 인가 Endpoint로 로그인하고 Redirect URI에서 `code`와 `state`를 받는다.
+- 로그인 요청마다 고유한 `state`를 사용하고 Redirect로 돌아온 값과 일치하는지 확인한 뒤 Authorization Code를
+  백엔드에 전달한다. OAuth `state`는 `/auth/csrf`의 애플리케이션 CSRF Token과 목적과 생명주기가 다른 값이다.
+- 백엔드는 Kakao REST API 키, Client Secret과 동일한 Redirect URI로 Authorization Code를 Token으로 교환한다.
+- Kakao가 발급한 Access·Refresh Token은 사용자 정보 조회에 필요한 범위에서만 사용하고 총총 Token으로 반환하거나
+  현재 DB에 저장하지 않는다.
+- Authorization Code, Kakao Token과 총총 Token 원문은 로그, 예외 메시지와 문자열 표현에 노출하지 않는다.
+- 실제 Kakao Token 교환과 사용자 정보 조회 Adapter는 후속 이슈에서 구현한다.
 
 ### Access Token은 JSON, Refresh Token은 HttpOnly Cookie로 전달한다
 
@@ -88,7 +95,7 @@ Set-Cookie: refresh_token=<opaque-token>; HttpOnly; Secure; SameSite=Lax; Path=/
 - 웹은 Access Token을 JavaScript 메모리에만 보관하고 보호 API의 Authorization Header에 사용한다.
 - Access Token과 Refresh Token을 `localStorage`, `sessionStorage`와 URL Query Parameter에 저장하지 않는다.
 - 페이지 새로고침으로 Access Token 메모리가 사라지면 `/auth/csrf` 후 `/auth/refresh`를 호출해 복구한다.
-- 응답에 내부 User ID, Session ID, Refresh Token 해시와 Google ID Token을 포함하지 않는다.
+- 응답에 내부 User ID, Session ID, Refresh Token 해시와 Kakao Authorization Code·Provider Token을 포함하지 않는다.
 - Token을 포함하는 성공 응답은 `Cache-Control: no-store`를 유지한다.
 
 `refreshTokenExpiresAt`은 비밀값은 아니지만 웹이 Cookie 수명을 직접 관리하지 않고 서버의 `Max-Age`가 이를 표현한다.
@@ -290,8 +297,9 @@ third-party Cookie 제한을 항상 감수한다. 현재 배포 주소가 미정
 
 - 실제 웹과 API의 배포 Origin 및 same-origin Reverse Proxy 사용 여부
 - 로컬 개발 환경의 정확한 프론트엔드 Origin
-- 실제 Google Web Client ID와 환경별 설정 위치
-- Google 표시 이름 누락 정책과 Provider 장애 오류 계약
+- 실제 Kakao JavaScript·REST API 키와 Client Secret의 환경별 설정 위치
+- Kakao Redirect URI의 실제 값과 OAuth `state`의 정확한 생성·보관 구현 방식
+- Kakao 닉네임 동의·누락 정책과 Provider 장애 오류 계약
 - 프론트엔드의 다중 401 Refresh Single-flight 및 원 요청 재시도 정책
 - 향후 앱을 다시 지원할지와 앱 전용 Endpoint 경로
 
@@ -307,12 +315,15 @@ cross-site로 확정되면 SameSite 결정을 다시 검토한다.
 - CSRF Token 발급 Endpoint와 로그인·재발급·로그아웃 CSRF 검증을 구성한다.
 - 배포 Origin이 다르면 정확한 허용 Origin을 사용하는 credential CORS를 구성한다.
 - Cookie 속성, CSRF·Origin 실패와 전체 웹 인증 HTTP 인수 테스트를 작성한다.
-- 웹 인증 전환 완료 후 실제 Google ID Token 검증 Adapter 계획을 웹 브라우저 기준으로 갱신한다.
-- 프론트엔드 이슈에서 Google 웹 로그인, Access Token 메모리, CSRF bootstrap, Refresh Single-flight와 로그아웃을 구현한다.
+- 웹 인증 전환 완료 후 Kakao Authorization Code 교환과 사용자 정보 조회 Adapter를 별도 이슈로 구현한다.
+- 프론트엔드 이슈에서 Kakao 웹 로그인과 `state` 검증, Access Token 메모리, CSRF bootstrap, Refresh Single-flight와
+  로그아웃을 구현한다.
 
 ## 참고 자료
 
 - [Spring Security CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
 - [Spring Security CORS](https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html)
 - [MDN Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie)
-- [Google 백엔드 ID Token 검증](https://developers.google.com/identity/sign-in/web/backend-auth)
+- [Kakao 로그인 REST API](https://developers.kakao.com/docs/ko/kakaologin/rest-api)
+- [Kakao JavaScript SDK 로그인](https://developers.kakao.com/docs/ko/kakaologin/js)
+- [Kakao 보안 권장 사항](https://developers.kakao.com/docs/ko/getting-started/security-guideline)

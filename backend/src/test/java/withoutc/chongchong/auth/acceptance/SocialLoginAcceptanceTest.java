@@ -54,8 +54,8 @@ import withoutc.chongchong.user.repository.UserRepository;
 @ActiveProfiles("test")
 class SocialLoginAcceptanceTest {
 
-    private static final String GOOGLE_ID_TOKEN = "fake-google-id-token";
-    private static final String PROVIDER_USER_ID = "google-user-id";
+    private static final String KAKAO_AUTHORIZATION_CODE = "fake-kakao-authorization-code";
+    private static final String PROVIDER_USER_ID = "kakao-user-id";
 
     @LocalServerPort
     private int port;
@@ -94,14 +94,14 @@ class SocialLoginAcceptanceTest {
     @Test
     @DisplayName("신규 소셜 사용자가 로그인하고 발급 Access Token으로 보호 API에 접근한다")
     void loginNewSocialUserAndAuthenticateWithIssuedAccessToken() {
-        fakeSocialLoginClient.willSucceed(GOOGLE_ID_TOKEN, new SocialUserInfo(
-                SocialProvider.GOOGLE,
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
                 PROVIDER_USER_ID,
                 "총총이",
                 "https://example.com/profile.png"
         ));
 
-        Response response = requestLogin("GOOGLE", GOOGLE_ID_TOKEN);
+        Response response = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
 
         response.then()
                 .statusCode(200)
@@ -110,7 +110,7 @@ class SocialLoginAcceptanceTest {
                 .body("accessTokenExpiresAt", notNullValue())
                 .body("refreshToken", notNullValue())
                 .body("refreshTokenExpiresAt", notNullValue())
-                .body("$", not(hasKey("idToken")))
+                .body("$", not(hasKey("authorizationCode")))
                 .body("$", not(hasKey("userId")))
                 .body("$", not(hasKey("sessionId")))
                 .body("$", not(hasKey("refreshTokenHash")))
@@ -128,7 +128,7 @@ class SocialLoginAcceptanceTest {
 
         User user = userRepository.findAll().getFirst();
         SocialAccount socialAccount = socialAccountRepository.findByProviderAndProviderUserId(
-                SocialProvider.GOOGLE,
+                SocialProvider.KAKAO,
                 PROVIDER_USER_ID
         ).orElseThrow();
         AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
@@ -141,7 +141,7 @@ class SocialLoginAcceptanceTest {
         assertThat(user.getName()).isEqualTo("총총이");
         assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(socialAccount.getProvider()).isEqualTo(SocialProvider.GOOGLE);
+        assertThat(socialAccount.getProvider()).isEqualTo(SocialProvider.KAKAO);
         assertThat(socialAccount.getProviderUserId()).isEqualTo(PROVIDER_USER_ID);
         assertThat(socialAccount.getUser().getId()).isEqualTo(user.getId());
         assertThat(authSessionRepository.count()).isOne();
@@ -167,13 +167,13 @@ class SocialLoginAcceptanceTest {
     @Test
     @DisplayName("같은 소셜 사용자가 다시 로그인하면 사용자와 계정을 재사용하고 인증 세션을 교체한다")
     void reuseSocialUserAndReplaceAuthSessionOnRelogin() {
-        fakeSocialLoginClient.willSucceed(GOOGLE_ID_TOKEN, new SocialUserInfo(
-                SocialProvider.GOOGLE,
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
                 PROVIDER_USER_ID,
                 "처음 이름",
                 "https://example.com/first-profile.png"
         ));
-        Response firstResponse = requestLogin("GOOGLE", GOOGLE_ID_TOKEN);
+        Response firstResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
         firstResponse.then().statusCode(200);
         User firstUser = userRepository.findAll().getFirst();
         AuthSession firstSession = authSessionRepository.findByUserId(firstUser.getId()).orElseThrow();
@@ -181,13 +181,13 @@ class SocialLoginAcceptanceTest {
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
         String firstRefreshToken = firstResponse.jsonPath().getString("refreshToken");
 
-        fakeSocialLoginClient.willSucceed(GOOGLE_ID_TOKEN, new SocialUserInfo(
-                SocialProvider.GOOGLE,
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
                 PROVIDER_USER_ID,
                 "바뀐 이름",
                 "https://example.com/changed-profile.png"
         ));
-        Response secondResponse = requestLogin("GOOGLE", GOOGLE_ID_TOKEN);
+        Response secondResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
 
         secondResponse.then().statusCode(200);
         User reusedUser = userRepository.findAll().getFirst();
@@ -211,9 +211,9 @@ class SocialLoginAcceptanceTest {
     @Test
     @DisplayName("Provider 인증에 실패하면 Token을 반환하거나 로그인 데이터를 저장하지 않는다")
     void rejectProviderAuthenticationFailure() {
-        fakeSocialLoginClient.willFail(GOOGLE_ID_TOKEN);
+        fakeSocialLoginClient.willFail(KAKAO_AUTHORIZATION_CODE);
 
-        Response response = requestLogin("GOOGLE", GOOGLE_ID_TOKEN);
+        Response response = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
 
         response.then()
                 .statusCode(401)
@@ -225,14 +225,14 @@ class SocialLoginAcceptanceTest {
                 .body("$", not(hasKey("accessTokenExpiresAt")))
                 .body("$", not(hasKey("refreshTokenExpiresAt")));
 
-        assertThat(response.asString()).doesNotContain(GOOGLE_ID_TOKEN);
+        assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
         assertDatabaseEmpty();
     }
 
     @Test
     @DisplayName("등록되지 않은 Provider는 공통 Auth 오류로 거부한다")
     void rejectUnsupportedProvider() {
-        Response response = requestLogin("KAKAO", "fake-kakao-id-token");
+        Response response = requestLogin("GOOGLE", "fake-google-authorization-code");
 
         response.then()
                 .statusCode(400)
@@ -247,7 +247,7 @@ class SocialLoginAcceptanceTest {
     void rejectMissingProvider() {
         Response response = requestLoginBody("""
                 {
-                  "idToken": "fake-google-id-token"
+                  "authorizationCode": "fake-kakao-authorization-code"
                 }
                 """);
 
@@ -260,14 +260,14 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
-    @DisplayName("Google ID Token이 공백이면 공통 입력 오류로 거부한다")
-    void rejectBlankIdToken() {
-        Response response = requestLogin("GOOGLE", " ");
+    @DisplayName("Kakao 인가 코드가 공백이면 공통 입력 오류로 거부한다")
+    void rejectBlankAuthorizationCode() {
+        Response response = requestLogin("KAKAO", " ");
 
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
-                .body("errors.field", hasItem("idToken"));
+                .body("errors.field", hasItem("authorizationCode"));
 
         assertDatabaseEmpty();
     }
@@ -275,14 +275,14 @@ class SocialLoginAcceptanceTest {
     @Test
     @DisplayName("알 수 없는 Provider 문자열은 공통 잘못된 요청 오류로 거부한다")
     void rejectUnknownProvider() {
-        Response response = requestLogin("UNKNOWN", GOOGLE_ID_TOKEN);
+        Response response = requestLogin("UNKNOWN", KAKAO_AUTHORIZATION_CODE);
 
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST"))
                 .body("message", equalTo("요청 형식이 잘못되었습니다."));
 
-        assertThat(response.asString()).doesNotContain(GOOGLE_ID_TOKEN);
+        assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
         assertDatabaseEmpty();
     }
 
@@ -305,14 +305,14 @@ class SocialLoginAcceptanceTest {
 
     private Response requestLogin(
             String provider,
-            String idToken
+            String authorizationCode
     ) {
         return requestLoginBody("""
                 {
                   "provider": "%s",
-                  "idToken": "%s"
+                  "authorizationCode": "%s"
                 }
-                """.formatted(provider, idToken));
+                """.formatted(provider, authorizationCode));
     }
 
     private Response requestLoginBody(String body) {
@@ -344,7 +344,7 @@ class SocialLoginAcceptanceTest {
 
         @Bean
         FakeSocialLoginClient fakeSocialLoginClient() {
-            return new FakeSocialLoginClient(SocialProvider.GOOGLE);
+            return new FakeSocialLoginClient(SocialProvider.KAKAO);
         }
     }
 }

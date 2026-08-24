@@ -8,16 +8,16 @@ import withoutc.chongchong.auth.social.SocialProvider;
 public record SocialLoginRequest(
         @NotNull(message = "소셜 로그인 제공자는 필수입니다.")
         SocialProvider provider,
-        @NotBlank(message = "Google ID Token은 필수입니다.")
-        String idToken
+        @NotBlank(message = "소셜 로그인 인가 코드는 필수입니다.")
+        String authorizationCode
 ) {
 
     public SocialLoginCommand toCommand() {
-        return new SocialLoginCommand(provider, idToken);
+        return new SocialLoginCommand(provider, authorizationCode);
     }
 
     @Override
     public String toString() {
-        return "SocialLoginRequest[provider=" + provider + ", idToken=REDACTED]";
+        return "SocialLoginRequest[provider=" + provider + ", authorizationCode=REDACTED]";
     }
 }

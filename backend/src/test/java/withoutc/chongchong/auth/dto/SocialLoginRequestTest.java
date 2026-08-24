@@ -10,30 +10,30 @@ import withoutc.chongchong.auth.social.SocialProvider;
 class SocialLoginRequestTest {
 
     @Test
-    @DisplayName("Google ID Token을 Provider 독립 인증 정보로 변환한다")
-    void convertIdTokenToCredential() {
+    @DisplayName("Kakao 인가 코드를 Provider 독립 인증 정보로 변환한다")
+    void convertAuthorizationCodeToCredential() {
         SocialLoginRequest request = new SocialLoginRequest(
-                SocialProvider.GOOGLE,
-                "google-id-token"
+                SocialProvider.KAKAO,
+                "kakao-authorization-code"
         );
 
         SocialLoginCommand command = request.toCommand();
 
-        assertThat(command.provider()).isEqualTo(SocialProvider.GOOGLE);
-        assertThat(command.credential()).isEqualTo("google-id-token");
+        assertThat(command.provider()).isEqualTo(SocialProvider.KAKAO);
+        assertThat(command.credential()).isEqualTo("kakao-authorization-code");
     }
 
     @Test
-    @DisplayName("로그인 요청 문자열에 Google ID Token을 노출하지 않는다")
-    void redactIdTokenFromToString() {
+    @DisplayName("로그인 요청 문자열에 Kakao 인가 코드를 노출하지 않는다")
+    void redactAuthorizationCodeFromToString() {
         SocialLoginRequest request = new SocialLoginRequest(
-                SocialProvider.GOOGLE,
-                "sensitive-google-id-token"
+                SocialProvider.KAKAO,
+                "sensitive-kakao-authorization-code"
         );
 
         assertThat(request.toString())
-                .contains("provider=GOOGLE")
-                .contains("idToken=REDACTED")
-                .doesNotContain("sensitive-google-id-token");
+                .contains("provider=KAKAO")
+                .contains("authorizationCode=REDACTED")
+                .doesNotContain("sensitive-kakao-authorization-code");
     }
 }

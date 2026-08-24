@@ -39,7 +39,7 @@ import withoutc.chongchong.auth.token.RawRefreshToken;
 @ActiveProfiles("test")
 class AuthControllerTest {
 
-    private static final String GOOGLE_ID_TOKEN = "test-google-id-token";
+    private static final String KAKAO_AUTHORIZATION_CODE = "test-kakao-authorization-code";
     private static final String ACCESS_TOKEN = "test-access-token";
     private static final String REFRESH_TOKEN = "test-refresh-token";
     private static final Instant ACCESS_TOKEN_EXPIRES_AT = Instant.parse("2026-08-21T01:00:00Z");
@@ -60,10 +60,10 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "provider": "GOOGLE",
-                                  "idToken": "%s"
+                                  "provider": "KAKAO",
+                                  "authorizationCode": "%s"
                                 }
-                                """.formatted(GOOGLE_ID_TOKEN)))
+                                """.formatted(KAKAO_AUTHORIZATION_CODE)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().encoding(StandardCharsets.UTF_8))
@@ -73,13 +73,13 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.refreshToken").value(REFRESH_TOKEN))
                 .andExpect(jsonPath("$.refreshTokenExpiresAt").value("2026-09-20T01:00:00Z"))
                 .andExpect(jsonPath("$.userId").doesNotExist())
-                .andExpect(jsonPath("$.idToken").doesNotExist())
+                .andExpect(jsonPath("$.authorizationCode").doesNotExist())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
                 .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
 
         verify(socialLoginFacade).login(new SocialLoginCommand(
-                SocialProvider.GOOGLE,
-                GOOGLE_ID_TOKEN
+                SocialProvider.KAKAO,
+                KAKAO_AUTHORIZATION_CODE
         ));
     }
 
@@ -90,39 +90,39 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "idToken": "%s"
+                                  "authorizationCode": "%s"
                                 }
-                                """.formatted(GOOGLE_ID_TOKEN))), "provider")
-                .andExpect(content().string(not(containsString(GOOGLE_ID_TOKEN))));
+                                """.formatted(KAKAO_AUTHORIZATION_CODE))), "provider")
+                .andExpect(content().string(not(containsString(KAKAO_AUTHORIZATION_CODE))));
 
         verifyNoInteractions(socialLoginFacade);
     }
 
     @Test
-    @DisplayName("idToken이 누락되면 공통 입력 오류를 반환한다")
-    void rejectMissingIdToken() throws Exception {
+    @DisplayName("authorizationCode가 누락되면 공통 입력 오류를 반환한다")
+    void rejectMissingAuthorizationCode() throws Exception {
         expectInvalidInput(mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "provider": "GOOGLE"
+                                  "provider": "KAKAO"
                                 }
-                                """)), "idToken");
+                                """)), "authorizationCode");
 
         verifyNoInteractions(socialLoginFacade);
     }
 
     @Test
-    @DisplayName("idToken이 공백이면 공통 입력 오류를 반환한다")
-    void rejectBlankIdToken() throws Exception {
+    @DisplayName("authorizationCode가 공백이면 공통 입력 오류를 반환한다")
+    void rejectBlankAuthorizationCode() throws Exception {
         expectInvalidInput(mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "provider": "GOOGLE",
-                                  "idToken": " "
+                                  "provider": "KAKAO",
+                                  "authorizationCode": " "
                                 }
-                                """)), "idToken");
+                                """)), "authorizationCode");
 
         verifyNoInteractions(socialLoginFacade);
     }
@@ -135,14 +135,14 @@ class AuthControllerTest {
                         .content("""
                                 {
                                   "provider": "UNKNOWN",
-                                  "idToken": "%s"
+                                  "authorizationCode": "%s"
                                 }
-                                """.formatted(GOOGLE_ID_TOKEN)))
+                                """.formatted(KAKAO_AUTHORIZATION_CODE)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.message").value("요청 형식이 잘못되었습니다."))
                 .andExpect(jsonPath("$.errors").doesNotExist())
-                .andExpect(content().string(not(containsString(GOOGLE_ID_TOKEN))));
+                .andExpect(content().string(not(containsString(KAKAO_AUTHORIZATION_CODE))));
 
         verifyNoInteractions(socialLoginFacade);
     }
@@ -158,10 +158,10 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "provider": "KAKAO",
-                                  "idToken": "%s"
+                                  "provider": "GOOGLE",
+                                  "authorizationCode": "%s"
                                 }
-                                """.formatted(GOOGLE_ID_TOKEN))),
+                                """.formatted(KAKAO_AUTHORIZATION_CODE))),
                 400,
                 "UNSUPPORTED_SOCIAL_PROVIDER",
                 "지원하지 않는 소셜 로그인 제공자입니다."
@@ -179,10 +179,10 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "provider": "GOOGLE",
-                                  "idToken": "%s"
+                                  "provider": "KAKAO",
+                                  "authorizationCode": "%s"
                                 }
-                                """.formatted(GOOGLE_ID_TOKEN))),
+                                """.formatted(KAKAO_AUTHORIZATION_CODE))),
                 401,
                 "SOCIAL_AUTHENTICATION_FAILED",
                 "소셜 로그인 인증에 실패했습니다."
@@ -215,7 +215,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
-                .andExpect(content().string(not(containsString(GOOGLE_ID_TOKEN))))
+                .andExpect(content().string(not(containsString(KAKAO_AUTHORIZATION_CODE))))
                 .andExpect(content().string(not(containsString(ACCESS_TOKEN))))
                 .andExpect(content().string(not(containsString(REFRESH_TOKEN))));
 
