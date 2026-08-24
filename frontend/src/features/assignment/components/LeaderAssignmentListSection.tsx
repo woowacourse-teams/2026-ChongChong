@@ -30,7 +30,7 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
   });
 
   return (
-    <div>
+    <section>
       {assignments.length === 0 ? (
         <EmptyContent message="아직 공지가 없어요" />
       ) : (
@@ -68,6 +68,6 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
