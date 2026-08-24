@@ -3,7 +3,7 @@ import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import { useNavigate } from 'react-router';
-import EmptyState from '../../../shared/ui/EmptyState';
+import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
 import Badge from '../../../shared/ui/Badge';
@@ -32,24 +32,24 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
   return (
     <div>
       {assignments.length === 0 ? (
-        <EmptyState message="아직 공지가 없어요" />
+        <EmptyContent message="아직 공지가 없어요" />
       ) : (
         <>
           <AssignmentList assignments={assignments} studyId={studyId}>
             {(assignment) => (
               <>
                 {assignment.isComplete ? (
-                  <Badge variant="BrandSolid" size="Small">
+                  <Badge variant="brandSolid" size="small">
                     모두 제출
                   </Badge>
                 ) : (
-                  <Badge variant="BrandOutline" size="Small">
+                  <Badge variant="brandOutline" size="small">
                     {assignment.completeCount}/{assignment.memberCount} 제출
                   </Badge>
                 )}
 
                 {assignment.remindAt && (
-                  <Badge variant="NeutralSolid" size="Small">
+                  <Badge variant="neutralSolid" size="small">
                     <img src={clock} alt="리마인드 시각" width={12} height={12} />
                     {formatReminder(assignment.remindAt) + ' 리마인드'}
                   </Badge>
