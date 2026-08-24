@@ -1,4 +1,4 @@
-package withoutc.chongchong.notice.dto;
+package withoutc.chongchong.notice.controller.dto;
 
 import java.util.List;
 

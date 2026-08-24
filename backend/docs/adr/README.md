@@ -35,3 +35,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0016](0016-establish-backend-ci-cd-pipeline.md)                              | AWS 관리형 서비스로 백엔드 CI/CD 파이프라인을 구성한다 |
 | [0017](0017-use-personal-aws-account-for-temporary-development-deployment.md) | 개인 AWS 계정에 임시 개발 배포 환경을 구성한다 |
 | [0018](0018-define-rn-social-login-http-contract.md)                          | RN 소셜 로그인 HTTP 계약을 정의한다 |
+| [0019](0019-defer-notice-read-concurrency-strategy.md)                        | 공지 읽음 시각의 동시성 보장 방식을 후속 결정으로 유보한다 |

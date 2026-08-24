@@ -28,18 +28,23 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
-import withoutc.chongchong.notice.dto.NoticeCreateRequest;
-import withoutc.chongchong.notice.dto.NoticeCreateResponse;
-import withoutc.chongchong.notice.dto.NoticeDetailResponse;
-import withoutc.chongchong.notice.dto.NoticeListResponse;
-import withoutc.chongchong.notice.dto.NoticeSummaryResponse;
-import withoutc.chongchong.notice.dto.NoticeUpdateRequest;
+import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
+import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeRecipient;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
+import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -341,8 +346,115 @@ class NoticeServiceTest {
         verify(noticeRepository, never()).delete(any(Notice.class));
     }
 
+    @Test
+    @DisplayName("스터디원이 공지를 읽으면 현재 시각을 읽음 시각으로 반환한다")
+    void markAsReadTest() {
+        StudyMember member = mock(StudyMember.class);
+        Notice notice = noticeWithId(NOTICE_ID);
+        NoticeRecipient recipient = recipientOf(notice, null);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(member.getId()).thenReturn(MEMBER_ID);
+        when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
+        when(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(NOTICE_ID, MEMBER_ID)).thenReturn(recipient);
+
+        NoticeReadResponse response = noticeService.markAsRead(USER_ID, STUDY_ID, NOTICE_ID);
+
+        assertThat(response.readAt()).isEqualTo(NOW);
+        assertThat(recipient.getReadAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    @DisplayName("스터디원이 공지 읽음 상태를 조회하면 읽지 않음과 읽음 상태를 그대로 반환한다")
+    void getReadStatusTest() {
+        StudyMember member = mock(StudyMember.class);
+        Notice notice = noticeWithId(NOTICE_ID);
+        NoticeRecipient recipient = recipientOf(notice, null);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(member.getId()).thenReturn(MEMBER_ID);
+        when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
+        when(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(NOTICE_ID, MEMBER_ID)).thenReturn(recipient);
+
+        NoticeReadStatusResponse unreadResponse = noticeService.getReadStatus(USER_ID, STUDY_ID, NOTICE_ID);
+        ReflectionTestUtils.setField(recipient, "readAt", NOW);
+        NoticeReadStatusResponse readResponse = noticeService.getReadStatus(USER_ID, STUDY_ID, NOTICE_ID);
+
+        assertThat(unreadResponse.isRead()).isFalse();
+        assertThat(unreadResponse.readAt()).isNull();
+        assertThat(readResponse.isRead()).isTrue();
+        assertThat(readResponse.readAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    @DisplayName("리더가 공지 읽음 현황을 조회하면 읽은 사람과 읽지 않은 사람을 마지막 리마인드 시각과 함께 구분한다")
+    void getNoticeStatusesTest() {
+        StudyMember leader = mock(StudyMember.class);
+        Notice notice = noticeWithId(NOTICE_ID);
+        LocalDateTime remindAt = NOW.plusDays(1);
+        LocalDateTime lastRemindAt = NOW.minusHours(1);
+        notice.addReminders(List.of(remindAt), NOW);
+        List<NoticeRecipientStatusProjection> statuses = List.of(
+                new NoticeRecipientStatusProjection(21L, "읽은 멤버", "https://example.com/read.png", true, null),
+                new NoticeRecipientStatusProjection(22L, "리마인드 받은 멤버", "https://example.com/unread.png", false,
+                        lastRemindAt),
+                new NoticeRecipientStatusProjection(23L, "리마인드 없는 멤버", null, false, null)
+        );
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
+        when(leader.isLeader()).thenReturn(true);
+        when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
+        when(noticeRecipientRepository.findStatusesByNoticeId(NOTICE_ID)).thenReturn(statuses);
+
+        NoticeStatusesResponse response = noticeService.getNoticeStatuses(USER_ID, STUDY_ID, NOTICE_ID);
+
+        assertThat(response.id()).isEqualTo(NOTICE_ID);
+        assertThat(response.memberCount()).isEqualTo(3);
+        assertThat(response.readCount()).isEqualTo(1);
+        assertThat(response.remindAt()).isEqualTo(remindAt);
+        assertThat(response.readMembers()).containsExactly(
+                new NoticeStatusesResponse.ReadMember(21L, "읽은 멤버", "https://example.com/read.png")
+        );
+        assertThat(response.unreadMembers()).containsExactly(
+                new NoticeStatusesResponse.UnreadMember(22L, "리마인드 받은 멤버", "https://example.com/unread.png",
+                        lastRemindAt),
+                new NoticeStatusesResponse.UnreadMember(23L, "리마인드 없는 멤버", null, null)
+        );
+    }
+
+    @Test
+    @DisplayName("리더가 아닌 스터디원은 공지 읽음 현황을 조회할 수 없다")
+    void getNoticeStatusesByMemberTest() {
+        StudyMember member = mock(StudyMember.class);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(member.isLeader()).thenReturn(false);
+
+        assertThatThrownBy(() -> noticeService.getNoticeStatuses(USER_ID, STUDY_ID, NOTICE_ID))
+                .isInstanceOf(AuthException.class)
+                .extracting(exception -> ((AuthException) exception).getErrorCode())
+                .isEqualTo(AuthErrorCode.ACCESS_DENIED);
+
+        verifyNoInteractions(noticeRepository, noticeRecipientRepository);
+    }
+
+    @Test
+    @DisplayName("리더도 다른 스터디의 공지 읽음 현황은 조회할 수 없다")
+    void getNoticeStatusesFromOtherStudyTest() {
+        StudyMember leader = mock(StudyMember.class);
+        Notice notice = noticeWithId(NOTICE_ID, 999L);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
+        when(leader.isLeader()).thenReturn(true);
+        when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
+
+        assertNoticeNotFound(() -> noticeService.getNoticeStatuses(USER_ID, STUDY_ID, NOTICE_ID));
+        verifyNoInteractions(noticeRecipientRepository);
+    }
+
     private NoticeReadStatusProjection readStatus(Long noticeId, LocalDateTime readAt) {
         return new NoticeReadStatusProjection(noticeId, readAt);
+    }
+
+    private NoticeRecipient recipientOf(Notice notice, LocalDateTime readAt) {
+        NoticeRecipient recipient = NoticeRecipient.create(mock(StudyMember.class), notice);
+        ReflectionTestUtils.setField(recipient, "readAt", readAt);
+        return recipient;
     }
 
     private Notice noticeWithId(Long noticeId) {

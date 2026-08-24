@@ -10,7 +10,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,6 +54,12 @@ public class NoticeRecipient extends BaseEntity {
         this.member = member;
         this.notice = notice;
         this.readAt = readAt;
+    }
+
+    public void markAsRead(Clock clock) {
+        if (this.readAt == null) {
+            this.readAt = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MICROS);
+        }
     }
 
     public boolean isRead() {
