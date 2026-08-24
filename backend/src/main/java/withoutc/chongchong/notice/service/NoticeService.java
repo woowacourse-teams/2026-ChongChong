@@ -21,6 +21,8 @@ import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusResponse.UnreadMember;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
@@ -30,6 +32,7 @@ import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
+import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -100,6 +103,41 @@ public class NoticeService {
 
         List<NoticeSummaryResponse> noticeSummaries = createNoticeSummaries(member, noticePage.content());
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);
+    }
+
+    public NoticeStatusResponse getNoticeStatus(Long userId, Long studyId, Long noticeId) {
+        validateLeader(studyId, userId);
+
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
+
+        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findStatusesByNoticeId(noticeId);
+
+        List<NoticeStatusResponse.ReadMember> readMembers = statuses.stream()
+                .filter(NoticeRecipientStatusProjection::isRead)
+                .map(status -> NoticeStatusResponse.ReadMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl()
+                ))
+                .toList();
+
+        List<UnreadMember> unreadMembers = statuses.stream()
+                .filter(status -> !status.isRead())
+                .map(status -> UnreadMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl(),
+                        status.lastRemindAt()
+                ))
+                .toList();
+
+        return NoticeStatusResponse.of(
+                noticeId,
+                notice.getNextRemindAt(),
+                readMembers,
+                unreadMembers
+        );
     }
 
     @Transactional
