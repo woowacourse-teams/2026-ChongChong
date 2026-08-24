@@ -22,3 +22,10 @@ auth:
     access-token-validity: 30m
   refresh-token:
     validity: 30d
+  web:
+    refresh-cookie:
+      name: refresh_token
+      secure: true
+      http-only: true
+      same-site: Lax
+      path: /auth
