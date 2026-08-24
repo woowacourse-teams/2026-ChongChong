@@ -108,22 +108,23 @@ class SocialLoginAcceptanceTest {
                 .body("tokenType", equalTo("Bearer"))
                 .body("accessToken", notNullValue())
                 .body("accessTokenExpiresAt", notNullValue())
-                .body("refreshToken", notNullValue())
-                .body("refreshTokenExpiresAt", notNullValue())
+                .body("$", not(hasKey("refreshToken")))
+                .body("$", not(hasKey("refreshTokenExpiresAt")))
                 .body("$", not(hasKey("authorizationCode")))
                 .body("$", not(hasKey("userId")))
                 .body("$", not(hasKey("sessionId")))
                 .body("$", not(hasKey("refreshTokenHash")))
                 .header(HttpHeaders.CACHE_CONTROL, containsString("no-store"))
-                .header(HttpHeaders.SET_COOKIE, nullValue());
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Secure"))
+                .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"))
+                .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
 
         String accessToken = response.jsonPath().getString("accessToken");
-        String refreshToken = response.jsonPath().getString("refreshToken");
+        String refreshToken = response.getCookie("refresh_token");
         Instant accessTokenExpiresAt = Instant.parse(
                 response.jsonPath().getString("accessTokenExpiresAt")
-        );
-        Instant refreshTokenExpiresAt = Instant.parse(
-                response.jsonPath().getString("refreshTokenExpiresAt")
         );
 
         User user = userRepository.findAll().getFirst();
@@ -148,7 +149,7 @@ class SocialLoginAcceptanceTest {
         assertThat(authSession.getUser().getId()).isEqualTo(user.getId());
         assertThat(authSession.getRefreshTokenHash()).isEqualTo(expectedRefreshTokenHash);
         assertThat(authSession.getRefreshTokenHash().value()).isNotEqualTo(refreshToken);
-        assertThat(authSession.getExpiresAt()).isEqualTo(refreshTokenExpiresAt);
+        assertThat(authSession.getExpiresAt()).isAfter(accessTokenExpiresAt);
         assertThat(jwt.getSubject()).isEqualTo(user.getId().toString());
         assertThat(jwt.getClaimAsString("iss")).isEqualTo(jwtProperties.issuer());
         assertThat(jwt.getAudience()).containsExactly(jwtProperties.audience());
@@ -179,7 +180,7 @@ class SocialLoginAcceptanceTest {
         AuthSession firstSession = authSessionRepository.findByUserId(firstUser.getId()).orElseThrow();
         Long firstSessionId = firstSession.getId();
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
-        String firstRefreshToken = firstResponse.jsonPath().getString("refreshToken");
+        String firstRefreshToken = firstResponse.getCookie("refresh_token");
 
         fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
                 SocialProvider.KAKAO,
@@ -193,7 +194,7 @@ class SocialLoginAcceptanceTest {
         User reusedUser = userRepository.findAll().getFirst();
         AuthSession replacedSession = authSessionRepository.findByUserId(reusedUser.getId()).orElseThrow();
         String secondAccessToken = secondResponse.jsonPath().getString("accessToken");
-        String secondRefreshToken = secondResponse.jsonPath().getString("refreshToken");
+        String secondRefreshToken = secondResponse.getCookie("refresh_token");
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
@@ -223,7 +224,8 @@ class SocialLoginAcceptanceTest {
                 .body("$", not(hasKey("accessToken")))
                 .body("$", not(hasKey("refreshToken")))
                 .body("$", not(hasKey("accessTokenExpiresAt")))
-                .body("$", not(hasKey("refreshTokenExpiresAt")));
+                .body("$", not(hasKey("refreshTokenExpiresAt")))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
         assertDatabaseEmpty();
@@ -237,7 +239,8 @@ class SocialLoginAcceptanceTest {
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("UNSUPPORTED_SOCIAL_PROVIDER"))
-                .body("message", equalTo("지원하지 않는 소셜 로그인 제공자입니다."));
+                .body("message", equalTo("지원하지 않는 소셜 로그인 제공자입니다."))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
     }
@@ -254,7 +257,8 @@ class SocialLoginAcceptanceTest {
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
-                .body("errors.field", hasItem("provider"));
+                .body("errors.field", hasItem("provider"))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
     }
@@ -267,7 +271,8 @@ class SocialLoginAcceptanceTest {
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
-                .body("errors.field", hasItem("authorizationCode"));
+                .body("errors.field", hasItem("authorizationCode"))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
     }
@@ -280,7 +285,8 @@ class SocialLoginAcceptanceTest {
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST"))
-                .body("message", equalTo("요청 형식이 잘못되었습니다."));
+                .body("message", equalTo("요청 형식이 잘못되었습니다."))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
         assertDatabaseEmpty();
@@ -298,7 +304,8 @@ class SocialLoginAcceptanceTest {
         response.then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST"))
-                .body("message", equalTo("요청 형식이 잘못되었습니다."));
+                .body("message", equalTo("요청 형식이 잘못되었습니다."))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
     }

@@ -13,12 +13,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -37,13 +43,15 @@ import withoutc.chongchong.auth.token.RawRefreshToken;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(AuthControllerTest.FixedClockConfig.class)
 class AuthControllerTest {
 
+    private static final Instant NOW = Instant.parse("2026-08-21T00:00:00Z");
     private static final String KAKAO_AUTHORIZATION_CODE = "test-kakao-authorization-code";
     private static final String ACCESS_TOKEN = "test-access-token";
     private static final String REFRESH_TOKEN = "test-refresh-token";
     private static final Instant ACCESS_TOKEN_EXPIRES_AT = Instant.parse("2026-08-21T01:00:00Z");
-    private static final Instant REFRESH_TOKEN_EXPIRES_AT = Instant.parse("2026-09-20T01:00:00Z");
+    private static final Instant REFRESH_TOKEN_EXPIRES_AT = Instant.parse("2026-09-20T00:00:00Z");
 
     @Autowired
     private MockMvc mockMvc;
@@ -52,7 +60,7 @@ class AuthControllerTest {
     private SocialLoginFacade socialLoginFacade;
 
     @Test
-    @DisplayName("Access Token 없이 소셜 로그인하고 Token 쌍을 JSON으로 받는다")
+    @DisplayName("Access Token 없이 로그인하고 Access Token JSON과 Refresh Token Cookie를 받는다")
     void loginWithoutAccessToken() throws Exception {
         when(socialLoginFacade.login(any())).thenReturn(createIssuedTokenPair());
 
@@ -70,12 +78,21 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.accessToken").value(ACCESS_TOKEN))
                 .andExpect(jsonPath("$.accessTokenExpiresAt").value("2026-08-21T01:00:00Z"))
-                .andExpect(jsonPath("$.refreshToken").value(REFRESH_TOKEN))
-                .andExpect(jsonPath("$.refreshTokenExpiresAt").value("2026-09-20T01:00:00Z"))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshTokenExpiresAt").doesNotExist())
                 .andExpect(jsonPath("$.userId").doesNotExist())
                 .andExpect(jsonPath("$.authorizationCode").doesNotExist())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
-                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString(
+                        "refresh_token=" + REFRESH_TOKEN
+                )))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=2592000")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/auth")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax")))
+                .andExpect(content().string(not(containsString(REFRESH_TOKEN))))
+                .andExpect(content().string(not(containsString(KAKAO_AUTHORIZATION_CODE))));
 
         verify(socialLoginFacade).login(new SocialLoginCommand(
                 SocialProvider.KAKAO,
@@ -142,6 +159,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.message").value("요청 형식이 잘못되었습니다."))
                 .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE))
                 .andExpect(content().string(not(containsString(KAKAO_AUTHORIZATION_CODE))));
 
         verifyNoInteractions(socialLoginFacade);
@@ -199,7 +217,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("입력값이 올바르지 않습니다."))
                 .andExpect(jsonPath("$.errors[0].field").value(invalidField))
                 .andExpect(jsonPath("$.accessToken").doesNotExist())
-                .andExpect(jsonPath("$.refreshToken").doesNotExist());
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
     }
 
     private void expectAuthError(
@@ -215,6 +234,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE))
                 .andExpect(content().string(not(containsString(KAKAO_AUTHORIZATION_CODE))))
                 .andExpect(content().string(not(containsString(ACCESS_TOKEN))))
                 .andExpect(content().string(not(containsString(REFRESH_TOKEN))));
@@ -228,5 +248,15 @@ class AuthControllerTest {
                 new RawRefreshToken(REFRESH_TOKEN),
                 REFRESH_TOKEN_EXPIRES_AT
         );
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class FixedClockConfig {
+
+        @Bean
+        @Primary
+        Clock fixedClock() {
+            return Clock.fixed(NOW, ZoneOffset.UTC);
+        }
     }
 }
