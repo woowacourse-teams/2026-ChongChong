@@ -2,7 +2,7 @@ import emptyIcon from '../assets/icons/error-icon.svg';
 import { CSSProperties } from 'react';
 import { tokens, typography } from '../../styles/global';
 
-interface ErrorStateProps {
+interface ErrorContentProps {
   message: string;
 }
 
@@ -20,7 +20,7 @@ const messageStyle = {
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
-export default function ErrorContent({ message }: ErrorStateProps) {
+export default function ErrorContent({ message }: ErrorContentProps) {
   return (
     <div css={divStyle}>
       <img src={emptyIcon} width={150} height={150} alt="오류" />
