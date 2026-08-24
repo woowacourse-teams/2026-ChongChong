@@ -8,8 +8,12 @@ export default function AssignmentListPage() {
   const { studyId } = useParams();
 
   const {
-    data: { role },
+    data: { role, studyName, memberName },
   } = useSuspenseQuery(studyQueries.info(studyId!));
 
-  return role === 'LEADER' ? <LeaderAssignmentListPage /> : <MemberAssignmentListPage />;
+  return role === 'LEADER' ? (
+    <LeaderAssignmentListPage studyName={studyName} memberName={memberName} />
+  ) : (
+    <MemberAssignmentListPage studyName={studyName} memberName={memberName} />
+  );
 }

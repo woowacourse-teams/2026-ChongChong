@@ -63,7 +63,7 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
               size="large"
               onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
             >
-              공지 작성하기
+              과제 작성하기
             </Button>
           </div>
         </>
