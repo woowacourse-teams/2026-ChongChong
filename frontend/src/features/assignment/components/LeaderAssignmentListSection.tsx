@@ -7,8 +7,8 @@ import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
 import Badge from '../../../shared/ui/Badge';
-import clock from '../../../shared/assets/clock.svg';
-import { formatReminder } from '../../../shared/utils/formatDate';
+// import clock from '../../../shared/assets/clock.svg';
+// import { formatReminder } from '../../../shared/utils/formatDate';
 
 interface Props {
   studyId: number;
@@ -47,13 +47,13 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
                     {assignment.completeCount}/{assignment.memberCount} 제출
                   </Badge>
                 )}
-
-                {assignment.remindAt && (
+                {/* 당장 필요하지 않은 리마인드 정보 주석 처리 */}
+                {/* {assignment.remindAt && (
                   <Badge variant="neutralSolid" size="small">
                     <img src={clock} alt="리마인드 시각" width={12} height={12} />
                     {formatReminder(assignment.remindAt) + ' 리마인드'}
                   </Badge>
-                )}
+                )} */}
               </>
             )}
           </AssignmentList>

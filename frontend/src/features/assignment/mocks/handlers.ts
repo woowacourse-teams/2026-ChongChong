@@ -13,7 +13,6 @@ export const handlers = [
           closeAt: '2026-08-25T23:59:59',
           memberCount: 4,
           completeCount: 2,
-          remindAt: '2026-08-24T16:44:10',
           isComplete: false,
         },
         {
@@ -24,7 +23,6 @@ export const handlers = [
           closeAt: '2026-08-25T23:59:59',
           memberCount: 4,
           completeCount: 2,
-          remindAt: '2026-08-24T16:44:10',
           isComplete: true,
         },
       ],
