@@ -29,7 +29,7 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
                 <ContentCard.Title>{assignment.title}</ContentCard.Title>
 
                 <ContentCard.Trailing>
-                  <img src={rightArrow} alt="공지 상세 보기" width={20} height={20} />
+                  <img src={rightArrow} alt="" width={20} height={20} />
                 </ContentCard.Trailing>
               </ContentCard.TitleRow>
 
@@ -40,7 +40,7 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
                   {formatDeadline(assignment.closeAt) + ' 마감'}
                 </ContentCard.Meta>
                 <ContentCard.Meta>
-                  <img src={LinkIcon} alt="링크" width={13} height={13} />
+                  <img src={LinkIcon} alt="" width={13} height={13} />
                   {assignment.submissionType}
                 </ContentCard.Meta>
               </ContentCard.Footer>
