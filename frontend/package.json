@@ -32,7 +32,7 @@
       "^.+\\.[mc]?[jt]sx?$": "<rootDir>/node_modules/babel-jest"
     },
     "transformIgnorePatterns": [
-      "/node_modules/.pnpm/(?!(ky|rettime|until-async|outvariant|strict-event-emitter|headers-polyfill|is-node-process|@open-draft\\+[^@]+|@bundled-es-modules\\+[^@]+|@mswjs\\+[^@]+)@)"
+      "/node_modules/.pnpm/(?!(@msw\\+[^@]+|react-router|cookie-es|ky|rettime|until-async|outvariant|strict-event-emitter|headers-polyfill|is-node-process|@open-draft\\+[^@]+|@bundled-es-modules\\+[^@]+|@mswjs\\+[^@]+)@)"
     ],
     "moduleNameMapper": {
       "\\.(png|svg|jpg|jpeg|gif|woff2?|eot|ttf|otf)$": "<rootDir>/src/test/stub.ts"

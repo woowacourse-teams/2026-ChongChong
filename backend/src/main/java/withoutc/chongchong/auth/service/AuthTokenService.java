@@ -2,6 +2,7 @@ package withoutc.chongchong.auth.service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -42,7 +43,9 @@ public class AuthTokenService {
         IssuedAccessToken accessToken = accessTokenIssuer.issue(userId);
         RawRefreshToken refreshToken = refreshTokenGenerator.generate();
         HashedRefreshToken refreshTokenHash = refreshTokenHasher.hash(refreshToken);
-        Instant refreshTokenExpiresAt = clock.instant().plus(refreshTokenProperties.validity());
+        Instant refreshTokenExpiresAt = clock.instant()
+                .plus(refreshTokenProperties.validity())
+                .truncatedTo(ChronoUnit.MICROS);
 
         authSessionRepository.findByUserId(userId)
                 .ifPresentOrElse(

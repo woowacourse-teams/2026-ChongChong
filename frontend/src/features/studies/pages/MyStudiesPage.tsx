@@ -1,6 +1,7 @@
 import { Suspense, CSSProperties } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import TopHeader from '../../../shared/ui/TopHeader';
+import { Link } from 'react-router';
 import logo from '../../../shared/assets/icons/header-icon.svg';
 import MyStudies from '../components/MyStudies';
 import Main from '../../../shared/ui/Main';
@@ -8,13 +9,7 @@ import footerIcon from '../../../shared/assets/icons/footer-icon.svg';
 import { tokens } from '../../../styles/global';
 import { typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
-
-const pageStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: '100dvh',
-  background: tokens.bg.default,
-} satisfies CSSProperties;
+import Page from '../../../shared/ui/Page';
 
 const actionsStyle = {
   display: 'flex',
@@ -32,7 +27,7 @@ const footerBannerStyle = {
 
 export default function StudyListPage() {
   return (
-    <div css={pageStyle}>
+    <Page>
       <TopHeader
         middle={
           <div>
@@ -49,9 +44,11 @@ export default function StudyListPage() {
         </ErrorBoundary>
         <div css={actionsStyle}>
           {/* 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더의 링크에 안잡힘 */}
-          <Button role="link" variant="brandSolid" size="large">
-            스터디 만들기
-          </Button>
+          <Link to="/studies/new">
+            <Button variant="brandSolid" size="large">
+              스터디 만들기
+            </Button>
+          </Link>
           <Button role="link" variant="neutralOutline" size="large">
             스터디 참여하기
           </Button>
@@ -66,6 +63,6 @@ export default function StudyListPage() {
           </div>
         </aside>
       </Main>
-    </div>
+    </Page>
   );
 }

@@ -2,9 +2,9 @@ import { CSSProperties } from 'react';
 import { tokens } from '../../styles/global';
 import { typography } from '../../styles/global';
 
-type Variant = 'BrandSolid' | 'NeutralSolid' | 'BrandOutline';
+type Variant = 'brandSolid' | 'neutralSolid' | 'brandOutline';
 
-type Size = 'Small' | 'Large';
+type Size = 'small' | 'large';
 
 interface BadgeProps extends React.ComponentProps<'span'> {
   variant: Variant;
@@ -20,15 +20,15 @@ const badgeStyle = {
 } satisfies CSSProperties;
 
 const variantStyle = {
-  BrandSolid: {
+  brandSolid: {
     background: tokens.bg.brand,
     color: tokens.text.onBrand,
   },
-  NeutralSolid: {
+  neutralSolid: {
     background: tokens.bg.neutral,
     color: tokens.text.muted,
   },
-  BrandOutline: {
+  brandOutline: {
     background: tokens.bg.default,
     color: tokens.text.brand,
     border: tokens.border.brand,
@@ -36,11 +36,11 @@ const variantStyle = {
 };
 
 const sizeStyle = {
-  Small: {
+  small: {
     padding: `3px ${tokens.spacing[2]}`,
     gap: tokens.spacing[1],
   },
-  Large: {
+  large: {
     padding: `5px ${tokens.spacing[3]} 5px 5px`,
     gap: '6px',
   },

@@ -9,6 +9,7 @@ import { clampToMinimumTime, getMinimumDateTime } from './dateTimePicker.utils';
 type PickerStep = 'date' | 'time';
 
 export interface DateTimePickerProps {
+  id?: string;
   value?: Date;
   minDate?: Date;
   triggerLabel?: ReactNode;
@@ -16,6 +17,7 @@ export interface DateTimePickerProps {
 }
 
 export default function DateTimePicker({
+  id,
   value,
   minDate,
   triggerLabel = '리마인드 시각 설정',
@@ -49,8 +51,9 @@ export default function DateTimePicker({
   return (
     <>
       <Button
-        variant="brandSolid"
-        size="small"
+        id={id}
+        variant="neutralOutline"
+        size="large"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         onClick={openPicker}

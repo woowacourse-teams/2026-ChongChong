@@ -54,9 +54,9 @@ class SocialLoginFacadeTest {
     @Test
     @DisplayName("Provider 인증은 DB Transaction 밖에서 수행하고 검증 결과로 내부 로그인을 처리한다")
     void authenticateProviderOutsideTransactionAndLogin() {
-        String authorizationCode = "valid-authorization-code";
+        String credential = "valid-credential";
         FakeSocialLoginClient fakeClient = new FakeSocialLoginClient(SocialProvider.GOOGLE);
-        fakeClient.willSucceed(authorizationCode, new SocialUserInfo(
+        fakeClient.willSucceed(credential, new SocialUserInfo(
                 SocialProvider.GOOGLE,
                 "google-user-id",
                 "총총이",
@@ -68,7 +68,7 @@ class SocialLoginFacadeTest {
 
         IssuedTokenPair tokenPair = facade.login(new SocialLoginCommand(
                 SocialProvider.GOOGLE,
-                authorizationCode
+                credential
         ));
 
         assertThat(recordingClient.wasTransactionActiveDuringAuthentication()).isFalse();
@@ -81,16 +81,16 @@ class SocialLoginFacadeTest {
     @Test
     @DisplayName("Provider 인증에 실패하면 내부 로그인 데이터가 생성되지 않는다")
     void keepDatabaseUnchangedWhenProviderAuthenticationFails() {
-        String authorizationCode = "invalid-authorization-code";
+        String credential = "invalid-credential";
         FakeSocialLoginClient fakeClient = new FakeSocialLoginClient(SocialProvider.GOOGLE);
-        fakeClient.willFail(authorizationCode);
+        fakeClient.willFail(credential);
         TransactionRecordingSocialLoginClient recordingClient =
                 new TransactionRecordingSocialLoginClient(fakeClient);
         SocialLoginFacade facade = createFacade(recordingClient);
 
         assertThatThrownBy(() -> facade.login(new SocialLoginCommand(
                 SocialProvider.GOOGLE,
-                authorizationCode
+                credential
         )))
                 .isInstanceOf(AuthException.class)
                 .extracting(exception -> ((AuthException) exception).getErrorCode())

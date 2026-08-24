@@ -10,3 +10,29 @@ export async function fetchStudies() {
     throw new Error('스터디 목록을 불러오는데 실패했습니다.');
   }
 }
+
+export async function createStudy(body: {
+  name: string;
+  description: string;
+}): Promise<{ studyId: string }> {
+  try {
+    const response = await api.post(STUDY_URLS.create, { json: body });
+    return await response.json<{ studyId: string }>();
+  } catch {
+    throw new Error('아직 에러 처리 안함');
+  }
+}
+
+export async function fetchStudyInfo(studyId: string) {
+  try {
+    const response = await api.get(`/studies/${studyId}/info`);
+    return await response.json<{
+      studyName: string;
+      role: 'LEADER' | 'MEMBER';
+      memberName: string;
+    }>();
+  } catch {
+    // TODO: 에러코드별로 에러 분기가 필요합니다.
+    throw new Error('스터디 정보를 불러오는데 실패했습니다.');
+  }
+}

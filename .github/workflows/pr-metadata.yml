@@ -2,27 +2,55 @@ name: Pull request metadata
 
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize]
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+    types: [opened, reopened, synchronize, closed]
 
 jobs:
   metadata:
     name: assign-and-label
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Apply labels
+        if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize'
         uses: actions/labeler@b8dd2d9be0f68b860e7dae5dae7d772984eacd6d
         with:
           repo-token: ${{ github.token }}
           sync-labels: true
 
       - name: Assign pull request author
+        if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: gh pr edit "$PR_URL" --add-assignee "$PR_AUTHOR"
+
+  notify-discord:
+    name: notify-discord
+    needs: metadata
+    if: github.event.action != 'synchronize'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout trusted workflow scripts
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Fetch current pull request state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" > "${RUNNER_TEMP}/pull-request.json"
+
+      - name: Send Discord notification
+        env:
+          DISCORD_PR_WEBHOOK_URL: ${{ secrets.DISCORD_PR_WEBHOOK_URL }}
+          PR_ACTION: ${{ github.event.action }}
+          PR_DATA_PATH: ${{ runner.temp }}/pull-request.json
+        run: bash .github/scripts/notify-discord-pr.sh

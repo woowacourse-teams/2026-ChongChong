@@ -226,7 +226,7 @@ class StudyAcceptanceTest {
                 .get("/studies/{studyId}/info", study.getId())
                 .then()
                 .statusCode(403)
-                .body("code", equalTo("NOT_STUDY_MEMBER"));
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
     }
 
     @Test
@@ -304,7 +304,7 @@ class StudyAcceptanceTest {
                 .get("/studies/{studyId}", study.getId())
                 .then()
                 .statusCode(403)
-                .body("code", equalTo("NOT_STUDY_MEMBER"));
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
     }
 
     @Test
@@ -341,7 +341,7 @@ class StudyAcceptanceTest {
                 .get("/studies/{studyId}/invite-link", study.getId())
                 .then()
                 .statusCode(403)
-                .body("code", equalTo("NOT_STUDY_MEMBER"));
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
     }
 
     @Test
@@ -390,7 +390,7 @@ class StudyAcceptanceTest {
                 .delete("/studies/{studyId}", study.getId())
                 .then()
                 .statusCode(403)
-                .body("code", equalTo("NOT_STUDY_MEMBER"));
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
 
         assertThat(studyRepository.findById(study.getId())).isPresent();
     }
