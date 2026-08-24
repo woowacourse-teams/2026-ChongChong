@@ -1,0 +1,15 @@
+package withoutc.chongchong.auth.social.kakao;
+
+public record KakaoAccessToken(String value) {
+
+    public KakaoAccessToken {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Kakao Access Token은 비어 있을 수 없습니다.");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "KakaoAccessToken[value=REDACTED]";
+    }
+}

@@ -27,6 +27,8 @@ OAuth `state`, Spring Security CSRF Token, Kakao Provider Token과 총총 Token�
 
 - 웹은 Kakao 인가 Endpoint에서 Authorization Code를 받는다.
 - 백엔드는 `POST https://kauth.kakao.com/oauth/token`으로 Code를 Kakao Access Token으로 교환한다.
+- Token 요청은 `application/x-www-form-urlencoded`로 `grant_type=authorization_code`, REST API 키, Redirect URI,
+  Authorization Code와 Client Secret을 전달한다.
 - 백엔드는 Kakao Access Token으로 `GET https://kapi.kakao.com/v2/user/me`를 호출한다.
 - Kakao 회원번호 `id`는 문자열 `providerUserId`, `kakao_account.profile.nickname`은 `displayName`으로 변환한다.
 - 프로필 이미지 URL은 선택값이며 없으면 `null`을 사용한다.
@@ -54,6 +56,8 @@ auth:
       redirect-uri: ${AUTH_KAKAO_REDIRECT_URI}
       token-uri: ${AUTH_KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
       user-info-uri: ${AUTH_KAKAO_USER_INFO_URI:https://kapi.kakao.com/v2/user/me}
+      connect-timeout: ${AUTH_KAKAO_CONNECT_TIMEOUT:2s}
+      read-timeout: ${AUTH_KAKAO_READ_TIMEOUT:3s}
 ```
 
 - REST API 키, Client Secret과 Redirect URI는 운영 기본값을 Git에 넣지 않는다.
@@ -61,6 +65,7 @@ auth:
 - 필수 설정의 누락·공백을 애플리케이션 시작 시 거부한다.
 - URI는 HTTPS만 허용하고, 로컬 Callback과 Stub 서버에 필요한 loopback HTTP만 예외로 허용한다.
 - 설정 객체의 문자열 표현에서 REST API 키와 Client Secret을 가린다.
+- 연결·응답 제한 시간은 양수 설정으로 강제해 Provider가 응답하지 않을 때 요청 Thread가 무기한 대기하지 않게 한다.
 - Client Secret, Authorization Code와 Kakao Token을 로그·예외 메시지·HTTP 응답에 포함하지 않는다.
 
 ### 닉네임은 신규 가입에 필요한 값으로 취급한다
@@ -138,7 +143,6 @@ Token 검증을 추가하면 nonce, 공개키, Claim 검증 책임이 늘어난�
 
 ## 후속 작업
 
-- Authorization Code를 Kakao Token으로 교환하는 HTTP Client를 구현한다.
 - Kakao 사용자 정보를 `SocialUserInfo`로 변환하는 운영 `SocialLoginClient`를 구현한다.
 - Stub Kakao 서버를 사용해 성공·4xx·5xx·Timeout·잘못된 응답을 검증한다.
 - 실제 Kakao 개발 앱으로 로컬 로그인·보호 API·재발급·로그아웃을 수동 검증한다.

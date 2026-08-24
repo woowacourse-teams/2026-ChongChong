@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.web.client.RestClient;
+import withoutc.chongchong.auth.social.kakao.KakaoTokenClient;
 
 class KakaoLoginConfigTest {
 
@@ -15,7 +17,9 @@ class KakaoLoginConfigTest {
                     "auth.social.kakao.client-secret=test-client-secret",
                     "auth.social.kakao.redirect-uri=http://localhost:3005/auth/kakao/callback",
                     "auth.social.kakao.token-uri=https://kauth.kakao.com/oauth/token",
-                    "auth.social.kakao.user-info-uri=https://kapi.kakao.com/v2/user/me"
+                    "auth.social.kakao.user-info-uri=https://kapi.kakao.com/v2/user/me",
+                    "auth.social.kakao.connect-timeout=2s",
+                    "auth.social.kakao.read-timeout=3s"
             );
 
     @Test
@@ -24,6 +28,8 @@ class KakaoLoginConfigTest {
         contextRunner.run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context).hasSingleBean(KakaoLoginProperties.class);
+            assertThat(context).hasSingleBean(RestClient.class);
+            assertThat(context).hasSingleBean(KakaoTokenClient.class);
         });
     }
 
@@ -36,7 +42,9 @@ class KakaoLoginConfigTest {
                         "auth.social.kakao.client-secret=test-client-secret",
                         "auth.social.kakao.redirect-uri=http://localhost:3005/auth/kakao/callback",
                         "auth.social.kakao.token-uri=https://kauth.kakao.com/oauth/token",
-                        "auth.social.kakao.user-info-uri=https://kapi.kakao.com/v2/user/me"
+                        "auth.social.kakao.user-info-uri=https://kapi.kakao.com/v2/user/me",
+                        "auth.social.kakao.connect-timeout=2s",
+                        "auth.social.kakao.read-timeout=3s"
                 )
                 .run(context -> assertThat(context).hasFailed());
     }

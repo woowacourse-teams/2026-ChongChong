@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.URI;
+import java.time.Duration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,7 +57,9 @@ class KakaoLoginPropertiesTest {
                 "client-secret",
                 URI.create("/auth/kakao/callback"),
                 TOKEN_URI,
-                USER_INFO_URI
+                USER_INFO_URI,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(3)
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Kakao Redirect URI는 HTTPS 또는 loopback HTTP URI여야 합니다.");
 
@@ -65,7 +68,9 @@ class KakaoLoginPropertiesTest {
                 "client-secret",
                 REDIRECT_URI,
                 URI.create("file:///tmp/kakao-token"),
-                USER_INFO_URI
+                USER_INFO_URI,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(3)
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Kakao Token URI는 HTTPS 또는 loopback HTTP URI여야 합니다.");
 
@@ -74,7 +79,9 @@ class KakaoLoginPropertiesTest {
                 "client-secret",
                 REDIRECT_URI,
                 TOKEN_URI,
-                null
+                null,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(3)
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Kakao 사용자 정보 URI는 HTTPS 또는 loopback HTTP URI여야 합니다.");
     }
@@ -87,9 +94,37 @@ class KakaoLoginPropertiesTest {
                 "client-secret",
                 REDIRECT_URI,
                 URI.create("http://example.com/oauth/token"),
-                USER_INFO_URI
+                USER_INFO_URI,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(3)
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Kakao Token URI는 HTTPS 또는 loopback HTTP URI여야 합니다.");
+    }
+
+    @Test
+    @DisplayName("0 이하인 Kakao HTTP 제한 시간을 거부한다")
+    void rejectNonPositiveTimeout() {
+        assertThatThrownBy(() -> new KakaoLoginProperties(
+                "rest-api-key",
+                "client-secret",
+                REDIRECT_URI,
+                TOKEN_URI,
+                USER_INFO_URI,
+                Duration.ZERO,
+                Duration.ofSeconds(3)
+        )).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Kakao 연결 제한 시간은 0보다 커야 합니다.");
+
+        assertThatThrownBy(() -> new KakaoLoginProperties(
+                "rest-api-key",
+                "client-secret",
+                REDIRECT_URI,
+                TOKEN_URI,
+                USER_INFO_URI,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(-1)
+        )).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Kakao 응답 제한 시간은 0보다 커야 합니다.");
     }
 
     @Test
@@ -108,7 +143,9 @@ class KakaoLoginPropertiesTest {
                 clientSecret,
                 REDIRECT_URI,
                 TOKEN_URI,
-                USER_INFO_URI
+                USER_INFO_URI,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(3)
         );
     }
 }
