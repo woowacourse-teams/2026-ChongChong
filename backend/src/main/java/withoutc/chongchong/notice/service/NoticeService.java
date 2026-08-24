@@ -60,14 +60,14 @@ public class NoticeService {
 
         StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Notice notice = Notice.create(study, writer, request.title(), request.content());
+        Notice notice = Notice.create(writer, request.title(), request.content());
         LocalDateTime now = LocalDateTime.now(clock);
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
 
         noticeRepository.save(notice);
 
-        return NoticeCreateResponse.of(notice.getId());
+        return NoticeCreateResponse.from(notice);
     }
 
     @Transactional
