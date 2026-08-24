@@ -1,14 +1,13 @@
 import { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import useStudyId from '../../studies/hooks/useStudyId';
 import { memberQueries } from '../queries';
+import studyQueries from '../../studies/queries';
 import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
 import CopyIcon from '../../../shared/assets/copy.svg';
-
-const INVITE_LINK = 'chongchong.app/join/S1';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -49,16 +48,20 @@ const actionButtonStyle = {
   margin: `${tokens.spacing[5]} 0`,
 } satisfies CSSProperties;
 
-export function InviteLinkBox() {
+export function InviteLinkBox({ studyId }: { studyId: number }) {
+  const {
+    data: { inviteLink },
+  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(INVITE_LINK);
+    navigator.clipboard.writeText(inviteLink);
   };
 
   return (
     <>
       <p css={inviteDescriptionStyle}>링크를 통해 새로운 스터디원을 초대해요</p>
       <div css={inviteLinkBlockStyle}>
-        <span css={inviteLinkStyle}>{INVITE_LINK}</span>
+        <span css={inviteLinkStyle}>{inviteLink}</span>
         <button css={copyButtonStyle} type="button" onClick={handleCopy} aria-label="링크 복사">
           <img src={CopyIcon} width={16} height={20} alt="" />
         </button>
@@ -68,9 +71,9 @@ export function InviteLinkBox() {
 }
 
 function LeaderContent() {
-  const { studyId } = useParams();
+  const { studyId } = useStudyId();
   const { data: members } = useSuspenseQuery({
-    ...memberQueries.list(Number(studyId)),
+    ...memberQueries.list(studyId),
     select: (data) => data.members,
   });
 
@@ -85,7 +88,7 @@ function LeaderContent() {
             </List.Item>
           ))}
         </List>
-        <InviteLinkBox />
+        <InviteLinkBox studyId={studyId} />
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={() => {}}>
         스터디 삭제하기
@@ -95,7 +98,7 @@ function LeaderContent() {
 }
 
 function MemberContent() {
-  const { studyId } = useParams();
+  const { studyId } = useStudyId();
   const { data: members } = useSuspenseQuery({
     ...memberQueries.list(Number(studyId)),
     select: (data) => data.members,
@@ -112,7 +115,7 @@ function MemberContent() {
             </List.Item>
           ))}
         </List>
-        <InviteLinkBox />
+        <InviteLinkBox studyId={studyId} />
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={() => {}}>
         스터디 탈퇴하기

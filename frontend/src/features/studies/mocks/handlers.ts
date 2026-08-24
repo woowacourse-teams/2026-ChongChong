@@ -37,7 +37,7 @@ export const handlers = [
     // }
 
     const studyId = Date.now();
-    await study.create({ id: studyId, ...body });
+    await study.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
@@ -49,6 +49,15 @@ export const handlers = [
       studyName: found.name,
       role: 'LEADER',
       memberName: '바니',
+    });
+  }),
+
+  http.get(`${BASE_URL}${STUDY_URLS.inviteLink}`, async ({ params }) => {
+    const { studyId } = params;
+    const found = await study.findFirst((q) => q.where({ id: Number(studyId) }));
+    if (!found) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json({
+      inviteLink: found.inviteLink,
     });
   }),
 ];
