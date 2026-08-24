@@ -28,7 +28,12 @@ export default function StudyJoinPage() {
             // errorText={errors.name.message}
             // isError={errors.name.state}
           >
-            <Input id="study-join-link" value={joinLink} onChange={handleJoinLink} />
+            <Input
+              id="study-join-link"
+              placeholder="chongchong.app/welcome/join/15"
+              value={joinLink}
+              onChange={handleJoinLink}
+            />
           </Field>
           <Button
             css={{ marginTop: tokens.spacing[5] }}

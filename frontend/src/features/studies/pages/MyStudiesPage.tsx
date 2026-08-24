@@ -49,9 +49,11 @@ export default function StudyListPage() {
               스터디 만들기
             </Button>
           </Link>
-          <Button role="link" variant="neutralOutline" size="large">
-            스터디 참여하기
-          </Button>
+          <Link to="/studies/join">
+            <Button role="link" variant="neutralOutline" size="large">
+              스터디 참여하기
+            </Button>
+          </Link>
         </div>
         <aside css={footerBannerStyle}>
           <img src={footerIcon} css={{ height: '52px', width: '52px' }} alt="" />
