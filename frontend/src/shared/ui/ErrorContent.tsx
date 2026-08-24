@@ -20,7 +20,7 @@ const messageStyle = {
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
-export default function ErrorState({ message }: ErrorStateProps) {
+export default function ErrorContent({ message }: ErrorStateProps) {
   return (
     <div css={divStyle}>
       <img src={emptyIcon} width={150} height={150} alt="오류" />

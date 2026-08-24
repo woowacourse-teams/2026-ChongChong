@@ -5,7 +5,7 @@ import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import LeaderAssignmentListSection from '../components/LeaderAssignmentListSection';
 import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import ErrorState from '../../../shared/ui/ErrorState';
+import ErrorContent from '../../../shared/ui/ErrorContent';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const studyId = 1;
@@ -13,7 +13,7 @@ const studyId = 1;
 export default function LeaderAssignmentListPage() {
   return (
     <Page>
-      <ErrorBoundary fallback={<ErrorState message="오류가 발생했습니다." />}>
+      <ErrorBoundary fallback={<ErrorContent message="오류가 발생했습니다." />}>
         <TopHeader
           left={<PrevButton />}
           middle={

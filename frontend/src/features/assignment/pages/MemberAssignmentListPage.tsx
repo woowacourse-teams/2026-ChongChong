@@ -1,7 +1,7 @@
 import Page from '../../../shared/ui/Page';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense } from 'react';
-import ErrorState from '../../../shared/ui/ErrorState';
+import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
 import MemberAssignmentListSection from '../components/MemberAssignmentListSectiont';
 import Main from '../../../shared/ui/Main';
@@ -13,7 +13,7 @@ const studyId = 1;
 export default function MemberAssignmentListPage() {
   return (
     <Page>
-      <ErrorBoundary fallback={<ErrorState message="오류가 발생했습니다." />}>
+      <ErrorBoundary fallback={<ErrorContent message="오류가 발생했습니다." />}>
         <TopHeader
           left={<PrevButton />}
           middle={
