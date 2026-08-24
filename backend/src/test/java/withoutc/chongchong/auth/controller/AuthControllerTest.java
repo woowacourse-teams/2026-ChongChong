@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -33,6 +34,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.auth.service.AuthTokenService;
 import withoutc.chongchong.auth.service.SocialLoginFacade;
 import withoutc.chongchong.auth.social.SocialLoginCommand;
 import withoutc.chongchong.auth.social.SocialProvider;
@@ -50,6 +52,7 @@ class AuthControllerTest {
     private static final String KAKAO_AUTHORIZATION_CODE = "test-kakao-authorization-code";
     private static final String ACCESS_TOKEN = "test-access-token";
     private static final String REFRESH_TOKEN = "test-refresh-token";
+    private static final String CURRENT_REFRESH_TOKEN = "current-refresh-token";
     private static final Instant ACCESS_TOKEN_EXPIRES_AT = Instant.parse("2026-08-21T01:00:00Z");
     private static final Instant REFRESH_TOKEN_EXPIRES_AT = Instant.parse("2026-09-20T00:00:00Z");
 
@@ -58,6 +61,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private SocialLoginFacade socialLoginFacade;
+
+    @MockitoBean
+    private AuthTokenService authTokenService;
 
     @Test
     @DisplayName("Access Token 없이 로그인하고 Access Token JSON과 Refresh Token Cookie를 받는다")
@@ -205,6 +211,66 @@ class AuthControllerTest {
                 "SOCIAL_AUTHENTICATION_FAILED",
                 "소셜 로그인 인증에 실패했습니다."
         );
+    }
+
+    @Test
+    @DisplayName("Refresh Cookie로 새 Access Token JSON과 Refresh Cookie를 받는다")
+    void refreshTokenPairWithCookie() throws Exception {
+        when(authTokenService.rotate(new RawRefreshToken(CURRENT_REFRESH_TOKEN)))
+                .thenReturn(createIssuedTokenPair());
+
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.accessToken").value(ACCESS_TOKEN))
+                .andExpect(jsonPath("$.accessTokenExpiresAt").value("2026-08-21T01:00:00Z"))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshTokenExpiresAt").doesNotExist())
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString(
+                        "refresh_token=" + REFRESH_TOKEN
+                )))
+                .andExpect(content().string(not(containsString(REFRESH_TOKEN))))
+                .andExpect(content().string(not(containsString(CURRENT_REFRESH_TOKEN))));
+
+        verify(authTokenService).rotate(new RawRefreshToken(CURRENT_REFRESH_TOKEN));
+        verifyNoInteractions(socialLoginFacade);
+    }
+
+    @Test
+    @DisplayName("Refresh Cookie가 없으면 공통 401 오류를 반환한다")
+    void rejectMissingRefreshCookie() throws Exception {
+        expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh")));
+
+        verifyNoInteractions(authTokenService, socialLoginFacade);
+    }
+
+    @Test
+    @DisplayName("유효하지 않은 Refresh Cookie는 Token을 노출하지 않는 공통 401 오류를 반환한다")
+    void rejectInvalidRefreshCookie() throws Exception {
+        when(authTokenService.rotate(any()))
+                .thenThrow(new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+
+        expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN))))
+                .andExpect(content().string(not(containsString(CURRENT_REFRESH_TOKEN))))
+                .andExpect(content().string(not(containsString(REFRESH_TOKEN))));
+
+        verify(authTokenService).rotate(new RawRefreshToken(CURRENT_REFRESH_TOKEN));
+        verifyNoInteractions(socialLoginFacade);
+    }
+
+    private ResultActions expectInvalidRefreshToken(ResultActions resultActions) throws Exception {
+        return resultActions
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"))
+                .andExpect(jsonPath("$.message").value("유효하지 않은 Refresh Token입니다."))
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
     }
 
     private ResultActions expectInvalidInput(

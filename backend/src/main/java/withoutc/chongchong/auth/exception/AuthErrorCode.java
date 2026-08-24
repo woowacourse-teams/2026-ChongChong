@@ -19,6 +19,12 @@ public enum AuthErrorCode implements ErrorCode {
             "소셜 로그인 인증에 실패했습니다."
     ),
 
+    INVALID_REFRESH_TOKEN(
+            HttpStatus.UNAUTHORIZED,
+            "INVALID_REFRESH_TOKEN",
+            "유효하지 않은 Refresh Token입니다."
+    ),
+
     UNSUPPORTED_SOCIAL_PROVIDER(
             HttpStatus.BAD_REQUEST,
             "UNSUPPORTED_SOCIAL_PROVIDER",

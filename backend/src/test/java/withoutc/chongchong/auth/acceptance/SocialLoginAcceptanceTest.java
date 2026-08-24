@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.nullValue;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -210,6 +211,131 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
+    @DisplayName("Refresh Cookie를 회전하고 새 Access Token으로 보호 API에 접근한다")
+    void rotateRefreshCookieAndAuthenticateWithNewAccessToken() {
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID,
+                "총총이",
+                null
+        ));
+        Response loginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        String originalRefreshToken = loginResponse.getCookie("refresh_token");
+        User user = userRepository.findAll().getFirst();
+        AuthSession originalSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        Long sessionId = originalSession.getId();
+        HashedRefreshToken originalHash = originalSession.getRefreshTokenHash();
+
+        Response refreshResponse = requestRefresh(originalRefreshToken);
+
+        refreshResponse.then()
+                .statusCode(200)
+                .body("tokenType", equalTo("Bearer"))
+                .body("accessToken", notNullValue())
+                .body("accessTokenExpiresAt", notNullValue())
+                .body("$", not(hasKey("refreshToken")))
+                .body("$", not(hasKey("refreshTokenExpiresAt")))
+                .header(HttpHeaders.CACHE_CONTROL, containsString("no-store"))
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("Secure"))
+                .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"))
+                .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
+
+        String rotatedAccessToken = refreshResponse.jsonPath().getString("accessToken");
+        String rotatedRefreshToken = refreshResponse.getCookie("refresh_token");
+        HashedRefreshToken rotatedHash = refreshTokenHasher.hash(
+                new RawRefreshToken(rotatedRefreshToken)
+        );
+        AuthSession rotatedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+
+        assertThat(rotatedRefreshToken).isNotEqualTo(originalRefreshToken);
+        assertThat(rotatedSession.getId()).isEqualTo(sessionId);
+        assertThat(rotatedSession.getRefreshTokenHash())
+                .isEqualTo(rotatedHash)
+                .isNotEqualTo(originalHash);
+        assertThat(rotatedSession.getRefreshTokenHash().value())
+                .isNotEqualTo(rotatedRefreshToken);
+
+        requestRefresh(originalRefreshToken)
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"))
+                .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+
+        given()
+                .port(port)
+                .auth().oauth2(rotatedAccessToken)
+                .when()
+                .get("/test/auth-login/current-user")
+                .then()
+                .statusCode(200)
+                .body(equalTo(user.getId().toString()));
+    }
+
+    @Test
+    @DisplayName("Refresh Cookie가 없으면 공통 401 오류를 반환한다")
+    void rejectMissingRefreshCookie() {
+        Response response = requestRefreshWithoutCookie();
+
+        response.then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"))
+                .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+
+        assertDatabaseEmpty();
+    }
+
+    @Test
+    @DisplayName("DB에 없는 Refresh Cookie는 공통 401 오류로 반환하고 비밀값을 노출하지 않는다")
+    void rejectUnknownRefreshCookieWithoutExposingSecret() {
+        String unknownRefreshToken = "unknown-refresh-token";
+
+        Response response = requestRefresh(unknownRefreshToken);
+
+        response.then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"))
+                .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+        assertThat(response.asString())
+                .doesNotContain(unknownRefreshToken)
+                .doesNotContain("uk_auth_sessions")
+                .doesNotContain(refreshTokenHasher.hash(new RawRefreshToken(unknownRefreshToken)).value());
+        assertDatabaseEmpty();
+    }
+
+    @Test
+    @DisplayName("만료된 Refresh Cookie는 Session을 변경하지 않고 공통 401 오류를 반환한다")
+    void rejectExpiredRefreshCookieWithoutChangingSession() {
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID,
+                "총총이",
+                null
+        ));
+        Response loginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        String refreshToken = loginResponse.getCookie("refresh_token");
+        User user = userRepository.findAll().getFirst();
+        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        HashedRefreshToken refreshTokenHash = authSession.getRefreshTokenHash();
+        Instant expiredAt = Instant.now().minusSeconds(1).truncatedTo(ChronoUnit.MICROS);
+        authSession.replaceRefreshToken(refreshTokenHash, expiredAt);
+        authSessionRepository.saveAndFlush(authSession);
+
+        Response response = requestRefresh(refreshToken);
+
+        response.then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+        AuthSession unchangedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        assertThat(unchangedSession.getRefreshTokenHash()).isEqualTo(refreshTokenHash);
+        assertThat(unchangedSession.getExpiresAt()).isEqualTo(expiredAt);
+    }
+
+    @Test
     @DisplayName("Provider 인증에 실패하면 Token을 반환하거나 로그인 데이터를 저장하지 않는다")
     void rejectProviderAuthenticationFailure() {
         fakeSocialLoginClient.willFail(KAKAO_AUTHORIZATION_CODE);
@@ -329,6 +455,21 @@ class SocialLoginAcceptanceTest {
                 .body(body)
                 .when()
                 .post("/auth/login");
+    }
+
+    private Response requestRefresh(String refreshToken) {
+        return given()
+                .port(port)
+                .cookie("refresh_token", refreshToken)
+                .when()
+                .post("/auth/refresh");
+    }
+
+    private Response requestRefreshWithoutCookie() {
+        return given()
+                .port(port)
+                .when()
+                .post("/auth/refresh");
     }
 
     private void assertDatabaseEmpty() {

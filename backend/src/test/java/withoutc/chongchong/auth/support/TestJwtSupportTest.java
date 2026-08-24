@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 
@@ -112,8 +111,8 @@ class TestJwtSupportTest {
                 .when()
                 .post("/auth/refresh")
                 .then()
-                .statusCode(200)
-                .body(equalTo("refresh-public"));
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"));
     }
 
     @RestController
@@ -122,11 +121,6 @@ class TestJwtSupportTest {
         @GetMapping("/test/auth-support/current-user")
         Long currentUser(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
             return authenticatedUser.id();
-        }
-
-        @PostMapping("/auth/refresh")
-        String refreshPublicEndpoint() {
-            return "refresh-public";
         }
     }
 }
