@@ -7,8 +7,10 @@ import java.nio.charset.StandardCharsets;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.csrf.CsrfException;
 import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
+import withoutc.chongchong.global.exception.code.ErrorCode;
 import withoutc.chongchong.global.exception.response.ErrorResponse;
 
 public final class RestAccessDeniedHandler implements AccessDeniedHandler {
@@ -25,7 +27,9 @@ public final class RestAccessDeniedHandler implements AccessDeniedHandler {
             HttpServletResponse response,
             AccessDeniedException accessDeniedException
     ) throws IOException {
-        AuthErrorCode errorCode = AuthErrorCode.ACCESS_DENIED;
+        ErrorCode errorCode = accessDeniedException instanceof CsrfException
+                ? AuthErrorCode.INVALID_CSRF_TOKEN
+                : AuthErrorCode.ACCESS_DENIED;
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

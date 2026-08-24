@@ -2,6 +2,7 @@ package withoutc.chongchong.auth.security;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -60,6 +61,13 @@ class SecurityErrorResponseTest {
     }
 
     @Test
+    @DisplayName("운영 테스트 토큰 발급 경로는 인증 없이 접근할 수 없다")
+    void rejectPublicTestTokenIssuancePath() throws Exception {
+        expectAuthenticationRequired(mockMvc.perform(get("/auth/token")
+                .param("userId", "1")));
+    }
+
+    @Test
     @DisplayName("서명이 올바르지 않은 Access Token이면 공통 JSON 형식의 401을 반환한다")
     void respondUnauthorizedWhenAccessTokenHasInvalidSignature() throws Exception {
         String invalidToken = testJwtFactory.invalidSignatureAccessToken(1L);
@@ -103,6 +111,7 @@ class SecurityErrorResponseTest {
     @DisplayName("로그인 경로는 Access Token 없이 Security를 통과한다")
     void allowLoginPathWithoutAccessToken() throws Exception {
         mockMvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())

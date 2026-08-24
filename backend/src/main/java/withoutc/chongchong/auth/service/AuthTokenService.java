@@ -40,22 +40,75 @@ public class AuthTokenService {
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND));
 
+        IssuedTokenPair tokenPair = createTokenPair(userId);
+        HashedRefreshToken refreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
+
+        authSessionRepository.findByUserId(userId)
+                .ifPresentOrElse(
+                        authSession -> authSession.replaceRefreshToken(
+                                refreshTokenHash,
+                                tokenPair.refreshTokenExpiresAt()
+                        ),
+                        () -> authSessionRepository.save(
+                                AuthSession.create(user, refreshTokenHash, tokenPair.refreshTokenExpiresAt())
+                        )
+                );
+
+        return tokenPair;
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public IssuedTokenPair rotate(RawRefreshToken currentRefreshToken) {
+        validateRefreshToken(currentRefreshToken);
+        HashedRefreshToken currentRefreshTokenHash = refreshTokenHasher.hash(currentRefreshToken);
+        AuthSession authSession = authSessionRepository
+                .findByRefreshTokenHashForUpdate(currentRefreshTokenHash)
+                .orElseThrow(this::invalidRefreshToken);
+
+        validateCurrentSession(authSession, currentRefreshTokenHash);
+
+        IssuedTokenPair tokenPair = createTokenPair(authSession.getUser().getId());
+        HashedRefreshToken newRefreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
+        authSession.replaceRefreshToken(newRefreshTokenHash, tokenPair.refreshTokenExpiresAt());
+
+        return tokenPair;
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void logout(RawRefreshToken currentRefreshToken) {
+        HashedRefreshToken currentRefreshTokenHash = refreshTokenHasher.hash(currentRefreshToken);
+        authSessionRepository.findByRefreshTokenHashForUpdate(currentRefreshTokenHash)
+                .ifPresent(authSessionRepository::delete);
+    }
+
+    private IssuedTokenPair createTokenPair(Long userId) {
         IssuedAccessToken accessToken = accessTokenIssuer.issue(userId);
         RawRefreshToken refreshToken = refreshTokenGenerator.generate();
-        HashedRefreshToken refreshTokenHash = refreshTokenHasher.hash(refreshToken);
         Instant refreshTokenExpiresAt = clock.instant()
                 .plus(refreshTokenProperties.validity())
                 .truncatedTo(ChronoUnit.MICROS);
 
-        authSessionRepository.findByUserId(userId)
-                .ifPresentOrElse(
-                        authSession -> authSession.replaceRefreshToken(refreshTokenHash, refreshTokenExpiresAt),
-                        () -> authSessionRepository.save(
-                                AuthSession.create(user, refreshTokenHash, refreshTokenExpiresAt)
-                        )
-                );
-
         return new IssuedTokenPair(accessToken, refreshToken, refreshTokenExpiresAt);
+    }
+
+    private void validateCurrentSession(
+            AuthSession authSession,
+            HashedRefreshToken currentRefreshTokenHash
+    ) {
+        if (!authSession.getRefreshTokenHash().equals(currentRefreshTokenHash)
+                || authSession.isExpiredAt(clock.instant())) {
+            throw invalidRefreshToken();
+        }
+    }
+
+    private void validateRefreshToken(RawRefreshToken refreshToken) {
+        if (refreshToken == null) {
+            throw invalidRefreshToken();
+        }
+    }
+
+    private AuthException invalidRefreshToken() {
+        return new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
 
     private void validateUserId(Long userId) {

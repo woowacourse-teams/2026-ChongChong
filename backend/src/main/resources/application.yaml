@@ -27,3 +27,10 @@ auth:
     access-token-validity: ${AUTH_JWT_ACCESS_TOKEN_VALIDITY:30m}
   refresh-token:
     validity: ${AUTH_REFRESH_TOKEN_VALIDITY:30d}
+  web:
+    refresh-cookie:
+      name: refresh_token
+      secure: ${AUTH_WEB_REFRESH_COOKIE_SECURE:true}
+      http-only: true
+      same-site: Lax
+      path: /auth

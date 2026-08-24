@@ -2,18 +2,21 @@ package withoutc.chongchong.auth.support;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 
@@ -21,6 +24,9 @@ import withoutc.chongchong.auth.security.AuthenticatedUser;
 @Import(TestJwtSupportTest.TestController.class)
 @ActiveProfiles("test")
 class TestJwtSupportTest {
+
+    private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
+    private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
 
     @LocalServerPort
     private int port;
@@ -107,13 +113,35 @@ class TestJwtSupportTest {
     @Test
     @DisplayName("토큰 재발급 공개 경로는 Access Token 없이 Security를 통과한다")
     void allowRefreshPathWithoutAccessToken() {
-        given()
-                .port(port)
+        givenWithCsrf()
                 .when()
                 .post("/auth/refresh")
                 .then()
-                .statusCode(200)
-                .body(equalTo("refresh-public"));
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"));
+    }
+
+    @Test
+    @DisplayName("로그아웃 공개 경로는 Access Token 없이 Security를 통과한다")
+    void allowLogoutPathWithoutAccessToken() {
+        givenWithCsrf()
+                .when()
+                .post("/auth/logout")
+                .then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"));
+    }
+
+    private RequestSpecification givenWithCsrf() {
+        Response csrfResponse = given()
+                .port(port)
+                .when()
+                .get("/auth/csrf");
+
+        return given()
+                .port(port)
+                .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
+                .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));
     }
 
     @RestController
@@ -122,11 +150,6 @@ class TestJwtSupportTest {
         @GetMapping("/test/auth-support/current-user")
         Long currentUser(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
             return authenticatedUser.id();
-        }
-
-        @PostMapping("/auth/refresh")
-        String refreshPublicEndpoint() {
-            return "refresh-public";
         }
     }
 }
