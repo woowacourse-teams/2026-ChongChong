@@ -24,6 +24,7 @@ import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 
@@ -62,6 +63,16 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{noticeId}/status")
+    public ResponseEntity<NoticeStatusesResponse> getNoticeStatuses(
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
+            @PathVariable Long studyId,
+            @PathVariable Long noticeId) {
+        NoticeStatusesResponse response = noticeService.getNoticeStatuses(currentUser.id(), studyId, noticeId);
+
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Void> updateNotice(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                              @PathVariable Long studyId, @PathVariable Long noticeId,
@@ -87,7 +98,7 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{noticeId}/read-status/me")
+    @GetMapping("/{noticeId}/status/me")
     public ResponseEntity<NoticeReadStatusResponse> getReadStatus(
             @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
             @PathVariable Long noticeId) {

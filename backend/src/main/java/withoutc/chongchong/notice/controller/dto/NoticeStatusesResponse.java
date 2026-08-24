@@ -3,7 +3,7 @@ package withoutc.chongchong.notice.controller.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record NoticeStatusResponse(
+public record NoticeStatusesResponse(
         Long id,
         int memberCount,
         int readCount,
@@ -11,13 +11,13 @@ public record NoticeStatusResponse(
         List<ReadMember> readMembers,
         List<UnreadMember> unreadMembers
 ) {
-    public static NoticeStatusResponse of(
+    public static NoticeStatusesResponse of(
             Long noticeId,
             LocalDateTime remindAt,
             List<ReadMember> readMembers,
             List<UnreadMember> unreadMembers
     ) {
-        return new NoticeStatusResponse(
+        return new NoticeStatusesResponse(
                 noticeId,
                 readMembers.size() + unreadMembers.size(),
                 readMembers.size(),

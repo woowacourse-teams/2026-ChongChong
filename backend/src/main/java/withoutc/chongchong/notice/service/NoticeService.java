@@ -21,8 +21,8 @@ import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeStatusResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeStatusResponse.UnreadMember;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse.UnreadMember;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
@@ -105,7 +105,7 @@ public class NoticeService {
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);
     }
 
-    public NoticeStatusResponse getNoticeStatus(Long userId, Long studyId, Long noticeId) {
+    public NoticeStatusesResponse getNoticeStatuses(Long userId, Long studyId, Long noticeId) {
         validateLeader(studyId, userId);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
@@ -113,9 +113,9 @@ public class NoticeService {
 
         List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findStatusesByNoticeId(noticeId);
 
-        List<NoticeStatusResponse.ReadMember> readMembers = statuses.stream()
+        List<NoticeStatusesResponse.ReadMember> readMembers = statuses.stream()
                 .filter(NoticeRecipientStatusProjection::isRead)
-                .map(status -> NoticeStatusResponse.ReadMember.of(
+                .map(status -> NoticeStatusesResponse.ReadMember.of(
                         status.memberId(),
                         status.name(),
                         status.profileImageUrl()
@@ -132,7 +132,7 @@ public class NoticeService {
                 ))
                 .toList();
 
-        return NoticeStatusResponse.of(
+        return NoticeStatusesResponse.of(
                 noticeId,
                 notice.getNextRemindAt(),
                 readMembers,
