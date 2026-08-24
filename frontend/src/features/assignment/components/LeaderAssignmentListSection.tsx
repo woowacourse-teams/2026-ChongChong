@@ -8,6 +8,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
 import Badge from '../../../shared/ui/Badge';
 import clock from '../../../shared/assets/clock.svg';
+import { formatReminder } from '../../../shared/utils/formatDate';
 
 interface Props {
   studyId: number;
@@ -50,7 +51,7 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
                 {assignment.remindAt && (
                   <Badge variant="NeutralSolid" size="Small">
                     <img src={clock} alt="리마인드 시각" width={12} height={12} />
-                    {assignment.remindAt}
+                    {formatReminder(assignment.remindAt) + ' 리마인드'}
                   </Badge>
                 )}
               </>

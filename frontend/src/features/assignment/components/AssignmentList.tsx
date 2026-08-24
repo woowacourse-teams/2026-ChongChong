@@ -1,10 +1,11 @@
-// import type { ReactNode } from 'react';
 import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
 import { Link } from 'react-router';
 import { Assignment } from '../types';
 import { ReactNode } from 'react';
+import { formatDeadline } from '../../../shared/utils/formatDate';
+import LinkIcon from '../../../shared/assets/link.svg';
 
 interface AssigmentListProps {
   assignments: Assignment[];
@@ -23,12 +24,7 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
             }}
           >
             <ContentCard>
-              <ContentCard.Badges>
-                {/* <Badge variant="BrandOutline" size="Small">
-                  {assignment.completeCount}/{assignment.memberCount} 제출
-                </Badge> */}
-                {children(assignment)}
-              </ContentCard.Badges>
+              <ContentCard.Badges>{children(assignment)}</ContentCard.Badges>
               <ContentCard.TitleRow>
                 <ContentCard.Title>{assignment.title}</ContentCard.Title>
 
@@ -40,8 +36,13 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
               <ContentCard.Description>{assignment.content}</ContentCard.Description>
 
               <ContentCard.Footer direction="column">
-                <ContentCard.Meta tone="brand">{assignment.closeAt}</ContentCard.Meta>
-                <ContentCard.Meta>{assignment.submissionType}</ContentCard.Meta>
+                <ContentCard.Meta tone="brand">
+                  {formatDeadline(assignment.closeAt) + ' 마감'}
+                </ContentCard.Meta>
+                <ContentCard.Meta>
+                  <img src={LinkIcon} alt="링크" width={13} height={13} />
+                  {assignment.submissionType}
+                </ContentCard.Meta>
               </ContentCard.Footer>
             </ContentCard>
           </Link>
