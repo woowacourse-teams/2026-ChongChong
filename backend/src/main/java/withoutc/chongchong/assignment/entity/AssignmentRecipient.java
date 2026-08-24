@@ -40,7 +40,7 @@ public class AssignmentRecipient extends BaseEntity {
     private StudyMember member;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "assignment._id", nullable = false)
+    @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
     @Column(name = "read_at", nullable = true)

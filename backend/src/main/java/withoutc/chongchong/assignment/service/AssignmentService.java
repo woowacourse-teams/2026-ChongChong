@@ -12,7 +12,6 @@ import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
-import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
@@ -24,14 +23,11 @@ public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
     private final StudyMemberRepository studyMemberRepository;
-    private final StudyRepository studyRepository;
 
     private final Clock clock;
 
     @Transactional
     public AssignmentCreateResponse create(Long userId, Long studyId, AssignmentCreateRequest request) {
-        Study study = studyRepository.getByIdOrThrow(studyId);
-
         validateLeader(studyId, userId);
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()

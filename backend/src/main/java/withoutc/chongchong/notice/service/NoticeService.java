@@ -51,8 +51,6 @@ public class NoticeService {
 
     @Transactional
     public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
-        Study study = studyRepository.getByIdOrThrow(studyId);
-
         validateLeader(studyId, userId);
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
