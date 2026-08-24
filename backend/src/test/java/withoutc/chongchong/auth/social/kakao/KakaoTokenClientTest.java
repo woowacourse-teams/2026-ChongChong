@@ -93,9 +93,10 @@ class KakaoTokenClientTest {
             "",
             "{broken-json",
             "{}",
-            "{\"access_token\":\" \"}"
+            "{\"access_token\":\" \"}",
+            "{\"access_token\":\"token\\r\\nvalue\"}"
     })
-    @DisplayName("읽을 수 없거나 Access Token이 없는 Kakao 응답을 공통 소셜 인증 실패로 변환한다")
+    @DisplayName("읽을 수 없거나 Header에 사용할 수 없는 Kakao Token 응답을 공통 소셜 인증 실패로 변환한다")
     void rejectInvalidResponse(String responseBody) {
         respond(200, responseBody);
 
