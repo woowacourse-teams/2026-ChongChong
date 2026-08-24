@@ -25,8 +25,8 @@ class WebRefreshCookiePropertiesTest {
     }
 
     @Test
-    @DisplayName("로컬 HTTP 개발을 위한 Secure 비활성화 설정을 허용한다")
-    void allowInsecureLocalDevelopmentProperties() {
+    @DisplayName("환경 정책을 적용하기 전 Secure 비활성화 설정값을 보관한다")
+    void holdInsecurePropertiesBeforeEnvironmentPolicyValidation() {
         WebRefreshCookieProperties properties = properties(false);
 
         assertThat(properties.secure()).isFalse();

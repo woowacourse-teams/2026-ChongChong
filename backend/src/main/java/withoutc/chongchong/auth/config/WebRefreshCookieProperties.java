@@ -22,7 +22,7 @@ public record WebRefreshCookieProperties(
 
     public WebRefreshCookieProperties {
         validateName(name);
-        validateSecure(secure);
+        validateSecurePresence(secure);
         validateHttpOnly(httpOnly);
         validateSameSite(sameSite);
         validatePath(path);
@@ -37,7 +37,7 @@ public record WebRefreshCookieProperties(
         }
     }
 
-    private void validateSecure(Boolean secure) {
+    private void validateSecurePresence(Boolean secure) {
         if (secure == null) {
             throw new IllegalArgumentException("Refresh Cookie Secure 설정은 필수입니다.");
         }

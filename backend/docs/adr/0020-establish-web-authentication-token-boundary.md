@@ -121,6 +121,8 @@ Refresh Cookie는 다음 기본 계약을 사용한다.
 - `Domain`을 생략해 다른 하위 도메인으로 Cookie 범위를 넓히지 않는다.
 - 운영 `Secure=false`, `HttpOnly=false`, 공백 이름, 비양수 Max-Age와 허용하지 않는 SameSite 설정은 시작 또는 생성
   시점에 거부한다.
+- `Secure=false`는 명시적인 `local` 프로필에서만 로컬 HTTP 개발 용도로 허용하며, 기본·테스트·그 밖의 프로필에서는
+  애플리케이션 시작을 실패시킨다.
 - 실제 Refresh Token 원문, Cookie Header와 환경별 Client ID를 일반 애플리케이션 로그에 기록하지 않는다.
 
 현재 실제 배포 URL은 확정되지 않았다. 웹과 API가 cross-site인 환경에서는 `SameSite=None; Secure`가 필요할 수 있지만,

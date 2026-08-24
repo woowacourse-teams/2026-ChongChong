@@ -38,4 +38,28 @@ class WebRefreshCookieConfigTest {
                             .hasRootCauseMessage("Refresh Cookie는 HttpOnly여야 합니다.");
                 });
     }
+
+    @Test
+    @DisplayName("local이 아닌 환경의 Secure 비활성화 설정은 애플리케이션 시작을 실패시킨다")
+    void rejectInsecureCookieOutsideLocalProfile() {
+        contextRunner
+                .withPropertyValues("auth.web.refresh-cookie.secure=false")
+                .run(context -> {
+                    assertThat(context).hasFailed();
+                    assertThat(context.getStartupFailure())
+                            .hasRootCauseMessage("Refresh Cookie Secure 비활성화는 local 프로필에서만 허용됩니다.");
+                });
+    }
+
+    @Test
+    @DisplayName("local 환경은 HTTP 개발을 위한 Secure 비활성화 설정을 허용한다")
+    void allowInsecureCookieInLocalProfile() {
+        contextRunner
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("local"))
+                .withPropertyValues("auth.web.refresh-cookie.secure=false")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(WebRefreshCookieProperties.class).secure()).isFalse();
+                });
+    }
 }
