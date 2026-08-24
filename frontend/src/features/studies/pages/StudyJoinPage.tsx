@@ -7,9 +7,10 @@ import Input from '../../../shared/ui/inputs/Input';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
+import isBlank from '../../../shared/utils/isBlank';
 
 export default function StudyJoinPage() {
-  const [joinLink, handleJoinLink] = useInputState();
+  const [joinLink, handleJoinLink] = useInputState('');
 
   return (
     <Page>
@@ -29,7 +30,12 @@ export default function StudyJoinPage() {
           >
             <Input id="study-name" value={joinLink} onChange={handleJoinLink} maxLength={15} />
           </Field>
-          <Button css={{ marginTop: tokens.spacing[5] }} variant="brandSolid" size="large">
+          <Button
+            css={{ marginTop: tokens.spacing[5] }}
+            variant="brandSolid"
+            size="large"
+            disabled={isBlank(joinLink)}
+          >
             스터디 참여하기
           </Button>
         </form>

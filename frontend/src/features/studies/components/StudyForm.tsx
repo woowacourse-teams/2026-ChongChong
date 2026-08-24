@@ -8,6 +8,7 @@ import Button from '../../../shared/ui/Button';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import { tokens } from '../../../styles/global';
 import { createStudy } from '../api';
+import isBlank from '../../../shared/utils/isBlank';
 
 const StudyFormStyle = {
   display: 'flex',
@@ -41,11 +42,6 @@ export default function StudyForm() {
     mutation.mutate(body);
   }
 
-  function isInValidInput() {
-    if (nameValue.length > 0) return false;
-    return true;
-  }
-
   return (
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
       <Field
@@ -76,7 +72,7 @@ export default function StudyForm() {
         variant="brandSolid"
         size="large"
         type="submit"
-        disabled={isInValidInput()}
+        disabled={isBlank(nameValue)}
         css={{ marginTop: tokens.spacing[1] }}
       >
         스터디 만들기
