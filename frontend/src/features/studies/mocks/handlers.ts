@@ -47,7 +47,7 @@ export const handlers = [
     if (!found) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json({
       studyName: found.name,
-      role: 'MEMBER',
+      role: 'LEADER',
       memberName: '바니',
     });
   }),
