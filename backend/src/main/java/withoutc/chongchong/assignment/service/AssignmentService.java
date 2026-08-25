@@ -124,6 +124,20 @@ public class AssignmentService {
         return AssignmentSubmitResponse.from(submission);
     }
 
+    @Transactional
+    public void updateSubmission(Long userId, Long studyId, Long assignmentId, Long submissionId,
+                                 AssignmentSubmitRequest request) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndMemberIdOrThrow(submissionId,
+                member.getId());
+        submission.update(request.content(), request.link());
+        assignmentSubmissionRepository.save(submission);
+    }
+
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
                                                                       List<Assignment> assignments) {
         if (member.isLeader()) {
@@ -134,8 +148,7 @@ public class AssignmentService {
             return List.of();
         }
 
-        List<Long> assignmentIds = assignments.stream().map(Assignment
-                ::getId).toList();
+        List<Long> assignmentIds = assignments.stream().map(Assignment::getId).toList();
 
         Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository
                 .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())

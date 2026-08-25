@@ -67,6 +67,18 @@ public class AssignmentSubmission extends BaseEntity {
         this.submitted = true;
     }
 
+    public void update(String content, String link) {
+        if (content != null) {
+            validateContent(content);
+            this.content = content;
+        }
+
+        if (link != null) {
+            validateLink(link);
+            this.link = link;
+        }
+    }
+
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,
                                  boolean submitted) {
         this.member = member;
