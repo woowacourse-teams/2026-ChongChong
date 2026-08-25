@@ -18,6 +18,7 @@ const formStyle = {
 interface AssignmentFormProps {
   initialValues?: AssignmentValue;
   submitLabel: string;
+  isSubmitting?: boolean;
   onSubmit: (values: AssignmentValue) => void;
 }
 
@@ -31,6 +32,7 @@ const emptyValues = {
 export default function AssignmentForm({
   initialValues = emptyValues,
   submitLabel,
+  isSubmitting = false,
   onSubmit,
 }: AssignmentFormProps) {
   const [title, setTitle] = useState(initialValues.title);
@@ -44,6 +46,8 @@ export default function AssignmentForm({
       css={formStyle}
       onSubmit={(event) => {
         event.preventDefault();
+        if (isSubmitting) return;
+
         if (!closeAt) {
           setIsCloseAtError(true);
           return;
@@ -111,6 +115,7 @@ export default function AssignmentForm({
         type="submit"
         variant="brandSolid"
         size="large"
+        disabled={isSubmitting}
         css={{ marginTop: tokens.spacing[8] }}
       >
         {submitLabel}

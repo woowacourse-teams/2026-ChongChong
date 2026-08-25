@@ -32,6 +32,7 @@ export default function CreateAssignmentPage() {
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
       <Main>
         <AssignmentForm
+          isSubmitting={createMutation.isPending}
           submitLabel="과제 올리기"
           onSubmit={(values) => createMutation.mutate(values)}
         />
