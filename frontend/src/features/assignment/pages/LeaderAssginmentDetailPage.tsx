@@ -5,7 +5,7 @@ import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import { useNavigate, useParams } from 'react-router';
 import { useRef } from 'react';
-import NoticeDetailActions from '../../notice/components/NoticeDetailActions';
+import DetailActions from '../../../shared/ui/components/DetailActions';
 import Main from '../../../shared/ui/Main';
 import assignmentQueries from '../queries';
 import { useSuspenseQueries } from '@tanstack/react-query';
@@ -40,7 +40,7 @@ export default function LeaderAssignmentDetailpage() {
         <AssignmentArticle assignment={assignment} />
         <SubmissionList submissions={submissions.submissions} />
 
-        <NoticeDetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
+        <DetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
       </Main>
 
       <ConfirmDialog

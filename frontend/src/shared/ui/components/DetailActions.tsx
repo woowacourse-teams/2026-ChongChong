@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import deleteIcon from '../../../shared/assets/delete.svg';
 import modifyIcon from '../../../shared/assets/modify.svg';
-import Button from '../../../shared/ui/Button';
+import Button from '../Button';
 import { tokens } from '../../../styles/global';
 
 interface NoticeDetailActionsProps {
@@ -21,7 +21,7 @@ const buttonContentStyle = {
   gap: tokens.spacing[1],
 } satisfies CSSProperties;
 
-export default function NoticeDetailActions({ onEdit, onDelete }: NoticeDetailActionsProps) {
+export default function DetailActions({ onEdit, onDelete }: NoticeDetailActionsProps) {
   return (
     <div css={actionsStyle}>
       <Button variant="neutralOutline" size="small" onClick={onEdit}>
