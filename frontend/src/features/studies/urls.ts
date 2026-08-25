@@ -2,4 +2,6 @@ export const STUDY_URLS = {
   list: '/studies/me',
   create: '/studies',
   info: '/studies/:studyId/info',
+  inviteLink: '/studies/:studyId/invite-link',
+  remove: '/studies/:studyId',
 };

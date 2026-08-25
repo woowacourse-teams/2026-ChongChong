@@ -1,15 +1,15 @@
 import LeaderAssignmentListPage from './LeaderAssignmentListPage';
 import MemberAssignmentListPage from './MemberAssignmentListPage';
-import { useParams } from 'react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
+import useStudyId from '../../studies/hooks/useStudyId';
 import studyQueries from '../../studies/queries';
 
 export default function AssignmentListPage() {
-  const { studyId } = useParams();
+  const { studyId } = useStudyId();
 
   const {
     data: { role, studyName, memberName },
-  } = useSuspenseQuery(studyQueries.info(studyId!));
+  } = useSuspenseQuery(studyQueries.info(studyId));
 
   return role === 'LEADER' ? (
     <LeaderAssignmentListPage studyName={studyName} memberName={memberName} />

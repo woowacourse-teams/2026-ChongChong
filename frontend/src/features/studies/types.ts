@@ -1,4 +1,4 @@
-type Role = 'STUDY_LEADER' | 'SOME';
+type Role = 'LEADER' | 'MEMBER';
 
 export interface Study {
   id: string;

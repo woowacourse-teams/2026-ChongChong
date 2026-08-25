@@ -15,7 +15,7 @@ export default function StudyDetailPage() {
   const { studyId } = useParams();
   const {
     data: { studyName, role, memberName },
-  } = useSuspenseQuery(studyQueries.info(studyId as string));
+  } = useSuspenseQuery(studyQueries.info(Number(studyId)));
 
   return (
     <Page>

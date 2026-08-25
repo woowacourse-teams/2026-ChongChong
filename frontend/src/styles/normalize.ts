@@ -214,4 +214,10 @@ export const modernNormalize = css`
     text-decoration: none;
     color: black;
   }
+
+  button {
+    border: none;
+    background: none;
+    padding: 0;
+  }
 `;

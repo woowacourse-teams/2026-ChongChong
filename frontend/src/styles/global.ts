@@ -28,7 +28,7 @@ export const globalStyles = css`
 
     /* Figma Color Tokens */
 
-    --card-line-8: rgba(15, 23, 42, 0.08);
+    --card-line-8: rgba(20, 20, 20, 0.08);
     --option-sub-6: rgba(15, 23, 42, 0.06);
     --option-placeholder-40: rgba(15, 23, 42, 0.4);
     --option-sub-font-color-55: rgba(15, 23, 42, 0.55);

@@ -16,7 +16,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
               <ContentCard>
                 <ContentCard.Badges>
                   <Badge variant="brandSolid" size="small">
-                    {study.role === 'STUDY_LEADER' ? '스터디 리드' : '스터디원'}
+                    {study.role === 'LEADER' ? '스터디 리드' : '스터디원'}
                   </Badge>
                 </ContentCard.Badges>
 

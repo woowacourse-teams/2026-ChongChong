@@ -1,32 +1,31 @@
 import { http, HttpResponse } from 'msw';
-import { study } from './db';
+import { studyTable } from './db';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
+import { CURRENT_USER } from '../../../mocks/currentUser';
+import { memberTable } from '../../member/mocks/db';
 
 export const handlers = [
-  http.get(`${BASE_URL}${STUDY_URLS.list}`, () => {
-    return HttpResponse.json({
-      studies: [
-        {
-          id: '1',
-          role: 'STUDY_LEADER',
-          title: '리액트 스터디',
-          description: '매주 화요일 10시에 진행하는 리액트 스터디',
-          memberCount: 3,
+  http.get(`${BASE_URL}${STUDY_URLS.list}`, async () => {
+    const memberships = await memberTable.findMany((q) => q.where({ id: CURRENT_USER.id }));
+    const studies = await Promise.all(
+      memberships.map(async (membership) => {
+        const study = await studyTable.findFirst((q) => q.where({ id: membership.studyId }));
+        if (!study) return null;
+        const members = await memberTable.findMany((q) => q.where({ studyId: study.id }));
+        return {
+          id: String(study.id),
+          role: membership.role === 'LEADER' ? 'LEADER' : 'MEMBER',
+          title: study.name,
+          description: study.description,
+          memberCount: members.length,
+          // 공지/과제는 아직 mock table 이 없어 고정값을 사용합니다.
           noticeCount: 2,
           assignmentCount: 2,
-        },
-        {
-          id: '2',
-          role: 'SOME',
-          title: '우테코 8기 FE 스터디',
-          description: '매주 화요일 저녁 9시, 프론트엔드 CS와 코드 리뷰',
-          memberCount: 5,
-          noticeCount: 2,
-          assignmentCount: 1,
-        },
-      ],
-    });
+        };
+      }),
+    );
+    return HttpResponse.json({ studies: studies.filter((study) => study !== null) });
   }),
 
   http.post(`${BASE_URL}${STUDY_URLS.create}`, async ({ request }) => {
@@ -37,18 +36,42 @@ export const handlers = [
     // }
 
     const studyId = Date.now();
-    await study.create({ id: studyId, ...body });
+    await studyTable.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
+    await memberTable.create({
+      id: CURRENT_USER.id,
+      studyId,
+      name: CURRENT_USER.name,
+      profileImage: 'http://localhost:8000',
+      role: 'LEADER',
+    });
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
   http.get(`${BASE_URL}${STUDY_URLS.info}`, async ({ params }) => {
     const { studyId } = params;
-    const found = await study.findFirst((q) => q.where({ id: Number(studyId) }));
+    const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!found) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json({
       studyName: found.name,
       role: 'LEADER',
-      memberName: '바니',
+      memberName: CURRENT_USER.name,
     });
+  }),
+
+  http.get(`${BASE_URL}${STUDY_URLS.inviteLink}`, async ({ params }) => {
+    const { studyId } = params;
+    const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
+    if (!found) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json({
+      inviteLink: found.inviteLink,
+    });
+  }),
+
+  http.delete(`${BASE_URL}${STUDY_URLS.remove}`, async ({ params }) => {
+    const { studyId } = params;
+    const study = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
+    if (!study) return new HttpResponse(null, { status: 404 });
+    studyTable.delete(study);
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

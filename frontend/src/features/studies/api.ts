@@ -23,7 +23,7 @@ export async function createStudy(body: {
   }
 }
 
-export async function fetchStudyInfo(studyId: string) {
+export async function fetchStudyInfo(studyId: number) {
   try {
     const response = await api.get(`/studies/${studyId}/info`);
     return await response.json<{
@@ -34,5 +34,24 @@ export async function fetchStudyInfo(studyId: string) {
   } catch {
     // TODO: 에러코드별로 에러 분기가 필요합니다.
     throw new Error('스터디 정보를 불러오는데 실패했습니다.');
+  }
+}
+
+export async function fetchStudyInviteLink(studyId: number) {
+  try {
+    const response = await api.get(`/studies/${studyId}/invite-link`);
+    return await response.json<{
+      inviteLink: string;
+    }>();
+  } catch {
+    throw new Error('초대 링크를 가져오는데 실패했습니다.');
+  }
+}
+
+export async function removeStudy(studyId: number) {
+  try {
+    await api.delete(`/studies/${studyId}`);
+  } catch {
+    throw new Error('스터디를 삭제하는데 실패했습니다.');
   }
 }

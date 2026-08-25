@@ -10,7 +10,7 @@ import { Study } from '../types';
 const studies: Study[] = [
   {
     id: '1',
-    role: 'STUDY_LEADER',
+    role: 'LEADER',
     title: '점심메뉴 스터디',
     description: '매주 진행하는 점심메뉴 정하기',
     memberCount: 3,
@@ -19,7 +19,7 @@ const studies: Study[] = [
   },
   {
     id: '2',
-    role: 'SOME',
+    role: 'MEMBER',
     title: '저녁메뉴 스터디',
     description: '매주 진행하는 저녁메뉴 정하기',
     memberCount: 5,
