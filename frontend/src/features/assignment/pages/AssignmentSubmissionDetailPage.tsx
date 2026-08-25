@@ -12,6 +12,7 @@ import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import InfoCard from '../components/InfoCard';
 import assignmentQueries from '../queries';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 
 const articleStyle = {
   display: 'flex',
@@ -105,6 +106,7 @@ export default function AssignmentSubmissionDetailPage() {
           </div>
         </article>
       </Main>
+      <BottomTab />
     </Page>
   );
 }
