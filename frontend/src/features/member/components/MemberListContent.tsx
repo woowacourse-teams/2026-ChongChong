@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react';
+import { useNavigate } from 'react-router';
 import { useMutation, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
 import { memberQueries } from '../queries';
@@ -8,7 +9,7 @@ import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
 import CopyIcon from '../../../shared/assets/copy.svg';
-import { kickMember } from '../api';
+import { kickMember, leaveStudyMember } from '../api';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -112,12 +113,23 @@ function LeaderContent() {
 
 function MemberContent() {
   const { studyId } = useStudyId();
+  const queryClient = useQueryClient();
   const {
     data: { inviteLink },
   } = useSuspenseQuery(studyQueries.inviteLink(studyId));
   const { data: members } = useSuspenseQuery({
     ...memberQueries.list(Number(studyId)),
     select: (data) => data.members,
+  });
+
+  const navigate = useNavigate();
+
+  const leaveStudy = useMutation({
+    mutationFn: ({ studyId }: { studyId: number }) => leaveStudyMember({ studyId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studyQueries.lists() });
+      navigate('/studies');
+    },
   });
 
   return (
@@ -137,7 +149,12 @@ function MemberContent() {
         </List>
         <InviteLinkBox inviteLink={inviteLink} />
       </section>
-      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={() => {}}>
+      <Button
+        variant="criticalSolid"
+        size="large"
+        css={actionButtonStyle}
+        onClick={() => leaveStudy.mutate({ studyId })}
+      >
         스터디 탈퇴하기
       </Button>
     </>

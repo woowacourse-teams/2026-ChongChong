@@ -54,6 +54,7 @@ function renderMemberListContent(content: React.ReactNode) {
   render(
     <Routes>
       <Route path="/studies/:studyId" element={<Suspense fallback={null}>{content}</Suspense>} />
+      <Route path="/studies" element={<h2>내 스터디</h2>} />
     </Routes>,
     { wrapper: createWrapper({ initialEntries: ['/studies/1'] }) },
   );
@@ -125,5 +126,19 @@ describe('스터디원 화면 테스트', () => {
 
     const memberRow = screen.getByTestId('member-2-row');
     expect(within(memberRow).queryByAltText('스터디 리드')).not.toBeInTheDocument();
+  });
+
+  test('스터디를 탈퇴하면 스터디 리스트 페이지로 이동한다.', async () => {
+    mockStudyInviteLink();
+    mockMemberList();
+    const user = userEvent.setup();
+    renderMemberListContent(<MemberListContent.Member />);
+
+    const leaveButton = await screen.findByRole('button', {
+      name: '스터디 탈퇴하기',
+    });
+    await user.click(leaveButton);
+
+    expect(await screen.findByText('내 스터디')).toBeInTheDocument();
   });
 });
