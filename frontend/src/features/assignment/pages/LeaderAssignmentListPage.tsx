@@ -7,10 +7,16 @@ import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import { useParams } from 'react-router';
 
-const studyId = 1;
+interface Props {
+  studyName: string;
+  memberName: string;
+}
 
-export default function LeaderAssignmentListPage() {
+export default function LeaderAssignmentListPage({ studyName, memberName }: Props) {
+  const { studyId } = useParams();
+
   return (
     <Page>
       <ErrorBoundary fallback={<ErrorContent message="오류가 발생했습니다." />}>
@@ -18,15 +24,15 @@ export default function LeaderAssignmentListPage() {
           left={<PrevButton />}
           middle={
             <>
-              <TopHeader.Title>우테코 8기 FE 스터디</TopHeader.Title>
-              <TopHeader.Subtitle>디움 · 리드</TopHeader.Subtitle>
+              <TopHeader.Title>{studyName}</TopHeader.Title>
+              <TopHeader.Subtitle>{memberName} · 리드</TopHeader.Subtitle>
             </>
           }
         />
 
         <Suspense fallback={<p>로딩중...</p>}>
           <Main>
-            <LeaderAssignmentListSection studyId={studyId} />
+            <LeaderAssignmentListSection studyId={Number(studyId)} />
           </Main>
         </Suspense>
       </ErrorBoundary>

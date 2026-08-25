@@ -6,7 +6,7 @@ import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeArticle from '../components/NoticeArticle';
-import NoticeDetailActions from '../components/NoticeDetailActions';
+import DetailActions from '../../../shared/ui/components/DetailActions';
 import NoticeReadStatus from '../components/NoticeReadStatus';
 import { notice } from '../noticeData';
 import Page from '../../../shared/ui/Page';
@@ -63,7 +63,7 @@ export default function LeaderNoticeDetailPage() {
           content={notice.content}
         />
 
-        <NoticeDetailActions onEdit={editNotice} onDelete={openDeleteDialog} />
+        <DetailActions onEdit={editNotice} onDelete={openDeleteDialog} />
       </Main>
 
       <ConfirmDialog

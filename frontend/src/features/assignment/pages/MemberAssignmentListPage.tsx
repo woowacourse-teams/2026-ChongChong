@@ -7,10 +7,16 @@ import MemberAssignmentListSection from '../components/MemberAssignmentListSecti
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import { useParams } from 'react-router';
 
-const studyId = 1;
+interface Props {
+  studyName: string;
+  memberName: string;
+}
 
-export default function MemberAssignmentListPage() {
+export default function MemberAssignmentListPage({ studyName, memberName }: Props) {
+  const { studyId } = useParams();
+
   return (
     <Page>
       <ErrorBoundary fallback={<ErrorContent message="오류가 발생했습니다." />}>
@@ -18,14 +24,14 @@ export default function MemberAssignmentListPage() {
           left={<PrevButton />}
           middle={
             <>
-              <TopHeader.Title>우테코 8기 FE 스터디</TopHeader.Title>
-              <TopHeader.Subtitle>디움 · 스터디원</TopHeader.Subtitle>
+              <TopHeader.Title>{studyName}</TopHeader.Title>
+              <TopHeader.Subtitle>{memberName} · 스터디원</TopHeader.Subtitle>
             </>
           }
         />
         <Suspense fallback={<p>로딩중입니다...</p>}>
           <Main>
-            <MemberAssignmentListSection studyId={studyId} />
+            <MemberAssignmentListSection studyId={Number(studyId)} />
           </Main>
         </Suspense>
       </ErrorBoundary>

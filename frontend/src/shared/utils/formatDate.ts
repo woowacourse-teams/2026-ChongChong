@@ -27,3 +27,16 @@ export function formatReminder(value: string) {
 
   return `${diffDays}일 뒤`;
 }
+
+export function formatSubmittedAt(value: string) {
+  const date = new Date(value.replace(' ', 'T'));
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes} 제출`;
+}
