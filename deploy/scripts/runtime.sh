@@ -38,6 +38,9 @@ load_deployment_environment() {
         AUTH_JWT_ISSUER
         AUTH_JWT_AUDIENCE
         AUTH_JWT_SECRET_BASE64
+        AUTH_KAKAO_REST_API_KEY
+        AUTH_KAKAO_CLIENT_SECRET
+        AUTH_KAKAO_REDIRECT_URI
     )
 
     local variable
