@@ -66,7 +66,7 @@ function LeaderContent() {
           {members.map((member) => (
             <List.Item key={member.id}>
               <MemberRow.Leader
-                data-testid={`member-${member.id}-row`}
+                data-testid="member-row"
                 name={member.name}
                 role={member.role}
                 onKick={() => deleteMember.mutate({ studyId, memberId: member.id })}
@@ -130,7 +130,7 @@ function MemberContent() {
           {members.map((member) => (
             <List.Item key={member.id}>
               <MemberRow.Member
-                data-testid={`member-${member.id}-row`}
+                data-testid="member-row"
                 name={member.name}
                 role={member.role}
               />

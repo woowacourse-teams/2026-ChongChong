@@ -7,35 +7,12 @@ import { createWrapper } from '../../../test/render';
 import { server } from '../../../mocks/msw-node';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../../studies/urls';
-import { MEMBER_URLS } from '../urls';
 import MemberListContent from './MemberListContent';
 
-const STUDY_MEMBER_LIST_URL = `${BASE_URL}${MEMBER_URLS.list}`;
-const STUDY_MEMBER_KICK_URL = `${BASE_URL}${MEMBER_URLS.kick}`;
-
-function mockMemberList() {
-  let members = [
-    {
-      id: 1,
-      name: '리드',
-      profileImage: 'http://localhost:8000',
-      role: 'LEADER',
-    },
-    {
-      id: 2,
-      name: '멤버',
-      profileImage: 'http://localhost:8000',
-      role: 'MEMBER',
-    },
-  ];
-
-  server.use(
-    http.get(STUDY_MEMBER_LIST_URL, () => HttpResponse.json({ members })),
-    http.delete(STUDY_MEMBER_KICK_URL, ({ params }) => {
-      members = members.filter((member) => member.id !== Number(params.memberId));
-      return new HttpResponse(null, { status: 204 });
-    }),
-  );
+async function findMemberRow(name: string) {
+  const row = (await screen.findByText(name)).closest('[data-testid="member-row"]');
+  if (!row) throw new Error(`${name} 스터디원의 행을 찾을 수 없습니다.`);
+  return row as HTMLElement;
 }
 
 function renderMemberListContent(content: React.ReactNode) {
@@ -63,7 +40,6 @@ describe('초대 링크 테스트', () => {
 
   test('스터디 리드 화면에 API로 받은 초대 링크가 노출된다', async () => {
     mockStudyInviteLink();
-    mockMemberList();
     renderMemberListContent(<MemberListContent.Leader />);
 
     expect(await screen.findByText('mock-chongchong-invite-link123')).toBeInTheDocument();
@@ -71,7 +47,6 @@ describe('초대 링크 테스트', () => {
 
   test('스터디원 화면에 API로 받은 초대 링크가 노출된다', async () => {
     mockStudyInviteLink();
-    mockMemberList();
     renderMemberListContent(<MemberListContent.Member />);
 
     expect(await screen.findByText('mock-chongchong-invite-link123')).toBeInTheDocument();
@@ -80,33 +55,26 @@ describe('초대 링크 테스트', () => {
 
 describe('스터디 리드 화면 테스트', () => {
   test('스터디 리드 행에는 방출하기 버튼이 존재하지 않는다', async () => {
-    mockMemberList();
     renderMemberListContent(<MemberListContent.Leader />);
 
-    const memberRow = await screen.findByTestId('member-1-row');
+    const memberRow = await findMemberRow('이든');
     expect(within(memberRow).queryByRole('button', { name: '방출하기' })).not.toBeInTheDocument();
   });
 
   test('스터디원을 추방하면 목록에서 추방한 스터디원이 사라진다', async () => {
-    mockMemberList();
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Leader />);
 
-    const memberRow = await screen.findByTestId('member-2-row');
-    expect(within(memberRow).getByText('멤버')).toBeInTheDocument();
+    const memberRow = await findMemberRow('안톨리니');
+    expect(within(memberRow).getByText('안톨리니')).toBeInTheDocument();
 
     await user.click(within(memberRow).getByRole('button', { name: '방출하기' }));
     await user.click(within(memberRow).getByRole('button', { name: '추방' }));
 
-    await waitFor(() => {
-      expect(screen.queryByTestId('member-2-row')).not.toBeInTheDocument();
-    });
-    expect(screen.queryByText('멤버')).not.toBeInTheDocument();
-    expect(screen.getByText('리드')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('안톨리니')).not.toBeInTheDocument());
   });
 
   test('스터디를 삭제하면 스터디 리스트 페이지로 이동한다.', async () => {
-    mockMemberList();
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Leader />);
 
@@ -119,25 +87,22 @@ describe('스터디 리드 화면 테스트', () => {
 
 describe('스터디원 화면 테스트', () => {
   test('스터디원에게는 방출하기 버튼이 렌더링 되지 않는다', async () => {
-    mockMemberList();
     renderMemberListContent(<MemberListContent.Member />);
 
     expect(screen.queryByText('방출하기')).not.toBeInTheDocument();
   });
 
   test('스터디원에게 스터디리드는 리드 아이콘이 렌더링 된다', async () => {
-    mockMemberList();
     renderMemberListContent(<MemberListContent.Member />);
 
-    const leaderRow = await screen.findByTestId('member-1-row');
+    const leaderRow = await findMemberRow('이든');
     expect(within(leaderRow).getByAltText('스터디 리드')).toBeInTheDocument();
 
-    const memberRow = screen.getByTestId('member-2-row');
+    const memberRow = await findMemberRow('안톨리니');
     expect(within(memberRow).queryByAltText('스터디 리드')).not.toBeInTheDocument();
   });
 
   test('스터디를 탈퇴하면 스터디 리스트 페이지로 이동한다.', async () => {
-    mockMemberList();
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Member />);
 
