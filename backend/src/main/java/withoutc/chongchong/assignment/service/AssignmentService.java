@@ -20,6 +20,8 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
+import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
+import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse.SubmissionSummary;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
@@ -149,6 +151,18 @@ public class AssignmentService {
         AssignmentSubmission submission = getAssignmentSubmission(submissionId, member);
 
         return SubmissionDetailResponse.of(submission, submission.getMember());
+    }
+
+    public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeader(studyId, member.getId());
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        List<AssignmentSubmission> submissions = assignmentSubmissionRepository.findAllByAssignmentId(assignmentId);
+
+        return SubmissionListResponse.from(submissions.stream().map(SubmissionSummary::from).toList());
     }
 
     private AssignmentSubmission getAssignmentSubmission(Long submissionId, StudyMember member) {

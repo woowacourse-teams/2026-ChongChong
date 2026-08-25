@@ -27,6 +27,8 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
             @Param("memberId") Long memberId
     );
 
+    List<AssignmentSubmission> findAllByAssignmentId(Long assignmentId);
+
     Optional<AssignmentSubmission> findByAssignmentIdAndMemberId(Long assignmentId, Long memberId);
 
     Optional<AssignmentSubmission> findByIdAndMemberId(Long id, Long memberId);
