@@ -2,32 +2,39 @@ import { http, HttpResponse } from 'msw';
 import { BASE_URL } from '../../../../config';
 import type { AssignmentValue, UpdateAssignmentValue } from '../types';
 
+const assignmentList = Array.from({ length: 12 }, (_, index) => {
+  const id = 12 - index;
+
+  return {
+    id,
+    title: `${id}주차 과제`,
+    content: `${id}주차 학습 내용을 정리하고 풀이 링크를 제출해주세요.`,
+    submissionType: id % 2 === 0 ? 'GitHub PR' : '링크 제출',
+    closeAt: `2026-09-${String(id).padStart(2, '0')}T23:59:59`,
+    memberCount: 4,
+    completeCount: id % 5,
+    isComplete: id % 4 === 0,
+  };
+});
+
 export const handlers = [
-  http.get(`${BASE_URL}/studies/:studyId/assignments`, () => {
-    return HttpResponse.json({
-      assignments: [
-        {
-          id: 1,
-          title: '8월 스터디 운영 방식이 바뀝니다',
-          content: '8월부터 스터디 운영 방식을 변경하려고 합니다.',
-          submissionType: '링크 제출',
-          closeAt: '2026-08-25T23:59:59',
-          memberCount: 4,
-          completeCount: 2,
-          isComplete: false,
-        },
-        {
-          id: 2,
-          title: '9월의 스터디',
-          content: '치킨 피자',
-          submissionType: '링크 제출',
-          closeAt: '2026-08-25T23:59:59',
-          memberCount: 4,
-          completeCount: 2,
-          isComplete: true,
-        },
-      ],
-    });
+  http.get(`${BASE_URL}/studies/:studyId/assignments`, ({ request }) => {
+    const searchParams = new URL(request.url).searchParams;
+    const cursor = searchParams.get('cursor');
+    const requestedSize = Number(searchParams.get('size') ?? 4);
+    const size = Number.isInteger(requestedSize) && requestedSize > 0 ? requestedSize : 4;
+    const cursorIndex = cursor
+      ? assignmentList.findIndex((assignment) => assignment.id === Number(cursor))
+      : 0;
+    const startIndex = cursorIndex >= 0 ? cursorIndex : 0;
+    const assignments = assignmentList.slice(startIndex, startIndex + size);
+    const nextIndex = startIndex + assignments.length;
+    const hasNext = nextIndex < assignmentList.length;
+    const nextCursor = hasNext
+      ? assignmentList[nextIndex].id
+      : (assignments[assignments.length - 1]?.id ?? 0);
+
+    return HttpResponse.json({ nextCursor, hasNext, assignments });
   }),
 
   http.post(`${BASE_URL}/studies/:studyId/assignments`, async ({ request }) => {

@@ -1,18 +1,20 @@
 import api from '../../client';
 import {
-  Assignment,
   AssignmentSubmitStatus,
   AssignmentDetail,
   Submission,
   SubmissionDetail,
   AssignmentValue,
   UpdateAssignmentValue,
+  AssignmentListResponse,
 } from './types';
 
-export async function fetchAssignmentList(studyId: number) {
+export async function fetchAssignmentList(studyId: number, cursor?: number) {
   try {
-    const response = await api.get(`/studies/${studyId}/assignments`);
-    return await response.json<{ assignments: Assignment[] }>();
+    const response = await api.get(`/studies/${studyId}/assignments`, {
+      searchParams: cursor === undefined ? undefined : { cursor },
+    });
+    return await response.json<AssignmentListResponse>();
   } catch {
     throw new Error('과제 목록을 불러오는데 실패했습니다.');
   }

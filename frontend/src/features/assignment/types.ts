@@ -4,10 +4,16 @@ export interface Assignment {
   content: string;
   submissionType: string;
   closeAt: string;
-  memberCount: number;
-  completeCount: number;
+  memberCount?: number;
+  completeCount?: number;
   remindAt?: string;
   isComplete: boolean;
+}
+
+export interface AssignmentListResponse {
+  nextCursor: number;
+  hasNext: boolean;
+  assignments: Assignment[];
 }
 
 export interface Member {

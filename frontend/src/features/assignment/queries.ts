@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import {
   fetchAssignmentList,
   fetchAssignmentSubmitStatus,
@@ -15,9 +15,12 @@ const assignmentQueries = {
   lists: (studyId: number) => [...assignmentQueries.study(studyId), 'assignments'] as const,
 
   list: (studyId: number) =>
-    queryOptions({
+    infiniteQueryOptions({
       queryKey: assignmentQueries.lists(studyId),
-      queryFn: () => fetchAssignmentList(studyId),
+      queryFn: ({ pageParam }: { pageParam: number | null }) =>
+        fetchAssignmentList(studyId, pageParam ?? undefined),
+      initialPageParam: null,
+      getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor : undefined),
     }),
 
   detail: (studyId: number, assignmentId: number) =>
