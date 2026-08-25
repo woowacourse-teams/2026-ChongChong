@@ -1,11 +1,6 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import {
-  useMutation,
-  useSuspenseQueries,
-  useSuspenseQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useSuspenseQueries } from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
 import { memberQueries } from '../queries';
 import studyQueries from '../../studies/queries';
@@ -13,12 +8,12 @@ import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
-import { leaveStudyMember } from '../api';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteLinkBox from './InviteLinkBox';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
 import useDeleteStudy from '../../studies/hooks/useDeleteStudy';
 import useKickStudyMember from '../hooks/useKickMember';
+import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -96,26 +91,26 @@ function LeaderContent() {
 
 function MemberContent() {
   const { studyId } = useStudyId();
-  const queryClient = useQueryClient();
 
-  const {
-    data: { inviteLink },
-  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
-
-  const { data: members } = useSuspenseQuery({
-    ...memberQueries.list(Number(studyId)),
-    select: (data) => data.members,
+  const [
+    {
+      data: { members },
+    },
+    {
+      data: { inviteLink },
+    },
+  ] = useSuspenseQueries({
+    queries: [memberQueries.list(studyId), studyQueries.inviteLink(studyId)],
   });
 
   const navigate = useNavigate();
 
-  const leaveStudy = useMutation({
-    mutationFn: ({ studyId }: { studyId: number }) => leaveStudyMember({ studyId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: studyQueries.lists() });
-      navigate('/studies');
-    },
-  });
+  const { mutate: leaveStudyMember } = useLeaveStudyMember();
+
+  function handleLeaveStudyMember() {
+    leaveStudyMember({ studyId });
+    navigate('/studies');
+  }
 
   return (
     <>
@@ -134,7 +129,7 @@ function MemberContent() {
         variant="criticalSolid"
         size="large"
         css={actionButtonStyle}
-        onClick={() => leaveStudy.mutate({ studyId })}
+        onClick={handleLeaveStudyMember}
       >
         스터디 탈퇴하기
       </Button>
