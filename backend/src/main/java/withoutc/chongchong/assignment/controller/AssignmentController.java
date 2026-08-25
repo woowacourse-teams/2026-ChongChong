@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
@@ -26,19 +28,26 @@ public class AssignmentController {
 
     @PostMapping
     public ResponseEntity<AssignmentCreateResponse> createAssignment(
-            @AuthenticationPrincipal AuthenticatedUser currentUser,
-            @PathVariable Long studyId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
             @Valid @RequestBody AssignmentCreateRequest request) {
         AssignmentCreateResponse response = assignmentService.create(currentUser.id(), studyId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping("/{assignmentId}")
+    public ResponseEntity<AssignmentDetailResponse> getNoticeDetail(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId) {
+        AssignmentDetailResponse response = assignmentService.getDetail(currentUser.id(), studyId, assignmentId);
+
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("{assignmentId}")
     public ResponseEntity<Void> updateAssignment(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                  @PathVariable Long studyId, @PathVariable Long assignmentId,
-                                                 @Valid AssignmentUpdateRequest request
-    ) {
+                                                 @Valid AssignmentUpdateRequest request) {
         assignmentService.update(currentUser.id(), studyId, assignmentId, request);
 
         return ResponseEntity.noContent().build();
