@@ -23,7 +23,6 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
-import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -87,5 +86,15 @@ public class AssignmentController {
                 request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{assignmentId}/submissions/{submissionId}")
+    public ResponseEntity<Void> updateSubmission(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId, @PathVariable Long submissionId,
+            @Valid @RequestBody AssignmentSubmitRequest request) {
+        assignmentService.updateSubmission(currentUser.id(), studyId, assignmentId, submissionId, request);
+
+        return ResponseEntity.noContent().build();
     }
 }
