@@ -24,6 +24,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
+import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -105,6 +106,15 @@ public class AssignmentController {
             @PathVariable Long assignmentId, @PathVariable Long submissionId) {
         SubmissionDetailResponse response = assignmentService.getSubmissionDetail(currentUser.id(), studyId,
                 assignmentId, submissionId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{assignmentId}/submissions")
+    public ResponseEntity<SubmissionListResponse> getSubmissionList(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId) {
+        SubmissionListResponse response = assignmentService.getSubmissionList(currentUser.id(), studyId, assignmentId);
 
         return ResponseEntity.ok(response);
     }
