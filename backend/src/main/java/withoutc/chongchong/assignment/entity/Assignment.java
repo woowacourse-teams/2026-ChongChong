@@ -11,10 +11,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -64,15 +66,16 @@ public class Assignment extends BaseEntity {
 
     public static Assignment create(StudyMember writer, String title, String content,
                                     String submissionMethod,
-                                    LocalDateTime closeAt) {
-        return new Assignment(writer, title, content, submissionMethod, closeAt);
+                                    LocalDateTime closeAt, Clock clock) {
+        return new Assignment(writer, title, content, submissionMethod, closeAt, LocalDateTime.now(clock));
     }
 
     private Assignment(StudyMember writer, String title, String content, String submissionMethod,
-                       LocalDateTime closeAt) {
+                       LocalDateTime closeAt, LocalDateTime now) {
         validateTitle(title);
         validateContent(content);
         validateSubmissionMethod(submissionMethod);
+        validateCloseAt(closeAt, now);
 
         this.study = writer.getStudy();
         this.writer = writer;
@@ -80,6 +83,41 @@ public class Assignment extends BaseEntity {
         this.content = content;
         this.submissionMethod = submissionMethod;
         this.closeAt = closeAt;
+    }
+
+    public void update(String title, String content, String submissionMethod, LocalDateTime closeAt,
+                       List<LocalDateTime> remindAts, Clock clock) {
+        if (title != null) {
+            validateTitle(title);
+            this.title = title;
+        }
+        if (content != null) {
+            validateContent(content);
+            this.content = content;
+        }
+        if (submissionMethod != null) {
+            validateSubmissionMethod(submissionMethod);
+            this.submissionMethod = submissionMethod;
+        }
+        if (closeAt != null) {
+            validateCloseAt(closeAt, LocalDateTime.now(clock));
+        }
+
+        if (remindAts != null) {
+            replacePendingReminders(remindAts, LocalDateTime.now(clock));
+        }
+    }
+
+    public void replacePendingReminders(List<LocalDateTime> remindAts, LocalDateTime now) {
+        if (remindAts.stream().anyMatch(Objects::isNull)) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_REMIND_AT);
+        }
+
+        List<AssignmentReminder> newReminders = remindAts.stream().distinct()
+                .map(remindAt -> AssignmentReminder.create(this, remindAt, now)).toList();
+
+        reminders.removeIf(AssignmentReminder::isPending);
+        reminders.addAll(newReminders);
     }
 
     public void addRecipients(List<StudyMember> members) {
@@ -121,5 +159,12 @@ public class Assignment extends BaseEntity {
         if (submissionMethod == null || submissionMethod.isBlank() || submissionMethod.length() > 10000) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
         }
+    }
+
+    private static void validateCloseAt(LocalDateTime closeAt, LocalDateTime now) {
+        if (closeAt.isBefore(now)) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_REMIND_AT);
+        }
+
     }
 }

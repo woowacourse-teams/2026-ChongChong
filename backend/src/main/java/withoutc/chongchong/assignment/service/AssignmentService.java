@@ -9,18 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
-import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.exception.NoticeErrorCode;
-import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
-import withoutc.chongchong.study.repository.StudyRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -42,7 +39,7 @@ public class AssignmentService {
         StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Assignment assignment = Assignment.create(writer, request.title(), request.content(),
-                request.submissionMethod(), request.closeAt());
+                request.submissionMethod(), request.closeAt(), clock);
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.addReminders(request.remindAts(), now);
         assignment.addRecipients(members);
@@ -53,10 +50,23 @@ public class AssignmentService {
     }
 
     @Transactional
+    public void update(Long userId, Long studyId, Long assignmentId, AssignmentUpdateRequest request) {
+        validateLeader(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        assignment.update(request.title(), request.content(), request.submissionMethod(), request.closeAt(),
+                request.remindAts(), clock);
+
+        assignmentRepository.save(assignment);
+    }
+
+    @Transactional
     public void delete(Long userId, Long studyId, Long assignmentId) {
         validateLeader(studyId, userId);
 
-        Assignment assignment = assignmentRepository.getAssignmentById(assignmentId);
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
         assignmentRepository.delete(assignment);

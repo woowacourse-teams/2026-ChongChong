@@ -14,7 +14,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     void deleteAllByStudyId(Long studyId);
 
-    default Assignment getAssignmentById(Long assignmentId) {
+    default Assignment getByIdOrThrow(Long assignmentId) {
         return findById(assignmentId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
     }
