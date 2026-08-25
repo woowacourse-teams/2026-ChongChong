@@ -46,7 +46,7 @@ class SocialUserInfoTest {
     void containOnlyVerifiedUserInformation() {
         assertThat(Arrays.stream(SocialUserInfo.class.getRecordComponents())
                 .map(component -> component.getName()))
-                .containsExactly("provider", "providerUserId", "displayName", "profileImageUrl");
+                .containsExactly("provider", "providerUserId", "displayName", "profileImage");
     }
 
     @Test
