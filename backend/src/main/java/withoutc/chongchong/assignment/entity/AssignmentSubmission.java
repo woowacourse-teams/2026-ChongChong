@@ -11,9 +11,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
+import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.study.entity.StudyMember;
 
@@ -41,10 +44,10 @@ public class AssignmentSubmission extends BaseEntity {
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
-    @Column(nullable = true)
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String content;
 
-    @Column(nullable = true)
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String link;
 
     @Column(nullable = false)
@@ -55,6 +58,15 @@ public class AssignmentSubmission extends BaseEntity {
         return new AssignmentSubmission(member, assignment, null, null, false);
     }
 
+    public void submit(String content, String link) {
+        validateContent(content);
+        validateLink(link);
+
+        this.content = content;
+        this.link = link;
+        this.submitted = true;
+    }
+
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,
                                  boolean submitted) {
         this.member = member;
@@ -62,5 +74,17 @@ public class AssignmentSubmission extends BaseEntity {
         this.content = content;
         this.link = link;
         this.submitted = submitted;
+    }
+
+    private void validateContent(String content) {
+        if (content.length() > 10000) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
+        }
+    }
+
+    private void validateLink(String link) {
+        if (link.length() > 10000) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_LINK);
+        }
     }
 }

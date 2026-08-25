@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
@@ -18,6 +20,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
@@ -107,6 +110,18 @@ public class AssignmentService {
         List<AssignmentSummaryResponse> assignmentSummaries = createAssignmentSummaries(member,
                 assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), assignmentSummaries);
+    }
+
+    @Transactional
+    public AssignmentSubmitResponse submitAssignment(Long userId, Long studyId, Long assignmentId,
+                                                     AssignmentSubmitRequest request) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByAssignmentIdAndMemberIdOrThrow(
+                assignmentId, member.getId());
+        submission.submit(request.content(), request.link());
+
+        return AssignmentSubmitResponse.from(submission);
     }
 
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
