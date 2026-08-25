@@ -56,3 +56,8 @@ export interface SubmissionDetail extends Submission {
   content: string;
   link?: string;
 }
+
+export interface AssignmentSubmissionValue {
+  content: string;
+  link?: string;
+}

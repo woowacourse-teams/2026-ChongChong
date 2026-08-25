@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { BASE_URL } from '../../../../config';
-import type { AssignmentValue, UpdateAssignmentValue } from '../types';
+import type { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
 
 const assignmentList = Array.from({ length: 12 }, (_, index) => {
   const id = 12 - index;
@@ -155,6 +155,24 @@ export const handlers = [
         content: '과제 제출합니다.',
         link: 'http://localhost:8080',
       });
+    },
+  ),
+
+  http.post(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`,
+    async ({ request }) => {
+      const values = (await request.json()) as AssignmentSubmissionValue;
+
+      return HttpResponse.json(
+        {
+          id: 4,
+          name: '총총이',
+          profileImage: 'https://example.com/profile.png',
+          createdAt: new Date().toISOString(),
+          ...values,
+        },
+        { status: 201 },
+      );
     },
   ),
 ];

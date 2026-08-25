@@ -7,6 +7,7 @@ import {
   AssignmentValue,
   UpdateAssignmentValue,
   AssignmentListResponse,
+  AssignmentSubmissionValue,
 } from './types';
 
 export async function fetchAssignmentList(studyId: number, cursor?: number) {
@@ -65,6 +66,18 @@ export async function fetchAssignmentSubmissionDetail(
   } catch {
     throw new Error('제출 정보를 불러오는데 실패했습니다.');
   }
+}
+
+export async function createAssignmentSubmission(
+  studyId: number,
+  assignmentId: number,
+  values: AssignmentSubmissionValue,
+) {
+  return api
+    .post(`studies/${studyId}/assignments/${assignmentId}/submissions`, {
+      json: values,
+    })
+    .json<SubmissionDetail>();
 }
 
 export async function createAssignment(studyId: number, values: AssignmentValue) {
