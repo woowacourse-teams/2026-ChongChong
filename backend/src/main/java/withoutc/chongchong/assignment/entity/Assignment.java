@@ -64,7 +64,7 @@ public class Assignment extends BaseEntity {
     private final List<AssignmentReminder> reminders = new ArrayList<>();
 
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<AssignmentRecipient> recipients = new ArrayList<>();
+    private final List<AssignmentSubmission> submissions = new ArrayList<>();
 
     public static Assignment create(StudyMember writer, String title, String content,
                                     String submissionMethod,
@@ -122,12 +122,12 @@ public class Assignment extends BaseEntity {
         reminders.addAll(newReminders);
     }
 
-    public int getRecipientCount() {
-        return this.recipients.size();
+    public int getSubmissionCount() {
+        return this.submissions.size();
     }
 
-    public int getSubmitCount() {
-        return Math.toIntExact(this.recipients.stream().filter(AssignmentRecipient::isSubmit).count());
+    public int getSubmittedCount() {
+        return Math.toIntExact(this.submissions.stream().filter(AssignmentSubmission::isSubmitted).count());
     }
 
     public LocalDateTime getNextRemindAt() {
@@ -135,16 +135,16 @@ public class Assignment extends BaseEntity {
                 .min(LocalDateTime::compareTo).orElse(null);
     }
 
-    public void addRecipients(List<StudyMember> members) {
-        Set<Long> recipientMemberIds = recipients.stream()
-                .map(recipient -> recipient.getMember().getId())
+    public void initializeSubmissions(List<StudyMember> members) {
+        Set<Long> submissionMemberIds = submissions.stream()
+                .map(submission -> submission.getMember().getId())
                 .collect(Collectors.toCollection(HashSet::new));
 
         members.stream()
                 .filter(member -> member.getId() != null)
-                .filter(member -> recipientMemberIds.add(member.getId()))
-                .map(member -> AssignmentRecipient.create(member, this))
-                .forEach(this.recipients::add);
+                .filter(member -> submissionMemberIds.add(member.getId()))
+                .map(member -> AssignmentSubmission.create(member, this))
+                .forEach(this.submissions::add);
     }
 
     public void addReminders(List<LocalDateTime> remindAts, LocalDateTime now) {

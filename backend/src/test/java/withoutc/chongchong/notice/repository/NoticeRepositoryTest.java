@@ -48,10 +48,10 @@ class NoticeRepositoryTest {
         List<Notice> notices = new ArrayList<>();
         for (int index = 1; index <= 5; index++) {
             notices.add(noticeRepository.save(
-                    Notice.create(firstStudy.study(), firstStudy.leader(), "공지 " + index, "공지 내용")
+                    Notice.create(firstStudy.leader(), "공지 " + index, "공지 내용")
             ));
         }
-        noticeRepository.save(Notice.create(secondStudy.study(), secondStudy.leader(), "다른 공지", "공지 내용"));
+        noticeRepository.save(Notice.create(secondStudy.leader(), "다른 공지", "공지 내용"));
         noticeRepository.flush();
 
         List<Notice> firstPage = noticeRepository.findByCursor(
@@ -79,7 +79,7 @@ class NoticeRepositoryTest {
     void getByIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
         Notice notice = noticeRepository.save(
-                Notice.create(fixture.study(), fixture.leader(), "공지", "공지 내용")
+                Notice.create(fixture.leader(), "공지", "공지 내용")
         );
 
         Notice found = noticeRepository.getByIdOrThrow(notice.getId());

@@ -90,7 +90,7 @@ class NoticeApiTest {
                 StudyMember.create(study, secondMemberUser, "두 번째 스터디원", null, StudyMemberRole.MEMBER)
         );
         remindAt = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
-        notice = Notice.create(study, leader, "기존 공지", "기존 공지 내용");
+        notice = Notice.create(leader, "기존 공지", "기존 공지 내용");
         notice.addRecipients(List.of(member, secondMember));
         notice.addReminders(List.of(remindAt), LocalDateTime.now());
         noticeRepository.saveAndFlush(notice);
@@ -207,10 +207,10 @@ class NoticeApiTest {
     @DisplayName("공지 목록을 size만큼 조회하면 다음 조회 기준인 cursor를 반환한다")
     void getNoticesWithCursorTest() {
         Notice middleNotice = noticeRepository.save(
-                Notice.create(study, leader, "두 번째 공지", "두 번째 공지 내용")
+                Notice.create(leader, "두 번째 공지", "두 번째 공지 내용")
         );
         Notice latestNotice = noticeRepository.saveAndFlush(
-                Notice.create(study, leader, "세 번째 공지", "세 번째 공지 내용")
+                Notice.create(leader, "세 번째 공지", "세 번째 공지 내용")
         );
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
@@ -306,7 +306,7 @@ class NoticeApiTest {
                 StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
         );
         Notice otherNotice = noticeRepository.saveAndFlush(
-                Notice.create(otherStudy, otherLeader, "다른 공지", "다른 공지 내용")
+                Notice.create(otherLeader, "다른 공지", "다른 공지 내용")
         );
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
@@ -432,8 +432,8 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 스터디에 공지를 생성하면 스터디 없음 오류 응답을 반환한다")
-    void createNoticeInMissingStudyTest() {
+    @DisplayName("참여하지 않은 스터디에 공지를 생성하면 접근 거부 응답을 반환한다")
+    void createNoticeWithoutStudyAccessTest() {
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .contentType(ContentType.JSON)
@@ -447,9 +447,9 @@ class NoticeApiTest {
                 .when()
                 .post("/studies/{studyId}/notices", Long.MAX_VALUE)
                 .then()
-                .statusCode(404)
-                .body("code", equalTo("STUDY_NOT_FOUND"))
-                .body("message", equalTo("존재하지 않는 스터디입니다."));
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"))
+                .body("message", equalTo("해당 스터디에 대한 접근 권한이 없습니다."));
     }
 
     @Test
@@ -623,7 +623,7 @@ class NoticeApiTest {
 
     @Test
     @DisplayName("리더가 공지 읽음 현황을 조회하면 읽음 여부와 가장 최근 리마인드 시각을 반환한다")
-    void getNoticeStatusesByLeaderTest() {
+    void getAllReadStatusesByLeaderTest() {
         LocalDateTime readAt = LocalDateTime.of(2026, 8, 24, 10, 0);
         LocalDateTime lastRemindAt = LocalDateTime.of(2026, 8, 24, 10, 5);
         jdbcTemplate.update(
@@ -656,7 +656,7 @@ class NoticeApiTest {
 
     @Test
     @DisplayName("스터디원이 공지 읽음 현황을 조회하면 접근 거부 응답을 반환한다")
-    void getNoticeStatusesByMemberTest() {
+    void getAllReadStatusesByMemberTest() {
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
                 .when()
@@ -668,7 +668,7 @@ class NoticeApiTest {
 
     @Test
     @DisplayName("인증 없이 공지 읽음 현황을 조회하면 인증 실패 응답을 반환한다")
-    void getNoticeStatusesWithoutAuthenticationTest() {
+    void getAllReadStatusesWithoutAuthenticationTest() {
         io.restassured.RestAssured.given()
                 .port(port)
                 .when()

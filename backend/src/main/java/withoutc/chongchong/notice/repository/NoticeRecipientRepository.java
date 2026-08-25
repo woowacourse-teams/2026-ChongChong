@@ -31,7 +31,7 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
             WHERE recipient.notice.id = :noticeId
             GROUP BY member.id, member.name, member.profileImageUrl, recipient.readAt
             """)
-    List<NoticeRecipientStatusProjection> findStatusesByNoticeId(@Param("noticeId") Long noticeId);
+    List<NoticeRecipientStatusProjection> findAllReadStatusesByNoticeId(@Param("noticeId") Long noticeId);
 
     @Query("""
             SELECT new withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection(
@@ -42,7 +42,7 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
             WHERE recipient.notice.id IN :noticeIds
               AND recipient.member.id = :memberId
             """)
-    List<NoticeReadStatusProjection> findReadStatusesByNoticeIdsAndMemberId(
+    List<NoticeReadStatusProjection> findMyReadStatusesByNoticeIdsAndMemberId(
             @Param("noticeIds") List<Long> noticeIds,
             @Param("memberId") Long memberId
     );

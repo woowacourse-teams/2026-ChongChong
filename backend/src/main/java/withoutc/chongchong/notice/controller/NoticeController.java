@@ -64,11 +64,11 @@ public class NoticeController {
     }
 
     @GetMapping("/{noticeId}/status")
-    public ResponseEntity<NoticeStatusesResponse> getNoticeStatuses(
+    public ResponseEntity<NoticeStatusesResponse> getAllReadStatuses(
             @AuthenticationPrincipal AuthenticatedUser currentUser,
             @PathVariable Long studyId,
             @PathVariable Long noticeId) {
-        NoticeStatusesResponse response = noticeService.getNoticeStatuses(currentUser.id(), studyId, noticeId);
+        NoticeStatusesResponse response = noticeService.getAllReadStatuses(currentUser.id(), studyId, noticeId);
 
         return ResponseEntity.ok(response);
     }
@@ -99,10 +99,10 @@ public class NoticeController {
     }
 
     @GetMapping("/{noticeId}/status/me")
-    public ResponseEntity<NoticeReadStatusResponse> getReadStatus(
+    public ResponseEntity<NoticeReadStatusResponse> getMyReadStatus(
             @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
             @PathVariable Long noticeId) {
-        NoticeReadStatusResponse response = noticeService.getReadStatus(currentUser.id(), studyId, noticeId);
+        NoticeReadStatusResponse response = noticeService.getMyReadStatus(currentUser.id(), studyId, noticeId);
 
         return ResponseEntity.ok(response);
     }

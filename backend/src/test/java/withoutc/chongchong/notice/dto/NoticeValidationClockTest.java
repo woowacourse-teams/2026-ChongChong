@@ -23,7 +23,6 @@ import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
-import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
 @ActiveProfiles("test")
@@ -68,7 +67,6 @@ class NoticeValidationClockTest {
 
     private Notice createNotice() {
         return Notice.create(
-                mock(Study.class),
                 mock(StudyMember.class),
                 "공지 제목",
                 "공지 내용"

@@ -18,8 +18,8 @@ public record AssignmentSummaryResponse(
 ) {
     public static AssignmentSummaryResponse forLeader(Assignment assignment) {
 
-        int memberCount = assignment.getRecipientCount();
-        int completeCount = assignment.getSubmitCount();
+        int memberCount = assignment.getSubmissionCount();
+        int completeCount = assignment.getSubmittedCount();
 
         boolean isComplete = (memberCount == completeCount);
 

@@ -15,7 +15,7 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     INVALID_REMIND_AT(HttpStatus.BAD_REQUEST, "INVALID_CLOSE_AT", "과제 마감 시각이 올바르지 않습니다."),
 
-    ASSIGNMENT_RECIPIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_RECIPIENT_NOT_FOUND", "과제 수신자 정보를 찾을 수 없습니다."),
+    ASSIGNMENT_SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_SUBMISSION_NOT_FOUND", "과제 제출 정보를 찾을 수 없습니다."),
 
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "존재하지 않는 과제입니다.");
 

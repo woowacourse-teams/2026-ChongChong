@@ -41,7 +41,7 @@ public class AssignmentController {
     }
 
     @GetMapping("/{assignmentId}")
-    public ResponseEntity<AssignmentDetailResponse> getNoticeDetail(
+    public ResponseEntity<AssignmentDetailResponse> getAssignmentDetail(
             @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
             @PathVariable Long assignmentId) {
         AssignmentDetailResponse response = assignmentService.getDetail(currentUser.id(), studyId, assignmentId);

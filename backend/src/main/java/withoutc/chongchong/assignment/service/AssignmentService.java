@@ -20,9 +20,9 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
-import withoutc.chongchong.assignment.repository.AssignmentRecipientRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -36,7 +36,7 @@ import withoutc.chongchong.study.repository.StudyMemberRepository;
 public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
-    private final AssignmentRecipientRepository assignmentRecipientRepository;
+    private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final StudyMemberRepository studyMemberRepository;
 
     private final Clock clock;
@@ -54,7 +54,7 @@ public class AssignmentService {
                 request.submissionMethod(), request.closeAt(), clock);
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.addReminders(request.remindAts(), now);
-        assignment.addRecipients(members);
+        assignment.initializeSubmissions(members);
 
         assignmentRepository.save(assignment);
 
@@ -84,10 +84,10 @@ public class AssignmentService {
         assignmentRepository.delete(assignment);
     }
 
-    public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
+    public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long assignmentId) {
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Assignment assignment = assignmentRepository.getByIdOrThrow(noticeId);
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
         return AssignmentDetailResponse.from(assignment);
@@ -121,22 +121,21 @@ public class AssignmentService {
         List<Long> assignmentIds = assignments.stream().map(Assignment
                 ::getId).toList();
 
-        Map<Long, Boolean> submitStatusByAssignmentId = assignmentRecipientRepository.findSubmitStatusesByAssignmentIdsAndMemberId(
-                        assignmentIds,
-                        member.getId())
-                .stream().collect(Collectors.toMap(AssignmentSubmitStatusProjection::assignmentId,
-                        AssignmentSubmitStatusProjection::isSubmit));
+        Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository
+                .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
+                .stream().collect(Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
+                        AssignmentSubmissionStatusProjection::submitted));
 
         return assignments.stream().map(assignment -> AssignmentSummaryResponse.forMember(assignment,
-                getSubmitStatus(submitStatusByAssignmentId, assignment.getId()))).toList();
+                requireSubmissionStatus(submissionStatusByAssignmentId, assignment.getId()))).toList();
     }
 
-    private boolean getSubmitStatus(Map<Long, Boolean> submitStatusByAssignmentId, Long assignmentId) {
-        Boolean isSubmit = submitStatusByAssignmentId.get(assignmentId);
-        if (isSubmit == null) {
-            throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_RECIPIENT_NOT_FOUND);
+    private boolean requireSubmissionStatus(Map<Long, Boolean> submissionStatusByAssignmentId, Long assignmentId) {
+        Boolean submitted = submissionStatusByAssignmentId.get(assignmentId);
+        if (submitted == null) {
+            throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND);
         }
-        return isSubmit;
+        return submitted;
     }
 
     private void validateLeader(Long studyId, Long userId) {

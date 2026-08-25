@@ -21,13 +21,13 @@ import withoutc.chongchong.study.entity.StudyMember;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        name = "assignment_recipients",
+        name = "assignment_submissions",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_assignment_recipients_assignment_member",
+                name = "uk_assignment_submissions_assignment_member",
                 columnNames = {"assignment_id", "member_id"}
         )
 )
-public class AssignmentRecipient extends BaseEntity {
+public class AssignmentSubmission extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,19 +48,19 @@ public class AssignmentRecipient extends BaseEntity {
     private String link;
 
     @Column(nullable = false)
-    private boolean isSubmit;
+    private boolean submitted;
 
 
-    public static AssignmentRecipient create(StudyMember member, Assignment assignment) {
-        return new AssignmentRecipient(member, assignment, null, null, false);
+    public static AssignmentSubmission create(StudyMember member, Assignment assignment) {
+        return new AssignmentSubmission(member, assignment, null, null, false);
     }
 
-    private AssignmentRecipient(StudyMember member, Assignment assignment, String content, String link,
-                                boolean isSubmit) {
+    private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,
+                                 boolean submitted) {
         this.member = member;
         this.assignment = assignment;
         this.content = content;
         this.link = link;
-        this.isSubmit = isSubmit;
+        this.submitted = submitted;
     }
 }
