@@ -64,7 +64,7 @@ public class AssignmentController {
     @PatchMapping("{assignmentId}")
     public ResponseEntity<Void> updateAssignment(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                  @PathVariable Long studyId, @PathVariable Long assignmentId,
-                                                 @Valid AssignmentUpdateRequest request) {
+                                                 @Valid @RequestBody AssignmentUpdateRequest request) {
         assignmentService.update(currentUser.id(), studyId, assignmentId, request);
 
         return ResponseEntity.noContent().build();

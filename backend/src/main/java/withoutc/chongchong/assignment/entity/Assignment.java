@@ -25,8 +25,6 @@ import lombok.NoArgsConstructor;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.global.persistence.BaseEntity;
-import withoutc.chongchong.notice.entity.NoticeRecipient;
-import withoutc.chongchong.notice.entity.NoticeReminder;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
@@ -103,6 +101,7 @@ public class Assignment extends BaseEntity {
         }
         if (closeAt != null) {
             validateCloseAt(closeAt, LocalDateTime.now(clock));
+            this.closeAt = closeAt;
         }
 
         if (remindAts != null) {
@@ -177,9 +176,8 @@ public class Assignment extends BaseEntity {
     }
 
     private static void validateCloseAt(LocalDateTime closeAt, LocalDateTime now) {
-        if (closeAt.isBefore(now)) {
+        if (closeAt == null || !closeAt.isAfter(now)) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_REMIND_AT);
         }
-
     }
 }
