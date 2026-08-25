@@ -39,9 +39,10 @@ export interface AssignmentDetail {
   content: string;
   submissionType: string;
   closeAt: string;
+  submissionId?: number;
 }
 
-export type AssignmentValue = Omit<AssignmentDetail, 'id'>;
+export type AssignmentValue = Omit<AssignmentDetail, 'id' | 'submissionId'>;
 
 export type UpdateAssignmentValue = Partial<AssignmentValue>;
 

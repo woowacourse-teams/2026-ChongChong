@@ -8,9 +8,16 @@ import { tokens, typography } from '../../../styles/global';
 import type { AssignmentSubmissionValue } from '../types';
 
 interface Props {
+  initialValues?: AssignmentSubmissionValue;
   isSubmitting?: boolean;
+  submitLabel?: string;
   onSubmit: (values: AssignmentSubmissionValue) => void;
 }
+
+const emptyValues: AssignmentSubmissionValue = {
+  content: '',
+  link: '',
+};
 
 const sectionStyle = {
   display: 'flex',
@@ -34,9 +41,14 @@ const submitButtonStyle = {
   marginTop: tokens.spacing[5],
 } satisfies CSSProperties;
 
-export default function AssignmentSubmissionForm({ isSubmitting = false, onSubmit }: Props) {
-  const [content, setContent] = useState('');
-  const [link, setLink] = useState('');
+export default function AssignmentSubmissionForm({
+  initialValues = emptyValues,
+  isSubmitting = false,
+  submitLabel = '제출하기',
+  onSubmit,
+}: Props) {
+  const [content, setContent] = useState(initialValues.content);
+  const [link, setLink] = useState(initialValues.link ?? '');
 
   const submitAssignment: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -44,7 +56,7 @@ export default function AssignmentSubmissionForm({ isSubmitting = false, onSubmi
 
     onSubmit({
       content,
-      ...(link.trim() && { link: link.trim() }),
+      link: link.trim(),
     });
   };
 
@@ -84,7 +96,7 @@ export default function AssignmentSubmissionForm({ isSubmitting = false, onSubmi
           disabled={isSubmitting}
           css={submitButtonStyle}
         >
-          {isSubmitting ? '제출 중...' : '제출하기'}
+          {isSubmitting ? '저장 중...' : submitLabel}
         </Button>
       </form>
     </section>

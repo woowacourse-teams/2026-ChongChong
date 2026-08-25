@@ -108,14 +108,17 @@ export const handlers = [
   ),
 
   http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, ({ params }) => {
+    const assignmentId = Number(params.assignmentId);
+
     return HttpResponse.json({
-      id: Number(params.assignmentId),
+      id: assignmentId,
       title: '이번주 그리디 3문제 풀이',
       closeAt: '2025-04-16T16:44:10',
       content:
         '백준에서 문제 푸시고 링크 올려주시면 됩니다. 그리디 문제집에서 원하는 세 문제를 풀고 올려주세요.',
       submissionType:
         'GitHub 저장소에 문제 번호로 폴더를 만들어 올린 뒤, 저장소나 PR 링크를 제출해주세요.',
+      ...(assignmentId % 4 === 0 && { submissionId: assignmentId + 100 }),
     });
   }),
 
@@ -173,6 +176,21 @@ export const handlers = [
         },
         { status: 201 },
       );
+    },
+  ),
+
+  http.patch(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
+    async ({ params, request }) => {
+      const values = (await request.json()) as AssignmentSubmissionValue;
+
+      return HttpResponse.json({
+        id: Number(params.submissionId),
+        name: '총총이',
+        profileImage: 'https://example.com/profile.png',
+        createdAt: '2026-08-03T18:20:00',
+        ...values,
+      });
     },
   ),
 ];

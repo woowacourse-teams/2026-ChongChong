@@ -80,6 +80,19 @@ export async function createAssignmentSubmission(
     .json<SubmissionDetail>();
 }
 
+export async function updateAssignmentSubmission(
+  studyId: number,
+  assignmentId: number,
+  submissionId: number,
+  values: AssignmentSubmissionValue,
+) {
+  return api
+    .patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+      json: values,
+    })
+    .json<SubmissionDetail>();
+}
+
 export async function createAssignment(studyId: number, values: AssignmentValue) {
   return api
     .post(`studies/${studyId}/assignments`, {
