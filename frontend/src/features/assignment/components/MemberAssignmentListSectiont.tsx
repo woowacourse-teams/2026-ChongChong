@@ -23,7 +23,7 @@ export default function MemberAssignmentListSection({ studyId }: Props) {
   return (
     <section>
       {assignments.length === 0 ? (
-        <EmptyContent message="아직 공지가 없어요" />
+        <EmptyContent message="아직 과제가 없어요" />
       ) : (
         <>
           <AssignmentList assignments={assignments} studyId={studyId}>
