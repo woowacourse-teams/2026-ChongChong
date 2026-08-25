@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { study } from './db';
+import { studyTable } from './db';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 
@@ -37,13 +37,13 @@ export const handlers = [
     // }
 
     const studyId = Date.now();
-    await study.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
+    await studyTable.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
   http.get(`${BASE_URL}${STUDY_URLS.info}`, async ({ params }) => {
     const { studyId } = params;
-    const found = await study.findFirst((q) => q.where({ id: Number(studyId) }));
+    const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!found) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json({
       studyName: found.name,
@@ -54,7 +54,7 @@ export const handlers = [
 
   http.get(`${BASE_URL}${STUDY_URLS.inviteLink}`, async ({ params }) => {
     const { studyId } = params;
-    const found = await study.findFirst((q) => q.where({ id: Number(studyId) }));
+    const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!found) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json({
       inviteLink: found.inviteLink,

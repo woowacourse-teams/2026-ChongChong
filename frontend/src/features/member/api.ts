@@ -9,3 +9,11 @@ export async function fetchMembers(studyId: number) {
     throw new Error('멤버 목록을 불러오는데 실패했습니다.');
   }
 }
+
+export async function kickMember({ studyId, memberId }: { studyId: number; memberId: number }) {
+  try {
+    await api.delete(`/studies/${studyId}/members/${memberId}`);
+  } catch {
+    throw new Error('멤버를 추방하는데 실패했습니다.');
+  }
+}

@@ -1,9 +1,10 @@
-import { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode, useRef } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import crownIcon from '../../../shared/assets/lead.svg';
+import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import { StudyRole } from '../types';
 
-interface Props {
+interface Props extends React.ComponentProps<'div'> {
   left?: React.ReactNode;
   right?: React.ReactNode;
 }
@@ -13,13 +14,13 @@ interface ProfileProps {
   icon?: ReactNode;
 }
 
-interface LeaderProps {
+interface LeaderProps extends React.ComponentProps<'div'> {
   name: string;
   role: StudyRole;
   onKick: () => void;
 }
 
-interface MemberProps {
+interface MemberProps extends React.ComponentProps<'div'> {
   name: string;
   role: StudyRole;
 }
@@ -79,9 +80,9 @@ const kickButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-export default function MemberRow({ left, right }: Props) {
+export default function MemberRow({ left, right, ...props }: Props) {
   return (
-    <div css={rowStyle}>
+    <div css={rowStyle} {...props}>
       {left}
       {right}
     </div>
@@ -100,9 +101,19 @@ function Profile({ name, icon }: ProfileProps) {
   );
 }
 
-MemberRow.Leader = function Leader({ name, role, onKick }: LeaderProps) {
+MemberRow.Leader = function Leader({ name, role, onKick, ...props }: LeaderProps) {
+  const kickMemberDialogRef = useRef<HTMLDialogElement>(null);
+
+  const handleOpenDialog = () => {
+    kickMemberDialogRef.current?.showModal();
+  };
+
+  const handleCloseDialog = () => {
+    kickMemberDialogRef.current?.close();
+  };
   return (
     <MemberRow
+      {...props}
       left={
         <Profile
           name={name}
@@ -111,18 +122,36 @@ MemberRow.Leader = function Leader({ name, role, onKick }: LeaderProps) {
       }
       right={
         role !== 'LEADER' && (
-          <button css={kickButtonStyle} type="button" onClick={onKick}>
-            방출하기
-          </button>
+          <>
+            <button css={kickButtonStyle} type="button" onClick={handleOpenDialog}>
+              방출하기
+            </button>
+            <ConfirmDialog
+              ref={kickMemberDialogRef}
+              title={`${name} 님을 추방하시겠습니까?`}
+              description={
+                '추방된 스터디원은 스터디 정보에 다시 접근할 수 없으며, 이 작업은 되돌릴 수 없습니다.'
+              }
+              closeButton={
+                <ConfirmDialog.CloseButton onClick={handleCloseDialog}>
+                  취소
+                </ConfirmDialog.CloseButton>
+              }
+              confirmButton={
+                <ConfirmDialog.ConfirmButton onClick={onKick}>추방</ConfirmDialog.ConfirmButton>
+              }
+            />
+          </>
         )
       }
     />
   );
 };
 
-MemberRow.Member = function Member({ name, role }: MemberProps) {
+MemberRow.Member = function Member({ name, role, ...props }: MemberProps) {
   return (
     <MemberRow
+      {...props}
       left={
         <Profile
           name={name}

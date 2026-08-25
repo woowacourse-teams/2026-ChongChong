@@ -1,7 +1,7 @@
 import { Collection } from '@msw/data';
 import { z } from 'zod';
 
-export const member = new Collection({
+export const memberTable = new Collection({
   schema: z.object({
     id: z.number(),
     name: z.string(),
@@ -45,6 +45,6 @@ export const mockMembers = [
 
 export function createSeedMembers() {
   for (const mockStudy of mockMembers) {
-    member.create(mockStudy);
+    memberTable.create(mockStudy);
   }
 }

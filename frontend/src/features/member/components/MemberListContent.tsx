@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
 import { memberQueries } from '../queries';
 import studyQueries from '../../studies/queries';
@@ -8,6 +8,7 @@ import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
 import CopyIcon from '../../../shared/assets/copy.svg';
+import { kickMember } from '../api';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -68,12 +69,20 @@ export function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
 
 function LeaderContent() {
   const { studyId } = useStudyId();
+  const queryClient = useQueryClient();
   const {
     data: { inviteLink },
   } = useSuspenseQuery(studyQueries.inviteLink(studyId));
   const { data: members } = useSuspenseQuery({
     ...memberQueries.list(studyId),
     select: (data) => data.members,
+  });
+
+  const deleteMember = useMutation({
+    mutationFn: ({ studyId, memberId }: { studyId: number; memberId: number }) =>
+      kickMember({ studyId, memberId }),
+    onSettled: (_data, _error, variables) =>
+      queryClient.invalidateQueries({ queryKey: memberQueries.lists(variables.studyId) }),
   });
 
   return (
@@ -83,7 +92,12 @@ function LeaderContent() {
         <List css={listStyle}>
           {members.map((member) => (
             <List.Item key={member.id}>
-              <MemberRow.Leader name={member.name} role={member.role} onKick={() => {}} />
+              <MemberRow.Leader
+                data-testid={`member-${member.id}-row`}
+                name={member.name}
+                role={member.role}
+                onKick={() => deleteMember.mutate({ studyId, memberId: member.id })}
+              />
             </List.Item>
           ))}
         </List>
@@ -113,7 +127,11 @@ function MemberContent() {
         <List css={listStyle}>
           {members.map((member) => (
             <List.Item key={member.id}>
-              <MemberRow.Member name={member.name} role={member.role} />
+              <MemberRow.Member
+                data-testid={`member-${member.id}-row`}
+                name={member.name}
+                role={member.role}
+              />
             </List.Item>
           ))}
         </List>
