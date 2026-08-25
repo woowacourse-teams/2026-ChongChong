@@ -38,9 +38,23 @@ bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 
 - PostgreSQL JDBC URL, 사용자명과 비밀번호
 - Study Invite 및 인증 JWT 설정
 - 프론트엔드 기준 URL
+- Kakao REST API 키, Client Secret과 환경별 Redirect URI
 
 배포 스크립트가 이 파일을 읽으므로 각 줄은 Bash에서 읽을 수 있는 `KEY=VALUE` 형식으로 작성한다. 공백이나 `$`,
 따옴표처럼 Shell에서 의미가 있는 문자가 포함된 값은 작은따옴표로 감싼다.
+
+Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
+
+| 변수 | 필수 여부 | 용도와 기본값 |
+| --- | --- | --- |
+| `AUTH_KAKAO_REST_API_KEY` | 필수 | Kakao Developers 애플리케이션의 REST API 키 |
+| `AUTH_KAKAO_CLIENT_SECRET` | 필수 | Kakao Developers에서 활성화한 Client Secret |
+| `AUTH_KAKAO_REDIRECT_URI` | 필수 | 환경별 웹 Callback URI |
+
+`AUTH_KAKAO_REDIRECT_URI`는 Kakao Developers에 등록한 URI, 프론트엔드가 Authorization Code를 받는 URI와
+백엔드가 Token 교환에 사용하는 URI가 완전히 같아야 한다. 로컬은 `http://localhost:3005/auth/kakao/callback`,
+배포 환경은 같은 `/auth/kakao/callback` 경로를 사용하는 실제 프론트엔드 HTTPS 주소로 설정한다. REST API 키와
+Client Secret의 실제 값은 `/opt/chongchong/.env`에만 저장하고 저장소에는 커밋하지 않는다.
 
 ## 3. CodeBuild Project를 구성한다
 
