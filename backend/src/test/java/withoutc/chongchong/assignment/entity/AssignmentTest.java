@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
@@ -33,7 +34,23 @@ class AssignmentTest {
     void createWithInvalidTextTest() {
         assertInvalidCreate(" ", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
         assertInvalidCreate("과제 제목", " ", "링크 제출", AssignmentErrorCode.INVALID_CONTENT);
-        assertInvalidCreate("과제 제목", "과제 내용", " ", AssignmentErrorCode.INVALID_CONTENT);
+        assertInvalidCreate("과제 제목", "과제 내용", " ", AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
+    }
+
+    @Test
+    @DisplayName("제출 방법, 마감 시각, 리마인드 시각은 각각의 오류 코드로 구분한다")
+    void distinguishFieldValidationErrorCodesTest() {
+        assertErrorCode(
+                () -> createAssignment("과제 제목", "과제 내용", " ", NOW.plusHours(1)),
+                "INVALID_SUBMISSION_METHOD"
+        );
+        assertErrorCode(
+                () -> createAssignment("과제 제목", "과제 내용", "링크 제출", null),
+                "INVALID_CLOSE_AT"
+        );
+
+        Assignment assignment = createAssignment();
+        assertErrorCode(() -> assignment.addReminders(List.of(NOW), NOW), "INVALID_REMIND_AT");
     }
 
     @Test
@@ -60,15 +77,17 @@ class AssignmentTest {
         assertThatCode(() -> createAssignment("과제 제목", "과제 내용", "가".repeat(10000), NOW.plusHours(1)))
                 .doesNotThrowAnyException();
 
-        assertInvalidCreate("과제 제목", "과제 내용", "가".repeat(10001), AssignmentErrorCode.INVALID_CONTENT);
+        assertInvalidCreate("과제 제목", "과제 내용", "가".repeat(10001),
+                AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
     }
 
     @Test
     @DisplayName("마감 시각은 고정된 현재 시각 이전과 현재를 거부하고 미래를 허용한다")
     void validateCloseAtBoundaryWithFixedClockTest() {
-        assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_REMIND_AT, null);
-        assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_REMIND_AT, NOW.minusNanos(1));
-        assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_REMIND_AT, NOW);
+        assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_CLOSE_AT, null);
+        assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_CLOSE_AT,
+                NOW.minusNanos(1));
+        assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_CLOSE_AT, NOW);
         assertThatCode(() -> createAssignment("과제 제목", "과제 내용", "링크 제출", NOW.plusNanos(1)))
                 .doesNotThrowAnyException();
     }
@@ -104,7 +123,7 @@ class AssignmentTest {
         assertThatThrownBy(() -> assignment.update(null, null, null, NOW.minusNanos(1), null, CLOCK))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
-                .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
+                .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
     }
 
     @Test
@@ -238,5 +257,16 @@ class AssignmentTest {
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
+    }
+
+    private void assertErrorCode(ThrowingCallable callable, String expectedCode) {
+        assertThatThrownBy(callable)
+                .isInstanceOf(AssignmentException.class)
+                .satisfies(exception -> {
+                    AssignmentErrorCode errorCode = (AssignmentErrorCode) ((AssignmentException) exception)
+                            .getErrorCode();
+                    assertThat(errorCode.name()).isEqualTo(expectedCode);
+                    assertThat(errorCode.getCode()).isEqualTo(expectedCode);
+                });
     }
 }

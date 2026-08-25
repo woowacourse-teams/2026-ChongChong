@@ -171,13 +171,13 @@ public class Assignment extends BaseEntity {
 
     private static void validateSubmissionMethod(String submissionMethod) {
         if (submissionMethod == null || submissionMethod.isBlank() || submissionMethod.length() > 10000) {
-            throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
+            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
         }
     }
 
     private static void validateCloseAt(LocalDateTime closeAt, LocalDateTime now) {
         if (closeAt == null || !closeAt.isAfter(now)) {
-            throw new AssignmentException(AssignmentErrorCode.INVALID_REMIND_AT);
+            throw new AssignmentException(AssignmentErrorCode.INVALID_CLOSE_AT);
         }
     }
 }

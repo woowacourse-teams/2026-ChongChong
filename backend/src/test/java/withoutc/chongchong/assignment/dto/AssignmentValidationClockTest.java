@@ -63,7 +63,7 @@ class AssignmentValidationClockTest {
         ))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
-                .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
+                .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
         assertThatThrownBy(() -> assignment.addReminders(List.of(NOW), NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())

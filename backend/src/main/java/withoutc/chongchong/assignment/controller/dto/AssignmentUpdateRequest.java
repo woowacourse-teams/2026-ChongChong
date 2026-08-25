@@ -17,7 +17,7 @@ public record AssignmentUpdateRequest(
         @Future(message = "마감 시각은 현재보다 미래여야 합니다.")
         LocalDateTime closeAt,
         List<
-                @NotNull(message = "리마인드 시각은 필수 값 입니다.")
+                @NotNull(message = "리마인드 시각은 필수 값입니다.")
                 @Future(message = "리마인드 시각은 현재보다 미래여야 합니다.")
                         LocalDateTime
                 > remindAts

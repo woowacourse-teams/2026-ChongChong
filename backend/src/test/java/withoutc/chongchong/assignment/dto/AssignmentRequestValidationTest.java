@@ -91,6 +91,14 @@ class AssignmentRequestValidationTest {
                         "closeAt",
                         "remindAts[0].<list element>"
                 );
+        assertThat(messages(validator.validate(request)))
+                .containsExactlyInAnyOrder(
+                        "제목은 필수 값입니다.",
+                        "내용은 필수 값입니다.",
+                        "제출 방법은 필수 값입니다.",
+                        "마감 시각은 필수 값입니다.",
+                        "리마인드 시각은 필수 값입니다."
+                );
     }
 
     @Test

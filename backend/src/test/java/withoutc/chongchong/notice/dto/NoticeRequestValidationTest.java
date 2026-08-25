@@ -79,7 +79,7 @@ class NoticeRequestValidationTest {
         );
 
         assertThat(messages(validator.validate(nullRemindAtRequest)))
-                .containsExactly("리마인드 시각은 필수 값 입니다.");
+                .containsExactly("리마인드 시각은 필수 값입니다.");
         assertThat(messages(validator.validate(pastRemindAtRequest)))
                 .containsExactly("리마인드 시각은 현재보다 미래여야 합니다.");
     }
