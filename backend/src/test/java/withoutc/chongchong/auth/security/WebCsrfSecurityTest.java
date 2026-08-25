@@ -42,6 +42,7 @@ class WebCsrfSecurityTest {
     private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
     private static final String REFRESH_COOKIE_NAME = "refresh_token";
     private static final String TEST_REFRESH_TOKEN = "test-refresh-token";
+    private static final String TRUSTED_ORIGIN = "https://test.chongchong.app";
     private static final String UNTRUSTED_ORIGIN = "https://attacker.example";
 
     @Autowired
@@ -158,13 +159,39 @@ class WebCsrfSecurityTest {
     }
 
     @Test
-    @DisplayName("신뢰하지 않는 Origin의 Cookie 요청은 CSRF 정보가 없으면 거부하고 CORS를 허용하지 않는다")
-    void rejectUntrustedOriginWithoutCsrfToken() throws Exception {
+    @DisplayName("신뢰하는 Origin의 실제 요청에는 credential CORS Header를 부여한다")
+    void allowTrustedOriginRequest() throws Exception {
+        mockMvc.perform(get("/auth/csrf")
+                        .header(HttpHeaders.ORIGIN, TRUSTED_ORIGIN))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, TRUSTED_ORIGIN))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
+    }
+
+    @Test
+    @DisplayName("신뢰하는 Origin의 사전 요청에는 필요한 Method와 Header를 허용한다")
+    void allowTrustedOriginPreflight() throws Exception {
+        mockMvc.perform(options("/auth/refresh")
+                        .header(HttpHeaders.ORIGIN, TRUSTED_ORIGIN)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, CSRF_HEADER_NAME))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, TRUSTED_ORIGIN))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, containsString("POST")))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString(CSRF_HEADER_NAME)));
+    }
+
+    @Test
+    @DisplayName("신뢰하지 않는 Origin의 Cookie 요청은 CORS에서 거부한다")
+    void rejectUntrustedOriginRequest() throws Exception {
         mockMvc.perform(post("/auth/refresh")
                         .header(HttpHeaders.ORIGIN, UNTRUSTED_ORIGIN)
                         .cookie(new Cookie(REFRESH_COOKIE_NAME, TEST_REFRESH_TOKEN)))
-                .andExpectAll(invalidCsrfTokenExpectations())
-                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, not(containsString(REFRESH_COOKIE_NAME + "="))))
+                .andExpect(content().string(not(containsString(TEST_REFRESH_TOKEN))));
     }
 
     @Test
@@ -174,7 +201,7 @@ class WebCsrfSecurityTest {
                         .header(HttpHeaders.ORIGIN, UNTRUSTED_ORIGIN)
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, CSRF_HEADER_NAME))
-                .andExpect(status().isOk())
+                .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
