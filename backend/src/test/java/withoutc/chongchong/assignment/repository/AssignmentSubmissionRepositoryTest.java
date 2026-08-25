@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,9 +30,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest
 class AssignmentSubmissionRepositoryTest {
 
-    private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-08-20T00:00:00Z"), ZoneId.of("Asia/Seoul")
-    );
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 9, 0);
 
     @Autowired
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
@@ -105,7 +100,7 @@ class AssignmentSubmissionRepositoryTest {
                 "과제 내용",
                 "GitHub PR",
                 LocalDateTime.of(2026, 8, 30, 23, 59),
-                CLOCK
+                NOW
         ));
     }
 

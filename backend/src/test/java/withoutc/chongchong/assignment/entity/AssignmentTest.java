@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -25,7 +24,6 @@ class AssignmentTest {
     private static final ZoneId ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final Instant INSTANT = Instant.parse("2026-08-20T01:00:00Z");
     private static final LocalDateTime NOW = LocalDateTime.ofInstant(INSTANT, ZONE_ID);
-    private static final Clock CLOCK = Clock.fixed(INSTANT, ZONE_ID);
 
     private final StudyMember writer = mock(StudyMember.class);
 
@@ -83,7 +81,7 @@ class AssignmentTest {
 
     @Test
     @DisplayName("마감 시각은 고정된 현재 시각 이전과 현재를 거부하고 미래를 허용한다")
-    void validateCloseAtBoundaryWithFixedClockTest() {
+    void validateCloseAtBoundaryTest() {
         assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_CLOSE_AT, null);
         assertInvalidCreate("과제 제목", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_CLOSE_AT,
                 NOW.minusNanos(1));
@@ -99,7 +97,7 @@ class AssignmentTest {
         LocalDateTime updatedCloseAt = NOW.plusDays(2);
         Assignment assignment = createAssignment("기존 제목", "기존 내용", "기존 방법", originalCloseAt);
 
-        assignment.update("수정 제목", null, "수정 방법", updatedCloseAt, null, CLOCK);
+        assignment.update("수정 제목", null, "수정 방법", updatedCloseAt, null, NOW);
 
         assertThat(assignment.getTitle()).isEqualTo("수정 제목");
         assertThat(assignment.getContent()).isEqualTo("기존 내용");
@@ -112,15 +110,15 @@ class AssignmentTest {
     void updateWithInvalidValuesTest() {
         Assignment assignment = createAssignment("기존 제목", "기존 내용", "기존 방법", NOW.plusDays(1));
 
-        assertThatThrownBy(() -> assignment.update(" ", null, null, null, null, CLOCK))
+        assertThatThrownBy(() -> assignment.update(" ", null, null, null, null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_TITLE);
-        assertThatThrownBy(() -> assignment.update(null, " ", null, null, null, CLOCK))
+        assertThatThrownBy(() -> assignment.update(null, " ", null, null, null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
-        assertThatThrownBy(() -> assignment.update(null, null, null, NOW.minusNanos(1), null, CLOCK))
+        assertThatThrownBy(() -> assignment.update(null, null, null, NOW.minusNanos(1), null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
@@ -167,7 +165,7 @@ class AssignmentTest {
         assignment.addReminders(List.of(sentRemindAt, pendingRemindAt), NOW);
         assignment.getReminders().getFirst().markAsSent();
 
-        assignment.update(null, null, null, null, List.of(newRemindAt, newRemindAt), CLOCK);
+        assignment.update(null, null, null, null, List.of(newRemindAt, newRemindAt), NOW);
 
         assertThat(assignment.getReminders())
                 .extracting(AssignmentReminder::getRemindAt)
@@ -182,7 +180,7 @@ class AssignmentTest {
         LocalDateTime existingRemindAt = NOW.plusHours(1);
         assignment.addReminders(List.of(existingRemindAt), NOW);
 
-        assertThatThrownBy(() -> assignment.update(null, null, null, null, List.of(NOW.plusHours(2), NOW), CLOCK))
+        assertThatThrownBy(() -> assignment.update(null, null, null, null, List.of(NOW.plusHours(2), NOW), NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
@@ -231,7 +229,7 @@ class AssignmentTest {
     }
 
     private Assignment createAssignment(String title, String content, String submissionMethod, LocalDateTime closeAt) {
-        return Assignment.create(writer, title, content, submissionMethod, closeAt, CLOCK);
+        return Assignment.create(writer, title, content, submissionMethod, closeAt, NOW);
     }
 
     private StudyMember memberWithId(Long id) {

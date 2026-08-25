@@ -50,9 +50,9 @@ public class AssignmentService {
 
         StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Assignment assignment = Assignment.create(writer, request.title(), request.content(),
-                request.submissionMethod(), request.closeAt(), clock);
         LocalDateTime now = LocalDateTime.now(clock);
+        Assignment assignment = Assignment.create(writer, request.title(), request.content(),
+                request.submissionMethod(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
         assignment.initializeSubmissions(members);
 
@@ -68,8 +68,9 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
+        LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(request.title(), request.content(), request.submissionMethod(), request.closeAt(),
-                request.remindAts(), clock);
+                request.remindAts(), now);
 
         assignmentRepository.save(assignment);
     }

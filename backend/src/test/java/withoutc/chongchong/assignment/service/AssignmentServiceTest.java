@@ -373,14 +373,10 @@ class AssignmentServiceTest {
         StudyMember writer = StudyMember.create(study, user, "리더", null, StudyMemberRole.LEADER);
         ReflectionTestUtils.setField(study, "id", studyId);
         Assignment assignment = Assignment.create(
-                writer, "과제 제목", "과제 내용", "링크 제출", NOW.plusDays(7), fixedClock()
+                writer, "과제 제목", "과제 내용", "링크 제출", NOW.plusDays(7), NOW
         );
         ReflectionTestUtils.setField(assignment, "id", assignmentId);
         return assignment;
-    }
-
-    private Clock fixedClock() {
-        return Clock.fixed(Instant.parse("2026-08-20T01:00:00Z"), ZoneId.of("Asia/Seoul"));
     }
 
     private void assertAccessDenied(ThrowingCallable callable) {

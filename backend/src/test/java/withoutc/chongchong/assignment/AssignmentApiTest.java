@@ -331,7 +331,7 @@ class AssignmentApiTest {
                         "다른 과제 내용",
                         "링크 제출",
                         closeAt,
-                        CLOCK
+                        LocalDateTime.now(CLOCK)
                 )
         );
 
@@ -401,17 +401,18 @@ class AssignmentApiTest {
 
     private Assignment createAssignment(String title, String content, String submissionMethod,
                                           LocalDateTime assignmentCloseAt, LocalDateTime assignmentRemindAt) {
+        LocalDateTime now = LocalDateTime.now(CLOCK);
         Assignment newAssignment = Assignment.create(
                 leader,
                 title,
                 content,
                 submissionMethod,
                 assignmentCloseAt,
-                CLOCK
+                now
         );
         newAssignment.initializeSubmissions(List.of(member, secondMember));
         if (assignmentRemindAt != null) {
-            newAssignment.addReminders(List.of(assignmentRemindAt), LocalDateTime.now(CLOCK));
+            newAssignment.addReminders(List.of(assignmentRemindAt), now);
         }
         return assignmentRepository.saveAndFlush(newAssignment);
     }
