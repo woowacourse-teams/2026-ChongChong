@@ -8,67 +8,18 @@ import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
-import CopyIcon from '../../../shared/assets/copy.svg';
 import { kickMember, leaveStudyMember } from '../api';
 import { removeStudy } from '../../studies/api';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
+import InviteLinkBox from './InviteLinkBox';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
 } satisfies CSSProperties;
 
-const inviteDescriptionStyle = {
-  ...typography.paragraph,
-  margin: `${tokens.spacing[2]} 0`,
-  color: tokens.text.muted,
-} satisfies CSSProperties;
-
-const inviteLinkBlockStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: tokens.spacing[4],
-  background: tokens.bg.subtle,
-  border: tokens.border.neutral,
-  borderRadius: tokens.radius.md,
-} satisfies CSSProperties;
-
-const inviteLinkStyle = {
-  ...typography.paragraph,
-  overflow: 'hidden',
-  color: tokens.text.secondary,
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-} satisfies CSSProperties;
-
-const copyButtonStyle = {
-  flex: '0 0 auto',
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
 const actionButtonStyle = {
   margin: `${tokens.spacing[5]} 0`,
 } satisfies CSSProperties;
-
-export function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(inviteLink);
-  };
-
-  return (
-    <>
-      <p css={inviteDescriptionStyle}>링크를 통해 새로운 스터디원을 초대해요</p>
-      <div css={inviteLinkBlockStyle}>
-        <span css={inviteLinkStyle}>{inviteLink}</span>
-        <button css={copyButtonStyle} type="button" onClick={handleCopy} aria-label="링크 복사">
-          <img src={CopyIcon} width={16} height={20} alt="" />
-        </button>
-      </div>
-    </>
-  );
-}
 
 function LeaderContent() {
   const { studyId } = useStudyId();
@@ -123,7 +74,7 @@ function LeaderContent() {
             </List.Item>
           ))}
         </List>
-        <InviteLinkBox inviteLink={inviteLink} />
+        <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
       </section>
       <Button
         variant="criticalSolid"
@@ -186,7 +137,7 @@ function MemberContent() {
             </List.Item>
           ))}
         </List>
-        <InviteLinkBox inviteLink={inviteLink} />
+        <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
       </section>
       <Button
         variant="criticalSolid"

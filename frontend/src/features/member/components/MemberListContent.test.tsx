@@ -4,26 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { Route, Routes } from 'react-router';
 import { createWrapper } from '../../../test/render';
-import { InviteLinkBox } from './MemberListContent';
 import { server } from '../../../mocks/msw-node';
 import { BASE_URL } from '../../../../config';
 import { STUDY_URLS } from '../../studies/urls';
 import { MEMBER_URLS } from '../urls';
 import MemberListContent from './MemberListContent';
 
-const STUDY_INVITE_LINK_URL = `${BASE_URL}${STUDY_URLS.inviteLink}`;
 const STUDY_MEMBER_LIST_URL = `${BASE_URL}${MEMBER_URLS.list}`;
 const STUDY_MEMBER_KICK_URL = `${BASE_URL}${MEMBER_URLS.kick}`;
-
-function mockStudyInviteLink() {
-  server.use(
-    http.get(STUDY_INVITE_LINK_URL, () =>
-      HttpResponse.json({
-        inviteLink: 'mock-chongchong-invite-link123',
-      }),
-    ),
-  );
-}
 
 function mockMemberList() {
   let members = [
@@ -61,25 +49,37 @@ function renderMemberListContent(content: React.ReactNode) {
 }
 
 describe('초대 링크 테스트', () => {
-  test('버튼을 클릭하면 초대 링크가 복사된다', async () => {
-    mockStudyInviteLink();
-    const user = userEvent.setup();
-    const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
-    render(<InviteLinkBox inviteLink={'mock-chongchong-invite-link123'} />);
-    const copyButton = await screen.findByRole('button', {
-      name: '링크 복사',
-    });
-    await user.click(copyButton);
+  const STUDY_INVITE_LINK_URL = `${BASE_URL}${STUDY_URLS.inviteLink}`;
 
-    // 이후에 API 값으로 전환
-    expect(writeText).toHaveBeenCalledWith('mock-chongchong-invite-link123');
-    writeText.mockRestore();
+  function mockStudyInviteLink() {
+    server.use(
+      http.get(STUDY_INVITE_LINK_URL, () =>
+        HttpResponse.json({
+          inviteLink: 'mock-chongchong-invite-link123',
+        }),
+      ),
+    );
+  }
+
+  test('스터디 리드 화면에 API로 받은 초대 링크가 노출된다', async () => {
+    mockStudyInviteLink();
+    mockMemberList();
+    renderMemberListContent(<MemberListContent.Leader />);
+
+    expect(await screen.findByText('mock-chongchong-invite-link123')).toBeInTheDocument();
+  });
+
+  test('스터디원 화면에 API로 받은 초대 링크가 노출된다', async () => {
+    mockStudyInviteLink();
+    mockMemberList();
+    renderMemberListContent(<MemberListContent.Member />);
+
+    expect(await screen.findByText('mock-chongchong-invite-link123')).toBeInTheDocument();
   });
 });
 
 describe('스터디 리드 화면 테스트', () => {
   test('스터디 리드 행에는 방출하기 버튼이 존재하지 않는다', async () => {
-    mockStudyInviteLink();
     mockMemberList();
     renderMemberListContent(<MemberListContent.Leader />);
 
@@ -88,7 +88,6 @@ describe('스터디 리드 화면 테스트', () => {
   });
 
   test('스터디원을 추방하면 목록에서 추방한 스터디원이 사라진다', async () => {
-    mockStudyInviteLink();
     mockMemberList();
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Leader />);
@@ -107,7 +106,6 @@ describe('스터디 리드 화면 테스트', () => {
   });
 
   test('스터디를 삭제하면 스터디 리스트 페이지로 이동한다.', async () => {
-    mockStudyInviteLink();
     mockMemberList();
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Leader />);
@@ -121,7 +119,6 @@ describe('스터디 리드 화면 테스트', () => {
 
 describe('스터디원 화면 테스트', () => {
   test('스터디원에게는 방출하기 버튼이 렌더링 되지 않는다', async () => {
-    mockStudyInviteLink();
     mockMemberList();
     renderMemberListContent(<MemberListContent.Member />);
 
@@ -129,7 +126,6 @@ describe('스터디원 화면 테스트', () => {
   });
 
   test('스터디원에게 스터디리드는 리드 아이콘이 렌더링 된다', async () => {
-    mockStudyInviteLink();
     mockMemberList();
     renderMemberListContent(<MemberListContent.Member />);
 
@@ -141,7 +137,6 @@ describe('스터디원 화면 테스트', () => {
   });
 
   test('스터디를 탈퇴하면 스터디 리스트 페이지로 이동한다.', async () => {
-    mockStudyInviteLink();
     mockMemberList();
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Member />);
