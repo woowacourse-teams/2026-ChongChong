@@ -33,16 +33,13 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
-import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
-import withoutc.chongchong.study.repository.StudyRepository;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Service
 public class NoticeService {
-    private final StudyRepository studyRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
     private final NoticeRecipientRepository noticeRecipientRepository;
@@ -51,8 +48,6 @@ public class NoticeService {
 
     @Transactional
     public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
-        Study study = studyRepository.getByIdOrThrow(studyId);
-
         validateLeader(studyId, userId);
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
@@ -60,14 +55,14 @@ public class NoticeService {
 
         StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Notice notice = Notice.create(study, writer, request.title(), request.content());
+        Notice notice = Notice.create(writer, request.title(), request.content());
         LocalDateTime now = LocalDateTime.now(clock);
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
 
         noticeRepository.save(notice);
 
-        return NoticeCreateResponse.of(notice.getId());
+        return NoticeCreateResponse.from(notice);
     }
 
     @Transactional
@@ -92,6 +87,15 @@ public class NoticeService {
         noticeRepository.save(notice);
     }
 
+    public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
+
+        return NoticeDetailResponse.from(notice);
+    }
+
     public NoticeListResponse getList(Long userId, Long studyId, Long cursor, int size) {
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
@@ -105,13 +109,13 @@ public class NoticeService {
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);
     }
 
-    public NoticeStatusesResponse getNoticeStatuses(Long userId, Long studyId, Long noticeId) {
+    public NoticeStatusesResponse getAllReadStatuses(Long userId, Long studyId, Long noticeId) {
         validateLeader(studyId, userId);
 
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
-        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findStatusesByNoticeId(noticeId);
+        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(noticeId);
 
         List<NoticeStatusesResponse.ReadMember> readMembers = statuses.stream()
                 .filter(NoticeRecipientStatusProjection::isRead)
@@ -152,7 +156,7 @@ public class NoticeService {
         return NoticeReadResponse.from(recipient);
     }
 
-    public NoticeReadStatusResponse getReadStatus(Long userId, Long studyId, Long noticeId) {
+    public NoticeReadStatusResponse getMyReadStatus(Long userId, Long studyId, Long noticeId) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
@@ -172,24 +176,15 @@ public class NoticeService {
 
         List<Long> noticeIds = notices.stream().map(Notice::getId).toList();
 
-        Map<Long, Boolean> readStatusByNoticeId = noticeRecipientRepository.findReadStatusesByNoticeIdsAndMemberId(
+        Map<Long, Boolean> readStatusByNoticeId = noticeRecipientRepository.findMyReadStatusesByNoticeIdsAndMemberId(
                         noticeIds, member.getId()).stream()
                 .collect(Collectors.toMap(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::isRead));
 
         return notices.stream().map(notice -> NoticeSummaryResponse.forMember(notice,
-                getReadStatus(readStatusByNoticeId, notice.getId()))).toList();
+                requireReadStatus(readStatusByNoticeId, notice.getId()))).toList();
     }
 
-    public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
-        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
-
-        return NoticeDetailResponse.from(notice);
-    }
-
-    private boolean getReadStatus(Map<Long, Boolean> readStatusByNoticeId, Long noticeId) {
+    private boolean requireReadStatus(Map<Long, Boolean> readStatusByNoticeId, Long noticeId) {
         Boolean isRead = readStatusByNoticeId.get(noticeId);
         if (isRead == null) {
             throw new NoticeException(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND);

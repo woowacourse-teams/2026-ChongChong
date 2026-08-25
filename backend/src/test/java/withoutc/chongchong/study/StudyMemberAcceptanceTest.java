@@ -2,8 +2,12 @@ package withoutc.chongchong.study;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 import io.restassured.http.ContentType;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
+import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -36,6 +43,12 @@ class StudyMemberAcceptanceTest {
     private UserRepository userRepository;
 
     @Autowired
+    private AssignmentRepository assignmentRepository;
+
+    @Autowired
+    private AssignmentSubmissionRepository assignmentSubmissionRepository;
+
+    @Autowired
     private TestDatabaseCleaner databaseCleaner;
 
     @Autowired
@@ -43,6 +56,9 @@ class StudyMemberAcceptanceTest {
 
     @Autowired
     private StudyInviteTokenProvider studyInviteTokenProvider;
+
+    @Autowired
+    private Clock clock;
 
     @LocalServerPort
     private int port;
@@ -76,6 +92,59 @@ class StudyMemberAcceptanceTest {
         assertThat(studyMemberRepository.findByStudyIdAndUserId(study.getId(), user.getId()))
                 .get()
                 .satisfies(member -> assertThat(member.getRole()).isEqualTo(StudyMemberRole.MEMBER));
+    }
+
+    @Test
+    @DisplayName("기존 과제가 있는 스터디에 가입하면 제출 정보를 생성하고 과제 목록을 조회할 수 있다")
+    void joinStudyWithExistingAssignmentTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User user = userRepository.saveAndFlush(User.create("참여자", "user-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leaderMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        Assignment assignment = assignmentRepository.saveAndFlush(
+                Assignment.create(
+                        leaderMember,
+                        "기존 과제",
+                        "과제 내용",
+                        "링크 제출",
+                        LocalDateTime.now(clock).plusDays(1),
+                        clock
+                )
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"token": "%s"}
+                        """.formatted(studyInviteTokenProvider.generate(study.getId())))
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(201);
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments", study.getId())
+                .then()
+                .statusCode(200)
+                .body("assignments", hasSize(1))
+                .body("assignments[0].id", equalTo(assignment.getId().intValue()))
+                .body("assignments[0].isComplete", equalTo(false));
+
+        StudyMember joinedMember = studyMemberRepository
+                .getByStudyIdAndUserIdOrThrow(study.getId(), user.getId());
+        assertThat(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
+                List.of(assignment.getId()), joinedMember.getId()))
+                .singleElement()
+                .satisfies(status -> {
+                    assertThat(status.assignmentId()).isEqualTo(assignment.getId());
+                    assertThat(status.submitted()).isFalse();
+                });
     }
 
     @Test

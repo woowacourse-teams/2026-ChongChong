@@ -9,7 +9,10 @@ import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.http.ContentType;
 import java.sql.Timestamp;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +38,11 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class StudyAcceptanceTest {
+
+    private static final Clock ASSIGNMENT_CLOCK = Clock.fixed(
+            Instant.parse("2026-08-19T00:00:00Z"),
+            ZoneId.of("Asia/Seoul")
+    );
 
     @Autowired
     private StudyRepository studyRepository;
@@ -238,9 +246,16 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
         Assignment assignment = assignmentRepository.saveAndFlush(
-                Assignment.create(leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
+                Assignment.create(
+                        leaderMember,
+                        "과제",
+                        "내용",
+                        "링크",
+                        LocalDateTime.of(2026, 8, 20, 0, 0),
+                        ASSIGNMENT_CLOCK
+                )
         );
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
@@ -274,9 +289,16 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
                         StudyMemberRole.MEMBER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
         Assignment assignment = assignmentRepository.saveAndFlush(
-                Assignment.create(leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
+                Assignment.create(
+                        leaderMember,
+                        "과제",
+                        "내용",
+                        "링크",
+                        LocalDateTime.of(2026, 8, 20, 0, 0),
+                        ASSIGNMENT_CLOCK
+                )
         );
 
         testAuthRequest.givenAuthenticatedUser(member.getId())
@@ -356,9 +378,16 @@ class StudyAcceptanceTest {
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
-        noticeRepository.saveAndFlush(Notice.create(study, leaderMember, "공지", "내용"));
+        noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
         assignmentRepository.saveAndFlush(
-                Assignment.create(leaderMember, "과제", "내용", "링크", LocalDateTime.of(2026, 8, 20, 0, 0))
+                Assignment.create(
+                        leaderMember,
+                        "과제",
+                        "내용",
+                        "링크",
+                        LocalDateTime.of(2026, 8, 20, 0, 0),
+                        ASSIGNMENT_CLOCK
+                )
         );
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
