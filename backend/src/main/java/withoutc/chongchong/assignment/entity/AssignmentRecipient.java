@@ -10,9 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,26 +41,26 @@ public class AssignmentRecipient extends BaseEntity {
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
-    @Column(name = "read_at", nullable = true)
-    private LocalDateTime readAt;
+    @Column(nullable = true)
+    private String content;
+
+    @Column(nullable = true)
+    private String link;
+
+    @Column(nullable = false)
+    private boolean isSubmit;
+
 
     public static AssignmentRecipient create(StudyMember member, Assignment assignment) {
-        return new AssignmentRecipient(member, assignment, null);
+        return new AssignmentRecipient(member, assignment, null, null, false);
     }
 
-    private AssignmentRecipient(StudyMember member, Assignment assignment, LocalDateTime readAt) {
+    private AssignmentRecipient(StudyMember member, Assignment assignment, String content, String link,
+                                boolean isSubmit) {
         this.member = member;
         this.assignment = assignment;
-        this.readAt = readAt;
-    }
-
-    public void markAsRead(Clock clock) {
-        if (this.readAt == null) {
-            this.readAt = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MICROS);
-        }
-    }
-
-    public boolean isRead() {
-        return readAt != null;
+        this.content = content;
+        this.link = link;
+        this.isSubmit = isSubmit;
     }
 }

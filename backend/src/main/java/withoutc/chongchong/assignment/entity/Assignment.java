@@ -25,6 +25,8 @@ import lombok.NoArgsConstructor;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.global.persistence.BaseEntity;
+import withoutc.chongchong.notice.entity.NoticeRecipient;
+import withoutc.chongchong.notice.entity.NoticeReminder;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
@@ -118,6 +120,19 @@ public class Assignment extends BaseEntity {
 
         reminders.removeIf(AssignmentReminder::isPending);
         reminders.addAll(newReminders);
+    }
+
+    public int getRecipientCount() {
+        return this.recipients.size();
+    }
+
+    public int getSubmitCount() {
+        return Math.toIntExact(this.recipients.stream().filter(AssignmentRecipient::isSubmit).count());
+    }
+
+    public LocalDateTime getNextRemindAt() {
+        return reminders.stream().filter(AssignmentReminder::isPending).map(AssignmentReminder::getRemindAt)
+                .min(LocalDateTime::compareTo).orElse(null);
     }
 
     public void addRecipients(List<StudyMember> members) {
