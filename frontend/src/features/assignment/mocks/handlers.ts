@@ -103,4 +103,18 @@ export const handlers = [
       ],
     });
   }),
+
+  http.get(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
+    ({ params }) => {
+      return HttpResponse.json({
+        id: Number(params.submissionId),
+        name: '피즈',
+        profileImage: 'http://localhost:8080',
+        createdAt: '2025-04-16 16:44:10',
+        content: '과제 제출합니다.',
+        link: 'http://localhost:8080',
+      });
+    },
+  ),
 ];

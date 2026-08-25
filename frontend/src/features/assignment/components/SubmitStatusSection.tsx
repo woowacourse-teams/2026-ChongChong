@@ -17,6 +17,7 @@ const cardStyle = {
   border: tokens.border.neutral,
   borderRadius: tokens.radius.lg,
   background: tokens.bg.default,
+  gap: tokens.spacing[1],
 } satisfies CSSProperties;
 
 const headerStyle = {

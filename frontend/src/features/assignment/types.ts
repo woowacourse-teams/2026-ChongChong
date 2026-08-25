@@ -44,5 +44,5 @@ export interface Submission {
 
 export interface SubmissionDetail extends Submission {
   content: string;
-  link: string;
+  link?: string;
 }
