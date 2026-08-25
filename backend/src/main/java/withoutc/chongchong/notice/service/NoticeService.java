@@ -33,16 +33,13 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
-import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
-import withoutc.chongchong.study.repository.StudyRepository;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Service
 public class NoticeService {
-    private final StudyRepository studyRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
     private final NoticeRecipientRepository noticeRecipientRepository;
@@ -88,6 +85,15 @@ public class NoticeService {
         LocalDateTime now = LocalDateTime.now(clock);
         notice.update(request.title(), request.content(), request.remindAts(), now);
         noticeRepository.save(notice);
+    }
+
+    public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
+        validateNoticeBelongsToStudy(studyId, notice);
+
+        return NoticeDetailResponse.from(notice);
     }
 
     public NoticeListResponse getList(Long userId, Long studyId, Long cursor, int size) {
@@ -176,15 +182,6 @@ public class NoticeService {
 
         return notices.stream().map(notice -> NoticeSummaryResponse.forMember(notice,
                 getReadStatus(readStatusByNoticeId, notice.getId()))).toList();
-    }
-
-    public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
-        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
-
-        return NoticeDetailResponse.from(notice);
     }
 
     private boolean getReadStatus(Map<Long, Boolean> readStatusByNoticeId, Long noticeId) {

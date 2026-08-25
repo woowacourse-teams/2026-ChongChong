@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
@@ -70,6 +71,15 @@ public class AssignmentService {
         validateAssignmentBelongsToStudy(studyId, assignment);
 
         assignmentRepository.delete(assignment);
+    }
+
+    public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(noticeId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        return AssignmentDetailResponse.from(assignment);
     }
 
 
