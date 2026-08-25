@@ -4,22 +4,38 @@ import BottomTab from '../../../shared/ui/components/BottomTab';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import AssignmentForm from '../components/AssignmentForm';
 import Main from '../../../shared/ui/Main';
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import assignmentQueries from '../queries';
 import { AssignmentValue } from '../types';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { updateAssignment } from '../api';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 export default function EditAssignmentPage() {
   const { studyId, assignmentId } = useParams();
-
   const { data: assignment } = useSuspenseQuery(
     assignmentQueries.detail(Number(studyId), Number(assignmentId)),
   );
 
-  const onSubmit = (values: AssignmentValue) => {
-    // 수정 API
-    console.log(values);
-  };
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: (values: AssignmentValue) =>
+      updateAssignment(Number(studyId), Number(assignmentId), values),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: assignmentQueries.lists(Number(studyId)),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: assignmentQueries.detail(Number(studyId), Number(assignmentId)).queryKey,
+      });
+
+      navigate(`/studies/${studyId}/assignments/${assignmentId}`);
+    },
+  });
 
   return (
     <Page>
@@ -27,11 +43,12 @@ export default function EditAssignmentPage() {
       <Main>
         <AssignmentForm
           submitLabel="과제 수정하기"
-          onSubmit={onSubmit}
+          onSubmit={updateMutation.mutate}
           initialValues={{
             title: assignment.title,
             content: assignment.content,
             submissionType: assignment.submissionType,
+            closeAt: assignment.closeAt,
           }}
         />
       </Main>

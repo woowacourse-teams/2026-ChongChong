@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { BASE_URL } from '../../../../config';
+import type { AssignmentValue, UpdateAssignmentValue } from '../types';
 
 export const handlers = [
   http.get(`${BASE_URL}/studies/:studyId/assignments`, () => {
@@ -27,6 +28,38 @@ export const handlers = [
         },
       ],
     });
+  }),
+
+  http.post(`${BASE_URL}/studies/:studyId/assignments`, async ({ request }) => {
+    const values = (await request.json()) as AssignmentValue;
+
+    return HttpResponse.json(
+      {
+        id: 3,
+        ...values,
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.patch(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId`,
+    async ({ params, request }) => {
+      const values = (await request.json()) as UpdateAssignmentValue;
+
+      return HttpResponse.json({
+        id: Number(params.assignmentId),
+        title: '이번주 그리디 3문제 풀이',
+        content: '백준에서 그리디 문제 세 문제를 풀어주세요.',
+        submissionType: '풀이 링크 제출',
+        closeAt: '2026-08-31T23:59:00',
+        ...values,
+      });
+    },
+  ),
+
+  http.delete(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(

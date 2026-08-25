@@ -3,6 +3,7 @@ import Button from '../../../shared/ui/Button';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
+import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
 
@@ -23,7 +24,22 @@ const emptyValues = {
   title: '',
   content: '',
   submissionType: '',
+  closeAt: '',
 };
+
+function formatDateTime(value: Date) {
+  return `${value.getFullYear()}년 ${value.getMonth() + 1}월 ${value.getDate()}일 ${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+}
+
+function toLocalDateTime(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const date = String(value.getDate()).padStart(2, '0');
+  const hours = String(value.getHours()).padStart(2, '0');
+  const minutes = String(value.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${date}T${hours}:${minutes}:00`;
+}
 
 export default function AssignmentForm({
   initialValues = emptyValues,
@@ -33,13 +49,20 @@ export default function AssignmentForm({
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
   const [submissionType, setSubmissionType] = useState(initialValues.submissionType);
+  const [closeAt, setCloseAt] = useState(initialValues.closeAt);
+  const [isCloseAtError, setIsCloseAtError] = useState(false);
 
   return (
     <form
       css={formStyle}
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit({ title, content, submissionType });
+        if (!closeAt) {
+          setIsCloseAtError(true);
+          return;
+        }
+
+        onSubmit({ title, content, submissionType, closeAt });
       }}
     >
       <Field id="assignment-title" label="제목" isRequired>
@@ -74,6 +97,26 @@ export default function AssignmentForm({
           required
           onChange={(event) => setSubmissionType(event.target.value)}
           placeholder="제출 방법을 입력해주세요"
+        />
+      </Field>
+
+      <Field
+        id="assignment-close-at"
+        label="마감 시각"
+        isRequired
+        isError={isCloseAtError}
+        errorText="마감 시각을 설정해주세요"
+      >
+        <DateTimePicker
+          id="assignment-close-at"
+          title="마감 시각 설정"
+          value={closeAt ? new Date(closeAt) : undefined}
+          triggerLabel={closeAt ? formatDateTime(new Date(closeAt)) : '마감 시각 설정'}
+          triggerVariant="neutralOutline"
+          onChange={(value) => {
+            setCloseAt(toLocalDateTime(value));
+            setIsCloseAtError(false);
+          }}
         />
       </Field>
 

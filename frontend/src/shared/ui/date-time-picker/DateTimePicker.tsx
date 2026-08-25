@@ -12,7 +12,9 @@ export interface DateTimePickerProps {
   id?: string;
   value?: Date;
   minDate?: Date;
+  title?: string;
   triggerLabel?: ReactNode;
+  triggerVariant?: 'brandOutline' | 'neutralOutline';
   onChange: (value: Date) => void;
 }
 
@@ -20,7 +22,9 @@ export default function DateTimePicker({
   id,
   value,
   minDate,
+  title = '리마인드 시각 설정',
   triggerLabel = '리마인드 시각 설정',
+  triggerVariant = 'neutralOutline',
   onChange,
 }: DateTimePickerProps) {
   const [minimumDateTime, setMinimumDateTime] = useState(() => getMinimumDateTime(minDate));
@@ -52,7 +56,7 @@ export default function DateTimePicker({
     <>
       <Button
         id={id}
-        variant="neutralOutline"
+        variant={triggerVariant}
         size="large"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -63,7 +67,7 @@ export default function DateTimePicker({
 
       <BottomSheet
         open={isOpen}
-        title="리마인드 시각 설정"
+        title={title}
         actionLabel={step === 'date' ? '다음' : '완료'}
         onAction={step === 'date' ? () => setStep('time') : complete}
         onClose={closePicker}
