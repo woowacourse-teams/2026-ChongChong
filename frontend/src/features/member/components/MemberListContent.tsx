@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { useRef, CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import { useMutation, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
@@ -10,6 +10,8 @@ import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
 import CopyIcon from '../../../shared/assets/copy.svg';
 import { kickMember, leaveStudyMember } from '../api';
+import { removeStudy } from '../../studies/api';
+import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -70,6 +72,7 @@ export function InviteLinkBox({ inviteLink }: { inviteLink: string }) {
 
 function LeaderContent() {
   const { studyId } = useStudyId();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
     data: { inviteLink },
@@ -84,6 +87,24 @@ function LeaderContent() {
       kickMember({ studyId, memberId }),
     onSettled: (_data, _error, variables) =>
       queryClient.invalidateQueries({ queryKey: memberQueries.lists(variables.studyId) }),
+  });
+
+  const removeStudyDialogRef = useRef<HTMLDialogElement>(null);
+
+  const handleOpenDialog = () => {
+    removeStudyDialogRef.current?.showModal();
+  };
+
+  const handleCloseDialog = () => {
+    removeStudyDialogRef.current?.close();
+  };
+
+  const deleteStudy = useMutation({
+    mutationFn: ({ studyId }: { studyId: number }) => removeStudy(studyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studyQueries.lists() });
+      navigate('/studies');
+    },
   });
 
   return (
@@ -104,9 +125,27 @@ function LeaderContent() {
         </List>
         <InviteLinkBox inviteLink={inviteLink} />
       </section>
-      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={() => {}}>
+      <Button
+        variant="criticalSolid"
+        size="large"
+        css={actionButtonStyle}
+        onClick={handleOpenDialog}
+      >
         스터디 삭제하기
       </Button>
+      <ConfirmDialog
+        ref={removeStudyDialogRef}
+        title={'스터디를 삭제할까요?'}
+        description={'삭제한 스터디는 다시 복구할 수 없어요. 정말 삭제하시겠어요?'}
+        closeButton={
+          <ConfirmDialog.CloseButton onClick={handleCloseDialog}>취소</ConfirmDialog.CloseButton>
+        }
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={() => deleteStudy.mutate({ studyId })}>
+            삭제
+          </ConfirmDialog.ConfirmButton>
+        }
+      />
     </>
   );
 }

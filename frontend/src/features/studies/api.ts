@@ -47,3 +47,11 @@ export async function fetchStudyInviteLink(studyId: number) {
     throw new Error('초대 링크를 가져오는데 실패했습니다.');
   }
 }
+
+export async function removeStudy(studyId: number) {
+  try {
+    await api.delete(`/studies/${studyId}`);
+  } catch {
+    throw new Error('스터디를 삭제하는데 실패했습니다.');
+  }
+}

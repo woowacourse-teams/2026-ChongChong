@@ -66,4 +66,12 @@ export const handlers = [
       inviteLink: found.inviteLink,
     });
   }),
+
+  http.delete(`${BASE_URL}${STUDY_URLS.remove}`, async ({ params }) => {
+    const { studyId } = params;
+    const study = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
+    if (!study) return new HttpResponse(null, { status: 404 });
+    studyTable.delete(study);
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];

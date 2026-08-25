@@ -105,6 +105,18 @@ describe('스터디 리드 화면 테스트', () => {
     expect(screen.queryByText('멤버')).not.toBeInTheDocument();
     expect(screen.getByText('리드')).toBeInTheDocument();
   });
+
+  test('스터디를 삭제하면 스터디 리스트 페이지로 이동한다.', async () => {
+    mockStudyInviteLink();
+    mockMemberList();
+    const user = userEvent.setup();
+    renderMemberListContent(<MemberListContent.Leader />);
+
+    await user.click(await screen.findByRole('button', { name: '스터디 삭제하기' }));
+    await user.click(screen.getByRole('button', { name: '삭제' }));
+
+    expect(await screen.findByText('내 스터디')).toBeInTheDocument();
+  });
 });
 
 describe('스터디원 화면 테스트', () => {
