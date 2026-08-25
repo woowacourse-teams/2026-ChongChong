@@ -1,7 +1,8 @@
-import { CSSProperties, ReactNode, useRef } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import crownIcon from '../../../shared/assets/lead.svg';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
+import useDialogControl from '../../../shared/hooks/useDialogControl';
 import { StudyRole } from '../types';
 
 interface Props extends React.ComponentProps<'div'> {
@@ -102,15 +103,8 @@ function Profile({ name, icon }: ProfileProps) {
 }
 
 MemberRow.Leader = function Leader({ name, role, onKick, ...props }: LeaderProps) {
-  const kickMemberDialogRef = useRef<HTMLDialogElement>(null);
+  const { dialogRef, open, close } = useDialogControl();
 
-  const handleOpenDialog = () => {
-    kickMemberDialogRef.current?.showModal();
-  };
-
-  const handleCloseDialog = () => {
-    kickMemberDialogRef.current?.close();
-  };
   return (
     <MemberRow
       {...props}
@@ -123,19 +117,17 @@ MemberRow.Leader = function Leader({ name, role, onKick, ...props }: LeaderProps
       right={
         role !== 'LEADER' && (
           <>
-            <button css={kickButtonStyle} type="button" onClick={handleOpenDialog}>
+            <button css={kickButtonStyle} type="button" onClick={open}>
               방출하기
             </button>
             <ConfirmDialog
-              ref={kickMemberDialogRef}
+              ref={dialogRef}
               title={`${name} 님을 추방하시겠습니까?`}
               description={
                 '추방된 스터디원은 스터디 정보에 다시 접근할 수 없으며, 이 작업은 되돌릴 수 없습니다.'
               }
               closeButton={
-                <ConfirmDialog.CloseButton onClick={handleCloseDialog}>
-                  취소
-                </ConfirmDialog.CloseButton>
+                <ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>
               }
               confirmButton={
                 <ConfirmDialog.ConfirmButton onClick={onKick}>추방</ConfirmDialog.ConfirmButton>

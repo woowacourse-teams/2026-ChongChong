@@ -1,4 +1,4 @@
-import { useRef, CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import { useMutation, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
@@ -12,6 +12,7 @@ import { kickMember, leaveStudyMember } from '../api';
 import { removeStudy } from '../../studies/api';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteLinkBox from './InviteLinkBox';
+import useDialogControl from '../../../shared/hooks/useDialogControl';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -40,15 +41,7 @@ function LeaderContent() {
       queryClient.invalidateQueries({ queryKey: memberQueries.lists(variables.studyId) }),
   });
 
-  const removeStudyDialogRef = useRef<HTMLDialogElement>(null);
-
-  const handleOpenDialog = () => {
-    removeStudyDialogRef.current?.showModal();
-  };
-
-  const handleCloseDialog = () => {
-    removeStudyDialogRef.current?.close();
-  };
+  const { dialogRef, open, close } = useDialogControl();
 
   const deleteStudy = useMutation({
     mutationFn: ({ studyId }: { studyId: number }) => removeStudy(studyId),
@@ -76,21 +69,14 @@ function LeaderContent() {
         </List>
         <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
       </section>
-      <Button
-        variant="criticalSolid"
-        size="large"
-        css={actionButtonStyle}
-        onClick={handleOpenDialog}
-      >
+      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
         스터디 삭제하기
       </Button>
       <ConfirmDialog
-        ref={removeStudyDialogRef}
+        ref={dialogRef}
         title={'스터디를 삭제할까요?'}
         description={'삭제한 스터디는 다시 복구할 수 없어요. 정말 삭제하시겠어요?'}
-        closeButton={
-          <ConfirmDialog.CloseButton onClick={handleCloseDialog}>취소</ConfirmDialog.CloseButton>
-        }
+        closeButton={<ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>}
         confirmButton={
           <ConfirmDialog.ConfirmButton onClick={() => deleteStudy.mutate({ studyId })}>
             삭제
@@ -129,11 +115,7 @@ function MemberContent() {
         <List css={listStyle}>
           {members.map((member) => (
             <List.Item key={member.id}>
-              <MemberRow.Member
-                data-testid="member-row"
-                name={member.name}
-                role={member.role}
-              />
+              <MemberRow.Member data-testid="member-row" name={member.name} role={member.role} />
             </List.Item>
           ))}
         </List>
