@@ -35,6 +35,12 @@ export interface AssignmentDetail {
   closeAt: string;
 }
 
+export interface AssignmentValue {
+  title: string;
+  content: string;
+  submissionType: string;
+}
+
 export interface Submission {
   id: number;
   name: string;
