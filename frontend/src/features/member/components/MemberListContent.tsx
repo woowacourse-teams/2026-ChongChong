@@ -1,6 +1,11 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import { useMutation, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useSuspenseQueries,
+  useSuspenseQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
 import { memberQueries } from '../queries';
 import studyQueries from '../../studies/queries';
@@ -8,11 +13,12 @@ import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import MemberRow from './MemberRow';
-import { kickMember, leaveStudyMember } from '../api';
-import { removeStudy } from '../../studies/api';
+import { leaveStudyMember } from '../api';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteLinkBox from './InviteLinkBox';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
+import useDeleteStudy from '../../studies/hooks/useDeleteStudy';
+import useKickStudyMember from '../hooks/useKickMember';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -25,31 +31,32 @@ const actionButtonStyle = {
 function LeaderContent() {
   const { studyId } = useStudyId();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const {
-    data: { inviteLink },
-  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
-  const { data: members } = useSuspenseQuery({
-    ...memberQueries.list(studyId),
-    select: (data) => data.members,
+
+  const [
+    {
+      data: { members },
+    },
+    {
+      data: { inviteLink },
+    },
+  ] = useSuspenseQueries({
+    queries: [memberQueries.list(studyId), studyQueries.inviteLink(studyId)],
   });
 
-  const deleteMember = useMutation({
-    mutationFn: ({ studyId, memberId }: { studyId: number; memberId: number }) =>
-      kickMember({ studyId, memberId }),
-    onSettled: (_data, _error, variables) =>
-      queryClient.invalidateQueries({ queryKey: memberQueries.lists(variables.studyId) }),
-  });
+  const { mutate: kickStudyMember } = useKickStudyMember();
 
   const { dialogRef, open, close } = useDialogControl();
 
-  const deleteStudy = useMutation({
-    mutationFn: ({ studyId }: { studyId: number }) => removeStudy(studyId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: studyQueries.lists() });
-      navigate('/studies');
-    },
-  });
+  const { mutate: deleteStudy, isPending } = useDeleteStudy();
+
+  function handleDeleteStudy() {
+    deleteStudy(
+      { studyId },
+      {
+        onSuccess: () => navigate('/studies'),
+      },
+    );
+  }
 
   return (
     <>
@@ -62,7 +69,7 @@ function LeaderContent() {
                 data-testid="member-row"
                 name={member.name}
                 role={member.role}
-                onKick={() => deleteMember.mutate({ studyId, memberId: member.id })}
+                onKick={() => kickStudyMember({ studyId, memberId: member.id })}
               />
             </List.Item>
           ))}
@@ -78,7 +85,7 @@ function LeaderContent() {
         description={'삭제한 스터디는 다시 복구할 수 없어요. 정말 삭제하시겠어요?'}
         closeButton={<ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>}
         confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={() => deleteStudy.mutate({ studyId })}>
+          <ConfirmDialog.ConfirmButton onClick={handleDeleteStudy} disabled={isPending}>
             삭제
           </ConfirmDialog.ConfirmButton>
         }
@@ -90,9 +97,11 @@ function LeaderContent() {
 function MemberContent() {
   const { studyId } = useStudyId();
   const queryClient = useQueryClient();
+
   const {
     data: { inviteLink },
   } = useSuspenseQuery(studyQueries.inviteLink(studyId));
+
   const { data: members } = useSuspenseQuery({
     ...memberQueries.list(Number(studyId)),
     select: (data) => data.members,
