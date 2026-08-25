@@ -6,6 +6,7 @@ import TextArea from '../../../shared/ui/inputs/TextArea';
 import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
+import { formatDeadline, toLocalDateTime } from '../../../shared/utils/formatDate';
 
 const formStyle = {
   display: 'flex',
@@ -26,20 +27,6 @@ const emptyValues = {
   submissionType: '',
   closeAt: '',
 };
-
-function formatDateTime(value: Date) {
-  return `${value.getFullYear()}년 ${value.getMonth() + 1}월 ${value.getDate()}일 ${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
-}
-
-function toLocalDateTime(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const date = String(value.getDate()).padStart(2, '0');
-  const hours = String(value.getHours()).padStart(2, '0');
-  const minutes = String(value.getMinutes()).padStart(2, '0');
-
-  return `${year}-${month}-${date}T${hours}:${minutes}:00`;
-}
 
 export default function AssignmentForm({
   initialValues = emptyValues,
@@ -111,7 +98,7 @@ export default function AssignmentForm({
           id="assignment-close-at"
           title="마감 시각 설정"
           value={closeAt ? new Date(closeAt) : undefined}
-          triggerLabel={closeAt ? formatDateTime(new Date(closeAt)) : '마감 시각 설정'}
+          triggerLabel={closeAt ? formatDeadline(closeAt) : '마감 시각 설정'}
           triggerVariant="neutralOutline"
           onChange={(value) => {
             setCloseAt(toLocalDateTime(value));

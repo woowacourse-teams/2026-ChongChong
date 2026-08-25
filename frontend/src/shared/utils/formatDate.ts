@@ -40,3 +40,13 @@ export function formatSubmittedAt(value: string) {
 
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes} 제출`;
 }
+
+export function toLocalDateTime(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const date = String(value.getDate()).padStart(2, '0');
+  const hours = String(value.getHours()).padStart(2, '0');
+  const minutes = String(value.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${date}T${hours}:${minutes}:00`;
+}
