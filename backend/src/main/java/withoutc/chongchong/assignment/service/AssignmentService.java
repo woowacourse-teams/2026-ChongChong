@@ -11,18 +11,26 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
+import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
+import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse.SubmissionSummary;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -50,9 +58,9 @@ public class AssignmentService {
 
         StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Assignment assignment = Assignment.create(writer, request.title(), request.content(),
-                request.submissionMethod(), request.closeAt(), clock);
         LocalDateTime now = LocalDateTime.now(clock);
+        Assignment assignment = Assignment.create(writer, request.title(), request.content(),
+                request.submissionMethod(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
         assignment.initializeSubmissions(members);
 
@@ -68,8 +76,9 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
+        LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(request.title(), request.content(), request.submissionMethod(), request.closeAt(),
-                request.remindAts(), clock);
+                request.remindAts(), now);
 
         assignmentRepository.save(assignment);
     }
@@ -108,6 +117,98 @@ public class AssignmentService {
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), assignmentSummaries);
     }
 
+    public AssignmentStatusesResponse getAllSubmittedStatus(Long userId, Long studyId, Long assignmentId) {
+        validateLeader(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        List<AssignmentSubmitterStatusProjection> statues = assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(
+                assignmentId);
+
+        List<AssignmentStatusesResponse.CompleteMember> completeMembers = statues.stream()
+                .filter(AssignmentSubmitterStatusProjection::isSubmitted)
+                .map(status -> AssignmentStatusesResponse.CompleteMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl()
+                )).toList();
+
+        List<AssignmentStatusesResponse.IncompleteMember> incompleteMembers = statues.stream()
+                .filter(status -> !status.isSubmitted())
+                .map(status -> AssignmentStatusesResponse.IncompleteMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl(),
+                        status.lastRemindAt()
+                )).toList();
+
+        return AssignmentStatusesResponse.of(assignmentId, assignment.getNextRemindAt(), completeMembers,
+                incompleteMembers);
+    }
+
+    @Transactional
+    public AssignmentSubmitResponse submitAssignment(Long userId, Long studyId, Long assignmentId,
+                                                     AssignmentSubmitRequest request) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByAssignmentIdAndMemberIdOrThrow(
+                assignmentId, member.getId());
+        submission.submit(request.content(), request.link(), LocalDateTime.now(clock));
+
+        return AssignmentSubmitResponse.from(submission);
+    }
+
+    @Transactional
+    public void updateSubmission(Long userId, Long studyId, Long assignmentId, Long submissionId,
+                                 AssignmentSubmitRequest request) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdAndMemberIdOrThrow(
+                submissionId, assignmentId, member.getId());
+        submission.update(request.content(), request.link());
+        assignmentSubmissionRepository.save(submission);
+    }
+
+    public SubmissionDetailResponse getSubmissionDetail(Long userId, Long studyId, Long assignmentId,
+                                                        Long submissionId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        AssignmentSubmission submission = getAssignmentSubmission(submissionId, assignmentId, member);
+
+        return SubmissionDetailResponse.of(submission, submission.getMember());
+    }
+
+    public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeader(member);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        List<AssignmentSubmission> submissions = assignmentSubmissionRepository
+                .findAllByAssignmentIdAndSubmittedTrue(assignmentId);
+
+        return SubmissionListResponse.from(submissions.stream().map(SubmissionSummary::from).toList());
+    }
+
+    private AssignmentSubmission getAssignmentSubmission(Long submissionId, Long assignmentId, StudyMember member) {
+        if (member.isLeader()) {
+            return assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(submissionId, assignmentId);
+        }
+        return assignmentSubmissionRepository.getByIdAndAssignmentIdAndMemberIdOrThrow(submissionId, assignmentId,
+                member.getId());
+    }
+
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
                                                                       List<Assignment> assignments) {
         if (member.isLeader()) {
@@ -118,8 +219,7 @@ public class AssignmentService {
             return List.of();
         }
 
-        List<Long> assignmentIds = assignments.stream().map(Assignment
-                ::getId).toList();
+        List<Long> assignmentIds = assignments.stream().map(Assignment::getId).toList();
 
         Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository
                 .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
@@ -140,6 +240,10 @@ public class AssignmentService {
 
     private void validateLeader(Long studyId, Long userId) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeader(member);
+    }
+
+    private void validateLeader(StudyMember member) {
         if (!member.isLeader()) {
             throw new AuthException(AuthErrorCode.ACCESS_DENIED);
         }

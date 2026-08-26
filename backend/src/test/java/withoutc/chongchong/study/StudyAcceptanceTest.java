@@ -9,10 +9,7 @@ import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.http.ContentType;
 import java.sql.Timestamp;
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,10 +36,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @ActiveProfiles("test")
 class StudyAcceptanceTest {
 
-    private static final Clock ASSIGNMENT_CLOCK = Clock.fixed(
-            Instant.parse("2026-08-19T00:00:00Z"),
-            ZoneId.of("Asia/Seoul")
-    );
+    private static final LocalDateTime ASSIGNMENT_NOW = LocalDateTime.of(2026, 8, 19, 9, 0);
 
     @Autowired
     private StudyRepository studyRepository;
@@ -254,7 +248,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_CLOCK
+                        ASSIGNMENT_NOW
                 )
         );
 
@@ -297,7 +291,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_CLOCK
+                        ASSIGNMENT_NOW
                 )
         );
 
@@ -386,7 +380,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_CLOCK
+                        ASSIGNMENT_NOW
                 )
         );
 

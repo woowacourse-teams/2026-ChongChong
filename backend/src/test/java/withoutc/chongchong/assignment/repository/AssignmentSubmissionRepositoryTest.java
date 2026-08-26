@@ -4,22 +4,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -33,9 +33,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest
 class AssignmentSubmissionRepositoryTest {
 
-    private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-08-20T00:00:00Z"), ZoneId.of("Asia/Seoul")
-    );
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 9, 0);
 
     @Autowired
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
@@ -52,6 +50,9 @@ class AssignmentSubmissionRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
     @DisplayName("여러 과제의 제출 상태를 StudyMember id로 한 번에 조회한다")
     void findMySubmissionStatusesByAssignmentIdsAndMemberIdTest() {
@@ -64,7 +65,7 @@ class AssignmentSubmissionRepositoryTest {
         Assignment otherMemberAssignment = createAssignment(leader, "다른 사람 과제");
 
         AssignmentSubmission submitted = AssignmentSubmission.create(member, submittedAssignment);
-        ReflectionTestUtils.setField(submitted, "submitted", true);
+        submitted.submit("제출 내용", null, NOW);
         assignmentSubmissionRepository.saveAllAndFlush(List.of(
                 submitted,
                 AssignmentSubmission.create(member, unsubmittedAssignment),
@@ -98,6 +99,41 @@ class AssignmentSubmissionRepositoryTest {
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    @DisplayName("과제 제출 현황은 제출 여부와 해당 과제의 최근 리마인드 시각을 조회한다")
+    void findAllSubmitterStatusesByAssignmentIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
+        StudyMember incompleteMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(leader, "과제");
+        Assignment otherAssignment = createAssignment(leader, "다른 과제");
+        AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
+        submitted.submit("제출 내용", null, NOW);
+        assignmentSubmissionRepository.saveAllAndFlush(List.of(
+                submitted,
+                AssignmentSubmission.create(incompleteMember, assignment)
+        ));
+        LocalDateTime firstRemindAt = NOW.plusHours(1);
+        LocalDateTime lastRemindAt = NOW.plusHours(2);
+        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", firstRemindAt);
+        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", lastRemindAt);
+        insertNotification(study.getId(), incompleteMember.getId(), otherAssignment.getId(), "ASSIGNMENT",
+                NOW.plusHours(3));
+        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "NOTICE", NOW.plusHours(4));
+
+        Map<Long, AssignmentSubmitterStatusProjection> statusesByMemberId = assignmentSubmissionRepository
+                .findAllSubmitterStatusesByAssignmentId(assignment.getId())
+                .stream()
+                .collect(Collectors.toMap(AssignmentSubmitterStatusProjection::memberId, status -> status));
+
+        assertThat(statusesByMemberId).hasSize(2);
+        assertThat(statusesByMemberId.get(submittedMember.getId()).isSubmitted()).isTrue();
+        assertThat(statusesByMemberId.get(submittedMember.getId()).lastRemindAt()).isNull();
+        assertThat(statusesByMemberId.get(incompleteMember.getId()).isSubmitted()).isFalse();
+        assertThat(statusesByMemberId.get(incompleteMember.getId()).lastRemindAt()).isEqualTo(lastRemindAt);
+    }
+
     private Assignment createAssignment(StudyMember leader, String title) {
         return assignmentRepository.saveAndFlush(Assignment.create(
                 leader,
@@ -105,7 +141,7 @@ class AssignmentSubmissionRepositoryTest {
                 "과제 내용",
                 "GitHub PR",
                 LocalDateTime.of(2026, 8, 30, 23, 59),
-                CLOCK
+                NOW
         ));
     }
 
@@ -122,5 +158,15 @@ class AssignmentSubmissionRepositoryTest {
     private StudyMember createMember(Study study, String name, StudyMemberRole role) {
         User user = userRepository.save(User.create(name, null));
         return studyMemberRepository.save(StudyMember.create(study, user, name, null, role));
+    }
+
+    private void insertNotification(Long studyId, Long recipientId, Long resourceId, String resourceType,
+                                    LocalDateTime createdAt) {
+        jdbcTemplate.update("""
+                        INSERT INTO notification (
+                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
+                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                        """,
+                studyId, recipientId, resourceId, resourceType, createdAt, createdAt);
     }
 }

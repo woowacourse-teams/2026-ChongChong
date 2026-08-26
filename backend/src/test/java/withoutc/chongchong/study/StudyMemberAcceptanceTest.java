@@ -104,14 +104,15 @@ class StudyMemberAcceptanceTest {
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
         );
+        LocalDateTime now = LocalDateTime.now(clock);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
                         leaderMember,
                         "기존 과제",
                         "과제 내용",
                         "링크 제출",
-                        LocalDateTime.now(clock).plusDays(1),
-                        clock
+                        now.plusDays(1),
+                        now
                 )
         );
 

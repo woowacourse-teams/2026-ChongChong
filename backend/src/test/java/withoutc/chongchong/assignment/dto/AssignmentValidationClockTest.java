@@ -59,7 +59,7 @@ class AssignmentValidationClockTest {
                 "과제 내용",
                 "링크 제출",
                 NOW,
-                fixedClock()
+                NOW
         ))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
@@ -101,7 +101,7 @@ class AssignmentValidationClockTest {
                 "과제 내용",
                 "링크 제출",
                 closeAt,
-                fixedClock()
+                NOW
         );
     }
 
@@ -109,10 +109,6 @@ class AssignmentValidationClockTest {
         StudyMember writer = mock(StudyMember.class);
         when(writer.getStudy()).thenReturn(mock(Study.class));
         return writer;
-    }
-
-    private Clock fixedClock() {
-        return Clock.fixed(INSTANT, ZONE_ID);
     }
 
     @TestConfiguration(proxyBeanMethods = false)

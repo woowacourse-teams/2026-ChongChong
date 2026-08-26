@@ -3,9 +3,7 @@ package withoutc.chongchong.notice.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,13 +26,12 @@ class NoticeRecipientTest {
     }
 
     @Test
-    @DisplayName("공지 수신자를 읽음 처리하면 주어진 Clock의 시각을 기록한다")
+    @DisplayName("공지 수신자를 읽음 처리하면 주어진 시각을 기록한다")
     void markAsReadTest() {
         NoticeRecipient recipient = NoticeRecipient.create(mock(StudyMember.class), mock(Notice.class));
         LocalDateTime expectedReadAt = LocalDateTime.of(2026, 8, 24, 12, 30);
-        Clock clock = Clock.fixed(expectedReadAt.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
-        recipient.markAsRead(clock);
+        recipient.markAsRead(expectedReadAt);
 
         assertThat(recipient.getReadAt()).isEqualTo(expectedReadAt);
         assertThat(recipient.isRead()).isTrue();
@@ -45,9 +42,8 @@ class NoticeRecipientTest {
     void markAsReadTruncatesToMicrosecondsTest() {
         NoticeRecipient recipient = NoticeRecipient.create(mock(StudyMember.class), mock(Notice.class));
         LocalDateTime now = LocalDateTime.of(2026, 8, 24, 12, 30, 0, 123_456_789);
-        Clock clock = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
-        recipient.markAsRead(clock);
+        recipient.markAsRead(now);
 
         assertThat(recipient.getReadAt()).isEqualTo(now.truncatedTo(ChronoUnit.MICROS));
     }
@@ -58,11 +54,9 @@ class NoticeRecipientTest {
         NoticeRecipient recipient = NoticeRecipient.create(mock(StudyMember.class), mock(Notice.class));
         LocalDateTime firstReadAt = LocalDateTime.of(2026, 8, 24, 12, 30);
         LocalDateTime secondReadAt = firstReadAt.plusMinutes(5);
-        Clock firstClock = Clock.fixed(firstReadAt.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
-        Clock secondClock = Clock.fixed(secondReadAt.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
-        recipient.markAsRead(firstClock);
-        recipient.markAsRead(secondClock);
+        recipient.markAsRead(firstReadAt);
+        recipient.markAsRead(secondReadAt);
 
         assertThat(recipient.getReadAt()).isEqualTo(firstReadAt);
     }
