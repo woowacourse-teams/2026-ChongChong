@@ -13,6 +13,7 @@ jwt:
 
 frontend:
   base-url: https://test.chongchong.app
+  allowed-origins: https://test.chongchong.app,http://localhost:3005
 
 auth:
   jwt:
