@@ -84,11 +84,9 @@ export async function updateAssignmentSubmission(
   submissionId: number,
   values: AssignmentSubmissionValue,
 ) {
-  return api
-    .patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
-      json: values,
-    })
-    .json<SubmissionDetail>();
+  return api.patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+    json: values,
+  });
 }
 
 export async function createAssignment(studyId: number, values: AssignmentValue) {
@@ -104,11 +102,9 @@ export async function updateAssignment(
   assignmentId: number,
   values: UpdateAssignmentValue,
 ) {
-  return api
-    .patch(`studies/${studyId}/assignments/${assignmentId}`, {
-      json: values,
-    })
-    .json<AssignmentDetail>();
+  await api.patch(`studies/${studyId}/assignments/${assignmentId}`, {
+    json: values,
+  });
 }
 
 export async function deleteAssignment(studyId: number, assignmentId: number) {
