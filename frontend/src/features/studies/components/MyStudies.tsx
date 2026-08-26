@@ -3,7 +3,13 @@ import studyQueries from '../queries';
 import StudyList from './StudyList';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { typography } from '../../../styles/global';
-import { tokens } from '../../../styles/global';
+import { CSSProperties } from 'react';
+
+const sectionStyle = {
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+} satisfies CSSProperties;
 
 export default function MyStudies() {
   const { data: studies } = useSuspenseQuery({
@@ -12,14 +18,12 @@ export default function MyStudies() {
   });
 
   return (
-    <section aria-labelledby="my-studies-heading">
+    <section css={sectionStyle} aria-labelledby="my-studies-heading">
       <h2 id="my-studies-heading" css={typography.subtitle}>
         내 스터디
       </h2>
       {studies.length === 0 ? (
-        <div css={{ margin: `${tokens.spacing[8]} 0` }}>
-          <EmptyContent message="아직 스터디가 없어요" />
-        </div>
+        <EmptyContent message="아직 스터디가 없어요" />
       ) : (
         <StudyList studies={studies} />
       )}
