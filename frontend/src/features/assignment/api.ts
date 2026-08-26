@@ -86,7 +86,7 @@ export async function updateAssignmentSubmission(
   submissionId: number,
   values: AssignmentSubmissionValue,
 ) {
-  return api.patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+  await api.patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
     json: values,
   });
 }

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { BASE_URL } from '../../../../config';
-import type { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
+import type { AssignmentValue } from '../types';
 
 const assignmentList = Array.from({ length: 12 }, (_, index) => {
   const id = 12 - index;
@@ -51,18 +51,7 @@ export const handlers = [
 
   http.patch(
     `${BASE_URL}/studies/:studyId/assignments/:assignmentId`,
-    async ({ params, request }) => {
-      const values = (await request.json()) as UpdateAssignmentValue;
-
-      return HttpResponse.json({
-        id: Number(params.assignmentId),
-        title: '이번주 그리디 3문제 풀이',
-        content: '백준에서 그리디 문제 세 문제를 풀어주세요.',
-        submissionMethod: '풀이 링크 제출',
-        closeAt: '2026-08-31T23:59:00',
-        ...values,
-      });
-    },
+    () => new HttpResponse(null, { status: 204 }),
   ),
 
   http.delete(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, () => {
@@ -160,34 +149,11 @@ export const handlers = [
 
   http.post(
     `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`,
-    async ({ request }) => {
-      const values = (await request.json()) as AssignmentSubmissionValue;
-
-      return HttpResponse.json(
-        {
-          id: 4,
-          name: '총총이',
-          profileImage: 'https://example.com/profile.png',
-          createdAt: new Date().toISOString(),
-          ...values,
-        },
-        { status: 201 },
-      );
-    },
+    () => HttpResponse.json({ submissionId: 4 }, { status: 201 }),
   ),
 
   http.patch(
     `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
-    async ({ params, request }) => {
-      const values = (await request.json()) as AssignmentSubmissionValue;
-
-      return HttpResponse.json({
-        id: Number(params.submissionId),
-        name: '총총이',
-        profileImage: 'https://example.com/profile.png',
-        createdAt: '2026-08-03T18:20:00',
-        ...values,
-      });
-    },
+    () => new HttpResponse(null, { status: 204 }),
   ),
 ];

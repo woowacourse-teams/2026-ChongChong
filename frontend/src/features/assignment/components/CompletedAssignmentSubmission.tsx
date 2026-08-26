@@ -68,12 +68,14 @@ export default function CompletedAssignmentSubmission({
   const updateMutation = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       updateAssignmentSubmission(studyId, assignmentId, submissionId, values),
-    onSuccess: (updatedSubmission) => {
-      queryClient.setQueryData(
-        assignmentQueries.submissionDetail(studyId, assignmentId, submissionId).queryKey,
-        updatedSubmission,
-      );
-      queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: assignmentQueries.submissionDetail(studyId, assignmentId, submissionId)
+            .queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) }),
+      ]);
       setIsEditing(false);
     },
   });
