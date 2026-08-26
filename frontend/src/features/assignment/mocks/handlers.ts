@@ -69,43 +69,40 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get(
-    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/completions-status`,
-    ({ params }) => {
-      return HttpResponse.json({
-        id: Number(params.assignmentId),
-        memberCount: 4,
-        completeCount: 2,
-        incompleteCount: 2,
-        remindAt: '2025-04-16T16:44:10',
-        completeMembers: [
-          {
-            id: 1,
-            name: '안톨리니',
-            profileImage: 'https://example.com/profile.png',
-          },
-          {
-            id: 2,
-            name: '피즈',
-            profileImage: 'https://example.com/profile.png',
-          },
-        ],
-        incompleteMembers: [
-          {
-            id: 3,
-            name: '바니',
-            profileImage: 'https://example.com/profile2.png',
-            lastRemindAt: '2025-04-16T16:44:10',
-          },
-          {
-            id: 4,
-            name: '이든',
-            profileImage: 'https://example.com/profile.png',
-          },
-        ],
-      });
-    },
-  ),
+  http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId/status`, ({ params }) => {
+    return HttpResponse.json({
+      id: Number(params.assignmentId),
+      memberCount: 4,
+      completeCount: 2,
+      incompleteCount: 2,
+      remindAt: '2025-04-16T16:44:10',
+      completeMembers: [
+        {
+          id: 1,
+          name: '안톨리니',
+          profileImage: 'https://example.com/profile.png',
+        },
+        {
+          id: 2,
+          name: '피즈',
+          profileImage: 'https://example.com/profile.png',
+        },
+      ],
+      incompleteMembers: [
+        {
+          id: 3,
+          name: '바니',
+          profileImage: 'https://example.com/profile2.png',
+          lastRemindAt: '2025-04-16T16:44:10',
+        },
+        {
+          id: 4,
+          name: '이든',
+          profileImage: 'https://example.com/profile.png',
+        },
+      ],
+    });
+  }),
 
   http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, ({ params }) => {
     const assignmentId = Number(params.assignmentId);
