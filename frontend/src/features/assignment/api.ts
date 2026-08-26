@@ -8,6 +8,8 @@ import {
   UpdateAssignmentValue,
   AssignmentListResponse,
   AssignmentSubmissionValue,
+  CreateAssignmentResponse,
+  CreateSubmissionResponse,
 } from './types';
 
 export async function fetchAssignmentList(studyId: number, cursor?: number) {
@@ -75,7 +77,7 @@ export async function createAssignmentSubmission(
     .post(`studies/${studyId}/assignments/${assignmentId}/submissions`, {
       json: values,
     })
-    .json<SubmissionDetail>();
+    .json<CreateSubmissionResponse>();
 }
 
 export async function updateAssignmentSubmission(
@@ -94,7 +96,7 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
     .post(`studies/${studyId}/assignments`, {
       json: values,
     })
-    .json<AssignmentDetail>();
+    .json<CreateAssignmentResponse>();
 }
 
 export async function updateAssignment(

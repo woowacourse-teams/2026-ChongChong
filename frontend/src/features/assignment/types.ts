@@ -62,3 +62,11 @@ export interface AssignmentSubmissionValue {
   content: string;
   link?: string;
 }
+
+export interface CreateAssignmentResponse {
+  assignmentId: number;
+}
+
+export interface CreateSubmissionResponse {
+  submissionId: number;
+}
