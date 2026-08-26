@@ -160,7 +160,7 @@ class NoticeRecipientRepositoryTest {
     private void insertNotification(Long studyId, Long recipientId, Long resourceId, String resourceType,
                                     LocalDateTime createdAt) {
         jdbcTemplate.update("""
-                        INSERT INTO notification (
+                        INSERT INTO notifications (
                             study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
                         ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
                         """,
