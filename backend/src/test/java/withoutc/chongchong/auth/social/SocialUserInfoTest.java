@@ -3,6 +3,7 @@ package withoutc.chongchong.auth.social;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class SocialUserInfoTest {
     @DisplayName("검증 결과에는 Provider Token과 인증 정보가 포함되지 않는다")
     void containOnlyVerifiedUserInformation() {
         assertThat(Arrays.stream(SocialUserInfo.class.getRecordComponents())
-                .map(component -> component.getName()))
+                .map(RecordComponent::getName))
                 .containsExactly("provider", "providerUserId", "displayName", "profileImageUrl");
     }
 

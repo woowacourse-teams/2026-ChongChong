@@ -1,11 +1,16 @@
 package withoutc.chongchong.assignment.repository;
 
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
+import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 
 public interface AssignmentSubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
 
@@ -22,4 +27,53 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
             @Param("assignmentIds") List<Long> assignmentIds,
             @Param("memberId") Long memberId
     );
+
+    @Query("""
+            SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection(
+                       member.id,
+                       member.name,
+                       member.profileImageUrl,
+                       submission.submitted,
+                       MAX(notification.createdAt)
+                   )
+            FROM AssignmentSubmission submission
+            JOIN submission.member member
+            LEFT JOIN Notification notification
+              ON notification.recipient = member
+             AND notification.resourceType = withoutc.chongchong.notification.entity.NotificationResourceType.ASSIGNMENT
+             AND notification.resourceId = submission.assignment.id
+             AND notification.type = withoutc.chongchong.notification.entity.NotificationType.REMIND
+            WHERE submission.assignment.id = :assignmentId
+            GROUP BY member.id,
+                     member.name,
+                     member.profileImageUrl,
+                     submission.submitted
+            """)
+    List<AssignmentSubmitterStatusProjection> findAllSubmitterStatusesByAssignmentId(
+            @Param("assignmentId") Long assignmentId);
+
+    @EntityGraph(attributePaths = "member")
+    List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedTrue(Long assignmentId);
+
+    Optional<AssignmentSubmission> findByAssignmentIdAndMemberId(Long assignmentId, Long memberId);
+
+    Optional<AssignmentSubmission> findByIdAndAssignmentId(Long id, Long assignmentId);
+
+    Optional<AssignmentSubmission> findByIdAndAssignmentIdAndMemberId(Long id, Long assignmentId, Long memberId);
+
+    default AssignmentSubmission getByAssignmentIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
+        return findByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
+                AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    }
+
+    default AssignmentSubmission getByIdAndAssignmentIdOrThrow(Long id, Long assignmentId) {
+        return findByIdAndAssignmentId(id, assignmentId).orElseThrow(
+                () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    }
+
+    default AssignmentSubmission getByIdAndAssignmentIdAndMemberIdOrThrow(Long id, Long assignmentId,
+                                                                          Long memberId) {
+        return findByIdAndAssignmentIdAndMemberId(id, assignmentId, memberId).orElseThrow(
+                () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    }
 }

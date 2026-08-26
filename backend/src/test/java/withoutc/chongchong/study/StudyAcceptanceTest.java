@@ -9,10 +9,7 @@ import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.http.ContentType;
 import java.sql.Timestamp;
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,10 +38,8 @@ import withoutc.chongchong.user.repository.UserRepository;
 @ActiveProfiles("test")
 class StudyAcceptanceTest {
 
-    private static final Clock ASSIGNMENT_CLOCK = Clock.fixed(
-            Instant.parse("2026-08-19T00:00:00Z"),
-            ZoneId.of("Asia/Seoul")
-    );
+    private static final LocalDateTime NOTICE_NOW = LocalDateTime.of(2026, 8, 19, 0, 0);
+    private static final LocalDateTime ASSIGNMENT_NOW = LocalDateTime.of(2026, 8, 19, 9, 0);
 
     @Autowired
     private StudyRepository studyRepository;
@@ -258,7 +253,7 @@ class StudyAcceptanceTest {
         );
         Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
         notice.addRecipients(List.of(firstStudyMember, secondStudyMember));
-        notice.getRecipients().getFirst().markAsRead(ASSIGNMENT_CLOCK);
+        notice.getRecipients().getFirst().markAsRead(NOTICE_NOW);
         noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
@@ -267,7 +262,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_CLOCK
+                        ASSIGNMENT_NOW
                 )
         );
         assignment.initializeSubmissions(List.of(firstStudyMember, secondStudyMember));
@@ -316,7 +311,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_CLOCK
+                        ASSIGNMENT_NOW
                 )
         );
         assignment.initializeSubmissions(List.of(memberStudyMember));
@@ -407,7 +402,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_CLOCK
+                        ASSIGNMENT_NOW
                 )
         );
 

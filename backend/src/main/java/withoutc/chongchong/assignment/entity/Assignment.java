@@ -11,7 +11,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,8 +65,8 @@ public class Assignment extends BaseEntity {
 
     public static Assignment create(StudyMember writer, String title, String content,
                                     String submissionMethod,
-                                    LocalDateTime closeAt, Clock clock) {
-        return new Assignment(writer, title, content, submissionMethod, closeAt, LocalDateTime.now(clock));
+                                    LocalDateTime closeAt, LocalDateTime now) {
+        return new Assignment(writer, title, content, submissionMethod, closeAt, now);
     }
 
     private Assignment(StudyMember writer, String title, String content, String submissionMethod,
@@ -86,7 +85,7 @@ public class Assignment extends BaseEntity {
     }
 
     public void update(String title, String content, String submissionMethod, LocalDateTime closeAt,
-                       List<LocalDateTime> remindAts, Clock clock) {
+                       List<LocalDateTime> remindAts, LocalDateTime now) {
         if (title != null) {
             validateTitle(title);
             this.title = title;
@@ -100,12 +99,12 @@ public class Assignment extends BaseEntity {
             this.submissionMethod = submissionMethod;
         }
         if (closeAt != null) {
-            validateCloseAt(closeAt, LocalDateTime.now(clock));
+            validateCloseAt(closeAt, now);
             this.closeAt = closeAt;
         }
 
         if (remindAts != null) {
-            replacePendingReminders(remindAts, LocalDateTime.now(clock));
+            replacePendingReminders(remindAts, now);
         }
     }
 

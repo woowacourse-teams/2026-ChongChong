@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -35,9 +32,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest
 class AssignmentRepositoryTest {
 
-    private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-08-20T00:00:00Z"), ZoneId.of("Asia/Seoul")
-    );
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 9, 0);
 
     @Autowired
     private AssignmentRepository assignmentRepository;
@@ -65,7 +60,7 @@ class AssignmentRepositoryTest {
                             "과제 내용 " + index,
                             "GitHub PR",
                             LocalDateTime.of(2026, 8, 30, 23, 59),
-                            CLOCK
+                            NOW
                     )
             ));
         }
@@ -75,7 +70,7 @@ class AssignmentRepositoryTest {
                 "다른 과제 내용",
                 "GitHub PR",
                 LocalDateTime.of(2026, 8, 30, 23, 59),
-                CLOCK
+                NOW
         ));
         assignmentRepository.flush();
 
@@ -130,7 +125,7 @@ class AssignmentRepositoryTest {
                 "과제 내용",
                 "GitHub PR",
                 LocalDateTime.of(2026, 8, 30, 23, 59),
-                CLOCK
+                NOW
         ));
 
         Assignment found = assignmentRepository.getByIdOrThrow(assignment.getId());
@@ -247,7 +242,7 @@ class AssignmentRepositoryTest {
                 "과제 내용",
                 "GitHub PR",
                 LocalDateTime.of(2026, 8, 30, 23, 59),
-                CLOCK
+                NOW
         ));
         assignment.initializeSubmissions(members);
         assignment.getSubmissions().stream()

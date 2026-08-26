@@ -129,6 +129,9 @@ export const globalStyles = css`
 
     /* Typography Letter spacing */
     --letter-spacing-default: -0.025em;
+
+    /* Screen Size */
+    --body-width: 448px;
   }
   ${modernNormalize}
 `;
@@ -261,6 +264,10 @@ export const tokens = {
 
   letterSpacing: {
     default: 'var(--letter-spacing-default)',
+  },
+
+  screenSize: {
+    default: 'var(--body-width)',
   },
 } as const;
 

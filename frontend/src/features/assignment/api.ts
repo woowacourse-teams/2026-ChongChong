@@ -23,9 +23,7 @@ export async function fetchAssignmentList(studyId: number, cursor?: number) {
 
 export async function fetchAssignmentSubmitStatus(studyId: number, assignmentsId: number) {
   try {
-    const response = await api.get(
-      `/studies/${studyId}/assignments/${assignmentsId}/completions-status`,
-    );
+    const response = await api.get(`/studies/${studyId}/assignments/${assignmentsId}/status`);
     return await response.json<AssignmentSubmitStatus>();
   } catch {
     throw new Error('과제 제출 현황을 불러오는데 실패했습니다.');

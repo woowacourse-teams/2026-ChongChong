@@ -125,7 +125,8 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
-        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(noticeId);
+        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(
+                noticeId);
 
         List<NoticeStatusesResponse.ReadMember> readMembers = statuses.stream()
                 .filter(NoticeRecipientStatusProjection::isRead)
@@ -161,7 +162,8 @@ public class NoticeService {
         validateNoticeBelongsToStudy(studyId, notice);
 
         NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(noticeId, member.getId());
-        recipient.markAsRead(clock);
+        LocalDateTime now = LocalDateTime.now(clock);
+        recipient.markAsRead(now);
 
         return NoticeReadResponse.from(recipient);
     }

@@ -20,10 +20,16 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
+import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
 
 @RequiredArgsConstructor
 @RequestMapping("/studies/{studyId}/assignments")
@@ -50,18 +56,16 @@ public class AssignmentController {
     }
 
     @GetMapping
-    public ResponseEntity<AssignmentListResponse> getAssignments(
-            @AuthenticationPrincipal AuthenticatedUser currentUser,
-            @PathVariable Long studyId,
-            @RequestParam(required = false) @Positive(message = "cursor는 양수여야 합니다.") Long cursor,
-            @RequestParam(defaultValue = "10") @Positive(message = "size는 양수여야 합니다.")
-            @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.") int size) {
+    public ResponseEntity<AssignmentListResponse> getAssignments(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                                 @PathVariable Long studyId,
+                                                                 @RequestParam(required = false) @Positive(message = "cursor는 양수여야 합니다.") Long cursor,
+                                                                 @RequestParam(defaultValue = "10") @Positive(message = "size는 양수여야 합니다.") @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.") int size) {
         AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size);
 
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("{assignmentId}")
+    @PatchMapping("/{assignmentId}")
     public ResponseEntity<Void> updateAssignment(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                  @PathVariable Long studyId, @PathVariable Long assignmentId,
                                                  @Valid @RequestBody AssignmentUpdateRequest request) {
@@ -70,11 +74,60 @@ public class AssignmentController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("{assignmentId}")
+    @DeleteMapping("/{assignmentId}")
     public ResponseEntity<Void> deleteAssignment(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                                  @PathVariable Long studyId, @PathVariable Long assignmentId) {
         assignmentService.delete(currentUser.id(), studyId, assignmentId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{assignmentId}/submissions")
+    public ResponseEntity<AssignmentSubmitResponse> submitAssignment(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId, @Valid @RequestBody AssignmentSubmitRequest request) {
+        AssignmentSubmitResponse response = assignmentService.submitAssignment(currentUser.id(), studyId, assignmentId,
+                request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{assignmentId}/submissions/{submissionId}")
+    public ResponseEntity<Void> updateSubmission(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId, @PathVariable Long submissionId,
+            @Valid @RequestBody AssignmentSubmitRequest request) {
+        assignmentService.updateSubmission(currentUser.id(), studyId, assignmentId, submissionId, request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{assignmentId}/status")
+    public ResponseEntity<AssignmentStatusesResponse> getAllSubmissionStatuses(
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
+            @PathVariable Long studyId, @PathVariable Long assignmentId) {
+
+        AssignmentStatusesResponse response = assignmentService.getAllSubmittedStatus(currentUser.id(), studyId,
+                assignmentId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{assignmentId}/submissions/{submissionId}")
+    public ResponseEntity<SubmissionDetailResponse> getSubmissionDetail(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId, @PathVariable Long submissionId) {
+        SubmissionDetailResponse response = assignmentService.getSubmissionDetail(currentUser.id(), studyId,
+                assignmentId, submissionId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{assignmentId}/submissions")
+    public ResponseEntity<SubmissionListResponse> getSubmissionList(
+            @AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable Long studyId,
+            @PathVariable Long assignmentId) {
+        SubmissionListResponse response = assignmentService.getSubmissionList(currentUser.id(), studyId, assignmentId);
+
+        return ResponseEntity.ok(response);
     }
 }

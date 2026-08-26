@@ -4,9 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -33,9 +31,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest
 class NoticeRepositoryTest {
 
-    private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-08-20T00:00:00Z"), ZoneId.of("Asia/Seoul")
-    );
+    private static final LocalDateTime CLOCK = LocalDateTime.of(2026, 8, 20, 0, 0);
 
     @Autowired
     private NoticeRepository noticeRepository;
