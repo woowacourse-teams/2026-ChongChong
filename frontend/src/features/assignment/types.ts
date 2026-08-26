@@ -4,10 +4,16 @@ export interface Assignment {
   content: string;
   submissionType: string;
   closeAt: string;
-  memberCount: number;
-  completeCount: number;
+  memberCount?: number;
+  completeCount?: number;
   remindAt?: string;
   isComplete: boolean;
+}
+
+export interface AssignmentListResponse {
+  nextCursor: number;
+  hasNext: boolean;
+  assignments: Assignment[];
 }
 
 export interface Member {
@@ -33,7 +39,12 @@ export interface AssignmentDetail {
   content: string;
   submissionType: string;
   closeAt: string;
+  submissionId?: number;
 }
+
+export type AssignmentValue = Omit<AssignmentDetail, 'id' | 'submissionId'>;
+
+export type UpdateAssignmentValue = Partial<AssignmentValue>;
 
 export interface Submission {
   id: number;
@@ -43,6 +54,11 @@ export interface Submission {
 }
 
 export interface SubmissionDetail extends Submission {
+  content: string;
+  link?: string;
+}
+
+export interface AssignmentSubmissionValue {
   content: string;
   link?: string;
 }

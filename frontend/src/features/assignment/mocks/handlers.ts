@@ -1,32 +1,72 @@
 import { http, HttpResponse } from 'msw';
 import { BASE_URL } from '../../../../config';
+import type { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
+
+const assignmentList = Array.from({ length: 12 }, (_, index) => {
+  const id = 12 - index;
+
+  return {
+    id,
+    title: `${id}주차 과제`,
+    content: `${id}주차 학습 내용을 정리하고 풀이 링크를 제출해주세요.`,
+    submissionType: id % 2 === 0 ? 'GitHub PR' : '링크 제출',
+    closeAt: `2026-09-${String(id).padStart(2, '0')}T23:59:59`,
+    memberCount: 4,
+    completeCount: id % 5,
+    isComplete: id % 4 === 0,
+  };
+});
 
 export const handlers = [
-  http.get(`${BASE_URL}/studies/:studyId/assignments`, () => {
-    return HttpResponse.json({
-      assignments: [
-        {
-          id: 1,
-          title: '8월 스터디 운영 방식이 바뀝니다',
-          content: '8월부터 스터디 운영 방식을 변경하려고 합니다.',
-          submissionType: '링크 제출',
-          closeAt: '2026-08-25T23:59:59',
-          memberCount: 4,
-          completeCount: 2,
-          isComplete: false,
-        },
-        {
-          id: 2,
-          title: '9월의 스터디',
-          content: '치킨 피자',
-          submissionType: '링크 제출',
-          closeAt: '2026-08-25T23:59:59',
-          memberCount: 4,
-          completeCount: 2,
-          isComplete: true,
-        },
-      ],
-    });
+  http.get(`${BASE_URL}/studies/:studyId/assignments`, ({ request }) => {
+    const searchParams = new URL(request.url).searchParams;
+    const cursor = searchParams.get('cursor');
+    const requestedSize = Number(searchParams.get('size') ?? 4);
+    const size = Number.isInteger(requestedSize) && requestedSize > 0 ? requestedSize : 4;
+    const cursorIndex = cursor
+      ? assignmentList.findIndex((assignment) => assignment.id === Number(cursor))
+      : 0;
+    const startIndex = cursorIndex >= 0 ? cursorIndex : 0;
+    const assignments = assignmentList.slice(startIndex, startIndex + size);
+    const nextIndex = startIndex + assignments.length;
+    const hasNext = nextIndex < assignmentList.length;
+    const nextCursor = hasNext
+      ? assignmentList[nextIndex].id
+      : (assignments[assignments.length - 1]?.id ?? 0);
+
+    return HttpResponse.json({ nextCursor, hasNext, assignments });
+  }),
+
+  http.post(`${BASE_URL}/studies/:studyId/assignments`, async ({ request }) => {
+    const values = (await request.json()) as AssignmentValue;
+
+    return HttpResponse.json(
+      {
+        id: 3,
+        ...values,
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.patch(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId`,
+    async ({ params, request }) => {
+      const values = (await request.json()) as UpdateAssignmentValue;
+
+      return HttpResponse.json({
+        id: Number(params.assignmentId),
+        title: '이번주 그리디 3문제 풀이',
+        content: '백준에서 그리디 문제 세 문제를 풀어주세요.',
+        submissionType: '풀이 링크 제출',
+        closeAt: '2026-08-31T23:59:00',
+        ...values,
+      });
+    },
+  ),
+
+  http.delete(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(
@@ -68,14 +108,17 @@ export const handlers = [
   ),
 
   http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, ({ params }) => {
+    const assignmentId = Number(params.assignmentId);
+
     return HttpResponse.json({
-      id: Number(params.assignmentId),
+      id: assignmentId,
       title: '이번주 그리디 3문제 풀이',
       closeAt: '2025-04-16T16:44:10',
       content:
         '백준에서 문제 푸시고 링크 올려주시면 됩니다. 그리디 문제집에서 원하는 세 문제를 풀고 올려주세요.',
       submissionType:
         'GitHub 저장소에 문제 번호로 폴더를 만들어 올린 뒤, 저장소나 PR 링크를 제출해주세요.',
+      ...(assignmentId % 4 === 0 && { submissionId: assignmentId + 100 }),
     });
   }),
 
@@ -114,6 +157,39 @@ export const handlers = [
         createdAt: '2025-04-16 16:44:10',
         content: '과제 제출합니다.',
         link: 'http://localhost:8080',
+      });
+    },
+  ),
+
+  http.post(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`,
+    async ({ request }) => {
+      const values = (await request.json()) as AssignmentSubmissionValue;
+
+      return HttpResponse.json(
+        {
+          id: 4,
+          name: '총총이',
+          profileImage: 'https://example.com/profile.png',
+          createdAt: new Date().toISOString(),
+          ...values,
+        },
+        { status: 201 },
+      );
+    },
+  ),
+
+  http.patch(
+    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
+    async ({ params, request }) => {
+      const values = (await request.json()) as AssignmentSubmissionValue;
+
+      return HttpResponse.json({
+        id: Number(params.submissionId),
+        name: '총총이',
+        profileImage: 'https://example.com/profile.png',
+        createdAt: '2026-08-03T18:20:00',
+        ...values,
       });
     },
   ),

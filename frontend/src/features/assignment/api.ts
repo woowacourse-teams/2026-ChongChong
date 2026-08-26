@@ -1,16 +1,21 @@
 import api from '../../client';
 import {
-  Assignment,
   AssignmentSubmitStatus,
   AssignmentDetail,
   Submission,
   SubmissionDetail,
+  AssignmentValue,
+  UpdateAssignmentValue,
+  AssignmentListResponse,
+  AssignmentSubmissionValue,
 } from './types';
 
-export async function fetchAssignmentList(studyId: number) {
+export async function fetchAssignmentList(studyId: number, cursor?: number) {
   try {
-    const response = await api.get(`/studies/${studyId}/assignments`);
-    return await response.json<{ assignments: Assignment[] }>();
+    const response = await api.get(`/studies/${studyId}/assignments`, {
+      searchParams: cursor === undefined ? undefined : { cursor },
+    });
+    return await response.json<AssignmentListResponse>();
   } catch {
     throw new Error('과제 목록을 불러오는데 실패했습니다.');
   }
@@ -61,4 +66,53 @@ export async function fetchAssignmentSubmissionDetail(
   } catch {
     throw new Error('제출 정보를 불러오는데 실패했습니다.');
   }
+}
+
+export async function createAssignmentSubmission(
+  studyId: number,
+  assignmentId: number,
+  values: AssignmentSubmissionValue,
+) {
+  return api
+    .post(`studies/${studyId}/assignments/${assignmentId}/submissions`, {
+      json: values,
+    })
+    .json<SubmissionDetail>();
+}
+
+export async function updateAssignmentSubmission(
+  studyId: number,
+  assignmentId: number,
+  submissionId: number,
+  values: AssignmentSubmissionValue,
+) {
+  return api
+    .patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+      json: values,
+    })
+    .json<SubmissionDetail>();
+}
+
+export async function createAssignment(studyId: number, values: AssignmentValue) {
+  return api
+    .post(`studies/${studyId}/assignments`, {
+      json: values,
+    })
+    .json<AssignmentDetail>();
+}
+
+export async function updateAssignment(
+  studyId: number,
+  assignmentId: number,
+  values: UpdateAssignmentValue,
+) {
+  return api
+    .patch(`studies/${studyId}/assignments/${assignmentId}`, {
+      json: values,
+    })
+    .json<AssignmentDetail>();
+}
+
+export async function deleteAssignment(studyId: number, assignmentId: number) {
+  await api.delete(`studies/${studyId}/assignments/${assignmentId}`);
 }

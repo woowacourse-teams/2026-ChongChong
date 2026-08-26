@@ -8,14 +8,16 @@ import { useRef } from 'react';
 import DetailActions from '../../../shared/ui/components/DetailActions';
 import Main from '../../../shared/ui/Main';
 import assignmentQueries from '../queries';
-import { useSuspenseQueries } from '@tanstack/react-query';
+import { useSuspenseQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import SubmitStatusSection from '../components/SubmitStatusSection';
 import AssignmentArticle from '../components/AssignmentArticle';
 import SubmissionList from '../components/SubmissionList';
+import { deleteAssignment } from '../api';
 
 export default function LeaderAssignmentDetailpage() {
   const navigate = useNavigate();
   const { studyId, assignmentId } = useParams();
+  const queryClient = useQueryClient();
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
 
   const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
@@ -26,6 +28,22 @@ export default function LeaderAssignmentDetailpage() {
         assignmentQueries.submissions(Number(studyId), Number(assignmentId)),
       ],
     });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteAssignment(Number(studyId), Number(assignmentId)),
+
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: assignmentQueries.detail(Number(studyId), Number(assignmentId)).queryKey,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: assignmentQueries.lists(Number(studyId)),
+      });
+
+      navigate(`/studies/${studyId}/assignments`);
+    },
+  });
 
   const openDeleteDialog = () => deleteDialogRef.current?.showModal();
   const closeDeleteDialog = () => deleteDialogRef.current?.close();
@@ -51,8 +69,11 @@ export default function LeaderAssignmentDetailpage() {
           <ConfirmDialog.CloseButton onClick={closeDeleteDialog}>취소</ConfirmDialog.CloseButton>
         }
         confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={closeDeleteDialog}>
-            삭제
+          <ConfirmDialog.ConfirmButton
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate()}
+          >
+            {deleteMutation.isPending ? '삭제 중...' : '삭제'}
           </ConfirmDialog.ConfirmButton>
         }
       />

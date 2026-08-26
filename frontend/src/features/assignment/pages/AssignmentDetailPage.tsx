@@ -1,4 +1,4 @@
-import MemberAssginmentDetailPage from './MemberAssignmentDetailPage';
+import MemberAssignmentDetailPage from './MemberAssignmentDetailPage';
 import LeaderAssignmentDetailpage from './LeaderAssginmentDetailPage';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import useStudyId from '../../studies/hooks/useStudyId';
@@ -11,5 +11,5 @@ export default function AssignmentDetailPage() {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
-  return role === 'LEADER' ? <LeaderAssignmentDetailpage /> : <MemberAssginmentDetailPage />;
+  return role === 'LEADER' ? <LeaderAssignmentDetailpage /> : <MemberAssignmentDetailPage />;
 }
