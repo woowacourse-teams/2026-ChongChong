@@ -7,6 +7,7 @@ public record AssignmentStatusesResponse(
         Long id,
         int memberCount,
         int completeCount,
+        int incompleteCount,
         LocalDateTime remindAt,
         List<CompleteMember> completeMembers,
         List<IncompleteMember> incompleteMembers
@@ -21,6 +22,7 @@ public record AssignmentStatusesResponse(
                 assignmentId,
                 completeMembers.size() + incompleteMembers.size(),
                 completeMembers.size(),
+                incompleteMembers.size(),
                 remindAt,
                 completeMembers,
                 incompleteMembers
@@ -31,7 +33,7 @@ public record AssignmentStatusesResponse(
     public record CompleteMember(
             Long id,
             String name,
-            String profileImageUrl
+            String profileImage
     ) {
         public static CompleteMember of(Long studyMemberId, String name, String profileImageUrl) {
             return new CompleteMember(studyMemberId, name, profileImageUrl);
@@ -42,7 +44,7 @@ public record AssignmentStatusesResponse(
     public record IncompleteMember(
             Long id,
             String name,
-            String profileImageUrl,
+            String profileImage,
             LocalDateTime lastRemindAt
     ) {
         public static IncompleteMember of(Long studyMemberId, String name, String profileImageUrl,

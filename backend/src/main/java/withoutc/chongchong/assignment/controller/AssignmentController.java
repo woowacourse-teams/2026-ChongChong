@@ -20,6 +20,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
@@ -28,6 +29,7 @@ import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
+import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
 
 @RequiredArgsConstructor
 @RequestMapping("/studies/{studyId}/assignments")
@@ -98,6 +100,16 @@ public class AssignmentController {
         assignmentService.updateSubmission(currentUser.id(), studyId, assignmentId, submissionId, request);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{assignmentId}/status")
+    public ResponseEntity<AssignmentStatusesResponse> getAllSubmissionStatuses(
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
+            @PathVariable Long studyId, @PathVariable Long assignmentId) {
+
+        AssignmentStatusesResponse response = assignmentService.getAllSubmittedStatus(currentUser.id(), studyId,
+                assignmentId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{assignmentId}/submissions/{submissionId}")
