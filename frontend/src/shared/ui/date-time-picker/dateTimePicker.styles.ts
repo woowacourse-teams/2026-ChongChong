@@ -21,7 +21,7 @@ export const backdropStyle = {
 export const sheetStyle = {
   position: 'relative',
   zIndex: 1,
-  width: '100%',
+  width: tokens.screenSize.default,
   maxHeight: '100dvh',
   padding: `${tokens.spacing[2]} ${tokens.spacing[5]} calc(${tokens.spacing[8]} + 2px + ${tokens.layout.safeBottom})`,
   borderRadius: `${tokens.spacing[6]} ${tokens.spacing[6]} ${tokens.spacing[0]} ${tokens.spacing[0]}`,
