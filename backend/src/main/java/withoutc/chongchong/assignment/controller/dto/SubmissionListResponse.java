@@ -24,7 +24,7 @@ public record SubmissionListResponse(
                     submission.getId(),
                     member.getName(),
                     member.getProfileImageUrl(),
-                    submission.getCreatedAt()
+                    submission.getSubmittedAt()
             );
         }
     }

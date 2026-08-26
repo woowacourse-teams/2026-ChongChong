@@ -2,6 +2,7 @@ package withoutc.chongchong.assignment.repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,6 +52,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
     List<AssignmentSubmitterStatusProjection> findAllSubmitterStatusesByAssignmentId(
             @Param("assignmentId") Long assignmentId);
 
+    @EntityGraph(attributePaths = "member")
     List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedTrue(Long assignmentId);
 
     Optional<AssignmentSubmission> findByAssignmentIdAndMemberId(Long assignmentId, Long memberId);

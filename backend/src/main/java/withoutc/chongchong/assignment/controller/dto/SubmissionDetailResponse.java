@@ -17,7 +17,7 @@ public record SubmissionDetailResponse(
                 submission.getId(),
                 member.getName(),
                 member.getProfileImageUrl(),
-                submission.getCreatedAt(),
+                submission.getSubmittedAt(),
                 submission.getContent(),
                 submission.getLink()
         );

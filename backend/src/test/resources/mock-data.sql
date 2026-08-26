@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     content TEXT,
     link TEXT,
     submitted BOOLEAN NOT NULL,
+    submitted_at TIMESTAMP(6),
     created_at TIMESTAMP(6),
     updated_at TIMESTAMP(6),
     CONSTRAINT fk_assignment_submissions_member FOREIGN KEY (member_id) REFERENCES study_members (id),
@@ -230,7 +231,16 @@ VALUES (1, 1, '1주차 JVM 구조', 'JVM 메모리 구조와 클래스 로딩 �
        (3, 11, '동적 계획법 10문제', '점화식 도출 과정을 포함해 풀이합니다.', '문제 풀이 링크', TIMESTAMP '2026-08-21 23:59:59', TIMESTAMP '2026-08-07 11:00:00', TIMESTAMP '2026-08-07 11:00:00'),
        (4, 15, '주간 회고', '한 주 동안 학습한 내용을 짧게 회고합니다.', NULL, TIMESTAMP '2026-08-23 23:59:59', TIMESTAMP '2026-08-16 12:00:00', TIMESTAMP '2026-08-16 12:00:00');
 
-INSERT INTO assignment_submissions (member_id, assignment_id, content, link, submitted, created_at, updated_at)
+INSERT INTO assignment_submissions (
+    member_id,
+    assignment_id,
+    content,
+    link,
+    submitted,
+    submitted_at,
+    created_at,
+    updated_at
+)
 SELECT member.id,
        assignment.id,
        CASE
@@ -246,6 +256,10 @@ SELECT member.id,
        CASE
            WHEN MOD(member.id + assignment.id, 3) = 0 THEN TRUE
            ELSE FALSE
+       END,
+       CASE
+           WHEN MOD(member.id + assignment.id, 3) = 0 THEN assignment.created_at
+           ELSE NULL
        END,
        assignment.created_at,
        assignment.created_at

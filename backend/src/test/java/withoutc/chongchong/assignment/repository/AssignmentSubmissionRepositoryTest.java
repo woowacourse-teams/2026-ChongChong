@@ -65,7 +65,7 @@ class AssignmentSubmissionRepositoryTest {
         Assignment otherMemberAssignment = createAssignment(leader, "다른 사람 과제");
 
         AssignmentSubmission submitted = AssignmentSubmission.create(member, submittedAssignment);
-        submitted.submit("제출 내용", null);
+        submitted.submit("제출 내용", null, NOW);
         assignmentSubmissionRepository.saveAllAndFlush(List.of(
                 submitted,
                 AssignmentSubmission.create(member, unsubmittedAssignment),
@@ -109,7 +109,7 @@ class AssignmentSubmissionRepositoryTest {
         Assignment assignment = createAssignment(leader, "과제");
         Assignment otherAssignment = createAssignment(leader, "다른 과제");
         AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
-        submitted.submit("제출 내용", null);
+        submitted.submit("제출 내용", null, NOW);
         assignmentSubmissionRepository.saveAllAndFlush(List.of(
                 submitted,
                 AssignmentSubmission.create(incompleteMember, assignment)

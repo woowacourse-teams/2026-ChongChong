@@ -419,6 +419,45 @@ class AssignmentApiTest {
     }
 
     @Test
+    @DisplayName("URL의 스터디와 과제의 스터디가 다르면 과제를 제출할 수 없다")
+    void submitAssignmentFromOtherStudyTest() {
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        StudyMember otherLeader = studyMemberRepository.save(
+                StudyMember.create(otherStudy, leaderUser, "다른 스터디 리더", null, StudyMemberRole.LEADER)
+        );
+        StudyMember otherMember = studyMemberRepository.save(
+                StudyMember.create(otherStudy, memberUser, "다른 스터디원", null, StudyMemberRole.MEMBER)
+        );
+        Assignment otherAssignment = Assignment.create(
+                otherLeader,
+                "다른 과제",
+                "다른 과제 내용",
+                "링크 제출",
+                closeAt,
+                LocalDateTime.now(CLOCK)
+        );
+        otherAssignment.initializeSubmissions(List.of(otherMember));
+        assignmentRepository.saveAndFlush(otherAssignment);
+
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(new AssignmentSubmitRequest("잘못된 제출", null))
+                .when()
+                .post("/studies/{studyId}/assignments/{assignmentId}/submissions",
+                        study.getId(), otherAssignment.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("ASSIGNMENT_NOT_FOUND"));
+
+        AssignmentSubmission otherSubmission = assignmentSubmissionRepository
+                .findByAssignmentIdAndMemberId(otherAssignment.getId(), otherMember.getId())
+                .orElseThrow();
+        assertThat(otherSubmission.isSubmitted()).isFalse();
+        assertThat(otherSubmission.getContent()).isNull();
+    }
+
+    @Test
     @DisplayName("스터디원은 자신의 과제 제출물을 수정할 수 있다")
     void updateSubmissionTest() {
         Long submissionId = submitAssignment(memberUser, assignment, "기존 제출 내용", "https://old.example.com");
@@ -467,6 +506,8 @@ class AssignmentApiTest {
         Long submissionId = submitAssignment(
                 memberUser, assignment, "제출 상세 내용", "https://submission.example.com"
         );
+        AssignmentSubmission savedSubmission = assignmentSubmissionRepository.findById(submissionId)
+                .orElseThrow();
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
@@ -477,6 +518,8 @@ class AssignmentApiTest {
                 .statusCode(200)
                 .body("id", equalTo(submissionId.intValue()))
                 .body("name", equalTo(member.getName()))
+                .body("createdAt",
+                        equalTo(savedSubmission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("content", equalTo("제출 상세 내용"))
                 .body("link", equalTo("https://submission.example.com"));
     }
@@ -503,6 +546,8 @@ class AssignmentApiTest {
     @DisplayName("리더가 제출물 목록을 조회하면 제출 완료된 내역만 반환한다")
     void getSubmissionListTest() {
         Long submissionId = submitAssignment(memberUser, assignment, "제출 내용", null);
+        AssignmentSubmission savedSubmission = assignmentSubmissionRepository.findById(submissionId)
+                .orElseThrow();
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -513,7 +558,9 @@ class AssignmentApiTest {
                 .statusCode(200)
                 .body("submissions", hasSize(1))
                 .body("submissions[0].id", equalTo(submissionId.intValue()))
-                .body("submissions[0].name", equalTo(member.getName()));
+                .body("submissions[0].name", equalTo(member.getName()))
+                .body("submissions[0].createdAt",
+                        equalTo(savedSubmission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
 
     @Test

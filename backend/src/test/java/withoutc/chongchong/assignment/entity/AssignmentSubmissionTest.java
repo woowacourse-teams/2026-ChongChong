@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
@@ -12,16 +13,19 @@ import withoutc.chongchong.study.entity.StudyMember;
 
 class AssignmentSubmissionTest {
 
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
+
     @Test
     @DisplayName("내용과 링크가 없어도 제출 완료 상태로 변경한다")
     void submitWithoutContentAndLinkTest() {
         AssignmentSubmission submission = createSubmission();
 
-        submission.submit(null, null);
+        submission.submit(null, null, NOW);
 
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getContent()).isNull();
         assertThat(submission.getLink()).isNull();
+        assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
     }
 
     @Test
@@ -29,7 +33,7 @@ class AssignmentSubmissionTest {
     void rejectContentOverMaximumLengthTest() {
         AssignmentSubmission submission = createSubmission();
 
-        assertThatThrownBy(() -> submission.submit("a".repeat(10001), null))
+        assertThatThrownBy(() -> submission.submit("a".repeat(10001), null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
@@ -42,7 +46,7 @@ class AssignmentSubmissionTest {
     void rejectLinkOverMaximumLengthTest() {
         AssignmentSubmission submission = createSubmission();
 
-        assertThatThrownBy(() -> submission.submit(null, "a".repeat(10001)))
+        assertThatThrownBy(() -> submission.submit(null, "a".repeat(10001), NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_LINK);
@@ -54,12 +58,13 @@ class AssignmentSubmissionTest {
     @DisplayName("수정 값이 없으면 기존 제출 내용을 유지한다")
     void updateOnlyProvidedValueTest() {
         AssignmentSubmission submission = createSubmission();
-        submission.submit("기존 내용", "https://old.example.com");
+        submission.submit("기존 내용", "https://old.example.com", NOW);
 
         submission.update(null, "https://new.example.com");
 
         assertThat(submission.getContent()).isEqualTo("기존 내용");
         assertThat(submission.getLink()).isEqualTo("https://new.example.com");
+        assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
     }
 
     private AssignmentSubmission createSubmission() {

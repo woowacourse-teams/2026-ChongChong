@@ -152,9 +152,12 @@ public class AssignmentService {
                                                      AssignmentSubmitRequest request) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
         AssignmentSubmission submission = assignmentSubmissionRepository.getByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, member.getId());
-        submission.submit(request.content(), request.link());
+        submission.submit(request.content(), request.link(), LocalDateTime.now(clock));
 
         return AssignmentSubmitResponse.from(submission);
     }

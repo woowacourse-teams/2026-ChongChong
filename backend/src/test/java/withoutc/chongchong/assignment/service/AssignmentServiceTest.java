@@ -356,6 +356,7 @@ class AssignmentServiceTest {
         AssignmentSubmission submission = submissionWithId(300L, member, assignment);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("제출 내용", "https://example.com");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
 
@@ -366,7 +367,25 @@ class AssignmentServiceTest {
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://example.com");
+        assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
         verify(assignmentSubmissionRepository).getByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID);
+    }
+
+    @Test
+    @DisplayName("URL의 스터디와 과제의 스터디가 다르면 과제를 제출할 수 없다")
+    void submitAssignmentFromOtherStudyTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID, 999L);
+        Assignment currentStudyAssignment = assignmentWithId(200L);
+        StudyMember member = studyMember(currentStudyAssignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
+        AssignmentSubmitRequest request = new AssignmentSubmitRequest("제출 내용", null);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
+
+        assertAssignmentNotFound(
+                () -> assignmentService.submitAssignment(USER_ID, STUDY_ID, ASSIGNMENT_ID, request)
+        );
+
+        verifyNoInteractions(assignmentSubmissionRepository);
     }
 
     @Test
@@ -375,7 +394,7 @@ class AssignmentServiceTest {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
         AssignmentSubmission submission = submissionWithId(300L, member, assignment);
-        submission.submit("기존 내용", "https://old.example.com");
+        submission.submit("기존 내용", "https://old.example.com", NOW);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("수정 내용", null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
@@ -397,7 +416,7 @@ class AssignmentServiceTest {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
         AssignmentSubmission submission = submissionWithId(300L, member, assignment);
-        submission.submit("제출 내용", "https://example.com");
+        submission.submit("제출 내용", "https://example.com", NOW);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.getByIdAndAssignmentIdAndMemberIdOrThrow(300L, ASSIGNMENT_ID, MEMBER_ID))
@@ -442,7 +461,7 @@ class AssignmentServiceTest {
         StudyMember leader = studyMember(assignment, MEMBER_ID, StudyMemberRole.LEADER, "리더");
         StudyMember submitter = studyMember(assignment, 22L, StudyMemberRole.MEMBER, "제출자");
         AssignmentSubmission submission = submissionWithId(300L, submitter, assignment);
-        submission.submit("제출 내용", null);
+        submission.submit("제출 내용", null, NOW);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedTrue(ASSIGNMENT_ID))
