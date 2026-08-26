@@ -35,7 +35,6 @@ load_deployment_environment() {
         DB_PASSWORD
         STUDY_INVITE_JWT_SECRET
         FRONTEND_BASE_URL
-        FRONTEND_ALLOWED_ORIGINS
         AUTH_JWT_ISSUER
         AUTH_JWT_AUDIENCE
         AUTH_JWT_SECRET_BASE64

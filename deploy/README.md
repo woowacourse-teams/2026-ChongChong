@@ -37,11 +37,14 @@ bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 
 - Docker Hub 사용자명과 최소 pull 권한 Token
 - PostgreSQL JDBC URL, 사용자명과 비밀번호
 - Study Invite 및 인증 JWT 설정
-- 프론트엔드 기준 URL
+- 프론트엔드 기준 URL과 선택적인 CORS 허용 Origin 목록
 - Kakao REST API 키, Client Secret과 환경별 Redirect URI
 
 배포 스크립트가 이 파일을 읽으므로 각 줄은 Bash에서 읽을 수 있는 `KEY=VALUE` 형식으로 작성한다. 공백이나 `$`,
 따옴표처럼 Shell에서 의미가 있는 문자가 포함된 값은 작은따옴표로 감싼다.
+
+`FRONTEND_ALLOWED_ORIGINS`는 쉼표로 구분한 정확한 Origin 목록이며, 생략하면 `FRONTEND_BASE_URL`을 사용한다.
+로컬 프론트엔드도 허용할 때만 `https://chongchong.app,http://localhost:3005`처럼 추가하고 wildcard는 사용하지 않는다.
 
 Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
 
