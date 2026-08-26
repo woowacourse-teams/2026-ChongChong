@@ -69,6 +69,20 @@ class AssignmentSubmissionTest {
     }
 
     @Test
+    @DisplayName("수정 입력 중 하나가 유효하지 않으면 기존 제출 내용을 모두 유지한다")
+    void rejectUpdateWithInvalidLinkKeepsExistingValuesTest() {
+        AssignmentSubmission submission = createSubmission();
+        submission.submit("기존 내용", "https://old.example.com", NOW);
+
+        assertThatThrownBy(() -> submission.update("새 내용", "a".repeat(10001)))
+                .isInstanceOf(AssignmentException.class)
+                .extracting(exception -> ((AssignmentException) exception).getErrorCode())
+                .isEqualTo(AssignmentErrorCode.INVALID_LINK);
+        assertThat(submission.getContent()).isEqualTo("기존 내용");
+        assertThat(submission.getLink()).isEqualTo("https://old.example.com");
+    }
+
+    @Test
     @DisplayName("기존 제출 데이터에 제출 시각이 없으면 마지막 수정 시각을 반환한다")
     void getLegacySubmittedAtTest() {
         AssignmentSubmission submission = createSubmission();

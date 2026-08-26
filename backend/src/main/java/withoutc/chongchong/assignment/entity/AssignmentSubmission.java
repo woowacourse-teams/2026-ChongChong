@@ -74,13 +74,14 @@ public class AssignmentSubmission extends BaseEntity {
     }
 
     public void update(String content, String link) {
+        validateContent(content);
+        validateLink(link);
+
         if (content != null) {
-            validateContent(content);
             this.content = content;
         }
 
         if (link != null) {
-            validateLink(link);
             this.link = link;
         }
     }
