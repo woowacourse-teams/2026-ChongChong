@@ -88,6 +88,7 @@ export default function Button({ variant, size, children, ...props }: Props) {
         ...variantBase,
         ...sizeStyle[size],
         ...(props.disabled && disabledStyle),
+        cursor: props.disabled ? 'default' : 'pointer',
       }}
       {...props}
     >
