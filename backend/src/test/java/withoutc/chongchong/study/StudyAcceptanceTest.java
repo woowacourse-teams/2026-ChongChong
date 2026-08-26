@@ -240,7 +240,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("리더가 스터디 상세 조회를 요청하면 멤버 수와 공지·과제 완료 수를 반환한다")
+    @DisplayName("리더가 스터디 상세 조회를 요청하면 공지·과제별 대상자 수와 완료 수를 반환한다")
     void getStudyDetailForLeaderTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User firstMember = userRepository.saveAndFlush(User.create("첫 번째 멤버", null));
@@ -280,14 +280,15 @@ class StudyAcceptanceTest {
                 .get("/studies/{studyId}", study.getId())
                 .then()
                 .statusCode(200)
-                .body("memberCount", equalTo(3))
                 .body("notices.count", equalTo(1))
                 .body("notices.items[0].id", equalTo(notice.getId().intValue()))
                 .body("notices.items[0].title", equalTo("공지"))
+                .body("notices.items[0].memberCount", equalTo(2))
                 .body("notices.items[0].completeCount", equalTo(1))
                 .body("assignments.count", equalTo(1))
                 .body("assignments.items[0].id", equalTo(assignment.getId().intValue()))
                 .body("assignments.items[0].title", equalTo("과제"))
+                .body("assignments.items[0].memberCount", equalTo(2))
                 .body("assignments.items[0].completeCount", equalTo(1));
     }
 

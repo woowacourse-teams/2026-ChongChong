@@ -163,10 +163,11 @@ class AssignmentRepositoryTest {
         assertThat(summaries)
                 .extracting(LeaderAssignmentSummaryProjection::id,
                         LeaderAssignmentSummaryProjection::title,
+                        LeaderAssignmentSummaryProjection::memberCount,
                         LeaderAssignmentSummaryProjection::completeCount)
                 .containsExactlyInAnyOrder(
-                        tuple(incompleteAssignment.getId(), "일부 제출 과제", 1L),
-                        tuple(unsubmittedAssignment.getId(), "미제출 과제", 0L)
+                        tuple(incompleteAssignment.getId(), "일부 제출 과제", 2L, 1L),
+                        tuple(unsubmittedAssignment.getId(), "미제출 과제", 2L, 0L)
                 );
     }
 

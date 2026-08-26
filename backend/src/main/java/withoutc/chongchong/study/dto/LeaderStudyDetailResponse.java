@@ -5,7 +5,6 @@ import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSumm
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 
 public record LeaderStudyDetailResponse(
-        int memberCount,
         LeaderNoticeSummaryListResponse notices,
         LeaderAssignmentSummaryListResponse assignments
 ) implements StudyDetailResponse {
@@ -23,6 +22,7 @@ public record LeaderStudyDetailResponse(
     public record LeaderNoticeSummaryResponse(
             Long id,
             String title,
+            int memberCount,
             int completeCount
     ) {
 
@@ -30,6 +30,7 @@ public record LeaderStudyDetailResponse(
             return new LeaderNoticeSummaryResponse(
                     noticeProjection.id(),
                     noticeProjection.title(),
+                    (int) noticeProjection.memberCount(),
                     (int) noticeProjection.completeCount()
             );
         }
@@ -49,6 +50,7 @@ public record LeaderStudyDetailResponse(
     public record LeaderAssignmentSummaryResponse(
             Long id,
             String title,
+            int memberCount,
             int completeCount
     ) {
 
@@ -56,6 +58,7 @@ public record LeaderStudyDetailResponse(
             return new LeaderAssignmentSummaryResponse(
                     assignmentProjection.id(),
                     assignmentProjection.title(),
+                    (int) assignmentProjection.memberCount(),
                     (int) assignmentProjection.completeCount()
             );
         }

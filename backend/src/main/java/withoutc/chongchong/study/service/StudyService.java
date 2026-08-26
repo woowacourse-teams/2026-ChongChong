@@ -118,8 +118,6 @@ public class StudyService {
     }
 
     private LeaderStudyDetailResponse makeLeaderStudyDetailResponse(Study study) {
-        int memberCount = studyMemberRepository.countByStudyId(study.getId());
-
         List<LeaderNoticeSummaryProjection> noticeProjections = noticeRepository.findIncompleteNoticeSummariesByStudyId(
                 study.getId());
         List<LeaderAssignmentSummaryProjection> assignmentProjections = assignmentRepository.findIncompleteAssignmentSummariesByStudyId(
@@ -138,7 +136,7 @@ public class StudyService {
             assignmentResponses.add(response);
         }
 
-        return new LeaderStudyDetailResponse(memberCount, LeaderNoticeSummaryListResponse.from(noticeResponses),
+        return new LeaderStudyDetailResponse(LeaderNoticeSummaryListResponse.from(noticeResponses),
                 LeaderAssignmentSummaryListResponse.from(assignmentResponses));
     }
 

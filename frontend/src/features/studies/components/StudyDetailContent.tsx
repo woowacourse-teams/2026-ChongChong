@@ -54,13 +54,13 @@ const IconStyle = {
 
 export function LeaderStudyDetailContent({ username }: { username: string }) {
   const data = {
-    memberCount: 4,
     notices: {
       count: 2,
       items: [
         {
           id: 1,
           title: '판교 스터디룸에서 만나도록 합시다',
+          memberCount: 2,
           completeCount: 2,
         },
       ],
@@ -71,6 +71,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
         {
           id: 1,
           title: '그리디 3문제 풀기',
+          memberCount: 2,
           completeCount: 2,
         },
       ],
@@ -98,7 +99,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
             <List.Item key={`notice-${notice.id}`}>
               <LeaderActiveNoticeCard
                 title={notice.title}
-                memberCount={data.memberCount}
+                memberCount={notice.memberCount}
                 completeCount={notice.completeCount}
               />
             </List.Item>
@@ -107,7 +108,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
             <List.Item key={`assignment-${assignment.id}`}>
               <LeaderActiveAssignmentCard
                 title={assignment.title}
-                memberCount={data.memberCount}
+                memberCount={assignment.memberCount}
                 completeCount={assignment.completeCount}
               />
             </List.Item>

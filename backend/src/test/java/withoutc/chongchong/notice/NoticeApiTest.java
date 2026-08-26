@@ -547,7 +547,7 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("공지 수신자 정보가 없으면 수신자 없음 오류 응답을 반환한다")
+    @DisplayName("공지 수신자 정보가 없는 공지는 목록에서 제외한다")
     void getNoticesWithoutRecipientTest() {
         jdbcTemplate.update(
                 "DELETE FROM notice_recipients WHERE notice_id = ? AND member_id = ?",
@@ -560,9 +560,8 @@ class NoticeApiTest {
                 .when()
                 .get("/studies/{studyId}/notices", study.getId())
                 .then()
-                .statusCode(404)
-                .body("code", equalTo("NOTICE_RECIPIENT_NOT_FOUND"))
-                .body("message", equalTo("공지 수신자 정보를 찾을 수 없습니다."));
+                .statusCode(200)
+                .body("notices", hasSize(0));
     }
 
     @Test

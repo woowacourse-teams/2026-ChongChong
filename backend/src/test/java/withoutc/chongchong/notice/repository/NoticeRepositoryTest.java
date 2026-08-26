@@ -84,6 +84,28 @@ class NoticeRepositoryTest {
     }
 
     @Test
+    @DisplayName("멤버별 공지 cursor 조회는 수신 정보가 존재하는 공지만 반환한다")
+    void findByCursorAndMemberIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Notice firstMemberNotice = Notice.create(fixture.leader(), "첫 번째 멤버 공지", "내용");
+        firstMemberNotice.addRecipients(List.of(fixture.firstMember()));
+        Notice secondMemberNotice = Notice.create(fixture.leader(), "두 번째 멤버 공지", "내용");
+        secondMemberNotice.addRecipients(List.of(fixture.secondMember()));
+        noticeRepository.saveAllAndFlush(List.of(firstMemberNotice, secondMemberNotice));
+
+        List<Notice> notices = noticeRepository.findByCursorAndMemberId(
+                fixture.study().getId(),
+                fixture.firstMember().getId(),
+                null,
+                PageRequest.of(0, 11)
+        );
+
+        assertThat(notices)
+                .extracting(Notice::getId)
+                .containsExactly(firstMemberNotice.getId());
+    }
+
+    @Test
     @DisplayName("공지 조회에 성공하면 해당 공지를 반환한다")
     void getByIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
@@ -122,8 +144,9 @@ class NoticeRepositoryTest {
         assertThat(summaries)
                 .extracting(LeaderNoticeSummaryProjection::id,
                         LeaderNoticeSummaryProjection::title,
+                        LeaderNoticeSummaryProjection::memberCount,
                         LeaderNoticeSummaryProjection::completeCount)
-                .containsExactly(tuple(incompleteNotice.getId(), "미완료 공지", 0L));
+                .containsExactly(tuple(incompleteNotice.getId(), "미완료 공지", 2L, 0L));
     }
 
     @Test

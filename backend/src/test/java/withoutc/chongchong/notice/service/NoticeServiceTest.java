@@ -227,8 +227,9 @@ class NoticeServiceTest {
         Notice secondNotice = noticeWithId(200L);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(noticeRepository.findByCursor(
+        when(noticeRepository.findByCursorAndMemberId(
                 STUDY_ID,
+                MEMBER_ID,
                 null,
                 PageRequest.of(0, 11)
         )).thenReturn(List.of(firstNotice, secondNotice));
@@ -254,26 +255,22 @@ class NoticeServiceTest {
     }
 
     @Test
-    @DisplayName("스터디원의 공지 수신자 정보가 없으면 목록 조회를 거부한다")
+    @DisplayName("스터디원의 수신자 정보가 없는 공지는 목록에서 제외한다")
     void getListWithoutRecipientTest() {
         StudyMember member = mock(StudyMember.class);
-        Notice notice = noticeWithId(NOTICE_ID);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(noticeRepository.findByCursor(
+        when(noticeRepository.findByCursorAndMemberId(
                 STUDY_ID,
+                MEMBER_ID,
                 null,
                 PageRequest.of(0, 11)
-        )).thenReturn(List.of(notice));
-        when(noticeRecipientRepository.findMyReadStatusesByNoticeIdsAndMemberId(
-                List.of(NOTICE_ID),
-                MEMBER_ID
         )).thenReturn(List.of());
 
-        assertThatThrownBy(() -> noticeService.getList(USER_ID, STUDY_ID, null, 10))
-                .isInstanceOf(NoticeException.class)
-                .extracting(exception -> ((NoticeException) exception).getErrorCode())
-                .isEqualTo(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND);
+        NoticeListResponse response = noticeService.getList(USER_ID, STUDY_ID, null, 10);
+
+        assertThat(response.notices()).isEmpty();
+        verifyNoInteractions(noticeRecipientRepository);
     }
 
     @Test

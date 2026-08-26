@@ -94,9 +94,9 @@ class StudyServiceTest {
         when(studyMemberRepository.countByStudyId(1L)).thenReturn(3);
         when(studyMemberRepository.countByStudyId(2L)).thenReturn(2);
         when(noticeRepository.findIncompleteNoticeSummariesByStudyId(1L))
-                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "리더 공지", 2L)));
+                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "리더 공지", 3L, 2L)));
         when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(1L))
-                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "리더 과제", 1L)));
+                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "리더 과제", 2L, 1L)));
         when(noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(2L, member.getId()))
                 .thenReturn(List.of(mock(Notice.class)));
         when(assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(2L, member.getId()))
@@ -302,7 +302,7 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더는 멤버 수와 공지·과제 완료 수를 포함한 상세 정보를 조회한다")
+    @DisplayName("스터디 리더는 공지·과제별 대상자 수와 완료 수를 포함한 상세 정보를 조회한다")
     void getStudyDetailForLeaderTest() {
         Long userId = 1L;
         Long studyId = 1L;
@@ -314,29 +314,29 @@ class StudyServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(3);
         when(noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId))
-                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "공지", 2L)));
+                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "공지", 2L, 1L)));
         when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId))
-                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "과제", 2L)));
+                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "과제", 2L, 1L)));
 
         StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
 
         assertThat(response).isInstanceOf(LeaderStudyDetailResponse.class);
         LeaderStudyDetailResponse leaderResponse = (LeaderStudyDetailResponse) response;
-        assertThat(leaderResponse.memberCount()).isEqualTo(3);
         assertThat(leaderResponse.notices().count()).isEqualTo(1);
         assertThat(leaderResponse.notices().items())
                 .extracting(LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::id,
                         LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::title,
+                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::memberCount,
                         LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::completeCount)
-                .containsExactly(tuple(10L, "공지", 2));
+                .containsExactly(tuple(10L, "공지", 2, 1));
         assertThat(leaderResponse.assignments().count()).isEqualTo(1);
         assertThat(leaderResponse.assignments().items())
                 .extracting(LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::id,
                         LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::title,
+                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::memberCount,
                         LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::completeCount)
-                .containsExactly(tuple(20L, "과제", 2));
+                .containsExactly(tuple(20L, "과제", 2, 1));
     }
 
     @Test

@@ -40,12 +40,11 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             Pageable pageable
     );
 
-    List<Assignment> findAllByStudyId(Long studyId);
-
     @Query("""
             SELECT new withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection(
             a.id,
             a.title,
+            COUNT(s.id),
             SUM(CASE WHEN s.submitted = TRUE THEN 1 ELSE 0 END)
             )
             FROM Assignment a
