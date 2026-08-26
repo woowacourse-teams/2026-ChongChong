@@ -8,8 +8,10 @@ import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/studies/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
+import { routes as loginRoutes } from './src/features/login/routes/routes';
+import { refreshAccessToken } from './src/features/login/api';
 
-const router = createBrowserRouter([
+const appRoutes = [
   {
     path: '/',
     element: <App />,
@@ -18,7 +20,8 @@ const router = createBrowserRouter([
   ...noticeRoutes,
   ...AssignmentRoutes,
   ...memberRoutes,
-]);
+  ...loginRoutes,
+];
 
 const root = document.getElementById('root')!;
 
@@ -33,7 +36,24 @@ async function enableMocking() {
 
 const queryClient = new QueryClient();
 
-enableMocking().then(() => {
+const publicPaths = new Set(['/login', '/auth/kakao/callback']);
+
+async function restoreSession() {
+  if (publicPaths.has(window.location.pathname)) return;
+
+  try {
+    await refreshAccessToken();
+  } catch {
+    window.history.replaceState({}, document.title, '/login');
+  }
+}
+
+async function bootstrap() {
+  await enableMocking();
+  await restoreSession();
+
+  const router = createBrowserRouter(appRoutes);
+
   ReactDOM.createRoot(root).render(
     <>
       <QueryClientProvider client={queryClient}>
@@ -42,4 +62,6 @@ enableMocking().then(() => {
       </QueryClientProvider>
     </>,
   );
-});
+}
+
+bootstrap();
