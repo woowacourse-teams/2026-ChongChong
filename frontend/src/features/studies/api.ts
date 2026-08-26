@@ -23,10 +23,10 @@ export async function fetchStudyDetail<R extends Role>(studyId: number) {
 export async function createStudy(body: {
   name: string;
   description: string;
-}): Promise<{ studyId: string }> {
+}): Promise<{ id: number }> {
   try {
     const response = await api.post(STUDY_URLS.create, { json: body });
-    return await response.json<{ studyId: string }>();
+    return await response.json<{ id: number }>();
   } catch {
     throw new Error('아직 에러 처리 안함');
   }
