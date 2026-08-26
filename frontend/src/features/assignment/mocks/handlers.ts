@@ -147,9 +147,8 @@ export const handlers = [
     },
   ),
 
-  http.post(
-    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`,
-    () => HttpResponse.json({ submissionId: 4 }, { status: 201 }),
+  http.post(`${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () =>
+    HttpResponse.json({ submissionId: 4 }, { status: 201 }),
   ),
 
   http.patch(
