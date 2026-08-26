@@ -644,13 +644,13 @@ class NoticeApiTest {
                 .body("memberCount", equalTo(2))
                 .body("readCount", equalTo(1))
                 .body("remindAt", equalTo(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
-                .body("completeMembers", hasSize(1))
-                .body("completeMembers[0].id", equalTo(member.getId().intValue()))
-                .body("completeMembers[0].name", equalTo("스터디원"))
-                .body("incompleteMembers", hasSize(1))
-                .body("incompleteMembers[0].id", equalTo(secondMember.getId().intValue()))
-                .body("incompleteMembers[0].name", equalTo("두 번째 스터디원"))
-                .body("incompleteMembers[0].lastRemindAt",
+                .body("readMembers", hasSize(1))
+                .body("readMembers[0].id", equalTo(member.getId().intValue()))
+                .body("readMembers[0].name", equalTo("스터디원"))
+                .body("unreadMembers", hasSize(1))
+                .body("unreadMembers[0].id", equalTo(secondMember.getId().intValue()))
+                .body("unreadMembers[0].name", equalTo("두 번째 스터디원"))
+                .body("unreadMembers[0].lastRemindAt",
                         equalTo(lastRemindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
 
