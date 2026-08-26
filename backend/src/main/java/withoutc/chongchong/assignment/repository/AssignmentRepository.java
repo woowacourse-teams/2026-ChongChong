@@ -40,6 +40,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             Pageable pageable
     );
 
+    // 리더용
     @Query("""
             SELECT new withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection(
             a.id,
@@ -58,6 +59,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             @Param("studyId") Long studyId
     );
 
+    // 스터디원용
     @Query("""
             SELECT a
             FROM Assignment a
@@ -71,6 +73,37 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             ORDER BY a.createdAt DESC
             """)
     List<Assignment> findIncompleteAssignmentsByStudyIdAndMemberId(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId
+    );
+
+    // 리더용
+    @Query("""
+            SELECT count(a.id)
+            FROM Assignment a
+            WHERE a.study.id = :studyId
+            AND EXISTS (
+            SELECT s.id
+            FROM AssignmentSubmission s
+            WHERE s.assignment.id = a.id AND s.submitted IS FALSE
+            )
+            """)
+    long countIncompleteAssignmentByStudyId(
+            @Param("studyId") Long studyId
+    );
+
+    // 스터디원용
+    @Query("""
+            SELECT count(a.id)
+            FROM Assignment a
+            WHERE a.study.id = :studyId
+            AND EXISTS (
+            SELECT s.id
+            FROM AssignmentSubmission s
+            WHERE s.assignment.id = a.id AND s.member.id = :memberId AND s.submitted IS FALSE
+            )
+            """)
+    long countIncompleteAssignmentByStudyIdAndMemberId(
             @Param("studyId") Long studyId,
             @Param("memberId") Long memberId
     );

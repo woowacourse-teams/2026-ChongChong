@@ -93,14 +93,12 @@ class StudyServiceTest {
                 .thenReturn(List.of(leader, member));
         when(studyMemberRepository.countByStudyId(1L)).thenReturn(3);
         when(studyMemberRepository.countByStudyId(2L)).thenReturn(2);
-        when(noticeRepository.findIncompleteNoticeSummariesByStudyId(1L))
-                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "리더 공지", 3L, 2L)));
-        when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(1L))
-                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "리더 과제", 2L, 1L)));
-        when(noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(2L, member.getId()))
-                .thenReturn(List.of(mock(Notice.class)));
-        when(assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(2L, member.getId()))
-                .thenReturn(List.of(mock(Assignment.class)));
+        when(noticeRepository.countIncompleteNoticeByStudyId(1L)).thenReturn(1L);
+        when(assignmentRepository.countIncompleteAssignmentByStudyId(1L)).thenReturn(1L);
+        when(noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(2L, member.getId()))
+                .thenReturn(1L);
+        when(assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(2L, member.getId()))
+                .thenReturn(1L);
 
         MyStudyListResponse response = studyService.getMyStudies(userId);
 

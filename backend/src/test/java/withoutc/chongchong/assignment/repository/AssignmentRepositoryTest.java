@@ -191,6 +191,41 @@ class AssignmentRepositoryTest {
                 .containsExactly(incompleteAssignment.getId());
     }
 
+    @Test
+    @DisplayName("리더용 미완료 과제 개수는 미제출자가 있는 과제만 센다")
+    void countIncompleteAssignmentByStudyIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        createAssignment(
+                fixture.leader(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
+        );
+        createAssignment(
+                fixture.leader(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
+        );
+        assignmentRepository.flush();
+
+        long count = assignmentRepository.countIncompleteAssignmentByStudyId(fixture.study().getId());
+
+        assertThat(count).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("스터디원용 미완료 과제 개수는 해당 멤버가 제출하지 않은 과제만 센다")
+    void countIncompleteAssignmentByStudyIdAndMemberIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        createAssignment(fixture.leader(), "첫 번째 멤버 미제출 과제", List.of(fixture.firstMember()), 0);
+        createAssignment(fixture.leader(), "첫 번째 멤버 제출 과제", List.of(fixture.firstMember()), 1);
+        createAssignment(fixture.leader(), "두 번째 멤버 미제출 과제", List.of(fixture.secondMember()), 0);
+        assignmentRepository.flush();
+
+        long firstMemberCount = assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.firstMember().getId());
+        long secondMemberCount = assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.secondMember().getId());
+
+        assertThat(firstMemberCount).isEqualTo(1L);
+        assertThat(secondMemberCount).isEqualTo(1L);
+    }
+
     private StudyFixture createStudyFixture(String studyName, String userName) {
         User user = userRepository.save(User.create(userName, null));
         Study study = studyRepository.save(Study.create(studyName, "설명"));

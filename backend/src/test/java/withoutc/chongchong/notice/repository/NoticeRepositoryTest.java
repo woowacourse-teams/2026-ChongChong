@@ -168,6 +168,40 @@ class NoticeRepositoryTest {
                 .containsExactly(unreadNotice.getId());
     }
 
+    @Test
+    @DisplayName("리더용 미완료 공지 개수는 읽지 않은 수신자가 있는 공지만 센다")
+    void countIncompleteNoticeByStudyIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Notice incompleteNotice = Notice.create(fixture.leader(), "미완료 공지", "내용");
+        incompleteNotice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
+        Notice completeNotice = Notice.create(fixture.leader(), "완료 공지", "내용");
+        completeNotice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
+        completeNotice.getRecipients().forEach(recipient -> recipient.markAsRead(CLOCK));
+        noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
+
+        long count = noticeRepository.countIncompleteNoticeByStudyId(fixture.study().getId());
+
+        assertThat(count).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("스터디원용 미완료 공지 개수는 해당 멤버가 읽지 않은 공지만 센다")
+    void countIncompleteNoticeByStudyIdAndMemberIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Notice notice = Notice.create(fixture.leader(), "공지", "내용");
+        notice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
+        notice.getRecipients().getLast().markAsRead(CLOCK);
+        noticeRepository.saveAndFlush(notice);
+
+        long firstMemberCount = noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.firstMember().getId());
+        long secondMemberCount = noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.secondMember().getId());
+
+        assertThat(firstMemberCount).isEqualTo(1L);
+        assertThat(secondMemberCount).isZero();
+    }
+
     private StudyFixture createStudyFixture(String studyName, String userName) {
         User user = userRepository.save(User.create(userName, null));
         Study study = studyRepository.save(Study.create(studyName, "설명"));

@@ -180,16 +180,16 @@ public class StudyService {
 
     private int unReadNoticeCount(StudyMember studyMember, Long studyId) {
         if (studyMember.getRole() == StudyMemberRole.LEADER) {
-            return noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId).size();
+            return (int) noticeRepository.countIncompleteNoticeByStudyId(studyId);
         }
-        return noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(studyId, studyMember.getId()).size();
+        return (int) noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(studyId, studyMember.getId());
     }
 
     private int unFinishedAssignmentCount(StudyMember studyMember, Long studyId) {
         if (studyMember.getRole() == StudyMemberRole.LEADER) {
-            return assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId).size();
+            return (int) assignmentRepository.countIncompleteAssignmentByStudyId(studyId);
         }
-        return assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(studyId, studyMember.getId()).size();
+        return (int) assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(studyId, studyMember.getId());
     }
 
     public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {

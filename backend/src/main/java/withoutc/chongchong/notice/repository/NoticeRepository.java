@@ -44,6 +44,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
         return findById(noticeId).orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
+    // 리더용
     @Query("""
             SELECT new withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection(
                 n.id,
@@ -63,6 +64,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             @Param("studyId") Long studyId
     );
 
+    // 스터디원용
     @Query("""
             SELECT n
             FROM Notice n
@@ -76,6 +78,37 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             ORDER BY n.createdAt DESC
             """)
     List<Notice> findIncompleteNoticesByStudyIdAndMemberId(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId
+    );
+
+    // 리더용
+    @Query("""
+            SELECT count(n.id)
+            FROM Notice n
+            WHERE n.study.id = :studyId
+            AND EXISTS (
+            SELECT nr.id
+            FROM NoticeRecipient nr
+            WHERE nr.notice.id = n.id AND nr.readAt IS NULL
+            )
+            """)
+    long countIncompleteNoticeByStudyId(
+            @Param("studyId") Long studyId
+    );
+
+    // 스터디원용
+    @Query("""
+            SELECT count(n.id)
+            FROM Notice n
+            WHERE n.study.id = :studyId
+            AND EXISTS (
+            SELECT nr.id
+            FROM NoticeRecipient nr
+            WHERE nr.notice.id = n.id AND nr.member.id = :memberId AND nr.readAt IS NULL
+            )
+            """)
+    long countIncompleteNoticeByStudyIdAndMemberId(
             @Param("studyId") Long studyId,
             @Param("memberId") Long memberId
     );
