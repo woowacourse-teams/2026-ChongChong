@@ -9,7 +9,7 @@ import AssignmentArticle from '../components/AssignmentArticle';
 import AssignmentSubmissionForm from '../components/AssignmentSubmissionForm';
 import CompletedAssignmentSubmission from '../components/CompletedAssignmentSubmission';
 import assignmentQueries from '../queries';
-import type { AssignmentSubmissionValue, SubmissionDetail } from '../types';
+import type { AssignmentSubmissionValue } from '../types';
 
 export default function MemberAssignmentDetailPage() {
   const { studyId, assignmentId } = useParams();
@@ -22,15 +22,10 @@ export default function MemberAssignmentDetailPage() {
   const createMutation = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       createAssignmentSubmission(Number(studyId), Number(assignmentId), values),
-    onSuccess: (submission: SubmissionDetail) => {
+    onSuccess: ({ submissionId }) => {
       queryClient.setQueryData(
         assignmentQueries.detail(Number(studyId), Number(assignmentId)).queryKey,
-        { ...assignment, submissionId: submission.id },
-      );
-      queryClient.setQueryData(
-        assignmentQueries.submissionDetail(Number(studyId), Number(assignmentId), submission.id)
-          .queryKey,
-        submission,
+        { ...assignment, submissionId },
       );
       queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(Number(studyId)) });
     },

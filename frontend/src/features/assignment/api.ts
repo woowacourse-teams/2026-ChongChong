@@ -8,6 +8,8 @@ import {
   UpdateAssignmentValue,
   AssignmentListResponse,
   AssignmentSubmissionValue,
+  CreateAssignmentResponse,
+  CreateSubmissionResponse,
 } from './types';
 
 export async function fetchAssignmentList(studyId: number, cursor?: number) {
@@ -75,7 +77,7 @@ export async function createAssignmentSubmission(
     .post(`studies/${studyId}/assignments/${assignmentId}/submissions`, {
       json: values,
     })
-    .json<SubmissionDetail>();
+    .json<CreateSubmissionResponse>();
 }
 
 export async function updateAssignmentSubmission(
@@ -84,11 +86,9 @@ export async function updateAssignmentSubmission(
   submissionId: number,
   values: AssignmentSubmissionValue,
 ) {
-  return api
-    .patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
-      json: values,
-    })
-    .json<SubmissionDetail>();
+  await api.patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+    json: values,
+  });
 }
 
 export async function createAssignment(studyId: number, values: AssignmentValue) {
@@ -96,7 +96,7 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
     .post(`studies/${studyId}/assignments`, {
       json: values,
     })
-    .json<AssignmentDetail>();
+    .json<CreateAssignmentResponse>();
 }
 
 export async function updateAssignment(
@@ -104,11 +104,9 @@ export async function updateAssignment(
   assignmentId: number,
   values: UpdateAssignmentValue,
 ) {
-  return api
-    .patch(`studies/${studyId}/assignments/${assignmentId}`, {
-      json: values,
-    })
-    .json<AssignmentDetail>();
+  await api.patch(`studies/${studyId}/assignments/${assignmentId}`, {
+    json: values,
+  });
 }
 
 export async function deleteAssignment(studyId: number, assignmentId: number) {
