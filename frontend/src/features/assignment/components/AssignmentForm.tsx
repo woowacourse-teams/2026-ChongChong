@@ -25,7 +25,7 @@ interface AssignmentFormProps {
 const emptyValues = {
   title: '',
   content: '',
-  submissionType: '',
+  submissionMethod: '',
   closeAt: '',
 };
 
@@ -37,7 +37,7 @@ export default function AssignmentForm({
 }: AssignmentFormProps) {
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
-  const [submissionType, setSubmissionType] = useState(initialValues.submissionType);
+  const [submissionMethod, setsubmissionMethod] = useState(initialValues.submissionMethod);
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
   const [isCloseAtError, setIsCloseAtError] = useState(false);
 
@@ -53,7 +53,7 @@ export default function AssignmentForm({
           return;
         }
 
-        onSubmit({ title, content, submissionType, closeAt });
+        onSubmit({ title, content, submissionMethod, closeAt });
       }}
     >
       <Field id="assignment-title" label="제목" isRequired>
@@ -83,10 +83,10 @@ export default function AssignmentForm({
         <Input
           id="submit-method"
           name="method"
-          value={submissionType}
+          value={submissionMethod}
           autoFocus
           required
-          onChange={(event) => setSubmissionType(event.target.value)}
+          onChange={(event) => setsubmissionMethod(event.target.value)}
           placeholder="제출 방법을 입력해주세요"
         />
       </Field>

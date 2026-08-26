@@ -43,7 +43,7 @@ export const notice = {
 운영 방식은 한 달 동안 적용한 뒤 회고에서 다시 이야기해보겠습니다. 불편한 점이나 더 좋은 방법이 있다면 언제든 스터디 채널에 남겨주세요.
 
 긴 글 읽어주셔서 감사합니다. 다음 모임에서 만나요!`,
-  readMemberNames: ['디움', '피즈'],
+  readuserNames: ['디움', '피즈'],
   unreadMembers: [
     { id: 1, name: '안톨리니', remindedAt: '8월 3일 21:02 보냄' },
     { id: 2, name: '이든', remindedAt: '8월 3일 21:02 보냄' },

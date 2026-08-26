@@ -47,7 +47,7 @@ export default function EditAssignmentPage() {
           initialValues={{
             title: assignment.title,
             content: assignment.content,
-            submissionType: assignment.submissionType,
+            submissionMethod: assignment.submissionMethod,
             closeAt: assignment.closeAt,
           }}
         />

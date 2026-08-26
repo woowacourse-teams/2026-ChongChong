@@ -54,7 +54,7 @@ export const handlers = [
     return HttpResponse.json({
       studyName: found.name,
       role: 'LEADER',
-      memberName: CURRENT_USER.name,
+      userName: CURRENT_USER.name,
     });
   }),
 

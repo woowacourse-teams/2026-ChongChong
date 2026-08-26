@@ -11,10 +11,10 @@ import { useParams } from 'react-router';
 
 interface Props {
   studyName: string;
-  memberName: string;
+  userName: string;
 }
 
-export default function LeaderAssignmentListPage({ studyName, memberName }: Props) {
+export default function LeaderAssignmentListPage({ studyName, userName }: Props) {
   const { studyId } = useParams();
 
   return (
@@ -25,7 +25,7 @@ export default function LeaderAssignmentListPage({ studyName, memberName }: Prop
           middle={
             <>
               <TopHeader.Title>{studyName}</TopHeader.Title>
-              <TopHeader.Subtitle>{memberName} · 리드</TopHeader.Subtitle>
+              <TopHeader.Subtitle>{userName} · 리드</TopHeader.Subtitle>
             </>
           }
         />

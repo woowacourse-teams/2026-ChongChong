@@ -12,7 +12,7 @@ const STUDY_INFO_URL = `${BASE_URL}${STUDY_URLS.info}`;
 function mockStudyInfo(role: 'LEADER' | 'MEMBER') {
   server.use(
     http.get(STUDY_INFO_URL, () =>
-      HttpResponse.json({ studyName: '객체지향 스터디', role, memberName: '안톨리니' }),
+      HttpResponse.json({ studyName: '객체지향 스터디', role, userName: '안톨리니' }),
     ),
   );
 }

@@ -2,7 +2,7 @@ export interface Assignment {
   id: number;
   title: string;
   content: string;
-  submissionType: string;
+  submissionMethod: string;
   closeAt: string;
   memberCount?: number;
   completeCount?: number;
@@ -37,7 +37,7 @@ export interface AssignmentDetail {
   id: number;
   title: string;
   content: string;
-  submissionType: string;
+  submissionMethod: string;
   closeAt: string;
   submissionId?: number;
 }

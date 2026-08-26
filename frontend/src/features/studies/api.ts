@@ -38,7 +38,7 @@ export async function fetchStudyInfo(studyId: number) {
     return await response.json<{
       studyName: string;
       role: Role;
-      memberName: string;
+      userName: string;
     }>();
   } catch {
     // TODO: 에러코드별로 에러 분기가 필요합니다.

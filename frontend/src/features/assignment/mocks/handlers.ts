@@ -9,7 +9,7 @@ const assignmentList = Array.from({ length: 12 }, (_, index) => {
     id,
     title: `${id}주차 과제`,
     content: `${id}주차 학습 내용을 정리하고 풀이 링크를 제출해주세요.`,
-    submissionType: id % 2 === 0 ? 'GitHub PR' : '링크 제출',
+    submissionMethod: id % 2 === 0 ? 'GitHub PR' : '링크 제출',
     closeAt: `2026-09-${String(id).padStart(2, '0')}T23:59:59`,
     memberCount: 4,
     completeCount: id % 5,
@@ -58,7 +58,7 @@ export const handlers = [
         id: Number(params.assignmentId),
         title: '이번주 그리디 3문제 풀이',
         content: '백준에서 그리디 문제 세 문제를 풀어주세요.',
-        submissionType: '풀이 링크 제출',
+        submissionMethod: '풀이 링크 제출',
         closeAt: '2026-08-31T23:59:00',
         ...values,
       });
@@ -113,7 +113,7 @@ export const handlers = [
       closeAt: '2025-04-16T16:44:10',
       content:
         '백준에서 문제 푸시고 링크 올려주시면 됩니다. 그리디 문제집에서 원하는 세 문제를 풀고 올려주세요.',
-      submissionType:
+      submissionMethod:
         'GitHub 저장소에 문제 번호로 폴더를 만들어 올린 뒤, 저장소나 PR 링크를 제출해주세요.',
       ...(assignmentId % 4 === 0 && { submissionId: assignmentId + 100 }),
     });
