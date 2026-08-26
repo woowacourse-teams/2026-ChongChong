@@ -252,7 +252,7 @@ class NoticeApiTest {
                 .body("id", equalTo(notice.getId().intValue()))
                 .body("title", equalTo("기존 공지"))
                 .body("writer", equalTo("리더"))
-                .body("profileImage", equalTo("https://example.com/leader.png"))
+                .body("profileImageUrl", equalTo("https://example.com/leader.png"))
                 .body("content", equalTo("기존 공지 내용"))
                 .body("createdAt", notNullValue());
     }
