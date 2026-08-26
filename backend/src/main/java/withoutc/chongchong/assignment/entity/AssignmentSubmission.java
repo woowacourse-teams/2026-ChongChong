@@ -54,6 +54,7 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(nullable = false)
     private boolean submitted;
 
+    @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
     public static AssignmentSubmission create(StudyMember member, Assignment assignment) {
@@ -82,6 +83,16 @@ public class AssignmentSubmission extends BaseEntity {
             validateLink(link);
             this.link = link;
         }
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        if (!submitted) {
+            return null;
+        }
+        if (submittedAt != null) {
+            return submittedAt;
+        }
+        return getUpdatedAt();
     }
 
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,
