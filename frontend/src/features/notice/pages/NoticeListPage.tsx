@@ -1,13 +1,13 @@
-import { useSearchParams } from 'react-router';
-import LeaderNoticeListPage from './LeaderNoticeListPage';
-import MemberNoticeListPage from './MemberNoticeListPage';
+import NoConstructionPage from './NoConstructionPage';
+// import LeaderNoticeListPage from './LeaderNoticeListPage';
+// import MemberNoticeListPage from './MemberNoticeListPage';
 
 export default function NoticeListPage() {
-  const [searchParams] = useSearchParams();
+  return <NoConstructionPage />;
 
-  return searchParams.get('role') === 'member' ? (
-    <LeaderNoticeListPage />
-  ) : (
-    <MemberNoticeListPage />
-  );
+  // return searchParams.get('role') === 'member' ? (
+  //   <LeaderNoticeListPage />
+  // ) : (
+  //   <MemberNoticeListPage />
+  // );
 }
