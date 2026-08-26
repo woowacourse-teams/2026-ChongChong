@@ -1,9 +1,11 @@
 import { CSSProperties } from 'react';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { tokens, typography } from '../../../styles/global';
 import noticeIcon from '../../../shared/assets/notice-green.svg';
 import assignmentIcon from '../../../shared/assets/assign-green.svg';
 import List from '../../../shared/ui/List';
+import studyQueries from '../queries';
 import {
   LeaderActiveNoticeCard,
   LeaderActiveAssignmentCard,
@@ -11,6 +13,7 @@ import {
   MemberActiveAssignmentCard,
 } from './ActiveStudyCard';
 import { StudyLeaderWelcomeBanner, StudyMemberWelcomeBanner } from './WelcomeBanner';
+import useStudyId from '../hooks/useStudyId';
 
 const StatusCardListStyle = {
   display: 'flex',
@@ -54,29 +57,8 @@ const IconStyle = {
 } satisfies CSSProperties;
 
 export function LeaderStudyDetailContent({ username }: { username: string }) {
-  const data = {
-    memberCount: 4,
-    notices: {
-      count: 2,
-      items: [
-        {
-          id: 1,
-          title: '판교 스터디룸에서 만나도록 합시다',
-          completeCount: 2,
-        },
-      ],
-    },
-    assignments: {
-      count: 1,
-      items: [
-        {
-          id: 1,
-          title: '그리디 3문제 풀기',
-          completeCount: 2,
-        },
-      ],
-    },
-  };
+  const { studyId } = useStudyId();
+  const { data } = useSuspenseQuery(studyQueries.detail<'LEADER'>(studyId));
   return (
     <>
       <StudyLeaderWelcomeBanner username={username} />
@@ -124,26 +106,9 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
 }
 
 export function MemberStudyDetailContent({ username }: { username: string }) {
-  const data = {
-    totalCount: 4,
-    notices: [
-      {
-        id: 1,
-        title: '판교 스터디룸에서 만나도록 합시다',
-      },
-      {
-        id: 2,
-        title: '어제 공지 읽었나요 ?',
-      },
-    ],
-    assignments: [
-      {
-        id: 1,
-        title: '그리디 3문제 풀기',
-      },
-    ],
-  };
-  const todoCount = data.notices.length + data.assignments.length;
+  const { studyId } = useStudyId();
+  const { data } = useSuspenseQuery(studyQueries.detail<'MEMBER'>(studyId));
+  const todoCount = data.totalCount;
 
   return (
     <div>

@@ -1,6 +1,6 @@
 import api from '../../client';
 import { STUDY_URLS } from './urls';
-import { Study } from './types';
+import { Role, Study, StudyDetail } from './types';
 
 export async function fetchStudies() {
   try {
@@ -8,6 +8,15 @@ export async function fetchStudies() {
     return await response.json<{ studies: Study[] }>();
   } catch {
     throw new Error('스터디 목록을 불러오는데 실패했습니다.');
+  }
+}
+
+export async function fetchStudyDetail<R extends Role>(studyId: number) {
+  try {
+    const response = await api.get(`/studies/${studyId}`);
+    return await response.json<StudyDetail<R>>();
+  } catch {
+    throw new Error('스터디 정보를 불러오는데 실패했습니다.');
   }
 }
 
@@ -28,7 +37,7 @@ export async function fetchStudyInfo(studyId: number) {
     const response = await api.get(`/studies/${studyId}/info`);
     return await response.json<{
       studyName: string;
-      role: 'LEADER' | 'MEMBER';
+      role: Role;
       memberName: string;
     }>();
   } catch {
