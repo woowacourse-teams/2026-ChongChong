@@ -4,6 +4,7 @@ import Badge from '../../../shared/ui/Badge';
 import noticeIcon from '../../../shared/assets/notice.svg';
 import assignIcon from '../../../shared/assets/assign.svg';
 import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
+import { Link } from 'react-router';
 import { Study } from '../types';
 
 export default function StudyList({ studies }: { studies: Study[] }) {
@@ -11,8 +12,8 @@ export default function StudyList({ studies }: { studies: Study[] }) {
     <List>
       {studies.map((study) => {
         return (
-          <a href="">
-            <List.Item key={study.id}>
+          <List.Item key={study.id}>
+            <Link to={study.id}>
               <ContentCard>
                 <ContentCard.Badges>
                   <Badge variant="brandSolid" size="small">
@@ -40,8 +41,8 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                   </ContentCard.Badge>
                 </ContentCard.Footer>
               </ContentCard>
-            </List.Item>
-          </a>
+            </Link>
+          </List.Item>
         );
       })}
     </List>
