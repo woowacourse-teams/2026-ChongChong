@@ -1,0 +1,68 @@
+name: Deploy FE
+
+on:
+  push:
+    branches: [prod]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/fe-cd.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: fe-cd
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm build
+        env:
+          DEPLOY_TARGET: ec2
+          NODE_ENV: production
+
+      - name: Pack
+        run: tar -czf dist.tar.gz -C frontend/dist .
+
+      - name: Copy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: dist.tar.gz
+          target: /tmp
+
+      - name: Update new release
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            BASE=/var/www/chongchong
+            mkdir -p $BASE/releases
+            RELEASE=$BASE/releases/$(date +%Y%m%d%H%M%S)
+            mkdir -p $RELEASE
+            tar -xzf /tmp/dist.tar.gz -C $RELEASE
+            ln -sfn $RELEASE $BASE/current
+            ls -1dt $BASE/releases/* | tail -n +11 | xargs -r rm -rf 
+            rm -f /tmp/dist.tar.gz

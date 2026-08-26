@@ -38,6 +38,7 @@ services:
       - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
+      - /var/www/chongchong:/var/www/chongchong
     networks:
       - application
 

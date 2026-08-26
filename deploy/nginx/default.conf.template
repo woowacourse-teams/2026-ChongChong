@@ -17,11 +17,29 @@ server {
     listen [::]:443 ssl;
     server_name ${SERVER_NAME};
 
+    root /var/www/chongchong/current;
+    index index.html;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
     ssl_certificate /etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${SERVER_NAME}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
 
     location / {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~* \.(js|css|woff2?|png|jpe?g|svg|gif)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    location /api/ {
         proxy_pass http://backend:8080;
         proxy_http_version 1.1;
         proxy_set_header Host $host;

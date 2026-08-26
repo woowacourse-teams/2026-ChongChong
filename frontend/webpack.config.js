@@ -12,8 +12,10 @@ if (existsSync(envPath)) {
   process.loadEnvFile(envPath);
 }
 
+const mode = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
 export default {
-  mode: 'development',
+  mode: mode,
   entry: './main.tsx',
   module: {
     rules: [
