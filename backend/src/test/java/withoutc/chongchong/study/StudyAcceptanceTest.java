@@ -13,6 +13,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -241,12 +243,23 @@ class StudyAcceptanceTest {
     @DisplayName("리더가 스터디 상세 조회를 요청하면 멤버 수와 공지·과제 완료 수를 반환한다")
     void getStudyDetailForLeaderTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User firstMember = userRepository.saveAndFlush(User.create("첫 번째 멤버", null));
+        User secondMember = userRepository.saveAndFlush(User.create("두 번째 멤버", null));
         Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
         StudyMember leaderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
         );
+        StudyMember firstStudyMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, firstMember, firstMember.getName(), null, StudyMemberRole.MEMBER)
+        );
+        StudyMember secondStudyMember = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, secondMember, secondMember.getName(), null, StudyMemberRole.MEMBER)
+        );
         Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        notice.addRecipients(List.of(firstStudyMember, secondStudyMember));
+        notice.getRecipients().getFirst().markAsRead(ASSIGNMENT_CLOCK);
+        noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
                         leaderMember,
@@ -257,6 +270,9 @@ class StudyAcceptanceTest {
                         ASSIGNMENT_CLOCK
                 )
         );
+        assignment.initializeSubmissions(List.of(firstStudyMember, secondStudyMember));
+        ReflectionTestUtils.setField(assignment.getSubmissions().getFirst(), "submitted", true);
+        assignmentRepository.saveAndFlush(assignment);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
                 .port(port)
@@ -264,15 +280,15 @@ class StudyAcceptanceTest {
                 .get("/studies/{studyId}", study.getId())
                 .then()
                 .statusCode(200)
-                .body("memberCount", equalTo(1))
+                .body("memberCount", equalTo(3))
                 .body("notices.count", equalTo(1))
                 .body("notices.items[0].id", equalTo(notice.getId().intValue()))
                 .body("notices.items[0].title", equalTo("공지"))
-                .body("notices.items[0].completeCount", equalTo(2))
+                .body("notices.items[0].completeCount", equalTo(1))
                 .body("assignments.count", equalTo(1))
                 .body("assignments.items[0].id", equalTo(assignment.getId().intValue()))
                 .body("assignments.items[0].title", equalTo("과제"))
-                .body("assignments.items[0].completeCount", equalTo(2));
+                .body("assignments.items[0].completeCount", equalTo(1));
     }
 
     @Test
@@ -285,11 +301,13 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
         );
-        studyMemberRepository.saveAndFlush(
+        StudyMember memberStudyMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
                         StudyMemberRole.MEMBER)
         );
         Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        notice.addRecipients(List.of(memberStudyMember));
+        noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
                         leaderMember,
@@ -300,6 +318,8 @@ class StudyAcceptanceTest {
                         ASSIGNMENT_CLOCK
                 )
         );
+        assignment.initializeSubmissions(List.of(memberStudyMember));
+        assignmentRepository.saveAndFlush(assignment);
 
         testAuthRequest.givenAuthenticatedUser(member.getId())
                 .port(port)
@@ -307,7 +327,7 @@ class StudyAcceptanceTest {
                 .get("/studies/{studyId}", study.getId())
                 .then()
                 .statusCode(200)
-                .body("totalCount", equalTo(4))
+                .body("totalCount", equalTo(2))
                 .body("notices.items[0].id", equalTo(notice.getId().intValue()))
                 .body("notices.items[0].title", equalTo("공지"))
                 .body("assignments.items[0].id", equalTo(assignment.getId().intValue()))

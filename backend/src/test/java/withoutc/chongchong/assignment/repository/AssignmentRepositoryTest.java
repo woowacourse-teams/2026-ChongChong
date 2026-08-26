@@ -2,6 +2,7 @@ package withoutc.chongchong.assignment.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -15,10 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -96,6 +99,28 @@ class AssignmentRepositoryTest {
     }
 
     @Test
+    @DisplayName("멤버별 과제 cursor 조회는 제출 정보가 존재하는 과제만 반환한다")
+    void findByCursorAndMemberIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Assignment firstMemberAssignment = createAssignment(
+                fixture.leader(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
+        );
+        createAssignment(fixture.leader(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
+        assignmentRepository.flush();
+
+        List<Assignment> assignments = assignmentRepository.findByCursorAndMemberId(
+                fixture.study().getId(),
+                fixture.firstMember().getId(),
+                null,
+                PageRequest.of(0, 11)
+        );
+
+        assertThat(assignments)
+                .extracting(Assignment::getId)
+                .containsExactly(firstMemberAssignment.getId());
+    }
+
+    @Test
     @DisplayName("과제 조회에 성공하면 해당 과제를 반환하고, 없으면 과제 없음 예외를 던진다")
     void getByIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
@@ -117,6 +142,54 @@ class AssignmentRepositoryTest {
                 );
     }
 
+    @Test
+    @DisplayName("리더용 미완료 과제 요약은 미제출자가 있는 과제만 반환하고 제출 수를 센다")
+    void findIncompleteAssignmentSummariesByStudyIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Assignment incompleteAssignment = createAssignment(
+                fixture.leader(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
+        );
+        Assignment completeAssignment = createAssignment(
+                fixture.leader(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
+        );
+        Assignment unsubmittedAssignment = createAssignment(
+                fixture.leader(), "미제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 0
+        );
+        assignmentRepository.flush();
+
+        List<LeaderAssignmentSummaryProjection> summaries =
+                assignmentRepository.findIncompleteAssignmentSummariesByStudyId(fixture.study().getId());
+
+        assertThat(summaries)
+                .extracting(LeaderAssignmentSummaryProjection::id,
+                        LeaderAssignmentSummaryProjection::title,
+                        LeaderAssignmentSummaryProjection::completeCount)
+                .containsExactlyInAnyOrder(
+                        tuple(incompleteAssignment.getId(), "일부 제출 과제", 1L),
+                        tuple(unsubmittedAssignment.getId(), "미제출 과제", 0L)
+                );
+    }
+
+    @Test
+    @DisplayName("멤버용 미완료 과제는 해당 멤버가 제출하지 않은 과제만 반환한다")
+    void findIncompleteAssignmentsByStudyIdAndMemberIdTest() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Assignment incompleteAssignment = createAssignment(
+                fixture.leader(), "미제출 과제", List.of(fixture.firstMember()), 0
+        );
+        Assignment completeAssignment = createAssignment(
+                fixture.leader(), "제출 과제", List.of(fixture.firstMember()), 1
+        );
+        assignmentRepository.flush();
+
+        List<Assignment> assignments = assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.firstMember().getId());
+
+        assertThat(assignments)
+                .extracting(Assignment::getId)
+                .containsExactly(incompleteAssignment.getId());
+    }
+
     private StudyFixture createStudyFixture(String studyName, String userName) {
         User user = userRepository.save(User.create(userName, null));
         Study study = studyRepository.save(Study.create(studyName, "설명"));
@@ -126,6 +199,52 @@ class AssignmentRepositoryTest {
         return new StudyFixture(study, leader);
     }
 
+    private Assignment createAssignment(
+            StudyMember leader,
+            String title,
+            List<StudyMember> members,
+            int submittedCount
+    ) {
+        Assignment assignment = assignmentRepository.save(Assignment.create(
+                leader,
+                title,
+                "과제 내용",
+                "GitHub PR",
+                LocalDateTime.of(2026, 8, 30, 23, 59),
+                CLOCK
+        ));
+        assignment.initializeSubmissions(members);
+        assignment.getSubmissions().stream()
+                .limit(submittedCount)
+                .forEach(submission -> ReflectionTestUtils.setField(submission, "submitted", true));
+        return assignment;
+    }
+
+    private StudyWithMembersFixture createStudyWithMembersFixture() {
+        User leaderUser = userRepository.save(User.create("리더", null));
+        User firstMemberUser = userRepository.save(User.create("첫 번째 멤버", null));
+        User secondMemberUser = userRepository.save(User.create("두 번째 멤버", null));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember leader = studyMemberRepository.save(
+                StudyMember.create(study, leaderUser, leaderUser.getName(), null, StudyMemberRole.LEADER)
+        );
+        StudyMember firstMember = studyMemberRepository.save(
+                StudyMember.create(study, firstMemberUser, firstMemberUser.getName(), null, StudyMemberRole.MEMBER)
+        );
+        StudyMember secondMember = studyMemberRepository.save(
+                StudyMember.create(study, secondMemberUser, secondMemberUser.getName(), null, StudyMemberRole.MEMBER)
+        );
+        return new StudyWithMembersFixture(study, leader, firstMember, secondMember);
+    }
+
     private record StudyFixture(Study study, StudyMember leader) {
+    }
+
+    private record StudyWithMembersFixture(
+            Study study,
+            StudyMember leader,
+            StudyMember firstMember,
+            StudyMember secondMember
+    ) {
     }
 }

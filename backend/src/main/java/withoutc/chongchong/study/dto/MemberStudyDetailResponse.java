@@ -20,7 +20,7 @@ public record MemberStudyDetailResponse(
     }
 
     public record MemberNoticeSummaryResponse(
-            long id,
+            Long id,
             String title
     ) {
 
@@ -43,7 +43,7 @@ public record MemberStudyDetailResponse(
     }
 
     public record MemberAssignmentSummaryResponse(
-            long id,
+            Long id,
             String title
     ) {
 

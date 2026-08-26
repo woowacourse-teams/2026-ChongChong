@@ -300,7 +300,9 @@ class AssignmentServiceTest {
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(assignmentRepository.findByCursor(STUDY_ID, null, PageRequest.of(0, 11)))
+        when(assignmentRepository.findByCursorAndMemberId(
+                STUDY_ID, MEMBER_ID, null, PageRequest.of(0, 11)
+        ))
                 .thenReturn(List.of(firstAssignment, secondAssignment));
         when(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
@@ -322,22 +324,19 @@ class AssignmentServiceTest {
     }
 
     @Test
-    @DisplayName("스터디원의 과제 제출 정보가 없으면 목록 조회를 거부한다")
+    @DisplayName("스터디원의 제출 정보가 없는 과제는 목록에서 제외한다")
     void getListWithoutSubmissionTest() {
         StudyMember member = mock(StudyMember.class);
-        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(assignmentRepository.findByCursor(STUDY_ID, null, PageRequest.of(0, 11)))
-                .thenReturn(List.of(assignment));
-        when(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
-                List.of(ASSIGNMENT_ID), MEMBER_ID
+        when(assignmentRepository.findByCursorAndMemberId(
+                STUDY_ID, MEMBER_ID, null, PageRequest.of(0, 11)
         )).thenReturn(List.of());
 
-        assertThatThrownBy(() -> assignmentService.getList(USER_ID, STUDY_ID, null, 10))
-                .isInstanceOf(AssignmentException.class)
-                .extracting(exception -> ((AssignmentException) exception).getErrorCode())
-                .isEqualTo(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10);
+
+        assertThat(response.assignments()).isEmpty();
+        verifyNoInteractions(assignmentSubmissionRepository);
     }
 
     @ParameterizedTest

@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 import withoutc.chongchong.study.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryListResponse;
 import withoutc.chongchong.study.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse;
@@ -112,26 +114,27 @@ public class StudyService {
         if (studyMember.getRole() == StudyMemberRole.LEADER) {
             return makeLeaderStudyDetailResponse(study);
         }
-        return makeMemberStudyDetailResponse(study);
+        return makeMemberStudyDetailResponse(study, studyMember);
     }
 
     private LeaderStudyDetailResponse makeLeaderStudyDetailResponse(Study study) {
         int memberCount = studyMemberRepository.countByStudyId(study.getId());
 
-        // TODO: NoticeRecipient, Submission 구현되면 한 명이라도 안 읽은 공지, 한 명이라도 제출 안 한 과제로 변경
-        List<Notice> notices = noticeRepository.findAllByStudyId(study.getId());
-        List<Assignment> assignments = assignmentRepository.findAllByStudyId(study.getId());
+        List<LeaderNoticeSummaryProjection> noticeProjections = noticeRepository.findIncompleteNoticeSummariesByStudyId(
+                study.getId());
+        List<LeaderAssignmentSummaryProjection> assignmentProjections = assignmentRepository.findIncompleteAssignmentSummariesByStudyId(
+                study.getId());
 
         List<LeaderNoticeSummaryResponse> noticeResponses = new ArrayList<>();
         List<LeaderAssignmentSummaryResponse> assignmentResponses = new ArrayList<>();
 
-        for (Notice notice : notices) {
-            LeaderNoticeSummaryResponse response = LeaderNoticeSummaryResponse.from(notice, 2);
+        for (LeaderNoticeSummaryProjection projection : noticeProjections) {
+            LeaderNoticeSummaryResponse response = LeaderNoticeSummaryResponse.from(projection);
             noticeResponses.add(response);
         }
 
-        for (Assignment assignment : assignments) {
-            LeaderAssignmentSummaryResponse response = LeaderAssignmentSummaryResponse.from(assignment, 2);
+        for (LeaderAssignmentSummaryProjection projection : assignmentProjections) {
+            LeaderAssignmentSummaryResponse response = LeaderAssignmentSummaryResponse.from(projection);
             assignmentResponses.add(response);
         }
 
@@ -139,13 +142,13 @@ public class StudyService {
                 LeaderAssignmentSummaryListResponse.from(assignmentResponses));
     }
 
-    private MemberStudyDetailResponse makeMemberStudyDetailResponse(Study study) {
-        // TODO: NoticeRecipient, Submission 구현되면 안 읽은 공지 + 제출 안 한 과제로 변경
-        int totalCount = 4;
+    private MemberStudyDetailResponse makeMemberStudyDetailResponse(Study study, StudyMember studyMember) {
+        List<Notice> notices = noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(study.getId(),
+                studyMember.getId());
+        List<Assignment> assignments = assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(study.getId(),
+                studyMember.getId());
 
-        // TODO: NoticeRecipient, Submission 구현되면 안 읽은 공지, 제출 안 한 과제로 변경
-        List<Notice> notices = noticeRepository.findAllByStudyId(study.getId());
-        List<Assignment> assignments = assignmentRepository.findAllByStudyId(study.getId());
+        int totalCount = notices.size() + assignments.size();
 
         List<MemberNoticeSummaryResponse> noticeResponses = notices.stream()
                 .map(MemberNoticeSummaryResponse::from)
@@ -167,8 +170,8 @@ public class StudyService {
             Study study = studyMember.getStudy();
 
             int memberCount = studyMemberRepository.countByStudyId(study.getId());
-            int noticeCount = unReadNoticeCount(studyMember.getRole());
-            int assignmentCount = unFinishedAssignmentCount(studyMember.getRole());
+            int noticeCount = unReadNoticeCount(studyMember, study.getId());
+            int assignmentCount = unFinishedAssignmentCount(studyMember, study.getId());
 
             responses.add(
                     MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount));
@@ -177,20 +180,18 @@ public class StudyService {
         return new MyStudyListResponse(responses.size(), responses);
     }
 
-    // TODO: 현재 Mock 데이터. NoticeRecipient 구현되면 리더는 한 명이라도 안 읽은 공지, 멤버는 자신이 안 읽은 공지 개수로 변경
-    private int unReadNoticeCount(StudyMemberRole role) {
-        if (role == StudyMemberRole.LEADER) {
-            return 5;
+    private int unReadNoticeCount(StudyMember studyMember, Long studyId) {
+        if (studyMember.getRole() == StudyMemberRole.LEADER) {
+            return noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId).size();
         }
-        return 1;
+        return noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(studyId, studyMember.getId()).size();
     }
 
-    // TODO: 현재 Mock 데이터. Submission 구현되면 리더는 한 명이라도 안 낸 과제, 멤버는 자신이 제출하지 않은 과제 개수로 변경
-    private int unFinishedAssignmentCount(StudyMemberRole role) {
-        if (role == StudyMemberRole.LEADER) {
-            return 5;
+    private int unFinishedAssignmentCount(StudyMember studyMember, Long studyId) {
+        if (studyMember.getRole() == StudyMemberRole.LEADER) {
+            return assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId).size();
         }
-        return 1;
+        return assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(studyId, studyMember.getId()).size();
     }
 
     public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {

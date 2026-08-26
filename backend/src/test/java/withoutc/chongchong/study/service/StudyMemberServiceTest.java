@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +16,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -46,9 +43,6 @@ class StudyMemberServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private AssignmentRepository assignmentRepository;
-
-    @Mock
     private StudyInviteTokenProvider studyInviteTokenProvider;
 
     @InjectMocks
@@ -65,7 +59,6 @@ class StudyMemberServiceTest {
         when(user.getName()).thenReturn("사용자");
         when(user.getProfileImageUrl()).thenReturn("profile-image-url");
         Study study = mock(Study.class);
-        Assignment assignment = mock(Assignment.class);
         when(study.getId()).thenReturn(studyId);
         StudyInviteTokenRequest request = new StudyInviteTokenRequest(token);
         ArgumentCaptor<StudyMember> captor = ArgumentCaptor.forClass(StudyMember.class);
@@ -74,8 +67,6 @@ class StudyMemberServiceTest {
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
-        when(assignmentRepository.findAllByStudyId(studyId)).thenReturn(List.of(assignment));
-
         studyMemberService.join(userId, request);
 
         verify(studyMemberRepository).save(captor.capture());
@@ -83,7 +74,6 @@ class StudyMemberServiceTest {
         assertThat(studyMember.getStudy()).isSameAs(study);
         assertThat(studyMember.getUser()).isSameAs(user);
         assertThat(studyMember.getRole()).isEqualTo(StudyMemberRole.MEMBER);
-        verify(assignment).initializeSubmissions(List.of(studyMember));
     }
 
     @Test

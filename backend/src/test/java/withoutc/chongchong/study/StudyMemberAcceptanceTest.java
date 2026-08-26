@@ -95,7 +95,7 @@ class StudyMemberAcceptanceTest {
     }
 
     @Test
-    @DisplayName("기존 과제가 있는 스터디에 가입하면 제출 정보를 생성하고 과제 목록을 조회할 수 있다")
+    @DisplayName("기존 과제가 있는 스터디에 가입해도 제출 정보를 생성하지 않는다")
     void joinStudyWithExistingAssignmentTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User user = userRepository.saveAndFlush(User.create("참여자", "user-profile-image-url"));
@@ -132,19 +132,13 @@ class StudyMemberAcceptanceTest {
                 .get("/studies/{studyId}/assignments", study.getId())
                 .then()
                 .statusCode(200)
-                .body("assignments", hasSize(1))
-                .body("assignments[0].id", equalTo(assignment.getId().intValue()))
-                .body("assignments[0].isComplete", equalTo(false));
+                .body("assignments", hasSize(0));
 
         StudyMember joinedMember = studyMemberRepository
                 .getByStudyIdAndUserIdOrThrow(study.getId(), user.getId());
         assertThat(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
                 List.of(assignment.getId()), joinedMember.getId()))
-                .singleElement()
-                .satisfies(status -> {
-                    assertThat(status.assignmentId()).isEqualTo(assignment.getId());
-                    assertThat(status.submitted()).isFalse();
-                });
+                .isEmpty();
     }
 
     @Test

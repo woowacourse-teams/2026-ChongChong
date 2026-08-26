@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
+import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
     @Query("""
@@ -28,6 +29,41 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
     }
 
     List<Notice> findAllByStudyId(Long studyId);
+
+    @Query("""
+            SELECT new withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection(
+                n.id,
+                n.title,
+                COUNT(nr.readAt)
+            )
+            FROM Notice n
+            JOIN NoticeRecipient nr
+              ON nr.notice = n
+            WHERE n.study.id = :studyId
+            GROUP BY n.id, n.title, n.createdAt
+            HAVING COUNT(nr.readAt) < COUNT(nr.id)
+            ORDER BY n.createdAt DESC
+            """)
+    List<LeaderNoticeSummaryProjection> findIncompleteNoticeSummariesByStudyId(
+            @Param("studyId") Long studyId
+    );
+
+    @Query("""
+            SELECT n
+            FROM Notice n
+            WHERE n.study.id = :studyId
+            AND EXISTS (
+            SELECT nr.id
+            FROM NoticeRecipient nr
+            WHERE nr.notice = n AND nr.member.id = :memberId
+            AND nr.readAt IS NULL
+            )
+            ORDER BY n.createdAt DESC
+            """)
+    List<Notice> findIncompleteNoticesByStudyIdAndMemberId(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId
+    );
 
     void deleteAllByStudyId(Long studyId);
 }

@@ -98,7 +98,17 @@ public class AssignmentService {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
-        List<Assignment> assignments = assignmentRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
+        List<Assignment> assignments;
+        if (member.isLeader()) {
+            assignments = assignmentRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
+        } else {
+            assignments = assignmentRepository.findByCursorAndMemberId(
+                    studyId,
+                    member.getId(),
+                    pageRequest.cursor(),
+                    pageable
+            );
+        }
 
         CursorPageResponse<Assignment> assignmentPage = CursorPageResponse.of(assignments, pageRequest,
                 Assignment::getId);
