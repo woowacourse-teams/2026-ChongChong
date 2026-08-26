@@ -10,6 +10,7 @@ import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 
 public interface AssignmentSubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
 
@@ -26,6 +27,30 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
             @Param("assignmentIds") List<Long> assignmentIds,
             @Param("memberId") Long memberId
     );
+
+    @Query("""
+            SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection(
+                       member.id,
+                       member.name,
+                       member.profileImageUrl,
+                       submission.submitted,
+                       MAX(notification.createdAt)
+                   )
+            FROM AssignmentSubmission submission
+            JOIN submission.member member
+            LEFT JOIN Notification notification
+              ON notification.recipient = member
+             AND notification.resourceType = withoutc.chongchong.notification.entity.NotificationResourceType.ASSIGNMENT
+             AND notification.resourceId = submission.assignment.id
+             AND notification.type = withoutc.chongchong.notification.entity.NotificationType.REMIND
+            WHERE submission.assignment.id = :assignmentId
+            GROUP BY member.id,
+                     member.name,
+                     member.profileImageUrl,
+                     submission.submitted
+            """)
+    List<AssignmentSubmitterStatusProjection> findAllSubmitterStatusesByAssignmentId(
+            @Param("assignmentId") Long assignmentId);
 
     List<AssignmentSubmission> findAllByAssignmentId(Long assignmentId);
 

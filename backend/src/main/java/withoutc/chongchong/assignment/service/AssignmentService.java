@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
@@ -29,6 +30,7 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -113,6 +115,36 @@ public class AssignmentService {
         List<AssignmentSummaryResponse> assignmentSummaries = createAssignmentSummaries(member,
                 assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), assignmentSummaries);
+    }
+
+    public AssignmentStatusesResponse getAllSubmittedStatus(Long userId, Long studyId, Long assignmentId) {
+        validateLeader(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        List<AssignmentSubmitterStatusProjection> statues = assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(
+                assignmentId);
+
+        List<AssignmentStatusesResponse.CompleteMember> completeMembers = statues.stream()
+                .filter(AssignmentSubmitterStatusProjection::isSubmitted)
+                .map(status -> AssignmentStatusesResponse.CompleteMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl()
+                )).toList();
+
+        List<AssignmentStatusesResponse.IncompleteMember> incompleteMembers = statues.stream()
+                .filter(status -> !status.isSubmitted())
+                .map(status -> AssignmentStatusesResponse.IncompleteMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl(),
+                        status.lastRemindAt()
+                )).toList();
+
+        return AssignmentStatusesResponse.of(assignmentId, assignment.getNextRemindAt(), completeMembers,
+                incompleteMembers);
     }
 
     @Transactional

@@ -115,7 +115,8 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
-        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(noticeId);
+        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(
+                noticeId);
 
         List<NoticeStatusesResponse.ReadMember> readMembers = statuses.stream()
                 .filter(NoticeRecipientStatusProjection::isRead)

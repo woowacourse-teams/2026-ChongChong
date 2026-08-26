@@ -7,7 +7,7 @@ public record NoticeDetailResponse(
         Long id,
         String title,
         String writer,
-        String profileImageUrl,
+        String profileImage,
         String content,
         LocalDateTime createdAt
 ) {
