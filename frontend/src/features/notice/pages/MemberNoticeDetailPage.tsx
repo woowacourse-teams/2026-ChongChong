@@ -1,5 +1,5 @@
 import type { CSSProperties, UIEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import Main from '../../../shared/ui/Main';
@@ -10,6 +10,7 @@ import NoticeArticle from '../components/NoticeArticle';
 import { notice } from '../noticeData';
 import Page from '../../../shared/ui/Page';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import Loading from '../../../shared/ui/Loading';
 
 const backButtonStyle = {
   display: 'grid',
@@ -70,16 +71,17 @@ export default function MemberNoticeDetailPage() {
         }
         middle={<TopHeader.Title>공지</TopHeader.Title>}
       />
-
-      <Main ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
-        <NoticeArticle
-          title={notice.title}
-          author={notice.author}
-          createdAt={notice.createdAt}
-          content={notice.content}
-          hasTopMargin={false}
-        />
-      </Main>
+      <Suspense fallback={<Loading />}>
+        <Main ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
+          <NoticeArticle
+            title={notice.title}
+            author={notice.author}
+            createdAt={notice.createdAt}
+            content={notice.content}
+            hasTopMargin={false}
+          />
+        </Main>
+      </Suspense>
 
       <MemberNoticeReadState progress={readProgress} readAt="8월 3일 21:14" />
       <BottomTab />

@@ -8,6 +8,8 @@ import MemberNoticeList from '../components/MemberNoticeList';
 import { notices as allNotices } from '../noticeData';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 import Page from '../../../shared/ui/Page';
+import { Suspense } from 'react';
+import Loading from '../../../shared/ui/Loading';
 
 const emptyContentStyle = {
   alignItems: 'center',
@@ -51,14 +53,16 @@ export default function MemberNoticeListPage() {
           </>
         }
       />
+      <Suspense fallback={<Loading />}>
+        <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
+          {notices.length === 0 ? (
+            <EmptyContent message="아직 공지가 없어요" />
+          ) : (
+            <MemberNoticeList notices={notices} studyId={studyId} />
+          )}
+        </Main>
+      </Suspense>
 
-      <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
-        {notices.length === 0 ? (
-          <EmptyContent message="아직 공지가 없어요" />
-        ) : (
-          <MemberNoticeList notices={notices} studyId={studyId} />
-        )}
-      </Main>
       <BottomTab />
     </Page>
   );
