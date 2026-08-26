@@ -9,7 +9,7 @@ public record AssignmentSummaryResponse(
         Long id,
         String title,
         String content,
-        String submissionType,
+        String submissionMethod,
         LocalDateTime closeAt,
         Integer memberCount,
         Integer completeCount,
