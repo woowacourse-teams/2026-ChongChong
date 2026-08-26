@@ -1,10 +1,8 @@
 package withoutc.chongchong.study.service;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -31,7 +29,6 @@ public class StudyMemberService {
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
-    private final AssignmentRepository assignmentRepository;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
 
@@ -51,8 +48,6 @@ public class StudyMemberService {
                 StudyMemberRole.MEMBER);
 
         studyMemberRepository.save(studyMember);
-        assignmentRepository.findAllByStudyId(studyId)
-                .forEach(assignment -> assignment.initializeSubmissions(List.of(studyMember)));
     }
 
     private void validateJoin(Long studyId, Long userId) {

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
+import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
     @Query("""
@@ -23,11 +24,94 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             Pageable pageable
     );
 
+    @Query("""
+            SELECT n
+            FROM Notice n
+            JOIN NoticeRecipient nr ON nr.notice = n
+            WHERE n.study.id = :studyId
+              AND nr.member.id = :memberId
+              AND (:cursor IS NULL OR n.id < :cursor)
+            ORDER BY n.id DESC
+            """)
+    List<Notice> findByCursorAndMemberId(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId,
+            @Param("cursor") Long cursor,
+            Pageable pageable
+    );
+
     default Notice getByIdOrThrow(Long noticeId) {
         return findById(noticeId).orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
-    List<Notice> findAllByStudyId(Long studyId);
+    // 리더용
+    @Query("""
+            SELECT new withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection(
+                n.id,
+                n.title,
+                COUNT(nr.id),
+                COUNT(nr.readAt)
+            )
+            FROM Notice n
+            JOIN NoticeRecipient nr
+              ON nr.notice = n
+            WHERE n.study.id = :studyId
+            GROUP BY n.id, n.title, n.createdAt
+            HAVING COUNT(nr.readAt) < COUNT(nr.id)
+            ORDER BY n.createdAt DESC
+            """)
+    List<LeaderNoticeSummaryProjection> findIncompleteNoticeSummariesByStudyId(
+            @Param("studyId") Long studyId
+    );
+
+    // 스터디원용
+    @Query("""
+            SELECT n
+            FROM Notice n
+            WHERE n.study.id = :studyId
+            AND EXISTS (
+            SELECT nr.id
+            FROM NoticeRecipient nr
+            WHERE nr.notice = n AND nr.member.id = :memberId
+            AND nr.readAt IS NULL
+            )
+            ORDER BY n.createdAt DESC
+            """)
+    List<Notice> findIncompleteNoticesByStudyIdAndMemberId(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId
+    );
+
+    // 리더용
+    @Query("""
+            SELECT count(n.id)
+            FROM Notice n
+            WHERE n.study.id = :studyId
+            AND EXISTS (
+            SELECT nr.id
+            FROM NoticeRecipient nr
+            WHERE nr.notice.id = n.id AND nr.readAt IS NULL
+            )
+            """)
+    long countIncompleteNoticeByStudyId(
+            @Param("studyId") Long studyId
+    );
+
+    // 스터디원용
+    @Query("""
+            SELECT count(n.id)
+            FROM Notice n
+            WHERE n.study.id = :studyId
+            AND EXISTS (
+            SELECT nr.id
+            FROM NoticeRecipient nr
+            WHERE nr.notice.id = n.id AND nr.member.id = :memberId AND nr.readAt IS NULL
+            )
+            """)
+    long countIncompleteNoticeByStudyIdAndMemberId(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId
+    );
 
     void deleteAllByStudyId(Long studyId);
 }

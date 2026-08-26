@@ -23,8 +23,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 import withoutc.chongchong.study.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.dto.MemberStudyDetailResponse;
 import withoutc.chongchong.study.dto.MyStudyListResponse;
@@ -91,6 +93,12 @@ class StudyServiceTest {
                 .thenReturn(List.of(leader, member));
         when(studyMemberRepository.countByStudyId(1L)).thenReturn(3);
         when(studyMemberRepository.countByStudyId(2L)).thenReturn(2);
+        when(noticeRepository.countIncompleteNoticeByStudyId(1L)).thenReturn(1L);
+        when(assignmentRepository.countIncompleteAssignmentByStudyId(1L)).thenReturn(1L);
+        when(noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(2L, member.getId()))
+                .thenReturn(1L);
+        when(assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(2L, member.getId()))
+                .thenReturn(1L);
 
         MyStudyListResponse response = studyService.getMyStudies(userId);
 
@@ -106,7 +114,7 @@ class StudyServiceTest {
                         MyStudyResponse::assignmentCount
                 )
                 .containsExactly(
-                        tuple(1L, StudyMemberRole.LEADER, "리더 스터디", "리더 스터디 설명", 3, 5, 5),
+                        tuple(1L, StudyMemberRole.LEADER, "리더 스터디", "리더 스터디 설명", 3, 1, 1),
                         tuple(2L, StudyMemberRole.MEMBER, "멤버 스터디", "멤버 스터디 설명", 2, 1, 1)
                 );
         verify(studyMemberRepository).countByStudyId(1L);
@@ -292,7 +300,7 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더는 멤버 수와 공지·과제 완료 수를 포함한 상세 정보를 조회한다")
+    @DisplayName("스터디 리더는 공지·과제별 대상자 수와 완료 수를 포함한 상세 정보를 조회한다")
     void getStudyDetailForLeaderTest() {
         Long userId = 1L;
         Long studyId = 1L;
@@ -300,37 +308,33 @@ class StudyServiceTest {
         User user = User.create("리더", "profile-image-url");
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER);
-        Notice notice = mock(Notice.class);
-        Assignment assignment = mock(Assignment.class);
         when(study.getId()).thenReturn(studyId);
-        when(notice.getId()).thenReturn(10L);
-        when(notice.getTitle()).thenReturn("공지");
-        when(assignment.getId()).thenReturn(20L);
-        when(assignment.getTitle()).thenReturn("과제");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(3);
-        when(noticeRepository.findAllByStudyId(studyId)).thenReturn(List.of(notice));
-        when(assignmentRepository.findAllByStudyId(studyId)).thenReturn(List.of(assignment));
+        when(noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId))
+                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "공지", 2L, 1L)));
+        when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId))
+                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "과제", 2L, 1L)));
 
         StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
 
         assertThat(response).isInstanceOf(LeaderStudyDetailResponse.class);
         LeaderStudyDetailResponse leaderResponse = (LeaderStudyDetailResponse) response;
-        assertThat(leaderResponse.memberCount()).isEqualTo(3);
         assertThat(leaderResponse.notices().count()).isEqualTo(1);
         assertThat(leaderResponse.notices().items())
                 .extracting(LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::id,
                         LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::title,
+                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::memberCount,
                         LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::completeCount)
-                .containsExactly(tuple(10L, "공지", 2));
+                .containsExactly(tuple(10L, "공지", 2, 1));
         assertThat(leaderResponse.assignments().count()).isEqualTo(1);
         assertThat(leaderResponse.assignments().items())
                 .extracting(LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::id,
                         LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::title,
+                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::memberCount,
                         LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::completeCount)
-                .containsExactly(tuple(20L, "과제", 2));
+                .containsExactly(tuple(20L, "과제", 2, 1));
     }
 
     @Test
@@ -352,14 +356,16 @@ class StudyServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
-        when(noticeRepository.findAllByStudyId(studyId)).thenReturn(List.of(notice));
-        when(assignmentRepository.findAllByStudyId(studyId)).thenReturn(List.of(assignment));
+        when(noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(studyId, studyMember.getId()))
+                .thenReturn(List.of(notice));
+        when(assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(studyId, studyMember.getId()))
+                .thenReturn(List.of(assignment));
 
         StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
 
         assertThat(response).isInstanceOf(MemberStudyDetailResponse.class);
         MemberStudyDetailResponse memberResponse = (MemberStudyDetailResponse) response;
-        assertThat(memberResponse.totalCount()).isEqualTo(4);
+        assertThat(memberResponse.totalCount()).isEqualTo(2);
         assertThat(memberResponse.notices().items())
                 .extracting(MemberStudyDetailResponse.MemberNoticeSummaryResponse::id,
                         MemberStudyDetailResponse.MemberNoticeSummaryResponse::title)

@@ -388,7 +388,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("스터디원의 과제 제출 정보가 없으면 목록 조회 시 제출 정보 없음 오류를 반환한다")
+    @DisplayName("스터디원의 제출 정보가 없는 과제는 목록에서 제외한다")
     void getAssignmentsWithoutSubmissionTest() {
         jdbcTemplate.update(
                 "DELETE FROM assignment_submissions WHERE assignment_id = ? AND member_id = ?",
@@ -401,8 +401,8 @@ class AssignmentApiTest {
                 .when()
                 .get("/studies/{studyId}/assignments", study.getId())
                 .then()
-                .statusCode(404)
-                .body("code", equalTo("ASSIGNMENT_SUBMISSION_NOT_FOUND"));
+                .statusCode(200)
+                .body("assignments", hasSize(0));
     }
 
     @Test

@@ -101,7 +101,17 @@ public class NoticeService {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
-        List<Notice> notices = noticeRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
+        List<Notice> notices;
+        if (member.isLeader()) {
+            notices = noticeRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
+        } else {
+            notices = noticeRepository.findByCursorAndMemberId(
+                    studyId,
+                    member.getId(),
+                    pageRequest.cursor(),
+                    pageable
+            );
+        }
 
         CursorPageResponse<Notice> noticePage = CursorPageResponse.of(notices, pageRequest, Notice::getId);
 

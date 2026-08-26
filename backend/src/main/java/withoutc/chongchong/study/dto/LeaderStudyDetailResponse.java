@@ -1,11 +1,10 @@
 package withoutc.chongchong.study.dto;
 
 import java.util.List;
-import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
+import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 
 public record LeaderStudyDetailResponse(
-        int memberCount,
         LeaderNoticeSummaryListResponse notices,
         LeaderAssignmentSummaryListResponse assignments
 ) implements StudyDetailResponse {
@@ -21,16 +20,18 @@ public record LeaderStudyDetailResponse(
     }
 
     public record LeaderNoticeSummaryResponse(
-            long id,
+            Long id,
             String title,
+            int memberCount,
             int completeCount
     ) {
 
-        public static LeaderNoticeSummaryResponse from(Notice notice, int completeCount) {
+        public static LeaderNoticeSummaryResponse from(LeaderNoticeSummaryProjection noticeProjection) {
             return new LeaderNoticeSummaryResponse(
-                    notice.getId(),
-                    notice.getTitle(),
-                    completeCount
+                    noticeProjection.id(),
+                    noticeProjection.title(),
+                    (int) noticeProjection.memberCount(),
+                    (int) noticeProjection.completeCount()
             );
         }
     }
@@ -47,16 +48,18 @@ public record LeaderStudyDetailResponse(
     }
 
     public record LeaderAssignmentSummaryResponse(
-            long id,
+            Long id,
             String title,
+            int memberCount,
             int completeCount
     ) {
 
-        public static LeaderAssignmentSummaryResponse from(Assignment assignment, int completeCount) {
+        public static LeaderAssignmentSummaryResponse from(LeaderAssignmentSummaryProjection assignmentProjection) {
             return new LeaderAssignmentSummaryResponse(
-                    assignment.getId(),
-                    assignment.getTitle(),
-                    completeCount
+                    assignmentProjection.id(),
+                    assignmentProjection.title(),
+                    (int) assignmentProjection.memberCount(),
+                    (int) assignmentProjection.completeCount()
             );
         }
     }
