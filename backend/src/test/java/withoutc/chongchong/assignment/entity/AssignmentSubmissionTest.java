@@ -1,0 +1,68 @@
+package withoutc.chongchong.assignment.entity;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
+import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.study.entity.StudyMember;
+
+class AssignmentSubmissionTest {
+
+    @Test
+    @DisplayName("내용과 링크가 없어도 제출 완료 상태로 변경한다")
+    void submitWithoutContentAndLinkTest() {
+        AssignmentSubmission submission = createSubmission();
+
+        submission.submit(null, null);
+
+        assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.getContent()).isNull();
+        assertThat(submission.getLink()).isNull();
+    }
+
+    @Test
+    @DisplayName("제출 내용이 최대 길이를 초과하면 기존 상태를 유지한다")
+    void rejectContentOverMaximumLengthTest() {
+        AssignmentSubmission submission = createSubmission();
+
+        assertThatThrownBy(() -> submission.submit("a".repeat(10001), null))
+                .isInstanceOf(AssignmentException.class)
+                .extracting(exception -> ((AssignmentException) exception).getErrorCode())
+                .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
+        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.getContent()).isNull();
+    }
+
+    @Test
+    @DisplayName("제출 링크가 최대 길이를 초과하면 기존 상태를 유지한다")
+    void rejectLinkOverMaximumLengthTest() {
+        AssignmentSubmission submission = createSubmission();
+
+        assertThatThrownBy(() -> submission.submit(null, "a".repeat(10001)))
+                .isInstanceOf(AssignmentException.class)
+                .extracting(exception -> ((AssignmentException) exception).getErrorCode())
+                .isEqualTo(AssignmentErrorCode.INVALID_LINK);
+        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.getLink()).isNull();
+    }
+
+    @Test
+    @DisplayName("수정 값이 없으면 기존 제출 내용을 유지한다")
+    void updateOnlyProvidedValueTest() {
+        AssignmentSubmission submission = createSubmission();
+        submission.submit("기존 내용", "https://old.example.com");
+
+        submission.update(null, "https://new.example.com");
+
+        assertThat(submission.getContent()).isEqualTo("기존 내용");
+        assertThat(submission.getLink()).isEqualTo("https://new.example.com");
+    }
+
+    private AssignmentSubmission createSubmission() {
+        return AssignmentSubmission.create(mock(StudyMember.class), mock(Assignment.class));
+    }
+}

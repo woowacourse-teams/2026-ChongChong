@@ -6,17 +6,20 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -47,6 +50,9 @@ class AssignmentSubmissionRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
     @DisplayName("여러 과제의 제출 상태를 StudyMember id로 한 번에 조회한다")
     void findMySubmissionStatusesByAssignmentIdsAndMemberIdTest() {
@@ -59,7 +65,7 @@ class AssignmentSubmissionRepositoryTest {
         Assignment otherMemberAssignment = createAssignment(leader, "다른 사람 과제");
 
         AssignmentSubmission submitted = AssignmentSubmission.create(member, submittedAssignment);
-        ReflectionTestUtils.setField(submitted, "submitted", true);
+        submitted.submit("제출 내용", null);
         assignmentSubmissionRepository.saveAllAndFlush(List.of(
                 submitted,
                 AssignmentSubmission.create(member, unsubmittedAssignment),
@@ -94,45 +100,38 @@ class AssignmentSubmissionRepositoryTest {
     }
 
     @Test
-    @DisplayName("제출 목록은 내용과 링크가 비어 있어도 제출 완료된 정보만 조회한다")
-    void findAllSubmittedByAssignmentIdTest() {
+    @DisplayName("과제 제출 현황은 제출 여부와 해당 과제의 최근 리마인드 시각을 조회한다")
+    void findAllSubmitterStatusesByAssignmentIdTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
-        StudyMember unsubmittedMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
+        StudyMember incompleteMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
         Assignment assignment = createAssignment(leader, "과제");
-        AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
-        submitted.submit(null, null);
-        AssignmentSubmission unsubmitted = AssignmentSubmission.create(unsubmittedMember, assignment);
-        assignmentSubmissionRepository.saveAllAndFlush(List.of(submitted, unsubmitted));
-
-        assertThat(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedTrue(assignment.getId()))
-                .containsExactly(submitted);
-        assertThat(submitted.getContent()).isNull();
-        assertThat(submitted.getLink()).isNull();
-        assertThat(submitted.isSubmitted()).isTrue();
-    }
-
-    @Test
-    @DisplayName("제출 정보는 제출물 id와 과제 id를 함께 사용해 조회한다")
-    void findBySubmissionIdAndAssignmentIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명"));
-        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
-        StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
-        StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
-        Assignment assignment = createAssignment(leader, "조회 대상 과제");
         Assignment otherAssignment = createAssignment(leader, "다른 과제");
-        AssignmentSubmission submission = assignmentSubmissionRepository.saveAndFlush(
-                AssignmentSubmission.create(member, assignment));
+        AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
+        submitted.submit("제출 내용", null);
+        assignmentSubmissionRepository.saveAllAndFlush(List.of(
+                submitted,
+                AssignmentSubmission.create(incompleteMember, assignment)
+        ));
+        LocalDateTime firstRemindAt = NOW.plusHours(1);
+        LocalDateTime lastRemindAt = NOW.plusHours(2);
+        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", firstRemindAt);
+        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", lastRemindAt);
+        insertNotification(study.getId(), incompleteMember.getId(), otherAssignment.getId(), "ASSIGNMENT",
+                NOW.plusHours(3));
+        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "NOTICE", NOW.plusHours(4));
 
-        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentId(submission.getId(), assignment.getId()))
-                .contains(submission);
-        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentId(
-                submission.getId(), otherAssignment.getId())).isEmpty();
-        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentIdAndMemberId(
-                submission.getId(), assignment.getId(), member.getId())).contains(submission);
-        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentIdAndMemberId(
-                submission.getId(), assignment.getId(), otherMember.getId())).isEmpty();
+        Map<Long, AssignmentSubmitterStatusProjection> statusesByMemberId = assignmentSubmissionRepository
+                .findAllSubmitterStatusesByAssignmentId(assignment.getId())
+                .stream()
+                .collect(Collectors.toMap(AssignmentSubmitterStatusProjection::memberId, status -> status));
+
+        assertThat(statusesByMemberId).hasSize(2);
+        assertThat(statusesByMemberId.get(submittedMember.getId()).isSubmitted()).isTrue();
+        assertThat(statusesByMemberId.get(submittedMember.getId()).lastRemindAt()).isNull();
+        assertThat(statusesByMemberId.get(incompleteMember.getId()).isSubmitted()).isFalse();
+        assertThat(statusesByMemberId.get(incompleteMember.getId()).lastRemindAt()).isEqualTo(lastRemindAt);
     }
 
     private Assignment createAssignment(StudyMember leader, String title) {
@@ -159,5 +158,15 @@ class AssignmentSubmissionRepositoryTest {
     private StudyMember createMember(Study study, String name, StudyMemberRole role) {
         User user = userRepository.save(User.create(name, null));
         return studyMemberRepository.save(StudyMember.create(study, user, name, null, role));
+    }
+
+    private void insertNotification(Long studyId, Long recipientId, Long resourceId, String resourceType,
+                                    LocalDateTime createdAt) {
+        jdbcTemplate.update("""
+                        INSERT INTO notification (
+                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
+                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                        """,
+                studyId, recipientId, resourceId, resourceType, createdAt, createdAt);
     }
 }

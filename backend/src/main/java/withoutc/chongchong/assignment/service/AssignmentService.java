@@ -187,7 +187,7 @@ public class AssignmentService {
 
     public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        validateLeader(studyId, member.getId());
+        validateLeader(member);
 
         Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
@@ -237,6 +237,10 @@ public class AssignmentService {
 
     private void validateLeader(Long studyId, Long userId) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeader(member);
+    }
+
+    private void validateLeader(StudyMember member) {
         if (!member.isLeader()) {
             throw new AuthException(AuthErrorCode.ACCESS_DENIED);
         }
