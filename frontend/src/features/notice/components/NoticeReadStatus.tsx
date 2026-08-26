@@ -17,7 +17,7 @@ export interface NoticeMemberStatus {
 
 //TODO: API 연동 후 optional 제거
 interface NoticeReadStatusProps {
-  readMemberNames: string[];
+  readuserNames: string[];
   unreadMembers: NoticeMemberStatus[];
   totalCount: number;
   reminderText: string;
@@ -142,7 +142,7 @@ const memberTextStyle = {
   flexDirection: 'column',
 } satisfies CSSProperties;
 
-const memberNameStyle = {
+const userNameStyle = {
   ...typography.body,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -173,14 +173,14 @@ const sendAllStyle = {
 } satisfies CSSObject;
 
 export default function NoticeReadStatus({
-  readMemberNames,
+  readuserNames,
   unreadMembers,
   totalCount,
   reminderText,
   onSendReminder,
   onSendAllReminders,
 }: NoticeReadStatusProps) {
-  const readCount = readMemberNames.length;
+  const readCount = readuserNames.length;
   const progress = totalCount === 0 ? 0 : (readCount / totalCount) * 100;
 
   return (
@@ -214,7 +214,7 @@ export default function NoticeReadStatus({
           확인 {readCount}명
         </p>
         <div css={badgeRowStyle}>
-          {readMemberNames.map((name) => (
+          {readuserNames.map((name) => (
             <Badge key={name} variant="neutralSolid" size="large">
               <img src={profileIcon} alt="" css={profileStyle} />
               {name}
@@ -235,7 +235,7 @@ export default function NoticeReadStatus({
               <List.Item key={member.id} css={memberStyle}>
                 <img src={profileIcon} alt="" width={28} height={28} />
                 <span css={memberTextStyle}>
-                  <span css={memberNameStyle}>{member.name}</span>
+                  <span css={userNameStyle}>{member.name}</span>
                   <span css={sentAtStyle}>{member.remindedAt}</span>
                 </span>
                 <button

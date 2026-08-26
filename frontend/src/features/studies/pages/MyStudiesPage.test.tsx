@@ -11,7 +11,7 @@ const studies: Study[] = [
   {
     id: '1',
     role: 'LEADER',
-    title: '점심메뉴 스터디',
+    name: '점심메뉴 스터디',
     description: '매주 진행하는 점심메뉴 정하기',
     memberCount: 3,
     noticeCount: 2,
@@ -20,7 +20,7 @@ const studies: Study[] = [
   {
     id: '2',
     role: 'MEMBER',
-    title: '저녁메뉴 스터디',
+    name: '저녁메뉴 스터디',
     description: '매주 진행하는 저녁메뉴 정하기',
     memberCount: 5,
     noticeCount: 1,

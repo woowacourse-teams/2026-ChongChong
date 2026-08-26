@@ -14,7 +14,7 @@ import {
 export default function StudyDetailPage() {
   const { studyId } = useParams();
   const {
-    data: { studyName, role, memberName },
+    data: { studyName, role, userName },
   } = useSuspenseQuery(studyQueries.info(Number(studyId)));
 
   return (
@@ -25,16 +25,16 @@ export default function StudyDetailPage() {
           <>
             <TopHeader.Title>{studyName}</TopHeader.Title>
             <TopHeader.Subtitle>
-              {memberName} · {role === 'LEADER' ? '리드' : '스터디원'}
+              {userName} · {role === 'LEADER' ? '리드' : '스터디원'}
             </TopHeader.Subtitle>
           </>
         }
       />
       <Main>
         {role === 'LEADER' ? (
-          <LeaderStudyDetailContent username={memberName} />
+          <LeaderStudyDetailContent username={userName} />
         ) : (
-          <MemberStudyDetailContent username={memberName} />
+          <MemberStudyDetailContent username={userName} />
         )}
       </Main>
       <BottomTab />

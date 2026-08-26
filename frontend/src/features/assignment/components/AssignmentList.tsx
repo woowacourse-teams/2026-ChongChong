@@ -41,7 +41,7 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
                 </ContentCard.Meta>
                 <ContentCard.Meta>
                   <img src={LinkIcon} alt="" width={13} height={13} />
-                  {assignment.submissionType}
+                  {assignment.submissionMethod}
                 </ContentCard.Meta>
               </ContentCard.Footer>
             </ContentCard>

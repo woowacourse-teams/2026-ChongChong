@@ -65,17 +65,17 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
           {isFetchingNextPage && <p role="status">과제를 더 불러오는 중...</p>}
-          <div css={buttonAreaStyle}>
-            <Button
-              variant="brandSolid"
-              size="large"
-              onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
-            >
-              과제 작성하기
-            </Button>
-          </div>
         </>
       )}
+      <div css={buttonAreaStyle}>
+        <Button
+          variant="brandSolid"
+          size="large"
+          onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
+        >
+          과제 작성하기
+        </Button>
+      </div>
     </section>
   );
 }

@@ -1,10 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useParams } from 'react-router';
 
 import { createWrapper } from '../../../test/render';
 import { STUDY_URLS } from '../urls';
 import StudyForm from './StudyForm';
+
+function StudyDetailPath() {
+  const { studyId } = useParams();
+
+  return <p>스터디 ID: {studyId}</p>;
+}
 
 describe('StudyForm 테스트', () => {
   test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {
@@ -30,7 +36,7 @@ describe('StudyForm 테스트', () => {
     render(
       <Routes>
         <Route path={STUDY_URLS.create} element={<StudyForm />} />
-        <Route path="/studies/:studyId" element={<p>스터디 디테일 페이지</p>} />
+        <Route path="/studies/:studyId" element={<StudyDetailPath />} />
       </Routes>,
       { wrapper: createWrapper({ initialEntries: [STUDY_URLS.create] }) },
     );
@@ -40,6 +46,6 @@ describe('StudyForm 테스트', () => {
     const button = screen.getByRole('button', { name: '스터디 만들기' });
     await user.click(button);
 
-    expect(await screen.findByText('스터디 디테일 페이지')).toBeInTheDocument();
+    expect(await screen.findByText(/^스터디 ID: \d+$/)).toBeInTheDocument();
   });
 });

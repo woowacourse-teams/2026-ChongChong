@@ -50,7 +50,7 @@ export default function AssignmentArticle({ assignment }: Props) {
       </InfoCard>
 
       <InfoCard icon={assignmentIcon} title="제출 방법">
-        {assignment.submissionType}
+        {assignment.submissionMethod}
       </InfoCard>
     </article>
   );

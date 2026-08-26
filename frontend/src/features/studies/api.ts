@@ -23,10 +23,10 @@ export async function fetchStudyDetail<R extends Role>(studyId: number) {
 export async function createStudy(body: {
   name: string;
   description: string;
-}): Promise<{ studyId: string }> {
+}): Promise<{ id: number }> {
   try {
     const response = await api.post(STUDY_URLS.create, { json: body });
-    return await response.json<{ studyId: string }>();
+    return await response.json<{ id: number }>();
   } catch {
     throw new Error('아직 에러 처리 안함');
   }
@@ -38,7 +38,7 @@ export async function fetchStudyInfo(studyId: number) {
     return await response.json<{
       studyName: string;
       role: Role;
-      memberName: string;
+      userName: string;
     }>();
   } catch {
     // TODO: 에러코드별로 에러 분기가 필요합니다.

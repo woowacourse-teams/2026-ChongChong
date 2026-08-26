@@ -13,7 +13,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
       {studies.map((study) => {
         return (
           <List.Item key={study.id}>
-            <Link to={study.id}>
+            <Link to={`/studies/${study.id}`}>
               <ContentCard>
                 <ContentCard.Badges>
                   <Badge variant="brandSolid" size="small">
@@ -22,7 +22,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                 </ContentCard.Badges>
 
                 <ContentCard.TitleRow>
-                  <ContentCard.Title>{study.title}</ContentCard.Title>
+                  <ContentCard.Title>{study.name}</ContentCard.Title>
                   <ContentCard.Trailing>
                     <img src={rightArrowIcon} alt="" css={{ width: '20px', height: '20px' }} />
                   </ContentCard.Trailing>

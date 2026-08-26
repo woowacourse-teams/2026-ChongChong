@@ -50,7 +50,7 @@ export default function LeaderNoticeDetailPage() {
 
       <Main>
         <NoticeReadStatus
-          readMemberNames={notice.readMemberNames}
+          readuserNames={notice.readuserNames}
           unreadMembers={notice.unreadMembers}
           totalCount={notice.totalCount}
           reminderText={notice.reminderText}
