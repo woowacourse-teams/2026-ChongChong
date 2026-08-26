@@ -8,6 +8,7 @@ import Main from '../../../shared/ui/Main';
 import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
+import Loading from '../../../shared/ui/Loading';
 
 const actionsStyle = {
   display: 'flex',
@@ -28,7 +29,7 @@ export default function StudyListPage() {
       />
       <Main>
         <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
-          <Suspense fallback={<p>loading ...</p>}>
+          <Suspense fallback={<Loading />}>
             <MyStudies />
           </Suspense>
         </ErrorBoundary>

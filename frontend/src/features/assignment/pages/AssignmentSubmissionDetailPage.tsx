@@ -13,6 +13,8 @@ import { tokens, typography } from '../../../styles/global';
 import InfoCard from '../components/InfoCard';
 import assignmentQueries from '../queries';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import { Suspense } from 'react';
+import Loading from '../../../shared/ui/Loading';
 
 const articleStyle = {
   display: 'flex',
@@ -75,37 +77,38 @@ export default function AssignmentSubmissionDetailPage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
+      <Suspense fallback={<Loading />}>
+        <Main>
+          <article css={articleStyle} aria-labelledby="submission-member-name">
+            <header css={submitterStyle}>
+              <img src={profileIcon} alt="" aria-hidden="true" css={profileStyle} />
 
-      <Main>
-        <article css={articleStyle} aria-labelledby="submission-member-name">
-          <header css={submitterStyle}>
-            <img src={profileIcon} alt="" aria-hidden="true" css={profileStyle} />
+              <div css={submitterInfoStyle}>
+                <h2 id="submission-member-name" css={submitterNameStyle}>
+                  {submission.name}
+                </h2>
+                <time css={submittedAtStyle} dateTime={submission.createdAt}>
+                  {formatSubmittedAt(submission.createdAt)}
+                </time>
+              </div>
+            </header>
 
-            <div css={submitterInfoStyle}>
-              <h2 id="submission-member-name" css={submitterNameStyle}>
-                {submission.name}
-              </h2>
-              <time css={submittedAtStyle} dateTime={submission.createdAt}>
-                {formatSubmittedAt(submission.createdAt)}
-              </time>
-            </div>
-          </header>
-
-          <div css={cardListStyle}>
-            <InfoCard icon={assignmentIcon} title="내용">
-              {submission.content}
-            </InfoCard>
-
-            {submission.link && (
-              <InfoCard icon={linkIcon} title="링크">
-                <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
-                  {submission.link}
-                </a>
+            <div css={cardListStyle}>
+              <InfoCard icon={assignmentIcon} title="내용">
+                {submission.content}
               </InfoCard>
-            )}
-          </div>
-        </article>
-      </Main>
+
+              {submission.link && (
+                <InfoCard icon={linkIcon} title="링크">
+                  <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
+                    {submission.link}
+                  </a>
+                </InfoCard>
+              )}
+            </div>
+          </article>
+        </Main>
+      </Suspense>
       <BottomTab />
     </Page>
   );

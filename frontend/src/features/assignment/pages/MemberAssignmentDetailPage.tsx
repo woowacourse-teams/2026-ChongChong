@@ -10,6 +10,8 @@ import AssignmentSubmissionForm from '../components/AssignmentSubmissionForm';
 import CompletedAssignmentSubmission from '../components/CompletedAssignmentSubmission';
 import assignmentQueries from '../queries';
 import type { AssignmentSubmissionValue } from '../types';
+import { Suspense } from 'react';
+import Loading from '../../../shared/ui/Loading';
 
 export default function MemberAssignmentDetailPage() {
   const { studyId, assignmentId } = useParams();
@@ -34,25 +36,26 @@ export default function MemberAssignmentDetailPage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
+      <Suspense fallback={<Loading />}>
+        <Main>
+          <AssignmentArticle assignment={assignment} />
 
-      <Main>
-        <AssignmentArticle assignment={assignment} />
-
-        {assignment.submissionId ? (
-          <CompletedAssignmentSubmission
-            key={`${Number(studyId)}-${Number(assignmentId)}-${assignment.submissionId}`}
-            assignmentId={Number(assignmentId)}
-            studyId={Number(studyId)}
-            submissionId={assignment.submissionId}
-          />
-        ) : (
-          <AssignmentSubmissionForm
-            key={`${Number(studyId)}-${Number(assignmentId)}`}
-            isSubmitting={createMutation.isPending}
-            onSubmit={createMutation.mutate}
-          />
-        )}
-      </Main>
+          {assignment.submissionId ? (
+            <CompletedAssignmentSubmission
+              key={`${Number(studyId)}-${Number(assignmentId)}-${assignment.submissionId}`}
+              assignmentId={Number(assignmentId)}
+              studyId={Number(studyId)}
+              submissionId={assignment.submissionId}
+            />
+          ) : (
+            <AssignmentSubmissionForm
+              key={`${Number(studyId)}-${Number(assignmentId)}`}
+              isSubmitting={createMutation.isPending}
+              onSubmit={createMutation.mutate}
+            />
+          )}
+        </Main>
+      </Suspense>
     </Page>
   );
 }

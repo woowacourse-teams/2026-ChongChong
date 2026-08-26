@@ -8,6 +8,7 @@ import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 import { useParams } from 'react-router';
+import Loading from '../../../shared/ui/Loading';
 
 interface Props {
   studyName: string;
@@ -29,7 +30,7 @@ export default function MemberAssignmentListPage({ studyName, userName }: Props)
             </>
           }
         />
-        <Suspense fallback={<p>로딩중입니다...</p>}>
+        <Suspense fallback={<Loading />}>
           <Main>
             <MemberAssignmentListSection studyId={Number(studyId)} />
           </Main>

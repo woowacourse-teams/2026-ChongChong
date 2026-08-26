@@ -5,6 +5,8 @@ import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import MemberListContent from '../components/MemberListContent';
 import { StudyRole } from '../types';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import { Suspense } from 'react';
+import Loading from '../../../shared/ui/Loading';
 
 export default function MemberListPage() {
   const role: StudyRole = 'LEADER';
@@ -12,7 +14,11 @@ export default function MemberListPage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>멤버</TopHeader.Title>} />
-      <Main>{role === 'LEADER' ? <MemberListContent.Leader /> : <MemberListContent.Member />}</Main>
+      <Suspense fallback={<Loading />}>
+        <Main>
+          {role === 'LEADER' ? <MemberListContent.Leader /> : <MemberListContent.Member />}
+        </Main>
+      </Suspense>
       <BottomTab />
     </Page>
   );

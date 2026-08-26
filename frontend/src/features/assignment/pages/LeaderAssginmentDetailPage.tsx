@@ -4,7 +4,7 @@ import BottomTab from '../../../shared/ui/components/BottomTab';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import { useNavigate, useParams } from 'react-router';
-import { useRef } from 'react';
+import { useRef, Suspense } from 'react';
 import DetailActions from '../../../shared/ui/components/DetailActions';
 import Main from '../../../shared/ui/Main';
 import assignmentQueries from '../queries';
@@ -13,6 +13,7 @@ import SubmitStatusSection from '../components/SubmitStatusSection';
 import AssignmentArticle from '../components/AssignmentArticle';
 import SubmissionList from '../components/SubmissionList';
 import { deleteAssignment } from '../api';
+import Loading from '../../../shared/ui/Loading';
 
 export default function LeaderAssignmentDetailpage() {
   const navigate = useNavigate();
@@ -52,14 +53,15 @@ export default function LeaderAssignmentDetailpage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
+      <Suspense fallback={<Loading />}>
+        <Main>
+          <SubmitStatusSection status={submitStatusResponse} />
+          <AssignmentArticle assignment={assignment} />
+          <SubmissionList submissions={submissions.submissions} />
 
-      <Main>
-        <SubmitStatusSection status={submitStatusResponse} />
-        <AssignmentArticle assignment={assignment} />
-        <SubmissionList submissions={submissions.submissions} />
-
-        <DetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
-      </Main>
+          <DetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
+        </Main>
+      </Suspense>
 
       <ConfirmDialog
         ref={deleteDialogRef}

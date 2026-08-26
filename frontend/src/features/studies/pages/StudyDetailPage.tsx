@@ -10,6 +10,8 @@ import {
   LeaderStudyDetailContent,
   MemberStudyDetailContent,
 } from '../components/StudyDetailContent';
+import { Suspense } from 'react';
+import Loading from '../../../shared/ui/Loading';
 
 export default function StudyDetailPage() {
   const { studyId } = useParams();
@@ -30,13 +32,15 @@ export default function StudyDetailPage() {
           </>
         }
       />
-      <Main>
-        {role === 'LEADER' ? (
-          <LeaderStudyDetailContent username={userName} />
-        ) : (
-          <MemberStudyDetailContent username={userName} />
-        )}
-      </Main>
+      <Suspense fallback={<Loading />}>
+        <Main>
+          {role === 'LEADER' ? (
+            <LeaderStudyDetailContent username={userName} />
+          ) : (
+            <MemberStudyDetailContent username={userName} />
+          )}
+        </Main>
+      </Suspense>
       <BottomTab />
     </Page>
   );
