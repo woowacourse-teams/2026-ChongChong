@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react';
+import { Link } from 'react-router';
 import { tokens, typography } from '../../../styles/global';
 import noticeIcon from '../../../shared/assets/notice-green.svg';
 import assignmentIcon from '../../../shared/assets/assign-green.svg';
@@ -96,20 +97,24 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
         <List aria-label="진행 중인 공지와 과제">
           {data.notices.items.map((notice) => (
             <List.Item key={`notice-${notice.id}`}>
-              <LeaderActiveNoticeCard
-                title={notice.title}
-                memberCount={data.memberCount}
-                completeCount={notice.completeCount}
-              />
+              <Link to={`notices/${notice.id}`}>
+                <LeaderActiveNoticeCard
+                  title={notice.title}
+                  memberCount={data.memberCount}
+                  completeCount={notice.completeCount}
+                />
+              </Link>
             </List.Item>
           ))}
           {data.assignments.items.map((assignment) => (
             <List.Item key={`assignment-${assignment.id}`}>
-              <LeaderActiveAssignmentCard
-                title={assignment.title}
-                memberCount={data.memberCount}
-                completeCount={assignment.completeCount}
-              />
+              <Link to={`assignments/${assignment.id}`}>
+                <LeaderActiveAssignmentCard
+                  title={assignment.title}
+                  memberCount={data.memberCount}
+                  completeCount={assignment.completeCount}
+                />
+              </Link>
             </List.Item>
           ))}
         </List>
@@ -149,7 +154,9 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
           <List>
             {data.notices.map((notice) => (
               <List.Item key={`notice-${notice.id}`}>
-                <MemberActiveNoticeCard title={notice.title} />
+                <Link to={`notices/${notice.id}`}>
+                  <MemberActiveNoticeCard title={notice.title} />
+                </Link>
               </List.Item>
             ))}
           </List>
@@ -159,7 +166,9 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
           <List>
             {data.assignments.map((assignment) => (
               <List.Item key={`assignment-${assignment.id}`}>
-                <MemberActiveAssignmentCard title={assignment.title} />
+                <Link to={`assignments/${assignment.id}`}>
+                  <MemberActiveAssignmentCard title={assignment.title} />
+                </Link>
               </List.Item>
             ))}
           </List>
