@@ -11,7 +11,7 @@ const pageStyle = {
   minHeight: '100dvh',
   flexDirection: 'column',
   background: tokens.bg.default,
-  width: '448px',
+  width: tokens.screenSize.default,
   margin: '0 auto',
 } satisfies CSSProperties;
 
