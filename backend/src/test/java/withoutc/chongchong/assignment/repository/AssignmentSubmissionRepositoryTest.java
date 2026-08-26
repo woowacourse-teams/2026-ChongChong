@@ -93,6 +93,48 @@ class AssignmentSubmissionRepositoryTest {
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    @DisplayName("제출 목록은 내용과 링크가 비어 있어도 제출 완료된 정보만 조회한다")
+    void findAllSubmittedByAssignmentIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
+        StudyMember unsubmittedMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(leader, "과제");
+        AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
+        submitted.submit(null, null);
+        AssignmentSubmission unsubmitted = AssignmentSubmission.create(unsubmittedMember, assignment);
+        assignmentSubmissionRepository.saveAllAndFlush(List.of(submitted, unsubmitted));
+
+        assertThat(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedTrue(assignment.getId()))
+                .containsExactly(submitted);
+        assertThat(submitted.getContent()).isNull();
+        assertThat(submitted.getLink()).isNull();
+        assertThat(submitted.isSubmitted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("제출 정보는 제출물 id와 과제 id를 함께 사용해 조회한다")
+    void findBySubmissionIdAndAssignmentIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
+        StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(leader, "조회 대상 과제");
+        Assignment otherAssignment = createAssignment(leader, "다른 과제");
+        AssignmentSubmission submission = assignmentSubmissionRepository.saveAndFlush(
+                AssignmentSubmission.create(member, assignment));
+
+        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentId(submission.getId(), assignment.getId()))
+                .contains(submission);
+        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentId(
+                submission.getId(), otherAssignment.getId())).isEmpty();
+        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentIdAndMemberId(
+                submission.getId(), assignment.getId(), member.getId())).contains(submission);
+        assertThat(assignmentSubmissionRepository.findByIdAndAssignmentIdAndMemberId(
+                submission.getId(), assignment.getId(), otherMember.getId())).isEmpty();
+    }
+
     private Assignment createAssignment(StudyMember leader, String title) {
         return assignmentRepository.saveAndFlush(Assignment.create(
                 leader,

@@ -11,7 +11,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -89,13 +88,13 @@ public class AssignmentSubmission extends BaseEntity {
     }
 
     private void validateContent(String content) {
-        if (content.length() > 10000) {
+        if (content != null && content.length() > 10000) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
         }
     }
 
     private void validateLink(String link) {
-        if (link.length() > 10000) {
+        if (link != null && link.length() > 10000) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_LINK);
         }
     }

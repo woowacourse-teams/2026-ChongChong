@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
@@ -52,24 +51,27 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
     List<AssignmentSubmitterStatusProjection> findAllSubmitterStatusesByAssignmentId(
             @Param("assignmentId") Long assignmentId);
 
-    List<AssignmentSubmission> findAllByAssignmentId(Long assignmentId);
+    List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedTrue(Long assignmentId);
 
     Optional<AssignmentSubmission> findByAssignmentIdAndMemberId(Long assignmentId, Long memberId);
 
-    Optional<AssignmentSubmission> findByIdAndMemberId(Long id, Long memberId);
+    Optional<AssignmentSubmission> findByIdAndAssignmentId(Long id, Long assignmentId);
+
+    Optional<AssignmentSubmission> findByIdAndAssignmentIdAndMemberId(Long id, Long assignmentId, Long memberId);
 
     default AssignmentSubmission getByAssignmentIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
         return findByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
-    default AssignmentSubmission getByIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
-        return findByIdAndMemberId(assignmentId, memberId).orElseThrow(
+    default AssignmentSubmission getByIdAndAssignmentIdOrThrow(Long id, Long assignmentId) {
+        return findByIdAndAssignmentId(id, assignmentId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
-    default AssignmentSubmission getByIdOrThrow(Long assignmentId) {
-        return findById(assignmentId).orElseThrow(
+    default AssignmentSubmission getByIdAndAssignmentIdAndMemberIdOrThrow(Long id, Long assignmentId,
+                                                                          Long memberId) {
+        return findByIdAndAssignmentIdAndMemberId(id, assignmentId, memberId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 }

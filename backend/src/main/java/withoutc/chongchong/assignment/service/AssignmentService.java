@@ -167,8 +167,8 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
-        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndMemberIdOrThrow(submissionId,
-                member.getId());
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdAndMemberIdOrThrow(
+                submissionId, assignmentId, member.getId());
         submission.update(request.content(), request.link());
         assignmentSubmissionRepository.save(submission);
     }
@@ -180,7 +180,7 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
-        AssignmentSubmission submission = getAssignmentSubmission(submissionId, member);
+        AssignmentSubmission submission = getAssignmentSubmission(submissionId, assignmentId, member);
 
         return SubmissionDetailResponse.of(submission, submission.getMember());
     }
@@ -192,16 +192,18 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
         validateAssignmentBelongsToStudy(studyId, assignment);
 
-        List<AssignmentSubmission> submissions = assignmentSubmissionRepository.findAllByAssignmentId(assignmentId);
+        List<AssignmentSubmission> submissions = assignmentSubmissionRepository
+                .findAllByAssignmentIdAndSubmittedTrue(assignmentId);
 
         return SubmissionListResponse.from(submissions.stream().map(SubmissionSummary::from).toList());
     }
 
-    private AssignmentSubmission getAssignmentSubmission(Long submissionId, StudyMember member) {
+    private AssignmentSubmission getAssignmentSubmission(Long submissionId, Long assignmentId, StudyMember member) {
         if (member.isLeader()) {
-            return assignmentSubmissionRepository.getByIdOrThrow(submissionId);
+            return assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(submissionId, assignmentId);
         }
-        return assignmentSubmissionRepository.getByIdAndMemberIdOrThrow(submissionId, member.getId());
+        return assignmentSubmissionRepository.getByIdAndAssignmentIdAndMemberIdOrThrow(submissionId, assignmentId,
+                member.getId());
     }
 
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
