@@ -18,6 +18,7 @@ jwt:
 
 frontend:
   base-url: ${FRONTEND_BASE_URL}
+  allowed-origins: ${FRONTEND_ALLOWED_ORIGINS:${FRONTEND_BASE_URL}}
 
 auth:
   jwt:

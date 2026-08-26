@@ -43,6 +43,7 @@ class WebCsrfSecurityTest {
     private static final String REFRESH_COOKIE_NAME = "refresh_token";
     private static final String TEST_REFRESH_TOKEN = "test-refresh-token";
     private static final String TRUSTED_ORIGIN = "https://test.chongchong.app";
+    private static final String LOCAL_ORIGIN = "http://localhost:3005";
     private static final String UNTRUSTED_ORIGIN = "https://attacker.example";
 
     @Autowired
@@ -180,6 +181,18 @@ class WebCsrfSecurityTest {
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, containsString("POST")))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString(CSRF_HEADER_NAME)));
+    }
+
+    @Test
+    @DisplayName("환경에 추가한 로컬 Origin의 사전 요청도 허용한다")
+    void allowConfiguredLocalOriginPreflight() throws Exception {
+        mockMvc.perform(options("/auth/refresh")
+                        .header(HttpHeaders.ORIGIN, LOCAL_ORIGIN)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, CSRF_HEADER_NAME))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, LOCAL_ORIGIN))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
     }
 
     @Test
