@@ -9,11 +9,7 @@ import StudyForm from '../components/StudyForm';
 export default function NewStudyPage() {
   return (
     <Page>
-      <TopHeader
-        left={<PrevButton />}
-        middle={<div>스터디 만들기</div>}
-        right={<a href="#">My</a>}
-      />
+      <TopHeader left={<PrevButton />} middle={<div>스터디 만들기</div>} />
       <Main
         css={{ padding: `0 ${tokens.spacing[4]} ${tokens.layout.gutter} ${tokens.spacing[5]}` }}
       >

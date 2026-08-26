@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import alarmIcon from '../../../shared/assets/alarm.svg';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import Button from '../../../shared/ui/Button';
 import EmptyContent from '../../../shared/ui/EmptyContent';
@@ -60,7 +59,6 @@ export default function LeaderNoticeListPage() {
             <TopHeader.Subtitle>디움 · 리드</TopHeader.Subtitle>
           </>
         }
-        right={<img src={alarmIcon} alt="알림" width={24} height={24} />}
       />
 
       <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
