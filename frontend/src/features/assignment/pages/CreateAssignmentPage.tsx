@@ -18,12 +18,12 @@ export default function CreateAssignmentPage() {
   const createMutation = useMutation({
     mutationFn: (values: AssignmentValue) => createAssignment(Number(studyId), values),
 
-    onSuccess: ({ assignmentid }) => {
+    onSuccess: ({ assignmentId }) => {
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(Number(studyId)),
       });
 
-      navigate(`/studies/${studyId}/assignments/${assignmentid}`);
+      navigate(`/studies/${studyId}/assignments/${assignmentId}`);
     },
   });
 

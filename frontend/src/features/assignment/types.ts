@@ -64,7 +64,7 @@ export interface AssignmentSubmissionValue {
 }
 
 export interface CreateAssignmentResponse {
-  assignmentid: number;
+  assignmentId: number;
 }
 
 export interface CreateSubmissionResponse {
