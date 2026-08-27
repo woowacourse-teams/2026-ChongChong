@@ -16,6 +16,8 @@ import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProject
 public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> {
     Optional<StudyMember> findByStudyIdAndUserId(Long studyId, Long userId);
 
+    Optional<StudyMember> findByStudyIdAndId(Long studyId, Long memberId);
+
     List<StudyMember> findAllByStudyId(Long studyId);
 
     default StudyMember getByStudyIdAndUserIdOrThrow(Long studyId, Long userId) {

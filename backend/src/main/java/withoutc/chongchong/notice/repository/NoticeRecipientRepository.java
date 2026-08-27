@@ -3,6 +3,7 @@ package withoutc.chongchong.notice.repository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
@@ -54,4 +55,8 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
                 () -> new NoticeException(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND)
         );
     }
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM NoticeRecipient recipient WHERE recipient.member.id = :memberId")
+    int deleteAllByMemberId(@Param("memberId") Long memberId);
 }
