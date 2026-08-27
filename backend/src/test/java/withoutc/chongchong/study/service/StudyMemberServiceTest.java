@@ -314,4 +314,51 @@ class StudyMemberServiceTest {
 
         verifyNoInteractions(studyMemberRemover);
     }
+
+    @Test
+    @DisplayName("일반 멤버가 스터디에서 탈퇴한다")
+    void leaveTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        StudyMember member = mock(StudyMember.class);
+        when(member.isLeader()).thenReturn(false);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(member);
+
+        studyMemberService.leave(userId, studyId);
+
+        verify(studyMemberRemover).remove(member);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 탈퇴할 수 없다")
+    void leaveByNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
+
+        assertThatThrownBy(() -> studyMemberService.leave(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+
+        verifyNoInteractions(studyMemberRemover);
+    }
+
+    @Test
+    @DisplayName("스터디 리더는 탈퇴할 수 없다")
+    void leaveByLeaderTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        StudyMember leader = mock(StudyMember.class);
+        when(leader.isLeader()).thenReturn(true);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
+
+        assertThatThrownBy(() -> studyMemberService.leave(userId, studyId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
+
+        verifyNoInteractions(studyMemberRemover);
+    }
 }
