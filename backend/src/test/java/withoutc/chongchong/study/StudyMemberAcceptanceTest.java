@@ -436,6 +436,20 @@ class StudyMemberAcceptanceTest {
     }
 
     @Test
+    @DisplayName("스터디 ID가 양수가 아니면 방출 요청 시 400을 반환한다")
+    void expelStudyMemberWithInvalidStudyIdTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", 0, 1L)
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"));
+    }
+
+    @Test
     @DisplayName("인증 없이 멤버 방출을 요청하면 401을 반환한다")
     void expelStudyMemberWithoutAuthenticationTest() {
         given()
