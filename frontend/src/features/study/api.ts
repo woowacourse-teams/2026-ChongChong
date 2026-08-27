@@ -1,4 +1,5 @@
 import api from '../../client';
+import { getErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
 import { STUDY_URLS } from './urls';
 import type { Role } from './types';
 import {
@@ -45,15 +46,29 @@ export async function createStudy(body: {
 }): Promise<{ studyId: number }> {
   try {
     const response = await api.post(STUDY_URLS.create, { json: body });
-    const data: unknown = await response.json();
+    const data = await response.json<{ studyId: number }>();
 
     if (!isCreateStudyResponse(data)) {
       throw new Error('스터디 생성 응답 형식이 올바르지 않습니다.');
     }
 
     return data;
-  } catch {
-    throw new Error('아직 에러 처리 안함');
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: {
+          cause: error,
+        },
+      });
+    }
+
+    throw new Error('스터디를 생성하는데 실패했습니다.', {
+      cause: error,
+    });
   }
 }
 

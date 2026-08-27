@@ -48,4 +48,20 @@ describe('StudyForm 테스트', () => {
 
     expect(await screen.findByText(/^스터디 ID: \d+$/)).toBeInTheDocument();
   });
+
+  test('유효하지 않은 값을 입력하면 에러메시지가 렌더링 된다.', async () => {
+    const user = userEvent.setup();
+    render(<StudyForm />, { wrapper: createWrapper() });
+
+    const name = screen.getByRole('textbox', { name: '스터디 이름' });
+    await user.type(name, '엄청긴이름'.repeat(100));
+    const description = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+    await user.type(description, '엄청긴 설명'.repeat(100));
+
+    const button = screen.getByRole('button', { name: '스터디 만들기' });
+    await user.click(button);
+
+    expect(await screen.findByText('스터디 이름은 15자 이내여야 합니다.'));
+    expect(await screen.findByText('스터디 설명은 30자 이내여야 합니다.'));
+  });
 });
