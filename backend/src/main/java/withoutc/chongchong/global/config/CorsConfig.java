@@ -1,4 +1,4 @@
-package withoutc.chongchong.auth.config;
+package withoutc.chongchong.global.config;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,7 +10,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-public class WebConfig {
+public class CorsConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(

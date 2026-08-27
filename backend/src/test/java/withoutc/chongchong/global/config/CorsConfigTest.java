@@ -1,4 +1,4 @@
-package withoutc.chongchong.auth.config;
+package withoutc.chongchong.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,10 +10,10 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-class WebConfigTest {
+class CorsConfigTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withUserConfiguration(WebConfig.class)
+            .withUserConfiguration(CorsConfig.class)
             .withPropertyValues(
                     "frontend.base-url=https://fallback.example",
                     "frontend.allowed-origins=${frontend.base-url}"
