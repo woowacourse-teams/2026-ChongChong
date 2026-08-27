@@ -1,18 +1,16 @@
-import Page from '../../../shared/ui/Page';
-import TopHeader from '../../../shared/ui/TopHeader';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Suspense, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import { useNavigate, useParams } from 'react-router';
-import { useRef } from 'react';
-import DetailActions from '../../../shared/ui/components/DetailActions';
+import Loading from '../../../shared/ui/Loading';
 import Main from '../../../shared/ui/Main';
-import assignmentQueries from '../queries';
-import { useSuspenseQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import SubmitStatusSection from '../components/SubmitStatusSection';
-import AssignmentArticle from '../components/AssignmentArticle';
-import SubmissionList from '../components/SubmissionList';
+import Page from '../../../shared/ui/Page';
+import TopHeader from '../../../shared/ui/TopHeader';
 import { deleteAssignment } from '../api';
+import LeaderAssignmentDetailContent from '../components/LeaderAssignmentDetailContent';
+import assignmentQueries from '../queries';
 
 export default function LeaderAssignmentDetailpage() {
   const navigate = useNavigate();
@@ -20,27 +18,15 @@ export default function LeaderAssignmentDetailpage() {
   const queryClient = useQueryClient();
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
 
-  const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
-    useSuspenseQueries({
-      queries: [
-        assignmentQueries.detail(Number(studyId), Number(assignmentId)),
-        assignmentQueries.submitStatus(Number(studyId), Number(assignmentId)),
-        assignmentQueries.submissions(Number(studyId), Number(assignmentId)),
-      ],
-    });
-
   const deleteMutation = useMutation({
     mutationFn: () => deleteAssignment(Number(studyId), Number(assignmentId)),
-
     onSuccess: () => {
       queryClient.removeQueries({
         queryKey: assignmentQueries.detail(Number(studyId), Number(assignmentId)).queryKey,
       });
-
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(Number(studyId)),
       });
-
       navigate(`/studies/${studyId}/assignments`);
     },
   });
@@ -52,13 +38,15 @@ export default function LeaderAssignmentDetailpage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
-
       <Main>
-        <SubmitStatusSection status={submitStatusResponse} />
-        <AssignmentArticle assignment={assignment} />
-        <SubmissionList submissions={submissions.submissions} />
-
-        <DetailActions onEdit={editAssignment} onDelete={openDeleteDialog} />
+        <Suspense fallback={<Loading />}>
+          <LeaderAssignmentDetailContent
+            studyId={Number(studyId)}
+            assignmentId={Number(assignmentId)}
+            onEdit={editAssignment}
+            onDelete={openDeleteDialog}
+          />
+        </Suspense>
       </Main>
 
       <ConfirmDialog

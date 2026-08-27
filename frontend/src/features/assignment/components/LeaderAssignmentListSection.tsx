@@ -15,6 +15,12 @@ interface Props {
   studyId: number;
 }
 
+const sectionStyle = {
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+} satisfies CSSProperties;
+
 const buttonAreaStyle = {
   display: 'flex',
   width: '100%',
@@ -36,7 +42,7 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
   });
 
   return (
-    <section>
+    <section css={sectionStyle}>
       {assignments.length === 0 ? (
         <EmptyContent message="아직 과제가 없어요" />
       ) : (
@@ -73,7 +79,7 @@ export default function LeaderAssignmentListSection({ studyId }: Props) {
           size="large"
           onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
         >
-          과제 작성하기
+          과제 추가하기
         </Button>
       </div>
     </section>

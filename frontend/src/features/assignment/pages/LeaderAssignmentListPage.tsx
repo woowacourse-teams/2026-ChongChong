@@ -8,6 +8,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 import { useParams } from 'react-router';
+import Loading from '../../../shared/ui/Loading';
 
 interface Props {
   studyName: string;
@@ -30,11 +31,11 @@ export default function LeaderAssignmentListPage({ studyName, userName }: Props)
           }
         />
 
-        <Suspense fallback={<p>로딩중...</p>}>
-          <Main>
+        <Main>
+          <Suspense fallback={<Loading />}>
             <LeaderAssignmentListSection studyId={Number(studyId)} />
-          </Main>
-        </Suspense>
+          </Suspense>
+        </Main>
       </ErrorBoundary>
       <BottomTab />
     </Page>

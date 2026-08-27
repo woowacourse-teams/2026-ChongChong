@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useRef } from 'react';
+import { useRef, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
@@ -11,6 +11,7 @@ import NoticeReadStatus from '../components/NoticeReadStatus';
 import { notice } from '../noticeData';
 import Page from '../../../shared/ui/Page';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import Loading from '../../../shared/ui/Loading';
 
 const backButtonStyle = {
   display: 'grid',
@@ -47,24 +48,25 @@ export default function LeaderNoticeDetailPage() {
         }
         middle={<TopHeader.Title>공지</TopHeader.Title>}
       />
+      <Suspense fallback={<Loading />}>
+        <Main>
+          <NoticeReadStatus
+            readuserNames={notice.readuserNames}
+            unreadMembers={notice.unreadMembers}
+            totalCount={notice.totalCount}
+            reminderText={notice.reminderText}
+          />
 
-      <Main>
-        <NoticeReadStatus
-          readuserNames={notice.readuserNames}
-          unreadMembers={notice.unreadMembers}
-          totalCount={notice.totalCount}
-          reminderText={notice.reminderText}
-        />
+          <NoticeArticle
+            title={notice.title}
+            author={notice.author}
+            createdAt={notice.createdAt}
+            content={notice.content}
+          />
 
-        <NoticeArticle
-          title={notice.title}
-          author={notice.author}
-          createdAt={notice.createdAt}
-          content={notice.content}
-        />
-
-        <DetailActions onEdit={editNotice} onDelete={openDeleteDialog} />
-      </Main>
+          <DetailActions onEdit={editNotice} onDelete={openDeleteDialog} />
+        </Main>
+      </Suspense>
 
       <ConfirmDialog
         ref={deleteDialogRef}

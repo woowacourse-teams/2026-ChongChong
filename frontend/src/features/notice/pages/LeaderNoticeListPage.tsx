@@ -10,6 +10,8 @@ import LeaderNoticeList from '../components/LeaderNoticeList';
 import { notices as allNotices } from '../noticeData';
 import Page from '../../../shared/ui/Page';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import { Suspense } from 'react';
+import Loading from '../../../shared/ui/Loading';
 
 const emptyContentStyle = {
   alignItems: 'center',
@@ -60,24 +62,25 @@ export default function LeaderNoticeListPage() {
           </>
         }
       />
+      <Suspense fallback={<Loading />}>
+        <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
+          {notices.length === 0 ? (
+            <EmptyContent message="아직 공지가 없어요" />
+          ) : (
+            <LeaderNoticeList notices={notices} studyId={studyId} />
+          )}
 
-      <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
-        {notices.length === 0 ? (
-          <EmptyContent message="아직 공지가 없어요" />
-        ) : (
-          <LeaderNoticeList notices={notices} studyId={studyId} />
-        )}
-
-        <div css={buttonAreaStyle}>
-          <Button
-            variant="brandSolid"
-            size="large"
-            onClick={() => navigate(`/studies/${studyId}/notices/create`)}
-          >
-            공지 작성하기
-          </Button>
-        </div>
-      </Main>
+          <div css={buttonAreaStyle}>
+            <Button
+              variant="brandSolid"
+              size="large"
+              onClick={() => navigate(`/studies/${studyId}/notices/create`)}
+            >
+              공지 작성하기
+            </Button>
+          </div>
+        </Main>
+      </Suspense>
       <BottomTab />
     </Page>
   );

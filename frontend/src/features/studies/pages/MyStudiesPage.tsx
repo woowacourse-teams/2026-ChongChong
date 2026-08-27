@@ -8,6 +8,7 @@ import Main from '../../../shared/ui/Main';
 import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
+import Loading from '../../../shared/ui/Loading';
 
 const actionsStyle = {
   display: 'flex',
@@ -16,7 +17,7 @@ const actionsStyle = {
   margin: `${tokens.spacing[3]} 0`,
 } satisfies CSSProperties;
 
-export default function StudyListPage() {
+export default function MyStudiesPage() {
   return (
     <Page>
       <TopHeader
@@ -26,25 +27,27 @@ export default function StudyListPage() {
           </div>
         }
       />
+
       <Main>
         <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
-          <Suspense fallback={<p>loading ...</p>}>
+          <Suspense fallback={<Loading />}>
             <MyStudies />
+
+            <div css={actionsStyle}>
+              {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
+              <Link to="/studies/new">
+                <Button variant="brandSolid" size="large">
+                  스터디 만들기
+                </Button>
+              </Link>
+              <Link to="/studies/join">
+                <Button role="link" variant="neutralOutline" size="large">
+                  스터디 참여하기
+                </Button>
+              </Link>
+            </div>
           </Suspense>
         </ErrorBoundary>
-        <div css={actionsStyle}>
-          {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
-          <Link to="/studies/new">
-            <Button variant="brandSolid" size="large">
-              스터디 만들기
-            </Button>
-          </Link>
-          <Link to="/studies/join">
-            <Button role="link" variant="neutralOutline" size="large">
-              스터디 참여하기
-            </Button>
-          </Link>
-        </div>
       </Main>
     </Page>
   );
