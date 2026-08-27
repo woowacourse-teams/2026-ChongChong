@@ -25,6 +25,16 @@ abstract class AbstractOpenApiErrorProvider implements OpenApiErrorProvider {
         return new OpenApiError(responseCode, code, message, example);
     }
 
+    protected static OpenApiError error(
+            String responseCode,
+            String code,
+            String message,
+            Object example,
+            String exampleKey
+    ) {
+        return new OpenApiError(responseCode, code, message, example, exampleKey);
+    }
+
     protected static List<OpenApiError> errors(OpenApiError... errors) {
         return List.of(errors);
     }
