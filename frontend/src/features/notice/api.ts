@@ -27,7 +27,7 @@ export async function fetchNoticeDetail(studyId: number, noticeId: number) {
   return await response.json<NoticeDetail>();
 }
 
-export async function fetchNoticeRead(studyId: number, noticeId: number) {
+export async function fetchNoticeMyRead(studyId: number, noticeId: number) {
   const response = await api.get(`/studies/${studyId}/notices/${noticeId}/status/me`);
   return await response.json<MemberReadStatus>();
 }
