@@ -1,12 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { studyTable } from './db';
-import { BASE_URL } from '../../../../config';
+import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 import { CURRENT_USER } from '../../../mocks/currentUser';
 import { memberTable } from '../../member/mocks/db';
 
 export const handlers = [
-  http.get(`${BASE_URL}${STUDY_URLS.list}`, async () => {
+  http.get(`${API_URL}${STUDY_URLS.list}`, async () => {
     const memberships = await memberTable.findMany((q) => q.where({ id: CURRENT_USER.id }));
     const studies = await Promise.all(
       memberships.map(async (membership) => {
@@ -28,7 +28,7 @@ export const handlers = [
     return HttpResponse.json({ studies: studies.filter((study) => study !== null) });
   }),
 
-  http.post(`${BASE_URL}${STUDY_URLS.create}`, async ({ request }) => {
+  http.post(`${API_URL}${STUDY_URLS.create}`, async ({ request }) => {
     const body = (await request.json()) as { name: string; description: string };
     // msw 로직은 실제 backend API 로 대체될 예정입니다.
     // if (invalidInput) {
@@ -44,10 +44,10 @@ export const handlers = [
       profileImage: 'http://localhost:8000',
       role: 'LEADER',
     });
-    return HttpResponse.json({ id: studyId }, { status: 201 });
+    return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
-  http.get(`${BASE_URL}${STUDY_URLS.info}`, async ({ params }) => {
+  http.get(`${API_URL}${STUDY_URLS.info}`, async ({ params }) => {
     const { studyId } = params;
     const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!found) return new HttpResponse(null, { status: 404 });
@@ -58,7 +58,7 @@ export const handlers = [
     });
   }),
 
-  http.get(`${BASE_URL}${STUDY_URLS.inviteLink}`, async ({ params }) => {
+  http.get(`${API_URL}${STUDY_URLS.inviteLink}`, async ({ params }) => {
     const { studyId } = params;
     const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!found) return new HttpResponse(null, { status: 404 });
@@ -67,7 +67,7 @@ export const handlers = [
     });
   }),
 
-  http.delete(`${BASE_URL}${STUDY_URLS.remove}`, async ({ params }) => {
+  http.delete(`${API_URL}${STUDY_URLS.remove}`, async ({ params }) => {
     const { studyId } = params;
     const study = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!study) return new HttpResponse(null, { status: 404 });

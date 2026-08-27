@@ -1,14 +1,10 @@
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
-import addIcon from '../../../shared/assets/add.svg';
-import deleteIcon from '../../../shared/assets/delete-x.svg';
 import Button from '../../../shared/ui/Button';
-import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
-import List from '../../../shared/ui/List';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import type { NoticeFormValues } from '../types';
 
 const formStyle = {
@@ -18,63 +14,42 @@ const formStyle = {
   gap: tokens.spacing[4],
 } satisfies CSSProperties;
 
-const reminderChipStyle = {
-  ...typography.subtitle,
-  display: 'flex',
-  minHeight: '52px',
-  padding: `${tokens.spacing[2]} ${tokens.spacing[3]} ${tokens.spacing[2]} ${tokens.spacing[4]}`,
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  border: tokens.border.default,
-  borderRadius: tokens.radius.md,
-  background: tokens.bg.default,
-  color: tokens.text.primary,
-} satisfies CSSProperties;
-
-const iconButtonStyle = {
-  display: 'grid',
-  width: '32px',
-  height: '32px',
-  padding: 0,
-  flex: '0 0 32px',
-  placeItems: 'center',
-  border: 0,
-  background: 'transparent',
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
 interface NoticeFormProps {
   initialValues?: NoticeFormValues;
   submitLabel: string;
-  onSubmit?: (values: NoticeFormValues) => void;
+  isSubmitting?: boolean;
+  onSubmit: (values: NoticeFormValues) => void;
 }
 
 const emptyValues: NoticeFormValues = {
   title: '',
   content: '',
-  reminders: [],
 };
 
-function formatReminder(value: Date) {
-  return `${value.getFullYear()}년 ${value.getMonth() + 1}월 ${value.getDate()}일 ${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+function resizeTextArea(textArea: HTMLTextAreaElement | null) {
+  if (!textArea) return;
+
+  textArea.style.height = 'auto';
+  textArea.style.height = `${textArea.scrollHeight}px`;
 }
 
 export default function NoticeForm({
   initialValues = emptyValues,
   submitLabel,
+  isSubmitting = false,
   onSubmit,
 }: NoticeFormProps) {
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
-  const [reminders, setReminders] = useState<Date[]>(initialValues.reminders);
 
-  const removeReminder = (indexToRemove: number) => {
-    setReminders((current) => current.filter((_, index) => index !== indexToRemove));
-  };
+  useLayoutEffect(() => {
+    resizeTextArea(contentRef.current);
+  }, [content]);
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    onSubmit?.({ title, content, reminders });
+    onSubmit({ title, content });
   };
 
   return (
@@ -98,40 +73,14 @@ export default function NoticeForm({
         helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
       >
         <TextArea
+          ref={contentRef}
           id="notice-content"
           name="content"
           value={content}
           placeholder="내용을 입력해주세요"
           required
-          onChange={(event) => setContent(event.target.value)}
-        />
-      </Field>
-
-      <Field
-        id="notice-reminder"
-        label="리마인드 시각"
-        helpText="설정한 시각마다 읽지 않은 스터디원에게 알림을 보내드릴게요"
-      >
-        <List>
-          {reminders.map((reminder, index) => (
-            <List.Item key={`${reminder.getTime()}-${index}`} css={reminderChipStyle}>
-              <time dateTime={reminder.toISOString()}>{formatReminder(reminder)}</time>
-              <button
-                type="button"
-                css={iconButtonStyle}
-                aria-label={`${formatReminder(reminder)} 리마인드 삭제`}
-                onClick={() => removeReminder(index)}
-              >
-                <img src={deleteIcon} alt="리마인드 삭제" width={20} height={20} />
-              </button>
-            </List.Item>
-          ))}
-        </List>
-
-        <DateTimePicker
-          id="notice-reminder"
-          triggerLabel={<img src={addIcon} alt="리마인드 시각 추가" width={24} height={24} />}
-          onChange={(value) => setReminders((current) => [...current, value])}
+          css={{ overflowY: 'hidden' }}
+          onChange={(event) => setContent(event.currentTarget.value)}
         />
       </Field>
 
@@ -139,6 +88,7 @@ export default function NoticeForm({
         type="submit"
         variant="brandSolid"
         size="large"
+        disabled={isSubmitting}
         css={{ marginTop: tokens.spacing[8] }}
       >
         {submitLabel}

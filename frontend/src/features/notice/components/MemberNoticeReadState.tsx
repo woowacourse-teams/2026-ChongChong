@@ -6,7 +6,9 @@ import { tokens, typography } from '../../../styles/global';
 
 interface MemberNoticeReadStateProps {
   progress: number;
+  isRead: boolean;
   readAt?: string;
+  showCompletionToast?: boolean;
 }
 
 const footerStyle = {
@@ -63,21 +65,25 @@ const toastStyle = {
   color: tokens.text.onBrand,
 } satisfies CSSProperties;
 
-export default function MemberNoticeReadState({ progress, readAt }: MemberNoticeReadStateProps) {
-  const isCompleted = progress >= 100;
+export default function MemberNoticeReadState({
+  progress,
+  isRead,
+  readAt,
+  showCompletionToast = false,
+}: MemberNoticeReadStateProps) {
   const [isToastDismissed, setIsToastDismissed] = useState(false);
 
   useEffect(() => {
-    if (!isCompleted) return;
+    if (!showCompletionToast) return;
 
     const timeoutId = window.setTimeout(() => setIsToastDismissed(true), 2000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [isCompleted]);
+  }, [showCompletionToast]);
 
   return (
     <>
-      {isCompleted && !isToastDismissed && (
+      {showCompletionToast && !isToastDismissed ? (
         <div css={toastStyle} role="status">
           <img
             src={checkIcon}
@@ -88,10 +94,10 @@ export default function MemberNoticeReadState({ progress, readAt }: MemberNotice
           />
           읽음으로 표시했어요
         </div>
-      )}
+      ) : null}
 
       <footer css={footerStyle}>
-        {isCompleted ? (
+        {isRead ? (
           <div css={completedStyle}>
             <img src={circleCheckIcon} alt="읽음 완료" width={22} height={22} />
             {readAt ? `${readAt}에 읽음` : '읽음 완료'}

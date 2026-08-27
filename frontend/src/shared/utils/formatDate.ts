@@ -41,6 +41,45 @@ export function formatSubmittedAt(value: string) {
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes} 제출`;
 }
 
+export function formatRelativeTime(value: string, now = new Date()) {
+  const date = new Date(value.replace(' ', 'T'));
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffSeconds < 60) {
+    return '방금 전';
+  }
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) {
+    return `${diffMinutes}분 전`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours}시간 전`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) {
+    return `${diffDays}일 전`;
+  }
+
+  if (diffDays < 30) {
+    return `${Math.floor(diffDays / 7)}주 전`;
+  }
+
+  if (diffDays < 365) {
+    return `${Math.floor(diffDays / 30)}개월 전`;
+  }
+
+  return `${Math.floor(diffDays / 365)}년 전`;
+}
+
 export function toLocalDateTime(value: Date) {
   const year = value.getFullYear();
   const month = String(value.getMonth() + 1).padStart(2, '0');

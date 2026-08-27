@@ -1,17 +1,17 @@
 import { http, HttpResponse } from 'msw';
-import { BASE_URL } from '../../../../config';
+import { API_URL } from '../../../../config';
 import { MEMBER_URLS } from '../urls';
 import { memberTable } from './db';
 import { CURRENT_USER } from '../../../mocks/currentUser';
 
 export const handlers = [
-  http.get(`${BASE_URL}${MEMBER_URLS.list}`, async ({ params }) => {
+  http.get(`${API_URL}${MEMBER_URLS.list}`, async ({ params }) => {
     const { studyId } = params;
     const members = await memberTable.findMany((q) => q.where({ studyId: Number(studyId) }));
     return HttpResponse.json({ members });
   }),
 
-  http.delete(`${BASE_URL}${MEMBER_URLS.leave}`, async ({ params }) => {
+  http.delete(`${API_URL}${MEMBER_URLS.leave}`, async ({ params }) => {
     const { studyId } = params;
     const member = await memberTable.findFirst((q) =>
       q.where({ studyId: Number(studyId), id: CURRENT_USER.id }),
@@ -24,7 +24,7 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.delete(`${BASE_URL}${MEMBER_URLS.kick}`, async ({ params }) => {
+  http.delete(`${API_URL}${MEMBER_URLS.kick}`, async ({ params }) => {
     const { studyId, memberId } = params;
     const member = await memberTable.findFirst((q) =>
       q.where({ studyId: Number(studyId), id: Number(memberId) }),

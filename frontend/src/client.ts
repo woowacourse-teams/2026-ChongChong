@@ -1,10 +1,11 @@
 import ky from 'ky';
-import { BASE_URL } from '../config';
+import { API_PREFIX, BASE_URL } from '../config';
 import { clearAccessToken, getAccessToken } from './features/login/accessToken';
 import { refreshAccessToken } from './features/login/api';
 
 const api = ky.create({
   baseUrl: BASE_URL,
+  prefix: API_PREFIX,
   credentials: 'include',
   hooks: {
     beforeRequest: [

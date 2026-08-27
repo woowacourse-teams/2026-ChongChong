@@ -1,28 +1,13 @@
-import type { CSSObject } from '@emotion/react';
 import type { CSSProperties } from 'react';
 import checkIcon from '../../../shared/assets/check.svg';
 import clockIcon from '../../../shared/assets/clock.svg';
-import sendIcon from '../../../shared/assets/send.svg';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import Badge from '../../../shared/ui/Badge';
-import Button from '../../../shared/ui/Button';
-import List from '../../../shared/ui/List';
 import { tokens, typography } from '../../../styles/global';
+import type { NoticeReadStatus as NoticeReadStatusData } from '../types';
 
-export interface NoticeMemberStatus {
-  id: number;
-  name: string;
-  remindedAt: string;
-}
-
-//TODO: API 연동 후 optional 제거
-interface NoticeReadStatusProps {
-  readuserNames: string[];
-  unreadMembers: NoticeMemberStatus[];
-  totalCount: number;
-  reminderText: string;
-  onSendReminder?: (memberId: number) => void;
-  onSendAllReminders?: () => void;
+interface Props {
+  status: NoticeReadStatusData;
 }
 
 const cardStyle = {
@@ -45,13 +30,6 @@ const statusTitleStyle = {
   ...typography.subtitle,
   margin: 0,
   color: tokens.text.primary,
-} satisfies CSSProperties;
-
-const reminderTextStyle = {
-  ...typography.footnote,
-  margin: 0,
-  color: tokens.text.muted,
-  whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
 const countStyle = {
@@ -96,7 +74,7 @@ const groupLabelStyle = {
   margin: 0,
 } satisfies CSSProperties;
 
-const readGroupStyle = {
+const groupStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: tokens.spacing[1],
@@ -114,74 +92,8 @@ const profileStyle = {
   height: '22px',
 } satisfies CSSProperties;
 
-const unreadGroupStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: tokens.spacing[1],
-  marginTop: tokens.spacing[3],
-} satisfies CSSProperties;
-
-const memberListStyle = {
-  '& > ul': {
-    flex: 'none',
-    gap: tokens.spacing[1],
-  },
-} satisfies CSSObject;
-
-const memberStyle = {
-  display: 'flex',
-  minHeight: '40px',
-  alignItems: 'center',
-} satisfies CSSProperties;
-
-const memberTextStyle = {
-  display: 'flex',
-  minWidth: 0,
-  marginLeft: tokens.spacing[3],
-  flex: 1,
-  flexDirection: 'column',
-} satisfies CSSProperties;
-
-const userNameStyle = {
-  ...typography.body,
-  color: tokens.text.primary,
-} satisfies CSSProperties;
-
-const sentAtStyle = {
-  ...typography.footnote,
-  color: tokens.text.muted,
-} satisfies CSSProperties;
-
-const sendButtonStyle = {
-  ...typography.paragraph,
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: tokens.spacing[2],
-  padding: tokens.spacing[2],
-  border: 0,
-  background: 'transparent',
-  color: tokens.text.brand,
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
-const sendAllStyle = {
-  marginTop: tokens.spacing[3],
-  '& > button': {
-    height: '44px',
-    minHeight: '44px',
-  },
-} satisfies CSSObject;
-
-export default function NoticeReadStatus({
-  readuserNames,
-  unreadMembers,
-  totalCount,
-  reminderText,
-  onSendReminder,
-  onSendAllReminders,
-}: NoticeReadStatusProps) {
-  const readCount = readuserNames.length;
-  const progress = totalCount === 0 ? 0 : (readCount / totalCount) * 100;
+export default function NoticeReadStatus({ status }: Props) {
+  const progress = status.memberCount === 0 ? 0 : (status.readCount / status.memberCount) * 100;
 
   return (
     <section css={cardStyle} aria-labelledby="read-status-title">
@@ -189,12 +101,11 @@ export default function NoticeReadStatus({
         <h2 id="read-status-title" css={statusTitleStyle}>
           확인 현황
         </h2>
-        <p css={reminderTextStyle}>{reminderText}</p>
       </header>
 
       <div css={countStyle}>
-        <strong css={readCountStyle}>{readCount}</strong>
-        <span css={totalCountStyle}>/ {totalCount}명</span>
+        <strong css={readCountStyle}>{status.readCount}</strong>
+        <span css={totalCountStyle}>/ {status.memberCount}명</span>
       </div>
 
       <div
@@ -202,60 +113,41 @@ export default function NoticeReadStatus({
         role="progressbar"
         aria-label="공지 읽음률"
         aria-valuemin={0}
-        aria-valuemax={totalCount}
-        aria-valuenow={readCount}
+        aria-valuemax={status.memberCount}
+        aria-valuenow={status.readCount}
       >
         <div css={{ ...progressBarStyle, width: `${progress}%` }} />
       </div>
 
-      <div css={readGroupStyle}>
+      <div css={groupStyle}>
         <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>
           <img src={checkIcon} alt="" width={18} height={18} />
-          확인 {readCount}명
+          확인 {status.readCount}명
         </p>
         <div css={badgeRowStyle}>
-          {readuserNames.map((name) => (
-            <Badge key={name} variant="neutralSolid" size="large">
+          {status.readMembers.map((member) => (
+            <Badge key={member.id} variant="neutralSolid" size="large">
               <img src={profileIcon} alt="" css={profileStyle} />
-              {name}
+              {member.name}
             </Badge>
           ))}
         </div>
       </div>
 
-      <div css={unreadGroupStyle}>
+      <div css={groupStyle}>
         <p css={{ ...groupLabelStyle, color: tokens.text.muted }}>
           <img src={clockIcon} alt="" width={18} height={18} />
-          미확인 {unreadMembers.length}명
+          미확인 {status.unreadCount}명
         </p>
 
-        <div css={memberListStyle}>
-          <List>
-            {unreadMembers.map((member) => (
-              <List.Item key={member.id} css={memberStyle}>
-                <img src={profileIcon} alt="" width={28} height={28} />
-                <span css={memberTextStyle}>
-                  <span css={userNameStyle}>{member.name}</span>
-                  <span css={sentAtStyle}>{member.remindedAt}</span>
-                </span>
-                <button
-                  type="button"
-                  css={sendButtonStyle}
-                  onClick={() => onSendReminder?.(member.id)}
-                >
-                  <img src={sendIcon} alt="" width={16} height={16} />
-                  보내기
-                </button>
-              </List.Item>
-            ))}
-          </List>
+        <div css={badgeRowStyle}>
+          {status.unreadMembers.map((member) => (
+            <Badge key={member.id} variant="neutralSolid" size="large">
+              <img src={profileIcon} alt="" css={profileStyle} />
+              {member.name}
+            </Badge>
+          ))}
         </div>
-      </div>
-
-      <div css={sendAllStyle}>
-        <Button variant="brandSolid" size="large" onClick={onSendAllReminders}>
-          모두에게 보내기
-        </Button>
       </div>
     </section>
   );

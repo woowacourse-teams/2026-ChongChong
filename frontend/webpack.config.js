@@ -71,7 +71,7 @@ export default {
     historyApiFallback: true,
     proxy: [
       {
-        context: ['/auth/csrf', '/auth/login', '/auth/refresh', '/auth/logout'],
+        context: ['/api/auth/csrf', '/api/auth/login', '/api/auth/refresh', '/api/auth/logout'],
         target: process.env.API_BASE_URL ?? 'http://localhost:8080',
         changeOrigin: true,
       },

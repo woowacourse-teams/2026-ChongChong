@@ -1,50 +1,53 @@
-import type { CSSProperties } from 'react';
-import { useNavigate } from 'react-router';
-import backIcon from '../../../shared/assets/left-arrow.svg';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
-import type { NoticeFormValues } from '../types';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
+import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { useParams, useNavigate } from 'react-router';
+import noticeQueries from '../queries';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { UpdateNoticeValue } from '../types';
+import { updateNotice } from '../api';
 
-// TODO: API 연동 후 optional 제거
-interface EditNoticePageProps {
-  notice?: NoticeFormValues;
-  onSubmit?: (values: NoticeFormValues) => void;
-}
-
-const backButtonStyle = {
-  display: 'grid',
-  width: '32px',
-  height: '32px',
-  padding: 0,
-  placeItems: 'center',
-  border: 0,
-  background: 'transparent',
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
-export default function EditNoticePage({ notice, onSubmit }: EditNoticePageProps) {
+export default function EditNoticePage() {
+  const { studyId, noticeId } = useParams();
+  const { data: notice } = useSuspenseQuery(
+    noticeQueries.detail(Number(studyId), Number(noticeId)),
+  );
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: (values: UpdateNoticeValue) =>
+      updateNotice(Number(studyId), Number(noticeId), values),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: noticeQueries.lists(Number(studyId)),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: noticeQueries.detail(Number(studyId), Number(noticeId)).queryKey,
+      });
+
+      navigate(`/studies/${studyId}/notices/${noticeId}`);
+    },
+  });
 
   return (
     <Page>
-      <TopHeader
-        left={
-          <button
-            type="button"
-            css={backButtonStyle}
-            aria-label="뒤로 가기"
-            onClick={() => navigate(-1)}
-          >
-            <img src={backIcon} alt="뒤로 가기" width={24} height={24} />
-          </button>
-        }
-        middle={<TopHeader.Title>공지</TopHeader.Title>}
-      />
+      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>공지</TopHeader.Title>} />
 
       <Main>
-        <NoticeForm initialValues={notice} submitLabel="수정하기" onSubmit={onSubmit} />
+        <NoticeForm
+          submitLabel="수정하기"
+          onSubmit={updateMutation.mutate}
+          initialValues={{
+            title: notice.title,
+            content: notice.content,
+          }}
+        />
       </Main>
     </Page>
   );

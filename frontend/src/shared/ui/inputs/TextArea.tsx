@@ -1,9 +1,9 @@
 import { tokens, typography } from '../../../styles/global';
 import type { CSSObject } from '@emotion/react';
 import type { CSSProperties } from 'react';
-import type { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
-type TextAreaProps = ComponentPropsWithoutRef<'textarea'>;
+type TextAreaProps = ComponentPropsWithRef<'textarea'>;
 
 const textAreaBaseStyle = {
   ...typography.subtitle,

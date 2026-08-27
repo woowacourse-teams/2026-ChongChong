@@ -1,12 +1,11 @@
 import type { CSSProperties } from 'react';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
+import { formatRelativeTime } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
+import type { NoticeDetail } from '../types';
 
-interface NoticeArticleProps {
-  title: string;
-  author: string;
-  createdAt: string;
-  content: string;
+interface Props {
+  notice: NoticeDetail;
   hasTopMargin?: boolean;
 }
 
@@ -41,23 +40,17 @@ const contentStyle = {
   whiteSpace: 'pre-line',
 } satisfies CSSProperties;
 
-export default function NoticeArticle({
-  title,
-  author,
-  createdAt,
-  content,
-  hasTopMargin = true,
-}: NoticeArticleProps) {
+export default function NoticeArticle({ notice, hasTopMargin = true }: Props) {
   return (
     <article css={{ ...articleStyle, marginTop: hasTopMargin ? articleStyle.marginTop : 0 }}>
-      <h2 css={titleStyle}>{title}</h2>
+      <h2 css={titleStyle}>{notice.title}</h2>
       <div css={authorRowStyle}>
-        <img src={profileIcon} alt="" width={28} height={28} />
+        <img src={notice.profileImageUrl || profileIcon} alt="" width={28} height={28} />
         <span css={authorStyle}>
-          {author} · {createdAt}
+          {notice.writer} · {formatRelativeTime(notice.createdAt)}
         </span>
       </div>
-      <p css={contentStyle}>{content}</p>
+      <p css={contentStyle}>{notice.content}</p>
     </article>
   );
 }

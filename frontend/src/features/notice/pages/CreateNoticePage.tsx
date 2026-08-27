@@ -1,45 +1,42 @@
-import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import backIcon from '../../../shared/assets/left-arrow.svg';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
-import BottomTab from '../../../shared/ui/components/BottomTab';
-
-const backButtonStyle = {
-  display: 'grid',
-  width: '32px',
-  height: '32px',
-  padding: 0,
-  placeItems: 'center',
-  border: 0,
-  background: 'transparent',
-  cursor: 'pointer',
-} satisfies CSSProperties;
+import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import useStudyId from '../../studies/hooks/useStudyId';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import noticeQueries from '../queries';
+import { NoticeFormValues } from '../types';
+import { createNotice } from '../api';
 
 export default function CreateNoticePage() {
+  const { studyId } = useStudyId();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: (values: NoticeFormValues) => createNotice(studyId, values),
+
+    onSuccess: ({ noticeId }) => {
+      queryClient.invalidateQueries({
+        queryKey: noticeQueries.lists(studyId),
+      });
+
+      navigate(`/studies/${studyId}/notices/${noticeId}`);
+    },
+  });
 
   return (
     <Page>
-      <TopHeader
-        left={
-          <button
-            type="button"
-            css={backButtonStyle}
-            aria-label="뒤로 가기"
-            onClick={() => navigate(-1)}
-          >
-            <img src={backIcon} alt="뒤로 가기" width={24} height={24} />
-          </button>
-        }
-        middle={<TopHeader.Title>공지</TopHeader.Title>}
-      />
+      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>공지</TopHeader.Title>} />
       <Main>
-        <NoticeForm submitLabel="공지 올리기" />
+        <NoticeForm
+          submitLabel="공지 올리기"
+          isSubmitting={createMutation.isPending}
+          onSubmit={(values) => createMutation.mutate(values)}
+        />
       </Main>
-      <BottomTab />
     </Page>
   );
 }

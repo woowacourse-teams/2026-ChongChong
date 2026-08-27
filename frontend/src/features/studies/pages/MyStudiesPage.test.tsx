@@ -3,7 +3,7 @@ import { createWrapper, mockResponse } from '../../../test/render';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../mocks/msw-node';
 import MyStudiesPage from './MyStudiesPage';
-import { BASE_URL } from '../../../../config';
+import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 import { Study } from '../types';
 
@@ -28,7 +28,7 @@ const studies: Study[] = [
   },
 ];
 
-const STUDIES_URL = `${BASE_URL}${STUDY_URLS.list}`;
+const STUDIES_URL = `${API_URL}${STUDY_URLS.list}`;
 
 test('응답으로 받은 스터디들을 렌더링 한다', async () => {
   mockResponse(STUDIES_URL, studies);
