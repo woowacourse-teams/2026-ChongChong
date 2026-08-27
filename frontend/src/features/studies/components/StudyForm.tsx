@@ -28,7 +28,7 @@ export default function StudyForm() {
 
   const mutation = useMutation({
     mutationFn: createStudy,
-    onSuccess: (data) => navigate(`/studies/${data.id}`),
+    onSuccess: (data) => navigate(`/studies/${data.studyId}`),
   });
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {

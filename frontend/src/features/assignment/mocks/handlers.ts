@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
 import { BASE_URL } from '../../../../config';
-import type { AssignmentValue } from '../types';
 
 const assignmentList = Array.from({ length: 12 }, (_, index) => {
   const id = 12 - index;
@@ -37,17 +36,9 @@ export const handlers = [
     return HttpResponse.json({ nextCursor, hasNext, assignments });
   }),
 
-  http.post(`${BASE_URL}/studies/:studyId/assignments`, async ({ request }) => {
-    const values = (await request.json()) as AssignmentValue;
-
-    return HttpResponse.json(
-      {
-        id: 3,
-        ...values,
-      },
-      { status: 201 },
-    );
-  }),
+  http.post(`${BASE_URL}/studies/:studyId/assignments`, () =>
+    HttpResponse.json({ assignmentId: 3 }, { status: 201 }),
+  ),
 
   http.patch(
     `${BASE_URL}/studies/:studyId/assignments/:assignmentId`,

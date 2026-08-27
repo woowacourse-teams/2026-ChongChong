@@ -112,7 +112,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("과제 생성 요청은 201과 id를 반환하고 스터디원별 제출 정보와 리마인더를 저장한다")
+    @DisplayName("과제 생성 요청은 201과 assignmentId를 반환하고 스터디원별 제출 정보와 리마인더를 저장한다")
     void createAssignmentTest() {
         LocalDateTime newCloseAt = closeAt.plusDays(10);
         LocalDateTime newRemindAt = newCloseAt.minusDays(1);
@@ -133,10 +133,10 @@ class AssignmentApiTest {
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()
                 .statusCode(201)
-                .body("id", notNullValue())
+                .body("assignmentId", notNullValue())
                 .extract()
                 .jsonPath()
-                .getLong("id");
+                .getLong("assignmentId");
 
         assertThat(countRows("assignment_submissions", createdAssignmentId)).isEqualTo(2);
         assertThat(countRows("assignment_reminders", createdAssignmentId)).isEqualTo(1);
