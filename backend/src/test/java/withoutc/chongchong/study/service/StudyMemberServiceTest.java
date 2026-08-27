@@ -167,7 +167,6 @@ class StudyMemberServiceTest {
                 StudyMemberRole.MEMBER
         );
         List<StudyMemberSummaryProjection> projections = List.of(projection1, projection2);
-        StudyMembersResponse studyMembersResponse = StudyMembersResponse.from(projections);
 
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);

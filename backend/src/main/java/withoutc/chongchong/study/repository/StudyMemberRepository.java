@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 
 @Repository
 public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> {
@@ -28,4 +29,6 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
     int countByStudyId(Long studyId);
 
     void deleteAllByStudyId(Long studyId);
+
+    List<StudyMemberSummaryProjection> findAllSummariesByStudyId(Long studyId);
 }

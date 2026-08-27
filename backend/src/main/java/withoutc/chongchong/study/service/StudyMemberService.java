@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -48,6 +49,12 @@ public class StudyMemberService {
                 StudyMemberRole.MEMBER);
 
         studyMemberRepository.save(studyMember);
+    }
+
+    public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
+        studyRepository.getByIdOrThrow(studyId);
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        return StudyMembersResponse.from(studyMemberRepository.findAllSummariesByStudyId(studyId));
     }
 
     private void validateJoin(Long studyId, Long userId) {
