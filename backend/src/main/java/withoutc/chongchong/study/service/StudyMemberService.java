@@ -71,6 +71,16 @@ public class StudyMemberService {
         studyMemberRemover.remove(target);
     }
 
+    @Transactional
+    public void leave(Long userId, Long studyId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        if (member.isLeader()) {
+            throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
+        }
+
+        studyMemberRemover.remove(member);
+    }
+
     private void validateJoin(Long studyId, Long userId) {
         if (studyMemberRepository.findByStudyIdAndUserId(studyId, userId).isPresent()) {
             throw new StudyMemberException(StudyMemberErrorCode.ALREADY_JOINED_STUDY);
