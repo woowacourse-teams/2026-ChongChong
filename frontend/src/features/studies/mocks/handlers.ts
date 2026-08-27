@@ -44,7 +44,7 @@ export const handlers = [
       profileImage: 'http://localhost:8000',
       role: 'LEADER',
     });
-    return HttpResponse.json({ studyId }, { status: 201 });
+    return HttpResponse.json({ id: studyId }, { status: 201 });
   }),
 
   http.get(`${BASE_URL}${STUDY_URLS.info}`, async ({ params }) => {
