@@ -15,7 +15,7 @@ class WebRefreshCookieConfigTest {
                     "auth.web.refresh-cookie.secure=true",
                     "auth.web.refresh-cookie.http-only=true",
                     "auth.web.refresh-cookie.same-site=Lax",
-                    "auth.web.refresh-cookie.path=/auth"
+                    "auth.web.refresh-cookie.path=/api/auth"
             );
 
     @Test

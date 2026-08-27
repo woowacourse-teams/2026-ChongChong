@@ -51,7 +51,7 @@ class SecurityErrorResponseTest {
     @Test
     @DisplayName("보호 경로에 Access Token이 없으면 공통 JSON 형식의 401을 반환한다")
     void respondUnauthorizedWhenAccessTokenIsMissing() throws Exception {
-        expectAuthenticationRequired(mockMvc.perform(get("/test/security/protected")));
+        expectAuthenticationRequired(mockMvc.perform(get("/api/test/security/protected")));
     }
 
     @Test
@@ -63,7 +63,7 @@ class SecurityErrorResponseTest {
     @Test
     @DisplayName("운영 테스트 토큰 발급 경로는 인증 없이 접근할 수 없다")
     void rejectPublicTestTokenIssuancePath() throws Exception {
-        expectAuthenticationRequired(mockMvc.perform(get("/auth/token")
+        expectAuthenticationRequired(mockMvc.perform(get("/api/auth/token")
                 .param("userId", "1")));
     }
 
@@ -72,7 +72,7 @@ class SecurityErrorResponseTest {
     void respondUnauthorizedWhenAccessTokenHasInvalidSignature() throws Exception {
         String invalidToken = testJwtFactory.invalidSignatureAccessToken(1L);
 
-        expectAuthenticationRequired(mockMvc.perform(get("/test/security/protected")
+        expectAuthenticationRequired(mockMvc.perform(get("/api/test/security/protected")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + invalidToken)))
                 .andExpect(content().string(not(containsString(invalidToken))))
                 .andExpect(content().string(not(containsString("signature"))));
@@ -83,7 +83,7 @@ class SecurityErrorResponseTest {
     void respondUnauthorizedWhenAccessTokenIsExpired() throws Exception {
         String expiredToken = testJwtFactory.expiredAccessToken(1L);
 
-        expectAuthenticationRequired(mockMvc.perform(get("/test/security/protected")
+        expectAuthenticationRequired(mockMvc.perform(get("/api/test/security/protected")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredToken)))
                 .andExpect(content().string(not(containsString(expiredToken))))
                 .andExpect(content().string(not(containsString("expired"))));
@@ -94,7 +94,7 @@ class SecurityErrorResponseTest {
     void respondForbiddenWhenAuthenticatedUserIsDenied() throws Exception {
         String accessToken = testJwtFactory.accessToken(1L);
 
-        mockMvc.perform(get("/test/security/forbidden")
+        mockMvc.perform(get("/api/test/security/forbidden")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -110,7 +110,7 @@ class SecurityErrorResponseTest {
     @Test
     @DisplayName("로그인 경로는 Access Token 없이 Security를 통과한다")
     void allowLoginPathWithoutAccessToken() throws Exception {
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -122,7 +122,7 @@ class SecurityErrorResponseTest {
     @Test
     @DisplayName("지원하지 않는 GET 로그인 요청은 허용하지 않는 HTTP 메서드로 처리한다")
     void rejectUnsupportedLoginGetRequest() throws Exception {
-        mockMvc.perform(get("/auth/login"))
+        mockMvc.perform(get("/api/auth/login"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.code").value("UNSUPPORTED_HTTP_METHOD"))
                 .andExpect(jsonPath("$.message").value("지원하지 않는 HTTP 메서드입니다."));
@@ -166,7 +166,7 @@ class SecurityErrorResponseTest {
                 RestAccessDeniedHandler accessDeniedHandler
         ) throws Exception {
             return http
-                    .securityMatcher("/test/security/forbidden")
+                    .securityMatcher("/api/test/security/forbidden")
                     .csrf(AbstractHttpConfigurer::disable)
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(authorize -> authorize.anyRequest().denyAll())

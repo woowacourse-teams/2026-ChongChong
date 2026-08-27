@@ -43,4 +43,4 @@ auth:
       secure: ${AUTH_WEB_REFRESH_COOKIE_SECURE:true}
       http-only: true
       same-site: Lax
-      path: /auth
+      path: /api/auth

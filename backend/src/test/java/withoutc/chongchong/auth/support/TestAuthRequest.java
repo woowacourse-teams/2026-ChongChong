@@ -1,6 +1,7 @@
 package withoutc.chongchong.auth.support;
 
 import static io.restassured.RestAssured.given;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.specification.RequestSpecification;
 import org.springframework.context.annotation.Profile;
@@ -21,6 +22,6 @@ public final class TestAuthRequest {
     }
 
     public RequestSpecification givenAccessToken(String accessToken) {
-        return given().auth().oauth2(accessToken);
+        return given().basePath(API_PREFIX).auth().oauth2(accessToken);
     }
 }

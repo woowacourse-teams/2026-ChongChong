@@ -36,7 +36,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("DTO 필드 검증 실패 시 필드별 검증 사유를 반환한다")
     void handleBindException() throws Exception {
-        mockMvc.perform(post("/test/validation")
+        mockMvc.perform(post("/api/test/validation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -54,7 +54,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("메서드 파라미터 검증 실패 시 요청 파라미터 오류와 검증 사유를 반환한다")
     void handleMethodValidationException() throws Exception {
-        mockMvc.perform(get("/test/parameter-validation")
+        mockMvc.perform(get("/api/test/parameter-validation")
                         .param("page", "0"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST_PARAMETER"))
@@ -67,7 +67,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("반환값 검증 실패 시 내부 서버 오류를 반환한다")
     void handleReturnValueValidationException() throws Exception {
-        mockMvc.perform(get("/test/return-validation"))
+        mockMvc.perform(get("/api/test/return-validation"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
                 .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다."))
@@ -77,7 +77,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("읽을 수 없는 JSON 요청은 잘못된 요청으로 반환한다")
     void handleHttpMessageNotReadableException() throws Exception {
-        mockMvc.perform(post("/test/validation")
+        mockMvc.perform(post("/api/test/validation")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{"))
                 .andExpect(status().isBadRequest())
@@ -89,7 +89,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("요청 파라미터 타입이 올바르지 않으면 잘못된 요청으로 반환한다")
     void handleMethodArgumentTypeMismatchException() throws Exception {
-        mockMvc.perform(get("/test/parameter-validation")
+        mockMvc.perform(get("/api/test/parameter-validation")
                         .param("page", "not-a-number"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
@@ -99,7 +99,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("필수 요청 파라미터가 없으면 잘못된 요청으로 반환한다")
     void handleServletRequestBindingException() throws Exception {
-        mockMvc.perform(get("/test/parameter-validation"))
+        mockMvc.perform(get("/api/test/parameter-validation"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
                 .andExpect(jsonPath("$.message").value("요청 형식이 잘못되었습니다."));
@@ -108,7 +108,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("지원하지 않는 HTTP 메서드는 405 응답으로 반환한다")
     void handleUnsupportedMethodException() throws Exception {
-        mockMvc.perform(post("/test/method"))
+        mockMvc.perform(post("/api/test/method"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.code").value("UNSUPPORTED_HTTP_METHOD"))
                 .andExpect(jsonPath("$.message").value("지원하지 않는 HTTP 메서드입니다."));
@@ -117,7 +117,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("존재하지 않는 경로는 404 응답으로 반환한다")
     void handleUnsupportedPathException() throws Exception {
-        mockMvc.perform(get("/test/not-found"))
+        mockMvc.perform(get("/api/test/not-found"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("UNSUPPORTED_PATH"))
                 .andExpect(jsonPath("$.message").value("존재하지 않는 경로입니다."));
@@ -126,7 +126,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("비즈니스 예외는 에러 코드에 정의된 응답으로 반환한다")
     void handleBusinessException() throws Exception {
-        mockMvc.perform(get("/test/business-exception"))
+        mockMvc.perform(get("/api/test/business-exception"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("TEST_BUSINESS_ERROR"))
                 .andExpect(jsonPath("$.message").value("테스트 비즈니스 예외입니다."))
@@ -136,7 +136,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("처리하지 못한 예외는 내부 정보를 노출하지 않고 500 응답으로 반환한다")
     void handleException() throws Exception {
-        mockMvc.perform(get("/test/unexpected-exception"))
+        mockMvc.perform(get("/api/test/unexpected-exception"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
                 .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다."))

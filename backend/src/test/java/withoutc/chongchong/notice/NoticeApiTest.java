@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.http.ContentType;
 import java.time.LocalDateTime;
@@ -669,6 +670,7 @@ class NoticeApiTest {
     @DisplayName("인증 없이 공지 읽음 현황을 조회하면 인증 실패 응답을 반환한다")
     void getAllReadStatusesWithoutAuthenticationTest() {
         io.restassured.RestAssured.given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .when()
                 .get("/studies/{studyId}/notices/{noticeId}/status", study.getId(), notice.getId())

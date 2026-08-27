@@ -32,7 +32,7 @@ class WebRefreshCookieWriterTest {
         assertThat(cookie.headerValue())
                 .contains("refresh_token=" + REFRESH_TOKEN)
                 .contains("Max-Age=3600")
-                .contains("Path=/auth")
+                .contains("Path=/api/auth")
                 .contains("Secure")
                 .contains("HttpOnly")
                 .contains("SameSite=Lax")
@@ -60,7 +60,7 @@ class WebRefreshCookieWriterTest {
         assertThat(cookie.headerValue())
                 .contains("refresh_token=")
                 .contains("Max-Age=0")
-                .contains("Path=/auth")
+                .contains("Path=/api/auth")
                 .contains("Secure")
                 .contains("HttpOnly")
                 .contains("SameSite=Lax")
@@ -112,7 +112,7 @@ class WebRefreshCookieWriterTest {
                 secure,
                 true,
                 "Lax",
-                "/auth"
+                "/api/auth"
         );
     }
 }

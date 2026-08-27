@@ -38,4 +38,4 @@ auth:
       secure: true
       http-only: true
       same-site: Lax
-      path: /auth
+      path: /api/auth
