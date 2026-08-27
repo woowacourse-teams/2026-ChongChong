@@ -1,4 +1,4 @@
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import Field from '../../../shared/ui/inputs/Field';
@@ -26,14 +26,26 @@ const emptyValues: NoticeFormValues = {
   content: '',
 };
 
+function resizeTextArea(textArea: HTMLTextAreaElement | null) {
+  if (!textArea) return;
+
+  textArea.style.height = 'auto';
+  textArea.style.height = `${textArea.scrollHeight}px`;
+}
+
 export default function NoticeForm({
   initialValues = emptyValues,
   submitLabel,
   isSubmitting = false,
   onSubmit,
 }: NoticeFormProps) {
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
+
+  useLayoutEffect(() => {
+    resizeTextArea(contentRef.current);
+  }, [content]);
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -61,19 +73,14 @@ export default function NoticeForm({
         helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
       >
         <TextArea
+          ref={contentRef}
           id="notice-content"
           name="content"
           value={content}
           placeholder="내용을 입력해주세요"
           required
           css={{ overflowY: 'hidden' }}
-          onChange={(event) => {
-            const textArea = event.currentTarget;
-
-            textArea.style.height = 'auto';
-            textArea.style.height = `${textArea.scrollHeight}px`;
-            setContent(textArea.value);
-          }}
+          onChange={(event) => setContent(event.currentTarget.value)}
         />
       </Field>
 
