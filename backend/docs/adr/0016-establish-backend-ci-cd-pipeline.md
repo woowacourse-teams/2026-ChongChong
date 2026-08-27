@@ -1,7 +1,8 @@
 # 0016. AWS 관리형 서비스로 백엔드 CI/CD 파이프라인을 구성한다
 
 - 날짜: 2026-08-21
-- 관련 이슈: [#83](https://github.com/woowacourse-teams/2026-ChongChong/issues/83)
+- 관련 이슈: [#83](https://github.com/woowacourse-teams/2026-ChongChong/issues/83),
+  [#155](https://github.com/woowacourse-teams/2026-ChongChong/issues/155)
 - 후속 ADR: [0017. 개인 AWS 계정에 임시 개발 배포 환경을 구성한다](0017-use-personal-aws-account-for-temporary-development-deployment.md)
 
 ## 배경
@@ -14,6 +15,10 @@ SSH로 접속해 준비할 수 있다.
 개발 기간에는 서버 한 대를 유지하고 배포 중 짧은 서비스 중단을 허용한다. 운영 단계에서 요구할 무중단 배포를 지금
 단일 서버에 억지로 구성하면 메모리 여유가 작은 `t4g.micro`에서 두 애플리케이션 컨테이너를 동시에 실행해야 하고,
 배포 복잡도도 먼저 증가한다.
+
+개발이 활발한 동안에는 `dev` 배포가 자주 발생한다. Docker 이미지의 실행 환경과 기반 Layer는 대부분 유지되고
+애플리케이션 JAR Layer가 주로 변경되므로, 배포마다 이미지 전체를 파일로 전달하기보다 Registry에서 변경된 Layer를
+주고받을 수 있어야 한다.
 
 프론트엔드와 백엔드는 같은 저장소와 브랜치를 사용한다. 프론트엔드 변경만으로 백엔드를 다시 배포하지 않되,
 백엔드 실행 파일과 Nginx, Docker Compose 또는 배포 절차가 달라지면 `dev` 병합 후 자동으로 EC2에 반영해야 한다.
@@ -50,17 +55,10 @@ CI와 CodeBuild에서 JAR을 각각 만드는 중복을 허용한다. PR에서 �
 
 ### Docker Hub를 이미지 Registry로 사용한다
 
-- CodeBuild는 쓰기 권한이 있는 Docker Hub Access Token으로 이미지를 push한다.
-- EC2는 pull에 필요한 최소 권한의 Docker Hub Access Token을 사용한다.
+- CodeBuild는 배포 이미지를 Docker Hub에 push한다.
+- EC2는 Docker Hub에서 배포 대상 이미지를 pull한다.
 - `latest`만으로 배포하지 않고 CodeBuild가 제공하는 Git commit SHA를 이미지 태그와 배포 변수로 전달한다.
-- Registry 자격 증명은 Git에 저장하지 않는다.
-- CodeBuild용 Docker Hub username과 push Token은 Systems Manager Parameter Store의 표준 파라미터로 저장한다.
-- username은 `String`, Token은 `SecureString`으로 저장하고 CodeBuild Service Role에는 해당 파라미터를 읽는
-  `ssm:GetParameters` 권한만 부여한다.
-
-Parameter Store 조회는 CodeBuild가 AWS API로 수행하므로 EC2를 Systems Manager 관리형 노드로 등록하거나 SSM
-Agent를 설치할 필요가 없다. EC2의 런타임 환경 변수와 pull 자격 증명은 `/opt/chongchong/.env`에 두고 파일 권한을
-제한한다.
+- Registry 인증정보의 구체적인 주입 방식은 AWS 환경 설정에서 관리하고 Git에는 저장하지 않는다.
 
 ### CodeDeploy Agent가 배포 명령을 실행한다
 
@@ -81,7 +79,7 @@ Agent를 설치할 필요가 없다. EC2의 런타임 환경 변수와 pull 자�
 
 ### 애플리케이션 비밀은 EC2 파일에서 주입한다
 
-- DB, JWT, 프론트엔드 URL과 Docker Hub pull 자격 증명을 `/opt/chongchong/.env`에 저장한다.
+- DB, JWT와 프론트엔드 URL을 `/opt/chongchong/.env`에 저장한다.
 - `.env`는 저장소에 커밋하지 않고 EC2에서 소유자만 읽을 수 있게 관리한다.
 - RDS의 5432번 inbound source가 EC2에 연결된 Security Group인지 배포 전에 확인한다.
 
@@ -96,8 +94,9 @@ JAR 빌드를 다시 수행해 `dev` 커밋과 이미지 SHA의 대응을 보장
 `t4g.micro`가 에뮬레이션 없이 실행할 수 있고, 개인 AWS의 임시 환경에서는 AMD64 이미지를 만들어 x86_64 EC2와
 호환한다.
 
-Docker Hub는 별도의 AWS Registry 권한을 추가하지 않아도 되고 현재 팀이 사용할 수 있는 외부 Registry다. 이미지와
-소스가 서로 다른 서비스에 존재하고 토큰을 관리해야 하는 비용은 감수한다.
+Docker Hub는 별도의 AWS Registry 권한을 추가하지 않아도 되고 현재 팀이 사용할 수 있는 외부 Registry다. 잦은
+배포에서도 기존 이미지 Layer를 재사용하여 전체 이미지를 매번 CodeDeploy 아티팩트로 전달하는 비용을 피할 수 있다.
+이미지와 소스가 서로 다른 서비스에 존재하고 Registry 인증정보를 별도로 관리해야 하는 비용은 감수한다.
 
 ## 검토한 대안
 
@@ -127,11 +126,12 @@ ECR은 AWS 권한과 수명 짧은 인증을 활용할 수 있지만 현재 사�
 GHCR은 소스와 이미지를 GitHub에서 함께 관리할 수 있지만 GitHub PAT의 수명과 권한 변경이 배포에 미치는 영향을
 피하고자 선택하지 않았다.
 
-### Docker Hub Token을 Secrets Manager에 저장
+### Docker 이미지를 CodeDeploy 아티팩트로 직접 전달
 
-Secret 수명 주기와 교체 관리 기능이 더 풍부하지만 개발 환경의 Docker Hub Token 하나를 위해 Secret 저장 비용과
-별도 권한 구성을 추가해야 한다. 현재는 자동 교체가 필요하지 않고 비용을 낮추는 것이 더 중요하므로 표준
-Parameter Store `SecureString`을 사용한다.
+CodeBuild에서 만든 이미지를 `docker save`로 파일에 저장하면 외부 Registry 없이 CodeDeploy가 EC2로 전달할 수 있다.
+그러나 배포마다 이미지 전체가 CodePipeline 아티팩트에 포함되어 업로드·다운로드되고, 여러 배포 사이에서 Docker
+Layer를 재사용할 수 없다. 개발 중 배포가 자주 발생하는 현재 상황에서는 전송량과 배포 시간을 줄이는 Registry 방식이
+더 적합하므로 선택하지 않았다.
 
 ### 지금 무중단 배포 구성
 
@@ -158,14 +158,14 @@ Blue/Green 배포나 두 컨테이너 전환은 중단을 줄이지만 단일 `t
 - CodePipeline, CodeBuild와 CodeDeploy용 Service Role 및 EC2 Instance Profile을 인프라 담당자가 준비해야 한다.
 - GitHub Actions와 CodeBuild가 JAR을 각각 만들어 빌드 시간이 중복된다.
 - 단일 EC2 in-place 배포 중에는 짧은 서비스 중단이 발생한다.
-- Docker Hub 장애, pull 제한과 Access Token 변경이 배포 성공에 영향을 준다.
+- Docker Hub 장애, pull 제한과 인증정보 변경이 배포 성공에 영향을 준다.
 - 고정되지 않은 EC2 공개 IP가 바뀌면 `nip.io` 호스트 이름과 인증서를 다시 구성해야 한다.
 - CodeDeploy가 성공해도 데이터베이스 스키마 변경의 하위 호환성을 자동으로 보장하지 않는다.
 
 ## 미확정 사항
 
 - 인프라 담당자가 제공할 CodePipeline, CodeBuild, CodeDeploy Service Role과 EC2 Instance Profile의 정확한 이름
-- EC2의 Docker Hub pull Token을 개인 계정과 조직 계정 중 어디에서 발급할지
+- Docker Hub 인증정보의 소유 및 관리 주체
 - EC2 공개 IP와 이에 대응하는 `nip.io` 서버 이름
 - RDS Security Group의 5432번 source가 EC2 Security Group으로 제한되어 있는지
 - 운영 전 EC2 크기 조정, ELB·ACM 도입과 무중단 Blue/Green 배포 방식
@@ -177,4 +177,4 @@ Blue/Green 배포나 두 컨테이너 전환은 중단을 줄이지만 단일 `t
 - 개발 서버용 Docker Compose와 EC2 bootstrap·배포 스크립트를 추가한다.
 - CodeBuild `buildspec.yml`과 CodeDeploy `appspec.yml`을 추가한다.
 - CodePipeline의 GitHub Connection, `dev` 브랜치와 경로 필터를 AWS에서 구성한다.
-- 인프라 담당자와 Service Role, Instance Profile 및 Docker Hub 비밀 주입 방식을 확인한다.
+- 인프라 담당자와 Service Role, Instance Profile 및 Docker Hub 인증정보 주입 방식을 확인한다.
