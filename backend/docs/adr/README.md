@@ -39,3 +39,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0020](0020-establish-web-authentication-token-boundary.md)                   | 웹 인증 토큰 전달 경계를 구성한다 |
 | [0021](0021-establish-kakao-authorization-code-adapter-boundary.md)           | Kakao Authorization Code Adapter 경계를 구성한다 |
 | [0022](0022-explicitly-delete-study-member-dependencies.md)                   | 스터디 멤버 제거 시 종속 데이터를 명시적으로 삭제한다 |
+| [0023](0023-introduce-openapi-api-documentation.md)                           | OpenAPI 기반 API 문서화를 도입한다 |

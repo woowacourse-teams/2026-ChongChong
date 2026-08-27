@@ -44,3 +44,9 @@ auth:
       http-only: true
       same-site: Lax
       path: /api/auth
+
+springdoc:
+  api-docs:
+    enabled: true # 개발 끝나면 false로 변경
+  swagger-ui:
+    enabled: true # 개발 끝나면 false로 변경

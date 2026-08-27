@@ -55,7 +55,12 @@ public class SecurityConfig {
                                 AUTH_PATH + "/refresh",
                                 AUTH_PATH + "/logout",
                                 AUTH_PATH + "/csrf",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/api/v3/api-docs",
+                                "/api/v3/api-docs/**",
+                                "/api/v3/api-docs.yaml"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
