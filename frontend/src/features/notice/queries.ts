@@ -40,3 +40,5 @@ const noticeQueries = {
       queryFn: () => fetchNoticeMyRead(studyId, noticeId),
     }),
 };
+
+export default noticeQueries;
