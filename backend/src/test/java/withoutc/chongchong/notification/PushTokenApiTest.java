@@ -26,6 +26,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 class PushTokenApiTest {
 
     private static final String TOKEN = "ExponentPushToken[test-token]";
+    private static final String INSTALLATION_ID = "installation-1";
 
     @Autowired
     private UserRepository userRepository;
@@ -65,11 +66,12 @@ class PushTokenApiTest {
                 .contentType(ContentType.JSON)
                 .body("""
                         {
+                          "installationId": "%s",
                           "provider": "EXPO",
                           "token": "%s",
                           "platform": "ANDROID"
                         }
-                        """.formatted(TOKEN))
+                        """.formatted(INSTALLATION_ID, TOKEN))
                 .when()
                 .post("/push-tokens")
                 .then()
@@ -78,6 +80,7 @@ class PushTokenApiTest {
         assertThat(pushTokenRepository.count()).isOne();
         PushTokenRow saved = findPushToken();
         assertThat(saved.userId()).isEqualTo(user.getId());
+        assertThat(saved.installationId()).isEqualTo(INSTALLATION_ID);
         assertThat(saved.provider()).isEqualTo("EXPO");
         assertThat(saved.token()).isEqualTo(TOKEN);
         assertThat(saved.platform()).isEqualTo("ANDROID");
@@ -85,16 +88,17 @@ class PushTokenApiTest {
     }
 
     @Test
-    @DisplayName("이미 저장된 푸시 토큰을 등록하면 충돌 오류를 반환한다")
-    void rejectDuplicatePushTokenTest() {
+    @DisplayName("같은 사용자가 같은 설치 식별자로 다시 등록하면 204를 반환하고 중복 저장하지 않는다")
+    void createSamePushTokenAgainTest() {
         User user = userRepository.saveAndFlush(User.create("총총이", null));
         String requestBody = """
                 {
+                  "installationId": "%s",
                   "provider": "EXPO",
                   "token": "%s",
                   "platform": "ANDROID"
                 }
-                """.formatted(TOKEN);
+                """.formatted(INSTALLATION_ID, TOKEN);
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
@@ -112,9 +116,7 @@ class PushTokenApiTest {
                 .when()
                 .post("/push-tokens")
                 .then()
-                .statusCode(409)
-                .body("code", equalTo("PUSH_TOKEN_ALREADY_EXISTS"))
-                .body("message", equalTo("같은 푸시 토큰 제공자는 동일한 토큰을 생성할 수 없습니다."));
+                .statusCode(204);
 
         assertThat(pushTokenRepository.count()).isOne();
     }
@@ -133,8 +135,9 @@ class PushTokenApiTest {
                 .then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
-                .body("errors.field", hasItems("provider", "token", "platform"))
+                .body("errors.field", hasItems("installationId", "provider", "token", "platform"))
                 .body("errors.reason", hasItems(
+                        "설치된 앱 식별자는 필수입니다.",
                         "푸시 토큰 제공자는 필수입니다.",
                         "푸시 토큰은 필수입니다.",
                         "디바이스 플랫폼은 필수입니다."
@@ -151,11 +154,12 @@ class PushTokenApiTest {
                 .contentType(ContentType.JSON)
                 .body("""
                         {
+                          "installationId": "%s",
                           "provider": "EXPO",
                           "token": "%s",
                           "platform": "ANDROID"
                         }
-                        """.formatted(TOKEN))
+                        """.formatted(INSTALLATION_ID, TOKEN))
                 .when()
                 .post("/push-tokens")
                 .then()
@@ -167,11 +171,12 @@ class PushTokenApiTest {
     private PushTokenRow findPushToken() {
         return jdbcTemplate.queryForObject(
                 """
-                        SELECT user_id, provider, token, platform, is_active
+                        SELECT user_id, installation_id, provider, token, platform, is_active
                         FROM push_tokens
                         """,
                 (resultSet, rowNumber) -> new PushTokenRow(
                         resultSet.getLong("user_id"),
+                        resultSet.getString("installation_id"),
                         resultSet.getString("provider"),
                         resultSet.getString("token"),
                         resultSet.getString("platform"),
@@ -182,6 +187,7 @@ class PushTokenApiTest {
 
     private record PushTokenRow(
             Long userId,
+            String installationId,
             String provider,
             String token,
             String platform,
