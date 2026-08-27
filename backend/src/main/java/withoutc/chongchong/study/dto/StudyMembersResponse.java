@@ -1,9 +1,11 @@
 package withoutc.chongchong.study.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 
 public record StudyMembersResponse(
+        @Schema(description = "스터디 멤버 목록")
         List<StudyMemberResponse> members
 ) {
 

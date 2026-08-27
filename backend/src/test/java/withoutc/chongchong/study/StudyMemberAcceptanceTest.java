@@ -8,9 +8,11 @@ import static org.hamcrest.Matchers.nullValue;
 import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.http.ContentType;
+import io.restassured.path.json.JsonPath;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -233,6 +235,63 @@ class StudyMemberAcceptanceTest {
                 .body("members[1].name", equalTo("스터디 내 이름"))
                 .body("members[1].profileImage", nullValue())
                 .body("members[1].role", equalTo("MEMBER"));
+    }
+
+    @Test
+    @DisplayName("Study Member API Swagger 문서를 생성한다")
+    @SuppressWarnings("unchecked")
+    void studyMemberOpenApiDocumentationTest() {
+        String document = given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .when()
+                .get("/v3/api-docs")
+                .then()
+                .statusCode(200)
+                .extract()
+                .asString();
+
+        Map<String, Object> paths = new JsonPath(document).getMap("paths");
+        Map<String, Object> membersPath = (Map<String, Object>) paths.get("/api/studies/{studyId}/members");
+        Map<String, Object> expelPath = (Map<String, Object>) paths.get("/api/studies/{studyId}/members/{memberId}");
+        Map<String, Object> leavePath = (Map<String, Object>) paths.get("/api/studies/{studyId}/members/me");
+
+        Map<String, Object> getMembersOperation = (Map<String, Object>) membersPath.get("get");
+        Map<String, Object> expelOperation = (Map<String, Object>) expelPath.get("delete");
+        Map<String, Object> leaveOperation = (Map<String, Object>) leavePath.get("delete");
+
+        assertThat(getMembersOperation.get("operationId")).isEqualTo("getAllStudyMembers");
+        assertThat(expelOperation.get("operationId")).isEqualTo("expel");
+        assertThat(leaveOperation.get("operationId")).isEqualTo("leave");
+
+        Map<String, Object> responses = (Map<String, Object>) getMembersOperation.get("responses");
+        Map<String, Object> response = (Map<String, Object>) responses.get("200");
+        Map<String, Object> content = (Map<String, Object>) response.get("content");
+        Map<String, Object> applicationJson = (Map<String, Object>) content.get("application/json");
+        Map<String, Object> schema = (Map<String, Object>) applicationJson.get("schema");
+        assertThat(schema.get("$ref")).isEqualTo("#/components/schemas/StudyMembersResponse");
+
+        Map<String, Object> expelResponses = (Map<String, Object>) expelOperation.get("responses");
+        assertThat(expelResponses.keySet()).contains("400", "401", "403", "404", "500");
+        assertThat(responseExamples(expelResponses, "400").keySet())
+                .contains("INVALID_REQUEST_PARAMETER");
+        assertThat(responseExamples(expelResponses, "403").keySet())
+                .contains("STUDY_ACCESS_DENIED", "NOT_STUDY_LEADER", "STUDY_LEADER_CANNOT_BE_REMOVED");
+        assertThat(responseExamples(expelResponses, "404").keySet())
+                .contains("STUDY_MEMBER_NOT_FOUND");
+
+        Map<String, Object> leaveResponses = (Map<String, Object>) leaveOperation.get("responses");
+        assertThat(leaveResponses.keySet()).contains("400", "401", "403", "500");
+        assertThat(responseExamples(leaveResponses, "403").keySet())
+                .contains("STUDY_ACCESS_DENIED", "STUDY_LEADER_CANNOT_LEAVE");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> responseExamples(Map<String, Object> responses, String responseCode) {
+        Map<String, Object> response = (Map<String, Object>) responses.get(responseCode);
+        Map<String, Object> content = (Map<String, Object>) response.get("content");
+        Map<String, Object> applicationJson = (Map<String, Object>) content.get("application/json");
+        return (Map<String, Object>) applicationJson.get("examples");
     }
 
     @Test
