@@ -23,8 +23,11 @@ import withoutc.chongchong.user.entity.User;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "push_tokens",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_push_tokens_provider_token",
-                columnNames = {"provider", "token"}
+                name = "uk_push_tokens_user_installation_id",
+                columnNames = {
+                        "user_id",
+                        "installation_id"
+                }
         ))
 public class PushToken extends BaseEntity {
 
@@ -35,6 +38,9 @@ public class PushToken extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(nullable = false)
+    private String installationId;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -52,23 +58,30 @@ public class PushToken extends BaseEntity {
 
     public static PushToken create(
             User user,
+            String installationId,
             TokenProvider provider,
             String token,
             DevicePlatform devicePlatform
     ) {
-        return new PushToken(user, provider, token, devicePlatform);
+        return new PushToken(user, installationId, provider, token, devicePlatform);
     }
 
     private PushToken(
             User user,
+            String installationId,
             TokenProvider provider,
             String token,
             DevicePlatform platform
     ) {
         this.user = user;
+        this.installationId = installationId;
         this.provider = provider;
         this.token = token;
         this.platform = platform;
         this.isActive = true;
+    }
+
+    public void changeActiveState() {
+        isActive = true;
     }
 }
