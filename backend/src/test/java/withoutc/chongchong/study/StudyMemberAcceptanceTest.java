@@ -313,4 +313,143 @@ class StudyMemberAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("AUTHENTICATION_REQUIRED"));
     }
+
+    @Test
+    @DisplayName("스터디 리더가 일반 멤버를 방출하면 204를 반환한다")
+    void expelStudyMemberTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember target = createMember(study, "방출 대상", StudyMemberRole.MEMBER);
+        Long targetId = target.getId();
+        Long targetUserId = target.getUser().getId();
+
+        testAuthRequest.givenAuthenticatedUser(leader.getUser().getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", study.getId(), targetId)
+                .then()
+                .statusCode(204);
+
+        assertThat(studyMemberRepository.findById(targetId)).isEmpty();
+        testAuthRequest.givenAuthenticatedUser(targetUserId)
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아닌 사용자가 방출을 요청하면 403을 반환한다")
+    void expelStudyMemberByNonMemberTest() {
+        User requester = userRepository.saveAndFlush(User.create("비멤버", null));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember target = createMember(study, "방출 대상", StudyMemberRole.MEMBER);
+
+        testAuthRequest.givenAuthenticatedUser(requester.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", study.getId(), target.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아닌 멤버가 방출을 요청하면 403을 반환한다")
+    void expelStudyMemberByNonLeaderTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember requester = createMember(study, "일반 멤버", StudyMemberRole.MEMBER);
+        StudyMember target = createMember(study, "방출 대상", StudyMemberRole.MEMBER);
+
+        testAuthRequest.givenAuthenticatedUser(requester.getUser().getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", study.getId(), target.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_LEADER"));
+    }
+
+    @Test
+    @DisplayName("다른 스터디의 멤버를 방출하려 하면 404를 반환한다")
+    void expelMemberFromOtherStudyTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study otherStudy = studyRepository.saveAndFlush(Study.create("다른 스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember otherStudyMember = createMember(otherStudy, "다른 스터디 멤버", StudyMemberRole.MEMBER);
+
+        testAuthRequest.givenAuthenticatedUser(leader.getUser().getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", study.getId(), otherStudyMember.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_MEMBER_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 멤버를 방출하려 하면 404를 반환한다")
+    void expelMissingStudyMemberTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+
+        testAuthRequest.givenAuthenticatedUser(leader.getUser().getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", study.getId(), Long.MAX_VALUE)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_MEMBER_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("스터디 리더를 방출하려 하면 403을 반환한다")
+    void expelStudyLeaderTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+
+        testAuthRequest.givenAuthenticatedUser(leader.getUser().getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", study.getId(), leader.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_LEADER_CANNOT_BE_REMOVED"));
+    }
+
+    @Test
+    @DisplayName("멤버 ID가 양수가 아니면 방출 요청 시 400을 반환한다")
+    void expelStudyMemberWithInvalidMemberIdTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", 1L, 0)
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 멤버 방출을 요청하면 401을 반환한다")
+    void expelStudyMemberWithoutAuthenticationTest() {
+        given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/{memberId}", 1L, 1L)
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("AUTHENTICATION_REQUIRED"));
+    }
+
+    private StudyMember createMember(Study study, String name, StudyMemberRole role) {
+        User user = userRepository.saveAndFlush(User.create(name, null));
+        return studyMemberRepository.saveAndFlush(StudyMember.create(study, user, name, null, role));
+    }
 }
