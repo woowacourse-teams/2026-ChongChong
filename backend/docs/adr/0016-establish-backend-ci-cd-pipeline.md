@@ -72,7 +72,8 @@ CI와 CodeBuild에서 JAR을 각각 만드는 중복을 허용한다. PR에서 �
 ### Nginx와 인증서의 책임을 분리한다
 
 - Nginx는 Docker Compose로 실행하여 설정과 버전을 저장소에서 관리한다.
-- Nginx는 80번 요청을 HTTPS로 전환하고 443번 요청을 백엔드 컨테이너로 전달한다.
+- Nginx는 80번 요청을 HTTPS로 전환하고 443번의 `/api/*` 요청과 배포 검증용 `/actuator/health`를 백엔드
+  컨테이너로 전달한다. 나머지 경로는 프론트엔드 배포 전까지 404로 응답한다.
 - 실제 도메인을 준비하기 전에는 EC2 공개 IP에 대응하는 `nip.io` 호스트 이름을 사용한다.
 - Certbot은 Ubuntu Host에 설치하고 인증서와 ACME webroot를 Nginx 컨테이너에 읽기 전용으로 마운트한다.
 - 최초 인증서 발급과 자동 갱신 설정은 EC2 bootstrap 절차에 포함한다.
