@@ -22,9 +22,17 @@ const contentStyle = {
   overflowY: 'auto',
 } satisfies CSSProperties;
 
+function calculateReadProgress(content: HTMLElement) {
+  const { scrollTop, scrollHeight, clientHeight } = content;
+  const scrollableHeight = scrollHeight - clientHeight;
+
+  return scrollableHeight <= 0 ? 100 : Math.round((scrollTop / scrollableHeight) * 100);
+}
+
 export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) {
   const queryClient = useQueryClient();
   const contentRef = useRef<HTMLElement>(null);
+  const contentBodyRef = useRef<HTMLDivElement>(null);
   const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.myRead(studyId, noticeId)],
   });
@@ -56,21 +64,31 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
 
   useEffect(() => {
     const content = contentRef.current;
+    const contentBody = contentBodyRef.current;
 
-    if (!content || content.scrollHeight > content.clientHeight) return;
+    if (!content || !contentBody) return;
 
-    setReadProgress(100);
-    if (hasRequestedReadRef.current) return;
+    const updateProgress = () => {
+      const nextProgress = calculateReadProgress(content);
+      setReadProgress((current) => Math.max(current, nextProgress));
 
-    hasRequestedReadRef.current = true;
-    markAsRead();
+      if (nextProgress < 100 || hasRequestedReadRef.current) return;
+
+      hasRequestedReadRef.current = true;
+      markAsRead();
+    };
+
+    updateProgress();
+
+    const resizeObserver = new ResizeObserver(updateProgress);
+    resizeObserver.observe(content);
+    resizeObserver.observe(contentBody);
+
+    return () => resizeObserver.disconnect();
   }, [markAsRead]);
 
   const updateReadProgress = (event: UIEvent<HTMLElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const scrollableHeight = scrollHeight - clientHeight;
-    const nextProgress =
-      scrollableHeight <= 0 ? 100 : Math.round((scrollTop / scrollableHeight) * 100);
+    const nextProgress = calculateReadProgress(event.currentTarget);
 
     setReadProgress((current) => Math.max(current, nextProgress));
 
@@ -85,7 +103,9 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   return (
     <>
       <Main ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
-        <NoticeArticle notice={notice} hasTopMargin={false} />
+        <div ref={contentBodyRef}>
+          <NoticeArticle notice={notice} hasTopMargin={false} />
+        </div>
       </Main>
 
       <MemberNoticeReadState
