@@ -11,12 +11,12 @@ export interface CreateNoticeResponse {
 export interface Notice {
   id: number;
   title: string;
-  description: string;
+  content: string;
   createdAt: string;
-  isRead?: boolean;
-  readCount?: number;
-  totalCount?: number;
-  reminderText?: string;
+  recipientCount?: number;
+  readRecipientCount?: number;
+  remindAt?: string;
+  isComplete: boolean;
 }
 
 export interface NoticeListResponse {
@@ -54,4 +54,10 @@ export interface NoticeDetail {
 export interface MemberReadStatus {
   isRead: boolean;
   readAt: string | null;
+}
+
+export type UpdateNoticeValue = Partial<NoticeFormValues>;
+
+export interface UpdateNoticeReadResponse {
+  readAt: string;
 }
