@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
@@ -30,5 +32,23 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
 
     void deleteAllByStudyId(Long studyId);
 
-    List<StudyMemberSummaryProjection> findAllSummariesByStudyId(Long studyId);
+    @Query("""
+            SELECT new withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection(
+                member.id,
+                member.name,
+                member.profileImageUrl,
+                member.role
+            )
+            FROM StudyMember member
+            WHERE member.study.id = :studyId
+            ORDER BY
+                CASE
+                    WHEN member.role = withoutc.chongchong.study.entity.StudyMemberRole.LEADER
+                    THEN 0
+                    ELSE 1
+                END,
+                member.createdAt ASC,
+                member.id ASC
+            """)
+    List<StudyMemberSummaryProjection> findAllSummariesByStudyId(@Param("studyId") Long studyId);
 }
