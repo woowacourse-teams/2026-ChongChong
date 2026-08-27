@@ -38,3 +38,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0019](0019-defer-notice-read-concurrency-strategy.md)                        | 공지 읽음 시각의 동시성 보장 방식을 후속 결정으로 유보한다 |
 | [0020](0020-establish-web-authentication-token-boundary.md)                   | 웹 인증 토큰 전달 경계를 구성한다 |
 | [0021](0021-establish-kakao-authorization-code-adapter-boundary.md)           | Kakao Authorization Code Adapter 경계를 구성한다 |
+| [0022](0022-explicitly-delete-study-member-dependencies.md)                   | 스터디 멤버 제거 시 종속 데이터를 명시적으로 삭제한다 |
