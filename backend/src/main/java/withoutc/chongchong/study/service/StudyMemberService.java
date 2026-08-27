@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -29,6 +30,7 @@ public class StudyMemberService {
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
+    private final StudyMemberRemover studyMemberRemover;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
 
@@ -50,6 +52,35 @@ public class StudyMemberService {
         studyMemberRepository.save(studyMember);
     }
 
+    public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
+        studyRepository.getByIdOrThrow(studyId);
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        return StudyMembersResponse.from(studyMemberRepository.findAllSummariesByStudyId(studyId));
+    }
+
+    @Transactional
+    public void expel(Long userId, Long studyId, Long memberId) {
+        StudyMember requester = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeader(requester);
+
+        StudyMember target = studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId);
+        if (target.isLeader()) {
+            throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_BE_REMOVED);
+        }
+
+        studyMemberRemover.remove(target);
+    }
+
+    @Transactional
+    public void leave(Long userId, Long studyId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        if (member.isLeader()) {
+            throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
+        }
+
+        studyMemberRemover.remove(member);
+    }
+
     private void validateJoin(Long studyId, Long userId) {
         if (studyMemberRepository.findByStudyIdAndUserId(studyId, userId).isPresent()) {
             throw new StudyMemberException(StudyMemberErrorCode.ALREADY_JOINED_STUDY);
@@ -57,6 +88,12 @@ public class StudyMemberService {
 
         if (studyMemberRepository.countByStudyId(studyId) >= MAX_STUDY_MEMBER_COUNT) {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_LIMIT_EXCEEDED);
+        }
+    }
+
+    private void validateLeader(StudyMember member) {
+        if (!member.isLeader()) {
+            throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
         }
     }
 }
