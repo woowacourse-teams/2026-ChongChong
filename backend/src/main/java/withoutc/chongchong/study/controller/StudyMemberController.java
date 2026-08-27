@@ -1,5 +1,9 @@
 package withoutc.chongchong.study.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +25,15 @@ import withoutc.chongchong.study.service.StudyMemberService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/studies")
+@Tag(name = "Study Member", description = "스터디 멤버 API")
+@SecurityRequirement(name = "bearerAuth")
 public class StudyMemberController {
 
     private final StudyMemberService studyMemberService;
 
     @PostMapping("/join")
+    @Operation(summary = "스터디 참여", description = "초대 토큰을 사용해 스터디에 참여한다.")
+    @ApiResponse(responseCode = "201", description = "스터디 참여 성공")
     public ResponseEntity<Void> join(
             @AuthenticationPrincipal AuthenticatedUser user,
             @RequestBody @Valid StudyInviteTokenRequest request
