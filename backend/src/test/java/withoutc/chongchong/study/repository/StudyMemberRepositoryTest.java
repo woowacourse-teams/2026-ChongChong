@@ -2,7 +2,9 @@ package withoutc.chongchong.study.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
@@ -87,6 +90,70 @@ class StudyMemberRepositoryTest {
                 );
     }
 
+    @Test
+    @DisplayName("스터디 멤버 목록을 리더 우선, 가입 순서대로 조회한다")
+    void findAllSummariesByStudyIdTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study otherStudy = studyRepository.saveAndFlush(Study.create("다른 스터디", "설명"));
+
+        StudyMember firstMember = saveMember(
+                study,
+                "첫 번째 멤버",
+                null,
+                StudyMemberRole.MEMBER
+        );
+        StudyMember secondMember = saveMember(
+                study,
+                "두 번째 멤버",
+                "member-profile-image-url",
+                StudyMemberRole.MEMBER
+        );
+        StudyMember leader = saveMember(
+                study,
+                "리더",
+                "leader-profile-image-url",
+                StudyMemberRole.LEADER
+        );
+
+        saveMember(
+                otherStudy,
+                "다른 스터디 멤버",
+                null,
+                StudyMemberRole.MEMBER
+        );
+
+        List<StudyMemberSummaryProjection> result =
+                studyMemberRepository.findAllSummariesByStudyId(study.getId());
+
+        assertThat(result)
+                .extracting(
+                        StudyMemberSummaryProjection::id,
+                        StudyMemberSummaryProjection::name,
+                        StudyMemberSummaryProjection::profileImageUrl,
+                        StudyMemberSummaryProjection::role
+                )
+                .containsExactly(
+                        tuple(
+                                leader.getId(),
+                                "리더",
+                                "leader-profile-image-url",
+                                StudyMemberRole.LEADER
+                        ),
+                        tuple(
+                                firstMember.getId(),
+                                "첫 번째 멤버",
+                                null,
+                                StudyMemberRole.MEMBER
+                        ),
+                        tuple(
+                                secondMember.getId(),
+                                "두 번째 멤버",
+                                "member-profile-image-url",
+                                StudyMemberRole.MEMBER
+                        )
+                );
+    }
+
     private StudyMember createMember(Study study, String name) {
         User user = userRepository.save(User.create(name, null));
         return saveMember(study, user, name);
@@ -95,6 +162,19 @@ class StudyMemberRepositoryTest {
     private StudyMember saveMember(Study study, User user, String name) {
         return studyMemberRepository.save(
                 StudyMember.create(study, user, name, null, StudyMemberRole.MEMBER)
+        );
+    }
+
+    private StudyMember saveMember(
+            Study study,
+            String name,
+            String profileImageUrl,
+            StudyMemberRole role
+    ) {
+        User user = userRepository.save(User.create(name, profileImageUrl));
+
+        return studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, user, name, profileImageUrl, role)
         );
     }
 }
