@@ -66,7 +66,14 @@ export default function NoticeForm({
           value={content}
           placeholder="내용을 입력해주세요"
           required
-          onChange={(event) => setContent(event.target.value)}
+          css={{ overflowY: 'hidden' }}
+          onChange={(event) => {
+            const textArea = event.currentTarget;
+
+            textArea.style.height = 'auto';
+            textArea.style.height = `${textArea.scrollHeight}px`;
+            setContent(textArea.value);
+          }}
         />
       </Field>
 
