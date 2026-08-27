@@ -274,7 +274,7 @@ class StudyMemberAcceptanceTest {
         Map<String, Object> expelResponses = (Map<String, Object>) expelOperation.get("responses");
         assertThat(expelResponses.keySet()).contains("400", "401", "403", "404", "500");
         assertThat(responseExamples(expelResponses, "400").keySet())
-                .contains("INVALID_REQUEST_PARAMETER");
+                .contains("INVALID_STUDY_ID_PARAMETER", "INVALID_MEMBER_ID_PARAMETER");
         assertThat(responseExamples(expelResponses, "403").keySet())
                 .contains("STUDY_ACCESS_DENIED", "NOT_STUDY_LEADER", "STUDY_LEADER_CANNOT_BE_REMOVED");
         assertThat(responseExamples(expelResponses, "404").keySet())

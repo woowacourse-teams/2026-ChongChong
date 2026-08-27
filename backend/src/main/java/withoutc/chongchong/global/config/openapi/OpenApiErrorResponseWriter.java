@@ -58,9 +58,9 @@ class OpenApiErrorResponseWriter {
             content.addMediaType(JSON_MEDIA_TYPE, mediaType);
         }
 
-        if (mediaType.getExamples() == null || !mediaType.getExamples().containsKey(error.code())) {
+        if (mediaType.getExamples() == null || !mediaType.getExamples().containsKey(error.exampleKey())) {
             mediaType.addExamples(
-                    error.code(),
+                    error.exampleKey(),
                     new Example()
                             .summary(error.message())
                             .value(error.example())

@@ -16,6 +16,19 @@ import org.springframework.stereotype.Component;
 @Component
 class StudyMemberOpenApiErrorProvider extends AbstractOpenApiErrorProvider {
 
+    private static final OpenApiError INVALID_STUDY_ID_PARAMETER = error(
+            "400", "INVALID_REQUEST_PARAMETER", "요청 파라미터가 올바르지 않습니다.",
+            Map.of(
+                    "code", "INVALID_REQUEST_PARAMETER",
+                    "message", "요청 파라미터가 올바르지 않습니다.",
+                    "errors", List.of(Map.of(
+                            "code", "REQUEST_VALIDATION_POSITIVE",
+                            "field", "studyId",
+                            "reason", "스터디 ID는 양수여야 합니다."
+                    ))
+            ),
+            "INVALID_STUDY_ID_PARAMETER"
+    );
     private static final OpenApiError INVALID_MEMBER_ID_PARAMETER = error(
             "400", "INVALID_REQUEST_PARAMETER", "요청 파라미터가 올바르지 않습니다.",
             Map.of(
@@ -26,7 +39,8 @@ class StudyMemberOpenApiErrorProvider extends AbstractOpenApiErrorProvider {
                             "field", "memberId",
                             "reason", "스터디 멤버 ID는 양수여야 합니다."
                     ))
-            )
+            ),
+            "INVALID_MEMBER_ID_PARAMETER"
     );
     private static final OpenApiError STUDY_MEMBER_NOT_FOUND = simple(
             "404", "STUDY_MEMBER_NOT_FOUND", "존재하지 않는 스터디 멤버입니다."
@@ -42,7 +56,8 @@ class StudyMemberOpenApiErrorProvider extends AbstractOpenApiErrorProvider {
         super(Map.ofEntries(
                 entry("getAllStudyMembers", errors(INVALID_REQUEST_PARAMETER, INVALID_REQUEST,
                         AUTHENTICATION_REQUIRED, STUDY_ACCESS_DENIED, STUDY_NOT_FOUND)),
-                entry("expel", errors(INVALID_MEMBER_ID_PARAMETER, INVALID_REQUEST, AUTHENTICATION_REQUIRED,
+                entry("expel", errors(INVALID_STUDY_ID_PARAMETER, INVALID_MEMBER_ID_PARAMETER,
+                        INVALID_REQUEST, AUTHENTICATION_REQUIRED,
                         STUDY_ACCESS_DENIED, NOT_STUDY_LEADER, STUDY_MEMBER_NOT_FOUND,
                         STUDY_LEADER_CANNOT_BE_REMOVED)),
                 entry("leave", errors(INVALID_REQUEST_PARAMETER, INVALID_REQUEST, AUTHENTICATION_REQUIRED,
