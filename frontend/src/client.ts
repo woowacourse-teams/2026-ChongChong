@@ -5,6 +5,7 @@ import { refreshAccessToken } from './features/login/api';
 
 const api = ky.create({
   baseUrl: BASE_URL,
+  prefix: '/api',
   credentials: 'include',
   hooks: {
     beforeRequest: [

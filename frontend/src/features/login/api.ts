@@ -4,7 +4,7 @@ import type { CsrfResponse, LoginResponse } from './types';
 let refreshRequest: Promise<LoginResponse> | null = null;
 
 async function getCsrfToken(): Promise<CsrfResponse> {
-  const response = await fetch('/auth/csrf', {
+  const response = await fetch('/api/auth/csrf', {
     method: 'GET',
     credentials: 'include',
     cache: 'no-store',
@@ -39,7 +39,7 @@ async function postWithCsrf(path: string, init?: RequestInit) {
 }
 
 export async function loginWithKakaoCode(authorizationCode: string) {
-  const response = await postWithCsrf('/auth/login', {
+  const response = await postWithCsrf('/api/auth/login', {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -59,7 +59,7 @@ export async function loginWithKakaoCode(authorizationCode: string) {
 }
 
 async function rotateAccessToken() {
-  const response = await postWithCsrf('/auth/refresh');
+  const response = await postWithCsrf('/api/auth/refresh');
 
   if (!response.ok) {
     clearAccessToken();
@@ -83,7 +83,7 @@ export function refreshAccessToken() {
 
 export async function logout() {
   try {
-    await postWithCsrf('/auth/logout');
+    await postWithCsrf('/api/auth/logout');
   } finally {
     clearAccessToken();
   }
