@@ -11,11 +11,11 @@ export default function AssignmentSubmissionDetailPage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
-      <Suspense fallback={<Loading />}>
-        <Main>
+      <Main>
+        <Suspense fallback={<Loading />}>
           <AssignmentSubmissionDetailContent />
-        </Main>
-      </Suspense>
+        </Suspense>
+      </Main>
       <BottomTab />
     </Page>
   );

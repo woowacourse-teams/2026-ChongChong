@@ -30,11 +30,11 @@ export default function MemberAssignmentListPage({ studyName, userName }: Props)
             </>
           }
         />
-        <Suspense fallback={<Loading />}>
-          <Main>
+        <Main>
+          <Suspense fallback={<Loading />}>
             <MemberAssignmentListSection studyId={Number(studyId)} />
-          </Main>
-        </Suspense>
+          </Suspense>
+        </Main>
       </ErrorBoundary>
       <BottomTab />
     </Page>

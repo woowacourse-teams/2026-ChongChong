@@ -32,15 +32,15 @@ export default function StudyDetailPage() {
           </>
         }
       />
-      <Suspense fallback={<Loading />}>
-        <Main>
+      <Main>
+        <Suspense fallback={<Loading />}>
           {role === 'LEADER' ? (
             <LeaderStudyDetailContent username={userName} />
           ) : (
             <MemberStudyDetailContent username={userName} />
           )}
-        </Main>
-      </Suspense>
+        </Suspense>
+      </Main>
       <BottomTab />
     </Page>
   );

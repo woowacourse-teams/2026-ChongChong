@@ -11,11 +11,11 @@ export default function MemberAssignmentDetailPage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
-      <Suspense fallback={<Loading />}>
-        <Main>
+      <Main>
+        <Suspense fallback={<Loading />}>
           <MemberAssignmentDetailContent />
-        </Main>
-      </Suspense>
+        </Suspense>
+      </Main>
       <BottomTab />
     </Page>
   );

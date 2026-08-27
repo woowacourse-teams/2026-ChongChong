@@ -31,11 +31,11 @@ export default function LeaderAssignmentListPage({ studyName, userName }: Props)
           }
         />
 
-        <Suspense fallback={<Loading />}>
-          <Main>
+        <Main>
+          <Suspense fallback={<Loading />}>
             <LeaderAssignmentListSection studyId={Number(studyId)} />
-          </Main>
-        </Suspense>
+          </Suspense>
+        </Main>
       </ErrorBoundary>
       <BottomTab />
     </Page>

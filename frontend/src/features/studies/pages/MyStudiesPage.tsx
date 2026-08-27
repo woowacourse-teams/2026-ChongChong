@@ -17,7 +17,7 @@ const actionsStyle = {
   margin: `${tokens.spacing[3]} 0`,
 } satisfies CSSProperties;
 
-export default function StudyListPage() {
+export default function MyStudiesPage() {
   return (
     <Page>
       <TopHeader
@@ -27,9 +27,10 @@ export default function StudyListPage() {
           </div>
         }
       />
-      <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
-        <Suspense fallback={<Loading />}>
-          <Main>
+
+      <Main>
+        <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
+          <Suspense fallback={<Loading />}>
             <MyStudies />
 
             <div css={actionsStyle}>
@@ -45,9 +46,9 @@ export default function StudyListPage() {
                 </Button>
               </Link>
             </div>
-          </Main>
-        </Suspense>
-      </ErrorBoundary>
+          </Suspense>
+        </ErrorBoundary>
+      </Main>
     </Page>
   );
 }

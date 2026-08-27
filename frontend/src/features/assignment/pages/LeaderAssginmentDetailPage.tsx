@@ -38,16 +38,16 @@ export default function LeaderAssignmentDetailpage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
-      <Suspense fallback={<Loading />}>
-        <Main>
+      <Main>
+        <Suspense fallback={<Loading />}>
           <LeaderAssignmentDetailContent
             studyId={Number(studyId)}
             assignmentId={Number(assignmentId)}
             onEdit={editAssignment}
             onDelete={openDeleteDialog}
           />
-        </Main>
-      </Suspense>
+        </Suspense>
+      </Main>
 
       <ConfirmDialog
         ref={deleteDialogRef}
