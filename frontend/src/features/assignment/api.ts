@@ -23,9 +23,9 @@ export async function fetchAssignmentList(studyId: number, cursor?: number) {
   }
 }
 
-export async function fetchAssignmentSubmitStatus(studyId: number, assignmentsId: number) {
+export async function fetchAssignmentSubmitStatus(studyId: number, assignmentId: number) {
   try {
-    const response = await api.get(`/studies/${studyId}/assignments/${assignmentsId}/status`);
+    const response = await api.get(`/studies/${studyId}/assignments/${assignmentId}/status`);
     return await response.json<AssignmentSubmitStatus>();
   } catch {
     throw new Error('과제 제출 현황을 불러오는데 실패했습니다.');
@@ -74,7 +74,7 @@ export async function createAssignmentSubmission(
   values: AssignmentSubmissionValue,
 ) {
   return api
-    .post(`studies/${studyId}/assignments/${assignmentId}/submissions`, {
+    .post(`/studies/${studyId}/assignments/${assignmentId}/submissions`, {
       json: values,
     })
     .json<CreateSubmissionResponse>();
@@ -86,14 +86,14 @@ export async function updateAssignmentSubmission(
   submissionId: number,
   values: AssignmentSubmissionValue,
 ) {
-  await api.patch(`studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+  await api.patch(`/studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
     json: values,
   });
 }
 
 export async function createAssignment(studyId: number, values: AssignmentValue) {
   return api
-    .post(`studies/${studyId}/assignments`, {
+    .post(`/studies/${studyId}/assignments`, {
       json: values,
     })
     .json<CreateAssignmentResponse>();
@@ -104,11 +104,11 @@ export async function updateAssignment(
   assignmentId: number,
   values: UpdateAssignmentValue,
 ) {
-  await api.patch(`studies/${studyId}/assignments/${assignmentId}`, {
+  await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {
     json: values,
   });
 }
 
 export async function deleteAssignment(studyId: number, assignmentId: number) {
-  await api.delete(`studies/${studyId}/assignments/${assignmentId}`);
+  await api.delete(`/studies/${studyId}/assignments/${assignmentId}`);
 }
