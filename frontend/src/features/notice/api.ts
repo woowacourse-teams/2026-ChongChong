@@ -32,7 +32,7 @@ export async function fetchNoticeMyRead(studyId: number, noticeId: number) {
   return await response.json<MemberReadStatus>();
 }
 
-export async function createNotice(studyId: number, noticeId: number, values: NoticeFormValues) {
+export async function createNotice(studyId: number, values: NoticeFormValues) {
   const response = await api.post(`/studies/${studyId}/notices`, {
     json: values,
   });
@@ -44,7 +44,7 @@ export async function deleteNotice(studyId: number, noticeId: number) {
 }
 
 export async function updateNotice(studyId: number, noticeId: number, values: UpdateNoticeValue) {
-  await api.delete(`/studies/${studyId}/notices/${noticeId}`, {
+  await api.patch(`/studies/${studyId}/notices/${noticeId}`, {
     json: values,
   });
 }

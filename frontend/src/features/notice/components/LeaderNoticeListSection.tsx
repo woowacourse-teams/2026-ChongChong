@@ -68,7 +68,7 @@ export default function LeaderNoticeListSection({ studyId }: Props) {
         <Button
           variant="brandSolid"
           size="large"
-          onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
+          onClick={() => navigate(`/studies/${studyId}/notices/create`)}
         >
           공지 작성하기
         </Button>
