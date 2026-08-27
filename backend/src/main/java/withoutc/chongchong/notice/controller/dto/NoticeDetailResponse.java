@@ -11,7 +11,7 @@ public record NoticeDetailResponse(
         String title,
         @Schema(description = "공지 작성자", example = "홍길동")
         String writer,
-        @Schema(description = "작성자 프로필 이미지 URL", example = "https://example.com/profile.png")
+        @Schema(description = "작성자 프로필 이미지 URL", example = "https://example.com/profile.png", nullable = true)
         String profileImageUrl,
         @Schema(description = "공지 내용", example = "이번 주 스터디 일정을 확인해주세요.")
         String content,

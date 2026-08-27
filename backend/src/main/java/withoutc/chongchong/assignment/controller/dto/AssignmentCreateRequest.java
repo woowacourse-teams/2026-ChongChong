@@ -23,9 +23,9 @@ public record AssignmentCreateRequest(
         String submissionMethod,
         @NotNull(message = "마감 시각은 필수 값입니다.")
         @Future(message = "마감 시각은 현재보다 미래여야 합니다.")
-        @Schema(description = "과제 마감 시각", example = "2026-08-29T23:59:00")
+        @Schema(description = "과제 마감 시각", example = "2099-12-31T23:59:00")
         LocalDateTime closeAt,
-        @Schema(description = "리마인드 예정 시각 목록", example = "[\"2026-08-28T10:00:00\"]")
+        @Schema(description = "리마인드 예정 시각 목록", example = "[\"2099-12-30T10:00:00\"]")
         List<
                 @NotNull(message = "리마인드 시각은 필수 값입니다.")
                 @Future(message = "리마인드 시각은 현재보다 미래여야 합니다.")

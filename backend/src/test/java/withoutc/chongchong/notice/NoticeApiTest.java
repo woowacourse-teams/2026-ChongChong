@@ -259,6 +259,26 @@ class NoticeApiTest {
     }
 
     @Test
+    @DisplayName("공지 작성자의 프로필 이미지가 없으면 null을 반환한다")
+    void getNoticeDetailWithoutProfileImageTest() {
+        User writerUser = userRepository.save(User.create("프로필 없는 리더", null));
+        StudyMember writer = studyMemberRepository.save(
+                StudyMember.create(study, writerUser, "프로필 없는 리더", null, StudyMemberRole.LEADER)
+        );
+        Notice noticeWithoutProfileImage = noticeRepository.save(
+                Notice.create(writer, "프로필 없는 작성자의 공지", "공지 내용")
+        );
+
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}", study.getId(), noticeWithoutProfileImage.getId())
+                .then()
+                .statusCode(200)
+                .body("profileImageUrl", nullValue());
+    }
+
+    @Test
     @DisplayName("모든 수신자가 공지를 읽으면 리더와 스터디원에게 완료 상태를 반환한다")
     void getCompletedNoticeListTest() {
         jdbcTemplate.update(

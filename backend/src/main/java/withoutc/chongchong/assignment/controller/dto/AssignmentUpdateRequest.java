@@ -19,9 +19,9 @@ public record AssignmentUpdateRequest(
         @Schema(description = "수정할 과제 제출 방법", example = "텍스트 제출")
         String submissionMethod,
         @Future(message = "마감 시각은 현재보다 미래여야 합니다.")
-        @Schema(description = "수정할 과제 마감 시각", example = "2026-08-30T23:59:00")
+        @Schema(description = "수정할 과제 마감 시각", example = "2099-12-31T23:59:00")
         LocalDateTime closeAt,
-        @Schema(description = "수정할 리마인드 예정 시각 목록", example = "[\"2026-08-29T10:00:00\"]")
+        @Schema(description = "수정할 리마인드 예정 시각 목록", example = "[\"2099-12-30T10:00:00\"]")
         List<
                 @NotNull(message = "리마인드 시각은 필수 값입니다.")
                 @Future(message = "리마인드 시각은 현재보다 미래여야 합니다.")

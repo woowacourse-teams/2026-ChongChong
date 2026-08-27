@@ -5,7 +5,7 @@ final class StudyApiExamples {
     static final String LEADER_STUDY_DETAIL_RESPONSE = """
             {
               "notices": {
-                "count": 3,
+                "count": 1,
                 "items": [
                   {
                     "id": 1,
@@ -16,7 +16,7 @@ final class StudyApiExamples {
                 ]
               },
               "assignments": {
-                "count": 4,
+                "count": 1,
                 "items": [
                   {
                     "id": 1,

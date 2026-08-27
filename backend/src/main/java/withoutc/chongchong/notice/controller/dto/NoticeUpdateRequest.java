@@ -14,7 +14,7 @@ public record NoticeUpdateRequest(
         @Size(max = 10000, message = "내용은 10,000자 이내로 입력 가능합니다.")
         @Schema(description = "수정할 공지 내용", example = "수정된 공지 내용입니다.")
         String content,
-        @Schema(description = "수정할 리마인드 예정 시각 목록", example = "[\"2026-08-29T10:00:00\"]")
+        @Schema(description = "수정할 리마인드 예정 시각 목록", example = "[\"2099-12-30T10:00:00\"]")
         List<
                 @NotNull(message = "리마인드 시각은 null일 수 없습니다.")
                 @Future(message = "리마인드 시각은 미래여야 합니다.")
