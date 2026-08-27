@@ -105,6 +105,17 @@ class StudyMemberRepositoryTest {
     }
 
     @Test
+    @DisplayName("스터디에 속한 멤버가 존재하지 않으면 멤버 없음 예외를 던진다")
+    void getByStudyIdAndIdOrThrowNotFoundTest() {
+        assertThatThrownBy(() -> studyMemberRepository.getByStudyIdAndIdOrThrow(
+                Long.MAX_VALUE, Long.MAX_VALUE
+        ))
+                .isInstanceOfSatisfying(StudyMemberException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND)
+                );
+    }
+
+    @Test
     @DisplayName("스터디 멤버 목록을 리더 우선, 가입 순서대로 조회한다")
     void findAllSummariesByStudyIdTest() {
         Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
