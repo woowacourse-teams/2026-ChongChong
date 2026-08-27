@@ -116,7 +116,7 @@ class AssignmentServiceTest {
 
         verify(assignmentRepository).save(assignmentCaptor.capture());
         Assignment assignment = assignmentCaptor.getValue();
-        assertThat(response.id()).isEqualTo(ASSIGNMENT_ID);
+        assertThat(response.assignmentId()).isEqualTo(ASSIGNMENT_ID);
         assertThat(assignment.getStudy()).isSameAs(study);
         assertThat(assignment.getWriter()).isSameAs(leader);
         assertThat(assignment.getSubmissions()).singleElement()

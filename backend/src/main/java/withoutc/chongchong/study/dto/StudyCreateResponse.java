@@ -3,7 +3,7 @@ package withoutc.chongchong.study.dto;
 import withoutc.chongchong.study.entity.Study;
 
 public record StudyCreateResponse(
-        Long id
+        Long studyId
 ) {
 
     public static StudyCreateResponse from(Study study) {

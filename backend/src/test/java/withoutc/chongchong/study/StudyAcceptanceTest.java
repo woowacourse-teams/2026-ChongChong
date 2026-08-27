@@ -74,7 +74,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 생성 요청을 보내면 201을 반환하고 생성자를 리더로 등록한다")
+    @DisplayName("스터디 생성 요청을 보내면 201과 studyId를 반환하고 생성자를 리더로 등록한다")
     void createStudyTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
 
@@ -91,7 +91,7 @@ class StudyAcceptanceTest {
                 .post("/studies")
                 .then()
                 .statusCode(201)
-                .body("id", notNullValue());
+                .body("studyId", notNullValue());
 
         assertThat(studyRepository.findAll())
                 .extracting(Study::getName, Study::getDescription)
