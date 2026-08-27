@@ -68,6 +68,20 @@ class StudyMemberRepositoryTest {
     }
 
     @Test
+    @DisplayName("스터디 id와 멤버 id가 모두 일치하는 스터디 멤버를 조회한다")
+    void findByStudyIdAndIdTest() {
+        Study firstStudy = studyRepository.save(Study.create("첫 번째 스터디", "설명"));
+        Study secondStudy = studyRepository.save(Study.create("두 번째 스터디", "설명"));
+        StudyMember firstMember = createMember(firstStudy, "첫 번째 멤버");
+        StudyMember secondMember = createMember(secondStudy, "두 번째 멤버");
+
+        assertThat(studyMemberRepository.findByStudyIdAndId(firstStudy.getId(), firstMember.getId()))
+                .hasValue(firstMember);
+        assertThat(studyMemberRepository.findByStudyIdAndId(firstStudy.getId(), secondMember.getId()))
+                .isEmpty();
+    }
+
+    @Test
     @DisplayName("스터디원 조회에 성공하면 해당 스터디원을 반환한다")
     void getByStudyIdAndUserIdOrThrowTest() {
         User user = userRepository.save(User.create("사용자", null));

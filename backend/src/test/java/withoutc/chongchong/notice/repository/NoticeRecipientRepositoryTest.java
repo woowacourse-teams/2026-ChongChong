@@ -142,6 +142,26 @@ class NoticeRecipientRepositoryTest {
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    @DisplayName("멤버의 공지 수신 정보만 모두 삭제한다")
+    void deleteAllByMemberIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
+        StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
+        Notice notice = Notice.create(leader, "공지", "공지 내용");
+        notice.addRecipients(List.of(target, otherMember));
+        noticeRepository.saveAndFlush(notice);
+
+        int deletedCount = noticeRecipientRepository.deleteAllByMemberId(target.getId());
+
+        assertThat(deletedCount).isOne();
+        assertThat(noticeRecipientRepository.findAll())
+                .extracting(recipient -> recipient.getMember().getId())
+                .containsExactly(otherMember.getId());
+        assertThat(noticeRepository.findById(notice.getId())).isPresent();
+    }
+
     private StudyMember createMemberWithIdDifferentFromUserId(Study study) {
         StudyMember candidate = createMember(study, "스터디원", StudyMemberRole.MEMBER);
         if (!candidate.getId().equals(candidate.getUser().getId())) {

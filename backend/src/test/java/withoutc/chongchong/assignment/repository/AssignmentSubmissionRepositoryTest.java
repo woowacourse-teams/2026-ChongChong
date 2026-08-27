@@ -134,6 +134,28 @@ class AssignmentSubmissionRepositoryTest {
         assertThat(statusesByMemberId.get(incompleteMember.getId()).lastRemindAt()).isEqualTo(lastRemindAt);
     }
 
+    @Test
+    @DisplayName("멤버의 과제 제출 정보만 모두 삭제한다")
+    void deleteAllByMemberIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
+        StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(leader, "과제");
+        assignmentSubmissionRepository.saveAllAndFlush(List.of(
+                AssignmentSubmission.create(target, assignment),
+                AssignmentSubmission.create(otherMember, assignment)
+        ));
+
+        int deletedCount = assignmentSubmissionRepository.deleteAllByMemberId(target.getId());
+
+        assertThat(deletedCount).isOne();
+        assertThat(assignmentSubmissionRepository.findAll())
+                .extracting(submission -> submission.getMember().getId())
+                .containsExactly(otherMember.getId());
+        assertThat(assignmentRepository.findById(assignment.getId())).isPresent();
+    }
+
     private Assignment createAssignment(StudyMember leader, String title) {
         return assignmentRepository.saveAndFlush(Assignment.create(
                 leader,
