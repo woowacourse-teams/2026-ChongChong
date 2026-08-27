@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -134,11 +135,13 @@ class TestJwtSupportTest {
 
     private RequestSpecification givenWithCsrf() {
         Response csrfResponse = given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .when()
                 .get("/auth/csrf");
 
         return given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
                 .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));

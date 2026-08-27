@@ -1,5 +1,7 @@
 package withoutc.chongchong.auth.config;
 
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.regex.Pattern;
@@ -18,7 +20,7 @@ public record WebRefreshCookieProperties(
 
     private static final Pattern COOKIE_NAME_PATTERN = Pattern.compile("[!#$%&'*+\\-.^_`|~0-9A-Za-z]+");
     private static final String REQUIRED_SAME_SITE = "Lax";
-    private static final String REQUIRED_PATH = "/auth";
+    private static final String REQUIRED_PATH = API_PREFIX + "/auth";
 
     public WebRefreshCookieProperties {
         validateName(name);
@@ -57,7 +59,7 @@ public record WebRefreshCookieProperties(
 
     private void validatePath(String path) {
         if (!REQUIRED_PATH.equals(path)) {
-            throw new IllegalArgumentException("Refresh Cookie Path는 /auth여야 합니다.");
+            throw new IllegalArgumentException("Refresh Cookie Path는 /api/auth여야 합니다.");
         }
     }
 }

@@ -11,7 +11,7 @@ import withoutc.chongchong.auth.config.WebRefreshCookieProperties;
 class WebRefreshCookieReaderTest {
 
     private final WebRefreshCookieReader cookieReader = new WebRefreshCookieReader(
-            new WebRefreshCookieProperties("refresh_token", true, true, "Lax", "/auth")
+            new WebRefreshCookieProperties("refresh_token", true, true, "Lax", "/api/auth")
     );
 
     @Test

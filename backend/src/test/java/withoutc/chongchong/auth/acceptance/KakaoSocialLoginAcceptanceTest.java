@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -227,11 +228,13 @@ class KakaoSocialLoginAcceptanceTest {
 
     private RequestSpecification givenWithCsrf() {
         Response csrfResponse = given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .when()
                 .get("/auth/csrf");
 
         return given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
                 .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));
@@ -287,6 +290,7 @@ class KakaoSocialLoginAcceptanceTest {
 
     private void assertProtectedApiAccessible(String accessToken, Long expectedUserId) {
         given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .auth().oauth2(accessToken)
                 .when()

@@ -1,5 +1,7 @@
 package withoutc.chongchong.auth.config;
 
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,10 +25,11 @@ public class SecurityConfig {
 
     private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
     private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
+    private static final String AUTH_PATH = API_PREFIX + "/auth";
     private static final RequestMatcher WEB_AUTH_CSRF_REQUEST_MATCHER = new OrRequestMatcher(
-            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/auth/login"),
-            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/auth/refresh"),
-            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/auth/logout")
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, AUTH_PATH + "/login"),
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, AUTH_PATH + "/refresh"),
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, AUTH_PATH + "/logout")
     );
 
     @Bean
@@ -48,10 +51,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/auth/login",
-                                "/auth/refresh",
-                                "/auth/logout",
-                                "/auth/csrf",
+                                AUTH_PATH + "/login",
+                                AUTH_PATH + "/refresh",
+                                AUTH_PATH + "/logout",
+                                AUTH_PATH + "/csrf",
                                 "/actuator/health"
                         ).permitAll()
                         .anyRequest().authenticated()

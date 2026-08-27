@@ -47,7 +47,7 @@ class AuthenticatedUserAuthenticationTest {
     @Test
     @DisplayName("Controller는 인증된 총총 내부 사용자 ID를 전달받는다")
     void provideAuthenticatedUserToController() throws Exception {
-        mockMvc.perform(get("/test/authenticated-user")
+        mockMvc.perform(get("/api/test/authenticated-user")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testJwtFactory.accessToken(1L)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("1"));
@@ -56,7 +56,7 @@ class AuthenticatedUserAuthenticationTest {
     @Test
     @DisplayName("양의 Long이 아닌 subject를 가진 HTTP 요청은 인증에 실패한다")
     void rejectHttpRequestWithInvalidSubject() throws Exception {
-        mockMvc.perform(get("/test/authenticated-user")
+        mockMvc.perform(get("/api/test/authenticated-user")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + testJwtFactory.accessTokenWithSubject("abc")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

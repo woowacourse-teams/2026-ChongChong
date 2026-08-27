@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -122,7 +123,7 @@ class SocialLoginAcceptanceTest {
                 .body("$", not(hasKey("refreshTokenHash")))
                 .header(HttpHeaders.CACHE_CONTROL, containsString("no-store"))
                 .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
-                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"))
                 .header(HttpHeaders.SET_COOKIE, containsString("Secure"))
                 .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"))
                 .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
@@ -282,7 +283,7 @@ class SocialLoginAcceptanceTest {
                 .statusCode(204)
                 .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
                 .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
-                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"));
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"));
         assertThat(logoutResponse.asString()).isEmpty();
         assertThat(authSessionRepository.findByUserId(user.getId())).isEmpty();
 
@@ -381,7 +382,7 @@ class SocialLoginAcceptanceTest {
                 .statusCode(204)
                 .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
                 .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
-                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"))
                 .header(HttpHeaders.SET_COOKIE, containsString("Secure"))
                 .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"))
                 .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
@@ -395,6 +396,7 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .auth().oauth2(accessToken)
                 .when()
@@ -419,7 +421,7 @@ class SocialLoginAcceptanceTest {
                 .statusCode(204)
                 .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
                 .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
-                .header(HttpHeaders.SET_COOKIE, containsString("Path=/auth"));
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"));
         assertThat(response.asString()).isEmpty();
         assertDatabaseEmpty();
     }
@@ -622,11 +624,13 @@ class SocialLoginAcceptanceTest {
 
     private RequestSpecification givenWithCsrf() {
         Response csrfResponse = given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .when()
                 .get("/auth/csrf");
 
         return given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .cookie(CSRF_COOKIE_NAME, csrfResponse.getCookie(CSRF_COOKIE_NAME))
                 .header(CSRF_HEADER_NAME, csrfResponse.jsonPath().getString("token"));
@@ -634,6 +638,7 @@ class SocialLoginAcceptanceTest {
 
     private void assertProtectedApiAccessible(String accessToken, Long expectedUserId) {
         given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .auth().oauth2(accessToken)
                 .when()

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -67,11 +68,18 @@ class AuthControllerTest {
     private AuthTokenService authTokenService;
 
     @Test
+    @DisplayName("API prefix가 적용된 CSRF Token 발급 경로를 제공한다")
+    void issueCsrfTokenWithApiPrefix() throws Exception {
+        mockMvc.perform(get("/api/auth/csrf"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("Access Token 없이 로그인하고 Access Token JSON과 Refresh Token Cookie를 받는다")
     void loginWithoutAccessToken() throws Exception {
         when(socialLoginFacade.login(any())).thenReturn(createIssuedTokenPair());
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -95,7 +103,7 @@ class AuthControllerTest {
                         "refresh_token=" + REFRESH_TOKEN
                 )))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=2592000")))
-                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/auth")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax")))
@@ -111,7 +119,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("provider가 누락되면 공통 입력 오류를 반환한다")
     void rejectMissingProvider() throws Exception {
-        expectInvalidInput(mockMvc.perform(post("/auth/login")
+        expectInvalidInput(mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -127,7 +135,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("authorizationCode가 누락되면 공통 입력 오류를 반환한다")
     void rejectMissingAuthorizationCode() throws Exception {
-        expectInvalidInput(mockMvc.perform(post("/auth/login")
+        expectInvalidInput(mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -142,7 +150,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("authorizationCode가 공백이면 공통 입력 오류를 반환한다")
     void rejectBlankAuthorizationCode() throws Exception {
-        expectInvalidInput(mockMvc.perform(post("/auth/login")
+        expectInvalidInput(mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -158,7 +166,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("알 수 없는 provider 문자열이면 공통 잘못된 요청 오류를 반환한다")
     void rejectUnknownProvider() throws Exception {
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -184,7 +192,7 @@ class AuthControllerTest {
                 .thenThrow(new AuthException(AuthErrorCode.UNSUPPORTED_SOCIAL_PROVIDER));
 
         expectAuthError(
-                mockMvc.perform(post("/auth/login")
+                mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -206,7 +214,7 @@ class AuthControllerTest {
                 .thenThrow(new AuthException(AuthErrorCode.SOCIAL_AUTHENTICATION_FAILED));
 
         expectAuthError(
-                mockMvc.perform(post("/auth/login")
+                mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -227,7 +235,7 @@ class AuthControllerTest {
         when(authTokenService.rotate(new RawRefreshToken(CURRENT_REFRESH_TOKEN)))
                 .thenReturn(createIssuedTokenPair());
 
-        mockMvc.perform(post("/auth/refresh")
+        mockMvc.perform(post("/api/auth/refresh")
                         .with(csrf())
                         .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN)))
                 .andExpect(status().isOk())
@@ -251,7 +259,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Cookie가 없으면 공통 401 오류를 반환한다")
     void rejectMissingRefreshCookie() throws Exception {
-        expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh").with(csrf())));
+        expectInvalidRefreshToken(mockMvc.perform(post("/api/auth/refresh").with(csrf())));
 
         verifyNoInteractions(authTokenService, socialLoginFacade);
     }
@@ -262,7 +270,7 @@ class AuthControllerTest {
         when(authTokenService.rotate(any()))
                 .thenThrow(new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
 
-        expectInvalidRefreshToken(mockMvc.perform(post("/auth/refresh")
+        expectInvalidRefreshToken(mockMvc.perform(post("/api/auth/refresh")
                         .with(csrf())
                         .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN))))
                 .andExpect(content().string(not(containsString(CURRENT_REFRESH_TOKEN))))
@@ -275,14 +283,14 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Cookie로 로그아웃하고 같은 범위의 Cookie를 만료시킨다")
     void logoutWithRefreshCookie() throws Exception {
-        mockMvc.perform(post("/auth/logout")
+        mockMvc.perform(post("/api/auth/logout")
                         .with(csrf())
                         .cookie(new Cookie("refresh_token", CURRENT_REFRESH_TOKEN)))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refresh_token=")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
-                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/auth")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Secure")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax")));
@@ -294,12 +302,12 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Cookie가 없어도 로그아웃은 멱등하게 성공하고 Cookie를 만료시킨다")
     void logoutIdempotentlyWithoutRefreshCookie() throws Exception {
-        mockMvc.perform(post("/auth/logout").with(csrf()))
+        mockMvc.perform(post("/api/auth/logout").with(csrf()))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("refresh_token=")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
-                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/auth")));
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth")));
 
         verifyNoInteractions(authTokenService, socialLoginFacade);
     }

@@ -21,7 +21,7 @@ class WebRefreshCookiePropertiesTest {
         assertThat(properties.secure()).isTrue();
         assertThat(properties.httpOnly()).isTrue();
         assertThat(properties.sameSite()).isEqualTo("Lax");
-        assertThat(properties.path()).isEqualTo("/auth");
+        assertThat(properties.path()).isEqualTo("/api/auth");
     }
 
     @Test
@@ -42,7 +42,7 @@ class WebRefreshCookiePropertiesTest {
                 true,
                 true,
                 "Lax",
-                "/auth"
+                "/api/auth"
         )).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -54,7 +54,7 @@ class WebRefreshCookiePropertiesTest {
                 null,
                 true,
                 "Lax",
-                "/auth"
+                "/api/auth"
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Refresh Cookie Secure 설정은 필수입니다.");
     }
@@ -69,7 +69,7 @@ class WebRefreshCookiePropertiesTest {
                 true,
                 httpOnly,
                 "Lax",
-                "/auth"
+                "/api/auth"
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Refresh Cookie는 HttpOnly여야 합니다.");
     }
@@ -84,7 +84,7 @@ class WebRefreshCookiePropertiesTest {
                 true,
                 true,
                 sameSite,
-                "/auth"
+                "/api/auth"
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Refresh Cookie SameSite는 Lax여야 합니다.");
     }
@@ -92,7 +92,7 @@ class WebRefreshCookiePropertiesTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"/", "/api", "auth"})
-    @DisplayName("합의한 /auth가 아닌 Cookie Path를 거부한다")
+    @DisplayName("합의한 /api/auth가 아닌 Cookie Path를 거부한다")
     void rejectUnsupportedPath(String path) {
         assertThatThrownBy(() -> new WebRefreshCookieProperties(
                 "refresh_token",
@@ -101,7 +101,7 @@ class WebRefreshCookiePropertiesTest {
                 "Lax",
                 path
         )).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Refresh Cookie Path는 /auth여야 합니다.");
+                .hasMessage("Refresh Cookie Path는 /api/auth여야 합니다.");
     }
 
     private WebRefreshCookieProperties properties(boolean secure) {
@@ -110,7 +110,7 @@ class WebRefreshCookiePropertiesTest {
                 secure,
                 true,
                 "Lax",
-                "/auth"
+                "/api/auth"
         );
     }
 }
