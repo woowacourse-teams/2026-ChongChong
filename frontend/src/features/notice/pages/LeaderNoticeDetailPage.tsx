@@ -1,33 +1,38 @@
-import type { CSSProperties } from 'react';
-import { useRef, Suspense } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Suspense, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import backIcon from '../../../shared/assets/left-arrow.svg';
-import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import Main from '../../../shared/ui/Main';
-import TopHeader from '../../../shared/ui/TopHeader';
-import NoticeArticle from '../components/NoticeArticle';
-import DetailActions from '../../../shared/ui/components/DetailActions';
-import NoticeReadStatus from '../components/NoticeReadStatus';
-import { notice } from '../noticeData';
-import Page from '../../../shared/ui/Page';
 import BottomTab from '../../../shared/ui/components/BottomTab';
+import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import Loading from '../../../shared/ui/Loading';
-
-const backButtonStyle = {
-  display: 'grid',
-  width: '32px',
-  height: '32px',
-  padding: 0,
-  placeItems: 'center',
-  border: 0,
-  background: 'transparent',
-  cursor: 'pointer',
-} satisfies CSSProperties;
+import Main from '../../../shared/ui/Main';
+import Page from '../../../shared/ui/Page';
+import TopHeader from '../../../shared/ui/TopHeader';
+import { deleteNotice } from '../api';
+import LeaderNoticeDetailContent from '../components/LeaderNoticeDetailContent';
+import noticeQueries from '../queries';
 
 export default function LeaderNoticeDetailPage() {
   const navigate = useNavigate();
   const { studyId, noticeId } = useParams();
+  const queryClient = useQueryClient();
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const numericStudyId = Number(studyId);
+  const numericNoticeId = Number(noticeId);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteNotice(numericStudyId, numericNoticeId),
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: noticeQueries.detail(numericStudyId, numericNoticeId).queryKey,
+      });
+      queryClient.removeQueries({
+        queryKey: noticeQueries.readStatus(numericStudyId, numericNoticeId).queryKey,
+      });
+      queryClient.invalidateQueries({ queryKey: noticeQueries.lists(numericStudyId) });
+      navigate(`/studies/${studyId}/notices`);
+    },
+  });
 
   const openDeleteDialog = () => deleteDialogRef.current?.showModal();
   const closeDeleteDialog = () => deleteDialogRef.current?.close();
@@ -35,38 +40,17 @@ export default function LeaderNoticeDetailPage() {
 
   return (
     <Page>
-      <TopHeader
-        left={
-          <button
-            type="button"
-            css={backButtonStyle}
-            aria-label="뒤로 가기"
-            onClick={() => navigate(-1)}
-          >
-            <img src={backIcon} alt="뒤로 가기" width={24} height={24} />
-          </button>
-        }
-        middle={<TopHeader.Title>공지</TopHeader.Title>}
-      />
-      <Suspense fallback={<Loading />}>
-        <Main>
-          <NoticeReadStatus
-            readuserNames={notice.readuserNames}
-            unreadMembers={notice.unreadMembers}
-            totalCount={notice.totalCount}
-            reminderText={notice.reminderText}
+      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>공지</TopHeader.Title>} />
+      <Main>
+        <Suspense fallback={<Loading />}>
+          <LeaderNoticeDetailContent
+            studyId={numericStudyId}
+            noticeId={numericNoticeId}
+            onEdit={editNotice}
+            onDelete={openDeleteDialog}
           />
-
-          <NoticeArticle
-            title={notice.title}
-            author={notice.author}
-            createdAt={notice.createdAt}
-            content={notice.content}
-          />
-
-          <DetailActions onEdit={editNotice} onDelete={openDeleteDialog} />
-        </Main>
-      </Suspense>
+        </Suspense>
+      </Main>
 
       <ConfirmDialog
         ref={deleteDialogRef}
@@ -76,8 +60,11 @@ export default function LeaderNoticeDetailPage() {
           <ConfirmDialog.CloseButton onClick={closeDeleteDialog}>취소</ConfirmDialog.CloseButton>
         }
         confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={closeDeleteDialog}>
-            삭제
+          <ConfirmDialog.ConfirmButton
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate()}
+          >
+            {deleteMutation.isPending ? '삭제 중...' : '삭제'}
           </ConfirmDialog.ConfirmButton>
         }
       />
