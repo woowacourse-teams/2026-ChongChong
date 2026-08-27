@@ -25,6 +25,11 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
                 .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
     }
 
+    default StudyMember getByStudyIdAndIdOrThrow(Long studyId, Long memberId) {
+        return findByStudyIdAndId(studyId, memberId)
+                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
+    }
+
     @EntityGraph(attributePaths = "study")
     List<StudyMember> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
