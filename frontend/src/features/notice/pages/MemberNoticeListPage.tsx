@@ -1,68 +1,37 @@
-import type { CSSProperties } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
-import backIcon from '../../../shared/assets/left-arrow.svg';
-import EmptyContent from '../../../shared/ui/EmptyContent';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
-import MemberNoticeList from '../components/MemberNoticeList';
-import { notices as allNotices } from '../noticeData';
-import BottomTab from '../../../shared/ui/components/BottomTab';
 import Page from '../../../shared/ui/Page';
+import BottomTab from '../../../shared/ui/components/BottomTab';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
+import useStudyId from '../../studies/hooks/useStudyId';
+import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import MemberNoticeListSection from '../components/MemerNoticeListSection';
 
-const emptyContentStyle = {
-  alignItems: 'center',
-  justifyContent: 'center',
-} satisfies CSSProperties;
+interface Props {
+  studyName: string;
+  userName: string;
+}
 
-const iconButtonStyle = {
-  display: 'grid',
-  width: '32px',
-  height: '32px',
-  padding: 0,
-  placeItems: 'center',
-  border: 0,
-  background: 'transparent',
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
-export default function MemberNoticeListPage() {
-  const navigate = useNavigate();
-  const { studyId = '1' } = useParams();
-  const [searchParams] = useSearchParams();
-  const notices = searchParams.get('empty') === 'true' ? [] : allNotices;
+export default function MemberNoticeListPage({ studyName, userName }: Props) {
+  const { studyId } = useStudyId();
 
   return (
     <Page>
       <TopHeader
-        left={
-          <button
-            type="button"
-            css={iconButtonStyle}
-            aria-label="뒤로 가기"
-            onClick={() => navigate(-1)}
-          >
-            <img src={backIcon} alt="뒤로 가기" width={24} height={24} />
-          </button>
-        }
+        left={<PrevButton />}
         middle={
           <>
-            <TopHeader.Title>우테코 8기 FE 스터디</TopHeader.Title>
-            <TopHeader.Subtitle>바니 · 스터디원</TopHeader.Subtitle>
+            <TopHeader.Title>{studyName}</TopHeader.Title>
+            <TopHeader.Subtitle>{userName} · 스터디원</TopHeader.Subtitle>
           </>
         }
       />
-      <Suspense fallback={<Loading />}>
-        <Main css={{ ...(notices.length === 0 ? emptyContentStyle : {}) }}>
-          {notices.length === 0 ? (
-            <EmptyContent message="아직 공지가 없어요" />
-          ) : (
-            <MemberNoticeList notices={notices} studyId={studyId} />
-          )}
-        </Main>
-      </Suspense>
-
+      <Main>
+        <Suspense fallback={<Loading />}>
+          <MemberNoticeListSection studyId={studyId} />
+        </Suspense>
+      </Main>
       <BottomTab />
     </Page>
   );

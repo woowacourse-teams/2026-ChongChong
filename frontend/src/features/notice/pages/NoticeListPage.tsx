@@ -7,8 +7,12 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 export default function NoticeListPage() {
   const { studyId } = useStudyId();
   const {
-    data: { role },
+    data: { role, studyName, userName },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
-  return role === 'LEADER' ? <LeaderNoticeListPage /> : <MemberNoticeListPage />;
+  return role === 'LEADER' ? (
+    <LeaderNoticeListPage studyName={studyName} userName={userName} />
+  ) : (
+    <MemberNoticeListPage studyName={studyName} userName={userName} />
+  );
 }
