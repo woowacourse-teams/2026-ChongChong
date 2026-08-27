@@ -33,6 +33,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
 
   const updateReadMutation = useMutation({
     mutationFn: () => updateNoticeRead(studyId, noticeId),
+    retry: 2,
     onSuccess: (updatedReadStatus) => {
       queryClient.setQueryData(noticeQueries.myRead(studyId, noticeId).queryKey, {
         isRead: true,
