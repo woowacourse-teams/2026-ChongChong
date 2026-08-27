@@ -1,13 +1,15 @@
-import { useSearchParams } from 'react-router';
 import LeaderNoticeDetailPage from './LeaderNoticeDetailPage';
 import MemberNoticeDetailPage from './MemberNoticeDetailPage';
+import useStudyId from '../../studies/hooks/useStudyId';
+import studyQueries from '../../studies/queries';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 export default function NoticeDetailPage() {
-  const [searchParams] = useSearchParams();
+  const { studyId } = useStudyId();
 
-  return searchParams.get('role') === 'leader' ? (
-    <LeaderNoticeDetailPage />
-  ) : (
-    <MemberNoticeDetailPage />
-  );
+  const {
+    data: { role },
+  } = useSuspenseQuery(studyQueries.info(studyId));
+
+  return role === 'LEADER' ? <LeaderNoticeDetailPage /> : <MemberNoticeDetailPage />;
 }
