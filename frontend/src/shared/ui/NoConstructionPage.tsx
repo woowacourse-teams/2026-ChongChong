@@ -1,10 +1,10 @@
 import { CSSProperties } from 'react';
-import Page from '../../../shared/ui/Page';
-import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
-import Main from '../../../shared/ui/Main';
-import BottomTab from '../../../shared/ui/components/BottomTab';
-import UnderConstructionContent from '../../../shared/ui/UnderConstructionContent';
+import Page from './Page';
+import TopHeader from './TopHeader';
+import { PrevButton } from './components/PrevButton';
+import Main from './Main';
+import BottomTab from './components/BottomTab';
+import UnderConstructionContent from './UnderConstructionContent';
 
 const emptyContentStyle = {
   alignItems: 'center',
