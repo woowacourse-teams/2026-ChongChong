@@ -85,6 +85,41 @@ class PushTokenApiTest {
     }
 
     @Test
+    @DisplayName("이미 저장된 푸시 토큰을 등록하면 충돌 오류를 반환한다")
+    void rejectDuplicatePushTokenTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+        String requestBody = """
+                {
+                  "provider": "EXPO",
+                  "token": "%s",
+                  "platform": "ANDROID"
+                }
+                """.formatted(TOKEN);
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/push-tokens")
+                .then()
+                .statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/push-tokens")
+                .then()
+                .statusCode(409)
+                .body("code", equalTo("PUSH_TOKEN_ALREADY_EXISTS"))
+                .body("message", equalTo("같은 푸시 토큰 제공자는 동일한 토큰을 생성할 수 없습니다."));
+
+        assertThat(pushTokenRepository.count()).isOne();
+    }
+
+    @Test
     @DisplayName("푸시 토큰 필수값이 누락되면 입력값 오류를 반환한다")
     void rejectMissingPushTokenFieldsTest() {
         User user = userRepository.saveAndFlush(User.create("총총이", null));
@@ -101,7 +136,7 @@ class PushTokenApiTest {
                 .body("errors.field", hasItems("provider", "token", "platform"))
                 .body("errors.reason", hasItems(
                         "푸시 토큰 제공자는 필수입니다.",
-                        "푸시 토큰 필수입니다.",
+                        "푸시 토큰은 필수입니다.",
                         "디바이스 플랫폼은 필수입니다."
                 ));
 
