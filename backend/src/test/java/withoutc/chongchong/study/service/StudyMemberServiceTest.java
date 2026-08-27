@@ -50,6 +50,9 @@ class StudyMemberServiceTest {
     @Mock
     private StudyInviteTokenProvider studyInviteTokenProvider;
 
+    @Mock
+    private StudyMemberRemover studyMemberRemover;
+
     @InjectMocks
     private StudyMemberService studyMemberService;
 
@@ -214,5 +217,101 @@ class StudyMemberServiceTest {
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verify(studyMemberRepository, never()).findAllSummariesByStudyId(studyId);
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 같은 스터디의 일반 멤버를 방출한다")
+    void expelTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        Long memberId = 3L;
+        StudyMember leader = mock(StudyMember.class);
+        StudyMember target = mock(StudyMember.class);
+        when(leader.isLeader()).thenReturn(true);
+        when(target.isLeader()).thenReturn(false);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
+        when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(target);
+
+        studyMemberService.expel(userId, studyId, memberId);
+
+        verify(studyMemberRemover).remove(target);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아닌 사용자는 멤버를 방출할 수 없다")
+    void expelByNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        Long memberId = 3L;
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
+
+        assertThatThrownBy(() -> studyMemberService.expel(userId, studyId, memberId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+
+        verify(studyMemberRepository, never()).getByStudyIdAndIdOrThrow(studyId, memberId);
+        verifyNoInteractions(studyMemberRemover);
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아닌 멤버는 다른 멤버를 방출할 수 없다")
+    void expelByNonLeaderTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        Long memberId = 3L;
+        StudyMember requester = mock(StudyMember.class);
+        when(requester.isLeader()).thenReturn(false);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);
+
+        assertThatThrownBy(() -> studyMemberService.expel(userId, studyId, memberId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_LEADER);
+
+        verify(studyMemberRepository, never()).getByStudyIdAndIdOrThrow(studyId, memberId);
+        verifyNoInteractions(studyMemberRemover);
+    }
+
+    @Test
+    @DisplayName("같은 스터디에 대상 멤버가 없으면 방출할 수 없다")
+    void expelMissingMemberTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        Long memberId = 3L;
+        StudyMember leader = mock(StudyMember.class);
+        when(leader.isLeader()).thenReturn(true);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
+        when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
+
+        assertThatThrownBy(() -> studyMemberService.expel(userId, studyId, memberId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND);
+
+        verifyNoInteractions(studyMemberRemover);
+    }
+
+    @Test
+    @DisplayName("스터디 리더는 방출할 수 없다")
+    void expelLeaderTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        Long memberId = 3L;
+        StudyMember requester = mock(StudyMember.class);
+        StudyMember targetLeader = mock(StudyMember.class);
+        when(requester.isLeader()).thenReturn(true);
+        when(targetLeader.isLeader()).thenReturn(true);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);
+        when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(targetLeader);
+
+        assertThatThrownBy(() -> studyMemberService.expel(userId, studyId, memberId))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_LEADER_CANNOT_BE_REMOVED);
+
+        verifyNoInteractions(studyMemberRemover);
     }
 }
