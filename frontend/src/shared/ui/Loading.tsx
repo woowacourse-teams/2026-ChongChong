@@ -3,8 +3,9 @@ import loadingImage from '../assets/icons/loading-running-rabbit.webp';
 
 const divStyle = {
   display: 'flex',
+  flex: 1,
   width: '100%',
-  minHeight: '90dvh',
+  minHeight: 0,
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',

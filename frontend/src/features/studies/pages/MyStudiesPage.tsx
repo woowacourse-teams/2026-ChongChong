@@ -27,26 +27,27 @@ export default function StudyListPage() {
           </div>
         }
       />
-      <Main>
-        <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
-          <Suspense fallback={<Loading />}>
+      <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
+        <Suspense fallback={<Loading />}>
+          <Main>
             <MyStudies />
-          </Suspense>
-        </ErrorBoundary>
-        <div css={actionsStyle}>
-          {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
-          <Link to="/studies/new">
-            <Button variant="brandSolid" size="large">
-              스터디 만들기
-            </Button>
-          </Link>
-          <Link to="/studies/join">
-            <Button role="link" variant="neutralOutline" size="large">
-              스터디 참여하기
-            </Button>
-          </Link>
-        </div>
-      </Main>
+
+            <div css={actionsStyle}>
+              {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
+              <Link to="/studies/new">
+                <Button variant="brandSolid" size="large">
+                  스터디 만들기
+                </Button>
+              </Link>
+              <Link to="/studies/join">
+                <Button role="link" variant="neutralOutline" size="large">
+                  스터디 참여하기
+                </Button>
+              </Link>
+            </div>
+          </Main>
+        </Suspense>
+      </ErrorBoundary>
     </Page>
   );
 }
