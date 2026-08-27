@@ -448,6 +448,99 @@ class StudyMemberAcceptanceTest {
                 .body("code", equalTo("AUTHENTICATION_REQUIRED"));
     }
 
+    @Test
+    @DisplayName("일반 멤버가 스터디에서 탈퇴하면 204를 반환한다")
+    void leaveStudyTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        StudyMember member = createMember(study, "탈퇴 멤버", StudyMemberRole.MEMBER);
+        Long memberId = member.getId();
+        Long userId = member.getUser().getId();
+
+        testAuthRequest.givenAuthenticatedUser(userId)
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/me", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyMemberRepository.findById(memberId)).isEmpty();
+        assertThat(studyMemberRepository.findById(leader.getId())).isPresent();
+        testAuthRequest.givenAuthenticatedUser(userId)
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+        testAuthRequest.givenAuthenticatedUser(userId)
+                .port(port)
+                .when()
+                .get("/studies/me")
+                .then()
+                .statusCode(200)
+                .body("studyCount", equalTo(0))
+                .body("studies", hasSize(0));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아닌 사용자가 탈퇴하면 403을 반환한다")
+    void leaveStudyByNonMemberTest() {
+        User user = userRepository.saveAndFlush(User.create("비멤버", null));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        createMember(study, "리더", StudyMemberRole.LEADER);
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/me", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 탈퇴하면 403을 반환한다")
+    void leaveStudyByLeaderTest() {
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+
+        testAuthRequest.givenAuthenticatedUser(leader.getUser().getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/me", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_LEADER_CANNOT_LEAVE"));
+    }
+
+    @Test
+    @DisplayName("스터디 ID가 양수가 아니면 탈퇴 요청 시 400을 반환한다")
+    void leaveStudyWithInvalidStudyIdTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/me", 0)
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 스터디 탈퇴를 요청하면 401을 반환한다")
+    void leaveStudyWithoutAuthenticationTest() {
+        given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/members/me", 1L)
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("AUTHENTICATION_REQUIRED"));
+    }
+
     private StudyMember createMember(Study study, String name, StudyMemberRole role) {
         User user = userRepository.saveAndFlush(User.create(name, null));
         return studyMemberRepository.saveAndFlush(StudyMember.create(study, user, name, null, role));
