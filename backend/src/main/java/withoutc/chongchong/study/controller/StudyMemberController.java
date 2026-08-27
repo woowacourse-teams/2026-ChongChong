@@ -57,4 +57,14 @@ public class StudyMemberController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{studyId}/members/me")
+    public ResponseEntity<Void> leave(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable @Positive(message = "스터디 ID는 양수여야 합니다.") Long studyId
+    ) {
+        studyMemberService.leave(user.id(), studyId);
+
+        return ResponseEntity.noContent().build();
+    }
 }
