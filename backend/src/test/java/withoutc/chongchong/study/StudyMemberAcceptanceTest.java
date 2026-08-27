@@ -1,8 +1,11 @@
 package withoutc.chongchong.study;
 
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.http.ContentType;
 import java.time.Clock;
@@ -200,5 +203,114 @@ class StudyMemberAcceptanceTest {
                 .then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INVITE_TOKEN"));
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 멤버 목록을 조회하면 200과 멤버 정보를 반환한다")
+    void getStudyMembersTest() {
+        User leaderUser = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User memberUser = userRepository.saveAndFlush(User.create("멤버", null));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leaderUser, "리더", "leader-profile-image-url", StudyMemberRole.LEADER)
+        );
+        StudyMember member = studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, memberUser, "스터디 내 이름", null, StudyMemberRole.MEMBER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", study.getId())
+                .then()
+                .statusCode(200)
+                .body("members", hasSize(2))
+                .body("members[0].id", equalTo(leader.getId().intValue()))
+                .body("members[0].name", equalTo("리더"))
+                .body("members[0].profileImage", equalTo("leader-profile-image-url"))
+                .body("members[0].role", equalTo("LEADER"))
+                .body("members[1].id", equalTo(member.getId().intValue()))
+                .body("members[1].name", equalTo("스터디 내 이름"))
+                .body("members[1].profileImage", nullValue())
+                .body("members[1].role", equalTo("MEMBER"));
+    }
+
+    @Test
+    @DisplayName("스터디 리더도 멤버 목록을 조회할 수 있다")
+    void getStudyMembersByLeaderTest() {
+        User leaderUser = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(
+                        study,
+                        leaderUser,
+                        leaderUser.getName(),
+                        leaderUser.getProfileImageUrl(),
+                        StudyMemberRole.LEADER
+                )
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", study.getId())
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 멤버 목록 조회 시 403을 반환한다")
+    void getStudyMembersByNonMemberTest() {
+        User user = userRepository.saveAndFlush(User.create("비멤버", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디의 멤버 목록을 조회하면 404를 반환한다")
+    void getStudyMembersWithMissingStudyTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", Long.MAX_VALUE)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("스터디 ID가 양수가 아니면 멤버 목록 조회 시 400을 반환한다")
+    void getStudyMembersWithInvalidStudyIdTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", 0)
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 멤버 목록을 조회하면 401을 반환한다")
+    void getStudyMembersWithoutAuthenticationTest() {
+        given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/members", 1L)
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("AUTHENTICATION_REQUIRED"));
     }
 }
