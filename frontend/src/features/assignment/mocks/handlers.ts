@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { BASE_URL } from '../../../../config';
+import { API_URL } from '../../../../config';
 
 const assignmentList = Array.from({ length: 12 }, (_, index) => {
   const id = 12 - index;
@@ -17,7 +17,7 @@ const assignmentList = Array.from({ length: 12 }, (_, index) => {
 });
 
 export const handlers = [
-  http.get(`${BASE_URL}/studies/:studyId/assignments`, ({ request }) => {
+  http.get(`${API_URL}/studies/:studyId/assignments`, ({ request }) => {
     const searchParams = new URL(request.url).searchParams;
     const cursor = searchParams.get('cursor');
     const requestedSize = Number(searchParams.get('size') ?? 4);
@@ -36,22 +36,22 @@ export const handlers = [
     return HttpResponse.json({ nextCursor, hasNext, assignments });
   }),
 
-  http.post(`${BASE_URL}/studies/:studyId/assignments`, async ({ request }) => {
+  http.post(`${API_URL}/studies/:studyId/assignments`, async ({ request }) => {
     await request.json();
 
     return HttpResponse.json({ assignmentId: 3 }, { status: 201 });
   }),
 
   http.patch(
-    `${BASE_URL}/studies/:studyId/assignments/:assignmentId`,
+    `${API_URL}/studies/:studyId/assignments/:assignmentId`,
     () => new HttpResponse(null, { status: 204 }),
   ),
 
-  http.delete(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, () => {
+  http.delete(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () => {
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId/status`, ({ params }) => {
+  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId/status`, ({ params }) => {
     return HttpResponse.json({
       id: Number(params.assignmentId),
       memberCount: 4,
@@ -86,7 +86,7 @@ export const handlers = [
     });
   }),
 
-  http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId`, ({ params }) => {
+  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, ({ params }) => {
     const assignmentId = Number(params.assignmentId);
 
     return HttpResponse.json({
@@ -101,7 +101,7 @@ export const handlers = [
     });
   }),
 
-  http.get(`${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () => {
+  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () => {
     return HttpResponse.json({
       submissions: [
         {
@@ -127,7 +127,7 @@ export const handlers = [
   }),
 
   http.get(
-    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
     ({ params }) => {
       return HttpResponse.json({
         id: Number(params.submissionId),
@@ -140,12 +140,12 @@ export const handlers = [
     },
   ),
 
-  http.post(`${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () =>
+  http.post(`${API_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () =>
     HttpResponse.json({ submissionId: 4 }, { status: 201 }),
   ),
 
   http.patch(
-    `${BASE_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
     () => new HttpResponse(null, { status: 204 }),
   ),
 ];

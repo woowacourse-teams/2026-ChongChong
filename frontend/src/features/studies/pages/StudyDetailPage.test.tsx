@@ -4,11 +4,11 @@ import { Route, Routes } from 'react-router';
 import { createWrapper } from '../../../test/render';
 import { server } from '../../../mocks/msw-node';
 import StudyDetailPage from './StudyDetailPage';
-import { BASE_URL } from '../../../../config';
+import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 
-const STUDY_INFO_URL = `${BASE_URL}${STUDY_URLS.info}`;
-const STUDY_DETAIL_URL = `${BASE_URL}${STUDY_URLS.detail}`;
+const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
+const STUDY_DETAIL_URL = `${API_URL}${STUDY_URLS.detail}`;
 
 function mockStudyInfo(role: 'LEADER' | 'MEMBER') {
   server.use(

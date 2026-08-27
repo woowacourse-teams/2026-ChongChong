@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { Route, Routes } from 'react-router';
 import { createWrapper } from '../../../test/render';
 import { server } from '../../../mocks/msw-node';
-import { BASE_URL } from '../../../../config';
+import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../../studies/urls';
 import MemberListContent from './MemberListContent';
 
@@ -26,7 +26,7 @@ function renderMemberListContent(content: React.ReactNode) {
 }
 
 describe('초대 링크 테스트', () => {
-  const STUDY_INVITE_LINK_URL = `${BASE_URL}${STUDY_URLS.inviteLink}`;
+  const STUDY_INVITE_LINK_URL = `${API_URL}${STUDY_URLS.inviteLink}`;
 
   function mockStudyInviteLink() {
     server.use(
