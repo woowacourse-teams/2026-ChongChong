@@ -16,7 +16,7 @@ const tabStyle = {
   bottom: 0,
   zIndex: 100,
   background: tokens.bg.default,
-  width: tokens.screenSize.default,
+  maxWidth: tokens.screenSize.default,
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
