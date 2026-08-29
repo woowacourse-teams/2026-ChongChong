@@ -1,9 +1,9 @@
 import { CSSProperties } from 'react';
 import Page from './Page';
 import TopHeader from './TopHeader';
-import { PrevButton } from './components/PrevButton';
+import { PrevButton } from '../widgets/PrevButton';
 import Main from './Main';
-import BottomTab from './components/BottomTab';
+import BottomTab from '../widgets/BottomTab';
 import UnderConstructionContent from './UnderConstructionContent';
 
 const emptyContentStyle = {

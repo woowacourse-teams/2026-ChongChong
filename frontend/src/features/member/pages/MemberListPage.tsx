@@ -1,10 +1,10 @@
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import MemberListContent from '../components/MemberListContent';
 import { StudyRole } from '../types';
-import BottomTab from '../../../shared/ui/components/BottomTab';
+import BottomTab from '../../../shared/widgets/BottomTab';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
 

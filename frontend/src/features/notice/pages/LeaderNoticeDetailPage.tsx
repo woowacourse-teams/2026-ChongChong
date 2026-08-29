@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Suspense, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import BottomTab from '../../../shared/ui/components/BottomTab';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import BottomTab from '../../../shared/widgets/BottomTab';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import Loading from '../../../shared/ui/Loading';
 import Main from '../../../shared/ui/Main';

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { useParams } from 'react-router';
-import BottomTab from '../../../shared/ui/components/BottomTab';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import BottomTab from '../../../shared/widgets/BottomTab';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Loading from '../../../shared/ui/Loading';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';

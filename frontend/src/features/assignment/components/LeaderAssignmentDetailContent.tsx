@@ -1,5 +1,5 @@
 import { useSuspenseQueries } from '@tanstack/react-query';
-import DetailActions from '../../../shared/ui/components/DetailActions';
+import DetailActions from '../../../shared/widgets/DetailActions';
 import assignmentQueries from '../queries';
 import AssignmentArticle from './AssignmentArticle';
 import SubmissionList from './SubmissionList';

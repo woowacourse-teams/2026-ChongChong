@@ -2,7 +2,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import { useParams, useNavigate } from 'react-router';
 import noticeQueries from '../queries';
 import { useSuspenseQuery } from '@tanstack/react-query';

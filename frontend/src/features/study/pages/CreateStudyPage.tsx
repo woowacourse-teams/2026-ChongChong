@@ -1,7 +1,7 @@
 import TopHeader from '../../../shared/ui/TopHeader';
 import { tokens } from '../../../styles/global';
 import Main from '../../../shared/ui/Main';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Page from '../../../shared/ui/Page';
 import headerIcon from '../../../shared/assets/icons/header-icon.svg';
 import StudyForm from '../components/StudyForm';

@@ -1,12 +1,12 @@
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import LeaderAssignmentListSection from '../components/LeaderAssignmentListSection';
 import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
-import BottomTab from '../../../shared/ui/components/BottomTab';
+import BottomTab from '../../../shared/widgets/BottomTab';
 import { useParams } from 'react-router';
 import Loading from '../../../shared/ui/Loading';
 
