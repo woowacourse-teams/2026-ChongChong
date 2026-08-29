@@ -24,7 +24,6 @@ const topHeaderStyle = {
   paddingLeft: tokens.layout.gutter,
   color: tokens.text.default,
   fontFamily: tokens.fontFamily.base,
-  boxShadow: tokens.shadow[2],
 } satisfies CSSProperties;
 
 const sideStyle = {
