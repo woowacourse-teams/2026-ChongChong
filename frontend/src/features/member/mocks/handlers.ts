@@ -14,7 +14,7 @@ export const handlers = [
   http.delete(`${API_URL}${MEMBER_URLS.leave}`, async ({ params }) => {
     const { studyId } = params;
     const member = await memberTable.findFirst((q) =>
-      q.where({ studyId: Number(studyId), id: CURRENT_USER.id }),
+      q.where({ studyId: Number(studyId), userId: CURRENT_USER.id }),
     );
     if (!member) return new HttpResponse(null, { status: 404 });
     // 스터디 리드는 탈퇴할 수 없고 스터디를 삭제해야 합니다.

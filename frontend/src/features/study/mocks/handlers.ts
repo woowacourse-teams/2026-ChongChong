@@ -4,10 +4,11 @@ import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 import { CURRENT_USER } from '../../../mocks/currentUser';
 import { memberTable } from '../../member/mocks/db';
+import { userTable } from '../../user/mocks/db';
 
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async () => {
-    const memberships = await memberTable.findMany((q) => q.where({ id: CURRENT_USER.id }));
+    const memberships = await memberTable.findMany((q) => q.where({ userId: CURRENT_USER.id }));
     const studies = await Promise.all(
       memberships.map(async (membership) => {
         const study = await studyTable.findFirst((q) => q.where({ id: membership.studyId }));
@@ -15,7 +16,7 @@ export const handlers = [
         const members = await memberTable.findMany((q) => q.where({ studyId: study.id }));
         return {
           id: String(study.id),
-          role: membership.role === 'LEADER' ? 'LEADER' : 'MEMBER',
+          role: membership.role,
           name: study.name,
           description: study.description,
           memberCount: members.length,
@@ -35,13 +36,17 @@ export const handlers = [
     //   return HttpResponse.json(invalidInput, { status: 400 });
     // }
 
+    const user = await userTable.findFirst((q) => q.where({ id: CURRENT_USER.id }));
+    if (!user) return new HttpResponse(null, { status: 404 });
+
     const studyId = Date.now();
     await studyTable.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
     await memberTable.create({
-      id: CURRENT_USER.id,
+      id: Date.now(),
       studyId,
-      name: CURRENT_USER.name,
-      profileImage: 'http://localhost:8000',
+      userId: user.id,
+      name: user.name,
+      profileImage: user.profileImage,
       role: 'LEADER',
     });
     return HttpResponse.json({ studyId }, { status: 201 });
