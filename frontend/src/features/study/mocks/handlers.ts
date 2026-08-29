@@ -16,7 +16,7 @@ export const handlers = [
         return {
           id: String(study.id),
           role: membership.role === 'LEADER' ? 'LEADER' : 'MEMBER',
-          title: study.name,
+          name: study.name,
           description: study.description,
           memberCount: members.length,
           // 공지/과제는 아직 mock table 이 없어 고정값을 사용합니다.
