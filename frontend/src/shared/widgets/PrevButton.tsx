@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import backIcon from '../../assets/left-arrow.svg';
+import backIcon from '../assets/left-arrow.svg';
 
 const backButtonStyle = {
   display: 'grid',

@@ -5,8 +5,8 @@ import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
 import MemberAssignmentListSection from '../components/MemberAssignmentListSectiont';
 import Main from '../../../shared/ui/Main';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
-import BottomTab from '../../../shared/ui/components/BottomTab';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
+import BottomTab from '../../../shared/widgets/BottomTab';
 import { useParams } from 'react-router';
 import Loading from '../../../shared/ui/Loading';
 

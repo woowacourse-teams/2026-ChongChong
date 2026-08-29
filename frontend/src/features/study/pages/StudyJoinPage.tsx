@@ -1,7 +1,7 @@
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import { useInputState } from '../../../shared/hooks/useInputState';

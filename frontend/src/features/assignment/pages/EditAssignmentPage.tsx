@@ -1,7 +1,7 @@
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import BottomTab from '../../../shared/ui/components/BottomTab';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import BottomTab from '../../../shared/widgets/BottomTab';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import AssignmentForm from '../components/AssignmentForm';
 import Main from '../../../shared/ui/Main';
 import { useParams, useNavigate } from 'react-router';

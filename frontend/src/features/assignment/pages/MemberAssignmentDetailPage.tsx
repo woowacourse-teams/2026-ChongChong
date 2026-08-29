@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
-import BottomTab from '../../../shared/ui/components/BottomTab';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import BottomTab from '../../../shared/widgets/BottomTab';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Loading from '../../../shared/ui/Loading';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';

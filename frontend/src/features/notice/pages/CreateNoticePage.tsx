@@ -3,7 +3,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import useStudyId from '../../study/hooks/useStudyId';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import noticeQueries from '../queries';

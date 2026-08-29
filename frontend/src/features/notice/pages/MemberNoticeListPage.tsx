@@ -1,11 +1,11 @@
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Page from '../../../shared/ui/Page';
-import BottomTab from '../../../shared/ui/components/BottomTab';
+import BottomTab from '../../../shared/widgets/BottomTab';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
 import useStudyId from '../../study/hooks/useStudyId';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import MemberNoticeListSection from '../components/MemerNoticeListSection';
 
 interface Props {

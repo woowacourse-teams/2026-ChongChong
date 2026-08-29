@@ -2,10 +2,10 @@ import { useParams } from 'react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import studyQueries from '../queries';
 import Main from '../../../shared/ui/Main';
-import BottomTab from '../../../shared/ui/components/BottomTab';
+import BottomTab from '../../../shared/widgets/BottomTab';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Page from '../../../shared/ui/Page';
-import { PrevButton } from '../../../shared/ui/components/PrevButton';
+import { PrevButton } from '../../../shared/widgets/PrevButton';
 import {
   LeaderStudyDetailContent,
   MemberStudyDetailContent,

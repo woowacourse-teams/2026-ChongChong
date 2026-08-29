@@ -1,15 +1,15 @@
 import { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useParams, useLocation } from 'react-router';
-import HomeIcon from '../../assets/home.svg';
-import ActivehomeIcon from '../../assets/home-green.svg';
-import NoticeIcon from '../../assets/notice.svg';
-import ActiveNoticeIcon from '../../assets/notice-green.svg';
-import AssignmentIcon from '../../assets/assign.svg';
-import ActiveAssignmentIcon from '../../assets/assign-green.svg';
-import MemberIcon from '../../assets/user.svg';
-import ActiveMemberIcon from '../../assets/user-green.svg';
-import { tokens, typography } from '../../../styles/global';
+import HomeIcon from '../assets/home.svg';
+import ActivehomeIcon from '../assets/home-green.svg';
+import NoticeIcon from '../assets/notice.svg';
+import ActiveNoticeIcon from '../assets/notice-green.svg';
+import AssignmentIcon from '../assets/assign.svg';
+import ActiveAssignmentIcon from '../assets/assign-green.svg';
+import MemberIcon from '../assets/user.svg';
+import ActiveMemberIcon from '../assets/user-green.svg';
+import { tokens, typography } from '../../styles/global';
 
 const tabStyle = {
   position: 'sticky',
