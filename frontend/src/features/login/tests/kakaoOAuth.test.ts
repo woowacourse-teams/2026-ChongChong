@@ -1,4 +1,4 @@
-import { consumeKakaoCallback } from './kakaoOAuth';
+import { consumeKakaoCallback } from '../kakaoOAuth';
 
 const OAUTH_STATE_KEY = 'kakao_oauth_state';
 

@@ -3,11 +3,11 @@ import { http, HttpResponse } from 'msw';
 import userEvent from '@testing-library/user-event';
 import { Suspense } from 'react';
 import { Route, Routes } from 'react-router';
-import { createWrapper } from '../../../test/render';
-import { server } from '../../../mocks/msw-node';
-import { API_URL } from '../../../../config';
-import { STUDY_URLS } from '../../study/urls';
-import MemberListContent from './MemberListContent';
+import { createWrapper } from '../../../../test/render';
+import { server } from '../../../../mocks/msw-node';
+import { API_URL } from '../../../../../config';
+import { STUDY_URLS } from '../../../study/urls';
+import MemberListContent from '../MemberListContent';
 
 async function findMemberRow(name: string) {
   const row = (await screen.findByText(name)).closest('[data-testid="member-row"]');

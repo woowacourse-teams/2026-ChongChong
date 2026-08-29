@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useParams } from 'react-router';
 
-import { createWrapper } from '../../../test/render';
-import { STUDY_URLS } from '../urls';
-import StudyForm from './StudyForm';
+import { createWrapper } from '../../../../test/render';
+import { STUDY_URLS } from '../../urls';
+import StudyForm from '../StudyForm';
 
 function StudyDetailPath() {
   const { studyId } = useParams();

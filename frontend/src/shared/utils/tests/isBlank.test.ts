@@ -1,4 +1,4 @@
-import isBlank from './isBlank';
+import isBlank from '../isBlank';
 
 describe('isBlank 테스트', () => {
   test('빈 문자열이면 true를 반환한다', () => {

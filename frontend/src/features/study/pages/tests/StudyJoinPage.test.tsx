@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createWrapper } from '../../../test/render';
-import StudyJoinPage from './StudyJoinPage';
+import { createWrapper } from '../../../../test/render';
+import StudyJoinPage from '../StudyJoinPage';
 
 describe('스터디 참가 폼 테스트', () => {
   test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {

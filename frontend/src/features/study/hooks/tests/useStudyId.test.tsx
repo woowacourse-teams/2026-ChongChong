@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { PropsWithChildren } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import useStudyId from './useStudyId';
+import useStudyId from '../useStudyId';
 
 function createWrapper({ path, entry }: { path: string; entry: string }) {
   return function Wrapper({ children }: PropsWithChildren) {

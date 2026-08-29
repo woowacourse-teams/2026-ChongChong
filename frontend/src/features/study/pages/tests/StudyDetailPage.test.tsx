@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
-import { createWrapper } from '../../../test/render';
-import { server } from '../../../mocks/msw-node';
-import StudyDetailPage from './StudyDetailPage';
-import { API_URL } from '../../../../config';
-import { STUDY_URLS } from '../urls';
+import { createWrapper } from '../../../../test/render';
+import { server } from '../../../../mocks/msw-node';
+import StudyDetailPage from '../StudyDetailPage';
+import { API_URL } from '../../../../../config';
+import { STUDY_URLS } from '../../urls';
 
 const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
 const STUDY_DETAIL_URL = `${API_URL}${STUDY_URLS.detail}`;
