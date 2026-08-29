@@ -4,7 +4,7 @@ import { AUTH_URLS } from '../urls';
 
 const mockLoginResponse = {
   tokenType: 'Bearer',
-  accessToken: 'access-antoliny',
+  accessToken: '1',
   accessTokenExpiresAt: new Date('9999-12-31T23:59:59Z').toISOString(),
 };
 
