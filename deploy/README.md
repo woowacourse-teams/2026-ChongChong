@@ -64,11 +64,15 @@ Client Secret의 실제 값은 `/opt/chongchong/.env`에만 저장하고 저장�
 | --- | --- |
 | Source | CodePipeline |
 | Artifacts | CodePipeline |
-| Environment | Managed image, x86_64 |
+| Environment | Managed image, x86_64, ARM64 cross-platform build 지원 |
 | Image | `aws/codebuild/amazonlinux-x86_64-standard:6.0` |
 | Compute | `BUILD_GENERAL1_SMALL` |
 | Privileged mode | 활성화 |
 | Buildspec | `buildspec.yml` |
+
+현재 x86_64 CodeBuild Project는 `docker build --platform linux/arm64`를 실행한다. Project를 다시 만들 때는 선택한
+Managed Image의 Docker Builder가 binfmt/QEMU를 통한 ARM64 cross-platform build를 지원하는지 먼저 검증한다. 이
+조건을 충족하지 못하면 native ARM64 CodeBuild 환경을 사용해야 한다.
 
 CodeBuild 환경에는 다음 변수를 설정한다.
 
@@ -78,16 +82,23 @@ CodeBuild 환경에는 다음 변수를 설정한다.
 | `DOCKERHUB_REPOSITORY` | 예: `docker.io/team/chongchong-backend` | 일반 변수 가능 |
 | `DOCKERHUB_TOKEN` | Docker Hub push Token | Parameter Store `/chongchong/dev/dockerhub/token` |
 
-CodeBuild Service Role에는 위 두 파라미터에 대한 `ssm:GetParameters` 권한만 부여한다. `DOCKERHUB_TOKEN`을
+CodeBuild Service Role에는 username과 Token 두 파라미터에 대한 `ssm:GetParameters` 권한만 부여한다.
+`DOCKERHUB_TOKEN`을
 plaintext 환경 변수나 저장소 파일에 넣지 않는다.
 
 CodeBuild는 Corretto 25로 `bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA 태그로만 push한다.
 CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`, Compose, Nginx, 스크립트와 확정된 `image.env`만
 포함한다.
 
-`dev`와 `prod` Pipeline은 같은 CodeBuild Project와 `buildspec.yml`을 공유할 수 있다. 각 실행의
-`CODEBUILD_RESOLVED_SOURCE_VERSION`을 불변 이미지 태그로 사용하고 `image.env`에 기록하므로 서로 다른 브랜치의
-이미지가 섞이지 않는다. `dev`나 `prod` 같은 가변 태그는 생성하지 않는다.
+`dev`와 `prod` Pipeline은 같은 Docker Hub Repository와 push 자격 증명을 사용해도 되는 동일한 신뢰 경계에 있을
+때만 CodeBuild Project와 `buildspec.yml`을 공유한다. 환경별 write 권한 격리가 필요하면 CodeBuild Project, Service
+Role, Parameter Store 경로와 이미지 Repository를 분리한다. 현재 Parameter Store의 `/chongchong/dev/dockerhub/*`
+경로를 공용으로 사용하는 것은 전자의 조건을 전제로 한다.
+
+각 실행의 `CODEBUILD_RESOLVED_SOURCE_VERSION`을 commit SHA별 이미지 태그와 `image.env`에 기록하므로 정상적인
+Pipeline 실행끼리는 `dev`와 `prod` 이미지 태그가 충돌하지 않는다. Docker Hub 태그 자체는 덮어쓸 수 있으므로 이
+구성은 Registry 수준의 불변성을 보장하지 않는다. 더 강한 이미지 무결성이 필요하면 push 결과의 manifest digest를
+artifact에 기록하고 digest로 배포해야 한다. `dev`나 `prod` 같은 가변 태그는 생성하지 않는다.
 
 ## 4. CodeDeploy를 구성한다
 
@@ -101,7 +112,8 @@ CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`,
 EC2 Instance Profile은 Pipeline artifact S3 읽기에 필요한 최소 권한을 가져야 한다. 현재처럼 공개 CodeDeploy
 Endpoint를 사용하는 Agent에는 별도의 `codedeploy-commands-secure` 권한이 필요하지 않으며, 이 권한은 CodeDeploy용
 VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service Role은 대상 EC2 tag와 배포 상태를 관리하는 데
-필요한 권한을 가져야 한다.
+필요한 권한을 가져야 한다. Pipeline Service Role도 해당 환경의 Deployment Group과 artifact 경로만 조작하도록
+권한을 제한한다.
 
 ## 5. CodePipeline V2를 구성한다
 
