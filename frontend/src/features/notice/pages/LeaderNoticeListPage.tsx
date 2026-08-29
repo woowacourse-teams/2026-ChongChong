@@ -4,7 +4,7 @@ import Page from '../../../shared/ui/Page';
 import BottomTab from '../../../shared/ui/components/BottomTab';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
-import useStudyId from '../../studies/hooks/useStudyId';
+import useStudyId from '../../study/hooks/useStudyId';
 import { PrevButton } from '../../../shared/ui/components/PrevButton';
 import LeaderNoticeListSection from '../components/LeaderNoticeListSection';
 

@@ -1,8 +1,8 @@
 import LeaderAssignmentListPage from './LeaderAssignmentListPage';
 import MemberAssignmentListPage from './MemberAssignmentListPage';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import useStudyId from '../../studies/hooks/useStudyId';
-import studyQueries from '../../studies/queries';
+import useStudyId from '../../study/hooks/useStudyId';
+import studyQueries from '../../study/queries';
 
 export default function AssignmentListPage() {
   const { studyId } = useStudyId();

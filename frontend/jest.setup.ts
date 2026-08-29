@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { server } from './src/mocks/msw-node';
-import { studyTable, createSeedStudies } from './src/features/studies/mocks/db';
+import { studyTable, createSeedStudies } from './src/features/study/mocks/db';
 import { memberTable, createSeedMembers } from './src/features/member/mocks/db';
 
 beforeAll(() => server.listen());

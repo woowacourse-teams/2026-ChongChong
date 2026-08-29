@@ -1,9 +1,9 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import { useSuspenseQueries } from '@tanstack/react-query';
-import useStudyId from '../../studies/hooks/useStudyId';
+import useStudyId from '../../study/hooks/useStudyId';
 import { memberQueries } from '../queries';
-import studyQueries from '../../studies/queries';
+import studyQueries from '../../study/queries';
 import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
@@ -11,7 +11,7 @@ import MemberRow from './MemberRow';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteLinkBox from './InviteLinkBox';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
-import useDeleteStudy from '../../studies/hooks/useDeleteStudy';
+import useDeleteStudy from '../../study/hooks/useDeleteStudy';
 import useKickStudyMember from '../hooks/useKickMember';
 import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
 

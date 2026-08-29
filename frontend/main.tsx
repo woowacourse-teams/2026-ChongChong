@@ -5,7 +5,7 @@ import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
-import { routes as studiesRoutes } from './src/features/studies/routes';
+import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
