@@ -1,0 +1,30 @@
+version: 0.0
+os: linux
+
+files:
+  - source: deploy
+    destination: /opt/chongchong/deploy
+file_exists_behavior: OVERWRITE
+
+permissions:
+  - object: /opt/chongchong/deploy/scripts
+    pattern: "*.sh"
+    owner: root
+    group: root
+    mode: 755
+    type:
+      - file
+
+hooks:
+  BeforeInstall:
+    - location: deploy/scripts/prepare.sh
+      timeout: 60
+      runas: root
+  ApplicationStart:
+    - location: deploy/scripts/deploy.sh
+      timeout: 300
+      runas: root
+  ValidateService:
+    - location: deploy/scripts/validate.sh
+      timeout: 120
+      runas: root

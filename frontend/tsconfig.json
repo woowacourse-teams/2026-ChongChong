@@ -7,8 +7,10 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "noEmit": true
+    "jsxImportSource": "@emotion/react",
+    "noEmit": true,
+    "types": ["jest", "node"]
   },
-  "include": ["./**/*.ts", "main.tsx"],
+  "include": ["./**/*.ts", "./**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

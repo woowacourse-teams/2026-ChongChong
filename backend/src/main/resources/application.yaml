@@ -8,3 +8,45 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+jwt:
+  study-invite-secret: ${STUDY_INVITE_JWT_SECRET}
+
+frontend:
+  base-url: ${FRONTEND_BASE_URL}
+  allowed-origins: ${FRONTEND_ALLOWED_ORIGINS:${FRONTEND_BASE_URL}}
+
+auth:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER}
+    audience: ${AUTH_JWT_AUDIENCE}
+    secret-base64: ${AUTH_JWT_SECRET_BASE64}
+    access-token-validity: ${AUTH_JWT_ACCESS_TOKEN_VALIDITY:30m}
+  refresh-token:
+    validity: ${AUTH_REFRESH_TOKEN_VALIDITY:30d}
+  social:
+    kakao:
+      rest-api-key: ${AUTH_KAKAO_REST_API_KEY}
+      client-secret: ${AUTH_KAKAO_CLIENT_SECRET}
+      redirect-uri: ${AUTH_KAKAO_REDIRECT_URI}
+      token-uri: ${AUTH_KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
+      user-info-uri: ${AUTH_KAKAO_USER_INFO_URI:https://kapi.kakao.com/v2/user/me}
+      connect-timeout: ${AUTH_KAKAO_CONNECT_TIMEOUT:2s}
+      read-timeout: ${AUTH_KAKAO_READ_TIMEOUT:3s}
+  web:
+    refresh-cookie:
+      name: refresh_token
+      secure: ${AUTH_WEB_REFRESH_COOKIE_SECURE:true}
+      http-only: true
+      same-site: Lax
+      path: /api/auth
+
+springdoc:
+  api-docs:
+    enabled: true # 개발 끝나면 false로 변경
+  swagger-ui:
+    enabled: true # 개발 끝나면 false로 변경
