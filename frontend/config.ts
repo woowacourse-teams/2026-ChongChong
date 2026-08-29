@@ -7,3 +7,5 @@ export const KAKAO_REDIRECT_URI = new URL(
   '/auth/kakao/callback',
   window.location.origin,
 ).toString();
+
+export const SKIP_AUTH = process.env.SKIP_AUTH === 'true';
