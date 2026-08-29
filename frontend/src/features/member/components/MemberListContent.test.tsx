@@ -6,7 +6,7 @@ import { Route, Routes } from 'react-router';
 import { createWrapper } from '../../../test/render';
 import { server } from '../../../mocks/msw-node';
 import { API_URL } from '../../../../config';
-import { STUDY_URLS } from '../../studies/urls';
+import { STUDY_URLS } from '../../study/urls';
 import MemberListContent from './MemberListContent';
 
 async function findMemberRow(name: string) {
