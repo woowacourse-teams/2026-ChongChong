@@ -1,13 +1,12 @@
 # Backend deployment
 
-`dev`에 병합된 백엔드 운영 변경을 CodePipeline, CodeBuild와 CodeDeploy로 단일 EC2에 배포한다. 이 문서는 저장소에
-포함할 수 없는 AWS Resource와 EC2 최초 설정을 연결하는 절차다.
+`dev` 또는 `prod`에 병합된 백엔드 변경을 환경별 CodePipeline이 CodeBuild와 CodeDeploy를 거쳐 대상 단일 EC2에
+배포하도록 구성한다. 이 문서는 저장소에 포함할 수 없는 AWS Resource와 EC2 최초 설정을 연결하는 절차다.
 
 ## 1. 배포 전 확인
 
-- 개인 AWS 개발 EC2는 Ubuntu 26.04 LTS `x86_64`를 사용한다.
+- 현재 `buildspec.yml`은 `linux/arm64` Docker 이미지를 생성하므로 배포 대상 EC2도 ARM64 환경이어야 한다.
 - CodeDeploy Agent는 Ubuntu 26.04와 Ruby 없는 실행을 지원하는 v2를 설치한다.
-- 팀 AWS 환경으로 이전할 때는 ADR-0016에 따라 `t4g.micro`와 `arm64` 이미지로 다시 전환한다.
 - EC2 outbound HTTPS 443 통신을 허용한다.
 - EC2 inbound 80과 443을 인터넷에 허용하고 22는 기존 관리 IP로만 제한한다.
 - RDS 5432 inbound source가 EC2의 Security Group인지 확인한다.
@@ -82,14 +81,19 @@ CodeBuild 환경에는 다음 변수를 설정한다.
 CodeBuild Service Role에는 위 두 파라미터에 대한 `ssm:GetParameters` 권한만 부여한다. `DOCKERHUB_TOKEN`을
 plaintext 환경 변수나 저장소 파일에 넣지 않는다.
 
-CodeBuild는 Corretto 25로 `bootJar`를 실행하고 AMD64 이미지를 Docker Hub에 commit SHA와 `dev` 태그로 push한다.
+CodeBuild는 Corretto 25로 `bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA 태그로만 push한다.
 CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`, Compose, Nginx, 스크립트와 확정된 `image.env`만
 포함한다.
 
+`dev`와 `prod` Pipeline은 같은 CodeBuild Project와 `buildspec.yml`을 공유할 수 있다. 각 실행의
+`CODEBUILD_RESOLVED_SOURCE_VERSION`을 불변 이미지 태그로 사용하고 `image.env`에 기록하므로 서로 다른 브랜치의
+이미지가 섞이지 않는다. `dev`나 `prod` 같은 가변 태그는 생성하지 않는다.
+
 ## 4. CodeDeploy를 구성한다
 
-1. EC2/On-Premises compute platform의 Application을 생성한다.
-2. EC2 tag로 개발 서버 한 대를 선택하는 Deployment Group을 생성한다.
+1. EC2/On-Premises compute platform의 Application을 생성한다. `dev`와 `prod`가 같은 Application을 공유할 수 있다.
+2. 환경마다 EC2 tag로 대상 서버 한 대를 선택하는 Deployment Group을 생성한다. 개발 서버와 운영 서버가 다르면
+   Deployment Group도 분리한다.
 3. Deployment Type은 `In-place`, Configuration은 `CodeDeployDefault.AllAtOnce`를 사용한다.
 4. 배포 실패 시 자동 rollback을 활성화한다.
 5. CodeDeploy Service Role과 EC2 Instance Profile을 연결한다.
@@ -101,7 +105,7 @@ VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service 
 
 ## 5. CodePipeline V2를 구성한다
 
-단계는 `Source -> Build -> Deploy` 순서로 구성한다.
+`dev`와 `prod` 환경마다 Pipeline을 하나씩 두고 `Source -> Build -> Deploy` 순서로 구성한다.
 
 ### Source
 
@@ -109,7 +113,7 @@ VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service 
 - Repository: `woowacourse-teams/2026-ChongChong`
 - Output artifact format: CodePipeline default
 - Trigger event: Push
-- Include branch: `dev`
+- Include branch: Pipeline 환경과 같은 `dev` 또는 `prod`
 - Include file paths:
   - `backend/**`
   - `deploy/**`
@@ -121,16 +125,17 @@ VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service 
 - Provider: CodeBuild
 - Input: Source artifact
 - Output: Build artifact
-- Project: 3단계에서 만든 x86_64 CodeBuild Project
+- Project: 3단계에서 만든 공용 x86_64 CodeBuild Project
 
 ### Deploy
 
 - Provider: CodeDeploy
 - Input: Build artifact
-- Application과 Deployment Group: 4단계에서 만든 Resource
+- Application: 4단계에서 만든 공용 Application
+- Deployment Group: Pipeline 환경에 대응하는 Deployment Group
 
-프론트엔드 파일만 바뀐 `dev` push에서는 Pipeline을 실행하지 않는다. 위 배포 경로 중 하나가 바뀌면 구현 단순성을
-위해 JAR과 Docker 이미지를 모두 새로 만든다.
+프론트엔드 파일만 바뀐 `dev` 또는 `prod` push에서는 Pipeline을 실행하지 않는다. 위 배포 경로 중 하나가 바뀌면
+구현 단순성을 위해 JAR과 Docker 이미지를 모두 새로 만든다.
 
 ## 6. 최초 배포를 확인한다
 
