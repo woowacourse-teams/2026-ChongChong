@@ -11,7 +11,6 @@ const api = ky.create({
     beforeRequest: [
       ({ request }) => {
         const accessToken = getAccessToken();
-
         if (accessToken) {
           request.headers.set('Authorization', `Bearer ${accessToken}`);
         }

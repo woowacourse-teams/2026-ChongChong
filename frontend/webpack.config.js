@@ -54,9 +54,6 @@ export default {
         process.env.API_BASE_URL ?? 'https://mock.chongchong.com',
       ),
       'process.env.KAKAO_REST_API_KEY': JSON.stringify(process.env.KAKAO_REST_API_KEY ?? ''),
-      // dev, prod 환경에서는 SKIP_AUTH가 무조건 false 여야 합니다.(인증을 무시하면 안됩니다)
-      // TODO: 해당 부분은 webpack환경을 분리했을때 정적인 값으로 유지할 수 있도록 전환해야 합니다.
-      'process.env.SKIP_AUTH': JSON.stringify(process.env.SKIP_AUTH ?? ''),
     }),
   ],
   devServer: {
@@ -72,13 +69,6 @@ export default {
     open: true,
     hot: true,
     historyApiFallback: true,
-    proxy: [
-      {
-        context: ['/api/auth/csrf', '/api/auth/login', '/api/auth/refresh', '/api/auth/logout'],
-        target: process.env.API_BASE_URL ?? 'http://localhost:8080',
-        changeOrigin: true,
-      },
-    ],
     client: {
       overlay: true,
     },
