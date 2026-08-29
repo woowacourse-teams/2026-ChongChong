@@ -10,6 +10,7 @@ import { routes as AssignmentRoutes } from './src/features/assignment/routes/rou
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
 import { refreshAccessToken } from './src/features/login/api';
+import { SKIP_AUTH } from './config';
 
 const appRoutes = [
   {
@@ -39,6 +40,8 @@ const queryClient = new QueryClient();
 const publicPaths = new Set(['/login', '/auth/kakao/callback']);
 
 async function restoreSession() {
+  if (SKIP_AUTH) return;
+
   if (publicPaths.has(window.location.pathname)) return;
 
   try {
