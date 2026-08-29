@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import { createWrapper, mockResponse } from '../../../test/render';
+
+import { createWrapper, mockResponse } from '../../../../test/render';
 import { http, HttpResponse } from 'msw';
-import { server } from '../../../mocks/msw-node';
-import MyStudiesPage from './MyStudiesPage';
-import { API_URL } from '../../../../config';
-import { STUDY_URLS } from '../urls';
-import { Study } from '../types';
+import { server } from '../../../../mocks/msw-node';
+import MyStudiesPage from '../MyStudiesPage';
+import { API_URL } from '../../../../../config';
+import { STUDY_URLS } from '../../urls';
+import { Study } from '../../types';
 
 const studies: Study[] = [
   {
