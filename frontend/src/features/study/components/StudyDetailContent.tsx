@@ -65,16 +65,20 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
       <section>
         <h2 css={SectionLabelStyle}>스터디 현황</h2>
         <div css={StatusCardListStyle}>
-          <div css={StatusCardStyle}>
-            <img src={noticeIcon} alt="" css={IconStyle} />
-            <p css={StatusCountStyle}>{data.notices.count}</p>
-            <p css={StatusLabelStyle}>안내 중인 공지</p>
-          </div>
-          <div css={StatusCardStyle}>
-            <img src={assignmentIcon} alt="" css={IconStyle} />
-            <p css={StatusCountStyle}>{data.assignments.count}</p>
-            <p css={StatusLabelStyle}>진행 중인 과제</p>
-          </div>
+          <Link to="notices" css={StatusCardStyle}>
+            <div>
+              <img src={noticeIcon} alt="" css={IconStyle} />
+              <p css={StatusCountStyle}>{data.notices.count}</p>
+              <p css={StatusLabelStyle}>안내 중인 공지</p>
+            </div>
+          </Link>
+          <Link to="assignments" css={StatusCardStyle}>
+            <div>
+              <img src={assignmentIcon} alt="" css={IconStyle} />
+              <p css={StatusCountStyle}>{data.assignments.count}</p>
+              <p css={StatusLabelStyle}>진행 중인 과제</p>
+            </div>
+          </Link>
         </div>
         <List aria-label="진행 중인 공지와 과제">
           {data.notices.items.map((notice) => (
