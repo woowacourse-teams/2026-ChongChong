@@ -82,7 +82,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
               <Link to={`notices/${notice.id}`}>
                 <LeaderActiveNoticeCard
                   title={notice.title}
-                  memberCount={data.memberCount}
+                  memberCount={notice.memberCount}
                   completeCount={notice.completeCount}
                 />
               </Link>
@@ -93,7 +93,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
               <Link to={`assignments/${assignment.id}`}>
                 <LeaderActiveAssignmentCard
                   title={assignment.title}
-                  memberCount={data.memberCount}
+                  memberCount={assignment.memberCount}
                   completeCount={assignment.completeCount}
                 />
               </Link>
