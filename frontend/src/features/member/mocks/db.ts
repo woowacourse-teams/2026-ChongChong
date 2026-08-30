@@ -19,7 +19,7 @@ type MemberSchemaType = z.infer<typeof memberSchema>;
 export const mockMembers = [
   {
     id: 1,
-    studyId: 1,
+    studyId: 2,
     userId: 1,
     name: '이든',
     profileImage: 'http://localhost:8000',
@@ -55,7 +55,7 @@ export const mockMembers = [
     userId: 5,
     name: '바니',
     profileImage: 'http://localhost:8000',
-    role: 'MEMBER',
+    role: 'LEADER',
   },
   {
     id: 6,
@@ -63,7 +63,7 @@ export const mockMembers = [
     userId: 5,
     name: '바니',
     profileImage: 'http://localhost:8000',
-    role: 'LEADER',
+    role: 'MEMBER',
   },
   {
     id: 7,
