@@ -45,7 +45,7 @@ export const handlers = [
     if (isLead) {
       return HttpResponse.json({
         notices: {
-          count: 2,
+          count: 1,
           items: [
             {
               id: 1,

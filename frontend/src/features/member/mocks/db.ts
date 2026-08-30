@@ -67,7 +67,7 @@ export const mockMembers = [
   },
   {
     id: 7,
-    studyId: 2,
+    studyId: 1,
     userId: 1,
     name: '이든',
     profileImage: 'http://localhost:8000',
