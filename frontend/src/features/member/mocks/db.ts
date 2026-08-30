@@ -14,7 +14,7 @@ export const memberTable = new Collection({
   schema: memberSchema,
 });
 
-type MemberSchemaType = z.infer<typeof memberSchema>;
+export type MemberSchemaType = z.infer<typeof memberSchema>;
 
 export const mockMembers = [
   {
