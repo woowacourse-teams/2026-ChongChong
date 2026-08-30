@@ -75,6 +75,24 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Auth API Swagger 문서를 생성한다")
+    void authOpenApiDocumentationTest() throws Exception {
+        mockMvc.perform(get("/api/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/auth/csrf'].get.summary").value("CSRF 토큰 조회"))
+                .andExpect(jsonPath("$.paths['/api/auth/csrf'].get.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/auth/login'].post.summary").value("소셜 로그인"))
+                .andExpect(jsonPath("$.paths['/api/auth/login'].post.responses['200']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/auth/login'].post.requestBody.content['application/json'].schema.$ref"
+                ).value("#/components/schemas/SocialLoginRequest"))
+                .andExpect(jsonPath("$.paths['/api/auth/refresh'].post.summary").value("액세스 토큰 갱신"))
+                .andExpect(jsonPath("$.paths['/api/auth/refresh'].post.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/auth/logout'].post.summary").value("로그아웃"))
+                .andExpect(jsonPath("$.paths['/api/auth/logout'].post.responses['204']").exists());
+    }
+
+    @Test
     @DisplayName("Access Token 없이 로그인하고 Access Token JSON과 Refresh Token Cookie를 받는다")
     void loginWithoutAccessToken() throws Exception {
         when(socialLoginFacade.login(any())).thenReturn(createIssuedTokenPair());
