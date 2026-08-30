@@ -2,18 +2,21 @@ import { http, HttpResponse } from 'msw';
 import { studyTable } from './db';
 import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
-import { CURRENT_USER } from '../../../mocks/currentUser';
+import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
-import { userTable } from '../../user/mocks/db';
 
 export const handlers = [
-  http.get(`${API_URL}${STUDY_URLS.list}`, async () => {
-    const memberships = await memberTable.findMany((q) => q.where({ userId: CURRENT_USER.id }));
+  http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const memberships = await memberTable.findMany((q) => q.where({ userId: user.id }));
     const studies = await Promise.all(
       memberships.map(async (membership) => {
         const study = await studyTable.findFirst((q) => q.where({ id: membership.studyId }));
         if (!study) return null;
-        const members = await memberTable.findMany((q) => q.where({ studyId: study.id }));
+        const members = await memberTable.findMany((q) =>
+          q.where({ studyId: study.id, userId: user.id }),
+        );
         return {
           id: String(study.id),
           role: membership.role,
@@ -26,18 +29,18 @@ export const handlers = [
         };
       }),
     );
+    console.log(studies.filter((study) => study !== null));
     return HttpResponse.json({ studies: studies.filter((study) => study !== null) });
   }),
 
   http.post(`${API_URL}${STUDY_URLS.create}`, async ({ request }) => {
     const body = (await request.json()) as { name: string; description: string };
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
     // msw 로직은 실제 backend API 로 대체될 예정입니다.
     // if (invalidInput) {
     //   return HttpResponse.json(invalidInput, { status: 400 });
     // }
-
-    const user = await userTable.findFirst((q) => q.where({ id: CURRENT_USER.id }));
-    if (!user) return new HttpResponse(null, { status: 404 });
 
     const studyId = Date.now();
     await studyTable.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
@@ -52,14 +55,20 @@ export const handlers = [
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
-  http.get(`${API_URL}${STUDY_URLS.info}`, async ({ params }) => {
+  http.get(`${API_URL}${STUDY_URLS.info}`, async ({ request, params }) => {
     const { studyId } = params;
-    const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
-    if (!found) return new HttpResponse(null, { status: 404 });
+    const study = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
+    if (!study) return new HttpResponse(null, { status: 404 });
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const member = await memberTable.findFirst((q) =>
+      q.where({ studyId: study.id, userId: user.id }),
+    );
+    if (!member) return new HttpResponse(null, { status: 404 });
     return HttpResponse.json({
-      studyName: found.name,
-      role: 'LEADER',
-      userName: CURRENT_USER.name,
+      studyName: study.name,
+      role: member.role,
+      userName: member.name,
     });
   }),
 

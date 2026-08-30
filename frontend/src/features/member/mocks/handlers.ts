@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
 import { MEMBER_URLS } from '../urls';
 import { memberTable } from './db';
-import { CURRENT_USER } from '../../../mocks/currentUser';
+import { findUserFromHeader } from '../../../mocks/auth';
 
 export const handlers = [
   http.get(`${API_URL}${MEMBER_URLS.list}`, async ({ params }) => {
@@ -11,10 +11,12 @@ export const handlers = [
     return HttpResponse.json({ members });
   }),
 
-  http.delete(`${API_URL}${MEMBER_URLS.leave}`, async ({ params }) => {
+  http.delete(`${API_URL}${MEMBER_URLS.leave}`, async ({ request, params }) => {
     const { studyId } = params;
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
     const member = await memberTable.findFirst((q) =>
-      q.where({ studyId: Number(studyId), userId: CURRENT_USER.id }),
+      q.where({ studyId: Number(studyId), userId: user.id }),
     );
     if (!member) return new HttpResponse(null, { status: 404 });
     // 스터디 리드는 탈퇴할 수 없고 스터디를 삭제해야 합니다.

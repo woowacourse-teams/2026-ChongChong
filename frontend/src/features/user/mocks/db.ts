@@ -11,7 +11,7 @@ export const userTable = new Collection({
   schema: userSchema,
 });
 
-type userSchemaType = z.infer<typeof userSchema>;
+export type userSchemaType = z.infer<typeof userSchema>;
 
 export const mockUsers = [
   {
