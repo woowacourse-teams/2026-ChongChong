@@ -29,8 +29,61 @@ export const handlers = [
         };
       }),
     );
-    console.log(studies.filter((study) => study !== null));
     return HttpResponse.json({ studies: studies.filter((study) => study !== null) });
+  }),
+
+  http.get(`${API_URL}${STUDY_URLS.detail}`, async ({ request, params }) => {
+    const { studyId } = params;
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const member = memberTable.findFirst((q) =>
+      q.where({ studyId: Number(studyId), userId: user.id }),
+    );
+    if (!member) return new HttpResponse(null, { status: 403 });
+    const isLead = member.role === 'LEADER';
+    // 과제/공지 MSW가 존재하지 않아 임시 데이터를 사용합니다.
+    if (isLead) {
+      return HttpResponse.json({
+        notices: {
+          count: 2,
+          items: [
+            {
+              id: 1,
+              title: '판교 스터디룸에서 만나도록 합시다',
+              memberCount: 4,
+              completeCount: 2,
+            },
+          ],
+        },
+        assignments: {
+          count: 1,
+          items: [
+            {
+              id: 1,
+              title: '그리디 3문제 풀기',
+              memberCount: 4,
+              completeCount: 2,
+            },
+          ],
+        },
+      });
+    } else {
+      return HttpResponse.json({
+        totalCount: 4,
+        notices: [
+          {
+            id: 1,
+            title: '판교 스터디룸에서 만나도록 합시다',
+          },
+        ],
+        assignments: [
+          {
+            id: 1,
+            title: '그리디 3문제 풀기',
+          },
+        ],
+      });
+    }
   }),
 
   http.post(`${API_URL}${STUDY_URLS.create}`, async ({ request }) => {
