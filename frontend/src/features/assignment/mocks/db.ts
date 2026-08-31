@@ -30,8 +30,8 @@ export const mockAssigments = [
   {
     id: 2,
     studyId: 2,
-    title: '레이업 100개 영상 찍기',
-    content: '왼손, 오른손 각각 50개씩 레이업 하는 영상을 찍어서 올려주세요.',
+    title: '엄청 긴 제목'.repeat(100),
+    content: '엄청 긴 내용'.repeat(100),
     submissionMethod: '영상 링크로 제출하세요',
     closeAt: '2026-08-20T23:59:59',
     completeUserIds: [1, 5],

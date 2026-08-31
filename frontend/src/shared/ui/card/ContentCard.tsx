@@ -95,6 +95,9 @@ const descriptionStyle = {
   color: tokens.text.muted,
   WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 2,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 } satisfies CSSProperties;
 
 const footerStyle = {
