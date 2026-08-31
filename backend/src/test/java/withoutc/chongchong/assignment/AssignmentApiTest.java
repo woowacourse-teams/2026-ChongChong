@@ -114,6 +114,7 @@ class AssignmentApiTest {
     @Test
     @DisplayName("과제 생성 요청은 201과 assignmentId를 반환하고 스터디원별 제출 정보와 리마인더를 저장한다")
     void createAssignmentTest() {
+        String maxLengthTitle = "가".repeat(20);
         LocalDateTime newCloseAt = closeAt.plusDays(10);
         LocalDateTime newRemindAt = newCloseAt.minusDays(1);
 
@@ -122,13 +123,13 @@ class AssignmentApiTest {
                 .contentType(ContentType.JSON)
                 .body("""
                         {
-                          "title": "새 과제",
+                          "title": "%s",
                           "content": "새 과제 내용",
                           "submissionMethod": "텍스트 제출",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(newCloseAt, newRemindAt))
+                        """.formatted(maxLengthTitle, newCloseAt, newRemindAt))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()

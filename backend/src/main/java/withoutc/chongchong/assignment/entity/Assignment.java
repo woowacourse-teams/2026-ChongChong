@@ -157,7 +157,7 @@ public class Assignment extends BaseEntity {
     }
 
     private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.length() > 15) {
+        if (title == null || title.isBlank() || title.length() > 20) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_TITLE);
         }
     }

@@ -37,10 +37,10 @@ class NoticeRequestValidationTest {
     }
 
     @Test
-    @DisplayName("공지 생성 요청은 제목 15자와 내용 10000자까지 허용한다")
+    @DisplayName("공지 생성 요청은 제목 20자와 내용 10000자까지 허용한다")
     void validateCreateRequestAtLengthBoundaryTest() {
         NoticeCreateRequest request = new NoticeCreateRequest(
-                "가".repeat(15),
+                "가".repeat(20),
                 "가".repeat(10000),
                 List.of(FUTURE)
         );
@@ -52,14 +52,14 @@ class NoticeRequestValidationTest {
     @DisplayName("공지 생성 요청의 제목과 내용이 최대 길이를 초과하면 거부한다")
     void validateCreateRequestOverLengthTest() {
         NoticeCreateRequest request = new NoticeCreateRequest(
-                "가".repeat(16),
+                "가".repeat(21),
                 "가".repeat(10001),
                 List.of(FUTURE)
         );
 
         assertThat(messages(validator.validate(request)))
                 .containsExactlyInAnyOrder(
-                        "제목은 15자 이내로 입력 가능합니다.",
+                        "제목은 20자 이내로 입력 가능합니다.",
                         "내용은 10,000자 이내로 입력 가능합니다."
                 );
     }
@@ -96,14 +96,14 @@ class NoticeRequestValidationTest {
     @DisplayName("공지 수정 요청의 제목과 내용이 최대 길이를 초과하면 거부한다")
     void validateUpdateRequestOverLengthTest() {
         NoticeUpdateRequest request = new NoticeUpdateRequest(
-                "가".repeat(16),
+                "가".repeat(21),
                 "가".repeat(10001),
                 null
         );
 
         assertThat(messages(validator.validate(request)))
                 .containsExactlyInAnyOrder(
-                        "제목은 15자 이내로 입력 가능합니다.",
+                        "제목은 20자 이내로 입력 가능합니다.",
                         "내용은 10,000자 이내로 입력 가능합니다."
                 );
     }

@@ -52,12 +52,12 @@ class AssignmentTest {
     }
 
     @Test
-    @DisplayName("과제 제목은 15자까지 허용하고 15자를 초과하면 거부한다")
+    @DisplayName("과제 제목은 20자까지 허용하고 20자를 초과하면 거부한다")
     void validateTitleLengthTest() {
-        assertThatCode(() -> createAssignment("가".repeat(15), "과제 내용", "링크 제출", NOW.plusHours(1)))
+        assertThatCode(() -> createAssignment("가".repeat(20), "과제 내용", "링크 제출", NOW.plusHours(1)))
                 .doesNotThrowAnyException();
 
-        assertInvalidCreate("가".repeat(16), "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
+        assertInvalidCreate("가".repeat(21), "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
     }
 
     @Test

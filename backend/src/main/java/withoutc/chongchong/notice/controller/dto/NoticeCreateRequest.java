@@ -10,7 +10,7 @@ import java.util.List;
 
 public record NoticeCreateRequest(
         @NotBlank(message = "제목은 필수 값입니다.")
-        @Size(max = 15, message = "제목은 15자 이내로 입력 가능합니다.")
+        @Size(max = 20, message = "제목은 20자 이내로 입력 가능합니다.")
         @Schema(description = "공지 제목", example = "이번 주 공지")
         String title,
         @NotBlank(message = "내용은 필수 값입니다.")

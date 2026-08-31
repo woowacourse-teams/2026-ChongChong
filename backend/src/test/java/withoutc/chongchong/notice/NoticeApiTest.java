@@ -105,6 +105,7 @@ class NoticeApiTest {
     @Test
     @DisplayName("공지 생성 요청을 보내면 201과 공지 id를 반환하고 리더를 제외한 수신자를 저장한다")
     void createNoticeTest() {
+        String maxLengthTitle = "가".repeat(20);
         LocalDateTime newRemindAt = remindAt.plusDays(1);
 
         Long createdNoticeId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
@@ -112,11 +113,11 @@ class NoticeApiTest {
                 .contentType(ContentType.JSON)
                 .body("""
                         {
-                          "title": "새 공지",
+                          "title": "%s",
                           "content": "새 공지 내용",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(newRemindAt))
+                        """.formatted(maxLengthTitle, newRemindAt))
                 .when()
                 .post("/studies/{studyId}/notices", study.getId())
                 .then()
@@ -663,13 +664,18 @@ class NoticeApiTest {
                 .body("id", equalTo(notice.getId().intValue()))
                 .body("memberCount", equalTo(2))
                 .body("readCount", equalTo(1))
+                .body("unreadCount", equalTo(1))
                 .body("remindAt", equalTo(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("readMembers", hasSize(1))
                 .body("readMembers[0].id", equalTo(member.getId().intValue()))
                 .body("readMembers[0].name", equalTo("스터디원"))
+                .body("readMembers[0]", hasKey("profileImage"))
+                .body("readMembers[0]", not(hasKey("profileImageUrl")))
                 .body("unreadMembers", hasSize(1))
                 .body("unreadMembers[0].id", equalTo(secondMember.getId().intValue()))
                 .body("unreadMembers[0].name", equalTo("두 번째 스터디원"))
+                .body("unreadMembers[0]", hasKey("profileImage"))
+                .body("unreadMembers[0]", not(hasKey("profileImageUrl")))
                 .body("unreadMembers[0].lastRemindAt",
                         equalTo(lastRemindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
