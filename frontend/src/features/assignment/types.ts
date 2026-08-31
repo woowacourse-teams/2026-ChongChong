@@ -11,7 +11,7 @@ export interface Assignment {
 }
 
 export interface AssignmentListResponse {
-  nextCursor: number;
+  nextCursor: number | null;
   hasNext: boolean;
   assignments: Assignment[];
 }
@@ -51,6 +51,10 @@ export interface Submission {
   name: string;
   profileImage: string;
   createdAt: string;
+}
+
+export interface SubmissionListResponse {
+  submissions: Submission[];
 }
 
 export interface SubmissionDetail extends Submission {

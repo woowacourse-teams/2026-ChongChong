@@ -1,23 +1,27 @@
 import api from '../../client';
+import { AssignmentValue, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
 import {
-  AssignmentSubmitStatus,
-  AssignmentDetail,
-  Submission,
-  SubmissionDetail,
-  AssignmentValue,
-  UpdateAssignmentValue,
-  AssignmentListResponse,
-  AssignmentSubmissionValue,
-  CreateAssignmentResponse,
-  CreateSubmissionResponse,
-} from './types';
+  isAssignmentListResponse,
+  isCreateAssignmentResponse,
+  isSubmissionDetailResponse,
+  isAssignmentDetailResponse,
+  isSubmissionListResponse,
+  isAssignmentSubmitStatusResponse,
+  isCreateSubmissionResponse,
+} from './responseSchemas';
 
 export async function fetchAssignmentList(studyId: number, cursor?: number) {
   try {
     const response = await api.get(`/studies/${studyId}/assignments`, {
       searchParams: cursor === undefined ? undefined : { cursor },
     });
-    return await response.json<AssignmentListResponse>();
+    const data: unknown = await response.json();
+
+    if (!isAssignmentListResponse(data)) {
+      throw new Error('과제 목록 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch {
     throw new Error('과제 목록을 불러오는데 실패했습니다.');
   }
@@ -26,7 +30,14 @@ export async function fetchAssignmentList(studyId: number, cursor?: number) {
 export async function fetchAssignmentSubmitStatus(studyId: number, assignmentId: number) {
   try {
     const response = await api.get(`/studies/${studyId}/assignments/${assignmentId}/status`);
-    return await response.json<AssignmentSubmitStatus>();
+
+    const data: unknown = await response.json();
+
+    if (!isAssignmentSubmitStatusResponse(data)) {
+      throw new Error('과제 제출 상태 목록 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch {
     throw new Error('과제 제출 현황을 불러오는데 실패했습니다.');
   }
@@ -36,7 +47,13 @@ export async function fetchAssignment(studyId: number, assignmentId: number) {
   try {
     const response = await api.get(`/studies/${studyId}/assignments/${assignmentId}`);
 
-    return await response.json<AssignmentDetail>();
+    const data: unknown = await response.json();
+
+    if (!isAssignmentDetailResponse(data)) {
+      throw new Error('과제 정보 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch {
     throw new Error('과제 정보를 불러오는데 실패했습니다.');
   }
@@ -46,7 +63,13 @@ export async function fetchAssignmentSubmission(studyId: number, assignmentId: n
   try {
     const response = await api.get(`/studies/${studyId}/assignments/${assignmentId}/submissions`);
 
-    return await response.json<{ submissions: Submission[] }>();
+    const data: unknown = await response.json();
+
+    if (!isSubmissionListResponse(data)) {
+      throw new Error('과제 제출 목록 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch {
     throw new Error('제출 내역을 불러오는데 실패했습니다.');
   }
@@ -62,7 +85,13 @@ export async function fetchAssignmentSubmissionDetail(
       `/studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`,
     );
 
-    return await response.json<SubmissionDetail>();
+    const data: unknown = await response.json();
+
+    if (!isSubmissionDetailResponse(data)) {
+      throw new Error('과제 제출 상세 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch {
     throw new Error('제출 정보를 불러오는데 실패했습니다.');
   }
@@ -73,11 +102,21 @@ export async function createAssignmentSubmission(
   assignmentId: number,
   values: AssignmentSubmissionValue,
 ) {
-  return api
-    .post(`/studies/${studyId}/assignments/${assignmentId}/submissions`, {
+  try {
+    const response = await api.post(`/studies/${studyId}/assignments/${assignmentId}/submissions`, {
       json: values,
-    })
-    .json<CreateSubmissionResponse>();
+    });
+
+    const data: unknown = await response.json();
+
+    if (!isCreateSubmissionResponse(data)) {
+      throw new Error('과제 제출 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
+  } catch {
+    throw new Error('과제 제출을 실패했습니다.');
+  }
 }
 
 export async function updateAssignmentSubmission(
@@ -86,17 +125,31 @@ export async function updateAssignmentSubmission(
   submissionId: number,
   values: AssignmentSubmissionValue,
 ) {
-  await api.patch(`/studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
-    json: values,
-  });
+  try {
+    await api.patch(`/studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {
+      json: values,
+    });
+  } catch {
+    throw new Error('과제 제출물 수정을 실패했습니다.');
+  }
 }
 
 export async function createAssignment(studyId: number, values: AssignmentValue) {
-  return api
-    .post(`/studies/${studyId}/assignments`, {
+  try {
+    const response = await api.post(`/studies/${studyId}/assignments`, {
       json: values,
-    })
-    .json<CreateAssignmentResponse>();
+    });
+
+    const data: unknown = await response.json();
+
+    if (!isCreateAssignmentResponse(data)) {
+      throw new Error('과제 생성 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
+  } catch {
+    throw new Error('과제 생성을 실패했습니다.');
+  }
 }
 
 export async function updateAssignment(
@@ -104,11 +157,19 @@ export async function updateAssignment(
   assignmentId: number,
   values: UpdateAssignmentValue,
 ) {
-  await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {
-    json: values,
-  });
+  try {
+    await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {
+      json: values,
+    });
+  } catch {
+    throw new Error('과제 수정을 실패했습니다.');
+  }
 }
 
 export async function deleteAssignment(studyId: number, assignmentId: number) {
-  await api.delete(`/studies/${studyId}/assignments/${assignmentId}`);
+  try {
+    await api.delete(`/studies/${studyId}/assignments/${assignmentId}`);
+  } catch {
+    throw new Error('과제 삭제를 실패했습니다.');
+  }
 }
