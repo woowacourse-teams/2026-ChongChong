@@ -48,6 +48,7 @@ describe('스터디 참가 폼 테스트', () => {
     await user.type(linkInput, inviteLink);
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
 
+    expect(await screen.findByText('농구 스터디')).toBeInTheDocument();
     expect(await screen.findByText('안톨리니 · 스터디원')).toBeInTheDocument();
   });
 });
