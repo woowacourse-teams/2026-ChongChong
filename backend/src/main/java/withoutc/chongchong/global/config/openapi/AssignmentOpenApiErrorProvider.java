@@ -62,6 +62,8 @@ class AssignmentOpenApiErrorProvider extends AbstractOpenApiErrorProvider {
                         ASSIGNMENT_SUBMISSION_NOT_FOUND, INVALID_CONTENT, INVALID_LINK)),
                 entry("getAllSubmissionStatuses", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
                         STUDY_ACCESS_DENIED, ACCESS_DENIED, ASSIGNMENT_NOT_FOUND)),
+                entry("getMySubmissionDetail", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
+                        STUDY_ACCESS_DENIED, ASSIGNMENT_NOT_FOUND)),
                 entry("getSubmissionDetail", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
                         STUDY_ACCESS_DENIED, ASSIGNMENT_NOT_FOUND, ASSIGNMENT_SUBMISSION_NOT_FOUND)),
                 entry("getSubmissionList", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
