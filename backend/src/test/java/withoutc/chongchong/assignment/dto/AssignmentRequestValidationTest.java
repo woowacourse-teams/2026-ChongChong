@@ -41,7 +41,7 @@ class AssignmentRequestValidationTest {
     @DisplayName("과제 생성 요청은 제목, 내용, 제출 방법의 최대 길이까지 허용한다")
     void validateCreateRequestAtLengthBoundaryTest() {
         AssignmentCreateRequest request = new AssignmentCreateRequest(
-                "가".repeat(15),
+                "가".repeat(20),
                 "가".repeat(10000),
                 "가".repeat(10000),
                 FUTURE,
@@ -55,7 +55,7 @@ class AssignmentRequestValidationTest {
     @DisplayName("과제 생성 요청의 제목, 내용, 제출 방법이 최대 길이를 초과하면 거부한다")
     void validateCreateRequestOverLengthTest() {
         AssignmentCreateRequest request = new AssignmentCreateRequest(
-                "가".repeat(16),
+                "가".repeat(21),
                 "가".repeat(10001),
                 "가".repeat(10001),
                 FUTURE,
@@ -64,7 +64,7 @@ class AssignmentRequestValidationTest {
 
         assertThat(messages(validator.validate(request)))
                 .containsExactlyInAnyOrder(
-                        "제목은 15자 이내로 입력 가능합니다.",
+                        "제목은 20자 이내로 입력 가능합니다.",
                         "내용은 10,000자 이내로 입력 가능합니다.",
                         "제출 방법은 10,000자 이내로 입력 가능합니다."
                 );
@@ -131,7 +131,7 @@ class AssignmentRequestValidationTest {
     @DisplayName("과제 수정 요청의 제목, 내용, 제출 방법이 최대 길이를 초과하면 거부한다")
     void validateUpdateRequestOverLengthTest() {
         AssignmentUpdateRequest request = new AssignmentUpdateRequest(
-                "가".repeat(16),
+                "가".repeat(21),
                 "가".repeat(10001),
                 "가".repeat(10001),
                 null,
@@ -140,7 +140,7 @@ class AssignmentRequestValidationTest {
 
         assertThat(messages(validator.validate(request)))
                 .containsExactlyInAnyOrder(
-                        "제목은 15자 이내로 입력 가능합니다.",
+                        "제목은 20자 이내로 입력 가능합니다.",
                         "내용은 10,000자 이내로 입력 가능합니다.",
                         "제출 방법은 10,000자 이내로 입력 가능합니다."
                 );

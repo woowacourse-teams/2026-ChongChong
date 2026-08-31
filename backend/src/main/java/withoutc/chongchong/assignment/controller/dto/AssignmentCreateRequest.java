@@ -10,7 +10,7 @@ import java.util.List;
 
 public record AssignmentCreateRequest(
         @NotBlank(message = "제목은 필수 값입니다.")
-        @Size(max = 15, message = "제목은 15자 이내로 입력 가능합니다.")
+        @Size(max = 20, message = "제목은 20자 이내로 입력 가능합니다.")
         @Schema(description = "과제 제목", example = "1주 차 과제")
         String title,
         @NotBlank(message = "내용은 필수 값입니다.")
