@@ -1,9 +1,11 @@
 package withoutc.chongchong.assignment.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record MySubmissionDetailResponse(
         @Schema(description = "제출 완료 여부", example = "true")
         boolean submitted,
