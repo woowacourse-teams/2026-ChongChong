@@ -22,3 +22,5 @@ if [[ ! "${HEALTH_STATUS_CODE}" =~ ^2[0-9]{2}$ ]]; then
     echo "Health check returned HTTP ${HEALTH_STATUS_CODE}" >&2
     exit 1
 fi
+
+docker image prune --all --force
