@@ -115,7 +115,7 @@ export async function createAssignmentSubmission(
 
     return data;
   } catch {
-    throw new Error('과제 제출을 실패했습니다.');
+    throw new Error('과제 제출에 실패했습니다.');
   }
 }
 
@@ -130,7 +130,7 @@ export async function updateAssignmentSubmission(
       json: values,
     });
   } catch {
-    throw new Error('과제 제출물 수정을 실패했습니다.');
+    throw new Error('과제 제출물 수정에 실패했습니다.');
   }
 }
 
@@ -148,7 +148,7 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
 
     return data;
   } catch {
-    throw new Error('과제 생성을 실패했습니다.');
+    throw new Error('과제 생성에 실패했습니다.');
   }
 }
 
@@ -162,7 +162,7 @@ export async function updateAssignment(
       json: values,
     });
   } catch {
-    throw new Error('과제 수정을 실패했습니다.');
+    throw new Error('과제 수정에 실패했습니다.');
   }
 }
 
@@ -170,6 +170,6 @@ export async function deleteAssignment(studyId: number, assignmentId: number) {
   try {
     await api.delete(`/studies/${studyId}/assignments/${assignmentId}`);
   } catch {
-    throw new Error('과제 삭제를 실패했습니다.');
+    throw new Error('과제 삭제에 실패했습니다.');
   }
 }
