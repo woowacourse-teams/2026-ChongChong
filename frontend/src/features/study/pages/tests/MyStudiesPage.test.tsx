@@ -52,6 +52,7 @@ test('스터디 역할에 따라 다른 뱃지를 렌더링 한다', async () =>
 });
 
 test('스터디 목록 요청이 실패하면 에러 메시지가 렌더링 한다', async () => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
   server.use(http.get(STUDIES_URL, () => new HttpResponse(null, { status: 500 })));
 
   render(<MyStudiesPage />, { wrapper: createWrapper() });

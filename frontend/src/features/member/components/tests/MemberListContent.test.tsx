@@ -17,10 +17,12 @@ async function findMemberRow(name: string) {
 
 function renderMemberListContent(content: React.ReactNode) {
   render(
-    <Routes>
-      <Route path="/studies/:studyId" element={<Suspense fallback={null}>{content}</Suspense>} />
-      <Route path="/studies" element={<h2>내 스터디</h2>} />
-    </Routes>,
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/studies/:studyId" element={content} />
+        <Route path="/studies" element={<h2>내 스터디</h2>} />
+      </Routes>
+    </Suspense>,
     { wrapper: createWrapper({ initialEntries: ['/studies/1'] }) },
   );
 }
@@ -89,6 +91,7 @@ describe('스터디원 화면 테스트', () => {
   test('스터디원에게는 방출하기 버튼이 렌더링 되지 않는다', async () => {
     renderMemberListContent(<MemberListContent.Member />);
 
+    await findMemberRow('안톨리니');
     expect(screen.queryByText('방출하기')).not.toBeInTheDocument();
   });
 
