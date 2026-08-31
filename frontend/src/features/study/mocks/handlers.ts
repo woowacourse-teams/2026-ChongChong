@@ -114,6 +114,9 @@ export const handlers = [
     if (!user) return new HttpResponse(null, { status: 401 });
     const study = studyTable.findFirst((q) => q.where({ inviteLink: token }));
     if (!study) return new HttpResponse(null, { status: 404 });
+    if (memberTable.findFirst((q) => q.where({ studyId: study.id, userId: user.id }))) {
+      return new HttpResponse(null, { status: 409 });
+    }
     const newMember = {
       id: Date.now(),
       studyId: study.id,

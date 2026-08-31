@@ -60,7 +60,7 @@ export async function fetchStudyInviteLink(studyId: number) {
 export async function joinStudy(body: { token: string }) {
   try {
     const response = await api.post(STUDY_URLS.join, { json: body });
-    return await response.json<{ studyId: string }>();
+    return await response.json<{ studyId: number }>();
   } catch {
     throw new Error('스터디 참여에 실패했습니다.');
   }
