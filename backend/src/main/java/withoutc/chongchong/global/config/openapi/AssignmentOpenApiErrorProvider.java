@@ -1,7 +1,5 @@
 package withoutc.chongchong.global.config.openapi;
 
-import static withoutc.chongchong.global.config.openapi.AbstractOpenApiErrorProvider.entry;
-import static withoutc.chongchong.global.config.openapi.AbstractOpenApiErrorProvider.errors;
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.ACCESS_DENIED;
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.AUTHENTICATION_REQUIRED;
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.INVALID_INPUT_VALUE;
@@ -51,7 +49,8 @@ class AssignmentOpenApiErrorProvider extends AbstractOpenApiErrorProvider {
                         STUDY_ACCESS_DENIED, ASSIGNMENT_SUBMISSION_NOT_FOUND)),
                 entry("updateAssignment", errors(INVALID_INPUT_VALUE, INVALID_REQUEST,
                         AUTHENTICATION_REQUIRED, STUDY_ACCESS_DENIED, ACCESS_DENIED, ASSIGNMENT_NOT_FOUND,
-                        INVALID_TITLE, INVALID_CONTENT, INVALID_SUBMISSION_METHOD, INVALID_CLOSE_AT, INVALID_REMIND_AT)),
+                        INVALID_TITLE, INVALID_CONTENT, INVALID_SUBMISSION_METHOD, INVALID_CLOSE_AT,
+                        INVALID_REMIND_AT)),
                 entry("deleteAssignment", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
                         STUDY_ACCESS_DENIED, ACCESS_DENIED, ASSIGNMENT_NOT_FOUND)),
                 entry("submitAssignment", errors(INVALID_INPUT_VALUE, INVALID_REQUEST,
@@ -62,6 +61,8 @@ class AssignmentOpenApiErrorProvider extends AbstractOpenApiErrorProvider {
                         ASSIGNMENT_SUBMISSION_NOT_FOUND, INVALID_CONTENT, INVALID_LINK)),
                 entry("getAllSubmissionStatuses", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
                         STUDY_ACCESS_DENIED, ACCESS_DENIED, ASSIGNMENT_NOT_FOUND)),
+                entry("getMySubmissionDetail", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
+                        STUDY_ACCESS_DENIED, ASSIGNMENT_NOT_FOUND)),
                 entry("getSubmissionDetail", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,
                         STUDY_ACCESS_DENIED, ASSIGNMENT_NOT_FOUND, ASSIGNMENT_SUBMISSION_NOT_FOUND)),
                 entry("getSubmissionList", errors(INVALID_REQUEST, AUTHENTICATION_REQUIRED,

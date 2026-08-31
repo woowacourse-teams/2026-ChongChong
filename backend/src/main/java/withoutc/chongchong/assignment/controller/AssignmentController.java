@@ -22,6 +22,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.service.AssignmentService;
@@ -124,6 +125,18 @@ public class AssignmentController implements AssignmentApi {
     ) {
         AssignmentStatusesResponse response = assignmentService.getAllSubmittedStatus(currentUser.id(), studyId,
                 assignmentId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{assignmentId}/submissions/my")
+    public ResponseEntity<MySubmissionDetailResponse> getMySubmissionDetail(
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
+            @PathVariable Long studyId,
+            @PathVariable Long assignmentId
+    ) {
+        MySubmissionDetailResponse response = assignmentService.getMySubmissionDetail(currentUser.id(), studyId,
+                assignmentId);
+
         return ResponseEntity.ok(response);
     }
 

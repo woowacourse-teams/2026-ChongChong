@@ -21,6 +21,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
@@ -119,6 +120,18 @@ public interface AssignmentApi {
     @Operation(summary = "과제 제출 상태 목록 조회", description = "스터디 리더가 멤버별 과제 제출 상태를 조회한다.")
     @ApiResponse(responseCode = "200", description = "과제 제출 상태 목록 조회 성공")
     ResponseEntity<AssignmentStatusesResponse> getAllSubmissionStatuses(
+            AuthenticatedUser currentUser,
+            @Parameter(description = "스터디 ID", example = "1") Long studyId,
+            @Parameter(description = "과제 ID", example = "1") Long assignmentId
+    );
+
+    @Operation(summary = "내 과제 제출 조회", description = "현재 사용자의 과제 제출 정보를 조회한다.")
+    @ApiResponse(
+            responseCode = "200",
+            description = "내 과제 제출 조회 성공. 제출 정보가 없으면 빈 본문을 반환한다.",
+            content = @Content(schema = @Schema(implementation = MySubmissionDetailResponse.class, nullable = true))
+    )
+    ResponseEntity<MySubmissionDetailResponse> getMySubmissionDetail(
             AuthenticatedUser currentUser,
             @Parameter(description = "스터디 ID", example = "1") Long studyId,
             @Parameter(description = "과제 ID", example = "1") Long assignmentId
