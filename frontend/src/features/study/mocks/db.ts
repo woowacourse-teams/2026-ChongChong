@@ -39,6 +39,18 @@ export const mockStudies = [
     description: '브론즈지만 피즈 장인 피즈의 피즈 잘하는 법 스터디',
     inviteLink: 'https://chongchong.app/join?token=4',
   },
+  {
+    id: 5,
+    name: '내가 리더인 유령 스터디',
+    description: '아무런 활동도 없는 유령 스터디',
+    inviteLink: 'chongchong.ghost.app/join/5',
+  },
+  {
+    id: 6,
+    name: '내가 멤버인 유령 스터디',
+    description: '아무런 활동도 없는 유령 스터디',
+    inviteLink: 'chongchong.ghost.app/join/6',
+  },
 ] satisfies studySchemaType[];
 
 export function createSeedStudies() {

@@ -6,6 +6,7 @@ import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
 import { validateStudy, validateStudyJoin } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
+import { assignmentTable } from '../../assignment/mocks/db';
 
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
@@ -35,55 +36,51 @@ export const handlers = [
   }),
 
   http.get(`${API_URL}${STUDY_URLS.detail}`, async ({ request, params }) => {
-    const { studyId } = params;
+    const studyId = Number(params.studyId);
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
-    const member = memberTable.findFirst((q) =>
-      q.where({ studyId: Number(studyId), userId: user.id }),
-    );
+    const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (!member) return new HttpResponse(null, { status: 403 });
     const isLead = member.role === 'LEADER';
-    // 과제/공지 MSW가 존재하지 않아 임시 데이터를 사용합니다.
+    const now = new Date();
+    const members = memberTable.findMany((q) => q.where({ studyId }));
+    const memberCount = members.length;
+    const openAssignments = assignmentTable
+      .findMany((q) => q.where({ studyId }))
+      .filter((assignment) => new Date(assignment.closeAt) > now);
+
+    // 공지 MSW가 존재하지 않아 빈데이터로 표현합니다.
     if (isLead) {
+      const assignments = openAssignments.filter(
+        (assignment) => assignment.completeUserIds.length < memberCount,
+      );
       return HttpResponse.json({
         notices: {
-          count: 1,
-          items: [
-            {
-              id: 1,
-              title: '판교 스터디룸에서 만나도록 합시다',
-              memberCount: 4,
-              completeCount: 2,
-            },
-          ],
+          count: 0,
+          items: [],
         },
         assignments: {
-          count: 1,
-          items: [
-            {
-              id: 1,
-              title: '그리디 3문제 풀기',
-              memberCount: 4,
-              completeCount: 2,
-            },
-          ],
+          count: assignments.length,
+          items: assignments.map((assignment) => ({
+            id: assignment.id,
+            title: assignment.title,
+            memberCount,
+            completeCount: assignment.completeUserIds.length,
+          })),
         },
       });
     } else {
+      const assignments = openAssignments.filter(
+        (assignment) => !assignment.completeUserIds.includes(user.id),
+      );
+      const notices: { id: number; title: string }[] = [];
       return HttpResponse.json({
-        totalCount: 4,
-        notices: [
-          {
-            id: 1,
-            title: '판교 스터디룸에서 만나도록 합시다',
-          },
-        ],
-        assignments: [
-          {
-            id: 1,
-            title: '그리디 3문제 풀기',
-          },
-        ],
+        totalCount: notices.length + assignments.length,
+        notices,
+        assignments: assignments.map((assignment) => ({
+          id: assignment.id,
+          title: assignment.title,
+        })),
       });
     }
   }),
