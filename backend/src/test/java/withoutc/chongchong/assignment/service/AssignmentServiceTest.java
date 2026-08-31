@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -407,6 +409,66 @@ class AssignmentServiceTest {
         verify(assignmentSubmissionRepository).getByIdAndAssignmentIdAndMemberIdOrThrow(300L, ASSIGNMENT_ID,
                 MEMBER_ID);
         verify(assignmentSubmissionRepository).save(submission);
+    }
+
+    @Test
+    @DisplayName("스터디원은 자신이 제출한 과제 제출 정보를 조회한다")
+    void getMySubmissionDetailTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
+        AssignmentSubmission submission = submissionWithId(300L, member, assignment);
+        submission.submit("제출 내용", "https://example.com", NOW);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(ASSIGNMENT_ID, MEMBER_ID))
+                .thenReturn(Optional.of(submission));
+
+        MySubmissionDetailResponse response = assignmentService.getMySubmissionDetail(
+                USER_ID, STUDY_ID, ASSIGNMENT_ID
+        );
+
+        assertThat(response.submitted()).isTrue();
+        assertThat(response.createdAt()).isEqualTo(NOW);
+        assertThat(response.content()).isEqualTo("제출 내용");
+        assertThat(response.link()).isEqualTo("https://example.com");
+    }
+
+    @Test
+    @DisplayName("스터디원이 과제를 제출하지 않았다면 미제출 상태를 반환한다")
+    void getMySubmissionDetailBeforeSubmitTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
+        AssignmentSubmission submission = submissionWithId(300L, member, assignment);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(ASSIGNMENT_ID, MEMBER_ID))
+                .thenReturn(Optional.of(submission));
+
+        MySubmissionDetailResponse response = assignmentService.getMySubmissionDetail(
+                USER_ID, STUDY_ID, ASSIGNMENT_ID
+        );
+
+        assertThat(response.submitted()).isFalse();
+        assertThat(response.createdAt()).isNull();
+        assertThat(response.content()).isNull();
+        assertThat(response.link()).isNull();
+    }
+
+    @Test
+    @DisplayName("현재 사용자에게 제출 행이 없다면 내 제출 정보는 null이다")
+    void getMySubmissionDetailWithoutSubmissionTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        StudyMember leader = studyMember(assignment, MEMBER_ID, StudyMemberRole.LEADER, "리더");
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
+        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(ASSIGNMENT_ID, MEMBER_ID))
+                .thenReturn(Optional.empty());
+
+        MySubmissionDetailResponse response = assignmentService.getMySubmissionDetail(
+                USER_ID, STUDY_ID, ASSIGNMENT_ID
+        );
+
+        assertThat(response).isNull();
     }
 
     @Test
