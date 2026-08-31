@@ -108,6 +108,27 @@ export const handlers = [
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
+  http.post(`${API_URL}${STUDY_URLS.join}`, async ({ request }) => {
+    const { token } = (await request.json()) as { token: string };
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const study = studyTable.findFirst((q) => q.where({ inviteLink: token }));
+    if (!study) return new HttpResponse(null, { status: 404 });
+    const newMember = {
+      id: Date.now(),
+      studyId: study.id,
+      userId: user.id,
+      name: user.name,
+      profileImage: user.profileImage,
+      role: 'MEMBER' as const,
+    };
+    await memberTable.create(newMember);
+
+    return HttpResponse.json({
+      studyId: study.id,
+    });
+  }),
+
   http.get(`${API_URL}${STUDY_URLS.info}`, async ({ request, params }) => {
     const { studyId } = params;
     const study = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
