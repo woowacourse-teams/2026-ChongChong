@@ -4,7 +4,6 @@ import { joinStudy } from '../api';
 export default function useStudyJoin() {
   const mutation = useMutation({
     mutationFn: ({ token }: { token: string }) => joinStudy({ token }),
-    onSuccess: () => {},
   });
 
   return mutation;
