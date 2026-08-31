@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -35,7 +36,7 @@ public class StudyMemberService {
     private final StudyInviteTokenProvider studyInviteTokenProvider;
 
     @Transactional
-    public void join(Long userId, StudyInviteTokenRequest request) {
+    public StudyMemberJoinResponse join(Long userId, StudyInviteTokenRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
@@ -49,7 +50,7 @@ public class StudyMemberService {
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.MEMBER);
 
-        studyMemberRepository.save(studyMember);
+        return StudyMemberJoinResponse.from(studyMemberRepository.save(studyMember));
     }
 
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {

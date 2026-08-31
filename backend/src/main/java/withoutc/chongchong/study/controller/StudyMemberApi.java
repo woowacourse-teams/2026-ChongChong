@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.dto.StudyMembersResponse;
 
 @Tag(name = "Study Member", description = "스터디 멤버 API")
@@ -20,8 +21,15 @@ import withoutc.chongchong.study.dto.StudyMembersResponse;
 public interface StudyMemberApi {
 
     @Operation(summary = "스터디 참여", description = "초대 토큰을 사용해 스터디에 참여한다.")
-    @ApiResponse(responseCode = "201", description = "스터디 참여 성공")
-    ResponseEntity<Void> join(
+    @ApiResponse(
+            responseCode = "201",
+            description = "스터디 참여 성공",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = StudyMemberJoinResponse.class)
+            )
+    )
+    ResponseEntity<StudyMemberJoinResponse> join(
             AuthenticatedUser user,
             @Valid StudyInviteTokenRequest request
     );

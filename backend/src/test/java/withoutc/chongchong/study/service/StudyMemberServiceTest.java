@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.dto.StudyMemberResponse;
 import withoutc.chongchong.study.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
@@ -75,10 +76,14 @@ class StudyMemberServiceTest {
         when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
-        studyMemberService.join(userId, request);
+        when(studyMemberRepository.save(any(StudyMember.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        StudyMemberJoinResponse response = studyMemberService.join(userId, request);
 
         verify(studyMemberRepository).save(captor.capture());
         StudyMember studyMember = captor.getValue();
+        assertThat(response.studyId()).isEqualTo(studyId);
         assertThat(studyMember.getStudy()).isSameAs(study);
         assertThat(studyMember.getUser()).isSameAs(user);
         assertThat(studyMember.getRole()).isEqualTo(StudyMemberRole.MEMBER);
