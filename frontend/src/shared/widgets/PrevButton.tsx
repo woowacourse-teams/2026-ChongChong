@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import backIcon from '../assets/left-arrow.svg';
 
 const backButtonStyle = {
@@ -15,10 +15,12 @@ const backButtonStyle = {
 
 export function PrevButton() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const parentPath = pathname.substring(0, pathname.lastIndexOf('/'));
 
   function goToPreviousPage() {
     // fallback 필요
-    navigate(-1);
+    navigate(parentPath);
   }
 
   return (
