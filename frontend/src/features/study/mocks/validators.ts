@@ -44,3 +44,25 @@ export function validateStudy(input: Partial<StudyInput>): FieldError[] {
     return error ? [{ field, ...error }] : [];
   });
 }
+
+interface StudyJoinInput {
+  token: string;
+}
+
+const studyJoinValidator = {
+  token: (value) => {
+    if (value.trim().length === 0) {
+      return { code: 'REQUIRED', reason: '초대 토큰은 필수입니다.' };
+    }
+    return null;
+  },
+} satisfies Record<keyof StudyJoinInput, FieldValidator>;
+
+const studyJoinFields = Object.keys(studyJoinValidator) as (keyof StudyJoinInput)[];
+
+export function validateStudyJoin(input: Partial<StudyJoinInput>): FieldError[] {
+  return studyJoinFields.flatMap((field) => {
+    const error = studyJoinValidator[field](input[field] ?? '');
+    return error ? [{ field, ...error }] : [];
+  });
+}

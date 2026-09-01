@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router';
+import { useMemo } from 'react';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -8,6 +9,7 @@ import Input from '../../../shared/ui/inputs/Input';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
+import { ValidationError } from '../../../shared/api/error';
 import isBlank from '../../../shared/utils/isBlank';
 import useStudyJoin from '../hooks/useStudyJoin';
 
@@ -15,7 +17,7 @@ export default function StudyJoinPage() {
   const navigate = useNavigate();
   const [joinToken, handleJoinToken] = useInputState('');
 
-  const { mutate: joinStudy, isPending } = useStudyJoin();
+  const { mutate: joinStudy, error, isPending } = useStudyJoin();
 
   function handleJoinStudy(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,6 +28,11 @@ export default function StudyJoinPage() {
       },
     );
   }
+
+  const fieldErrors = useMemo(
+    () => (error instanceof ValidationError ? error.fieldErrors : {}),
+    [error],
+  );
 
   return (
     <Page>
@@ -40,8 +47,8 @@ export default function StudyJoinPage() {
             isRequired={true}
             label="초대 링크"
             helpText="스터디 리드에게 받은 초대 링크를 붙여넣어 주세요"
-            // errorText={errors.name.message}
-            // isError={errors.name.state}
+            isError={Boolean(fieldErrors.token)}
+            errorText={fieldErrors.token}
           >
             <Input
               id="study-join-link"

@@ -4,7 +4,7 @@ import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
-import { validateStudy } from './validators';
+import { validateStudy, validateStudyJoin } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
 
 export const handlers = [
@@ -115,9 +115,14 @@ export const handlers = [
   }),
 
   http.post(`${API_URL}${STUDY_URLS.join}`, async ({ request }) => {
-    const { token } = (await request.json()) as { token: string };
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
+    const { token } = (await request.json()) as { token: string };
+    const fieldErrors = validateStudyJoin({ token });
+    if (fieldErrors.length > 0) {
+      return invalidInputResponse(fieldErrors);
+    }
+
     const study = studyTable.findFirst((q) => q.where({ inviteLink: token }));
     if (!study) return new HttpResponse(null, { status: 404 });
     if (memberTable.findFirst((q) => q.where({ studyId: study.id, userId: user.id }))) {
