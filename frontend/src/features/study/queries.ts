@@ -11,10 +11,10 @@ const studyQueries = {
       queryFn: () => fetchStudies(),
     }),
   details: () => [...studyQueries.all(), 'detail'],
-  detail: <R extends Role>(studyId: number) =>
+  detail: <R extends Role>(studyId: number, role: R) =>
     queryOptions({
-      queryKey: [...studyQueries.details(), studyId],
-      queryFn: () => fetchStudyDetail<R>(studyId),
+      queryKey: [...studyQueries.details(), studyId, role],
+      queryFn: () => fetchStudyDetail(studyId, role),
     }),
   info: (studyId: number) =>
     queryOptions({
