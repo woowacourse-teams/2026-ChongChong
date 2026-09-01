@@ -6,7 +6,9 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import webpack from 'webpack';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(__dirname, '.env');
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+
+const envPath = path.resolve(__dirname, envFile);
 
 if (existsSync(envPath)) {
   process.loadEnvFile(envPath);
