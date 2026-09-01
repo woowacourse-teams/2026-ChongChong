@@ -136,4 +136,16 @@ describe('이전 버튼 이동 테스트', () => {
 
     expect(screen.getByTestId('pathname')).toHaveTextContent('/studies');
   });
+
+  test.failing(
+    '후행 슬래시가 있는 공지 목록에서 클릭하면 동일하게 특정 스터디 디테일로 이동한다',
+    async () => {
+      const user = renderPrevButton('/studies/1/notices/');
+
+      await clickPrevButton(user);
+
+      expect(screen.getByRole('heading', { name: '스터디 상세' })).toBeInTheDocument();
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/studies/1');
+    },
+  );
 });
