@@ -2,27 +2,19 @@ import { http } from 'msw';
 import { render, screen } from '@testing-library/react';
 import { server } from '../../../../mocks/msw-node';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes, useParams } from 'react-router';
+import { Route, Routes } from 'react-router';
 
 import { createWrapper } from '../../../../test/render';
 import { STUDY_URLS } from '../../urls';
-import { setAccessToken } from '../../../login/accessToken';
 import { API_URL } from '../../../../../config';
 import { invalidInputResponse } from '../../../../mocks/errors';
+import StudyDetailPage from '../../pages/StudyDetailPage';
 import StudyForm from '../StudyForm';
-
-function StudyDetailPath() {
-  const { studyId } = useParams();
-
-  return <p>스터디 ID: {studyId}</p>;
-}
 
 describe('스터디폼 테스트', () => {
   let user: ReturnType<typeof userEvent.setup>;
   beforeEach(() => {
     user = userEvent.setup();
-    // 스터디 1의 리더만 과제를 생성할 수 있습니다.
-    setAccessToken('5');
   });
 
   test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {
@@ -46,17 +38,17 @@ describe('스터디폼 테스트', () => {
     render(
       <Routes>
         <Route path={STUDY_URLS.create} element={<StudyForm />} />
-        <Route path="/studies/:studyId" element={<StudyDetailPath />} />
+        <Route path="/studies/:studyId" element={<StudyDetailPage />} />
       </Routes>,
       { wrapper: createWrapper({ initialEntries: [STUDY_URLS.create] }) },
     );
 
     const nameInput = screen.getByRole('textbox', { name: '스터디 이름' });
-    await user.type(nameInput, '피자');
+    await user.type(nameInput, '피자 스터디');
     const button = screen.getByRole('button', { name: '스터디 만들기' });
     await user.click(button);
 
-    expect(await screen.findByText(/^스터디 ID: \d+$/)).toBeInTheDocument();
+    expect(await screen.findByText('피자 스터디')).toBeInTheDocument();
   });
 
   test('제목 입력은 15자로 제한된다', async () => {
