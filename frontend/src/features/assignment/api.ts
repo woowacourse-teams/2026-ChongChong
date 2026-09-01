@@ -177,7 +177,9 @@ export async function deleteAssignment(studyId: number, assignmentId: number) {
 
 export async function fetchMyAssignmentSubmission(studyId: number, assignmentId: number) {
   try {
-    const response = await api.get(`/studies/${studyId}/assignments/${assignmentId}`);
+    const response = await api.get(
+      `/studies/${studyId}/assignments/${assignmentId}/submissions/my`,
+    );
 
     const data: unknown = await response.json();
 
