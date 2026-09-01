@@ -3,10 +3,10 @@ export function parseParentPath(pathname: string) {
 
   // 후행 슬래시 제거
   if (pathname.endsWith('/')) {
-    parentPath = pathname.substring(0, pathname.lastIndexOf('/'));
+    parentPath = pathname.replace(/\/+$/, '');
   }
 
-  parentPath = pathname.substring(0, parentPath.lastIndexOf('/'));
+  parentPath = parentPath.substring(0, parentPath.lastIndexOf('/'));
 
   if (parentPath.endsWith('submissions')) {
     return parentPath.substring(0, parentPath.lastIndexOf('/'));
