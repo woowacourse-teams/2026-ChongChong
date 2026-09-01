@@ -11,6 +11,7 @@ import { routes as AssignmentRoutes } from './src/features/assignment/routes/rou
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
 import { refreshAccessToken } from './src/features/login/api';
+import { PostHogProvider } from '@posthog/react';
 
 const appRoutes = [
   {
@@ -57,10 +58,18 @@ async function bootstrap() {
 
   ReactDOM.createRoot(root).render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <Global styles={globalStyles} />
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <PostHogProvider
+        apiKey={process.env.POSTHOG_PROJECT_TOKEN!}
+        options={{
+          api_host: process.env.POSTHOG_HOST,
+          defaults: '2026-05-30',
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <Global styles={globalStyles} />
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </PostHogProvider>
     </StrictMode>,
   );
 }

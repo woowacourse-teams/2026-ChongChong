@@ -54,6 +54,8 @@ export default {
         process.env.API_BASE_URL ?? 'https://mock.chongchong.com',
       ),
       'process.env.KAKAO_REST_API_KEY': JSON.stringify(process.env.KAKAO_REST_API_KEY ?? ''),
+      'process.env.POSTHOG_HOST': JSON.stringify(process.env.POSTHOG_HOST),
+      'process.env.POSTHOG_PROJECT_TOKEN': JSON.stringify(process.env.POSTHOG_PROJECT_TOKEN),
     }),
   ],
   devServer: {
