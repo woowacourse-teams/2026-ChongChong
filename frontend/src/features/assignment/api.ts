@@ -8,6 +8,7 @@ import {
   isSubmissionListResponse,
   isAssignmentSubmitStatusResponse,
   isCreateSubmissionResponse,
+  isUserAssignmentSubmitDetailResponse,
 } from './responseSchemas';
 
 export async function fetchAssignmentList(studyId: number, cursor?: number) {
@@ -171,5 +172,23 @@ export async function deleteAssignment(studyId: number, assignmentId: number) {
     await api.delete(`/studies/${studyId}/assignments/${assignmentId}`);
   } catch {
     throw new Error('과제 삭제에 실패했습니다.');
+  }
+}
+
+export async function fetchMyAssignmentSubmission(studyId: number, assignmentId: number) {
+  try {
+    const response = await api.get(
+      `/studies/${studyId}/assignments/${assignmentId}/submissions/my`,
+    );
+
+    const data: unknown = await response.json();
+
+    if (!isUserAssignmentSubmitDetailResponse(data)) {
+      throw new Error('과제 제출 정보 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
+  } catch {
+    throw new Error('내 제출 정보를 불러오는데 실패했습니다.');
   }
 }

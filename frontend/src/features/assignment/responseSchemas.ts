@@ -10,6 +10,7 @@ import type {
   Member,
   AssignmentSubmitStatus,
   CreateSubmissionResponse,
+  UserAssignmentSubmitDetail,
 } from './types';
 
 const assignmentSchema = z.object({
@@ -84,6 +85,19 @@ const assignmentSubmitStatusSchema = z.object({
   incompleteMembers: z.array(memberSchema),
 }) satisfies z.ZodType<AssignmentSubmitStatus>;
 
+const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submitted', [
+  z.object({
+    submitted: z.literal(true),
+    submissionId: z.number(),
+    createdAt: z.string(),
+    content: z.string(),
+    link: z.url().optional(),
+  }),
+  z.object({
+    submitted: z.literal(false),
+  }),
+]) satisfies z.ZodType<UserAssignmentSubmitDetail>;
+
 export function isAssignmentListResponse(data: unknown): data is AssignmentListResponse {
   return assignmentListResponseSchema.safeParse(data).success;
 }
@@ -110,4 +124,10 @@ export function isSubmissionDetailResponse(data: unknown): data is SubmissionDet
 
 export function isAssignmentSubmitStatusResponse(data: unknown): data is AssignmentSubmitStatus {
   return assignmentSubmitStatusSchema.safeParse(data).success;
+}
+
+export function isUserAssignmentSubmitDetailResponse(
+  data: unknown,
+): data is UserAssignmentSubmitDetail {
+  return userAssignmentSubmitDetailSchema.safeParse(data).success;
 }
