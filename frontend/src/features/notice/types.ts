@@ -20,7 +20,7 @@ export interface Notice {
 }
 
 export interface NoticeListResponse {
-  nextCursor: number;
+  nextCursor: number | null;
   hasNext: boolean;
   notices: Notice[];
 }

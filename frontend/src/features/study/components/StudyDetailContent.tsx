@@ -58,7 +58,7 @@ const IconStyle = {
 
 export function LeaderStudyDetailContent({ username }: { username: string }) {
   const { studyId } = useStudyId();
-  const { data } = useSuspenseQuery(studyQueries.detail<'LEADER'>(studyId));
+  const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'LEADER'));
   return (
     <>
       <StudyLeaderWelcomeBanner username={username} />
@@ -111,7 +111,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
 
 export function MemberStudyDetailContent({ username }: { username: string }) {
   const { studyId } = useStudyId();
-  const { data } = useSuspenseQuery(studyQueries.detail<'MEMBER'>(studyId));
+  const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'MEMBER'));
   const todoCount = data.totalCount;
 
   return (

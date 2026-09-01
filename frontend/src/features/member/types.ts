@@ -6,3 +6,7 @@ export interface Member {
   profileImage: string;
   role: StudyRole;
 }
+
+export interface MemberResponse {
+  members: Member[];
+}
