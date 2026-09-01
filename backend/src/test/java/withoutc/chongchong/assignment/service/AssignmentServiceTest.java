@@ -427,6 +427,7 @@ class AssignmentServiceTest {
                 USER_ID, STUDY_ID, ASSIGNMENT_ID
         );
 
+        assertThat(response.submissionId()).isEqualTo(300L);
         assertThat(response.submitted()).isTrue();
         assertThat(response.createdAt()).isEqualTo(NOW);
         assertThat(response.content()).isEqualTo("제출 내용");
@@ -448,6 +449,7 @@ class AssignmentServiceTest {
                 USER_ID, STUDY_ID, ASSIGNMENT_ID
         );
 
+        assertThat(response.submissionId()).isEqualTo(300L);
         assertThat(response.submitted()).isFalse();
         assertThat(response.createdAt()).isNull();
         assertThat(response.content()).isNull();
