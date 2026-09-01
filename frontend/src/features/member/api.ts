@@ -1,10 +1,17 @@
 import api from '../../client';
-import { Member } from './types';
+import { isMemberResponse } from './responseSchemas';
 
 export async function fetchMembers(studyId: number) {
   try {
     const response = await api.get(`/studies/${studyId}/members`);
-    return await response.json<{ members: Member[] }>();
+
+    const data = await response.json();
+
+    if (!isMemberResponse(data)) {
+      throw new Error('멤버 목록 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch {
     throw new Error('멤버 목록을 불러오는데 실패했습니다.');
   }
