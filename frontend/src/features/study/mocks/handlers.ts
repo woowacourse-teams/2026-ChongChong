@@ -18,7 +18,7 @@ export const handlers = [
           q.where({ studyId: study.id, userId: user.id }),
         );
         return {
-          id: String(study.id),
+          id: study.id,
           role: membership.role,
           name: study.name,
           description: study.description,
@@ -96,7 +96,11 @@ export const handlers = [
     // }
 
     const studyId = Date.now();
-    await studyTable.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
+    await studyTable.create({
+      id: studyId,
+      inviteLink: `https://chongchong.app/join?token=${studyId}`,
+      ...body,
+    });
     await memberTable.create({
       id: Date.now(),
       studyId,
