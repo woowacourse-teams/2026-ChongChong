@@ -88,9 +88,10 @@ const assignmentSubmitStatusSchema = z.object({
 const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submitted', [
   z.object({
     submitted: z.literal(true),
+    submissionId: z.number(),
     createdAt: z.string(),
     content: z.string(),
-    link: z.url(),
+    link: z.url().optional(),
   }),
   z.object({
     submitted: z.literal(false),

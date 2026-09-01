@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
 import { useParams } from 'react-router';
 import { createAssignmentSubmission } from '../api';
 import assignmentQueries from '../queries';
@@ -11,18 +11,17 @@ export default function MemberAssignmentDetailContent() {
   const { studyId, assignmentId } = useParams();
   const queryClient = useQueryClient();
 
-  const { data: assignment } = useSuspenseQuery(
-    assignmentQueries.detail(Number(studyId), Number(assignmentId)),
-  );
+  const [{ data: assignment }, { data: submission }] = useSuspenseQueries({
+    queries: [
+      assignmentQueries.detail(Number(studyId), Number(assignmentId)),
+      assignmentQueries.mySubmission(Number(studyId), Number(assignmentId)),
+    ],
+  });
 
   const createMutation = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       createAssignmentSubmission(Number(studyId), Number(assignmentId), values),
-    onSuccess: ({ submissionId }) => {
-      queryClient.setQueryData(
-        assignmentQueries.detail(Number(studyId), Number(assignmentId)).queryKey,
-        { ...assignment, submissionId },
-      );
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(Number(studyId)) });
     },
   });
@@ -31,12 +30,12 @@ export default function MemberAssignmentDetailContent() {
     <>
       <AssignmentArticle assignment={assignment} />
 
-      {assignment.submissionId ? (
+      {submission.submitted ? (
         <CompletedAssignmentSubmission
-          key={`${Number(studyId)}-${Number(assignmentId)}-${assignment.submissionId}`}
+          key={`${Number(studyId)}-${Number(assignmentId)}-${submission.submissionId}`}
           assignmentId={Number(assignmentId)}
           studyId={Number(studyId)}
-          submissionId={assignment.submissionId}
+          submission={submission}
         />
       ) : (
         <AssignmentSubmissionForm

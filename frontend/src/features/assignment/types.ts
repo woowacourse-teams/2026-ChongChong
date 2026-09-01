@@ -39,10 +39,9 @@ export interface AssignmentDetail {
   content: string;
   submissionMethod: string;
   closeAt: string;
-  submissionId?: number;
 }
 
-export type AssignmentValue = Omit<AssignmentDetail, 'id' | 'submissionId'>;
+export type AssignmentValue = Omit<AssignmentDetail, 'id'>;
 
 export type UpdateAssignmentValue = Partial<AssignmentValue>;
 
@@ -75,13 +74,16 @@ export interface CreateSubmissionResponse {
   submissionId: number;
 }
 
-export type UserAssignmentSubmitDetail =
-  | {
-      submitted: true;
-      createdAt: string;
-      content: string;
-      link: string;
-    }
-  | {
-      submitted: false;
-    };
+export interface SubmittedAssignment {
+  submitted: true;
+  submissionId: number;
+  createdAt: string;
+  content: string;
+  link?: string;
+}
+
+export interface UnsubmittedAssignment {
+  submitted: false;
+}
+
+export type UserAssignmentSubmitDetail = SubmittedAssignment | UnsubmittedAssignment;
