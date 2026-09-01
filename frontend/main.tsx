@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import App from './src/App';
@@ -55,12 +56,12 @@ async function bootstrap() {
   const router = createBrowserRouter(appRoutes);
 
   ReactDOM.createRoot(root).render(
-    <>
+    <StrictMode>
       <QueryClientProvider client={queryClient}>
         <Global styles={globalStyles} />
         <RouterProvider router={router} />
       </QueryClientProvider>
-    </>,
+    </StrictMode>,
   );
 }
 
