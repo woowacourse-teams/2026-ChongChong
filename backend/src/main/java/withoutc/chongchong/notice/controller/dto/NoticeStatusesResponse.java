@@ -11,6 +11,8 @@ public record NoticeStatusesResponse(
         int memberCount,
         @Schema(description = "공지 읽음 완료 멤버 수", example = "3")
         int readCount,
+        @Schema(description = "공지 읽지 않은 멤버 수", example = "2")
+        int unreadCount,
         @Schema(description = "다음 리마인드 예정 시각", example = "2026-08-28T10:00:00", nullable = true)
         LocalDateTime remindAt,
         @Schema(description = "읽은 멤버 목록")
@@ -28,6 +30,7 @@ public record NoticeStatusesResponse(
                 noticeId,
                 readMembers.size() + unreadMembers.size(),
                 readMembers.size(),
+                unreadMembers.size(),
                 remindAt,
                 readMembers,
                 unreadMembers
@@ -41,7 +44,7 @@ public record NoticeStatusesResponse(
             @Schema(description = "멤버 이름", example = "홍길동")
             String name,
             @Schema(description = "멤버 프로필 이미지 URL", example = "https://example.com/profile.png", nullable = true)
-            String profileImageUrl
+            String profileImage
     ) {
         public static ReadMember of(Long studyMemberId, String name, String profileImageUrl) {
             return new ReadMember(studyMemberId, name, profileImageUrl);
@@ -55,7 +58,7 @@ public record NoticeStatusesResponse(
             @Schema(description = "멤버 이름", example = "김철수")
             String name,
             @Schema(description = "멤버 프로필 이미지 URL", example = "https://example.com/profile.png", nullable = true)
-            String profileImageUrl,
+            String profileImage,
             @Schema(description = "마지막 리마인드 발송 시각", example = "2026-08-27T09:00:00", nullable = true)
             LocalDateTime lastRemindAt
     ) {

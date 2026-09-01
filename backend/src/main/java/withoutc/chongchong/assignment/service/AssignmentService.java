@@ -20,6 +20,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse.SubmissionSummary;
@@ -184,6 +185,17 @@ public class AssignmentService {
                 submissionId, assignmentId, member.getId());
         submission.update(request.content(), request.link());
         assignmentSubmissionRepository.save(submission);
+    }
+
+    public MySubmissionDetailResponse getMySubmissionDetail(Long userId, Long studyId, Long assignmentId) {
+        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
+        validateAssignmentBelongsToStudy(studyId, assignment);
+
+        return assignmentSubmissionRepository.findByAssignmentIdAndMemberId(assignmentId, member.getId())
+                .map(MySubmissionDetailResponse::from)
+                .orElse(null);
     }
 
     public SubmissionDetailResponse getSubmissionDetail(Long userId, Long studyId, Long assignmentId,

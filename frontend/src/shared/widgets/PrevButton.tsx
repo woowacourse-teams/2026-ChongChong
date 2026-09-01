@@ -1,6 +1,7 @@
 import { CSSProperties } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import backIcon from '../assets/left-arrow.svg';
+import { parseParentPath } from '../utils/parseParentPath';
 
 const backButtonStyle = {
   display: 'grid',
@@ -15,10 +16,12 @@ const backButtonStyle = {
 
 export function PrevButton() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const parentPath = parseParentPath(pathname);
 
   function goToPreviousPage() {
     // fallback 필요
-    navigate(-1);
+    navigate(parentPath);
   }
 
   return (

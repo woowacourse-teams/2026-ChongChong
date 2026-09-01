@@ -8,21 +8,11 @@ import { API_URL } from '../../../../../config';
 import { STUDY_URLS } from '../../urls';
 
 const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
-const STUDY_DETAIL_URL = `${API_URL}${STUDY_URLS.detail}`;
 
 function mockStudyInfo(role: 'LEADER' | 'MEMBER') {
   server.use(
     http.get(STUDY_INFO_URL, () =>
       HttpResponse.json({ studyName: '객체지향 스터디', role, userName: '안톨리니' }),
-    ),
-    http.get(STUDY_DETAIL_URL, () =>
-      role === 'LEADER'
-        ? HttpResponse.json({
-            memberCount: 1,
-            notices: { count: 0, items: [] },
-            assignments: { count: 0, items: [] },
-          })
-        : HttpResponse.json({ totalCount: 0, notices: [], assignments: [] }),
     ),
   );
 }

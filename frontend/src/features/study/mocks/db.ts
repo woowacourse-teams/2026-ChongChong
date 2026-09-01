@@ -1,14 +1,18 @@
 import { Collection } from '@msw/data';
 import { z } from 'zod';
 
-export const studyTable = new Collection({
-  schema: z.object({
-    id: z.number(),
-    name: z.string(),
-    description: z.string(),
-    inviteLink: z.string(),
-  }),
+const studySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string(),
+  inviteLink: z.string(),
 });
+
+export const studyTable = new Collection({
+  schema: studySchema,
+});
+
+type studySchemaType = z.infer<typeof studySchema>;
 
 export const mockStudies = [
   {
@@ -35,7 +39,7 @@ export const mockStudies = [
     description: '브론즈지만 피즈 장인 피즈의 피즈 잘하는 법 스터디',
     inviteLink: 'chongchong.app/join/4',
   },
-];
+] satisfies studySchemaType[];
 
 export function createSeedStudies() {
   for (const mockStudy of mockStudies) {

@@ -129,7 +129,7 @@ public class Notice extends BaseEntity {
     }
 
     private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.length() > 15) {
+        if (title == null || title.isBlank() || title.length() > 20) {
             throw new NoticeException(NoticeErrorCode.INVALID_TITLE);
         }
     }

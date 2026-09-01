@@ -27,7 +27,7 @@ rollback() {
     export BACKEND_IMAGE="${previous_image%:*}"
     export BACKEND_IMAGE_TAG="${previous_image##*:}"
     echo "Rolling back to ${BACKEND_IMAGE}:${BACKEND_IMAGE_TAG}" >&2
-    compose up --detach --remove-orphans
+    compose up --detach --remove-orphans --force-recreate
     wait_for_application
 }
 
@@ -36,7 +36,7 @@ printf '%s' "${DOCKERHUB_TOKEN}" \
 
 compose pull backend nginx
 
-if ! compose up --detach --remove-orphans; then
+if ! compose up --detach --remove-orphans --force-recreate; then
     rollback
     exit 1
 fi

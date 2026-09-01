@@ -1,151 +1,296 @@
 import { http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
-
-const assignmentList = Array.from({ length: 12 }, (_, index) => {
-  const id = 12 - index;
-
-  return {
-    id,
-    title: `${id}주차 과제`,
-    content: `${id}주차 학습 내용을 정리하고 풀이 링크를 제출해주세요.`,
-    submissionMethod: id % 2 === 0 ? 'GitHub PR' : '링크 제출',
-    closeAt: `2026-09-${String(id).padStart(2, '0')}T23:59:59`,
-    memberCount: 4,
-    completeCount: id % 5,
-    isComplete: id % 4 === 0,
-  };
-});
+import { findUserFromHeader } from '../../../mocks/auth';
+import { paginateByCursor } from '../../../mocks/pagination';
+import { memberTable, MemberSchemaType } from '../../member/mocks/db';
+import { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
+import { assignmentTable, AssignmentSchemaType, submissionTable } from './db';
 
 export const handlers = [
-  http.get(`${API_URL}/studies/:studyId/assignments`, ({ request }) => {
-    const searchParams = new URL(request.url).searchParams;
-    const cursor = searchParams.get('cursor');
-    const requestedSize = Number(searchParams.get('size') ?? 4);
-    const size = Number.isInteger(requestedSize) && requestedSize > 0 ? requestedSize : 4;
-    const cursorIndex = cursor
-      ? assignmentList.findIndex((assignment) => assignment.id === Number(cursor))
-      : 0;
-    const startIndex = cursorIndex >= 0 ? cursorIndex : 0;
-    const assignments = assignmentList.slice(startIndex, startIndex + size);
-    const nextIndex = startIndex + assignments.length;
-    const hasNext = nextIndex < assignmentList.length;
-    const nextCursor = hasNext
-      ? assignmentList[nextIndex].id
-      : (assignments[assignments.length - 1]?.id ?? 0);
+  http.get(`${API_URL}/studies/:studyId/assignments`, ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+
+    const studyId = Number(params.studyId);
+    const studyMembers = memberTable.findMany((q) => q.where({ studyId }));
+    const member = studyMembers.find(({ userId }) => userId === user.id);
+    if (!member) return new HttpResponse(null, { status: 403 });
+
+    const studyAssignments: AssignmentSchemaType[] = assignmentTable.findMany((q) =>
+      q.where({ studyId }),
+    );
+    const { page, nextCursor, hasNext } = paginateByCursor(
+      studyAssignments,
+      new URL(request.url).searchParams,
+    );
+
+    const memberCount = studyMembers.length;
+    const isLeader = member.role === 'LEADER';
+
+    const assignments = page.map((assignment) => {
+      const completeCount = assignment.completeUserIds.length;
+      const common = {
+        id: assignment.id,
+        title: assignment.title,
+        content: assignment.content,
+        submissionMethod: assignment.submissionMethod,
+        closeAt: assignment.closeAt,
+      };
+
+      if (isLeader) {
+        return {
+          ...common,
+          memberCount,
+          completeCount,
+          isComplete: memberCount > 0 && completeCount === memberCount,
+        };
+      }
+
+      return {
+        ...common,
+        isComplete: assignment.completeUserIds.includes(user.id),
+      };
+    });
 
     return HttpResponse.json({ nextCursor, hasNext, assignments });
   }),
 
-  http.post(`${API_URL}/studies/:studyId/assignments`, async ({ request }) => {
-    await request.json();
+  http.post(`${API_URL}/studies/:studyId/assignments`, async ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
 
-    return HttpResponse.json({ assignmentId: 3 }, { status: 201 });
+    const studyId = Number(params.studyId);
+    const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
+    if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
+
+    const { title, content, submissionMethod, closeAt } = (await request.json()) as AssignmentValue;
+
+    const assignmentId = Date.now();
+    await assignmentTable.create({
+      id: assignmentId,
+      studyId,
+      title,
+      content,
+      submissionMethod,
+      closeAt,
+      completeUserIds: [],
+    });
+
+    return HttpResponse.json({ assignmentId }, { status: 201 });
   }),
 
   http.patch(
     `${API_URL}/studies/:studyId/assignments/:assignmentId`,
-    () => new HttpResponse(null, { status: 204 }),
+    async ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+
+      const studyId = Number(params.studyId);
+      const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
+      if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
+
+      const assignmentId = Number(params.assignmentId);
+      const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
+      if (!assignment) return new HttpResponse(null, { status: 404 });
+
+      const values = (await request.json()) as UpdateAssignmentValue;
+      await assignmentTable.update(assignment, {
+        data(assignment) {
+          Object.assign(assignment, values);
+        },
+      });
+
+      return new HttpResponse(null, { status: 204 });
+    },
   ),
 
-  http.delete(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () => {
+  http.delete(`${API_URL}/studies/:studyId/assignments/:assignmentId`, ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+
+    const studyId = Number(params.studyId);
+    const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
+    if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
+
+    const assignmentId = Number(params.assignmentId);
+    const deleted = assignmentTable.delete((q) => q.where({ id: assignmentId, studyId }));
+    if (!deleted) return new HttpResponse(null, { status: 404 });
+
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId/status`, ({ params }) => {
-    return HttpResponse.json({
-      id: Number(params.assignmentId),
-      memberCount: 4,
-      completeCount: 2,
-      incompleteCount: 2,
-      remindAt: '2025-04-16T16:44:10',
-      completeMembers: [
-        {
-          id: 1,
-          name: '안톨리니',
-          profileImage: 'https://example.com/profile.png',
-        },
-        {
-          id: 2,
-          name: '피즈',
-          profileImage: 'https://example.com/profile.png',
-        },
-      ],
-      incompleteMembers: [
-        {
-          id: 3,
-          name: '바니',
-          profileImage: 'https://example.com/profile2.png',
-          lastRemindAt: '2025-04-16T16:44:10',
-        },
-        {
-          id: 4,
-          name: '이든',
-          profileImage: 'https://example.com/profile.png',
-        },
-      ],
-    });
-  }),
-
-  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, ({ params }) => {
-    const assignmentId = Number(params.assignmentId);
-
-    return HttpResponse.json({
-      id: assignmentId,
-      title: '이번주 그리디 3문제 풀이',
-      closeAt: '2025-04-16T16:44:10',
-      content:
-        '백준에서 문제 푸시고 링크 올려주시면 됩니다. 그리디 문제집에서 원하는 세 문제를 풀고 올려주세요.',
-      submissionMethod:
-        'GitHub 저장소에 문제 번호로 폴더를 만들어 올린 뒤, 저장소나 PR 링크를 제출해주세요.',
-      ...(assignmentId % 4 === 0 && { submissionId: assignmentId + 100 }),
-    });
-  }),
-
-  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () => {
-    return HttpResponse.json({
-      submissions: [
-        {
-          id: 1,
-          name: '피즈',
-          profileImage: 'http://localhost:8080',
-          createdAt: '2025-04-16 16:44:10',
-        },
-        {
-          id: 2,
-          name: '이든',
-          profileImage: 'http://localhost:8080',
-          createdAt: '2025-04-16 16:44:10',
-        },
-        {
-          id: 3,
-          name: '바니',
-          profileImage: 'http://localhost:8080',
-          createdAt: '2025-04-16 16:44:10',
-        },
-      ],
-    });
-  }),
-
   http.get(
-    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
-    ({ params }) => {
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/status`,
+    ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+      const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
+      const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
+      if (!assignment) return new HttpResponse(null, { status: 404 });
+      const studyMembers = memberTable.findMany((q) => q.where({ studyId }));
+      const isComplete = ({ userId }: MemberSchemaType) =>
+        assignment.completeUserIds.includes(userId);
+
+      const completeMembers = studyMembers.filter(isComplete);
+      const incompleteMembers = studyMembers.filter((member) => !isComplete(member));
+
       return HttpResponse.json({
-        id: Number(params.submissionId),
-        name: '피즈',
-        profileImage: 'http://localhost:8080',
-        createdAt: '2025-04-16 16:44:10',
-        content: '과제 제출합니다.',
-        link: 'http://localhost:8080',
+        id: assignment.id,
+        memberCount: studyMembers.length,
+        completeCount: completeMembers.length,
+        incompleteCount: incompleteMembers.length,
+        remindAt: '2025-04-16T16:44:10',
+        completeMembers,
+        incompleteMembers,
       });
     },
   ),
 
-  http.post(`${API_URL}/studies/:studyId/assignments/:assignmentId/submissions`, () =>
-    HttpResponse.json({ submissionId: 4 }, { status: 201 }),
+  http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
+    const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
+    if (!assignment) return new HttpResponse(null, { status: 404 });
+
+    const submission = submissionTable.findFirst((q) => q.where({ assignmentId, userId: user.id }));
+
+    return HttpResponse.json({
+      id: assignment.id,
+      title: assignment.title,
+      closeAt: assignment.closeAt,
+      content: assignment.content,
+      submissionMethod: assignment.submissionMethod,
+      ...(submission && { submissionId: submission.id }),
+    });
+  }),
+
+  http.get(
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions`,
+    ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+
+      const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
+      const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
+      if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
+
+      const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
+      if (!assignment) return new HttpResponse(null, { status: 404 });
+
+      const submissions = submissionTable
+        .findMany((q) => q.where({ assignmentId }))
+        .map(({ id, userId, createdAt }) => {
+          const submitter = memberTable.findFirst((q) => q.where({ studyId, userId }));
+
+          return {
+            id,
+            name: submitter?.name ?? '',
+            profileImage: submitter?.profileImage ?? '',
+            createdAt,
+          };
+        });
+
+      return HttpResponse.json({ submissions });
+    },
+  ),
+
+  http.get(
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
+    ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+
+      const [studyId, assignmentId, submissionId] = [
+        params.studyId,
+        params.assignmentId,
+        params.submissionId,
+      ].map(Number);
+
+      const submission = submissionTable.findFirst((q) =>
+        q.where({ id: submissionId, assignmentId: assignmentId }),
+      );
+
+      if (!submission) return new HttpResponse(null, { status: 404 });
+
+      const member = memberTable.findFirst((q) =>
+        q.where({ studyId: studyId, userId: submission.userId }),
+      );
+
+      if (!member) return new HttpResponse(null, { status: 404 });
+
+      return HttpResponse.json({
+        id: submission.id,
+        name: member.name,
+        profileImage: member.profileImage,
+        createdAt: submission.createdAt,
+        content: submission.content,
+        link: submission.link,
+      });
+    },
+  ),
+
+  http.post(
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions`,
+    async ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+
+      const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
+      const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
+      if (!member) return new HttpResponse(null, { status: 403 });
+
+      const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
+      if (!assignment) return new HttpResponse(null, { status: 404 });
+
+      const submitted = submissionTable.findFirst((q) =>
+        q.where({ assignmentId, userId: user.id }),
+      );
+      if (submitted) return new HttpResponse(null, { status: 409 });
+
+      const { content, link } = (await request.json()) as AssignmentSubmissionValue;
+
+      const submissionId = Date.now();
+      await submissionTable.create({
+        id: submissionId,
+        assignmentId,
+        userId: user.id,
+        content,
+        link,
+        createdAt: new Date().toISOString(),
+      });
+
+      await assignmentTable.update(assignment, {
+        data(assignment) {
+          assignment.completeUserIds = [...assignment.completeUserIds, user.id];
+        },
+      });
+
+      return HttpResponse.json({ submissionId }, { status: 201 });
+    },
   ),
 
   http.patch(
     `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId`,
-    () => new HttpResponse(null, { status: 204 }),
+    async ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+
+      const [assignmentId, submissionId] = [params.assignmentId, params.submissionId].map(Number);
+      const submission = submissionTable.findFirst((q) =>
+        q.where({ id: submissionId, assignmentId }),
+      );
+      if (!submission) return new HttpResponse(null, { status: 404 });
+      if (submission.userId !== user.id) return new HttpResponse(null, { status: 403 });
+
+      const values = (await request.json()) as AssignmentSubmissionValue;
+      await submissionTable.update(submission, {
+        data(submission) {
+          Object.assign(submission, values);
+        },
+      });
+
+      return new HttpResponse(null, { status: 204 });
+    },
   ),
 ];

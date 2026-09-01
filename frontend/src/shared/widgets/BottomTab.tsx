@@ -44,15 +44,15 @@ export default function BottomTab() {
 
   return (
     <nav css={tabStyle}>
-      <Link to={basePath}>
+      <Link to={basePath} aria-current={isHome ? 'page' : undefined}>
         {<img src={isHome ? ActivehomeIcon : HomeIcon} alt="" width={22} height={22} />}
         <p css={[textStyle, isHome && { color: tokens.text.brand }]}>홈</p>
       </Link>
-      <Link to={`${basePath}/notices`}>
+      <Link to={`${basePath}/notices`} aria-current={isNotice ? 'page' : undefined}>
         <img src={isNotice ? ActiveNoticeIcon : NoticeIcon} width={22} height={22} alt="" />
         <p css={[textStyle, isNotice && { color: tokens.text.brand }]}>공지</p>
       </Link>
-      <Link to={`${basePath}/assignments`}>
+      <Link to={`${basePath}/assignments`} aria-current={isAssignment ? 'page' : undefined}>
         <img
           src={isAssignment ? ActiveAssignmentIcon : AssignmentIcon}
           width={22}
@@ -61,7 +61,7 @@ export default function BottomTab() {
         />
         <p css={[textStyle, isAssignment && { color: tokens.text.brand }]}>과제</p>
       </Link>
-      <Link to={`${basePath}/members`}>
+      <Link to={`${basePath}/members`} aria-current={isMember ? 'page' : undefined}>
         <img src={isMember ? ActiveMemberIcon : MemberIcon} width={22} height={22} alt="" />
         <p css={[textStyle, isMember && { color: tokens.text.brand }]}>멤버</p>
       </Link>

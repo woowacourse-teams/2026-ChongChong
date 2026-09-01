@@ -114,8 +114,8 @@ export default function SubmitStatusSection({ status }: Props) {
         role="progressbar"
         aria-label="과제 제출률"
         aria-valuemin={0}
-        aria-valuemax={status.completeCount}
-        aria-valuenow={status.memberCount}
+        aria-valuemax={status.memberCount}
+        aria-valuenow={status.completeCount}
       >
         <div css={{ ...progressBarStyle, width: `${progress}%` }} />
       </div>

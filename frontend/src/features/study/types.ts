@@ -11,14 +11,13 @@ export interface Study {
 }
 
 export interface LeaderStudyDetail {
-  memberCount: number;
   notices: {
     count: number;
-    items: { id: number; title: string; completeCount: number }[];
+    items: { id: number; title: string; completeCount: number; memberCount: number }[];
   };
   assignments: {
     count: number;
-    items: { id: number; title: string; completeCount: number }[];
+    items: { id: number; title: string; completeCount: number; memberCount: number }[];
   };
 }
 

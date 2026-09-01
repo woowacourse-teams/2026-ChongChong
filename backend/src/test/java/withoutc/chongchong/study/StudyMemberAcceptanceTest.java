@@ -92,7 +92,8 @@ class StudyMemberAcceptanceTest {
                 .when()
                 .post("/studies/join")
                 .then()
-                .statusCode(201);
+                .statusCode(201)
+                .body("studyId", equalTo(study.getId().intValue()));
 
         assertThat(studyMemberRepository.findByStudyIdAndUserId(study.getId(), user.getId()))
                 .get()
@@ -252,13 +253,22 @@ class StudyMemberAcceptanceTest {
                 .asString();
 
         Map<String, Object> paths = new JsonPath(document).getMap("paths");
+        Map<String, Object> joinPath = (Map<String, Object>) paths.get("/api/studies/join");
         Map<String, Object> membersPath = (Map<String, Object>) paths.get("/api/studies/{studyId}/members");
         Map<String, Object> expelPath = (Map<String, Object>) paths.get("/api/studies/{studyId}/members/{memberId}");
         Map<String, Object> leavePath = (Map<String, Object>) paths.get("/api/studies/{studyId}/members/me");
 
+        Map<String, Object> joinOperation = (Map<String, Object>) joinPath.get("post");
         Map<String, Object> getMembersOperation = (Map<String, Object>) membersPath.get("get");
         Map<String, Object> expelOperation = (Map<String, Object>) expelPath.get("delete");
         Map<String, Object> leaveOperation = (Map<String, Object>) leavePath.get("delete");
+
+        Map<String, Object> joinResponses = (Map<String, Object>) joinOperation.get("responses");
+        Map<String, Object> joinResponse = (Map<String, Object>) joinResponses.get("201");
+        Map<String, Object> joinContent = (Map<String, Object>) joinResponse.get("content");
+        Map<String, Object> joinApplicationJson = (Map<String, Object>) joinContent.get("application/json");
+        Map<String, Object> joinSchema = (Map<String, Object>) joinApplicationJson.get("schema");
+        assertThat(joinSchema.get("$ref")).isEqualTo("#/components/schemas/StudyMemberJoinResponse");
 
         assertThat(getMembersOperation.get("operationId")).isEqualTo("getAllStudyMembers");
         assertThat(expelOperation.get("operationId")).isEqualTo("expel");

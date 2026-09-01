@@ -25,6 +25,7 @@
   },
   "jest": {
     "testEnvironment": "jest-fixed-jsdom",
+    "restoreMocks": true,
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.ts"
     ],

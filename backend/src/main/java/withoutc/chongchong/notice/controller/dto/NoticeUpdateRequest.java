@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record NoticeUpdateRequest(
-        @Size(max = 15, message = "제목은 15자 이내로 입력 가능합니다.")
+        @Size(max = 20, message = "제목은 20자 이내로 입력 가능합니다.")
         @Schema(description = "수정할 공지 제목", example = "수정된 공지")
         String title,
         @Size(max = 10000, message = "내용은 10,000자 이내로 입력 가능합니다.")

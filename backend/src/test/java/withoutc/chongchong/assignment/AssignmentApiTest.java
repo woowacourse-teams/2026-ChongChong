@@ -1,6 +1,7 @@
 package withoutc.chongchong.assignment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
@@ -114,6 +115,7 @@ class AssignmentApiTest {
     @Test
     @DisplayName("과제 생성 요청은 201과 assignmentId를 반환하고 스터디원별 제출 정보와 리마인더를 저장한다")
     void createAssignmentTest() {
+        String maxLengthTitle = "가".repeat(20);
         LocalDateTime newCloseAt = closeAt.plusDays(10);
         LocalDateTime newRemindAt = newCloseAt.minusDays(1);
 
@@ -122,13 +124,13 @@ class AssignmentApiTest {
                 .contentType(ContentType.JSON)
                 .body("""
                         {
-                          "title": "새 과제",
+                          "title": "%s",
                           "content": "새 과제 내용",
                           "submissionMethod": "텍스트 제출",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(newCloseAt, newRemindAt))
+                        """.formatted(maxLengthTitle, newCloseAt, newRemindAt))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()
@@ -416,6 +418,56 @@ class AssignmentApiTest {
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://submission.example.com");
+    }
+
+    @Test
+    @DisplayName("스터디원은 자신이 제출한 과제 제출 정보를 조회할 수 있다")
+    void getMySubmissionDetailTest() {
+        Long submissionId = submitAssignment(
+                memberUser, assignment, "제출 내용", "https://submission.example.com"
+        );
+        AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
+
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments/{assignmentId}/submissions/my",
+                        study.getId(), assignment.getId())
+                .then()
+                .statusCode(200)
+                .body("submitted", equalTo(true))
+                .body("createdAt", equalTo(submission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+                .body("content", equalTo("제출 내용"))
+                .body("link", equalTo("https://submission.example.com"));
+    }
+
+    @Test
+    @DisplayName("스터디원이 과제를 제출하지 않았다면 미제출 상태를 반환한다")
+    void getMySubmissionDetailBeforeSubmitTest() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments/{assignmentId}/submissions/my",
+                        study.getId(), assignment.getId())
+                .then()
+                .statusCode(200)
+                .body("submitted", equalTo(false))
+                .body("createdAt", nullValue())
+                .body("content", nullValue())
+                .body("link", nullValue());
+    }
+
+    @Test
+    @DisplayName("리더에게 제출 행이 없다면 내 제출 정보는 null이다")
+    void getMySubmissionDetailByLeaderTest() {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments/{assignmentId}/submissions/my",
+                        study.getId(), assignment.getId())
+                .then()
+                .statusCode(200)
+                .body(emptyOrNullString());
     }
 
     @Test

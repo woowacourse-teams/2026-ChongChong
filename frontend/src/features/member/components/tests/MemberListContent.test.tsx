@@ -17,10 +17,12 @@ async function findMemberRow(name: string) {
 
 function renderMemberListContent(content: React.ReactNode) {
   render(
-    <Routes>
-      <Route path="/studies/:studyId" element={<Suspense fallback={null}>{content}</Suspense>} />
-      <Route path="/studies" element={<h2>내 스터디</h2>} />
-    </Routes>,
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/studies/:studyId" element={content} />
+        <Route path="/studies" element={<h2>내 스터디</h2>} />
+      </Routes>
+    </Suspense>,
     { wrapper: createWrapper({ initialEntries: ['/studies/1'] }) },
   );
 }
@@ -57,7 +59,7 @@ describe('스터디 리드 화면 테스트', () => {
   test('스터디 리드 행에는 방출하기 버튼이 존재하지 않는다', async () => {
     renderMemberListContent(<MemberListContent.Leader />);
 
-    const memberRow = await findMemberRow('이든');
+    const memberRow = await findMemberRow('바니');
     expect(within(memberRow).queryByRole('button', { name: '방출하기' })).not.toBeInTheDocument();
   });
 
@@ -89,13 +91,14 @@ describe('스터디원 화면 테스트', () => {
   test('스터디원에게는 방출하기 버튼이 렌더링 되지 않는다', async () => {
     renderMemberListContent(<MemberListContent.Member />);
 
+    await findMemberRow('안톨리니');
     expect(screen.queryByText('방출하기')).not.toBeInTheDocument();
   });
 
   test('스터디원에게 스터디리드는 리드 아이콘이 렌더링 된다', async () => {
     renderMemberListContent(<MemberListContent.Member />);
 
-    const leaderRow = await findMemberRow('이든');
+    const leaderRow = await findMemberRow('바니');
     expect(within(leaderRow).getByAltText('스터디 리드')).toBeInTheDocument();
 
     const memberRow = await findMemberRow('안톨리니');

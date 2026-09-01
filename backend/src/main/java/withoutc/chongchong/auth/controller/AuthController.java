@@ -1,8 +1,5 @@
 package withoutc.chongchong.auth.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +27,7 @@ import withoutc.chongchong.auth.token.IssuedTokenPair;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-@Tag(name = "Auth", description = "인증 API")
-public class AuthController {
+public class AuthController implements AuthApi {
 
     private final SocialLoginFacade socialLoginFacade;
     private final AuthTokenService authTokenService;
@@ -39,8 +35,6 @@ public class AuthController {
     private final WebRefreshCookieWriter webRefreshCookieWriter;
 
     @GetMapping("/csrf")
-    @Operation(summary = "CSRF 토큰 조회", description = "웹 인증 요청에 사용할 CSRF 토큰을 조회한다.")
-    @ApiResponse(responseCode = "200", description = "CSRF 토큰 조회 성공")
     public ResponseEntity<WebCsrfTokenResponse> csrf(CsrfToken csrfToken) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
@@ -48,8 +42,6 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "소셜 로그인", description = "소셜 로그인 인가 코드로 액세스 토큰을 발급한다.")
-    @ApiResponse(responseCode = "200", description = "로그인 성공. Refresh Token은 HttpOnly 쿠키로 발급된다.")
     public ResponseEntity<SocialLoginResponse> login(
             @Valid @RequestBody SocialLoginRequest request
     ) {
@@ -58,8 +50,6 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "액세스 토큰 갱신", description = "Refresh Token 쿠키를 회전시키고 새로운 액세스 토큰을 발급한다.")
-    @ApiResponse(responseCode = "200", description = "토큰 갱신 성공. 새로운 Refresh Token은 HttpOnly 쿠키로 발급된다.")
     public ResponseEntity<SocialLoginResponse> refresh(HttpServletRequest request) {
         IssuedTokenPair tokenPair = webRefreshCookieReader.read(request)
                 .map(authTokenService::rotate)
@@ -69,8 +59,6 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "로그아웃", description = "Refresh Token을 폐기하고 인증 쿠키를 만료시킨다.")
-    @ApiResponse(responseCode = "204", description = "로그아웃 성공")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
         webRefreshCookieReader.read(request)
                 .ifPresent(authTokenService::logout);
