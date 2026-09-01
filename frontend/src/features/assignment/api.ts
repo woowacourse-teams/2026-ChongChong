@@ -174,8 +174,20 @@ export async function updateAssignment(
     await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {
       json: values,
     });
-  } catch {
-    throw new Error('과제 수정에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: {
+          cause: error,
+        },
+      });
+    }
+
+    throw new Error('과제 수정에 실패했습니다.', { cause: error });
   }
 }
 

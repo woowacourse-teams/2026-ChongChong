@@ -91,6 +91,11 @@ export const handlers = [
     async ({ request, params }) => {
       const user = findUserFromHeader(request.headers);
       if (!user) return new HttpResponse(null, { status: 401 });
+      const body = (await request.json()) as UpdateAssignmentValue;
+      const fieldErrors = validateAssignment(body);
+      if (fieldErrors.length > 0) {
+        return invalidInputResponse(fieldErrors);
+      }
 
       const studyId = Number(params.studyId);
       const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
@@ -100,10 +105,9 @@ export const handlers = [
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
 
-      const values = (await request.json()) as UpdateAssignmentValue;
       await assignmentTable.update(assignment, {
         data(assignment) {
-          Object.assign(assignment, values);
+          Object.assign(assignment, body);
         },
       });
 
