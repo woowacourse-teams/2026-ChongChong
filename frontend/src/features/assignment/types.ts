@@ -74,3 +74,14 @@ export interface CreateAssignmentResponse {
 export interface CreateSubmissionResponse {
   submissionId: number;
 }
+
+export type UserAssignmentSubmitDetail =
+  | {
+      submitted: true;
+      createdAt: string;
+      content: string;
+      link: string;
+    }
+  | {
+      submitted: false;
+    };
