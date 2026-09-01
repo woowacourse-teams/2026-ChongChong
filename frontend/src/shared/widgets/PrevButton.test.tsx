@@ -97,7 +97,7 @@ describe('이전 버튼 이동 테스트', () => {
     expect(screen.getByTestId('pathname')).toHaveTextContent('/studies/1');
   });
 
-  test.failing('과제 제출 상세에서 클릭하면 과제 상세로 이동한다', async () => {
+  test('과제 제출 상세에서 클릭하면 과제 상세로 이동한다', async () => {
     // studies/1/assignments/2/submissions로 이동합니다.
     // 현재 submissions 페이지는 존재하지 않기 때문에 에러가 발생합니다.
     const user = renderPrevButton('/studies/1/assignments/2/submissions/3');
@@ -137,15 +137,12 @@ describe('이전 버튼 이동 테스트', () => {
     expect(screen.getByTestId('pathname')).toHaveTextContent('/studies');
   });
 
-  test.failing(
-    '후행 슬래시가 있는 공지 목록에서 클릭하면 동일하게 특정 스터디 디테일로 이동한다',
-    async () => {
-      const user = renderPrevButton('/studies/1/notices/');
+  test('후행 슬래시가 있는 공지 목록에서 클릭하면 동일하게 특정 스터디 디테일로 이동한다', async () => {
+    const user = renderPrevButton('/studies/1/notices/');
 
-      await clickPrevButton(user);
+    await clickPrevButton(user);
 
-      expect(screen.getByRole('heading', { name: '스터디 상세' })).toBeInTheDocument();
-      expect(screen.getByTestId('pathname')).toHaveTextContent('/studies/1');
-    },
-  );
+    expect(screen.getByRole('heading', { name: '스터디 상세' })).toBeInTheDocument();
+    expect(screen.getByTestId('pathname')).toHaveTextContent('/studies/1');
+  });
 });
