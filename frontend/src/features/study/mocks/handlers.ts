@@ -4,6 +4,8 @@ import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
+import { validateStudy } from './validators';
+import { invalidInputResponse } from '../../../mocks/errors';
 
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
@@ -90,10 +92,10 @@ export const handlers = [
     const body = (await request.json()) as { name: string; description: string };
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
-    // msw 로직은 실제 backend API 로 대체될 예정입니다.
-    // if (invalidInput) {
-    //   return HttpResponse.json(invalidInput, { status: 400 });
-    // }
+    const fieldErrors = validateStudy(body);
+    if (fieldErrors.length > 0) {
+      return invalidInputResponse(fieldErrors);
+    }
 
     const studyId = Date.now();
     await studyTable.create({

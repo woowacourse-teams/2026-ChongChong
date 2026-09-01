@@ -46,7 +46,7 @@ export async function createStudy(body: {
 }): Promise<{ studyId: number }> {
   try {
     const response = await api.post(STUDY_URLS.create, { json: body });
-    const data = await response.json<{ studyId: number }>();
+    const data: unknown = await response.json<{ studyId: number }>();
 
     if (!isCreateStudyResponse(data)) {
       throw new Error('스터디 생성 응답 형식이 올바르지 않습니다.');

@@ -48,7 +48,7 @@ export default function StudyForm() {
         errorText={fieldErrors.name}
         isError={Boolean(fieldErrors.name)}
       >
-        <Input id="study-name" value={nameValue} onChange={handleNameValue} />
+        <Input id="study-name" value={nameValue} onChange={handleNameValue} maxLength={15} />
       </Field>
       <Field
         id="study-description"
@@ -61,6 +61,7 @@ export default function StudyForm() {
           id="study-description"
           value={descriptionValue}
           onChange={handleDescriptionValue}
+          maxLength={30}
         />
       </Field>
       <Button
