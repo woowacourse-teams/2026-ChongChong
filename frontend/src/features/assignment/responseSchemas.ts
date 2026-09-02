@@ -21,7 +21,7 @@ const assignmentSchema = z.object({
   closeAt: z.string(),
   memberCount: z.number().optional(),
   completeCount: z.number().optional(),
-  remindAt: z.string().optional(),
+  remindAt: z.string().nullish(),
   isComplete: z.boolean(),
 }) satisfies z.ZodType<Assignment>;
 
@@ -42,7 +42,7 @@ const createSubmissionSchema = z.object({
 const submissionSchema = z.object({
   id: z.number(),
   name: z.string(),
-  profileImage: z.string(),
+  profileImage: z.string().nullable(),
   createdAt: z.string(),
 }) satisfies z.ZodType<Submission>;
 
@@ -62,7 +62,7 @@ const assignmentDetailSchema = z.object({
 const submissionDetailSchema = z.object({
   id: z.number(),
   name: z.string(),
-  profileImage: z.string(),
+  profileImage: z.string().nullable(),
   createdAt: z.string(),
   content: z.string(),
   link: z.string().optional(),
@@ -71,8 +71,8 @@ const submissionDetailSchema = z.object({
 const memberSchema = z.object({
   id: z.number(),
   name: z.string(),
-  profileImage: z.string(),
-  lastRemindAt: z.string().optional(),
+  profileImage: z.string().nullable(),
+  lastRemindAt: z.string().nullish(),
 }) satisfies z.ZodType<Member>;
 
 const assignmentSubmitStatusSchema = z.object({
@@ -80,7 +80,7 @@ const assignmentSubmitStatusSchema = z.object({
   memberCount: z.number(),
   completeCount: z.number(),
   incompleteCount: z.number(),
-  remindAt: z.string().optional(),
+  remindAt: z.string().nullish(),
   completeMembers: z.array(memberSchema),
   incompleteMembers: z.array(memberSchema),
 }) satisfies z.ZodType<AssignmentSubmitStatus>;

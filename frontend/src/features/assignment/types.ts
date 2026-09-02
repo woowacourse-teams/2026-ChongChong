@@ -6,7 +6,7 @@ export interface Assignment {
   closeAt: string;
   memberCount?: number;
   completeCount?: number;
-  remindAt?: string;
+  remindAt?: string | null;
   isComplete: boolean;
 }
 
@@ -19,8 +19,8 @@ export interface AssignmentListResponse {
 export interface Member {
   id: number;
   name: string;
-  profileImage: string;
-  lastRemindAt?: string;
+  profileImage: string | null;
+  lastRemindAt?: string | null;
 }
 
 export interface AssignmentSubmitStatus {
@@ -28,7 +28,7 @@ export interface AssignmentSubmitStatus {
   memberCount: number;
   completeCount: number;
   incompleteCount: number;
-  remindAt?: string;
+  remindAt?: string | null;
   completeMembers: Member[];
   incompleteMembers: Member[];
 }
@@ -48,7 +48,7 @@ export type UpdateAssignmentValue = Partial<AssignmentValue>;
 export interface Submission {
   id: number;
   name: string;
-  profileImage: string;
+  profileImage: string | null;
   createdAt: string;
 }
 
