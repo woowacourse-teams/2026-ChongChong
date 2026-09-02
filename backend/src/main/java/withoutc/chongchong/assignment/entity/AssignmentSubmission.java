@@ -108,7 +108,12 @@ public class AssignmentSubmission extends BaseEntity {
     }
 
     public boolean isOwnedBy(StudyMember member) {
-        return Objects.equals(this.member.getId(), member.getId());
+        if (this.member == null || member == null) {
+            return false;
+        }
+
+        Long ownerId = this.member.getId();
+        return ownerId != null && ownerId.equals(member.getId());
     }
 
     private void validateContent(String content) {
