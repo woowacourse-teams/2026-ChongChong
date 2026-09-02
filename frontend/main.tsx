@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
-import App from './src/features/randing/App';
+import App from './src/features/landing/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
