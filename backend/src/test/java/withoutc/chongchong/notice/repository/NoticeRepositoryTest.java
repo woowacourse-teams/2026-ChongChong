@@ -53,10 +53,10 @@ class NoticeRepositoryTest {
         List<Notice> notices = new ArrayList<>();
         for (int index = 1; index <= 5; index++) {
             notices.add(noticeRepository.save(
-                    Notice.create(firstStudy.leader(), "공지 " + index, "공지 내용")
+                    Notice.create(firstStudy.study(), "공지 " + index, "공지 내용")
             ));
         }
-        noticeRepository.save(Notice.create(secondStudy.leader(), "다른 공지", "공지 내용"));
+        noticeRepository.save(Notice.create(secondStudy.study(), "다른 공지", "공지 내용"));
         noticeRepository.flush();
 
         List<Notice> firstPage = noticeRepository.findByCursor(
@@ -83,9 +83,9 @@ class NoticeRepositoryTest {
     @DisplayName("멤버별 공지 cursor 조회는 수신 정보가 존재하는 공지만 반환한다")
     void findByCursorAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Notice firstMemberNotice = Notice.create(fixture.leader(), "첫 번째 멤버 공지", "내용");
+        Notice firstMemberNotice = Notice.create(fixture.study(), "첫 번째 멤버 공지", "내용");
         firstMemberNotice.addRecipients(List.of(fixture.firstMember()));
-        Notice secondMemberNotice = Notice.create(fixture.leader(), "두 번째 멤버 공지", "내용");
+        Notice secondMemberNotice = Notice.create(fixture.study(), "두 번째 멤버 공지", "내용");
         secondMemberNotice.addRecipients(List.of(fixture.secondMember()));
         noticeRepository.saveAllAndFlush(List.of(firstMemberNotice, secondMemberNotice));
 
@@ -106,7 +106,7 @@ class NoticeRepositoryTest {
     void getByIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
         Notice notice = noticeRepository.save(
-                Notice.create(fixture.leader(), "공지", "공지 내용")
+                Notice.create(fixture.study(), "공지", "공지 내용")
         );
 
         Notice found = noticeRepository.getByIdOrThrow(notice.getId());
@@ -127,9 +127,9 @@ class NoticeRepositoryTest {
     @DisplayName("리더용 미완료 공지 요약은 읽지 않은 수신자가 있는 공지만 반환하고 읽은 수를 센다")
     void findIncompleteNoticeSummariesByStudyIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Notice incompleteNotice = Notice.create(fixture.leader(), "미완료 공지", "내용");
+        Notice incompleteNotice = Notice.create(fixture.study(), "미완료 공지", "내용");
         incompleteNotice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
-        Notice completeNotice = Notice.create(fixture.leader(), "완료 공지", "내용");
+        Notice completeNotice = Notice.create(fixture.study(), "완료 공지", "내용");
         completeNotice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
         completeNotice.getRecipients().forEach(recipient -> recipient.markAsRead(CLOCK));
         noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
@@ -149,9 +149,9 @@ class NoticeRepositoryTest {
     @DisplayName("멤버용 미완료 공지는 해당 멤버가 읽지 않은 공지만 반환한다")
     void findIncompleteNoticesByStudyIdAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Notice unreadNotice = Notice.create(fixture.leader(), "읽지 않은 공지", "내용");
+        Notice unreadNotice = Notice.create(fixture.study(), "읽지 않은 공지", "내용");
         unreadNotice.addRecipients(List.of(fixture.firstMember()));
-        Notice readNotice = Notice.create(fixture.leader(), "읽은 공지", "내용");
+        Notice readNotice = Notice.create(fixture.study(), "읽은 공지", "내용");
         readNotice.addRecipients(List.of(fixture.firstMember()));
         readNotice.getRecipients().getFirst().markAsRead(CLOCK);
         noticeRepository.saveAllAndFlush(List.of(unreadNotice, readNotice));
@@ -168,9 +168,9 @@ class NoticeRepositoryTest {
     @DisplayName("리더용 미완료 공지 개수는 읽지 않은 수신자가 있는 공지만 센다")
     void countIncompleteNoticeByStudyIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Notice incompleteNotice = Notice.create(fixture.leader(), "미완료 공지", "내용");
+        Notice incompleteNotice = Notice.create(fixture.study(), "미완료 공지", "내용");
         incompleteNotice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
-        Notice completeNotice = Notice.create(fixture.leader(), "완료 공지", "내용");
+        Notice completeNotice = Notice.create(fixture.study(), "완료 공지", "내용");
         completeNotice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
         completeNotice.getRecipients().forEach(recipient -> recipient.markAsRead(CLOCK));
         noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
@@ -184,7 +184,7 @@ class NoticeRepositoryTest {
     @DisplayName("스터디원용 미완료 공지 개수는 해당 멤버가 읽지 않은 공지만 센다")
     void countIncompleteNoticeByStudyIdAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Notice notice = Notice.create(fixture.leader(), "공지", "내용");
+        Notice notice = Notice.create(fixture.study(), "공지", "내용");
         notice.addRecipients(List.of(fixture.firstMember(), fixture.secondMember()));
         notice.getRecipients().getLast().markAsRead(CLOCK);
         noticeRepository.saveAndFlush(notice);

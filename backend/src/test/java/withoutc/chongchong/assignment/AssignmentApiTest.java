@@ -334,7 +334,7 @@ class AssignmentApiTest {
         );
         Assignment otherAssignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
-                        otherLeader,
+                        otherStudy,
                         "다른 과제",
                         "다른 과제 내용",
                         "링크 제출",
@@ -488,7 +488,7 @@ class AssignmentApiTest {
                 StudyMember.create(otherStudy, memberUser, "다른 스터디원", null, StudyMemberRole.MEMBER)
         );
         Assignment otherAssignment = Assignment.create(
-                otherLeader,
+                otherStudy,
                 "다른 과제",
                 "다른 과제 내용",
                 "링크 제출",
@@ -664,7 +664,7 @@ class AssignmentApiTest {
                                           LocalDateTime assignmentCloseAt, LocalDateTime assignmentRemindAt) {
         LocalDateTime now = LocalDateTime.now(CLOCK);
         Assignment newAssignment = Assignment.create(
-                leader,
+                study,
                 title,
                 content,
                 submissionMethod,

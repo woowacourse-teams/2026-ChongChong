@@ -56,6 +56,7 @@ import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,6 +77,9 @@ class AssignmentServiceTest {
     @Mock
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
 
+    @Mock
+    private StudyRepository studyRepository;
+
     private AssignmentService assignmentService;
 
     @BeforeEach
@@ -86,6 +90,7 @@ class AssignmentServiceTest {
                 assignmentRepository,
                 assignmentSubmissionRepository,
                 studyMemberRepository,
+                studyRepository,
                 clock
         );
     }
@@ -104,7 +109,7 @@ class AssignmentServiceTest {
         ArgumentCaptor<Assignment> assignmentCaptor = ArgumentCaptor.forClass(Assignment.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
-        when(leader.getStudy()).thenReturn(study);
+        when(studyRepository.getByIdOrThrow(STUDY_ID)).thenReturn(study);
         when(studyMemberRepository.findAllByStudyId(STUDY_ID)).thenReturn(List.of(leader, member));
         when(member.isLeader()).thenReturn(false);
         when(member.getId()).thenReturn(MEMBER_ID);
@@ -120,7 +125,6 @@ class AssignmentServiceTest {
         Assignment assignment = assignmentCaptor.getValue();
         assertThat(response.assignmentId()).isEqualTo(ASSIGNMENT_ID);
         assertThat(assignment.getStudy()).isSameAs(study);
-        assertThat(assignment.getWriter()).isSameAs(leader);
         assertThat(assignment.getSubmissions()).singleElement()
                 .satisfies(submission -> assertThat(submission.getMember()).isSameAs(member));
         assertThat(assignment.getNextRemindAt()).isEqualTo(remindAt);
@@ -621,11 +625,9 @@ class AssignmentServiceTest {
 
     private Assignment assignmentWithId(Long assignmentId, Long studyId) {
         Study study = Study.create("자바 스터디", "설명");
-        User user = User.create("리더", null);
-        StudyMember writer = StudyMember.create(study, user, "리더", null, StudyMemberRole.LEADER);
         ReflectionTestUtils.setField(study, "id", studyId);
         Assignment assignment = Assignment.create(
-                writer, "과제 제목", "과제 내용", "링크 제출", NOW.plusDays(7), NOW
+                study, "과제 제목", "과제 내용", "링크 제출", NOW.plusDays(7), NOW
         );
         ReflectionTestUtils.setField(assignment, "id", assignmentId);
         return assignment;

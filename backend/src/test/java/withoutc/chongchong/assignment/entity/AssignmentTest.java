@@ -17,6 +17,7 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
 class AssignmentTest {
@@ -25,7 +26,7 @@ class AssignmentTest {
     private static final Instant INSTANT = Instant.parse("2026-08-20T01:00:00Z");
     private static final LocalDateTime NOW = LocalDateTime.ofInstant(INSTANT, ZONE_ID);
 
-    private final StudyMember writer = mock(StudyMember.class);
+    private final Study study = mock(Study.class);
 
     @Test
     @DisplayName("과제 생성 시 제목, 내용, 제출 방법을 검증한다")
@@ -229,7 +230,7 @@ class AssignmentTest {
     }
 
     private Assignment createAssignment(String title, String content, String submissionMethod, LocalDateTime closeAt) {
-        return Assignment.create(writer, title, content, submissionMethod, closeAt, NOW);
+        return Assignment.create(study, title, content, submissionMethod, closeAt, NOW);
     }
 
     private StudyMember memberWithId(Long id) {

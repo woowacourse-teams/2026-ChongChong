@@ -90,7 +90,6 @@ class StudyAcceptanceTest {
         configureCascadeIfColumnExists("study_members", "study_id", "studies", "fkb8cp6e23p040p7ml6sswen5cs");
         configureCascadeIfColumnExists("study_members", "user_id", "users", "fkdt5hp8mbe53a5sdcecsf7wpyg");
         configureCascadeIfColumnExists("assignments", "study_id", "studies", "fkqe029wvx6pjp0q8tlypilk0c9");
-        configureCascadeIfColumnExists("assignments", "writer_id", "study_members", "fk7ek80ftj5dsyq1uwib7nvfpkn");
         configureCascadeIfColumnExists(
                 "assignment_reminders", "assignment_id", "assignments", "fk23if7m1gm235fcgs3hleq5do2");
         configureCascadeIfColumnExists(
@@ -98,7 +97,6 @@ class StudyAcceptanceTest {
         configureCascadeIfColumnExists(
                 "assignment_submissions", "member_id", "study_members", "fknsfnkdmpdvd605vnpkpt1g0md");
         configureCascadeIfColumnExists("notices", "study_id", "studies", "fk403omqxfm0hkwwx6trtd12u76");
-        configureCascadeIfColumnExists("notices", "writer_id", "study_members", "fkom02f3y50va5rg7h3lslrcscv");
         configureCascadeIfColumnExists(
                 "notice_recipients", "notice_id", "notices", "fky3a9r7igh6bsqigv2lkgmu6o");
         configureCascadeIfColumnExists(
@@ -292,13 +290,13 @@ class StudyAcceptanceTest {
         StudyMember secondStudyMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, secondMember, secondMember.getName(), null, StudyMemberRole.MEMBER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, "공지", "내용"));
         notice.addRecipients(List.of(firstStudyMember, secondStudyMember));
         notice.getRecipients().getFirst().markAsRead(NOTICE_NOW);
         noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
-                        leaderMember,
+                        study,
                         "과제",
                         "내용",
                         "링크",
@@ -342,12 +340,12 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
                         StudyMemberRole.MEMBER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, "공지", "내용"));
         notice.addRecipients(List.of(memberStudyMember));
         noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
-                        leaderMember,
+                        study,
                         "과제",
                         "내용",
                         "링크",
@@ -436,12 +434,12 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
 
-        Notice notice = Notice.create(leaderMember, "공지", "내용");
+        Notice notice = Notice.create(study, "공지", "내용");
         notice.addRecipients(List.of(memberStudyMember));
         noticeRepository.saveAndFlush(notice);
 
         Assignment assignment = Assignment.create(
-                leaderMember,
+                study,
                 "과제",
                 "내용",
                 "링크",
