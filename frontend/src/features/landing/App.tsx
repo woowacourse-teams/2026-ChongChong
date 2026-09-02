@@ -96,8 +96,6 @@ export default function App() {
               <Link
                 className="cc-destination cc-destination--web"
                 to={'/studies'}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={handleClickWeb}
               >
                 <svg
