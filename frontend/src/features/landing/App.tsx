@@ -6,10 +6,7 @@ import homePreview from './assets/figma-home.png';
 import studyPreview from './assets/figma-study-uniform.png';
 import googlePlayMark from './assets/google-play-mark.svg';
 import { usePostHog } from '@posthog/react';
-
-const LANDING_CONFIG = {
-  websiteUrl: 'https://www.chongchong.kr/',
-};
+import { Link } from 'react-router';
 
 const pretendardFont = new URL('./assets/PretendardVariable.woff2', import.meta.url).href;
 const doHyeonFont = new URL('./assets/DoHyeon-Regular.ttf', import.meta.url).href;
@@ -72,16 +69,12 @@ export default function App() {
       <style>{LANDING_STYLES}</style>
       <div className="cc-site-shell">
         <header className="cc-site-header">
-          <a
-            className="cc-brand"
-            href={LANDING_CONFIG.websiteUrl}
-            aria-label="총총 웹사이트로 이동"
-          >
+          <Link className="cc-brand" to={'/studies'} aria-label="총총 웹사이트로 이동">
             <span className="cc-brand-mark" aria-hidden="true">
               <img src={chongchongLogo} alt="" width={232} height={256} />
             </span>
             <span>총총</span>
-          </a>
+          </Link>
           <span className="cc-header-note">스터디 운영 앱</span>
         </header>
 
@@ -100,9 +93,9 @@ export default function App() {
             </p>
 
             <div className="cc-actions" aria-label="총총 이용 경로">
-              <a
+              <Link
                 className="cc-destination cc-destination--web"
-                href={LANDING_CONFIG.websiteUrl}
+                to={'/studies'}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleClickWeb}
@@ -123,7 +116,7 @@ export default function App() {
                 <span className="cc-destination-copy">
                   <span className="cc-destination-name">웹사이트</span>
                 </span>
-              </a>
+              </Link>
 
               <button
                 className="cc-destination cc-store-button"
