@@ -478,7 +478,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("URL의 스터디와 과제의 스터디가 다르면 과제를 제출할 수 없다")
+    @DisplayName("요청 경로의 스터디와 과제의 소속 스터디가 다르면 제출할 수 없다")
     void submitAssignmentFromOtherStudyTest() {
         Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
         StudyMember otherLeader = studyMemberRepository.save(
