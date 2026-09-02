@@ -4,7 +4,7 @@ import { Member, MemberResponse } from './types';
 const memberSchema = z.object({
   id: z.number(),
   name: z.string(),
-  profileImage: z.string(),
+  profileImage: z.string().nullable(),
   role: z.enum(['LEADER', 'MEMBER']),
 }) satisfies z.ZodType<Member>;
 

@@ -64,7 +64,7 @@ const studyInfoSchema = z.object({
 }) satisfies z.ZodType<UserStudyInfo>;
 
 const inviteLinkSchema = z.object({
-  inviteLink: z.templateLiteral(['https://chongchong.app/join?token=', z.string().min(1)]),
+  inviteLink: z.url(),
 }) satisfies z.ZodType<InviteLink>;
 
 const createStudySchema = z.object({
