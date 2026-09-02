@@ -4,13 +4,14 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
-import App from './src/App';
+import App from './src/features/landing/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
 import { refreshAccessToken } from './src/features/login/api';
+import { PostHogProvider } from '@posthog/react';
 
 const appRoutes = [
   {
@@ -27,8 +28,10 @@ const appRoutes = [
 const root = document.getElementById('root')!;
 
 async function enableMocking() {
-  // 개발 환경에서는 MSW를 실행합니다.
-  if (process.env.NODE_ENV !== 'development') return;
+  // .env의 USE_MSW가 true일 때 MSW를 사용합니다.
+  if (process.env.USE_MSW !== 'true') {
+    return;
+  }
 
   const { worker } = await import('./src/mocks/msw-browser');
 
@@ -37,7 +40,7 @@ async function enableMocking() {
 
 const queryClient = new QueryClient();
 
-const publicPaths = new Set(['/login', '/auth/kakao/callback']);
+const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
 
 async function restoreSession() {
   if (publicPaths.has(window.location.pathname)) return;
@@ -57,10 +60,19 @@ async function bootstrap() {
 
   ReactDOM.createRoot(root).render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <Global styles={globalStyles} />
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <PostHogProvider
+        apiKey={process.env.POSTHOG_PROJECT_TOKEN!}
+        options={{
+          api_host: process.env.POSTHOG_HOST,
+          defaults: '2026-05-30',
+          autocapture: false,
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <Global styles={globalStyles} />
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </PostHogProvider>
     </StrictMode>,
   );
 }

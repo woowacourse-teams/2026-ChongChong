@@ -5,6 +5,7 @@ import {
   fetchAssignment,
   fetchAssignmentSubmission,
   fetchAssignmentSubmissionDetail,
+  fetchMyAssignmentSubmission,
 } from './api';
 
 const assignmentQueries = {
@@ -39,6 +40,12 @@ const assignmentQueries = {
     queryOptions({
       queryKey: [...assignmentQueries.lists(studyId), assignmentId, 'submissions'],
       queryFn: () => fetchAssignmentSubmission(studyId, assignmentId),
+    }),
+
+  mySubmission: (studyId: number, assignmentId: number) =>
+    queryOptions({
+      queryKey: [...assignmentQueries.lists(studyId), assignmentId, 'my-submission'],
+      queryFn: () => fetchMyAssignmentSubmission(studyId, assignmentId),
     }),
 
   submissionDetail: (studyId: number, assignmentId: number, submissionId: number) =>

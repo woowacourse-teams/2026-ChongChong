@@ -1,7 +1,7 @@
 export type Role = 'LEADER' | 'MEMBER';
 
 export interface Study {
-  id: string;
+  id: number;
   role: Role;
   name: string;
   description: string;
@@ -30,3 +30,13 @@ export interface MemberStudyDetail {
 export type StudyDetail<R extends Role> = R extends 'LEADER'
   ? LeaderStudyDetail
   : MemberStudyDetail;
+
+export interface UserStudyInfo {
+  studyName: string;
+  role: Role;
+  userName: string;
+}
+
+export interface InviteLink {
+  inviteLink: string;
+}

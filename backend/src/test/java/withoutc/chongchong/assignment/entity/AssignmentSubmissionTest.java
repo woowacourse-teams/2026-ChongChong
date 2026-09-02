@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
@@ -91,6 +92,38 @@ class AssignmentSubmissionTest {
         ReflectionTestUtils.setField(submission, "updatedAt", legacyUpdatedAt);
 
         assertThat(submission.getSubmittedAt()).isEqualTo(legacyUpdatedAt);
+    }
+
+    @Test
+    @DisplayName("소유자와 비교 대상의 식별자가 모두 없으면 소유자로 판단하지 않는다")
+    void isNotOwnedByMemberWhenBothIdsAreNullTest() {
+        StudyMember owner = mock(StudyMember.class);
+        StudyMember actor = mock(StudyMember.class);
+        when(owner.getId()).thenReturn(null);
+        when(actor.getId()).thenReturn(null);
+        AssignmentSubmission submission = AssignmentSubmission.create(owner, mock(Assignment.class));
+
+        assertThat(submission.isOwnedBy(actor)).isFalse();
+    }
+
+    @Test
+    @DisplayName("비교 대상이 없으면 소유자로 판단하지 않는다")
+    void isNotOwnedByNullMemberTest() {
+        AssignmentSubmission submission = createSubmission();
+
+        assertThat(submission.isOwnedBy(null)).isFalse();
+    }
+
+    @Test
+    @DisplayName("소유자와 비교 대상의 식별자가 같으면 소유자로 판단한다")
+    void isOwnedByMemberWithSameIdTest() {
+        StudyMember owner = mock(StudyMember.class);
+        StudyMember actor = mock(StudyMember.class);
+        when(owner.getId()).thenReturn(1L);
+        when(actor.getId()).thenReturn(1L);
+        AssignmentSubmission submission = AssignmentSubmission.create(owner, mock(Assignment.class));
+
+        assertThat(submission.isOwnedBy(actor)).isTrue();
     }
 
     private AssignmentSubmission createSubmission() {

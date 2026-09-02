@@ -6,12 +6,12 @@ export interface Assignment {
   closeAt: string;
   memberCount?: number;
   completeCount?: number;
-  remindAt?: string;
+  remindAt?: string | null;
   isComplete: boolean;
 }
 
 export interface AssignmentListResponse {
-  nextCursor: number;
+  nextCursor: number | null;
   hasNext: boolean;
   assignments: Assignment[];
 }
@@ -19,8 +19,8 @@ export interface AssignmentListResponse {
 export interface Member {
   id: number;
   name: string;
-  profileImage: string;
-  lastRemindAt?: string;
+  profileImage: string | null;
+  lastRemindAt?: string | null;
 }
 
 export interface AssignmentSubmitStatus {
@@ -28,7 +28,7 @@ export interface AssignmentSubmitStatus {
   memberCount: number;
   completeCount: number;
   incompleteCount: number;
-  remindAt?: string;
+  remindAt?: string | null;
   completeMembers: Member[];
   incompleteMembers: Member[];
 }
@@ -39,18 +39,21 @@ export interface AssignmentDetail {
   content: string;
   submissionMethod: string;
   closeAt: string;
-  submissionId?: number;
 }
 
-export type AssignmentValue = Omit<AssignmentDetail, 'id' | 'submissionId'>;
+export type AssignmentValue = Omit<AssignmentDetail, 'id'>;
 
 export type UpdateAssignmentValue = Partial<AssignmentValue>;
 
 export interface Submission {
   id: number;
   name: string;
-  profileImage: string;
+  profileImage: string | null;
   createdAt: string;
+}
+
+export interface SubmissionListResponse {
+  submissions: Submission[];
 }
 
 export interface SubmissionDetail extends Submission {
@@ -70,3 +73,17 @@ export interface CreateAssignmentResponse {
 export interface CreateSubmissionResponse {
   submissionId: number;
 }
+
+export interface SubmittedAssignment {
+  submitted: true;
+  submissionId: number;
+  createdAt: string;
+  content: string;
+  link?: string;
+}
+
+export interface UnsubmittedAssignment {
+  submitted: false;
+}
+
+export type UserAssignmentSubmitDetail = SubmittedAssignment | UnsubmittedAssignment;

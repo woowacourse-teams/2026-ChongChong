@@ -12,8 +12,10 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -23,8 +25,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationResourceType;
+import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -54,7 +62,16 @@ class StudyAcceptanceTest {
     private NoticeRepository noticeRepository;
 
     @Autowired
+    private NoticeRecipientRepository noticeRecipientRepository;
+
+    @Autowired
     private AssignmentRepository assignmentRepository;
+
+    @Autowired
+    private AssignmentSubmissionRepository assignmentSubmissionRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
@@ -67,6 +84,28 @@ class StudyAcceptanceTest {
 
     @LocalServerPort
     private int port;
+
+    @BeforeEach
+    void configureCascadeConstraints() {
+        configureCascadeIfColumnExists("study_members", "study_id", "studies", "fkb8cp6e23p040p7ml6sswen5cs");
+        configureCascadeIfColumnExists("study_members", "user_id", "users", "fkdt5hp8mbe53a5sdcecsf7wpyg");
+        configureCascadeIfColumnExists("assignments", "study_id", "studies", "fkqe029wvx6pjp0q8tlypilk0c9");
+        configureCascadeIfColumnExists(
+                "assignment_reminders", "assignment_id", "assignments", "fk23if7m1gm235fcgs3hleq5do2");
+        configureCascadeIfColumnExists(
+                "assignment_submissions", "assignment_id", "assignments", "fkm7i7ubgh7y2n6mvg8muw62oax");
+        configureCascadeIfColumnExists(
+                "assignment_submissions", "member_id", "study_members", "fknsfnkdmpdvd605vnpkpt1g0md");
+        configureCascadeIfColumnExists("notices", "study_id", "studies", "fk403omqxfm0hkwwx6trtd12u76");
+        configureCascadeIfColumnExists(
+                "notice_recipients", "notice_id", "notices", "fky3a9r7igh6bsqigv2lkgmu6o");
+        configureCascadeIfColumnExists(
+                "notice_recipients", "member_id", "study_members", "fkpm6u1t0n3px52tld2apx6oess");
+        configureCascadeIfColumnExists("notice_reminders", "notice_id", "notices", "fko0h19ha7jyrdtym2iy97ip03n");
+        configureCascadeIfColumnExists("notifications", "study_id", "studies", "fko5m57o40ivnn0td7m511dx42k");
+        configureCascadeIfColumnExists(
+                "notifications", "recipient_id", "study_members", "fk60prjsdd6ahrlv3ayvjjqdlqi");
+    }
 
     @AfterEach
     void cleanDatabase() {
@@ -109,6 +148,31 @@ class StudyAcceptanceTest {
     }
 
     @Test
+    @DisplayName("스터디 설명이 null인 생성 요청을 보내면 설명을 null로 저장한다")
+    void createStudyWithNullDescriptionTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "자바 스터디",
+                          "description": null
+                        }
+                        """)
+                .when()
+                .post("/studies")
+                .then()
+                .statusCode(201)
+                .body("studyId", notNullValue());
+
+        assertThat(studyRepository.findAll())
+                .singleElement()
+                .satisfies(study -> assertThat(study.getDescription()).isNull());
+    }
+
+    @Test
     @DisplayName("스터디 생성 요청의 검증에 실패하면 한글 검증 사유를 반환한다")
     void createStudyWithInvalidRequestTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
@@ -132,6 +196,197 @@ class StudyAcceptanceTest {
                         "스터디 이름은 필수입니다.",
                         "스터디 설명은 30자 이내여야 합니다."
                 ));
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 수정 요청을 보내면 스터디 이름과 설명을 변경하고 204를 반환한다")
+    void updateStudyTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "수정 스터디",
+                          "description": "수정 설명"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(updatedStudy -> {
+                    assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
+                    assertThat(updatedStudy.getDescription()).isEqualTo("수정 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 수정 요청에서 설명이 null이면 기존 설명을 유지한다")
+    void updateStudyWithNullDescriptionTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "수정 스터디",
+                          "description": null
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(updatedStudy -> {
+                    assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
+                    assertThat(updatedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디를 수정할 수 없다")
+    void updateStudyForNonMemberTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "권한 없는 수정"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(unchangedStudy -> {
+                    assertThat(unchangedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(unchangedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아니면 스터디를 수정할 수 없다")
+    void updateStudyForNonLeaderTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
+                        StudyMemberRole.MEMBER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(member.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "권한 없는 수정"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_LEADER"));
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(unchangedStudy -> {
+                    assertThat(unchangedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(unchangedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디는 수정할 수 없다")
+    void updateStudyForMissingStudyTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "수정 스터디"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", 999L)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("스터디 수정 요청의 이름과 설명이 최대 길이를 초과하면 검증 오류를 반환한다")
+    void updateStudyWithInvalidRequestTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "1234567890123456",
+                          "description": "1234567890123456789012345678901"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.reason", containsInAnyOrder(
+                        "스터디 이름은 15자 이내여야 합니다.",
+                        "스터디 설명은 30자 이내여야 합니다."
+                ));
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(unchangedStudy -> {
+                    assertThat(unchangedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(unchangedStudy.getDescription()).isEqualTo("기존 설명");
+                });
     }
 
     @Test
@@ -251,13 +506,13 @@ class StudyAcceptanceTest {
         StudyMember secondStudyMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, secondMember, secondMember.getName(), null, StudyMemberRole.MEMBER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, "공지", "내용"));
         notice.addRecipients(List.of(firstStudyMember, secondStudyMember));
         notice.getRecipients().getFirst().markAsRead(NOTICE_NOW);
         noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
-                        leaderMember,
+                        study,
                         "과제",
                         "내용",
                         "링크",
@@ -301,12 +556,12 @@ class StudyAcceptanceTest {
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
                         StudyMemberRole.MEMBER)
         );
-        Notice notice = noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
+        Notice notice = noticeRepository.saveAndFlush(Notice.create(study, "공지", "내용"));
         notice.addRecipients(List.of(memberStudyMember));
         noticeRepository.saveAndFlush(notice);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
-                        leaderMember,
+                        study,
                         "과제",
                         "내용",
                         "링크",
@@ -391,20 +646,27 @@ class StudyAcceptanceTest {
         StudyMember leaderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
         );
-        studyMemberRepository.saveAndFlush(
+        StudyMember memberStudyMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
-        noticeRepository.saveAndFlush(Notice.create(leaderMember, "공지", "내용"));
-        assignmentRepository.saveAndFlush(
-                Assignment.create(
-                        leaderMember,
-                        "과제",
-                        "내용",
-                        "링크",
-                        LocalDateTime.of(2026, 8, 20, 0, 0),
-                        ASSIGNMENT_NOW
-                )
+
+        Notice notice = Notice.create(study, "공지", "내용");
+        notice.addRecipients(List.of(memberStudyMember));
+        noticeRepository.saveAndFlush(notice);
+
+        Assignment assignment = Assignment.create(
+                study,
+                "과제",
+                "내용",
+                "링크",
+                LocalDateTime.of(2026, 8, 20, 0, 0),
+                ASSIGNMENT_NOW
         );
+        assignment.initializeSubmissions(List.of(memberStudyMember));
+        assignmentRepository.saveAndFlush(assignment);
+
+        saveNotification(study, memberStudyMember, notice.getId(), NotificationResourceType.NOTICE);
+        saveNotification(study, memberStudyMember, assignment.getId(), NotificationResourceType.ASSIGNMENT);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
                 .port(port)
@@ -416,7 +678,10 @@ class StudyAcceptanceTest {
         assertThat(studyRepository.findById(study.getId())).isEmpty();
         assertThat(studyMemberRepository.findAll()).isEmpty();
         assertThat(noticeRepository.findAll()).isEmpty();
+        assertThat(noticeRecipientRepository.findAll()).isEmpty();
         assertThat(assignmentRepository.findAll()).isEmpty();
+        assertThat(assignmentSubmissionRepository.findAll()).isEmpty();
+        assertThat(notificationRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -484,5 +749,48 @@ class StudyAcceptanceTest {
                 Timestamp.valueOf(createdAt),
                 studyMemberId
         );
+    }
+
+    private void configureCascadeIfColumnExists(
+            String tableName,
+            String columnName,
+            String referencedTableName,
+            String constraintName
+    ) {
+        Integer columnCount = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_SCHEMA = 'PUBLIC'
+                          AND TABLE_NAME = ?
+                          AND COLUMN_NAME = ?
+                        """,
+                Integer.class,
+                tableName.toUpperCase(),
+                columnName.toUpperCase()
+        );
+        if (columnCount == null || columnCount == 0) {
+            return;
+        }
+
+        jdbcTemplate.execute("ALTER TABLE %s DROP CONSTRAINT IF EXISTS %s"
+                .formatted(tableName, constraintName));
+        jdbcTemplate.execute("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (id) ON DELETE CASCADE"
+                .formatted(tableName, constraintName, columnName, referencedTableName));
+    }
+
+    private void saveNotification(
+            Study study,
+            StudyMember recipient,
+            Long resourceId,
+            NotificationResourceType resourceType
+    ) {
+        Notification notification = BeanUtils.instantiateClass(Notification.class);
+        ReflectionTestUtils.setField(notification, "study", study);
+        ReflectionTestUtils.setField(notification, "recipient", recipient);
+        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
+        ReflectionTestUtils.setField(notification, "resourceId", resourceId);
+        ReflectionTestUtils.setField(notification, "resourceType", resourceType);
+        notificationRepository.saveAndFlush(notification);
     }
 }

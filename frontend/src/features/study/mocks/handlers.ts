@@ -4,6 +4,9 @@ import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
+import { validateStudy, validateStudyJoin } from './validators';
+import { invalidInputResponse } from '../../../mocks/errors';
+import { assignmentTable } from '../../assignment/mocks/db';
 
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
@@ -18,7 +21,7 @@ export const handlers = [
           q.where({ studyId: study.id, userId: user.id }),
         );
         return {
-          id: String(study.id),
+          id: study.id,
           role: membership.role,
           name: study.name,
           description: study.description,
@@ -33,55 +36,51 @@ export const handlers = [
   }),
 
   http.get(`${API_URL}${STUDY_URLS.detail}`, async ({ request, params }) => {
-    const { studyId } = params;
+    const studyId = Number(params.studyId);
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
-    const member = memberTable.findFirst((q) =>
-      q.where({ studyId: Number(studyId), userId: user.id }),
-    );
+    const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (!member) return new HttpResponse(null, { status: 403 });
     const isLead = member.role === 'LEADER';
-    // 과제/공지 MSW가 존재하지 않아 임시 데이터를 사용합니다.
+    const now = new Date();
+    const members = memberTable.findMany((q) => q.where({ studyId }));
+    const memberCount = members.length;
+    const openAssignments = assignmentTable
+      .findMany((q) => q.where({ studyId }))
+      .filter((assignment) => new Date(assignment.closeAt) > now);
+
+    // 공지 MSW가 존재하지 않아 빈데이터로 표현합니다.
     if (isLead) {
+      const assignments = openAssignments.filter(
+        (assignment) => assignment.completeUserIds.length < memberCount,
+      );
       return HttpResponse.json({
         notices: {
-          count: 1,
-          items: [
-            {
-              id: 1,
-              title: '판교 스터디룸에서 만나도록 합시다',
-              memberCount: 4,
-              completeCount: 2,
-            },
-          ],
+          count: 0,
+          items: [],
         },
         assignments: {
-          count: 1,
-          items: [
-            {
-              id: 1,
-              title: '그리디 3문제 풀기',
-              memberCount: 4,
-              completeCount: 2,
-            },
-          ],
+          count: assignments.length,
+          items: assignments.map((assignment) => ({
+            id: assignment.id,
+            title: assignment.title,
+            memberCount,
+            completeCount: assignment.completeUserIds.length,
+          })),
         },
       });
     } else {
+      const assignments = openAssignments.filter(
+        (assignment) => !assignment.completeUserIds.includes(user.id),
+      );
+      const notices: { id: number; title: string }[] = [];
       return HttpResponse.json({
-        totalCount: 4,
-        notices: [
-          {
-            id: 1,
-            title: '판교 스터디룸에서 만나도록 합시다',
-          },
-        ],
-        assignments: [
-          {
-            id: 1,
-            title: '그리디 3문제 풀기',
-          },
-        ],
+        totalCount: notices.length + assignments.length,
+        notices,
+        assignments: assignments.map((assignment) => ({
+          id: assignment.id,
+          title: assignment.title,
+        })),
       });
     }
   }),
@@ -90,13 +89,17 @@ export const handlers = [
     const body = (await request.json()) as { name: string; description: string };
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
-    // msw 로직은 실제 backend API 로 대체될 예정입니다.
-    // if (invalidInput) {
-    //   return HttpResponse.json(invalidInput, { status: 400 });
-    // }
+    const fieldErrors = validateStudy(body);
+    if (fieldErrors.length > 0) {
+      return invalidInputResponse(fieldErrors);
+    }
 
     const studyId = Date.now();
-    await studyTable.create({ id: studyId, inviteLink: 'chongchong.app/join/new', ...body });
+    await studyTable.create({
+      id: studyId,
+      inviteLink: `https://chongchong.app/join?token=${studyId}`,
+      ...body,
+    });
     await memberTable.create({
       id: Date.now(),
       studyId,
@@ -109,13 +112,21 @@ export const handlers = [
   }),
 
   http.post(`${API_URL}${STUDY_URLS.join}`, async ({ request }) => {
-    const { token } = (await request.json()) as { token: string };
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
+    const { token } = (await request.json()) as { token: string };
+    const fieldErrors = validateStudyJoin({ token });
+    if (fieldErrors.length > 0) {
+      return invalidInputResponse(fieldErrors);
+    }
+
     const study = studyTable.findFirst((q) => q.where({ inviteLink: token }));
     if (!study) return new HttpResponse(null, { status: 404 });
     if (memberTable.findFirst((q) => q.where({ studyId: study.id, userId: user.id }))) {
-      return new HttpResponse(null, { status: 409 });
+      return HttpResponse.json(
+        { code: 'ALREADY_JOINED_STUDY', message: '해당 스터디에 이미 가입되어 있습니다.' },
+        { status: 409 },
+      );
     }
     const newMember = {
       id: Date.now(),

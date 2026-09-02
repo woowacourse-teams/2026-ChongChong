@@ -41,10 +41,6 @@ public class Notice extends BaseEntity {
     @JoinColumn(name = "study_id", nullable = false)
     private Study study;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "writer_id", nullable = false)
-    private StudyMember writer;
-
     @Column(nullable = false)
     private String title;
 
@@ -57,8 +53,8 @@ public class Notice extends BaseEntity {
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<NoticeRecipient> recipients = new ArrayList<>();
 
-    public static Notice create(StudyMember writer, String title, String content) {
-        return new Notice(writer, title, content);
+    public static Notice create(Study study, String title, String content) {
+        return new Notice(study, title, content);
     }
 
     public void addRecipients(List<StudyMember> members) {
@@ -118,12 +114,11 @@ public class Notice extends BaseEntity {
                 .min(LocalDateTime::compareTo).orElse(null);
     }
 
-    private Notice(StudyMember writer, String title, String content) {
+    private Notice(Study study, String title, String content) {
         validateTitle(title);
         validateContent(content);
 
-        this.study = writer.getStudy();
-        this.writer = writer;
+        this.study = study;
         this.title = title;
         this.content = content;
     }

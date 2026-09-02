@@ -1,24 +1,27 @@
 package withoutc.chongchong.study.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
-import withoutc.chongchong.study.dto.MyStudyListResponse;
-import withoutc.chongchong.study.dto.StudyCreateRequest;
-import withoutc.chongchong.study.dto.StudyCreateResponse;
-import withoutc.chongchong.study.dto.StudyDetailResponse;
-import withoutc.chongchong.study.dto.StudyInfoResponse;
-import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
+import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
+import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
+import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
+import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.service.StudyService;
 
 @RestController
@@ -40,20 +43,27 @@ public class StudyController implements StudyApi {
                 .body(response);
     }
 
-    @GetMapping("/{studyId}")
-    public ResponseEntity<StudyDetailResponse> getStudyDetail(
+    @PatchMapping("/{studyId}")
+    public ResponseEntity<Void> updateStudy(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId,
+            @RequestBody @Valid StudyUpdateRequest request
     ) {
-        StudyDetailResponse response = studyService.getStudyDetail(user.id(), studyId);
+        studyService.updateStudy(user.id(), studyId, request);
+
         return ResponseEntity
-                .ok(response);
+                .noContent()
+                .build();
     }
 
     @DeleteMapping("/{studyId}")
     public ResponseEntity<Void> deleteStudy(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId
     ) {
         studyService.deleteStudy(user.id(), studyId);
         return ResponseEntity
@@ -61,10 +71,24 @@ public class StudyController implements StudyApi {
                 .build();
     }
 
+    @GetMapping("/{studyId}")
+    public ResponseEntity<StudyDetailResponse> getStudyDetail(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId
+    ) {
+        StudyDetailResponse response = studyService.getStudyDetail(user.id(), studyId);
+        return ResponseEntity
+                .ok(response);
+    }
+
     @GetMapping("/{studyId}/info")
     public ResponseEntity<StudyInfoResponse> getStudyInfo(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId
     ) {
         StudyInfoResponse response = studyService.getStudyInfo(user.id(), studyId);
         return ResponseEntity
@@ -85,7 +109,9 @@ public class StudyController implements StudyApi {
     @GetMapping("/{studyId}/invite-link")
     public ResponseEntity<StudyInviteLinkResponse> getInviteLink(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId
     ) {
         StudyInviteLinkResponse response = studyService.getInviteLink(user.id(), studyId);
 

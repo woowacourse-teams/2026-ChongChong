@@ -29,12 +29,13 @@ function renderMemberListContent(content: React.ReactNode) {
 
 describe('초대 링크 테스트', () => {
   const STUDY_INVITE_LINK_URL = `${API_URL}${STUDY_URLS.inviteLink}`;
+  const INVITE_LINK = 'https://chongchong.app/join?token=mock-token';
 
   function mockStudyInviteLink() {
     server.use(
       http.get(STUDY_INVITE_LINK_URL, () =>
         HttpResponse.json({
-          inviteLink: 'mock-chongchong-invite-link123',
+          inviteLink: INVITE_LINK,
         }),
       ),
     );
@@ -44,14 +45,14 @@ describe('초대 링크 테스트', () => {
     mockStudyInviteLink();
     renderMemberListContent(<MemberListContent.Leader />);
 
-    expect(await screen.findByText('mock-chongchong-invite-link123')).toBeInTheDocument();
+    expect(await screen.findByText(INVITE_LINK)).toBeInTheDocument();
   });
 
   test('스터디원 화면에 API로 받은 초대 링크가 노출된다', async () => {
     mockStudyInviteLink();
     renderMemberListContent(<MemberListContent.Member />);
 
-    expect(await screen.findByText('mock-chongchong-invite-link123')).toBeInTheDocument();
+    expect(await screen.findByText(INVITE_LINK)).toBeInTheDocument();
   });
 });
 

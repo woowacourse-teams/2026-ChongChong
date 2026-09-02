@@ -135,6 +135,15 @@ export const mockAssigments = [
     closeAt: '2026-09-28T23:59:59',
     completeUserIds: [4, 5],
   },
+  {
+    id: 14,
+    studyId: 8,
+    title: '강아지 밥주기',
+    content: '강아지 저녁밥 꼭 줘야 합니다.',
+    submissionMethod: '인증사진을 첨부하세요.',
+    closeAt: '2030-09-28T23:59:59',
+    completeUserIds: [],
+  },
 ] satisfies AssignmentSchemaType[];
 
 export function createSeedAssignments() {
@@ -147,9 +156,10 @@ const submissionSchema = z.object({
   id: z.number(),
   assignmentId: z.number(),
   userId: z.number(),
-  content: z.string(),
-  link: z.string().optional(),
-  createdAt: z.string(),
+  submitted: z.boolean().default(true),
+  content: z.string().nullable().default(null),
+  link: z.string().nullable().default(null),
+  createdAt: z.string().nullable().default(null),
 });
 
 export const submissionTable = new Collection({
@@ -157,6 +167,7 @@ export const submissionTable = new Collection({
 });
 
 export type SubmissionSchemaType = z.infer<typeof submissionSchema>;
+type SubmissionSchemaInput = z.input<typeof submissionSchema>;
 
 export const mockSubmissions = [
   {
@@ -350,7 +361,13 @@ export const mockSubmissions = [
     link: 'http://localhost:8080',
     createdAt: '2026-09-26T12:29:16',
   },
-] satisfies SubmissionSchemaType[];
+  {
+    id: 24,
+    assignmentId: 7,
+    userId: 1,
+    submitted: false,
+  },
+] satisfies SubmissionSchemaInput[];
 
 export function createSeedSubmissions() {
   for (const mockSubmission of mockSubmissions) {

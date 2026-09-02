@@ -113,7 +113,7 @@ class StudyMemberAcceptanceTest {
         LocalDateTime now = LocalDateTime.now(clock);
         Assignment assignment = assignmentRepository.saveAndFlush(
                 Assignment.create(
-                        leaderMember,
+                        study,
                         "기존 과제",
                         "과제 내용",
                         "링크 제출",

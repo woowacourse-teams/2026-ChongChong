@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ class AssignmentRepositoryTest {
         for (int index = 1; index <= 5; index++) {
             assignments.add(assignmentRepository.save(
                     Assignment.create(
-                            firstStudy.leader(),
+                            firstStudy.study(),
                             "과제 " + index,
                             "과제 내용 " + index,
                             "GitHub PR",
@@ -65,7 +66,7 @@ class AssignmentRepositoryTest {
             ));
         }
         assignmentRepository.save(Assignment.create(
-                secondStudy.leader(),
+                secondStudy.study(),
                 "다른 과제",
                 "다른 과제 내용",
                 "GitHub PR",
@@ -98,9 +99,9 @@ class AssignmentRepositoryTest {
     void findByCursorAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Assignment firstMemberAssignment = createAssignment(
-                fixture.leader(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
+                fixture.study(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
         );
-        createAssignment(fixture.leader(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
+        createAssignment(fixture.study(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
         assignmentRepository.flush();
 
         List<Assignment> assignments = assignmentRepository.findByCursorAndMemberId(
@@ -116,25 +117,35 @@ class AssignmentRepositoryTest {
     }
 
     @Test
-    @DisplayName("과제 조회에 성공하면 해당 과제를 반환하고, 없으면 과제 없음 예외를 던진다")
-    void getByIdOrThrowTest() {
+    @DisplayName("스터디에 속한 과제를 ID로 조회한다")
+    void getByIdAndStudyIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
-        Assignment assignment = assignmentRepository.save(Assignment.create(
-                fixture.leader(),
-                "과제",
-                "과제 내용",
-                "GitHub PR",
-                LocalDateTime.of(2026, 8, 30, 23, 59),
-                NOW
-        ));
+        Assignment assignment = createAssignment(fixture.study(), "과제", List.of(), 0);
 
-        Assignment found = assignmentRepository.getByIdOrThrow(assignment.getId());
+        Assignment found = assignmentRepository.getByIdAndStudyIdOrThrow(
+                assignment.getId(), fixture.study().getId());
 
         assertThat(found.getId()).isEqualTo(assignment.getId());
-        assertThatThrownBy(() -> assignmentRepository.getByIdOrThrow(Long.MAX_VALUE))
-                .isInstanceOfSatisfying(AssignmentException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND)
-                );
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 과제 ID를 조회하면 과제 없음 예외를 던진다")
+    void getByIdAndStudyIdOrThrowWhenAssignmentNotFoundTest() {
+        StudyFixture fixture = createStudyFixture("스터디", "리더");
+
+        assertAssignmentNotFound(() -> assignmentRepository.getByIdAndStudyIdOrThrow(
+                Long.MAX_VALUE, fixture.study().getId()));
+    }
+
+    @Test
+    @DisplayName("다른 스터디에 속한 과제를 조회하면 과제 없음 예외를 던진다")
+    void getByIdAndStudyIdOrThrowWhenAssignmentBelongsToAnotherStudyTest() {
+        StudyFixture assignmentStudy = createStudyFixture("과제 스터디", "과제 스터디 리더");
+        StudyFixture requestedStudy = createStudyFixture("요청 스터디", "요청 스터디 리더");
+        Assignment assignment = createAssignment(assignmentStudy.study(), "과제", List.of(), 0);
+
+        assertAssignmentNotFound(() -> assignmentRepository.getByIdAndStudyIdOrThrow(
+                assignment.getId(), requestedStudy.study().getId()));
     }
 
     @Test
@@ -142,13 +153,13 @@ class AssignmentRepositoryTest {
     void findIncompleteAssignmentSummariesByStudyIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Assignment incompleteAssignment = createAssignment(
-                fixture.leader(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
+                fixture.study(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
         );
         Assignment completeAssignment = createAssignment(
-                fixture.leader(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
+                fixture.study(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
         );
         Assignment unsubmittedAssignment = createAssignment(
-                fixture.leader(), "미제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 0
+                fixture.study(), "미제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 0
         );
         assignmentRepository.flush();
 
@@ -171,10 +182,10 @@ class AssignmentRepositoryTest {
     void findIncompleteAssignmentsByStudyIdAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Assignment incompleteAssignment = createAssignment(
-                fixture.leader(), "미제출 과제", List.of(fixture.firstMember()), 0
+                fixture.study(), "미제출 과제", List.of(fixture.firstMember()), 0
         );
         Assignment completeAssignment = createAssignment(
-                fixture.leader(), "제출 과제", List.of(fixture.firstMember()), 1
+                fixture.study(), "제출 과제", List.of(fixture.firstMember()), 1
         );
         assignmentRepository.flush();
 
@@ -191,10 +202,10 @@ class AssignmentRepositoryTest {
     void countIncompleteAssignmentByStudyIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         createAssignment(
-                fixture.leader(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
+                fixture.study(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
         );
         createAssignment(
-                fixture.leader(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
+                fixture.study(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
         );
         assignmentRepository.flush();
 
@@ -207,9 +218,9 @@ class AssignmentRepositoryTest {
     @DisplayName("스터디원용 미완료 과제 개수는 해당 멤버가 제출하지 않은 과제만 센다")
     void countIncompleteAssignmentByStudyIdAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        createAssignment(fixture.leader(), "첫 번째 멤버 미제출 과제", List.of(fixture.firstMember()), 0);
-        createAssignment(fixture.leader(), "첫 번째 멤버 제출 과제", List.of(fixture.firstMember()), 1);
-        createAssignment(fixture.leader(), "두 번째 멤버 미제출 과제", List.of(fixture.secondMember()), 0);
+        createAssignment(fixture.study(), "첫 번째 멤버 미제출 과제", List.of(fixture.firstMember()), 0);
+        createAssignment(fixture.study(), "첫 번째 멤버 제출 과제", List.of(fixture.firstMember()), 1);
+        createAssignment(fixture.study(), "두 번째 멤버 미제출 과제", List.of(fixture.secondMember()), 0);
         assignmentRepository.flush();
 
         long firstMemberCount = assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(
@@ -231,13 +242,13 @@ class AssignmentRepositoryTest {
     }
 
     private Assignment createAssignment(
-            StudyMember leader,
+            Study study,
             String title,
             List<StudyMember> members,
             int submittedCount
     ) {
         Assignment assignment = assignmentRepository.save(Assignment.create(
-                leader,
+                study,
                 title,
                 "과제 내용",
                 "GitHub PR",
@@ -249,6 +260,13 @@ class AssignmentRepositoryTest {
                 .limit(submittedCount)
                 .forEach(submission -> ReflectionTestUtils.setField(submission, "submitted", true));
         return assignment;
+    }
+
+    private void assertAssignmentNotFound(ThrowingCallable callable) {
+        assertThatThrownBy(callable)
+                .isInstanceOfSatisfying(AssignmentException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND)
+                );
     }
 
     private StudyWithMembersFixture createStudyWithMembersFixture() {

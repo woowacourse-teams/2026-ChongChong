@@ -2,6 +2,7 @@ import ky from 'ky';
 import { API_PREFIX, BASE_URL } from '../config';
 import { clearAccessToken, getAccessToken } from './features/login/accessToken';
 import { refreshAccessToken } from './features/login/api';
+import { alertErrorResponse } from './shared/api/error';
 
 const api = ky.create({
   baseUrl: BASE_URL,
@@ -38,6 +39,14 @@ const api = ky.create({
 
           return response;
         }
+      },
+    ],
+    beforeError: [
+      ({ request, error }) => {
+        // 조회 실패는 각 페이지의 에러 UI가 표시하므로 Alert를 띄우지 않습니다.
+        if (request.method !== 'GET') alertErrorResponse(error);
+
+        return error;
       },
     ],
   },

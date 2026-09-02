@@ -9,6 +9,10 @@ import withoutc.chongchong.global.exception.code.ErrorCode;
 @RequiredArgsConstructor
 public enum StudyErrorCode implements ErrorCode {
 
+    INVALID_NAME(HttpStatus.BAD_REQUEST, "INVALID_NAME", "스터디 이름이 올바르지 않습니다."),
+
+    INVALID_DESCRIPTION(HttpStatus.BAD_REQUEST, "INVALID_DESCRIPTION", "스터디 설명이 올바르지 않습니다."),
+
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY_NOT_FOUND", "존재하지 않는 스터디입니다."),
 
     INVALID_STUDY_ID(HttpStatus.BAD_REQUEST, "INVALID_STUDY_ID", "유효하지 않은 스터디 ID입니다."),
