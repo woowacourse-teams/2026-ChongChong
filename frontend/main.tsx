@@ -40,7 +40,7 @@ async function enableMocking() {
 
 const queryClient = new QueryClient();
 
-const publicPaths = new Set(['/login', '/auth/kakao/callback']);
+const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
 
 async function restoreSession() {
   if (publicPaths.has(window.location.pathname)) return;

@@ -15,7 +15,7 @@ export interface Notice {
   createdAt: string;
   recipientCount?: number;
   readRecipientCount?: number;
-  remindAt?: string;
+  remindAt?: string | null;
   isComplete: boolean;
 }
 
@@ -28,8 +28,8 @@ export interface NoticeListResponse {
 export interface Member {
   id: number;
   name: string;
-  profileImage: string;
-  lastRemindAt?: string;
+  profileImage: string | null;
+  lastRemindAt?: string | null;
 }
 
 export interface NoticeReadStatus {
@@ -37,7 +37,7 @@ export interface NoticeReadStatus {
   memberCount: number;
   readCount: number;
   unreadCount: number;
-  remindAt?: string;
+  remindAt?: string | null;
   readMembers: Member[];
   unreadMembers: Member[];
 }

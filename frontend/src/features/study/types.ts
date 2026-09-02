@@ -38,5 +38,5 @@ export interface UserStudyInfo {
 }
 
 export interface InviteLink {
-  inviteLink: `https://chongchong.app/join?token=${string}`;
+  inviteLink: string;
 }

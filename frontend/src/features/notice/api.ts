@@ -1,4 +1,5 @@
 import api from '../../client';
+import { FIELD_ERROR_CODE, getErrorResponse, ValidationError } from '../../shared/api/error';
 import type { NoticeFormValues, UpdateNoticeValue } from './types';
 import {
   isNoticeListResponse,
@@ -83,8 +84,18 @@ export async function createNotice(studyId: number, values: NoticeFormValues) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 생성에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 생성에 실패했습니다.', { cause: error });
   }
 }
 
@@ -101,8 +112,18 @@ export async function updateNotice(studyId: number, noticeId: number, values: Up
     await api.patch(`/studies/${studyId}/notices/${noticeId}`, {
       json: values,
     });
-  } catch {
-    throw new Error('공지 수정에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 수정에 실패했습니다.', { cause: error });
   }
 }
 

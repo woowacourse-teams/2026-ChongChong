@@ -34,6 +34,7 @@ export default function CreateNoticePage() {
         <NoticeForm
           submitLabel="공지 올리기"
           isSubmitting={createMutation.isPending}
+          error={createMutation.error}
           onSubmit={(values) => createMutation.mutate(values)}
         />
       </Main>

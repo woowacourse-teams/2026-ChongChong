@@ -17,7 +17,7 @@ const noticeSchema = z.object({
   createdAt: z.string(),
   recipientCount: z.number().optional(),
   readRecipientCount: z.number().optional(),
-  remindAt: z.string().optional(),
+  remindAt: z.string().nullish(),
   isComplete: z.boolean(),
 }) satisfies z.ZodType<Notice>;
 
@@ -41,8 +41,8 @@ const noticeDetailSchema = z.object({
 const memberSchema = z.object({
   id: z.number(),
   name: z.string(),
-  profileImage: z.string(),
-  lastRemindAt: z.string().optional(),
+  profileImage: z.string().nullable(),
+  lastRemindAt: z.string().nullish(),
 }) satisfies z.ZodType<Member>;
 
 const noticeReadStatusSchema = z.object({
@@ -50,7 +50,7 @@ const noticeReadStatusSchema = z.object({
   memberCount: z.number(),
   readCount: z.number(),
   unreadCount: z.number(),
-  remindAt: z.string().optional(),
+  remindAt: z.string().nullish(),
   readMembers: z.array(memberSchema),
   unreadMembers: z.array(memberSchema),
 }) satisfies z.ZodType<NoticeReadStatus>;

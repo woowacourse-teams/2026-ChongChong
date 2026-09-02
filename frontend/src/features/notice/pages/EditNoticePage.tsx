@@ -42,6 +42,8 @@ export default function EditNoticePage() {
       <Main>
         <NoticeForm
           submitLabel="수정하기"
+          isSubmitting={updateMutation.isPending}
+          error={updateMutation.error}
           onSubmit={updateMutation.mutate}
           initialValues={{
             title: notice.title,
