@@ -1,6 +1,7 @@
 package withoutc.chongchong.study.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
-import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
-import withoutc.chongchong.study.dto.StudyMemberJoinResponse;
-import withoutc.chongchong.study.dto.StudyMembersResponse;
+import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
+import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.service.StudyMemberService;
 
 @RestController
@@ -40,7 +41,9 @@ public class StudyMemberController implements StudyMemberApi {
     @GetMapping("/{studyId}/members")
     public ResponseEntity<StudyMembersResponse> getAllStudyMembers(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId
     ) {
         StudyMembersResponse response = studyMemberService.getAllStudyMembers(user.id(), studyId);
 
@@ -50,8 +53,12 @@ public class StudyMemberController implements StudyMemberApi {
     @DeleteMapping("/{studyId}/members/{memberId}")
     public ResponseEntity<Void> expel(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId,
-            @PathVariable Long memberId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId,
+            @PathVariable
+            @Positive(message = "스터디 멤버 ID는 양수여야 합니다.")
+            Long memberId
     ) {
         studyMemberService.expel(user.id(), studyId, memberId);
 
@@ -61,7 +68,9 @@ public class StudyMemberController implements StudyMemberApi {
     @DeleteMapping("/{studyId}/members/me")
     public ResponseEntity<Void> leave(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable Long studyId
+            @PathVariable
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId
     ) {
         studyMemberService.leave(user.id(), studyId);
 
