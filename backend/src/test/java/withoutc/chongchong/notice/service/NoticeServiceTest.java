@@ -47,11 +47,10 @@ import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjecti
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
-import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
-import withoutc.chongchong.user.entity.User;
+import withoutc.chongchong.study.repository.StudyRepository;
 
 @ExtendWith(MockitoExtension.class)
 class NoticeServiceTest {
@@ -71,6 +70,9 @@ class NoticeServiceTest {
     @Mock
     private NoticeRecipientRepository noticeRecipientRepository;
 
+    @Mock
+    private StudyRepository studyRepository;
+
     private NoticeService noticeService;
 
     @BeforeEach
@@ -81,6 +83,7 @@ class NoticeServiceTest {
                 studyMemberRepository,
                 noticeRepository,
                 noticeRecipientRepository,
+                studyRepository,
                 clock
         );
     }
@@ -96,7 +99,7 @@ class NoticeServiceTest {
         ArgumentCaptor<Notice> noticeCaptor = ArgumentCaptor.forClass(Notice.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
-        when(leader.getStudy()).thenReturn(study);
+        when(studyRepository.getByIdOrThrow(STUDY_ID)).thenReturn(study);
         when(studyMemberRepository.findAllByStudyId(STUDY_ID)).thenReturn(List.of(leader, member));
         when(member.isLeader()).thenReturn(false);
         when(member.getId()).thenReturn(MEMBER_ID);
@@ -112,7 +115,6 @@ class NoticeServiceTest {
         Notice notice = noticeCaptor.getValue();
         assertThat(response.noticeId()).isEqualTo(NOTICE_ID);
         assertThat(notice.getStudy()).isSameAs(study);
-        assertThat(notice.getWriter()).isSameAs(leader);
         assertThat(notice.getRecipientCount()).isEqualTo(1);
         assertThat(notice.getRecipients().getFirst().getMember()).isSameAs(member);
         assertThat(notice.getNextRemindAt()).isEqualTo(remindAt);
@@ -139,8 +141,7 @@ class NoticeServiceTest {
     void updateTest() {
         Study study = mock(Study.class);
         StudyMember leader = mock(StudyMember.class);
-        when(leader.getStudy()).thenReturn(study);
-        Notice notice = Notice.create(leader, "기존 제목", "기존 내용");
+        Notice notice = Notice.create(study, "기존 제목", "기존 내용");
         LocalDateTime oldRemindAt = NOW.plusHours(1);
         LocalDateTime newRemindAt = NOW.plusHours(2);
         notice.addReminders(List.of(oldRemindAt), NOW);
@@ -163,8 +164,7 @@ class NoticeServiceTest {
     void deleteTest() {
         Study study = mock(Study.class);
         StudyMember leader = mock(StudyMember.class);
-        when(leader.getStudy()).thenReturn(study);
-        Notice notice = Notice.create(leader, "공지 제목", "공지 내용");
+        Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
         when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
@@ -286,7 +286,6 @@ class NoticeServiceTest {
         assertThat(response.id()).isEqualTo(NOTICE_ID);
         assertThat(response.title()).isEqualTo("공지 제목");
         assertThat(response.content()).isEqualTo("공지 내용");
-        assertThat(response.writer()).isEqualTo("리더");
     }
 
     @Test
@@ -457,10 +456,8 @@ class NoticeServiceTest {
 
     private Notice noticeWithId(Long noticeId, Long studyId) {
         Study study = Study.create("자바 스터디", "설명");
-        User user = User.create("리더", null);
-        StudyMember writer = StudyMember.create(study, user, "리더", null, StudyMemberRole.LEADER);
         ReflectionTestUtils.setField(study, "id", studyId);
-        Notice notice = Notice.create(writer, "공지 제목", "공지 내용");
+        Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         ReflectionTestUtils.setField(notice, "id", noticeId);
         return notice;
     }

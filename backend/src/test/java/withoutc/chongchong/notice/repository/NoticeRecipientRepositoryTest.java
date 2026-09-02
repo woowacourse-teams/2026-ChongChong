@@ -56,19 +56,19 @@ class NoticeRecipientRepositoryTest {
     @DisplayName("여러 공지의 읽음 상태를 StudyMember id로 한 번에 조회한다")
     void findMyReadStatusesByNoticeIdsAndMemberIdTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
-        StudyMember writer = createMember(study, "리더", StudyMemberRole.LEADER);
+        createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember recipient = createMemberWithIdDifferentFromUserId(study);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
-        Notice readNotice = Notice.create(writer, "읽은 공지", "공지 내용");
+        Notice readNotice = Notice.create(study, "읽은 공지", "공지 내용");
         readNotice.addRecipients(List.of(recipient, otherMember));
         NoticeRecipient readRecipient = readNotice.getRecipients().stream()
                 .filter(candidate -> candidate.getMember().getId().equals(recipient.getId()))
                 .findFirst()
                 .orElseThrow();
         ReflectionTestUtils.setField(readRecipient, "readAt", LocalDateTime.of(2026, 8, 20, 10, 0));
-        Notice unreadNotice = Notice.create(writer, "안 읽은 공지", "공지 내용");
+        Notice unreadNotice = Notice.create(study, "안 읽은 공지", "공지 내용");
         unreadNotice.addRecipients(List.of(recipient));
-        Notice otherNotice = Notice.create(writer, "다른 공지", "다른 공지 내용");
+        Notice otherNotice = Notice.create(study, "다른 공지", "다른 공지 내용");
         otherNotice.addRecipients(List.of(otherMember));
         noticeRepository.saveAllAndFlush(List.of(readNotice, unreadNotice, otherNotice));
 
@@ -92,11 +92,11 @@ class NoticeRecipientRepositoryTest {
         LocalDateTime latestRemindAt = LocalDateTime.of(2026, 8, 20, 12, 0);
         LocalDateTime irrelevantNotificationAt = LocalDateTime.of(2026, 8, 20, 13, 0);
         Study study = studyRepository.save(Study.create("스터디", "설명"));
-        StudyMember writer = createMember(study, "리더", StudyMemberRole.LEADER);
+        createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember readMember = createMember(study, "읽은 스터디원", StudyMemberRole.MEMBER);
         StudyMember unreadMember = createMember(study, "리마인드 받은 스터디원", StudyMemberRole.MEMBER);
         StudyMember unreadMemberWithoutReminder = createMember(study, "리마인드 없는 스터디원", StudyMemberRole.MEMBER);
-        Notice notice = Notice.create(writer, "공지", "공지 내용");
+        Notice notice = Notice.create(study, "공지", "공지 내용");
         notice.addRecipients(List.of(readMember, unreadMember, unreadMemberWithoutReminder));
         NoticeRecipient readRecipient = notice.getRecipients().stream()
                 .filter(candidate -> candidate.getMember().getId().equals(readMember.getId()))
@@ -130,10 +130,10 @@ class NoticeRecipientRepositoryTest {
     @DisplayName("같은 공지와 스터디원으로 수신자를 중복 저장할 수 없다")
     void rejectDuplicateNoticeRecipientTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
-        StudyMember writer = createMember(study, "리더", StudyMemberRole.LEADER);
+        createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember recipient = createMember(study, "스터디원", StudyMemberRole.MEMBER);
         Notice notice = noticeRepository.saveAndFlush(
-                Notice.create(writer, "공지", "공지 내용")
+                Notice.create(study, "공지", "공지 내용")
         );
         noticeRecipientRepository.saveAndFlush(NoticeRecipient.create(recipient, notice));
 
@@ -146,10 +146,10 @@ class NoticeRecipientRepositoryTest {
     @DisplayName("멤버의 공지 수신 정보만 모두 삭제한다")
     void deleteAllByMemberIdTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
-        StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
+        createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
-        Notice notice = Notice.create(leader, "공지", "공지 내용");
+        Notice notice = Notice.create(study, "공지", "공지 내용");
         notice.addRecipients(List.of(target, otherMember));
         noticeRepository.saveAndFlush(notice);
 

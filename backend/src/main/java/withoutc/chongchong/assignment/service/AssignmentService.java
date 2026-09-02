@@ -27,8 +27,10 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmission
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
+import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.StudyRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -38,6 +40,7 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final StudyMemberRepository studyMemberRepository;
+    private final StudyRepository studyRepository;
 
     private final Clock clock;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
@@ -51,8 +54,10 @@ public class AssignmentService {
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
 
+        Study study = studyRepository.getByIdOrThrow(studyId);
+
         LocalDateTime now = LocalDateTime.now(clock);
-        Assignment assignment = Assignment.create(actor, request.title(), request.content(),
+        Assignment assignment = Assignment.create(study, request.title(), request.content(),
                 request.submissionMethod(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
         // TODO 과제 제출물이 현재는 생성 시점 이전에 가입한 멤버에게만 생성(신규 가입자에게는 보이지 않음) 논의 필요

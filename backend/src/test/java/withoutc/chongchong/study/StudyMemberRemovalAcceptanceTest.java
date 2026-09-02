@@ -160,7 +160,7 @@ class StudyMemberRemovalAcceptanceTest {
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 멤버", StudyMemberRole.MEMBER);
 
-        Notice notice = Notice.create(leader, "공지", "공지 내용");
+        Notice notice = Notice.create(study, "공지", "공지 내용");
         notice.addRecipients(List.of(target, otherMember));
         notice.getRecipients().stream()
                 .filter(recipient -> recipient.getMember().getId().equals(target.getId()))
@@ -170,7 +170,7 @@ class StudyMemberRemovalAcceptanceTest {
         noticeRepository.saveAndFlush(notice);
 
         Assignment assignment = Assignment.create(
-                leader,
+                study,
                 "과제",
                 "과제 내용",
                 "링크 제출",

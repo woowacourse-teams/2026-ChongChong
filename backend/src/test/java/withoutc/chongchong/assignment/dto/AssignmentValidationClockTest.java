@@ -3,7 +3,6 @@ package withoutc.chongchong.assignment.dto;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import jakarta.validation.Validator;
 import java.time.Clock;
@@ -25,7 +24,6 @@ import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.study.entity.Study;
-import withoutc.chongchong.study.entity.StudyMember;
 
 @ActiveProfiles("test")
 @Import(AssignmentValidationClockTest.FixedClockConfig.class)
@@ -54,7 +52,7 @@ class AssignmentValidationClockTest {
                 .containsExactly("remindAts[0].<list element>");
 
         assertThatThrownBy(() -> Assignment.create(
-                mockWriter(),
+                mock(Study.class),
                 "과제 제목",
                 "과제 내용",
                 "링크 제출",
@@ -96,19 +94,13 @@ class AssignmentValidationClockTest {
 
     private Assignment createAssignment(LocalDateTime closeAt) {
         return Assignment.create(
-                mockWriter(),
+                mock(Study.class),
                 "과제 제목",
                 "과제 내용",
                 "링크 제출",
                 closeAt,
                 NOW
         );
-    }
-
-    private StudyMember mockWriter() {
-        StudyMember writer = mock(StudyMember.class);
-        when(writer.getStudy()).thenReturn(mock(Study.class));
-        return writer;
     }
 
     @TestConfiguration(proxyBeanMethods = false)

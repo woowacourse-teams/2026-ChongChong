@@ -50,6 +50,7 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.StudyRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AssignmentServiceTest {
@@ -70,6 +71,9 @@ class AssignmentServiceTest {
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
 
     @Mock
+    private StudyRepository studyRepository;
+
+    @Mock
     private AssignmentAccessPolicy assignmentAccessPolicy;
 
     private AssignmentService assignmentService;
@@ -82,6 +86,7 @@ class AssignmentServiceTest {
                 assignmentRepository,
                 assignmentSubmissionRepository,
                 studyMemberRepository,
+                studyRepository,
                 clock,
                 assignmentAccessPolicy
         );
@@ -101,7 +106,7 @@ class AssignmentServiceTest {
         ArgumentCaptor<Assignment> assignmentCaptor = ArgumentCaptor.forClass(Assignment.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
-        when(leader.getStudy()).thenReturn(study);
+        when(studyRepository.getByIdOrThrow(STUDY_ID)).thenReturn(study);
         when(studyMemberRepository.findAllByStudyId(STUDY_ID)).thenReturn(List.of(leader, member));
         when(member.isLeader()).thenReturn(false);
         when(member.getId()).thenReturn(MEMBER_ID);
@@ -118,7 +123,6 @@ class AssignmentServiceTest {
         verify(assignmentAccessPolicy).requireCanCreateAssignment(leader);
         assertThat(response.assignmentId()).isEqualTo(ASSIGNMENT_ID);
         assertThat(assignment.getStudy()).isSameAs(study);
-        assertThat(assignment.getWriter()).isSameAs(leader);
         assertThat(assignment.getSubmissions()).singleElement()
                 .satisfies(submission -> assertThat(submission.getMember()).isSameAs(member));
         assertThat(assignment.getNextRemindAt()).isEqualTo(remindAt);

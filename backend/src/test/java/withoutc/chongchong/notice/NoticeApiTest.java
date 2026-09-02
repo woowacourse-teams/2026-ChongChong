@@ -91,7 +91,7 @@ class NoticeApiTest {
                 StudyMember.create(study, secondMemberUser, "두 번째 스터디원", null, StudyMemberRole.MEMBER)
         );
         remindAt = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
-        notice = Notice.create(leader, "기존 공지", "기존 공지 내용");
+        notice = Notice.create(study, "기존 공지", "기존 공지 내용");
         notice.addRecipients(List.of(member, secondMember));
         notice.addReminders(List.of(remindAt), LocalDateTime.now());
         noticeRepository.saveAndFlush(notice);
@@ -209,10 +209,10 @@ class NoticeApiTest {
     @DisplayName("공지 목록을 size만큼 조회하면 다음 조회 기준인 cursor를 반환한다")
     void getNoticesWithCursorTest() {
         Notice middleNotice = noticeRepository.save(
-                Notice.create(leader, "두 번째 공지", "두 번째 공지 내용")
+                Notice.create(study, "두 번째 공지", "두 번째 공지 내용")
         );
         Notice latestNotice = noticeRepository.saveAndFlush(
-                Notice.create(leader, "세 번째 공지", "세 번째 공지 내용")
+                Notice.create(study, "세 번째 공지", "세 번째 공지 내용")
         );
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
@@ -253,30 +253,27 @@ class NoticeApiTest {
                 .statusCode(200)
                 .body("id", equalTo(notice.getId().intValue()))
                 .body("title", equalTo("기존 공지"))
-                .body("writer", equalTo("리더"))
-                .body("profileImageUrl", equalTo("https://example.com/leader.png"))
+                .body("$", not(hasKey("writer")))
+                .body("$", not(hasKey("profileImageUrl")))
                 .body("content", equalTo("기존 공지 내용"))
                 .body("createdAt", notNullValue());
     }
 
     @Test
-    @DisplayName("공지 작성자의 프로필 이미지가 없으면 null을 반환한다")
-    void getNoticeDetailWithoutProfileImageTest() {
-        User writerUser = userRepository.save(User.create("프로필 없는 리더", null));
-        StudyMember writer = studyMemberRepository.save(
-                StudyMember.create(study, writerUser, "프로필 없는 리더", null, StudyMemberRole.LEADER)
-        );
-        Notice noticeWithoutProfileImage = noticeRepository.save(
-                Notice.create(writer, "프로필 없는 작성자의 공지", "공지 내용")
+    @DisplayName("공지 상세 조회 응답은 작성자 정보를 반환하지 않는다")
+    void getNoticeDetailWithoutWriterTest() {
+        Notice noticeWithoutWriter = noticeRepository.save(
+                Notice.create(study, "작성자 없는 공지", "공지 내용")
         );
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
                 .when()
-                .get("/studies/{studyId}/notices/{noticeId}", study.getId(), noticeWithoutProfileImage.getId())
+                .get("/studies/{studyId}/notices/{noticeId}", study.getId(), noticeWithoutWriter.getId())
                 .then()
                 .statusCode(200)
-                .body("profileImageUrl", nullValue());
+                .body("$", not(hasKey("writer")))
+                .body("$", not(hasKey("profileImageUrl")));
     }
 
     @Test
@@ -328,7 +325,7 @@ class NoticeApiTest {
                 StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
         );
         Notice otherNotice = noticeRepository.saveAndFlush(
-                Notice.create(otherLeader, "다른 공지", "다른 공지 내용")
+                Notice.create(otherStudy, "다른 공지", "다른 공지 내용")
         );
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())

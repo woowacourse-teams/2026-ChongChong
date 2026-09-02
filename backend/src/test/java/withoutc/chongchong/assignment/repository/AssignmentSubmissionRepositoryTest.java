@@ -60,9 +60,9 @@ class AssignmentSubmissionRepositoryTest {
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember member = createMemberWithIdDifferentFromUserId(study);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
-        Assignment submittedAssignment = createAssignment(leader, "제출한 과제");
-        Assignment unsubmittedAssignment = createAssignment(leader, "미제출 과제");
-        Assignment otherMemberAssignment = createAssignment(leader, "다른 사람 과제");
+        Assignment submittedAssignment = createAssignment(study, "제출한 과제");
+        Assignment unsubmittedAssignment = createAssignment(study, "미제출 과제");
+        Assignment otherMemberAssignment = createAssignment(study, "다른 사람 과제");
 
         AssignmentSubmission submitted = AssignmentSubmission.create(member, submittedAssignment);
         submitted.submit("제출 내용", null, NOW);
@@ -91,7 +91,7 @@ class AssignmentSubmissionRepositoryTest {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
-        Assignment assignment = createAssignment(leader, "과제");
+        Assignment assignment = createAssignment(study, "과제");
         assignmentSubmissionRepository.saveAndFlush(AssignmentSubmission.create(member, assignment));
 
         assertThatThrownBy(() -> assignmentSubmissionRepository.saveAndFlush(
@@ -106,8 +106,8 @@ class AssignmentSubmissionRepositoryTest {
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
         StudyMember incompleteMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
-        Assignment assignment = createAssignment(leader, "과제");
-        Assignment otherAssignment = createAssignment(leader, "다른 과제");
+        Assignment assignment = createAssignment(study, "과제");
+        Assignment otherAssignment = createAssignment(study, "다른 과제");
         AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
         submitted.submit("제출 내용", null, NOW);
         assignmentSubmissionRepository.saveAllAndFlush(List.of(
@@ -141,7 +141,7 @@ class AssignmentSubmissionRepositoryTest {
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
-        Assignment assignment = createAssignment(leader, "과제");
+        Assignment assignment = createAssignment(study, "과제");
         assignmentSubmissionRepository.saveAllAndFlush(List.of(
                 AssignmentSubmission.create(target, assignment),
                 AssignmentSubmission.create(otherMember, assignment)
@@ -156,9 +156,9 @@ class AssignmentSubmissionRepositoryTest {
         assertThat(assignmentRepository.findById(assignment.getId())).isPresent();
     }
 
-    private Assignment createAssignment(StudyMember leader, String title) {
+    private Assignment createAssignment(Study study, String title) {
         return assignmentRepository.saveAndFlush(Assignment.create(
-                leader,
+                study,
                 title,
                 "과제 내용",
                 "GitHub PR",

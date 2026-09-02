@@ -56,7 +56,7 @@ class AssignmentRepositoryTest {
         for (int index = 1; index <= 5; index++) {
             assignments.add(assignmentRepository.save(
                     Assignment.create(
-                            firstStudy.leader(),
+                            firstStudy.study(),
                             "과제 " + index,
                             "과제 내용 " + index,
                             "GitHub PR",
@@ -66,7 +66,7 @@ class AssignmentRepositoryTest {
             ));
         }
         assignmentRepository.save(Assignment.create(
-                secondStudy.leader(),
+                secondStudy.study(),
                 "다른 과제",
                 "다른 과제 내용",
                 "GitHub PR",
@@ -99,9 +99,9 @@ class AssignmentRepositoryTest {
     void findByCursorAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Assignment firstMemberAssignment = createAssignment(
-                fixture.leader(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
+                fixture.study(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
         );
-        createAssignment(fixture.leader(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
+        createAssignment(fixture.study(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
         assignmentRepository.flush();
 
         List<Assignment> assignments = assignmentRepository.findByCursorAndMemberId(
@@ -120,7 +120,7 @@ class AssignmentRepositoryTest {
     @DisplayName("스터디에 속한 과제를 ID로 조회한다")
     void getByIdAndStudyIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
-        Assignment assignment = createAssignment(fixture.leader(), "과제", List.of(), 0);
+        Assignment assignment = createAssignment(fixture.study(), "과제", List.of(), 0);
 
         Assignment found = assignmentRepository.getByIdAndStudyIdOrThrow(
                 assignment.getId(), fixture.study().getId());
@@ -142,7 +142,7 @@ class AssignmentRepositoryTest {
     void getByIdAndStudyIdOrThrowWhenAssignmentBelongsToAnotherStudyTest() {
         StudyFixture assignmentStudy = createStudyFixture("과제 스터디", "과제 스터디 리더");
         StudyFixture requestedStudy = createStudyFixture("요청 스터디", "요청 스터디 리더");
-        Assignment assignment = createAssignment(assignmentStudy.leader(), "과제", List.of(), 0);
+        Assignment assignment = createAssignment(assignmentStudy.study(), "과제", List.of(), 0);
 
         assertAssignmentNotFound(() -> assignmentRepository.getByIdAndStudyIdOrThrow(
                 assignment.getId(), requestedStudy.study().getId()));
@@ -153,13 +153,13 @@ class AssignmentRepositoryTest {
     void findIncompleteAssignmentSummariesByStudyIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Assignment incompleteAssignment = createAssignment(
-                fixture.leader(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
+                fixture.study(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
         );
         Assignment completeAssignment = createAssignment(
-                fixture.leader(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
+                fixture.study(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
         );
         Assignment unsubmittedAssignment = createAssignment(
-                fixture.leader(), "미제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 0
+                fixture.study(), "미제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 0
         );
         assignmentRepository.flush();
 
@@ -182,10 +182,10 @@ class AssignmentRepositoryTest {
     void findIncompleteAssignmentsByStudyIdAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Assignment incompleteAssignment = createAssignment(
-                fixture.leader(), "미제출 과제", List.of(fixture.firstMember()), 0
+                fixture.study(), "미제출 과제", List.of(fixture.firstMember()), 0
         );
         Assignment completeAssignment = createAssignment(
-                fixture.leader(), "제출 과제", List.of(fixture.firstMember()), 1
+                fixture.study(), "제출 과제", List.of(fixture.firstMember()), 1
         );
         assignmentRepository.flush();
 
@@ -202,10 +202,10 @@ class AssignmentRepositoryTest {
     void countIncompleteAssignmentByStudyIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         createAssignment(
-                fixture.leader(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
+                fixture.study(), "일부 제출 과제", List.of(fixture.firstMember(), fixture.secondMember()), 1
         );
         createAssignment(
-                fixture.leader(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
+                fixture.study(), "완료 과제", List.of(fixture.firstMember(), fixture.secondMember()), 2
         );
         assignmentRepository.flush();
 
@@ -218,9 +218,9 @@ class AssignmentRepositoryTest {
     @DisplayName("스터디원용 미완료 과제 개수는 해당 멤버가 제출하지 않은 과제만 센다")
     void countIncompleteAssignmentByStudyIdAndMemberIdTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        createAssignment(fixture.leader(), "첫 번째 멤버 미제출 과제", List.of(fixture.firstMember()), 0);
-        createAssignment(fixture.leader(), "첫 번째 멤버 제출 과제", List.of(fixture.firstMember()), 1);
-        createAssignment(fixture.leader(), "두 번째 멤버 미제출 과제", List.of(fixture.secondMember()), 0);
+        createAssignment(fixture.study(), "첫 번째 멤버 미제출 과제", List.of(fixture.firstMember()), 0);
+        createAssignment(fixture.study(), "첫 번째 멤버 제출 과제", List.of(fixture.firstMember()), 1);
+        createAssignment(fixture.study(), "두 번째 멤버 미제출 과제", List.of(fixture.secondMember()), 0);
         assignmentRepository.flush();
 
         long firstMemberCount = assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(
@@ -242,13 +242,13 @@ class AssignmentRepositoryTest {
     }
 
     private Assignment createAssignment(
-            StudyMember leader,
+            Study study,
             String title,
             List<StudyMember> members,
             int submittedCount
     ) {
         Assignment assignment = assignmentRepository.save(Assignment.create(
-                leader,
+                study,
                 title,
                 "과제 내용",
                 "GitHub PR",
