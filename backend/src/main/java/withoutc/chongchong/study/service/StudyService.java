@@ -67,7 +67,7 @@ public class StudyService {
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         validateStudyCountLimit(userId);
 
-        Study study = studyRepository.save(request.toStudy());
+        Study study = studyRepository.save(Study.create(request.name(), request.description()));
 
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.LEADER);
