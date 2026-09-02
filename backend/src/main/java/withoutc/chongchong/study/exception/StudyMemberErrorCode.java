@@ -8,6 +8,20 @@ import withoutc.chongchong.global.exception.code.ErrorCode;
 @Getter
 @RequiredArgsConstructor
 public enum StudyMemberErrorCode implements ErrorCode {
+    INVALID_STUDY_MEMBER(HttpStatus.BAD_REQUEST, "INVALID_STUDY_MEMBER", "스터디 멤버의 필수 정보가 올바르지 않습니다."),
+
+    INVALID_STUDY_MEMBER_NAME(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_STUDY_MEMBER_NAME",
+            "스터디 멤버 이름이 올바르지 않습니다."
+    ),
+
+    INVALID_STUDY_MEMBER_PROFILE_IMAGE_URL(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_STUDY_MEMBER_PROFILE_IMAGE_URL",
+            "스터디 멤버 프로필 이미지 URL이 올바르지 않습니다."
+    ),
+
     STUDY_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STUDY_ACCESS_DENIED", "해당 스터디에 대한 접근 권한이 없습니다."),
 
     NOT_STUDY_LEADER(HttpStatus.FORBIDDEN, "NOT_STUDY_LEADER", "스터디 리더만 수행할 수 있습니다."),
