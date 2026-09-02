@@ -85,7 +85,7 @@ export default function SubmissionList({ submissions }: Props) {
 
       <List>
         {submissions.map((submission) => (
-          <List.Item key={submission.id} css={itemStyle} onClick={handleShowDetail}>
+          <List.Item key={submission.id} css={itemStyle}>
             <img src={profileIcon} alt="" aria-hidden="true" css={profileStyle} />
 
             <div css={memberStyle}>
@@ -99,6 +99,7 @@ export default function SubmissionList({ submissions }: Props) {
               css={detailLinkStyle}
               to={`/studies/${studyId}/assignments/${assignmentId}/submissions/${submission.id}`}
               aria-label={`${submission.name} 제출 내역 상세 보기`}
+              onClick={handleShowDetail}
             >
               상세 보기
             </Link>

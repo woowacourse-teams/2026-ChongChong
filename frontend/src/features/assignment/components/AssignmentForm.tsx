@@ -48,11 +48,11 @@ export default function AssignmentForm({
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
+    if (isSubmitting) return;
+
     posthog?.capture('assignment_form_submitted', {
       location: 'assignment_create_page',
     });
-
-    if (isSubmitting) return;
 
     onSubmit({ title, content, submissionMethod, closeAt });
   }

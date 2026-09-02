@@ -83,8 +83,8 @@ export default function MemberNoticeReadState({
 
   return (
     <>
-      <PostHogCaptureOnViewed name="notice-read">
-        {showCompletionToast && !isToastDismissed ? (
+      {showCompletionToast && !isToastDismissed ? (
+        <PostHogCaptureOnViewed name="notice-read">
           <div css={toastStyle} role="status">
             <img
               src={checkIcon}
@@ -95,8 +95,8 @@ export default function MemberNoticeReadState({
             />
             읽음으로 표시했어요
           </div>
-        ) : null}
-      </PostHogCaptureOnViewed>
+        </PostHogCaptureOnViewed>
+      ) : null}
 
       <footer css={footerStyle}>
         {isRead ? (

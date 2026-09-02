@@ -98,8 +98,8 @@ export default function SubmitStatusSection({ status }: Props) {
   const progress = status.memberCount === 0 ? 0 : (status.completeCount / status.memberCount) * 100;
 
   return (
-    <section css={cardStyle} aria-labelledby="submit-status-title">
-      <PostHogCaptureOnViewed name="assignment-submit-status-section">
+    <PostHogCaptureOnViewed name="assignment-submit-status-section">
+      <section css={cardStyle} aria-labelledby="submit-status-title">
         <header css={headerStyle}>
           <h2 id="submit-status-title" css={statusTitleStyle}>
             제출 현황
@@ -121,37 +121,37 @@ export default function SubmitStatusSection({ status }: Props) {
         >
           <div css={{ ...progressBarStyle, width: `${progress}%` }} />
         </div>
-      </PostHogCaptureOnViewed>
 
-      <div css={groupStyle}>
-        <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>
-          <img src={checkIcon} alt="" width={18} height={18} />
-          제출 {status.completeCount}명
-        </p>
-        <div css={badgeRowStyle}>
-          {status.completeMembers.map((member) => (
-            <Badge key={member.id} variant="neutralSolid" size="large">
-              <img src={profileIcon} alt="" css={profileStyle} />
-              {member.name}
-            </Badge>
-          ))}
+        <div css={groupStyle}>
+          <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>
+            <img src={checkIcon} alt="" width={18} height={18} />
+            제출 {status.completeCount}명
+          </p>
+          <div css={badgeRowStyle}>
+            {status.completeMembers.map((member) => (
+              <Badge key={member.id} variant="neutralSolid" size="large">
+                <img src={profileIcon} alt="" css={profileStyle} />
+                {member.name}
+              </Badge>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div css={groupStyle}>
-        <p css={{ ...groupLabelStyle, color: tokens.text.muted }}>
-          <img src={clockIcon} alt="" width={18} height={18} />
-          미제출 {status.incompleteCount}명
-        </p>
-        <div css={badgeRowStyle}>
-          {status.incompleteMembers.map((member) => (
-            <Badge key={member.id} variant="neutralSolid" size="large">
-              <img src={profileIcon} alt="" css={profileStyle} />
-              {member.name}
-            </Badge>
-          ))}
+        <div css={groupStyle}>
+          <p css={{ ...groupLabelStyle, color: tokens.text.muted }}>
+            <img src={clockIcon} alt="" width={18} height={18} />
+            미제출 {status.incompleteCount}명
+          </p>
+          <div css={badgeRowStyle}>
+            {status.incompleteMembers.map((member) => (
+              <Badge key={member.id} variant="neutralSolid" size="large">
+                <img src={profileIcon} alt="" css={profileStyle} />
+                {member.name}
+              </Badge>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </PostHogCaptureOnViewed>
   );
 }
