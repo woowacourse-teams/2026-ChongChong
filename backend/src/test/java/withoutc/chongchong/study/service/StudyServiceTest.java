@@ -36,6 +36,7 @@ import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
 import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -174,6 +175,88 @@ class StudyServiceTest {
 
         verify(studyRepository, never()).save(any(Study.class));
         verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 스터디를 수정하면 스터디 정보를 변경한다")
+    void updateStudyTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("기존 스터디", "기존 설명");
+        User user = User.create("리더", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
+        );
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
+
+        studyService.updateStudy(userId, studyId, request);
+
+        assertThat(study.getName()).isEqualTo("수정 스터디");
+        assertThat(study.getDescription()).isEqualTo("수정 설명");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디는 수정할 수 없다")
+    void updateStudyForMissingStudyTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        when(studyRepository.getByIdOrThrow(studyId))
+                .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+
+        assertThatThrownBy(() -> studyService.updateStudy(userId, studyId, request))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
+
+        verifyNoInteractions(studyMemberRepository);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디를 수정할 수 없다")
+    void updateStudyForNonMemberTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("기존 스터디", "기존 설명");
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
+
+        assertThatThrownBy(() -> studyService.updateStudy(userId, studyId, request))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+
+        assertThat(study.getName()).isEqualTo("기존 스터디");
+        assertThat(study.getDescription()).isEqualTo("기존 설명");
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아니면 스터디를 수정할 수 없다")
+    void updateStudyForNonLeaderTest() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("기존 스터디", "기존 설명");
+        User user = User.create("멤버", "profile-image-url");
+        StudyMember studyMember = StudyMember.create(
+                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
+        );
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
+                .thenReturn(studyMember);
+
+        assertThatThrownBy(() -> studyService.updateStudy(userId, studyId, request))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.NOT_STUDY_LEADER);
+
+        assertThat(study.getName()).isEqualTo("기존 스터디");
+        assertThat(study.getDescription()).isEqualTo("기존 설명");
     }
 
     @Test

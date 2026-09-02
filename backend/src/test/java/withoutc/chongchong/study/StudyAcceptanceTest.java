@@ -201,6 +201,197 @@ class StudyAcceptanceTest {
     }
 
     @Test
+    @DisplayName("스터디 리더가 수정 요청을 보내면 스터디 이름과 설명을 변경하고 204를 반환한다")
+    void updateStudyTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "수정 스터디",
+                          "description": "수정 설명"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(updatedStudy -> {
+                    assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
+                    assertThat(updatedStudy.getDescription()).isEqualTo("수정 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 수정 요청에서 설명이 null이면 기존 설명을 유지한다")
+    void updateStudyWithNullDescriptionTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "수정 스터디",
+                          "description": null
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(updatedStudy -> {
+                    assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
+                    assertThat(updatedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 멤버가 아니면 스터디를 수정할 수 없다")
+    void updateStudyForNonMemberTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "권한 없는 수정"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(unchangedStudy -> {
+                    assertThat(unchangedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(unchangedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 아니면 스터디를 수정할 수 없다")
+    void updateStudyForNonLeaderTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, member, member.getName(), member.getProfileImageUrl(),
+                        StudyMemberRole.MEMBER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(member.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "권한 없는 수정"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("NOT_STUDY_LEADER"));
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(unchangedStudy -> {
+                    assertThat(unchangedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(unchangedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디는 수정할 수 없다")
+    void updateStudyForMissingStudyTest() {
+        User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "수정 스터디"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", 999L)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("STUDY_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("스터디 수정 요청의 이름과 설명이 최대 길이를 초과하면 검증 오류를 반환한다")
+    void updateStudyWithInvalidRequestTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "1234567890123456",
+                          "description": "1234567890123456789012345678901"
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.reason", containsInAnyOrder(
+                        "스터디 이름은 15자 이내여야 합니다.",
+                        "스터디 설명은 30자 이내여야 합니다."
+                ));
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(unchangedStudy -> {
+                    assertThat(unchangedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(unchangedStudy.getDescription()).isEqualTo("기존 설명");
+                });
+    }
+
+    @Test
     @DisplayName("내 스터디 목록 조회 요청을 보내면 가입 순서와 집계 정보를 반환한다")
     void getMyStudiesTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
