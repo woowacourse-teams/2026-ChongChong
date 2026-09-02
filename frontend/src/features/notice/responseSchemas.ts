@@ -34,6 +34,8 @@ const createNoticeSchema = z.object({
 const noticeDetailSchema = z.object({
   id: z.number(),
   title: z.string(),
+  writer: z.string(),
+  profileImageUrl: z.string().nullable(),
   content: z.string(),
   createdAt: z.string(),
 }) satisfies z.ZodType<NoticeDetail>;
