@@ -1,3 +1,4 @@
 allowBuilds:
+  core-js: false
   msw: true
   unrs-resolver: true
