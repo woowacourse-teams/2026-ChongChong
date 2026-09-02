@@ -84,9 +84,6 @@ public class StudyService {
             throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
         }
 
-        assignmentRepository.deleteAllByStudyId(studyId);
-        noticeRepository.deleteAllByStudyId(studyId);
-        studyMemberRepository.deleteAllByStudyId(studyId);
         studyRepository.delete(study);
     }
 

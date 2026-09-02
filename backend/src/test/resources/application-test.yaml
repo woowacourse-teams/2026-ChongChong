@@ -7,6 +7,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+  flyway:
+    enabled: false
 
 jwt:
   study-invite-secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
