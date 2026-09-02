@@ -33,8 +33,10 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
+import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.StudyRepository;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,6 +45,7 @@ public class NoticeService {
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
     private final NoticeRecipientRepository noticeRecipientRepository;
+    private final StudyRepository studyRepository;
 
     private final Clock clock;
 
@@ -53,9 +56,9 @@ public class NoticeService {
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
 
-        StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        Study study = studyRepository.getByIdOrThrow(studyId);
 
-        Notice notice = Notice.create(writer, request.title(), request.content());
+        Notice notice = Notice.create(study, request.title(), request.content());
         LocalDateTime now = LocalDateTime.now(clock);
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
