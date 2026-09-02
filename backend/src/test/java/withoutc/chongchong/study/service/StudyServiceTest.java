@@ -4,23 +4,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
@@ -68,8 +69,16 @@ class StudyServiceTest {
     @Mock
     private StudyInviteLinkGenerator studyInviteLinkGenerator;
 
+    @Mock
+    private EntityManager entityManager;
+
     @InjectMocks
     private StudyService studyService;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(studyService, "entityManager", entityManager);
+    }
 
     @Test
     @DisplayName("내가 가입한 스터디 목록을 가입 순서와 집계 정보와 함께 반환한다")
@@ -168,7 +177,7 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더가 스터디를 삭제하면 하위 데이터를 먼저 삭제한다")
+    @DisplayName("스터디 리더가 스터디를 삭제하면 스터디 삭제를 저장소에 위임한다")
     void deleteStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
@@ -183,11 +192,11 @@ class StudyServiceTest {
 
         studyService.deleteStudy(userId, studyId);
 
-        InOrder inOrder = inOrder(assignmentRepository, noticeRepository, studyMemberRepository, studyRepository);
-        inOrder.verify(assignmentRepository).deleteAllByStudyId(studyId);
-        inOrder.verify(noticeRepository).deleteAllByStudyId(studyId);
-        inOrder.verify(studyMemberRepository).deleteAllByStudyId(studyId);
-        inOrder.verify(studyRepository).delete(study);
+        verify(entityManager).clear();
+        verify(studyRepository).delete(study);
+        verify(assignmentRepository, never()).deleteAllByStudyId(studyId);
+        verify(noticeRepository, never()).deleteAllByStudyId(studyId);
+        verify(studyMemberRepository, never()).deleteAllByStudyId(studyId);
     }
 
     @Test

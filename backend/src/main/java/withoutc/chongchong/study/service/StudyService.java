@@ -1,5 +1,7 @@
 package withoutc.chongchong.study.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +59,9 @@ public class StudyService {
 
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Transactional
     public StudyCreateResponse createStudy(Long userId, StudyCreateRequest request) {
         User user = userRepository.findById(userId)
@@ -84,6 +89,8 @@ public class StudyService {
             throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
         }
 
+        // DB CASCADE가 하위 데이터를 삭제하도록 영속성 컨텍스트를 비운다.
+        entityManager.clear();
         studyRepository.delete(study);
     }
 
