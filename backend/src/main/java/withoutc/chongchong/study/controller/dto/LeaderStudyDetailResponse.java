@@ -2,8 +2,6 @@ package withoutc.chongchong.study.controller.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
-import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 
 public record LeaderStudyDetailResponse(
         @Schema(description = "리더가 확인할 공지 요약")
@@ -34,15 +32,6 @@ public record LeaderStudyDetailResponse(
             @Schema(description = "공지 확인 완료 멤버 수", example = "3")
             int completeCount
     ) {
-
-        public static LeaderNoticeSummaryResponse from(LeaderNoticeSummaryProjection noticeProjection) {
-            return new LeaderNoticeSummaryResponse(
-                    noticeProjection.id(),
-                    noticeProjection.title(),
-                    (int) noticeProjection.memberCount(),
-                    (int) noticeProjection.completeCount()
-            );
-        }
     }
 
     public record LeaderAssignmentSummaryListResponse(
@@ -68,14 +57,5 @@ public record LeaderStudyDetailResponse(
             @Schema(description = "과제 제출 완료 멤버 수", example = "3")
             int completeCount
     ) {
-
-        public static LeaderAssignmentSummaryResponse from(LeaderAssignmentSummaryProjection assignmentProjection) {
-            return new LeaderAssignmentSummaryResponse(
-                    assignmentProjection.id(),
-                    assignmentProjection.title(),
-                    (int) assignmentProjection.memberCount(),
-                    (int) assignmentProjection.completeCount()
-            );
-        }
     }
 }

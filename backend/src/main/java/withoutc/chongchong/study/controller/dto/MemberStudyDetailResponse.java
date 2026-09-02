@@ -2,8 +2,6 @@ package withoutc.chongchong.study.controller.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.notice.entity.Notice;
 
 public record MemberStudyDetailResponse(
         @Schema(description = "미확인 공지·미제출 과제 전체 수", example = "2")
@@ -30,13 +28,6 @@ public record MemberStudyDetailResponse(
             @Schema(description = "공지 제목", example = "이번 주 공지")
             String title
     ) {
-
-        public static MemberNoticeSummaryResponse from(Notice notice) {
-            return new MemberNoticeSummaryResponse(
-                    notice.getId(),
-                    notice.getTitle()
-            );
-        }
     }
 
     public record MemberAssignmentSummaryListResponse(
@@ -56,12 +47,5 @@ public record MemberStudyDetailResponse(
             @Schema(description = "과제 제목", example = "1주 차 과제")
             String title
     ) {
-
-        public static MemberAssignmentSummaryResponse from(Assignment assignment) {
-            return new MemberAssignmentSummaryResponse(
-                    assignment.getId(),
-                    assignment.getTitle()
-            );
-        }
     }
 }

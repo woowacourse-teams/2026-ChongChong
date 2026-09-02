@@ -165,12 +165,20 @@ public class StudyService {
         List<LeaderAssignmentSummaryResponse> assignmentResponses = new ArrayList<>();
 
         for (LeaderNoticeSummaryProjection projection : noticeProjections) {
-            LeaderNoticeSummaryResponse response = LeaderNoticeSummaryResponse.from(projection);
+            LeaderNoticeSummaryResponse response = new LeaderNoticeSummaryResponse(
+                    projection.id(),
+                    projection.title(),
+                    (int) projection.memberCount(),
+                    (int) projection.completeCount());
             noticeResponses.add(response);
         }
 
         for (LeaderAssignmentSummaryProjection projection : assignmentProjections) {
-            LeaderAssignmentSummaryResponse response = LeaderAssignmentSummaryResponse.from(projection);
+            LeaderAssignmentSummaryResponse response = new LeaderAssignmentSummaryResponse(
+                    projection.id(),
+                    projection.title(),
+                    (int) projection.memberCount(),
+                    (int) projection.completeCount());
             assignmentResponses.add(response);
         }
 
@@ -187,11 +195,11 @@ public class StudyService {
         int totalCount = notices.size() + assignments.size();
 
         List<MemberNoticeSummaryResponse> noticeResponses = notices.stream()
-                .map(MemberNoticeSummaryResponse::from)
+                .map(notice -> new MemberNoticeSummaryResponse(notice.getId(), notice.getTitle()))
                 .toList();
 
         List<MemberAssignmentSummaryResponse> assignmentResponses = assignments.stream()
-                .map(MemberAssignmentSummaryResponse::from)
+                .map(assignment -> new MemberAssignmentSummaryResponse(assignment.getId(), assignment.getTitle()))
                 .toList();
 
         return new MemberStudyDetailResponse(totalCount, MemberNoticeSummaryListResponse.from(noticeResponses),
