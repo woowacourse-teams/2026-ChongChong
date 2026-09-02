@@ -45,8 +45,6 @@ export interface NoticeReadStatus {
 export interface NoticeDetail {
   id: number;
   title: string;
-  writer: string;
-  profileImageUrl: string;
   content: string;
   createdAt: string;
 }
