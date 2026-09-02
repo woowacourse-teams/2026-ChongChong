@@ -21,7 +21,6 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.service.AssignmentService;
-import withoutc.chongchong.assignment.service.AssignmentSubmissionService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 
 @RequiredArgsConstructor
@@ -29,7 +28,6 @@ import withoutc.chongchong.auth.security.AuthenticatedUser;
 @RestController
 public class AssignmentController implements AssignmentApi {
     private final AssignmentService assignmentService;
-    private final AssignmentSubmissionService assignmentSubmissionService;
 
     @PostMapping
     public ResponseEntity<AssignmentCreateResponse> createAssignment(
@@ -94,7 +92,7 @@ public class AssignmentController implements AssignmentApi {
             @PathVariable Long studyId,
             @PathVariable Long assignmentId
     ) {
-        AssignmentSubmissionStatusResponse response = assignmentSubmissionService.getAssignmentSubmissionStatus(
+        AssignmentSubmissionStatusResponse response = assignmentService.getAssignmentSubmissionStatus(
                 currentUser.id(),
                 studyId, assignmentId);
         return ResponseEntity.ok(response);

@@ -22,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
@@ -35,7 +34,6 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
@@ -304,52 +302,6 @@ class AssignmentSubmissionServiceTest {
         assertAccessDenied(() -> assignmentSubmissionService.getSubmissionList(USER_ID, STUDY_ID, ASSIGNMENT_ID));
 
         verify(assignmentAccessPolicy).requireCanReadSubmissionList(member);
-        verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
-    }
-
-    @Test
-    @DisplayName("리더가 제출 현황을 조회하면 완료 및 미완료 스터디원을 분류한다")
-    void getAssignmentSubmissionStatusTest() {
-        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
-        assignment.addReminders(List.of(NOW.plusDays(1)), NOW);
-        StudyMember leader = studyMember(assignment, 21L, StudyMemberRole.LEADER, "리더");
-        List<AssignmentSubmitterStatusProjection> statuses = List.of(
-                new AssignmentSubmitterStatusProjection(MEMBER_ID, "완료자", "complete.png", true, null),
-                new AssignmentSubmitterStatusProjection(22L, "미완료자", "incomplete.png", false,
-                        NOW.minusHours(1))
-        );
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID))
-                .thenReturn(statuses);
-
-        AssignmentSubmissionStatusResponse response = assignmentSubmissionService.getAssignmentSubmissionStatus(
-                USER_ID, STUDY_ID, ASSIGNMENT_ID);
-
-        assertThat(response.memberCount()).isEqualTo(2);
-        assertThat(response.completeCount()).isEqualTo(1);
-        assertThat(response.incompleteCount()).isEqualTo(1);
-        assertThat(response.completeMembers()).extracting(AssignmentSubmissionStatusResponse.CompleteMember::id)
-                .containsExactly(MEMBER_ID);
-        assertThat(response.incompleteMembers()).singleElement()
-                .satisfies(member -> assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1)));
-        verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(leader);
-        verify(assignmentSubmissionRepository).findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID);
-    }
-
-    @Test
-    @DisplayName("제출 현황 조회 정책이 거부하면 저장소 조회를 중단한다")
-    void rejectAssignmentSubmissionStatusWhenPolicyDeniesTest() {
-        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
-        StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
-                .when(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(member);
-
-        assertAccessDenied(() -> assignmentSubmissionService.getAssignmentSubmissionStatus(USER_ID, STUDY_ID,
-                ASSIGNMENT_ID));
-
-        verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(member);
         verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
     }
 

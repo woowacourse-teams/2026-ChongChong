@@ -31,6 +31,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -40,6 +41,7 @@ import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
@@ -298,6 +300,51 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().isComplete()).isFalse();
         assertThat(response.assignments().getLast().isComplete()).isTrue();
         verifyNoInteractions(assignmentSubmissionRepository);
+    }
+
+    @Test
+    @DisplayName("리더가 제출 현황을 조회하면 완료 및 미완료 스터디원을 분류한다")
+    void getAssignmentSubmissionStatusTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        assignment.addReminders(List.of(NOW.plusDays(1)), NOW);
+        StudyMember leader = mock(StudyMember.class);
+        List<AssignmentSubmitterStatusProjection> statuses = List.of(
+                new AssignmentSubmitterStatusProjection(MEMBER_ID, "완료자", "complete.png", true, null),
+                new AssignmentSubmitterStatusProjection(22L, "미완료자", "incomplete.png", false,
+                        NOW.minusHours(1))
+        );
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
+        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID))
+                .thenReturn(statuses);
+
+        AssignmentSubmissionStatusResponse response = assignmentService.getAssignmentSubmissionStatus(
+                USER_ID, STUDY_ID, ASSIGNMENT_ID);
+
+        assertThat(response.memberCount()).isEqualTo(2);
+        assertThat(response.completeCount()).isEqualTo(1);
+        assertThat(response.incompleteCount()).isEqualTo(1);
+        assertThat(response.completeMembers()).extracting(AssignmentSubmissionStatusResponse.CompleteMember::id)
+                .containsExactly(MEMBER_ID);
+        assertThat(response.incompleteMembers()).singleElement()
+                .satisfies(member -> assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1)));
+        verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(leader);
+        verify(assignmentSubmissionRepository).findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID);
+    }
+
+    @Test
+    @DisplayName("제출 현황 조회 정책이 거부하면 저장소 조회를 중단한다")
+    void rejectAssignmentSubmissionStatusWhenPolicyDeniesTest() {
+        StudyMember member = mock(StudyMember.class);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
+                .when(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(member);
+
+        assertAccessDenied(() -> assignmentService.getAssignmentSubmissionStatus(USER_ID, STUDY_ID,
+                ASSIGNMENT_ID));
+
+        verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(member);
+        verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
     }
 
     @Test

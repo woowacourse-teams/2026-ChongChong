@@ -14,6 +14,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -23,6 +24,7 @@ import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -83,6 +85,37 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         assignmentRepository.delete(assignment);
+    }
+
+    public AssignmentSubmissionStatusResponse getAssignmentSubmissionStatus(Long userId, Long studyId,
+                                                                             Long assignmentId) {
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        assignmentAccessPolicy.requireCanReadAssignmentSubmissionStatus(actor);
+
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+
+        List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository
+                .findAllSubmitterStatusesByAssignmentId(assignmentId);
+
+        List<AssignmentSubmissionStatusResponse.CompleteMember> completeMembers = statuses.stream()
+                .filter(AssignmentSubmitterStatusProjection::isSubmitted)
+                .map(status -> AssignmentSubmissionStatusResponse.CompleteMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl()
+                )).toList();
+
+        List<AssignmentSubmissionStatusResponse.IncompleteMember> incompleteMembers = statuses.stream()
+                .filter(status -> !status.isSubmitted())
+                .map(status -> AssignmentSubmissionStatusResponse.IncompleteMember.of(
+                        status.memberId(),
+                        status.name(),
+                        status.profileImageUrl(),
+                        status.lastRemindAt()
+                )).toList();
+
+        return AssignmentSubmissionStatusResponse.of(assignmentId, assignment.getNextRemindAt(), completeMembers,
+                incompleteMembers);
     }
 
     public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long assignmentId) {

@@ -72,12 +72,6 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
-    default AssignmentSubmission getByIdAndAssignmentIdAndMemberIdOrThrow(Long id, Long assignmentId,
-                                                                          Long memberId) {
-        return findByIdAndAssignmentIdAndMemberId(id, assignmentId, memberId).orElseThrow(
-                () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
-    }
-
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM AssignmentSubmission submission WHERE submission.member.id = :memberId")
     int deleteAllByMemberId(@Param("memberId") Long memberId);
