@@ -28,14 +28,14 @@ import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSumm
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
-import withoutc.chongchong.study.dto.LeaderStudyDetailResponse;
-import withoutc.chongchong.study.dto.MemberStudyDetailResponse;
-import withoutc.chongchong.study.dto.MyStudyListResponse;
-import withoutc.chongchong.study.dto.MyStudyListResponse.MyStudyResponse;
-import withoutc.chongchong.study.dto.StudyCreateRequest;
-import withoutc.chongchong.study.dto.StudyDetailResponse;
-import withoutc.chongchong.study.dto.StudyInfoResponse;
-import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse.MyStudyResponse;
+import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
+import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
+import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -186,7 +186,7 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
         );
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
 
@@ -204,7 +204,8 @@ class StudyServiceTest {
     void deleteStudyForMissingStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
+        when(studyRepository.getByIdOrThrow(studyId))
+                .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
         assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
                 .isInstanceOf(StudyException.class)
@@ -220,7 +221,7 @@ class StudyServiceTest {
         Long userId = 1L;
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
@@ -243,7 +244,7 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
         );
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
 
@@ -266,7 +267,7 @@ class StudyServiceTest {
         User user = User.create("테스트 사용자", "profile-image-url");
         StudyMember studyMember = StudyMember.create(
                 study, user, "스터디 내 이름", user.getProfileImageUrl(), StudyMemberRole.MEMBER);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
 
@@ -282,7 +283,8 @@ class StudyServiceTest {
     void getStudyInfoForMissingStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
+        when(studyRepository.getByIdOrThrow(studyId))
+                .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
         assertThatThrownBy(() -> studyService.getStudyInfo(userId, studyId))
                 .isInstanceOf(StudyException.class)
@@ -298,7 +300,7 @@ class StudyServiceTest {
         Long userId = 1L;
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
@@ -320,7 +322,7 @@ class StudyServiceTest {
         when(study.getId()).thenReturn(studyId);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId))
                 .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "공지", 2L, 1L)));
         when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId))
@@ -364,7 +366,7 @@ class StudyServiceTest {
         when(assignment.getTitle()).thenReturn("과제");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(studyId, studyMember.getId()))
                 .thenReturn(List.of(notice));
         when(assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(studyId, studyMember.getId()))
@@ -391,7 +393,7 @@ class StudyServiceTest {
         Long userId = 1L;
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
@@ -412,7 +414,7 @@ class StudyServiceTest {
         Study study = Study.create("자바 스터디", "설명");
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.MEMBER);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(any(), any()))
                 .thenReturn(studyMember);
         when(studyInviteLinkGenerator.generate(studyId))
@@ -430,7 +432,7 @@ class StudyServiceTest {
         Long userId = 1L;
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(any(), any()))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
@@ -447,7 +449,8 @@ class StudyServiceTest {
     void getInviteLinkForMissingStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        when(studyRepository.findById(studyId)).thenReturn(Optional.empty());
+        when(studyRepository.getByIdOrThrow(studyId))
+                .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
         assertThatThrownBy(() -> studyService.getInviteLink(userId, studyId))
                 .isInstanceOf(StudyException.class)

@@ -13,28 +13,27 @@ import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSumm
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
-import withoutc.chongchong.study.dto.LeaderStudyDetailResponse;
-import withoutc.chongchong.study.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryListResponse;
-import withoutc.chongchong.study.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse;
-import withoutc.chongchong.study.dto.LeaderStudyDetailResponse.LeaderNoticeSummaryListResponse;
-import withoutc.chongchong.study.dto.LeaderStudyDetailResponse.LeaderNoticeSummaryResponse;
-import withoutc.chongchong.study.dto.MemberStudyDetailResponse;
-import withoutc.chongchong.study.dto.MemberStudyDetailResponse.MemberAssignmentSummaryListResponse;
-import withoutc.chongchong.study.dto.MemberStudyDetailResponse.MemberAssignmentSummaryResponse;
-import withoutc.chongchong.study.dto.MemberStudyDetailResponse.MemberNoticeSummaryListResponse;
-import withoutc.chongchong.study.dto.MemberStudyDetailResponse.MemberNoticeSummaryResponse;
-import withoutc.chongchong.study.dto.MyStudyListResponse;
-import withoutc.chongchong.study.dto.MyStudyListResponse.MyStudyResponse;
-import withoutc.chongchong.study.dto.StudyCreateRequest;
-import withoutc.chongchong.study.dto.StudyCreateResponse;
-import withoutc.chongchong.study.dto.StudyDetailResponse;
-import withoutc.chongchong.study.dto.StudyInfoResponse;
-import withoutc.chongchong.study.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryListResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderNoticeSummaryListResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderNoticeSummaryResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberAssignmentSummaryListResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberAssignmentSummaryResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberNoticeSummaryListResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberNoticeSummaryResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse.MyStudyResponse;
+import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
+import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
+import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
+import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
-import withoutc.chongchong.study.exception.StudyErrorCode;
-import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -79,19 +78,69 @@ public class StudyService {
     }
 
     @Transactional
+    public void updateStudy(Long userId, Long studyId, StudyUpdateRequest request) {
+        Study study = studyRepository.getByIdOrThrow(studyId);
+
+        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeaderRole(studyMember);
+
+        study.update(request.name(), request.description());
+    }
+
+    @Transactional
     public void deleteStudy(Long userId, Long studyId) {
-        Study study = studyRepository.findById(studyId)
-                .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+        Study study = studyRepository.getByIdOrThrow(studyId);
+
+        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        validateLeaderRole(studyMember);
+
+        entityManager.clear();
+        studyRepository.delete(study);
+    }
+
+    public StudyInfoResponse getStudyInfo(Long userId, Long studyId) {
+        Study study = studyRepository.getByIdOrThrow(studyId);
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        if (studyMember.getRole() != StudyMemberRole.LEADER) {
-            throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
+        return new StudyInfoResponse(study.getName(), studyMember.getRole(), studyMember.getName());
+    }
+
+    public StudyDetailResponse getStudyDetail(Long userId, Long studyId) {
+        Study study = studyRepository.getByIdOrThrow(studyId);
+
+        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        if (studyMember.getRole() == StudyMemberRole.LEADER) {
+            return makeLeaderStudyDetailResponse(study);
         }
 
-        // DB CASCADE가 하위 데이터를 삭제하도록 영속성 컨텍스트를 비운다.
-        entityManager.clear();
-        studyRepository.delete(study);
+        return makeMemberStudyDetailResponse(study, studyMember);
+    }
+
+    public MyStudyListResponse getMyStudies(Long userId) {
+        List<StudyMember> studyMembers = studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+
+        List<MyStudyResponse> responses = new ArrayList<>();
+        for (StudyMember studyMember : studyMembers) {
+            Study study = studyMember.getStudy();
+
+            int memberCount = studyMemberRepository.countByStudyId(study.getId());
+            int noticeCount = unReadNoticeCount(studyMember, study.getId());
+            int assignmentCount = unFinishedAssignmentCount(studyMember, study.getId());
+
+            responses.add(
+                    MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount));
+        }
+
+        return new MyStudyListResponse(responses.size(), responses);
+    }
+
+    public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
+        studyRepository.getByIdOrThrow(studyId);
+
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        return new StudyInviteLinkResponse(studyInviteLinkGenerator.generate(studyId));
     }
 
     private void validateStudyCountLimit(Long userId) {
@@ -100,25 +149,10 @@ public class StudyService {
         }
     }
 
-    public StudyInfoResponse getStudyInfo(Long userId, Long studyId) {
-        Study study = studyRepository.findById(studyId)
-                .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
-
-        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        return new StudyInfoResponse(study.getName(), studyMember.getRole(), studyMember.getName());
-    }
-
-    public StudyDetailResponse getStudyDetail(Long userId, Long studyId) {
-        Study study = studyRepository.findById(studyId)
-                .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
-
-        StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        if (studyMember.getRole() == StudyMemberRole.LEADER) {
-            return makeLeaderStudyDetailResponse(study);
+    private void validateLeaderRole(StudyMember studyMember) {
+        if (studyMember.getRole() != StudyMemberRole.LEADER) {
+            throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
         }
-        return makeMemberStudyDetailResponse(study, studyMember);
     }
 
     private LeaderStudyDetailResponse makeLeaderStudyDetailResponse(Study study) {
@@ -164,24 +198,6 @@ public class StudyService {
                 MemberAssignmentSummaryListResponse.from(assignmentResponses));
     }
 
-    public MyStudyListResponse getMyStudies(Long userId) {
-        List<StudyMember> studyMembers = studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
-
-        List<MyStudyResponse> responses = new ArrayList<>();
-        for (StudyMember studyMember : studyMembers) {
-            Study study = studyMember.getStudy();
-
-            int memberCount = studyMemberRepository.countByStudyId(study.getId());
-            int noticeCount = unReadNoticeCount(studyMember, study.getId());
-            int assignmentCount = unFinishedAssignmentCount(studyMember, study.getId());
-
-            responses.add(
-                    MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount));
-        }
-
-        return new MyStudyListResponse(responses.size(), responses);
-    }
-
     private int unReadNoticeCount(StudyMember studyMember, Long studyId) {
         if (studyMember.getRole() == StudyMemberRole.LEADER) {
             return (int) noticeRepository.countIncompleteNoticeByStudyId(studyId);
@@ -194,14 +210,5 @@ public class StudyService {
             return (int) assignmentRepository.countIncompleteAssignmentByStudyId(studyId);
         }
         return (int) assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(studyId, studyMember.getId());
-    }
-
-    public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
-        studyRepository.findById(studyId)
-                .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
-
-        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        return new StudyInviteLinkResponse(studyInviteLinkGenerator.generate(studyId));
     }
 }

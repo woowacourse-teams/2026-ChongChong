@@ -150,6 +150,31 @@ class StudyAcceptanceTest {
     }
 
     @Test
+    @DisplayName("스터디 설명이 null인 생성 요청을 보내면 설명을 null로 저장한다")
+    void createStudyWithNullDescriptionTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "name": "자바 스터디",
+                          "description": null
+                        }
+                        """)
+                .when()
+                .post("/studies")
+                .then()
+                .statusCode(201)
+                .body("studyId", notNullValue());
+
+        assertThat(studyRepository.findAll())
+                .singleElement()
+                .satisfies(study -> assertThat(study.getDescription()).isNull());
+    }
+
+    @Test
     @DisplayName("스터디 생성 요청의 검증에 실패하면 한글 검증 사유를 반환한다")
     void createStudyWithInvalidRequestTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));

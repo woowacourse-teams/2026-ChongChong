@@ -12,9 +12,9 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
-import withoutc.chongchong.study.dto.StudyInviteTokenRequest;
-import withoutc.chongchong.study.dto.StudyMemberJoinResponse;
-import withoutc.chongchong.study.dto.StudyMembersResponse;
+import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
+import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 
 @Tag(name = "Study Member", description = "스터디 멤버 API")
 @SecurityRequirement(name = "bearerAuth")
