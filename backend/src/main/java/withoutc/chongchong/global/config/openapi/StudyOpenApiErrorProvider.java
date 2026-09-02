@@ -9,7 +9,6 @@ import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.STUD
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.STUDY_NOT_FOUND;
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.USER_NOT_FOUND;
 
-import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Component;
 
