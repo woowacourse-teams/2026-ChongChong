@@ -76,6 +76,7 @@ class AssignmentApiTest {
 
     private User leaderUser;
     private User memberUser;
+    private User secondMemberUser;
     private Study study;
     private StudyMember leader;
     private StudyMember member;
@@ -90,7 +91,7 @@ class AssignmentApiTest {
 
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
-        User secondMemberUser = userRepository.save(User.create("두 번째 스터디원", null));
+        secondMemberUser = userRepository.save(User.create("두 번째 스터디원", null));
         study = studyRepository.save(Study.create("자바 스터디", "설명"));
         leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, "리더", "https://example.com/leader.png", StudyMemberRole.LEADER)
@@ -478,7 +479,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("URL의 스터디와 과제의 스터디가 다르면 과제를 제출할 수 없다")
+    @DisplayName("요청 경로의 스터디와 과제의 소속 스터디가 다르면 제출할 수 없다")
     void submitAssignmentFromOtherStudyTest() {
         Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
         StudyMember otherLeader = studyMemberRepository.save(
@@ -537,6 +538,26 @@ class AssignmentApiTest {
     }
 
     @Test
+    @DisplayName("스터디원은 다른 스터디원의 제출물을 수정할 수 없다")
+    void updateOtherMembersSubmissionTest() {
+        Long submissionId = submitAssignment(memberUser, assignment, "기존 제출 내용", null);
+
+        testAuthRequest.givenAuthenticatedUser(secondMemberUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(new AssignmentSubmitRequest("권한 없는 수정", null))
+                .when()
+                .patch("/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}",
+                        study.getId(), assignment.getId(), submissionId)
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+
+        AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
+        assertThat(submission.getContent()).isEqualTo("기존 제출 내용");
+    }
+
+    @Test
     @DisplayName("URL의 과제와 제출물의 과제가 다르면 제출물을 수정할 수 없다")
     void updateSubmissionWithDifferentAssignmentPathTest() {
         Assignment otherAssignment = createAssignment(
@@ -584,6 +605,21 @@ class AssignmentApiTest {
     }
 
     @Test
+    @DisplayName("스터디원은 다른 스터디원의 제출물 상세를 조회할 수 없다")
+    void getOtherMembersSubmissionDetailTest() {
+        Long submissionId = submitAssignment(memberUser, assignment, "제출 상세 내용", null);
+
+        testAuthRequest.givenAuthenticatedUser(secondMemberUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}",
+                        study.getId(), assignment.getId(), submissionId)
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+    }
+
+    @Test
     @DisplayName("리더도 URL의 과제와 제출물의 과제가 다르면 상세를 조회할 수 없다")
     void getSubmissionDetailWithDifferentAssignmentPathTest() {
         Assignment otherAssignment = createAssignment(
@@ -624,7 +660,7 @@ class AssignmentApiTest {
 
     @Test
     @DisplayName("리더가 제출 현황을 조회하면 완료 및 미완료 인원과 개수를 반환한다")
-    void getSubmissionStatusesTest() {
+    void getAssignmentSubmissionStatusTest() {
         submitAssignment(memberUser, assignment, "제출 내용", null);
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())

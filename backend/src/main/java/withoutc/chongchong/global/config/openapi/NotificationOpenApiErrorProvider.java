@@ -1,6 +1,5 @@
 package withoutc.chongchong.global.config.openapi;
 
-import static withoutc.chongchong.global.config.openapi.AbstractOpenApiErrorProvider.entry;
 import static withoutc.chongchong.global.config.openapi.AbstractOpenApiErrorProvider.errors;
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.AUTHENTICATION_REQUIRED;
 import static withoutc.chongchong.global.config.openapi.OpenApiCommonErrors.INVALID_INPUT_VALUE;

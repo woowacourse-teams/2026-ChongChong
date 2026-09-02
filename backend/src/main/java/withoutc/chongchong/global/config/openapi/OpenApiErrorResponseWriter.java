@@ -10,7 +10,6 @@ import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
-import java.util.Map;
 import org.springframework.stereotype.Component;
 
 @Component

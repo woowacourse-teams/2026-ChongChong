@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,25 +117,35 @@ class AssignmentRepositoryTest {
     }
 
     @Test
-    @DisplayName("과제 조회에 성공하면 해당 과제를 반환하고, 없으면 과제 없음 예외를 던진다")
-    void getByIdOrThrowTest() {
+    @DisplayName("스터디에 속한 과제를 ID로 조회한다")
+    void getByIdAndStudyIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");
-        Assignment assignment = assignmentRepository.save(Assignment.create(
-                fixture.study(),
-                "과제",
-                "과제 내용",
-                "GitHub PR",
-                LocalDateTime.of(2026, 8, 30, 23, 59),
-                NOW
-        ));
+        Assignment assignment = createAssignment(fixture.study(), "과제", List.of(), 0);
 
-        Assignment found = assignmentRepository.getByIdOrThrow(assignment.getId());
+        Assignment found = assignmentRepository.getByIdAndStudyIdOrThrow(
+                assignment.getId(), fixture.study().getId());
 
         assertThat(found.getId()).isEqualTo(assignment.getId());
-        assertThatThrownBy(() -> assignmentRepository.getByIdOrThrow(Long.MAX_VALUE))
-                .isInstanceOfSatisfying(AssignmentException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND)
-                );
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 과제 ID를 조회하면 과제 없음 예외를 던진다")
+    void getByIdAndStudyIdOrThrowWhenAssignmentNotFoundTest() {
+        StudyFixture fixture = createStudyFixture("스터디", "리더");
+
+        assertAssignmentNotFound(() -> assignmentRepository.getByIdAndStudyIdOrThrow(
+                Long.MAX_VALUE, fixture.study().getId()));
+    }
+
+    @Test
+    @DisplayName("다른 스터디에 속한 과제를 조회하면 과제 없음 예외를 던진다")
+    void getByIdAndStudyIdOrThrowWhenAssignmentBelongsToAnotherStudyTest() {
+        StudyFixture assignmentStudy = createStudyFixture("과제 스터디", "과제 스터디 리더");
+        StudyFixture requestedStudy = createStudyFixture("요청 스터디", "요청 스터디 리더");
+        Assignment assignment = createAssignment(assignmentStudy.study(), "과제", List.of(), 0);
+
+        assertAssignmentNotFound(() -> assignmentRepository.getByIdAndStudyIdOrThrow(
+                assignment.getId(), requestedStudy.study().getId()));
     }
 
     @Test
@@ -249,6 +260,13 @@ class AssignmentRepositoryTest {
                 .limit(submittedCount)
                 .forEach(submission -> ReflectionTestUtils.setField(submission, "submitted", true));
         return assignment;
+    }
+
+    private void assertAssignmentNotFound(ThrowingCallable callable) {
+        assertThatThrownBy(callable)
+                .isInstanceOfSatisfying(AssignmentException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND)
+                );
     }
 
     private StudyWithMembersFixture createStudyWithMembersFixture() {

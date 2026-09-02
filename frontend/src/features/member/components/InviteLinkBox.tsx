@@ -1,6 +1,7 @@
 import { CSSProperties } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import CopyIcon from '../../../shared/assets/copy.svg';
+import { usePostHog } from '@posthog/react';
 
 const inviteDescriptionStyle = {
   ...typography.paragraph,
@@ -40,7 +41,13 @@ export default function InviteLinkBox({
   title: string;
   inviteLink: string;
 }) {
+  const posthog = usePostHog();
+
   const handleCopy = () => {
+    posthog?.capture('copy-invite-link', {
+      location: 'member_list_page',
+    });
+
     navigator.clipboard.writeText(inviteLink);
   };
 

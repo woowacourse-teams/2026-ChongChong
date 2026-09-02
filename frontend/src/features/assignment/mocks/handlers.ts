@@ -5,6 +5,8 @@ import { paginateByCursor } from '../../../mocks/pagination';
 import { memberTable, MemberSchemaType } from '../../member/mocks/db';
 import { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
 import { assignmentTable, AssignmentSchemaType, submissionTable } from './db';
+import { validateAssignment } from './validators';
+import { invalidInputResponse } from '../../../mocks/errors';
 
 export const handlers = [
   http.get(`${API_URL}/studies/:studyId/assignments`, ({ request, params }) => {
@@ -59,12 +61,17 @@ export const handlers = [
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
+    const body = (await request.json()) as AssignmentValue;
+    const fieldErrors = validateAssignment(body);
+    if (fieldErrors.length > 0) {
+      return invalidInputResponse(fieldErrors);
+    }
+
     const studyId = Number(params.studyId);
     const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
 
-    const { title, content, submissionMethod, closeAt } = (await request.json()) as AssignmentValue;
-
+    const { title, content, submissionMethod, closeAt } = body;
     const assignmentId = Date.now();
     await assignmentTable.create({
       id: assignmentId,
@@ -84,6 +91,11 @@ export const handlers = [
     async ({ request, params }) => {
       const user = findUserFromHeader(request.headers);
       if (!user) return new HttpResponse(null, { status: 401 });
+      const body = (await request.json()) as UpdateAssignmentValue;
+      const fieldErrors = validateAssignment(body);
+      if (fieldErrors.length > 0) {
+        return invalidInputResponse(fieldErrors);
+      }
 
       const studyId = Number(params.studyId);
       const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
@@ -93,10 +105,9 @@ export const handlers = [
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
 
-      const values = (await request.json()) as UpdateAssignmentValue;
       await assignmentTable.update(assignment, {
         data(assignment) {
-          Object.assign(assignment, values);
+          Object.assign(assignment, body);
         },
       });
 

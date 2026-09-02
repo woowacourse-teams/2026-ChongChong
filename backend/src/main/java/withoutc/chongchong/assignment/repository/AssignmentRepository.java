@@ -1,6 +1,7 @@
 package withoutc.chongchong.assignment.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +12,9 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
+
+    Optional<Assignment> findByIdAndStudyId(Long id, Long studyId);
+
     @Query("""
             SELECT n
             FROM Assignment n
@@ -110,8 +114,8 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     void deleteAllByStudyId(Long studyId);
 
-    default Assignment getByIdOrThrow(Long assignmentId) {
-        return findById(assignmentId).orElseThrow(
+    default Assignment getByIdAndStudyIdOrThrow(Long id, Long studyId) {
+        return findByIdAndStudyId(id, studyId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
     }
 }

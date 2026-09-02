@@ -17,19 +17,51 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
-import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
-import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
-import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
-import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
-import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
-import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 
 @Tag(name = "Assignment", description = "과제 API")
 @SecurityRequirement(name = "bearerAuth")
 public interface AssignmentApi {
+
+    String LEADER_ASSIGNMENT_LIST_RESPONSE = """
+            {
+              "nextCursor": null,
+              "hasNext": false,
+              "assignments": [
+                {
+                  "id": 1,
+                  "title": "1주 차 과제",
+                  "content": "이번 주 과제를 제출해주세요.",
+                  "submissionMethod": "링크 제출",
+                  "closeAt": "2026-08-29T23:59:00",
+                  "memberCount": 5,
+                  "completeCount": 3,
+                  "remindAt": "2026-08-28T10:00:00",
+                  "isComplete": false
+                }
+              ]
+            }
+            """;
+
+    String MEMBER_ASSIGNMENT_LIST_RESPONSE = """
+            {
+              "nextCursor": null,
+              "hasNext": false,
+              "assignments": [
+                {
+                  "id": 1,
+                  "title": "1주 차 과제",
+                  "content": "이번 주 과제를 제출해주세요.",
+                  "submissionMethod": "링크 제출",
+                  "closeAt": "2026-08-29T23:59:00",
+                  "isComplete": false
+                }
+              ]
+            }
+            """;
 
     @Operation(summary = "과제 생성", description = "스터디 리더가 과제를 생성한다.")
     @ApiResponse(responseCode = "201", description = "과제 생성 성공")
@@ -57,12 +89,12 @@ public interface AssignmentApi {
                             @ExampleObject(
                                     name = "Leader",
                                     summary = "스터디 리더 응답",
-                                    value = AssignmentApiExamples.LEADER_ASSIGNMENT_LIST_RESPONSE
+                                    value = LEADER_ASSIGNMENT_LIST_RESPONSE
                             ),
                             @ExampleObject(
                                     name = "Member",
                                     summary = "스터디 멤버 응답",
-                                    value = AssignmentApiExamples.MEMBER_ASSIGNMENT_LIST_RESPONSE
+                                    value = MEMBER_ASSIGNMENT_LIST_RESPONSE
                             )
                     }
             )
@@ -98,57 +130,9 @@ public interface AssignmentApi {
             @Parameter(description = "과제 ID", example = "1") Long assignmentId
     );
 
-    @Operation(summary = "과제 제출", description = "현재 사용자가 과제를 제출한다.")
-    @ApiResponse(responseCode = "201", description = "과제 제출 성공")
-    ResponseEntity<AssignmentSubmitResponse> submitAssignment(
-            AuthenticatedUser currentUser,
-            @Parameter(description = "스터디 ID", example = "1") Long studyId,
-            @Parameter(description = "과제 ID", example = "1") Long assignmentId,
-            @Valid AssignmentSubmitRequest request
-    );
-
-    @Operation(summary = "과제 제출 수정", description = "현재 사용자의 과제 제출 내용을 수정한다.")
-    @ApiResponse(responseCode = "204", description = "과제 제출 수정 성공")
-    ResponseEntity<Void> updateSubmission(
-            AuthenticatedUser currentUser,
-            @Parameter(description = "스터디 ID", example = "1") Long studyId,
-            @Parameter(description = "과제 ID", example = "1") Long assignmentId,
-            @Parameter(description = "제출 ID", example = "1") Long submissionId,
-            @Valid AssignmentSubmitRequest request
-    );
-
-    @Operation(summary = "과제 제출 상태 목록 조회", description = "스터디 리더가 멤버별 과제 제출 상태를 조회한다.")
-    @ApiResponse(responseCode = "200", description = "과제 제출 상태 목록 조회 성공")
-    ResponseEntity<AssignmentStatusesResponse> getAllSubmissionStatuses(
-            AuthenticatedUser currentUser,
-            @Parameter(description = "스터디 ID", example = "1") Long studyId,
-            @Parameter(description = "과제 ID", example = "1") Long assignmentId
-    );
-
-    @Operation(summary = "내 과제 제출 조회", description = "현재 사용자의 과제 제출 정보를 조회한다.")
-    @ApiResponse(
-            responseCode = "200",
-            description = "내 과제 제출 조회 성공. 제출 정보가 없으면 빈 본문을 반환한다.",
-            content = @Content(schema = @Schema(implementation = MySubmissionDetailResponse.class, nullable = true))
-    )
-    ResponseEntity<MySubmissionDetailResponse> getMySubmissionDetail(
-            AuthenticatedUser currentUser,
-            @Parameter(description = "스터디 ID", example = "1") Long studyId,
-            @Parameter(description = "과제 ID", example = "1") Long assignmentId
-    );
-
-    @Operation(summary = "과제 제출 상세 조회", description = "과제 제출의 상세 정보를 조회한다.")
-    @ApiResponse(responseCode = "200", description = "과제 제출 상세 조회 성공")
-    ResponseEntity<SubmissionDetailResponse> getSubmissionDetail(
-            AuthenticatedUser currentUser,
-            @Parameter(description = "스터디 ID", example = "1") Long studyId,
-            @Parameter(description = "과제 ID", example = "1") Long assignmentId,
-            @Parameter(description = "제출 ID", example = "1") Long submissionId
-    );
-
-    @Operation(summary = "과제 제출 목록 조회", description = "스터디 리더가 과제 제출 목록을 조회한다.")
-    @ApiResponse(responseCode = "200", description = "과제 제출 목록 조회 성공")
-    ResponseEntity<SubmissionListResponse> getSubmissionList(
+    @Operation(summary = "과제 제출 현황 조회", description = "스터디 리더가 과제의 제출 현황을 조회한다.")
+    @ApiResponse(responseCode = "200", description = "과제 제출 현황 조회 성공")
+    ResponseEntity<AssignmentSubmissionStatusResponse> getAssignmentSubmissionStatus(
             AuthenticatedUser currentUser,
             @Parameter(description = "스터디 ID", example = "1") Long studyId,
             @Parameter(description = "과제 ID", example = "1") Long assignmentId

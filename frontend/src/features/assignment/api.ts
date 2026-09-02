@@ -1,5 +1,6 @@
 import api from '../../client';
 import { AssignmentValue, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
+import { getErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
 import {
   isAssignmentListResponse,
   isCreateAssignmentResponse,
@@ -137,10 +138,7 @@ export async function updateAssignmentSubmission(
 
 export async function createAssignment(studyId: number, values: AssignmentValue) {
   try {
-    const response = await api.post(`/studies/${studyId}/assignments`, {
-      json: values,
-    });
-
+    const response = await api.post(`/studies/${studyId}/assignments`, { json: values });
     const data: unknown = await response.json();
 
     if (!isCreateAssignmentResponse(data)) {
@@ -148,8 +146,22 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
     }
 
     return data;
-  } catch {
-    throw new Error('과제 생성에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: {
+          cause: error,
+        },
+      });
+    }
+
+    throw new Error('과제를 생성하는데 실패했습니다.', {
+      cause: error,
+    });
   }
 }
 
@@ -162,8 +174,20 @@ export async function updateAssignment(
     await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {
       json: values,
     });
-  } catch {
-    throw new Error('과제 수정에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: {
+          cause: error,
+        },
+      });
+    }
+
+    throw new Error('과제 수정에 실패했습니다.', { cause: error });
   }
 }
 

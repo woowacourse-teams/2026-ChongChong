@@ -1,4 +1,5 @@
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useState, useMemo } from 'react';
+import { ValidationError } from '../../../shared/api/error';
 import Button from '../../../shared/ui/Button';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
@@ -7,6 +8,7 @@ import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
 import { formatDeadline, toLocalDateTime } from '../../../shared/utils/formatDate';
+import { usePostHog } from '@posthog/react';
 
 const formStyle = {
   display: 'flex',
@@ -20,6 +22,7 @@ interface AssignmentFormProps {
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: AssignmentValue) => void;
+  error?: Error | null;
 }
 
 const emptyValues = {
@@ -34,58 +37,80 @@ export default function AssignmentForm({
   submitLabel,
   isSubmitting = false,
   onSubmit,
+  error,
 }: AssignmentFormProps) {
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
   const [submissionMethod, setsubmissionMethod] = useState(initialValues.submissionMethod);
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
-  const [isCloseAtError, setIsCloseAtError] = useState(false);
+  const posthog = usePostHog();
+
+  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (isSubmitting) return;
+
+    posthog?.capture('assignment_form_submitted', {
+      location: 'assignment_create_page',
+    });
+
+    onSubmit({ title, content, submissionMethod, closeAt });
+  }
+
+  const fieldErrors = useMemo(
+    () => (error instanceof ValidationError ? error.fieldErrors : {}),
+    [error],
+  );
 
   return (
-    <form
-      css={formStyle}
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (isSubmitting) return;
-
-        if (!closeAt) {
-          setIsCloseAtError(true);
-          return;
-        }
-
-        onSubmit({ title, content, submissionMethod, closeAt });
-      }}
-    >
-      <Field id="assignment-title" label="제목" isRequired>
+    <form css={formStyle} onSubmit={handleSubmit}>
+      <Field
+        id="assignment-title"
+        label="제목"
+        isRequired
+        isError={Boolean(fieldErrors.title)}
+        errorText={fieldErrors.title}
+      >
         <Input
           id="assignment-title"
           name="title"
           value={title}
           autoFocus
-          required
           onChange={(event) => setTitle(event.target.value)}
+          maxLength={20}
           placeholder="제목을 입력해주세요"
         />
       </Field>
 
-      <Field id="assignment-content" label="내용" isRequired>
+      <Field
+        id="assignment-content"
+        label="내용"
+        isRequired
+        isError={Boolean(fieldErrors.content)}
+        errorText={fieldErrors.content}
+      >
         <TextArea
           id="assignment-content"
           name="content"
           value={content}
           placeholder="내용을 입력해주세요"
-          required
+          maxLength={10000}
           onChange={(event) => setContent(event.target.value)}
         />
       </Field>
 
-      <Field id="submit-method" label="제출 방법" isRequired>
+      <Field
+        id="submit-method"
+        label="제출 방법"
+        isRequired
+        isError={Boolean(fieldErrors.submissionMethod)}
+        errorText={fieldErrors.submissionMethod}
+      >
         <Input
           id="submit-method"
           name="method"
           value={submissionMethod}
           autoFocus
-          required
           onChange={(event) => setsubmissionMethod(event.target.value)}
           placeholder="제출 방법을 입력해주세요"
         />
@@ -95,8 +120,8 @@ export default function AssignmentForm({
         id="assignment-close-at"
         label="마감 시각"
         isRequired
-        isError={isCloseAtError}
-        errorText="마감 시각을 설정해주세요"
+        isError={Boolean(fieldErrors.closeAt)}
+        errorText={fieldErrors.closeAt}
       >
         <DateTimePicker
           id="assignment-close-at"
@@ -106,7 +131,6 @@ export default function AssignmentForm({
           triggerVariant="neutralOutline"
           onChange={(value) => {
             setCloseAt(toLocalDateTime(value));
-            setIsCloseAtError(false);
           }}
         />
       </Field>
