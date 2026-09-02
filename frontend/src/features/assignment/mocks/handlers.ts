@@ -153,15 +153,12 @@ export const handlers = [
     const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
     if (!assignment) return new HttpResponse(null, { status: 404 });
 
-    const submission = submissionTable.findFirst((q) => q.where({ assignmentId, userId: user.id }));
-
     return HttpResponse.json({
       id: assignment.id,
       title: assignment.title,
       closeAt: assignment.closeAt,
       content: assignment.content,
       submissionMethod: assignment.submissionMethod,
-      ...(submission && { submissionId: submission.id }),
     });
   }),
 
@@ -180,6 +177,7 @@ export const handlers = [
 
       const submissions = submissionTable
         .findMany((q) => q.where({ assignmentId }))
+        .filter(({ submitted }) => submitted)
         .map(({ id, userId, createdAt }) => {
           const submitter = memberTable.findFirst((q) => q.where({ studyId, userId }));
 
@@ -192,6 +190,34 @@ export const handlers = [
         });
 
       return HttpResponse.json({ submissions });
+    },
+  ),
+
+  http.get(
+    `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/my`,
+    ({ request, params }) => {
+      const user = findUserFromHeader(request.headers);
+      if (!user) return new HttpResponse(null, { status: 401 });
+
+      const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
+      const member = memberTable.findFirst((query) => query.where({ studyId, userId: user.id }));
+      if (!member) return new HttpResponse(null, { status: 403 });
+
+      const submission = submissionTable.findFirst((query) =>
+        query.where({ assignmentId, userId: user.id }),
+      );
+
+      if (!submission?.submitted) {
+        return HttpResponse.json({ submitted: false });
+      }
+
+      return HttpResponse.json({
+        submitted: true,
+        submissionId: submission.id,
+        createdAt: submission.createdAt,
+        content: submission.content,
+        ...(submission.link && { link: submission.link }),
+      });
     },
   ),
 
@@ -211,7 +237,7 @@ export const handlers = [
         q.where({ id: submissionId, assignmentId: assignmentId }),
       );
 
-      if (!submission) return new HttpResponse(null, { status: 404 });
+      if (!submission?.submitted) return new HttpResponse(null, { status: 404 });
 
       const member = memberTable.findFirst((q) =>
         q.where({ studyId: studyId, userId: submission.userId }),
@@ -243,22 +269,36 @@ export const handlers = [
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
 
-      const submitted = submissionTable.findFirst((q) =>
+      const submission = submissionTable.findFirst((q) =>
         q.where({ assignmentId, userId: user.id }),
       );
-      if (submitted) return new HttpResponse(null, { status: 409 });
+      if (submission?.submitted) return new HttpResponse(null, { status: 409 });
 
       const { content, link } = (await request.json()) as AssignmentSubmissionValue;
 
-      const submissionId = Date.now();
-      await submissionTable.create({
-        id: submissionId,
-        assignmentId,
-        userId: user.id,
-        content,
-        link,
-        createdAt: new Date().toISOString(),
-      });
+      const createdAt = new Date().toISOString();
+      const submissionId = submission?.id ?? Date.now();
+
+      if (submission) {
+        await submissionTable.update(submission, {
+          data(current) {
+            current.submitted = true;
+            current.content = content;
+            current.link = link ?? null;
+            current.createdAt = createdAt;
+          },
+        });
+      } else {
+        await submissionTable.create({
+          id: submissionId,
+          assignmentId,
+          userId: user.id,
+          submitted: true,
+          content,
+          link: link ?? null,
+          createdAt,
+        });
+      }
 
       await assignmentTable.update(assignment, {
         data(assignment) {

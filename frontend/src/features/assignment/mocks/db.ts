@@ -147,9 +147,10 @@ const submissionSchema = z.object({
   id: z.number(),
   assignmentId: z.number(),
   userId: z.number(),
-  content: z.string(),
-  link: z.string().optional(),
-  createdAt: z.string(),
+  submitted: z.boolean().default(true),
+  content: z.string().nullable().default(null),
+  link: z.string().nullable().default(null),
+  createdAt: z.string().nullable().default(null),
 });
 
 export const submissionTable = new Collection({
@@ -157,6 +158,7 @@ export const submissionTable = new Collection({
 });
 
 export type SubmissionSchemaType = z.infer<typeof submissionSchema>;
+type SubmissionSchemaInput = z.input<typeof submissionSchema>;
 
 export const mockSubmissions = [
   {
@@ -350,7 +352,13 @@ export const mockSubmissions = [
     link: 'http://localhost:8080',
     createdAt: '2026-09-26T12:29:16',
   },
-] satisfies SubmissionSchemaType[];
+  {
+    id: 24,
+    assignmentId: 7,
+    userId: 1,
+    submitted: false,
+  },
+] satisfies SubmissionSchemaInput[];
 
 export function createSeedSubmissions() {
   for (const mockSubmission of mockSubmissions) {

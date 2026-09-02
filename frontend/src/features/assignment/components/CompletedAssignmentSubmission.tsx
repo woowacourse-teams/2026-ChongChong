@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import assignmentIcon from '../../../shared/assets/assign-green.svg';
 import linkIcon from '../../../shared/assets/link-green.svg';
 import Button from '../../../shared/ui/Button';
@@ -8,14 +8,16 @@ import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { updateAssignmentSubmission } from '../api';
 import assignmentQueries from '../queries';
-import type { AssignmentSubmissionValue } from '../types';
+import type { AssignmentSubmissionValue, UserAssignmentSubmitDetail } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import InfoCard from './InfoCard';
+
+type SubmittedAssignment = Extract<UserAssignmentSubmitDetail, { submitted: true }>;
 
 interface Props {
   assignmentId: number;
   studyId: number;
-  submissionId: number;
+  submission: SubmittedAssignment;
 }
 
 const sectionStyle = {
@@ -56,33 +58,28 @@ const editButtonStyle = {
 export default function CompletedAssignmentSubmission({
   assignmentId,
   studyId,
-  submissionId,
+  submission,
 }: Props) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: submission } = useSuspenseQuery(
-    assignmentQueries.submissionDetail(studyId, assignmentId, submissionId),
-  );
-
   const updateMutation = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
-      updateAssignmentSubmission(studyId, assignmentId, submissionId, values),
+      updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
+
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: assignmentQueries.submissionDetail(studyId, assignmentId, submissionId)
-            .queryKey,
-        }),
-        queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) }),
-      ]);
+      await queryClient.invalidateQueries({
+        queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
+        exact: true,
+      });
+
       setIsEditing(false);
     },
   });
 
   return isEditing ? (
     <AssignmentSubmissionForm
-      key={`${studyId}-${assignmentId}-${submissionId}`}
+      key={`${studyId}-${assignmentId}-${submission.submissionId}`}
       initialValues={{ content: submission.content, link: submission.link }}
       isSubmitting={updateMutation.isPending}
       submitLabel="수정하기"

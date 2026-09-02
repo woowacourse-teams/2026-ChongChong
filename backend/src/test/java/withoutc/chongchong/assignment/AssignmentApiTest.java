@@ -435,6 +435,7 @@ class AssignmentApiTest {
                         study.getId(), assignment.getId())
                 .then()
                 .statusCode(200)
+                .body("submissionId", equalTo(submissionId.intValue()))
                 .body("submitted", equalTo(true))
                 .body("createdAt", equalTo(submission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("content", equalTo("제출 내용"))
@@ -444,6 +445,11 @@ class AssignmentApiTest {
     @Test
     @DisplayName("스터디원이 과제를 제출하지 않았다면 미제출 상태를 반환한다")
     void getMySubmissionDetailBeforeSubmitTest() {
+        Long submissionId = assignmentSubmissionRepository
+                .findByAssignmentIdAndMemberId(assignment.getId(), member.getId())
+                .orElseThrow()
+                .getId();
+
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
                 .when()
@@ -451,6 +457,7 @@ class AssignmentApiTest {
                         study.getId(), assignment.getId())
                 .then()
                 .statusCode(200)
+                .body("submissionId", equalTo(submissionId.intValue()))
                 .body("submitted", equalTo(false))
                 .body("createdAt", nullValue())
                 .body("content", nullValue())

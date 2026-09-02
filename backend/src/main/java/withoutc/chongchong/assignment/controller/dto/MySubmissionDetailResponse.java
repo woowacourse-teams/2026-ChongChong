@@ -7,6 +7,8 @@ import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record MySubmissionDetailResponse(
+        @Schema(description = "제출 ID", example = "1")
+        Long submissionId,
         @Schema(description = "제출 완료 여부", example = "true")
         boolean submitted,
         @Schema(description = "제출 시각", example = "2026-08-27T10:30:00", nullable = true)
@@ -18,6 +20,7 @@ public record MySubmissionDetailResponse(
 ) {
     public static MySubmissionDetailResponse from(AssignmentSubmission submission) {
         return new MySubmissionDetailResponse(
+                submission.getId(),
                 submission.isSubmitted(),
                 submission.getSubmittedAt(),
                 submission.getContent(),
