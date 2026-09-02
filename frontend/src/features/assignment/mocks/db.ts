@@ -135,6 +135,15 @@ export const mockAssigments = [
     closeAt: '2026-09-28T23:59:59',
     completeUserIds: [4, 5],
   },
+  {
+    id: 14,
+    studyId: 8,
+    title: '강아지 밥주기',
+    content: '강아지 저녁밥 꼭 줘야 합니다.',
+    submissionMethod: '인증사진을 첨부하세요.',
+    closeAt: '2030-09-28T23:59:59',
+    completeUserIds: [],
+  },
 ] satisfies AssignmentSchemaType[];
 
 export function createSeedAssignments() {
