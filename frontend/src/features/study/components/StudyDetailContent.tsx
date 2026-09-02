@@ -14,8 +14,8 @@ import {
 } from './ActiveStudyCard';
 import { StudyLeaderWelcomeBanner, StudyMemberWelcomeBanner } from './WelcomeBanner';
 import useStudyId from '../hooks/useStudyId';
-import EmptyContent from '../../../shared/ui/EmptyContent';
 import SleepIcon from '../../../shared/assets/icons/sleep-icon.webp';
+import WritingLogo from '../../../shared/assets/icons/writing-logo.webp';
 
 const StatusCardListStyle = {
   display: 'flex',
@@ -53,7 +53,7 @@ const StatusLabelStyle = {
   color: tokens.text.default,
 } satisfies CSSProperties;
 
-const MemberContentStyle = {
+const DetailContentStyle = {
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
@@ -111,10 +111,12 @@ const IconStyle = {
 export function LeaderStudyDetailContent({ username }: { username: string }) {
   const { studyId } = useStudyId();
   const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'LEADER'));
+  const activeContentCount = data.notices.count + data.assignments.count;
+
   return (
-    <>
+    <div css={DetailContentStyle}>
       <StudyLeaderWelcomeBanner username={username} />
-      <section>
+      <section css={SectionStyle}>
         <h2 css={SectionLabelStyle}>스터디 현황</h2>
         <div css={StatusCardListStyle}>
           <Link to="notices" css={StatusCardStyle}>
@@ -132,32 +134,40 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
             </div>
           </Link>
         </div>
-        <List aria-label="진행 중인 공지와 과제">
-          {data.notices.items.map((notice) => (
-            <List.Item key={`notice-${notice.id}`}>
-              <Link to={`notices/${notice.id}`}>
-                <LeaderActiveNoticeCard
-                  title={notice.title}
-                  memberCount={notice.memberCount}
-                  completeCount={notice.completeCount}
-                />
-              </Link>
-            </List.Item>
-          ))}
-          {data.assignments.items.map((assignment) => (
-            <List.Item key={`assignment-${assignment.id}`}>
-              <Link to={`assignments/${assignment.id}`}>
-                <LeaderActiveAssignmentCard
-                  title={assignment.title}
-                  memberCount={assignment.memberCount}
-                  completeCount={assignment.completeCount}
-                />
-              </Link>
-            </List.Item>
-          ))}
-        </List>
+        {activeContentCount === 0 ? (
+          <div css={CompletedContentStyle}>
+            <img src={WritingLogo} alt="" css={CompletedImageStyle} />
+            <h2 css={CompletedTitleStyle}>아직 진행 중인 공지나 과제가 없어요!</h2>
+            <p css={CompletedDescriptionStyle}>새로운 공지나 과제를 작성하러 가볼까요?</p>
+          </div>
+        ) : (
+          <List aria-label="진행 중인 공지와 과제">
+            {data.notices.items.map((notice) => (
+              <List.Item key={`notice-${notice.id}`}>
+                <Link to={`notices/${notice.id}`}>
+                  <LeaderActiveNoticeCard
+                    title={notice.title}
+                    memberCount={notice.memberCount}
+                    completeCount={notice.completeCount}
+                  />
+                </Link>
+              </List.Item>
+            ))}
+            {data.assignments.items.map((assignment) => (
+              <List.Item key={`assignment-${assignment.id}`}>
+                <Link to={`assignments/${assignment.id}`}>
+                  <LeaderActiveAssignmentCard
+                    title={assignment.title}
+                    memberCount={assignment.memberCount}
+                    completeCount={assignment.completeCount}
+                  />
+                </Link>
+              </List.Item>
+            ))}
+          </List>
+        )}
       </section>
-    </>
+    </div>
   );
 }
 
@@ -167,12 +177,12 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
   const todoCount = data.totalCount;
 
   return (
-    <div css={MemberContentStyle}>
+    <div css={DetailContentStyle}>
       <StudyMemberWelcomeBanner username={username} todoCount={todoCount} />
       <div css={SectionListStyle}>
         {todoCount === 0 ? (
           <section css={CompletedContentStyle}>
-            <img src={SleepIcon} alt="편안하게 쉬고 있는 총총이" css={CompletedImageStyle} />
+            <img src={SleepIcon} alt="" css={CompletedImageStyle} />
             <h2 css={CompletedTitleStyle}>오늘 할 일을 모두 마쳤어요!</h2>
             <p css={CompletedDescriptionStyle}>
               모든 공지를 확인했고, 제출할 과제도 없어요.
@@ -193,11 +203,9 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                 ))}
               </List>
             )}
-            <section css={SectionStyle}>
-              <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
-              {data.notices.length === 0 ? (
-                <EmptyContent message="모든 공지를 다 읽었어요!" />
-              ) : (
+            {data.notices.length !== 0 && (
+              <section css={SectionStyle}>
+                <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
                 <List>
                   {data.notices.map((notice) => (
                     <List.Item key={`notice-${notice.id}`}>
@@ -207,13 +215,11 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                     </List.Item>
                   ))}
                 </List>
-              )}
-            </section>
-            <section css={SectionStyle}>
-              <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
-              {data.assignments.length === 0 ? (
-                <EmptyContent message="남아있는 과제가 없어요!" />
-              ) : (
+              </section>
+            )}
+            {data.assignments.length !== 0 && (
+              <section css={SectionStyle}>
+                <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
                 <List>
                   {data.assignments.map((assignment) => (
                     <List.Item key={`assignment-${assignment.id}`}>
@@ -223,8 +229,8 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                     </List.Item>
                   ))}
                 </List>
-              )}
-            </section>
+              </section>
+            )}
           </>
         )}
       </div>
