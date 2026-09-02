@@ -20,6 +20,15 @@ class StudyTest {
     }
 
     @Test
+    @DisplayName("스터디 생성 시 이름이 null이면 거부한다")
+    void createWithNullNameTest() {
+        assertThatThrownBy(() -> Study.create(null, "설명"))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.INVALID_NAME);
+    }
+
+    @Test
     @DisplayName("스터디 설명은 30자까지 허용하고 30자를 초과하면 거부한다")
     void validateDescriptionLengthTest() {
         String maxLengthDescription = "가".repeat(30);

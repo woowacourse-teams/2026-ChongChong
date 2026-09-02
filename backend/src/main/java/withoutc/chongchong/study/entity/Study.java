@@ -65,7 +65,7 @@ public class Study extends BaseEntity {
     }
 
     private void validateName(String name) {
-        if (name.isBlank() || name.length() > MAX_STUDY_NAME_SIZE) {
+        if (name == null || name.isBlank() || name.length() > MAX_STUDY_NAME_SIZE) {
             throw new StudyException(StudyErrorCode.INVALID_NAME);
         }
     }
