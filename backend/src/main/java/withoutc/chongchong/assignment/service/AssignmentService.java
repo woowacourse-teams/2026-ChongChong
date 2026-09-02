@@ -36,8 +36,10 @@ import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
+import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.StudyRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -47,6 +49,7 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final StudyMemberRepository studyMemberRepository;
+    private final StudyRepository studyRepository;
 
     private final Clock clock;
 
@@ -57,10 +60,10 @@ public class AssignmentService {
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
 
-        StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        Study study = studyRepository.getByIdOrThrow(studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
-        Assignment assignment = Assignment.create(writer, request.title(), request.content(),
+        Assignment assignment = Assignment.create(study, request.title(), request.content(),
                 request.submissionMethod(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
         assignment.initializeSubmissions(members);

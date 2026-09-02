@@ -41,10 +41,6 @@ public class Assignment extends BaseEntity {
     @JoinColumn(name = "study_id", nullable = false)
     private Study study;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "writer_id", nullable = false)
-    private StudyMember writer;
-
     @Column(nullable = false)
     private String title;
 
@@ -63,21 +59,20 @@ public class Assignment extends BaseEntity {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<AssignmentSubmission> submissions = new ArrayList<>();
 
-    public static Assignment create(StudyMember writer, String title, String content,
+    public static Assignment create(Study study, String title, String content,
                                     String submissionMethod,
                                     LocalDateTime closeAt, LocalDateTime now) {
-        return new Assignment(writer, title, content, submissionMethod, closeAt, now);
+        return new Assignment(study, title, content, submissionMethod, closeAt, now);
     }
 
-    private Assignment(StudyMember writer, String title, String content, String submissionMethod,
+    private Assignment(Study study, String title, String content, String submissionMethod,
                        LocalDateTime closeAt, LocalDateTime now) {
         validateTitle(title);
         validateContent(content);
         validateSubmissionMethod(submissionMethod);
         validateCloseAt(closeAt, now);
 
-        this.study = writer.getStudy();
-        this.writer = writer;
+        this.study = study;
         this.title = title;
         this.content = content;
         this.submissionMethod = submissionMethod;
