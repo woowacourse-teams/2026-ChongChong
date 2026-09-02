@@ -28,8 +28,10 @@ const appRoutes = [
 const root = document.getElementById('root')!;
 
 async function enableMocking() {
-  // 개발 환경에서는 MSW를 실행합니다.
-  if (process.env.NODE_ENV !== 'development') return;
+  // .env의 USE_MSW가 true일 때 MSW를 사용합니다.
+  if (process.env.USE_MSW !== 'true') {
+    return;
+  }
 
   const { worker } = await import('./src/mocks/msw-browser');
 
