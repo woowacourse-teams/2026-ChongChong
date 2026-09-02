@@ -43,6 +43,7 @@ export default function EditAssignmentPage() {
       <Main>
         <AssignmentForm
           submitLabel="과제 수정하기"
+          error={updateMutation.error}
           onSubmit={updateMutation.mutate}
           initialValues={{
             title: assignment.title,

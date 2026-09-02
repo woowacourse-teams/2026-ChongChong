@@ -33,6 +33,7 @@ export default function CreateAssignmentPage() {
       <Main>
         <AssignmentForm
           isSubmitting={createMutation.isPending}
+          error={createMutation.error}
           submitLabel="과제 올리기"
           onSubmit={(values) => createMutation.mutate(values)}
         />

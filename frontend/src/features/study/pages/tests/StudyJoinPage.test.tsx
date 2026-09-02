@@ -11,6 +11,7 @@ import { STUDY_URLS } from '../../urls';
 import StudyDetailPage from '../StudyDetailPage';
 import { setAccessToken, clearAccessToken } from '../../../login/accessToken';
 import { mockStudies } from '../../mocks/db';
+import { invalidInputResponse } from '../../../../mocks/errors';
 
 const STUDY_JOIN_URL = `${API_URL}${STUDY_URLS.join}`;
 
@@ -111,5 +112,23 @@ describe('스터디 참가 폼 테스트', () => {
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('스터디 참여에 실패했습니다.');
+  });
+
+  test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post(STUDY_JOIN_URL, () =>
+        invalidInputResponse([
+          { field: 'token', code: 'SOME_ERROR', reason: '토큰값이 문제가 있어요' },
+        ]),
+      ),
+    );
+
+    render(<StudyJoinPage />, { wrapper: createWrapper() });
+
+    const inviteLinkInput = screen.getByRole('textbox', { name: '초대 링크' });
+    await user.type(inviteLinkInput, '우아한테크코스9기');
+    await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
+    expect(await screen.findByText('토큰값이 문제가 있어요')).toBeInTheDocument();
   });
 });

@@ -11,8 +11,7 @@ import {
 import { userTable, createSeedUsers } from './src/features/user/mocks/db';
 
 beforeAll(() => server.listen());
-// 매 테스트마다 초기 시드 상태로 되돌립니다.
-afterEach(() => {
+beforeEach(() => {
   server.resetHandlers();
   userTable.clear();
   studyTable.clear();
