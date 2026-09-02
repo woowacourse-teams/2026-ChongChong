@@ -15,6 +15,7 @@ import {
 import { StudyLeaderWelcomeBanner, StudyMemberWelcomeBanner } from './WelcomeBanner';
 import useStudyId from '../hooks/useStudyId';
 import EmptyContent from '../../../shared/ui/EmptyContent';
+import SleepIcon from '../../../shared/assets/icons/sleep-icon.webp';
 
 const StatusCardListStyle = {
   display: 'flex',
@@ -71,6 +72,35 @@ const SectionStyle = {
   flex: 1,
   flexDirection: 'column',
   minHeight: 0,
+} satisfies CSSProperties;
+
+const CompletedContentStyle = {
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: tokens.spacing[2],
+  paddingBottom: tokens.spacing[8],
+  textAlign: 'center',
+} satisfies CSSProperties;
+
+const CompletedImageStyle = {
+  width: 'min(100%, 300px)',
+  height: 'auto',
+} satisfies CSSProperties;
+
+const CompletedTitleStyle = {
+  ...typography.title,
+  margin: 0,
+  color: tokens.text.default,
+  fontWeight: tokens.fontWeight.semibold,
+} satisfies CSSProperties;
+
+const CompletedDescriptionStyle = {
+  ...typography.body,
+  margin: 0,
+  color: tokens.text.muted,
 } satisfies CSSProperties;
 
 const IconStyle = {
@@ -140,38 +170,63 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
     <div css={MemberContentStyle}>
       <StudyMemberWelcomeBanner username={username} todoCount={todoCount} />
       <div css={SectionListStyle}>
-        <section css={SectionStyle}>
-          <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
-          {data.notices.length === 0 ? (
-            <EmptyContent message="모든 공지를 다 읽었어요 !"></EmptyContent>
-          ) : (
-            <List>
-              {data.notices.map((notice) => (
-                <List.Item key={`notice-${notice.id}`}>
-                  <Link to={`notices/${notice.id}`}>
-                    <MemberActiveNoticeCard title={notice.title} />
-                  </Link>
-                </List.Item>
-              ))}
-            </List>
-          )}
-        </section>
-        <section css={SectionStyle}>
-          <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
-          {data.assignments.length === 0 ? (
-            <EmptyContent message="남아있는 과제가 없어요 !"></EmptyContent>
-          ) : (
-            <List>
-              {data.assignments.map((assignment) => (
-                <List.Item key={`assignment-${assignment.id}`}>
-                  <Link to={`assignments/${assignment.id}`}>
-                    <MemberActiveAssignmentCard title={assignment.title} />
-                  </Link>
-                </List.Item>
-              ))}
-            </List>
-          )}
-        </section>
+        {todoCount === 0 ? (
+          <section css={CompletedContentStyle}>
+            <img src={SleepIcon} alt="편안하게 쉬고 있는 총총이" css={CompletedImageStyle} />
+            <h2 css={CompletedTitleStyle}>오늘 할 일을 모두 마쳤어요!</h2>
+            <p css={CompletedDescriptionStyle}>
+              모든 공지를 확인했고, 제출할 과제도 없어요.
+              <br />
+              잠깐 쉬어가는건 어떨까요 ?
+            </p>
+          </section>
+        ) : (
+          <>
+            {data.notices.length !== 0 && (
+              <List>
+                {data.notices.map((notice) => (
+                  <List.Item key={`notice-${notice.id}`}>
+                    <Link to={`notices/${notice.id}`}>
+                      <MemberActiveNoticeCard title={notice.title} />
+                    </Link>
+                  </List.Item>
+                ))}
+              </List>
+            )}
+            <section css={SectionStyle}>
+              <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
+              {data.notices.length === 0 ? (
+                <EmptyContent message="모든 공지를 다 읽었어요!" />
+              ) : (
+                <List>
+                  {data.notices.map((notice) => (
+                    <List.Item key={`notice-${notice.id}`}>
+                      <Link to={`notices/${notice.id}`}>
+                        <MemberActiveNoticeCard title={notice.title} />
+                      </Link>
+                    </List.Item>
+                  ))}
+                </List>
+              )}
+            </section>
+            <section css={SectionStyle}>
+              <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
+              {data.assignments.length === 0 ? (
+                <EmptyContent message="남아있는 과제가 없어요!" />
+              ) : (
+                <List>
+                  {data.assignments.map((assignment) => (
+                    <List.Item key={`assignment-${assignment.id}`}>
+                      <Link to={`assignments/${assignment.id}`}>
+                        <MemberActiveAssignmentCard title={assignment.title} />
+                      </Link>
+                    </List.Item>
+                  ))}
+                </List>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

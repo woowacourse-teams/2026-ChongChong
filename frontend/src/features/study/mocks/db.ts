@@ -51,6 +51,18 @@ export const mockStudies = [
     description: '아무런 활동도 없는 유령 스터디',
     inviteLink: 'chongchong.ghost.app/join/6',
   },
+  {
+    id: 7,
+    name: '내가 멤버이면서 읽어야할 공지가 하나만 있는 스터디',
+    description: '공지가 하나',
+    inviteLink: 'chongchong.only.one.notice.app/join/7',
+  },
+  {
+    id: 8,
+    name: '내가 멤버이면서 제출해야할 과제가 하나만 있는 스터디',
+    description: '과제가 하나',
+    inviteLink: 'chongchong.only.one.assignment.app/join/8',
+  },
 ] satisfies studySchemaType[];
 
 export function createSeedStudies() {
