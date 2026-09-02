@@ -126,7 +126,10 @@ export const handlers = [
     const study = studyTable.findFirst((q) => q.where({ inviteLink: token }));
     if (!study) return new HttpResponse(null, { status: 404 });
     if (memberTable.findFirst((q) => q.where({ studyId: study.id, userId: user.id }))) {
-      return new HttpResponse(null, { status: 409 });
+      return HttpResponse.json(
+        { code: 'ALREADY_JOINED_STUDY', message: '해당 스터디에 이미 가입되어 있습니다.' },
+        { status: 409 },
+      );
     }
     const newMember = {
       id: Date.now(),
