@@ -96,6 +96,7 @@ class StudyMemberServiceTest {
         Long studyId = 2L;
         User user = mock(User.class);
         when(user.getId()).thenReturn(userId);
+        when(user.getName()).thenReturn("사용자");
         Study study = mock(Study.class);
         when(study.getId()).thenReturn(studyId);
         StudyMember member = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
