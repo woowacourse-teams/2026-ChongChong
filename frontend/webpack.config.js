@@ -18,6 +18,8 @@ export default (_, argv) => {
     process.loadEnvFile(envPath);
   }
 
+  const devApiProxyTarget = process.env.DEV_API_PROXY_TARGET;
+
   return {
     mode,
     entry: './main.tsx',
@@ -89,6 +91,16 @@ export default (_, argv) => {
       client: {
         overlay: true,
       },
+      proxy: devApiProxyTarget
+        ? [
+            {
+              context: ['/api'],
+              target: devApiProxyTarget,
+              changeOrigin: true,
+              secure: true,
+            },
+          ]
+        : [],
     },
   };
 };
