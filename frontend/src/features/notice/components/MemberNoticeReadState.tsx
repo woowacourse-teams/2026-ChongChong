@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import checkIcon from '../../../shared/assets/check.svg';
 import circleCheckIcon from '../../../shared/assets/circle-check.svg';
 import { tokens, typography } from '../../../styles/global';
-
+import { PostHogCaptureOnViewed } from '@posthog/react';
 interface MemberNoticeReadStateProps {
   progress: number;
   isRead: boolean;
@@ -83,18 +83,20 @@ export default function MemberNoticeReadState({
 
   return (
     <>
-      {showCompletionToast && !isToastDismissed ? (
-        <div css={toastStyle} role="status">
-          <img
-            src={checkIcon}
-            alt=""
-            width={16}
-            height={16}
-            css={{ filter: 'brightness(0) invert(1)' }}
-          />
-          읽음으로 표시했어요
-        </div>
-      ) : null}
+      <PostHogCaptureOnViewed name="notice-read">
+        {showCompletionToast && !isToastDismissed ? (
+          <div css={toastStyle} role="status">
+            <img
+              src={checkIcon}
+              alt=""
+              width={16}
+              height={16}
+              css={{ filter: 'brightness(0) invert(1)' }}
+            />
+            읽음으로 표시했어요
+          </div>
+        ) : null}
+      </PostHogCaptureOnViewed>
 
       <footer css={footerStyle}>
         {isRead ? (

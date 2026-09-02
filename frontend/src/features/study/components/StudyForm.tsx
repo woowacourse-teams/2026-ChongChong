@@ -10,6 +10,7 @@ import { tokens } from '../../../styles/global';
 import { createStudy } from '../api';
 import isBlank from '../../../shared/utils/isBlank';
 import { ValidationError } from '../../../shared/api/error';
+import { usePostHog } from '@posthog/react';
 
 const StudyFormStyle = {
   display: 'flex',
@@ -21,6 +22,7 @@ export default function StudyForm() {
   const navigate = useNavigate();
   const [nameValue, handleNameValue] = useInputState('');
   const [descriptionValue, handleDescriptionValue] = useInputState('');
+  const posthog = usePostHog();
 
   const { mutate, error } = useMutation({
     mutationFn: createStudy,
@@ -29,6 +31,11 @@ export default function StudyForm() {
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    posthog?.capture('study_form_submitted', {
+      location: 'study_create_page',
+    });
+
     const body = { name: nameValue, description: descriptionValue };
     mutate(body);
   }

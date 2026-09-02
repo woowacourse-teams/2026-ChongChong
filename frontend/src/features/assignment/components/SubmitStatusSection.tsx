@@ -5,6 +5,7 @@ import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import Badge from '../../../shared/ui/Badge';
 import { tokens, typography } from '../../../styles/global';
 import { AssignmentSubmitStatus } from '../types';
+import { PostHogCaptureOnViewed } from '@posthog/react';
 
 interface Props {
   status: AssignmentSubmitStatus;
@@ -98,27 +99,29 @@ export default function SubmitStatusSection({ status }: Props) {
 
   return (
     <section css={cardStyle} aria-labelledby="submit-status-title">
-      <header css={headerStyle}>
-        <h2 id="submit-status-title" css={statusTitleStyle}>
-          제출 현황
-        </h2>
-      </header>
+      <PostHogCaptureOnViewed name="assignment-submit-status-section">
+        <header css={headerStyle}>
+          <h2 id="submit-status-title" css={statusTitleStyle}>
+            제출 현황
+          </h2>
+        </header>
 
-      <div css={countStyle}>
-        <strong css={readCountStyle}>{status.completeCount}</strong>
-        <span css={totalCountStyle}>/ {status.memberCount}명</span>
-      </div>
+        <div css={countStyle}>
+          <strong css={readCountStyle}>{status.completeCount}</strong>
+          <span css={totalCountStyle}>/ {status.memberCount}명</span>
+        </div>
 
-      <div
-        css={progressTrackStyle}
-        role="progressbar"
-        aria-label="과제 제출률"
-        aria-valuemin={0}
-        aria-valuemax={status.memberCount}
-        aria-valuenow={status.completeCount}
-      >
-        <div css={{ ...progressBarStyle, width: `${progress}%` }} />
-      </div>
+        <div
+          css={progressTrackStyle}
+          role="progressbar"
+          aria-label="과제 제출률"
+          aria-valuemin={0}
+          aria-valuemax={status.memberCount}
+          aria-valuenow={status.completeCount}
+        >
+          <div css={{ ...progressBarStyle, width: `${progress}%` }} />
+        </div>
+      </PostHogCaptureOnViewed>
 
       <div css={groupStyle}>
         <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>

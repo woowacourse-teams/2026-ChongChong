@@ -6,6 +6,7 @@ import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens } from '../../../styles/global';
 import type { NoticeFormValues } from '../types';
+import { usePostHog } from '@posthog/react';
 
 const formStyle = {
   display: 'flex',
@@ -42,6 +43,7 @@ export default function NoticeForm({
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
+  const posthog = usePostHog();
 
   useLayoutEffect(() => {
     resizeTextArea(contentRef.current);
@@ -49,6 +51,11 @@ export default function NoticeForm({
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
+
+    posthog?.capture('notice_form_submitted', {
+      location: 'notice_create_page',
+    });
+
     onSubmit({ title, content });
   };
 

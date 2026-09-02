@@ -6,6 +6,7 @@ import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens, typography } from '../../../styles/global';
 import type { AssignmentSubmissionValue } from '../types';
+import { usePostHog } from '@posthog/react';
 
 interface Props {
   initialValues?: AssignmentSubmissionValue;
@@ -49,10 +50,15 @@ export default function AssignmentSubmissionForm({
 }: Props) {
   const [content, setContent] = useState(initialValues.content);
   const [link, setLink] = useState(initialValues.link ?? '');
+  const posthog = usePostHog();
 
   const submitAssignment: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     if (isSubmitting) return;
+
+    posthog?.capture('assignment_submission_submitted', {
+      location: 'assignment_submission_page',
+    });
 
     onSubmit({
       content,

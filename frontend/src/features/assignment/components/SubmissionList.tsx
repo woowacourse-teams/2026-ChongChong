@@ -5,6 +5,7 @@ import List from '../../../shared/ui/List';
 import { tokens, typography } from '../../../styles/global';
 import type { Submission } from '../types';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
+import { usePostHog } from '@posthog/react';
 
 interface Props {
   submissions: Submission[];
@@ -68,6 +69,13 @@ const detailLinkStyle = {
 
 export default function SubmissionList({ submissions }: Props) {
   const { studyId, assignmentId } = useParams();
+  const posthog = usePostHog();
+
+  const handleShowDetail = () => {
+    posthog?.capture('submission_detail', {
+      location: 'assignment_detail_page',
+    });
+  };
 
   return (
     <section css={sectionStyle} aria-labelledby="submission-list-title">
@@ -77,7 +85,7 @@ export default function SubmissionList({ submissions }: Props) {
 
       <List>
         {submissions.map((submission) => (
-          <List.Item key={submission.id} css={itemStyle}>
+          <List.Item key={submission.id} css={itemStyle} onClick={handleShowDetail}>
             <img src={profileIcon} alt="" aria-hidden="true" css={profileStyle} />
 
             <div css={memberStyle}>

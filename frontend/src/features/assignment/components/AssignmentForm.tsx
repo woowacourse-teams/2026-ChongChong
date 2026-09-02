@@ -8,6 +8,7 @@ import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
 import { formatDeadline, toLocalDateTime } from '../../../shared/utils/formatDate';
+import { usePostHog } from '@posthog/react';
 
 const formStyle = {
   display: 'flex',
@@ -42,9 +43,15 @@ export default function AssignmentForm({
   const [content, setContent] = useState(initialValues.content);
   const [submissionMethod, setsubmissionMethod] = useState(initialValues.submissionMethod);
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
+  const posthog = usePostHog();
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    posthog?.capture('assignment_form_submitted', {
+      location: 'assignment_create_page',
+    });
+
     if (isSubmitting) return;
 
     onSubmit({ title, content, submissionMethod, closeAt });

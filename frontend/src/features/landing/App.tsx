@@ -1,25 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import appleMark from './assets/apple-mark.svg';
 import chongchongLogo from './assets/chongchong-logo.png';
 import assignmentPreview from './assets/figma-assignment-uniform.png';
 import homePreview from './assets/figma-home.png';
 import studyPreview from './assets/figma-study-uniform.png';
 import googlePlayMark from './assets/google-play-mark.svg';
+import { usePostHog } from '@posthog/react';
 
 const LANDING_CONFIG = {
   websiteUrl: 'https://www.chongchong.kr/',
-  appStoreUrl: '', // 출시 후 App Store 주소를 입력하면 다운로드 링크로 바뀝니다.
-  googlePlayUrl: '', // 비워 두면 '출시 준비 중' 안내가 표시됩니다.
 };
 
 const pretendardFont = new URL('./assets/PretendardVariable.woff2', import.meta.url).href;
 const doHyeonFont = new URL('./assets/DoHyeon-Regular.ttf', import.meta.url).href;
 type StoreName = 'App Store' | 'Google Play';
-
-const STORES: { name: StoreName; url: string; icon: string }[] = [
-  { name: 'App Store', url: LANDING_CONFIG.appStoreUrl, icon: appleMark },
-  { name: 'Google Play', url: LANDING_CONFIG.googlePlayUrl, icon: googlePlayMark },
-];
 
 // BrowserRouter / RouterProvider는 기존 프로젝트의 설정을 그대로 사용합니다.
 export default function App() {
@@ -43,6 +37,35 @@ export default function App() {
   }, [activeStore]);
 
   const closeDialog = () => dialogRef.current?.close();
+
+  const posthog = usePostHog();
+
+  const handleClickWeb = () => {
+    posthog?.capture('web_button_clicked', {
+      location: 'landing_page',
+    });
+  };
+
+  const openStoreDialog = (event: MouseEvent<HTMLButtonElement>, store: StoreName) => {
+    triggerRef.current = event.currentTarget;
+    setActiveStore(store);
+  };
+
+  const handleClickAndroid = (event: MouseEvent<HTMLButtonElement>) => {
+    posthog?.capture('android_button_clicked', {
+      location: 'landing_page',
+    });
+
+    openStoreDialog(event, 'Google Play');
+  };
+
+  const handleClickIos = (event: MouseEvent<HTMLButtonElement>) => {
+    posthog?.capture('ios_button_clicked', {
+      location: 'landing_page',
+    });
+
+    openStoreDialog(event, 'App Store');
+  };
 
   return (
     <div className="cc-landing" lang="ko">
@@ -82,6 +105,7 @@ export default function App() {
                 href={LANDING_CONFIG.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={handleClickWeb}
               >
                 <svg
                   className="cc-destination-icon"
@@ -101,46 +125,37 @@ export default function App() {
                 </span>
               </a>
 
-              {STORES.map((store) => {
-                const label = (
-                  <>
-                    <span className="cc-store-mark" aria-hidden="true">
-                      <img src={store.icon} alt="" width={24} height={24} />
-                    </span>
-                    <span className="cc-destination-copy">
-                      <span className="cc-destination-name">{store.name}</span>
-                    </span>
-                  </>
-                );
+              <button
+                className="cc-destination cc-store-button"
+                data-store="App Store"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="cc-release-dialog"
+                onClick={handleClickIos}
+              >
+                <span className="cc-store-mark" aria-hidden="true">
+                  <img src={appleMark} alt="" width={24} height={24} />
+                </span>
+                <span className="cc-destination-copy">
+                  <span className="cc-destination-name">App Store</span>
+                </span>
+              </button>
 
-                return store.url ? (
-                  <a
-                    key={store.name}
-                    className="cc-destination cc-store-button"
-                    data-store={store.name}
-                    href={store.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {label}
-                  </a>
-                ) : (
-                  <button
-                    key={store.name}
-                    className="cc-destination cc-store-button"
-                    data-store={store.name}
-                    type="button"
-                    aria-haspopup="dialog"
-                    aria-controls="cc-release-dialog"
-                    onClick={(event) => {
-                      triggerRef.current = event.currentTarget;
-                      setActiveStore(store.name);
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+              <button
+                className="cc-destination cc-store-button"
+                data-store="Google Play"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="cc-release-dialog"
+                onClick={handleClickAndroid}
+              >
+                <span className="cc-store-mark" aria-hidden="true">
+                  <img src={googlePlayMark} alt="" width={24} height={24} />
+                </span>
+                <span className="cc-destination-copy">
+                  <span className="cc-destination-name">Google Play</span>
+                </span>
+              </button>
             </div>
           </section>
 

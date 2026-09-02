@@ -12,15 +12,22 @@ import { tokens } from '../../../styles/global';
 import { ValidationError } from '../../../shared/api/error';
 import isBlank from '../../../shared/utils/isBlank';
 import useStudyJoin from '../hooks/useStudyJoin';
+import { usePostHog } from '@posthog/react';
 
 export default function StudyJoinPage() {
   const navigate = useNavigate();
   const [joinToken, handleJoinToken] = useInputState('');
+  const posthog = usePostHog();
 
   const { mutate: joinStudy, error, isPending } = useStudyJoin();
 
   function handleJoinStudy(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    posthog?.capture('study_join', {
+      location: 'study_join_page',
+    });
+
     joinStudy(
       { token: joinToken },
       {

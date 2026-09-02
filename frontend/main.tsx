@@ -65,6 +65,7 @@ async function bootstrap() {
         options={{
           api_host: process.env.POSTHOG_HOST,
           defaults: '2026-05-30',
+          autocapture: false,
         }}
       >
         <QueryClientProvider client={queryClient}>
