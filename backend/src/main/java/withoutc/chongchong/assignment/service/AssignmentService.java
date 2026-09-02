@@ -63,11 +63,9 @@ public class AssignmentService {
 
     @Transactional
     public void update(Long userId, Long studyId, Long assignmentId, AssignmentUpdateRequest request) {
-        // 해당 유저가 해당 스터디의 리더가 맞는지 user - study
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanUpdateAssignment(actor);
 
-        // 해당 과제가 해당 스터디의 것이 맞는지 assignment - study
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
