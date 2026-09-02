@@ -13,6 +13,7 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -104,6 +105,10 @@ public class AssignmentSubmission extends BaseEntity {
         this.link = link;
         this.submitted = submitted;
         this.submittedAt = submittedAt;
+    }
+
+    public boolean isOwnedBy(StudyMember member) {
+        return Objects.equals(this.member.getId(), member.getId());
     }
 
     private void validateContent(String content) {

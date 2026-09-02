@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -20,11 +19,10 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
-import withoutc.chongchong.auth.exception.AuthErrorCode;
-import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -40,20 +38,23 @@ public class AssignmentService {
     private final StudyMemberRepository studyMemberRepository;
 
     private final Clock clock;
+    private final AssignmentAccessPolicy assignmentAccessPolicy;
 
     @Transactional
     public AssignmentCreateResponse create(Long userId, Long studyId, AssignmentCreateRequest request) {
-        validateLeader(studyId, userId);
+        // 해당 유저가 해당 스터디의 리더가 맞는지 user - study
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        assignmentAccessPolicy.requireCanCreateAssignment(actor);
 
+        // TODO V2에서 리더에게도 과제를 생성하도록 수정 필요
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
 
-        StudyMember writer = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
         LocalDateTime now = LocalDateTime.now(clock);
-        Assignment assignment = Assignment.create(writer, request.title(), request.content(),
+        Assignment assignment = Assignment.create(actor, request.title(), request.content(),
                 request.submissionMethod(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
+        // TODO 과제 제출물이 현재는 생성 시점 이전에 가입한 멤버에게만 생성(신규 가입자에게는 보이지 않음) 논의 필요
         assignment.initializeSubmissions(members);
 
         assignmentRepository.save(assignment);
@@ -63,10 +64,12 @@ public class AssignmentService {
 
     @Transactional
     public void update(Long userId, Long studyId, Long assignmentId, AssignmentUpdateRequest request) {
-        validateLeader(studyId, userId);
+        // 해당 유저가 해당 스터디의 리더가 맞는지 user - study
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        assignmentAccessPolicy.requireCanUpdateAssignment(actor);
 
-        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
-        validateAssignmentBelongsToStudy(studyId, assignment);
+        // 해당 과제가 해당 스터디의 것이 맞는지 assignment - study
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(request.title(), request.content(), request.submissionMethod(), request.closeAt(),
@@ -77,26 +80,31 @@ public class AssignmentService {
 
     @Transactional
     public void delete(Long userId, Long studyId, Long assignmentId) {
-        validateLeader(studyId, userId);
+        // 해당 유저가 해당 스터디의 리더가 맞는지 user - study
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        assignmentAccessPolicy.requireCanDeleteAssignment(actor);
 
-        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
-        validateAssignmentBelongsToStudy(studyId, assignment);
+        // 해당 과제가 해당 스터디의 것이 맞는지 assignment - study
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         assignmentRepository.delete(assignment);
     }
 
     public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long assignmentId) {
+        // 해당 유저가 해당 스터디의 소속이 맞는지 user - study
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Assignment assignment = assignmentRepository.getByIdOrThrow(assignmentId);
-        validateAssignmentBelongsToStudy(studyId, assignment);
+        // 해당 과제가 해당 스터디의 것이 맞는지 assignment - study
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         return AssignmentDetailResponse.from(assignment);
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {
-        CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
+        // 해당 유저가 해당 스터디의 소속이 맞는지 user - study
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
 
         Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
         List<Assignment> assignments;
@@ -146,22 +154,5 @@ public class AssignmentService {
             throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND);
         }
         return submitted;
-    }
-
-    private void validateLeader(Long studyId, Long userId) {
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        validateLeader(member);
-    }
-
-    private void validateLeader(StudyMember member) {
-        if (!member.isLeader()) {
-            throw new AuthException(AuthErrorCode.ACCESS_DENIED);
-        }
-    }
-
-    private void validateAssignmentBelongsToStudy(Long studyId, Assignment assignment) {
-        if (!Objects.equals(assignment.getStudy().getId(), studyId)) {
-            throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND);
-        }
     }
 }

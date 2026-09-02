@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
@@ -34,7 +33,7 @@ public class AssignmentSubmissionController implements AssignmentSubmissionApi {
             @PathVariable Long assignmentId,
             @Valid @RequestBody AssignmentSubmitRequest request
     ) {
-        AssignmentSubmitResponse response = assignmentSubmissionService.create(currentUser.id(), studyId,
+        AssignmentSubmitResponse response = assignmentSubmissionService.submit(currentUser.id(), studyId,
                 assignmentId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -48,20 +47,9 @@ public class AssignmentSubmissionController implements AssignmentSubmissionApi {
             @PathVariable Long submissionId,
             @Valid @RequestBody AssignmentSubmitRequest request
     ) {
-        assignmentSubmissionService.update(currentUser.id(), studyId, assignmentId, submissionId, request);
+        assignmentSubmissionService.updateSubmission(currentUser.id(), studyId, assignmentId, submissionId, request);
 
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/status")
-    public ResponseEntity<AssignmentStatusesResponse> getAllSubmissionStatuses(
-            @AuthenticationPrincipal AuthenticatedUser currentUser,
-            @PathVariable Long studyId,
-            @PathVariable Long assignmentId
-    ) {
-        AssignmentStatusesResponse response = assignmentSubmissionService.getAllSubmittedStatus(currentUser.id(),
-                studyId, assignmentId);
-        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/my")

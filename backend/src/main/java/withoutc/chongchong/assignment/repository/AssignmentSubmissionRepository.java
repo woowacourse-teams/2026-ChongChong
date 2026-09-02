@@ -62,14 +62,14 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
 
     Optional<AssignmentSubmission> findByIdAndAssignmentIdAndMemberId(Long id, Long assignmentId, Long memberId);
 
-    default AssignmentSubmission getByAssignmentIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
-        return findByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
+    default AssignmentSubmission getByIdAndAssignmentIdOrThrow(Long id, Long assignmentId) {
+        return findByIdAndAssignmentId(id, assignmentId).orElseThrow(() -> new AssignmentException(
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
-    default AssignmentSubmission getByIdAndAssignmentIdOrThrow(Long id, Long assignmentId) {
-        return findByIdAndAssignmentId(id, assignmentId).orElseThrow(
-                () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    default AssignmentSubmission getByAssignmentIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
+        return findByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
+                AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
     default AssignmentSubmission getByIdAndAssignmentIdAndMemberIdOrThrow(Long id, Long assignmentId,

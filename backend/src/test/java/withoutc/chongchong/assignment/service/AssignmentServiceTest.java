@@ -32,7 +32,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
-import withoutc.chongchong.assignment.controller.dto.AssignmentStatusesResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
@@ -551,7 +551,7 @@ class AssignmentServiceTest {
 
     @Test
     @DisplayName("리더가 제출 현황을 조회하면 완료 및 미완료 스터디원을 분류한다")
-    void getAllSubmittedStatusTest() {
+    void getAssignmentSubmissionStatusTest() {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         assignment.addReminders(List.of(NOW.plusDays(1)), NOW);
         StudyMember leader = studyMember(assignment, 21L, StudyMemberRole.LEADER, "리더");
@@ -565,13 +565,14 @@ class AssignmentServiceTest {
         when(assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID))
                 .thenReturn(statuses);
 
-        AssignmentStatusesResponse response = assignmentService.getAllSubmittedStatus(USER_ID, STUDY_ID,
+        AssignmentSubmissionStatusResponse response = assignmentService.getAssignmentSubmissionStatus(USER_ID,
+                STUDY_ID,
                 ASSIGNMENT_ID);
 
         assertThat(response.memberCount()).isEqualTo(2);
         assertThat(response.completeCount()).isEqualTo(1);
         assertThat(response.incompleteCount()).isEqualTo(1);
-        assertThat(response.completeMembers()).extracting(AssignmentStatusesResponse.CompleteMember::id)
+        assertThat(response.completeMembers()).extracting(AssignmentSubmissionStatusResponse.CompleteMember::id)
                 .containsExactly(MEMBER_ID);
         assertThat(response.incompleteMembers()).singleElement()
                 .satisfies(member -> assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1)));
@@ -580,12 +581,12 @@ class AssignmentServiceTest {
 
     @Test
     @DisplayName("스터디원은 제출 현황을 조회할 수 없다")
-    void rejectSubmittedStatusForMemberTest() {
+    void rejectAssignmentSubmissionStatusForMemberTest() {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
 
-        assertAccessDenied(() -> assignmentService.getAllSubmittedStatus(USER_ID, STUDY_ID, ASSIGNMENT_ID));
+        assertAccessDenied(() -> assignmentService.getAssignmentSubmissionStatus(USER_ID, STUDY_ID, ASSIGNMENT_ID));
 
         verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
     }

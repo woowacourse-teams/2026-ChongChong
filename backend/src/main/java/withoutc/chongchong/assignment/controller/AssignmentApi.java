@@ -17,6 +17,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -124,6 +125,14 @@ public interface AssignmentApi {
     @Operation(summary = "과제 삭제", description = "스터디 리더가 과제를 삭제한다.")
     @ApiResponse(responseCode = "204", description = "과제 삭제 성공")
     ResponseEntity<Void> deleteAssignment(
+            AuthenticatedUser currentUser,
+            @Parameter(description = "스터디 ID", example = "1") Long studyId,
+            @Parameter(description = "과제 ID", example = "1") Long assignmentId
+    );
+
+    @Operation(summary = "과제 제출 현황 조회", description = "스터디 리더가 과제의 제출 현황을 조회한다.")
+    @ApiResponse(responseCode = "200", description = "과제 제출 현황 조회 성공")
+    ResponseEntity<AssignmentSubmissionStatusResponse> getAssignmentSubmissionStatus(
             AuthenticatedUser currentUser,
             @Parameter(description = "스터디 ID", example = "1") Long studyId,
             @Parameter(description = "과제 ID", example = "1") Long assignmentId

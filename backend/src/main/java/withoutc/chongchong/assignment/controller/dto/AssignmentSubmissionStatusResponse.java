@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record AssignmentStatusesResponse(
+public record AssignmentSubmissionStatusResponse(
         @Schema(description = "과제 ID", example = "1")
         Long id,
         @Schema(description = "과제 대상 멤버 수", example = "5")
@@ -20,13 +20,13 @@ public record AssignmentStatusesResponse(
         @Schema(description = "미제출 멤버 목록")
         List<IncompleteMember> incompleteMembers
 ) {
-    public static AssignmentStatusesResponse of(
+    public static AssignmentSubmissionStatusResponse of(
             Long assignmentId,
             LocalDateTime remindAt,
             List<CompleteMember> completeMembers,
             List<IncompleteMember> incompleteMembers
     ) {
-        return new AssignmentStatusesResponse(
+        return new AssignmentSubmissionStatusResponse(
                 assignmentId,
                 completeMembers.size() + incompleteMembers.size(),
                 completeMembers.size(),

@@ -617,7 +617,7 @@ class AssignmentApiTest {
 
     @Test
     @DisplayName("리더가 제출 현황을 조회하면 완료 및 미완료 인원과 개수를 반환한다")
-    void getSubmissionStatusesTest() {
+    void getAssignmentSubmissionStatusTest() {
         submitAssignment(memberUser, assignment, "제출 내용", null);
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
