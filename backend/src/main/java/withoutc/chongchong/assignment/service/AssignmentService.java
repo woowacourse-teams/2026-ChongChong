@@ -42,7 +42,6 @@ public class AssignmentService {
 
     @Transactional
     public AssignmentCreateResponse create(Long userId, Long studyId, AssignmentCreateRequest request) {
-        // 해당 유저가 해당 스터디의 리더가 맞는지 user - study
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanCreateAssignment(actor);
 
@@ -80,28 +79,23 @@ public class AssignmentService {
 
     @Transactional
     public void delete(Long userId, Long studyId, Long assignmentId) {
-        // 해당 유저가 해당 스터디의 리더가 맞는지 user - study
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanDeleteAssignment(actor);
 
-        // 해당 과제가 해당 스터디의 것이 맞는지 assignment - study
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         assignmentRepository.delete(assignment);
     }
 
     public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long assignmentId) {
-        // 해당 유저가 해당 스터디의 소속이 맞는지 user - study
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        // 해당 과제가 해당 스터디의 것이 맞는지 assignment - study
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         return AssignmentDetailResponse.from(assignment);
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {
-        // 해당 유저가 해당 스터디의 소속이 맞는지 user - study
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
