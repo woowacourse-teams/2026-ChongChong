@@ -618,7 +618,7 @@ class StudyAcceptanceTest {
                 .statusCode(200)
                 .body(
                         "inviteLink",
-                        startsWith("https://test.chongchong.app/join?token=")
+                        startsWith("https://test.chongchong.app/studies/join?token=")
                 );
     }
 
