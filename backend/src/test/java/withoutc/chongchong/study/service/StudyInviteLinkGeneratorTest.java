@@ -38,7 +38,7 @@ class StudyInviteLinkGeneratorTest {
 
         String inviteLink = studyInviteLinkGenerator.generate(studyId);
 
-        assertThat(inviteLink).isEqualTo("https://test.chongchong.app/join?token=invite-token");
+        assertThat(inviteLink).isEqualTo("https://test.chongchong.app/studies/join?token=invite-token");
         verify(studyInviteTokenProvider).generate(studyId);
     }
 }

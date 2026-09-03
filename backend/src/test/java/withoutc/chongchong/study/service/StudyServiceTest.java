@@ -501,11 +501,11 @@ class StudyServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(any(), any()))
                 .thenReturn(studyMember);
         when(studyInviteLinkGenerator.generate(studyId))
-                .thenReturn("https://test.chongchong.app/join?token=invite-token");
+                .thenReturn("https://test.chongchong.app/studies/join?token=invite-token");
 
         StudyInviteLinkResponse response = studyService.getInviteLink(userId, studyId);
 
-        assertThat(response.inviteLink()).isEqualTo("https://test.chongchong.app/join?token=invite-token");
+        assertThat(response.inviteLink()).isEqualTo("https://test.chongchong.app/studies/join?token=invite-token");
         verify(studyInviteLinkGenerator).generate(studyId);
     }
 
