@@ -4,7 +4,7 @@ export interface Study {
   id: number;
   role: Role;
   name: string;
-  description: string;
+  description: string | null;
   memberCount: number;
   noticeCount: number;
   assignmentCount: number;
