@@ -4,7 +4,7 @@ import { z } from 'zod';
 const studySchema = z.object({
   id: z.number(),
   name: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   inviteLink: z.string(),
 });
 
