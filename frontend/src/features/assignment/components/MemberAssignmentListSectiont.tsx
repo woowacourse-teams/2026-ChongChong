@@ -1,4 +1,5 @@
 import AssignmentList from './AssignmentList';
+import { CSSProperties } from 'react';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
@@ -8,6 +9,12 @@ import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
 interface Props {
   studyId: number;
 }
+
+const sectionStyle = {
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+} satisfies CSSProperties;
 
 export default function MemberAssignmentListSection({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
@@ -21,7 +28,7 @@ export default function MemberAssignmentListSection({ studyId }: Props) {
   });
 
   return (
-    <section>
+    <section css={sectionStyle}>
       {assignments.length === 0 ? (
         <EmptyContent message="아직 과제가 없어요" />
       ) : (
