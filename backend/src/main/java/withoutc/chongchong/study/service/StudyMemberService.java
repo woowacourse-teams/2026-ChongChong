@@ -31,7 +31,6 @@ public class StudyMemberService {
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
-    private final StudyMemberRemover studyMemberRemover;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
 
@@ -69,7 +68,7 @@ public class StudyMemberService {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_BE_REMOVED);
         }
 
-        studyMemberRemover.remove(target);
+        studyMemberRepository.delete(target);
     }
 
     @Transactional
@@ -79,7 +78,7 @@ public class StudyMemberService {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
         }
 
-        studyMemberRemover.remove(member);
+        studyMemberRepository.delete(member);
     }
 
     private void validateJoin(Long studyId, Long userId) {
