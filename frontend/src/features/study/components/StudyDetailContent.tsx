@@ -193,17 +193,6 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
         ) : (
           <>
             {data.notices.items.length !== 0 && (
-              <List>
-                {data.notices.items.map((notice) => (
-                  <List.Item key={`notice-${notice.id}`}>
-                    <Link to={`notices/${notice.id}`}>
-                      <MemberActiveNoticeCard title={notice.title} />
-                    </Link>
-                  </List.Item>
-                ))}
-              </List>
-            )}
-            {data.notices.items.length !== 0 && (
               <section css={SectionStyle}>
                 <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
                 <List>
