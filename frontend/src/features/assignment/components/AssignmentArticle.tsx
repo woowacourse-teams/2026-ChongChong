@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import assignmentIcon from '../../../shared/assets/assign-green.svg';
-import { formatDeadline } from '../../../shared/utils/formatDate';
+import { formatDateToString } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import type { AssignmentDetail } from '../types';
 import InfoCard from './InfoCard';
@@ -41,7 +41,7 @@ export default function AssignmentArticle({ assignment }: Props) {
           {assignment.title}
         </h2>
         <time css={deadlineStyle} dateTime={assignment.closeAt}>
-          {formatDeadline(assignment.closeAt)} 마감
+          {formatDateToString(assignment.closeAt)} 마감
         </time>
       </header>
 

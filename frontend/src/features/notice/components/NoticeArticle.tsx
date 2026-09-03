@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
-import profileIcon from '../../../shared/assets/unknown-profile.svg';
-import { formatRelativeTime } from '../../../shared/utils/formatDate';
+import { formatDateToString } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import type { NoticeDetail } from '../types';
 
@@ -21,16 +20,10 @@ const titleStyle = {
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
-const authorRowStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: tokens.spacing[2],
-  marginTop: tokens.spacing[1],
-} satisfies CSSProperties;
-
 const authorStyle = {
   ...typography.footnote,
-  color: tokens.text.muted,
+  color: tokens.text.brand,
+  marginTop: tokens.spacing[1],
 } satisfies CSSProperties;
 
 const contentStyle = {
@@ -44,12 +37,7 @@ export default function NoticeArticle({ notice, hasTopMargin = true }: Props) {
   return (
     <article css={{ ...articleStyle, marginTop: hasTopMargin ? articleStyle.marginTop : 0 }}>
       <h2 css={titleStyle}>{notice.title}</h2>
-      <div css={authorRowStyle}>
-        <img src={notice.profileImageUrl || profileIcon} alt="" width={28} height={28} />
-        <span css={authorStyle}>
-          {notice.writer} · {formatRelativeTime(notice.createdAt)}
-        </span>
-      </div>
+      <span css={authorStyle}>{formatDateToString(notice.createdAt) + ' 작성'}</span>
       <p css={contentStyle}>{notice.content}</p>
     </article>
   );

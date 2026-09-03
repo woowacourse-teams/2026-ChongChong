@@ -4,7 +4,7 @@ import List from '../../../shared/ui/List';
 import { Link } from 'react-router';
 import { Assignment } from '../types';
 import { ReactNode } from 'react';
-import { formatDeadline } from '../../../shared/utils/formatDate';
+import { formatDateToString } from '../../../shared/utils/formatDate';
 import LinkIcon from '../../../shared/assets/link.svg';
 
 interface AssigmentListProps {
@@ -37,7 +37,7 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
 
               <ContentCard.Footer direction="column">
                 <ContentCard.Meta tone="brand">
-                  {formatDeadline(assignment.closeAt) + ' 마감'}
+                  {formatDateToString(assignment.closeAt) + ' 마감'}
                 </ContentCard.Meta>
                 <ContentCard.Meta>
                   <img src={LinkIcon} alt="" width={13} height={13} />
