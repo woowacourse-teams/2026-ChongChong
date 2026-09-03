@@ -112,6 +112,7 @@ describe('스터디원 상세 콘텐츠', () => {
 
     expect(await screen.findByRole('heading', { name: '읽지 않은 공지' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: '제출하지 않은 과제' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('내일 점심 장소 공지')).toHaveLength(1);
   });
 
   test('제출하지 않은 과제만 있으면 과제 섹션만 렌더링한다', async () => {
