@@ -51,9 +51,6 @@ class StudyMemberServiceTest {
     @Mock
     private StudyInviteTokenProvider studyInviteTokenProvider;
 
-    @Mock
-    private StudyMemberRemover studyMemberRemover;
-
     @InjectMocks
     private StudyMemberService studyMemberService;
 
@@ -240,7 +237,7 @@ class StudyMemberServiceTest {
 
         studyMemberService.expel(userId, studyId, memberId);
 
-        verify(studyMemberRemover).remove(target);
+        verify(studyMemberRepository).delete(target);
     }
 
     @Test
@@ -258,7 +255,7 @@ class StudyMemberServiceTest {
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verify(studyMemberRepository, never()).getByStudyIdAndIdOrThrow(studyId, memberId);
-        verifyNoInteractions(studyMemberRemover);
+        verify(studyMemberRepository, never()).delete(any(StudyMember.class));
     }
 
     @Test
@@ -277,7 +274,7 @@ class StudyMemberServiceTest {
                 .isEqualTo(StudyMemberErrorCode.NOT_STUDY_LEADER);
 
         verify(studyMemberRepository, never()).getByStudyIdAndIdOrThrow(studyId, memberId);
-        verifyNoInteractions(studyMemberRemover);
+        verify(studyMemberRepository, never()).delete(any(StudyMember.class));
     }
 
     @Test
@@ -297,7 +294,7 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND);
 
-        verifyNoInteractions(studyMemberRemover);
+        verify(studyMemberRepository, never()).delete(any(StudyMember.class));
     }
 
     @Test
@@ -318,7 +315,7 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_LEADER_CANNOT_BE_REMOVED);
 
-        verifyNoInteractions(studyMemberRemover);
+        verify(studyMemberRepository, never()).delete(any(StudyMember.class));
     }
 
     @Test
@@ -332,7 +329,7 @@ class StudyMemberServiceTest {
 
         studyMemberService.leave(userId, studyId);
 
-        verify(studyMemberRemover).remove(member);
+        verify(studyMemberRepository).delete(member);
     }
 
     @Test
@@ -348,7 +345,7 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
-        verifyNoInteractions(studyMemberRemover);
+        verify(studyMemberRepository, never()).delete(any(StudyMember.class));
     }
 
     @Test
@@ -365,6 +362,6 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
 
-        verifyNoInteractions(studyMemberRemover);
+        verify(studyMemberRepository, never()).delete(any(StudyMember.class));
     }
 }
