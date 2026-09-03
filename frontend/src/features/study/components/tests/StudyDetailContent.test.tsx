@@ -30,8 +30,8 @@ function mockMemberStudyDetail({
     http.get(STUDY_DETAIL_URL, () =>
       HttpResponse.json({
         totalCount: notices.length + assignments.length,
-        notices,
-        assignments,
+        notices: { items: notices },
+        assignments: { items: assignments },
       }),
     ),
   );

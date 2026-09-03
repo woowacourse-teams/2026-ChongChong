@@ -23,8 +23,12 @@ export interface LeaderStudyDetail {
 
 export interface MemberStudyDetail {
   totalCount: number;
-  notices: { id: number; title: string }[];
-  assignments: { id: number; title: string }[];
+  notices: {
+    items: { id: number; title: string }[];
+  };
+  assignments: {
+    items: { id: number; title: string }[];
+  };
 }
 
 export type StudyDetail<R extends Role> = R extends 'LEADER'
