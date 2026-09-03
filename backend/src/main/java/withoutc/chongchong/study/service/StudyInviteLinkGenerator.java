@@ -22,7 +22,7 @@ public class StudyInviteLinkGenerator {
     public String generate(Long studyId) {
         return UriComponentsBuilder
                 .fromUriString(frontendBaseUrl)
-                .path("/join")
+                .path("/studies/join")
                 .queryParam("token", studyInviteTokenProvider.generate(studyId))
                 .build()
                 .toUriString();

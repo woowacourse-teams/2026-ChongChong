@@ -2,7 +2,10 @@ import { useState, ChangeEventHandler, useCallback } from 'react';
 
 type InputLikeElement = HTMLInputElement | HTMLTextAreaElement;
 
-export function useInputState(initialValue = '', transformValue: (value: string) => string = echo) {
+export function useInputState(
+  initialValue: string | (() => string) = '',
+  transformValue: (value: string) => string = echo,
+) {
   const [value, setValue] = useState(initialValue);
 
   const handleValueChange: ChangeEventHandler<InputLikeElement> = useCallback(

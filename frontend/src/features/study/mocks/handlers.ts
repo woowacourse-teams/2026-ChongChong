@@ -164,8 +164,9 @@ export const handlers = [
     const { studyId } = params;
     const found = await studyTable.findFirst((q) => q.where({ id: Number(studyId) }));
     if (!found) return new HttpResponse(null, { status: 404 });
+    const inviteLink = `http://localhost:3005/studies/join?token=${found.inviteLink}`;
     return HttpResponse.json({
-      inviteLink: found.inviteLink,
+      inviteLink,
     });
   }),
 

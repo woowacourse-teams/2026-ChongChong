@@ -37,7 +37,14 @@ import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.datasource.url=jdbc:h2:mem:study-member-removal-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "spring.jpa.hibernate.ddl-auto=validate",
+                "spring.flyway.enabled=true"
+        }
+)
 @ActiveProfiles("test")
 class StudyMemberRemovalAcceptanceTest {
 
@@ -82,6 +89,17 @@ class StudyMemberRemovalAcceptanceTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
+    }
+
+    @Test
+    @DisplayName("스터디 멤버를 직접 삭제하면 대상의 연관 데이터만 cascade 삭제한다")
+    void deleteMemberCascadesActivityDataTest() {
+        RemovalFixture fixture = createRemovalFixture();
+
+        studyMemberRepository.delete(fixture.target());
+        studyMemberRepository.flush();
+
+        assertOnlyTargetRemoved(fixture);
     }
 
     @Test

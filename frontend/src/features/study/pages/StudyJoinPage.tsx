@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useMemo } from 'react';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
@@ -16,7 +16,15 @@ import { usePostHog } from '@posthog/react';
 
 export default function StudyJoinPage() {
   const navigate = useNavigate();
-  const [joinToken, handleJoinToken] = useInputState('');
+  const [searchParams] = useSearchParams();
+  const [joinToken, handleJoinToken] = useInputState(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      return token;
+    }
+    return '';
+  });
+
   const posthog = usePostHog();
 
   const { mutate: joinStudy, error, isPending } = useStudyJoin();

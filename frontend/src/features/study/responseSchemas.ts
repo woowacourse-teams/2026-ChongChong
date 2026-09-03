@@ -13,7 +13,7 @@ const studyItemSchema = z.object({
   id: z.number(),
   role: z.enum(['LEADER', 'MEMBER']),
   name: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   memberCount: z.number(),
   noticeCount: z.number(),
   assignmentCount: z.number(),
