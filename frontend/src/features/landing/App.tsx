@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import appleMark from './assets/apple-mark.svg';
 import chongchongLogo from './assets/chongchong-logo.png';
-import assignmentPreview from './assets/figma-assignment-uniform.png';
-import homePreview from './assets/figma-home.png';
-import studyPreview from './assets/figma-study-uniform.png';
 import googlePlayMark from './assets/google-play-mark.svg';
+import FeatureCarousel from './components/FeatureCarousel';
+import { TRANSITION_DURATION, useFeaturePreview } from './useFeaturePreview';
+import { previewFeatures } from './previewFeatures';
 import { usePostHog } from '@posthog/react';
 import { Link } from 'react-router';
 
@@ -15,6 +15,7 @@ type StoreName = 'App Store' | 'Google Play';
 // BrowserRouter / RouterProvider는 기존 프로젝트의 설정을 그대로 사용합니다.
 export default function App() {
   const [activeStore, setActiveStore] = useState<StoreName | null>(null);
+  const preview = useFeaturePreview({ suspended: activeStore !== null });
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -75,22 +76,27 @@ export default function App() {
             </span>
             <span>총총</span>
           </Link>
-          <span className="cc-header-note">스터디 운영 앱</span>
         </header>
 
         <main className="cc-hero" aria-labelledby="cc-hero-title">
           <section className="cc-copy">
-            <p className="cc-eyebrow">스터디 운영 앱, 총총</p>
-            <h1 id="cc-hero-title">
-              <span className="cc-accent">운영은 총총에게,</span>
-              <br />
-              공부는 편하게!
-            </h1>
-            <p className="cc-lead">
-              공지와 과제, 리마인드까지
-              <br />
-              스터디 운영에 필요한 일을 한곳에서
-            </p>
+            <div
+              className="cc-feature-copy"
+              aria-live={preview.playing ? 'off' : 'polite'}
+              aria-atomic="true"
+            >
+              <div key={preview.feature.id} className="cc-feature-copy-content">
+                <p className="cc-eyebrow">
+                  {preview.feature.label}
+                  <span className="cc-feature-number">
+                    {String(preview.activeIndex + 1).padStart(2, '0')} /{' '}
+                    {String(previewFeatures.length).padStart(2, '0')}
+                  </span>
+                </p>
+                <h1 id="cc-hero-title">{preview.feature.title}</h1>
+                <p className="cc-lead">{preview.feature.description}</p>
+              </div>
+            </div>
 
             <div className="cc-actions" aria-label="총총 이용 경로">
               <Link
@@ -150,19 +156,7 @@ export default function App() {
             </div>
           </section>
 
-          <div className="cc-visual" aria-label="총총 앱 주요 화면 미리보기">
-            <div className="cc-device-stage">
-              <div className="cc-device cc-device--left" aria-hidden="true">
-                <img src={studyPreview} alt="" width={780} height={1688} />
-              </div>
-              <div className="cc-device cc-device--main">
-                <img src={homePreview} alt="총총 스터디 현황 화면" width={780} height={1688} />
-              </div>
-              <div className="cc-device cc-device--right" aria-hidden="true">
-                <img src={assignmentPreview} alt="" width={780} height={1688} />
-              </div>
-            </div>
-          </div>
+          <FeatureCarousel preview={preview} />
         </main>
       </div>
 
@@ -321,16 +315,6 @@ const LANDING_STYLES = `
       --dialog-bunny-overshoot-y: -8px;
       --dialog-folded-clip: inset(48% 48% 48% 48% round 30px);
       --dialog-open-clip: inset(0 0 0 0 round 30px);
-      --device-stage-width: min(43vw, 540px);
-      --device-stage-offset: 0px;
-      --device-main-width: clamp(238px, 21vw, 276px);
-      --device-side-width: clamp(178px, 16vw, 214px);
-      --device-stage-height: min(78vh, 650px);
-      --device-stage-min-height: 520px;
-      --device-padding: 6px;
-      --device-radius: 38px;
-      --device-screen-radius: 31px;
-      --device-shadow: 0 34px 72px var(--alpha-brand-22), 0 12px 28px var(--line), inset 1px 1px 1px var(--alpha-white-90);
       --entry-distance: 24px;
       --copy-mobile-padding-top: clamp(12px, 3vh, 32px);
       --motion-micro: 180ms cubic-bezier(.16, 1, .3, 1);
@@ -382,10 +366,10 @@ const LANDING_STYLES = `
       text-align: start;
       -webkit-font-smoothing: antialiased;
     }
-    .cc-landing :where(button, a) { font: inherit; }
-    .cc-landing :where(button) { border: 0; padding: 0; background: none; }
-    .cc-landing :where(a) { color: inherit; text-decoration: none; }
-    .cc-landing a:hover { color: var(--ink); text-decoration: none; }
+    .cc-landing :where(.cc-brand, .cc-destination, .cc-feature-dot, .cc-release-dialog button) { font: inherit; }
+    .cc-landing :where(button.cc-destination, .cc-feature-dot, .cc-release-dialog button) { border: 0; padding: 0; background: none; }
+    .cc-landing :where(a.cc-brand, a.cc-destination) { color: inherit; text-decoration: none; }
+    .cc-landing :where(a.cc-brand, a.cc-destination):hover { color: var(--ink); text-decoration: none; }
     .cc-sr-only {
       position: absolute;
       width: var(--sr-only-size);
@@ -433,11 +417,6 @@ const LANDING_STYLES = `
       place-items: center;
     }
     .cc-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
-    .cc-header-note {
-      color: var(--muted);
-      font-size: var(--font-label);
-      font-weight: 620;
-    }
 
     .cc-hero {
       position: relative;
@@ -473,7 +452,7 @@ const LANDING_STYLES = `
       font-size: var(--font-label);
       font-weight: 720;
     }
-    .cc-landing h1 {
+    .cc-feature-copy h1 {
       max-width: var(--title-max-width);
       margin: 0;
       font-size: var(--font-display);
@@ -483,7 +462,9 @@ const LANDING_STYLES = `
       letter-spacing: var(--font-display-tracking);
       word-break: keep-all;
     }
-    .cc-accent { color: inherit; }
+    .cc-feature-copy h1, .cc-feature-copy .cc-lead { white-space: pre-line; }
+    .cc-feature-copy-content { animation: cc-feature-copy-in ${TRANSITION_DURATION}ms ease-out both; }
+    .cc-feature-number { margin-left: 14px; color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
     .cc-lead {
       max-width: var(--lead-max-width);
       margin: var(--space-6) 0 0;
@@ -660,73 +641,16 @@ const LANDING_STYLES = `
     .cc-release-dialog-close svg { width: var(--dialog-close-icon-size); height: var(--dialog-close-icon-size); }
     .cc-release-dialog button:focus-visible { outline: var(--focus-ring-width) solid var(--brand-deep); outline-offset: var(--focus-ring-offset); }
 
-    .cc-visual {
-      position: relative;
-      display: grid;
-      min-height: 0;
-      align-self: stretch;
-      place-items: center;
-      animation: cc-enter-right var(--motion-entry) 80ms both;
-    }
-    .cc-device-stage {
-      position: relative;
-      left: var(--device-stage-offset);
-      width: var(--device-stage-width);
-      height: var(--device-stage-height);
-      min-height: var(--device-stage-min-height);
-      isolation: isolate;
-    }
-    .cc-device-stage::before {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 92%;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      border: var(--line-thin) solid var(--alpha-brand-14);
-      content: none;
-      transform: translate(-50%, -50%);
-    }
-    .cc-device {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      overflow: hidden;
-      padding: var(--device-padding);
-      border: var(--line-thin) solid var(--alpha-card);
-      border-radius: var(--device-radius);
-      background: var(--frame-light);
-      box-shadow: var(--device-shadow);
-      transform-origin: center;
-    }
-    .cc-device img {
-      width: 100%;
-      height: 100%;
-      border-radius: var(--device-screen-radius);
-      object-fit: cover;
-    }
-    .cc-device--main {
-      z-index: 3;
-      width: var(--device-main-width);
-      aspect-ratio: 780 / 1688;
-      transform: translate(-50%, -50%) rotate(2.5deg);
-    }
-    .cc-device--left,
-    .cc-device--right {
-      z-index: 1;
-      width: var(--device-side-width);
-      aspect-ratio: 780 / 1688;
-      filter: saturate(.92) brightness(.98);
-    }
-    .cc-device--left { transform: translate(-112%, -45%) rotate(-8deg); }
-    .cc-device--right { transform: translate(12%, -43%) rotate(8deg); }
-
     @keyframes cc-enter-left {
       from { opacity: 0; transform: translateX(calc(var(--entry-distance) * -1)); }
       to { opacity: 1; transform: none; }
     }
     @keyframes cc-enter-right {
       from { opacity: 0; transform: translateX(var(--entry-distance)); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes cc-feature-copy-in {
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: none; }
     }
     @keyframes cc-dialog-backdrop-in {
@@ -744,18 +668,9 @@ const LANDING_STYLES = `
     }
 
     @media (max-width: 900px) {
-      .cc-landing {
-        --device-stage-width: min(36vw, 292px);
-        --device-stage-offset: 24px;
-        --device-main-width: clamp(208px, 28vw, 244px);
-      }
       .cc-site-header, .cc-hero { width: min(calc(100% - var(--space-6) * 2), var(--content)); }
       .cc-hero { grid-template-columns: minmax(0, 1fr) var(--hero-narrow-column); gap: var(--space-6); }
       .cc-actions { grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, 1.18fr); }
-    }
-
-    @media (min-width: 721px) and (max-width: 900px) {
-      .cc-device--left { display: none; }
     }
 
     @media (max-width: 720px) {
@@ -773,19 +688,11 @@ const LANDING_STYLES = `
         --dialog-bunny-box: 82px;
         --dialog-bunny-width: 62px;
         --dialog-bunny-height: 68px;
-        --device-stage-width: min(72vw, 270px);
-        --device-stage-offset: 0px;
-        --device-main-width: min(38vw, 158px);
-        --device-stage-min-height: 300px;
-        --device-padding: 4px;
-        --device-radius: 25px;
-        --device-screen-radius: 20px;
         --font-display: clamp(2.05rem, 10vw, 3.15rem);
         --font-lead: .95rem;
         --action-bar-gap: 5px;
       }
       .cc-site-header { min-height: var(--header-height); }
-      .cc-header-note { display: none; }
       .cc-brand-mark img { width: 100%; height: 100%; }
       .cc-hero {
         grid-template-columns: 1fr;
@@ -796,7 +703,7 @@ const LANDING_STYLES = `
       }
       .cc-copy { padding-top: var(--copy-mobile-padding-top); }
       .cc-eyebrow { margin-bottom: var(--space-4); }
-      .cc-landing h1 { font-size: var(--font-display); }
+      .cc-feature-copy h1 { font-size: var(--font-display); }
       .cc-lead { margin: var(--space-4) auto 0; font-size: var(--font-lead); line-height: 1.55; }
       .cc-actions { margin-top: var(--space-5); max-width: none; grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, 1.18fr); }
       .cc-destination { padding: var(--space-2); gap: var(--space-1); }
@@ -805,36 +712,30 @@ const LANDING_STYLES = `
       .cc-release-dialog-panel { padding: var(--dialog-padding-top) var(--space-6) var(--space-6); border-radius: var(--dialog-radius); }
       .cc-release-dialog-bunny { width: var(--dialog-bunny-box); height: var(--dialog-bunny-box); }
       .cc-release-dialog-bunny img { width: var(--dialog-bunny-width); height: var(--dialog-bunny-height); }
-      .cc-visual { min-height: 0; }
-      .cc-device-stage { height: 100%; min-height: var(--device-stage-min-height); }
-      .cc-device--left, .cc-device--right { display: none; }
-      .cc-device { padding: var(--device-padding); }
-      .cc-device--main { transform: translate(-50%, -50%) rotate(2deg); }
     }
 
     @media (max-height: 700px) and (max-width: 720px) {
       .cc-landing {
         --header-height: 52px;
         --control-height: 48px;
-        --device-main-width: min(31vw, 136px);
         --font-display: clamp(1.8rem, 8.7vw, 2.35rem);
         --font-lead: .875rem;
       }
       .cc-site-header { min-height: var(--header-height); }
       .cc-copy { padding-top: var(--space-1); }
       .cc-eyebrow { margin-bottom: var(--space-3); }
-      .cc-landing h1 { font-size: var(--font-display); }
+      .cc-feature-copy h1 { font-size: var(--font-display); }
       .cc-lead { margin-top: var(--space-3); font-size: var(--font-lead); }
       .cc-actions { margin-top: var(--space-4); }
     }
 
-    @media (max-height: 560px) {
-      .cc-visual { display: none; }
-      .cc-hero { grid-template-columns: 1fr; }
+    @media (max-width: 360px) {
+      .cc-landing { --control-icon-size: 16px; --control-name-size: .6875rem; }
+      .cc-destination { padding: 8px 4px; gap: 3px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .cc-copy, .cc-visual { animation: none; }
+      .cc-copy, .cc-feature-copy-content { animation: none; }
       .cc-destination { transition: none; }
       .cc-destination:hover, .cc-destination:active { transform: none; }
       .cc-release-dialog-bunny img, .cc-release-dialog[open] .cc-release-dialog-panel, .cc-release-dialog::backdrop { animation: none; }
