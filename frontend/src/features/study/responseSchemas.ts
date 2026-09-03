@@ -43,18 +43,22 @@ const leaderStudyDetailSchema = z.object({
 
 const memberStudyDetailSchema = z.object({
   totalCount: z.number(),
-  notices: z.array(
-    z.object({
-      id: z.number(),
-      title: z.string(),
-    }),
-  ),
-  assignments: z.array(
-    z.object({
-      id: z.number(),
-      title: z.string(),
-    }),
-  ),
+  notices: z.object({
+    items: z.array(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+      }),
+    ),
+  }),
+  assignments: z.object({
+    items: z.array(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+      }),
+    ),
+  }),
 }) satisfies z.ZodType<MemberStudyDetail>;
 
 const studyInfoSchema = z.object({

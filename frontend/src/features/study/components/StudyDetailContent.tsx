@@ -192,9 +192,9 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
           </section>
         ) : (
           <>
-            {data.notices.length !== 0 && (
+            {data.notices.items.length !== 0 && (
               <List>
-                {data.notices.map((notice) => (
+                {data.notices.items.map((notice) => (
                   <List.Item key={`notice-${notice.id}`}>
                     <Link to={`notices/${notice.id}`}>
                       <MemberActiveNoticeCard title={notice.title} />
@@ -203,11 +203,11 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                 ))}
               </List>
             )}
-            {data.notices.length !== 0 && (
+            {data.notices.items.length !== 0 && (
               <section css={SectionStyle}>
                 <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
                 <List>
-                  {data.notices.map((notice) => (
+                  {data.notices.items.map((notice) => (
                     <List.Item key={`notice-${notice.id}`}>
                       <Link to={`notices/${notice.id}`}>
                         <MemberActiveNoticeCard title={notice.title} />
@@ -217,11 +217,11 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                 </List>
               </section>
             )}
-            {data.assignments.length !== 0 && (
+            {data.assignments.items.length !== 0 && (
               <section css={SectionStyle}>
                 <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
                 <List>
-                  {data.assignments.map((assignment) => (
+                  {data.assignments.items.map((assignment) => (
                     <List.Item key={`assignment-${assignment.id}`}>
                       <Link to={`assignments/${assignment.id}`}>
                         <MemberActiveAssignmentCard title={assignment.title} />
