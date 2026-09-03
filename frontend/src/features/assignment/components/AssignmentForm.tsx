@@ -7,7 +7,7 @@ import TextArea from '../../../shared/ui/inputs/TextArea';
 import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
-import { formatDeadline, toLocalDateTime } from '../../../shared/utils/formatDate';
+import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
 
 const formStyle = {
@@ -127,7 +127,7 @@ export default function AssignmentForm({
           id="assignment-close-at"
           title="마감 시각 설정"
           value={closeAt ? new Date(closeAt) : undefined}
-          triggerLabel={closeAt ? formatDeadline(closeAt) : '마감 시각 설정'}
+          triggerLabel={closeAt ? formatDateToString(closeAt) : '마감 시각 설정'}
           triggerVariant="neutralOutline"
           onChange={(value) => {
             setCloseAt(toLocalDateTime(value));
