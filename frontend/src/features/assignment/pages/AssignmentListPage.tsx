@@ -10,7 +10,6 @@ export default function AssignmentListPage() {
   const {
     data: { role, studyName, userName },
   } = useSuspenseQuery(studyQueries.info(studyId));
-
   return role === 'LEADER' ? (
     <LeaderAssignmentListPage studyName={studyName} userName={userName} />
   ) : (
