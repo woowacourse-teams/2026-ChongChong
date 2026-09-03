@@ -88,6 +88,32 @@ describe('스터디 참가 폼 테스트', () => {
     expect(await screen.findByText('안톨리니 · 스터디원')).toBeInTheDocument();
   });
 
+  test('쿼리 파라미터로 토큰 값이 존재하지 않으면 스터디 참여 입력은 빈값이다', async () => {
+    render(
+      <Routes>
+        <Route path={STUDY_URLS.join} element={<StudyJoinPage />}></Route>
+      </Routes>,
+      {
+        wrapper: createWrapper({ initialEntries: [STUDY_URLS.join] }),
+      },
+    );
+    const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
+    expect(linkInput).toHaveValue('');
+  });
+
+  test('쿼리 파라미터로 토큰 값이 존재하면 스터디 참여 입력에 토큰 값이 채워진다', async () => {
+    render(
+      <Routes>
+        <Route path={STUDY_URLS.join} element={<StudyJoinPage />}></Route>
+      </Routes>,
+      {
+        wrapper: createWrapper({ initialEntries: [`${STUDY_URLS.join}?token=some-token-exist`] }),
+      },
+    );
+    const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
+    expect(linkInput).toHaveValue('some-token-exist');
+  });
+
   // 에러처리 + Toast UI가 추가된 뒤에 skip을 해제합니다.
   test.skip('이미 참여한 스터디를 참여하려고 하면 에러 메시지를 보여준다', async () => {
     setAccessToken('2');
