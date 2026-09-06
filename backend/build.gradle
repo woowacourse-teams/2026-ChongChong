@@ -41,10 +41,45 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.rest-assured:rest-assured:6.0.1'
+    testImplementation 'com.atlassian.oai:openapi-request-validator-restassured:3.0.0'
     testRuntimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'openapi-coverage'
+    }
+    systemProperty 'openapi.spec.path', layout.projectDirectory.file('docs/openapi/openapi.yaml').asFile.absolutePath
+    systemProperty 'openapi.coverage.path', layout.buildDirectory.file('openapi/covered-operations.txt').get().asFile.absolutePath
+    inputs.files(fileTree('docs/openapi') {
+        include '**/*.yaml'
+        exclude 'node_modules/**', 'dist/**'
+    })
+    outputs.file(layout.buildDirectory.file('openapi/covered-operations.txt'))
+    doFirst {
+        delete layout.buildDirectory.file('openapi/covered-operations.txt')
+    }
+    finalizedBy 'verifyOpenApiCoverage'
+}
+
+tasks.register('verifyOpenApiCoverage', Test) {
+    description = 'Verifies that every OpenAPI operation has a successful HTTP test call.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'openapi-coverage'
+    }
+    systemProperty 'openapi.spec.path', layout.projectDirectory.file('docs/openapi/openapi.yaml').asFile.absolutePath
+    systemProperty 'openapi.coverage.path', layout.buildDirectory.file('openapi/covered-operations.txt').get().asFile.absolutePath
+    inputs.files(fileTree('docs/openapi') {
+        include '**/*.yaml'
+        exclude 'node_modules/**', 'dist/**'
+    })
+    inputs.file(layout.buildDirectory.file('openapi/covered-operations.txt'))
+    shouldRunAfter tasks.named('test')
+    onlyIf {
+        tasks.named('test').get().filter.commandLineIncludePatterns.empty
+    }
 }
