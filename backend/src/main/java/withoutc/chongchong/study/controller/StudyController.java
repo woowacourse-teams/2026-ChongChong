@@ -27,7 +27,7 @@ import withoutc.chongchong.study.service.StudyService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/studies")
-public class StudyController implements StudyApi {
+public class StudyController {
 
     private final StudyService studyService;
 
