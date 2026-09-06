@@ -1,0 +1,27 @@
+post:
+  tags: [Study Member]
+  operationId: join
+  summary: 스터디 참여
+  description: 초대 토큰으로 스터디에 참여한다. 입력·초대 토큰 오류(400), 인증 실패(401), 사용자·스터디 없음(404), 이미 참여·정원·가입 상한 충돌(409)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/studies.yaml#/StudyInviteTokenRequest' }
+        example: { token: eyJhbGciOiJIUzI1NiJ9... }
+  responses:
+    '201':
+      description: 스터디 참여 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/studies.yaml#/StudyMemberJoinResponse' }
+          example: { studyId: 1 }
+    '400': { $ref: '../../components/responses.yaml#/JoinBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404':
+      description: 사용자 또는 스터디가 존재하지 않음
+      content:
+        application/json:
+          schema: { oneOf: [{ $ref: '../../components/schemas/errors.yaml#/UserNotFoundError' }, { $ref: '../../components/schemas/errors.yaml#/StudyNotFoundError' }] }
+    '409': { $ref: '../../components/responses.yaml#/JoinConflict' }

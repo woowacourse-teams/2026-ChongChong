@@ -27,7 +27,7 @@ import withoutc.chongchong.auth.token.IssuedTokenPair;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController implements AuthApi {
+public class AuthController {
 
     private final SocialLoginFacade socialLoginFacade;
     private final AuthTokenService authTokenService;

@@ -3,12 +3,8 @@ name: Backend CI
 on:
   push:
     branches: [main, dev, prod]
-    paths:
-      - "backend/**"
   pull_request:
     branches: [main, dev, prod]
-    paths:
-      - "backend/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,6 +14,34 @@ permissions:
   contents: read
 
 jobs:
+  api-documentation:
+    name: API documentation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/docs/openapi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/docs/openapi/package-lock.json
+      - name: Install documentation dependencies
+        run: npm ci
+      - name: Test static document rendering
+        run: npm test
+      - name: Lint OpenAPI specification
+        run: npm run lint
+      - name: Bundle OpenAPI specification
+        run: npm run bundle
+      - name: Build static API documentation
+        run: npm run build
+
   build:
     runs-on: ubuntu-latest
     defaults:

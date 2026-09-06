@@ -15,7 +15,7 @@ import withoutc.chongchong.notification.service.PushTokenService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/push-tokens")
-public class PushTokenController implements PushTokenApi {
+public class PushTokenController {
 
     private final PushTokenService pushTokenService;
 

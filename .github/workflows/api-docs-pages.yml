@@ -1,0 +1,75 @@
+name: Deploy API documentation
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "backend/docs/openapi/**"
+      - ".github/workflows/api-docs-pages.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: api-docs-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/docs/openapi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/docs/openapi/package-lock.json
+      - name: Install documentation dependencies
+        run: npm ci
+      - name: Test static document rendering
+        run: npm test
+      - name: Lint OpenAPI specification
+        run: npm run lint
+      - name: Bundle OpenAPI specification
+        run: npm run bundle
+      - name: Build static API documentation
+        run: npm run build
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+          cache-dependency-path: |
+            backend/*.gradle
+            backend/gradle/wrapper/gradle-wrapper.properties
+      - name: Verify API contract and build executable JAR
+        working-directory: backend
+        run: ./gradlew test bootJar
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: backend/docs/openapi/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

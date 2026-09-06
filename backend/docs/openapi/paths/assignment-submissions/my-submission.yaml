@@ -1,0 +1,23 @@
+get:
+  tags: [Assignment Submission]
+  operationId: getMySubmissionDetail
+  summary: 내 과제 제출 조회
+  description: 현재 사용자의 제출 정보를 조회한다. 멤버가 아직 제출하지 않았다면 submitted=false인 객체를, 제출 행이 생성되지 않는 스터디 리더에게는 200과 빈 본문을 반환한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/StudyId' }
+    - { $ref: '../../components/parameters.yaml#/AssignmentId' }
+  responses:
+    '200':
+      description: 내 제출 조회 성공. 스터디 리더에게는 제출 행이 없어 본문 없음.
+      x-allow-empty-body: true
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/assignment-submissions.yaml#/MySubmissionDetailResponse' }
+          examples:
+            submitted: { value: { submissionId: 1, submitted: true, createdAt: '2026-08-27T10:30:00', content: 이번 주 과제를 완료했습니다., link: 'https://github.com/example/project' } }
+            beforeSubmit: { value: { submissionId: 1, submitted: false } }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }

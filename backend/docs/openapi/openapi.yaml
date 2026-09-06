@@ -1,0 +1,74 @@
+openapi: 3.1.0
+info:
+  title: 총총 API
+  version: 1.0.0
+  description: |
+    총총 서비스의 사전 설계 API 계약이다. 이 파일과 `paths/`, `components/`의 YAML 파일이 명세의 원본이며,
+    구현 코드와 분리해 관리한다. 모든 응답 객체는 명시된 필드 외의 추가 필드를 허용하지 않는다.
+servers:
+  - url: /
+tags:
+  - { name: Auth, description: 인증 API }
+  - { name: Study, description: 스터디 API }
+  - { name: Study Member, description: 스터디 멤버 API }
+  - { name: Notice, description: 공지 API }
+  - { name: Assignment, description: 과제 API }
+  - { name: Assignment Submission, description: 과제 제출물 API }
+  - { name: Push Token, description: 푸시 토큰 API }
+
+paths:
+  /api/auth/csrf:
+    $ref: './paths/auth/csrf.yaml'
+  /api/auth/login:
+    $ref: './paths/auth/login.yaml'
+  /api/auth/refresh:
+    $ref: './paths/auth/refresh.yaml'
+  /api/auth/logout:
+    $ref: './paths/auth/logout.yaml'
+  /api/studies:
+    $ref: './paths/studies/collection.yaml'
+  /api/studies/{studyId}:
+    $ref: './paths/studies/detail.yaml'
+  /api/studies/{studyId}/info:
+    $ref: './paths/studies/info.yaml'
+  /api/studies/me:
+    $ref: './paths/studies/my-studies.yaml'
+  /api/studies/{studyId}/invite-link:
+    $ref: './paths/studies/invite-link.yaml'
+  /api/studies/join:
+    $ref: './paths/studies/join.yaml'
+  /api/studies/{studyId}/members:
+    $ref: './paths/study-members/collection.yaml'
+  /api/studies/{studyId}/members/{memberId}:
+    $ref: './paths/study-members/detail.yaml'
+  /api/studies/{studyId}/members/me:
+    $ref: './paths/study-members/leave.yaml'
+  /api/studies/{studyId}/notices:
+    $ref: './paths/notices/collection.yaml'
+  /api/studies/{studyId}/notices/{noticeId}:
+    $ref: './paths/notices/detail.yaml'
+  /api/studies/{studyId}/notices/{noticeId}/status:
+    $ref: './paths/notices/status.yaml'
+  /api/studies/{studyId}/notices/{noticeId}/read:
+    $ref: './paths/notices/mark-as-read.yaml'
+  /api/studies/{studyId}/notices/{noticeId}/status/me:
+    $ref: './paths/notices/my-status.yaml'
+  /api/studies/{studyId}/assignments:
+    $ref: './paths/assignments/collection.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}:
+    $ref: './paths/assignments/detail.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/status:
+    $ref: './paths/assignments/status.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/submissions:
+    $ref: './paths/assignment-submissions/collection.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/submissions/my:
+    $ref: './paths/assignment-submissions/my-submission.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}:
+    $ref: './paths/assignment-submissions/detail.yaml'
+  /api/push-tokens:
+    $ref: './paths/push-tokens/collection.yaml'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: './components/security.yaml#/bearerAuth'

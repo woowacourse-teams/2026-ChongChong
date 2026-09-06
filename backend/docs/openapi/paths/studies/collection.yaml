@@ -1,0 +1,23 @@
+post:
+  tags: [Study]
+  operationId: createStudy
+  summary: 스터디 생성
+  description: 인증된 사용자가 새 스터디를 생성한다. 입력 오류(400), 인증 실패(401), 사용자 없음(404), 가입 스터디 상한 초과(409)를 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/studies.yaml#/StudyCreateRequest' }
+        example: { name: 자바 스터디, description: 매주 월요일에 진행한다. }
+  responses:
+    '201':
+      description: 스터디 생성 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/studies.yaml#/StudyCreateResponse' }
+          example: { studyId: 1 }
+    '400': { $ref: '../../components/responses.yaml#/InvalidInputAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+    '409': { $ref: '../../components/responses.yaml#/JoinedStudyLimitExceeded' }

@@ -1,0 +1,49 @@
+StudyId:
+  name: studyId
+  in: path
+  required: true
+  description: 스터디 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
+NoticeId:
+  name: noticeId
+  in: path
+  required: true
+  description: 공지 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
+AssignmentId:
+  name: assignmentId
+  in: path
+  required: true
+  description: 과제 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
+SubmissionId:
+  name: submissionId
+  in: path
+  required: true
+  description: 제출물 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
+MemberId:
+  name: memberId
+  in: path
+  required: true
+  description: 스터디 멤버 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
+Cursor:
+  name: cursor
+  in: query
+  required: false
+  description: 다음 페이지 조회 커서. 첫 조회에서는 생략한다.
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 10
+Size:
+  name: size
+  in: query
+  required: false
+  description: 페이지 크기
+  schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+  example: 10

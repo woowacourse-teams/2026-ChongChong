@@ -1,0 +1,31 @@
+post:
+  tags: [Auth]
+  operationId: login
+  summary: 소셜 로그인
+  security: []
+  description: |
+    소셜 로그인 인가 코드로 액세스 토큰을 발급하고 Refresh Token은 HttpOnly 쿠키로 발급한다.
+    오류: 입력 검증/형식 오류(400), 지원하지 않는 제공자(400), CSRF 불일치(403),
+    소셜 인증 실패(401), 사용자 없음(404).
+  parameters:
+    - { name: X-XSRF-TOKEN, in: header, required: true, description: CSRF 토큰, schema: { type: string }, example: csrf-token }
+    - { name: XSRF-TOKEN, in: cookie, required: true, description: CSRF 쿠키, schema: { type: string }, example: csrf-token }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/auth.yaml#/SocialLoginRequest' }
+        example: { provider: KAKAO, authorizationCode: authorization-code-from-provider }
+  responses:
+    '200':
+      description: 로그인 성공
+      headers:
+        Set-Cookie: { description: HttpOnly Refresh Token 쿠키, schema: { type: string } }
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/auth.yaml#/SocialLoginResponse' }
+          example: { tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9..., accessTokenExpiresAt: '2026-08-27T12:00:00Z' }
+    '400': { $ref: '../../components/responses.yaml#/LoginBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/SocialAuthenticationFailed' }
+    '403': { $ref: '../../components/responses.yaml#/InvalidCsrfToken' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }

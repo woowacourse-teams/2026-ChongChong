@@ -1,0 +1,17 @@
+{
+  "name": "chongchong-api-documentation",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "test": "node --test scripts/render-client-only.test.mjs",
+    "lint": "redocly lint openapi.yaml --config redocly.yaml",
+    "bundle": "redocly bundle openapi.yaml --config redocly.yaml --output dist/openapi.yaml",
+    "build": "redocly build-docs openapi.yaml --config redocly.yaml --output dist/index.html && node scripts/render-client-only.mjs dist/index.html"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.51.2"
+  }
+}

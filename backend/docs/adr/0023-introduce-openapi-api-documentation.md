@@ -1,6 +1,7 @@
 # 0023. OpenAPI 기반 API 문서화를 도입한다
 
 - 날짜: 2026-08-28
+- 상태: 대체됨 — [0028. 명세 우선 API 계약을 채택한다](0028-adopt-spec-first-api-contracts.md)
 - 관련 이슈: [#165](https://github.com/woowacourse-teams/2026-ChongChong/issues/165)
 - 관련 ADR: [0004. 에러 응답과 에러 코드 형식을 통일한다](0004-standardize-error-response.md),
   [0007. Access Token 인증 경계를 구성한다](0007-establish-access-token-authentication-boundary.md)

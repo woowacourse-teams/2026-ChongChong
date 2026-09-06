@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
+import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.AfterEach;
@@ -150,6 +151,7 @@ class PushTokenApiTest {
     @DisplayName("인증 없이 푸시 토큰을 저장하면 인증 필요 오류를 반환한다")
     void rejectUnauthenticatedRequestTest() {
         given()
+                .basePath(API_PREFIX)
                 .port(port)
                 .contentType(ContentType.JSON)
                 .body("""

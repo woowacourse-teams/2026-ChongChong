@@ -1,0 +1,18 @@
+get:
+  tags: [Study]
+  operationId: getStudyInfo
+  summary: 스터디 기본 정보 조회
+  description: 사용자의 스터디 역할과 기본 정보를 조회한다. 경로 오류(400), 인증 실패(401), 접근 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  parameters: [{ $ref: '../../components/parameters.yaml#/StudyId' }]
+  responses:
+    '200':
+      description: 스터디 기본 정보 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/studies.yaml#/StudyInfoResponse' }
+          example: { studyName: 자바 스터디, role: LEADER, userName: 홍길동 }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }

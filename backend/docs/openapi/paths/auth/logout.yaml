@@ -1,0 +1,16 @@
+post:
+  tags: [Auth]
+  operationId: logout
+  summary: 로그아웃
+  security: []
+  description: Refresh Token이 있으면 폐기하고 인증 쿠키를 만료시킨다. Refresh Token 쿠키가 없어도 성공하며 CSRF 불일치 시 403을 반환한다.
+  parameters:
+    - { name: X-XSRF-TOKEN, in: header, required: true, description: CSRF 토큰, schema: { type: string }, example: csrf-token }
+    - { name: XSRF-TOKEN, in: cookie, required: true, description: CSRF 쿠키, schema: { type: string }, example: csrf-token }
+    - { name: refresh_token, in: cookie, required: false, description: 폐기할 Refresh Token 쿠키, schema: { type: string }, example: refresh-token }
+  responses:
+    '204':
+      description: 로그아웃 성공. 응답 본문 없음.
+      headers:
+        Set-Cookie: { description: 즉시 만료된 Refresh Token 쿠키, schema: { type: string } }
+    '403': { $ref: '../../components/responses.yaml#/InvalidCsrfToken' }

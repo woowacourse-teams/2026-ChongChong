@@ -1,0 +1,55 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+  - { $ref: '../../components/parameters.yaml#/NoticeId' }
+get:
+  tags: [Notice]
+  operationId: getNoticeDetail
+  summary: 공지 상세 조회
+  description: 스터디 공지의 상세 내용을 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 공지 상세 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/notices.yaml#/NoticeDetailResponse' }
+          example: { id: 1, title: 이번 주 공지, content: 이번 주 스터디 일정을 확인해주세요., createdAt: '2026-08-27T10:00:00' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404':
+      description: 공지가 존재하지 않음
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/errors.yaml#/NoticeNotFoundError' }
+          example: { code: NOTICE_NOT_FOUND, message: 존재하지 않는 공지입니다. }
+patch:
+  tags: [Notice]
+  operationId: updateNotice
+  summary: 공지 수정
+  description: 스터디 리더가 공지를 부분 수정한다. 입력·형식·도메인 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/notices.yaml#/NoticeUpdateRequest' }
+        example: { title: 수정된 공지, content: 수정된 공지 내용입니다., remindAts: ['2099-12-30T10:00:00'] }
+  responses:
+    '204': { description: 공지 수정 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/NoticeWriteBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeNotFound' }
+delete:
+  tags: [Notice]
+  operationId: deleteNotice
+  summary: 공지 삭제
+  description: 스터디 리더가 공지를 삭제한다. 형식 오류(400), 인증 실패(401), 접근·삭제 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '204': { description: 공지 삭제 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeNotFound' }
