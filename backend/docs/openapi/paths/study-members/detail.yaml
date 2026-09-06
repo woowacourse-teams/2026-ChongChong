@@ -1,0 +1,15 @@
+delete:
+  tags: [Study Member]
+  operationId: expel
+  summary: 스터디 멤버 방출
+  description: 리더가 다른 멤버를 방출한다. 경로 오류(400), 인증 실패(401), 접근·리더 권한 없음 또는 리더 방출 시도(403), 멤버 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/StudyId' }
+    - { $ref: '../../components/parameters.yaml#/MemberId' }
+  responses:
+    '204': { description: 멤버 방출 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/ExpelForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/StudyMemberNotFound' }

@@ -1,0 +1,50 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+  - { $ref: '../../components/parameters.yaml#/AssignmentId' }
+get:
+  tags: [Assignment]
+  operationId: getAssignmentDetail
+  summary: 과제 상세 조회
+  description: 스터디 과제 상세를 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 과제 상세 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentDetailResponse' }
+          example: { id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, closeAt: '2026-08-29T23:59:00' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }
+patch:
+  tags: [Assignment]
+  operationId: updateAssignment
+  summary: 과제 수정
+  description: 스터디 리더가 과제를 부분 수정한다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentUpdateRequest' }
+        example: { title: 수정된 과제, content: 수정된 과제 내용입니다., submissionMethod: 텍스트 제출, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
+  responses:
+    '204': { description: 과제 수정 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/AssignmentWriteBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }
+delete:
+  tags: [Assignment]
+  operationId: deleteAssignment
+  summary: 과제 삭제
+  description: 스터디 리더가 과제를 삭제한다. 형식 오류(400), 인증 실패(401), 접근·삭제 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '204': { description: 과제 삭제 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }

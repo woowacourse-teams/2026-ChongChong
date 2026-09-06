@@ -1,0 +1,9 @@
+PushTokenCreateRequest:
+  type: object
+  additionalProperties: false
+  required: [installationId, provider, token, platform]
+  properties:
+    installationId: { type: string, minLength: 1, example: installation-1 }
+    provider: { type: string, enum: [EXPO, FCM, APNS], example: EXPO }
+    token: { type: string, minLength: 1, example: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]' }
+    platform: { type: string, enum: [ANDROID, IOS], example: ANDROID }

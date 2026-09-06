@@ -2,6 +2,7 @@ package withoutc.chongchong.support.openapi;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -31,7 +32,9 @@ final class OpenApiOperationCatalog {
     }
 
     static OpenApiOperationCatalog load(Path specPath) {
-        SwaggerParseResult result = new OpenAPIV3Parser().readLocation(specPath.toString(), null, null);
+        ParseOptions options = new ParseOptions();
+        options.setResolve(true);
+        SwaggerParseResult result = new OpenAPIV3Parser().readLocation(specPath.toString(), null, options);
         OpenAPI openApi = result.getOpenAPI();
         if (openApi == null || result.getMessages() != null && !result.getMessages().isEmpty()) {
             throw new IllegalStateException("OpenAPI 명세를 읽을 수 없습니다: " + result.getMessages());

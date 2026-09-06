@@ -1,0 +1,145 @@
+StudyCreateRequest:
+  type: object
+  additionalProperties: false
+  required: [name]
+  properties:
+    name: { type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
+    description: { type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
+StudyUpdateRequest:
+  type: object
+  additionalProperties: false
+  properties:
+    name: { type: [string, 'null'], maxLength: 15, example: 수정된 스터디 }
+    description: { type: [string, 'null'], maxLength: 30, example: 매주 화요일에 진행한다. }
+StudyCreateResponse:
+  type: object
+  additionalProperties: false
+  required: [studyId]
+  properties:
+    studyId: { type: integer, format: int64, example: 1 }
+StudyInviteTokenRequest:
+  type: object
+  additionalProperties: false
+  required: [token]
+  properties:
+    token: { type: string, minLength: 1, example: eyJhbGciOiJIUzI1NiJ9... }
+StudyMemberJoinResponse:
+  type: object
+  additionalProperties: false
+  required: [studyId]
+  properties:
+    studyId: { type: integer, format: int64, example: 1 }
+StudyInviteLinkResponse:
+  type: object
+  additionalProperties: false
+  required: [inviteLink]
+  properties:
+    inviteLink: { type: string, example: 'https://chongchong.app/studies/join?token=eyJ...' }
+StudyInfoResponse:
+  type: object
+  additionalProperties: false
+  required: [studyName, role, userName]
+  properties:
+    studyName: { type: string, example: 자바 스터디 }
+    role: { type: string, enum: [LEADER, MEMBER], example: LEADER }
+    userName: { type: string, example: 홍길동 }
+StudyMemberResponse:
+  type: object
+  additionalProperties: false
+  required: [id, name, profileImage, role]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    name: { type: string, example: 홍길동 }
+    profileImage: { type: [string, 'null'], example: 'https://example.com/profile.png' }
+    role: { type: string, enum: [LEADER, MEMBER], example: MEMBER }
+StudyMembersResponse:
+  type: object
+  additionalProperties: false
+  required: [members]
+  properties:
+    members:
+      type: array
+      items: { $ref: '#/StudyMemberResponse' }
+MyStudyResponse:
+  type: object
+  additionalProperties: false
+  required: [id, role, name, description, memberCount, noticeCount, assignmentCount]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    role: { type: string, enum: [LEADER, MEMBER], example: MEMBER }
+    name: { type: string, example: 자바 스터디 }
+    description: { type: [string, 'null'], example: 매주 월요일에 진행한다. }
+    memberCount: { type: integer, example: 5 }
+    noticeCount: { type: integer, example: 3 }
+    assignmentCount: { type: integer, example: 4 }
+MyStudyListResponse:
+  type: object
+  additionalProperties: false
+  required: [studyCount, studies]
+  properties:
+    studyCount: { type: integer, example: 2 }
+    studies:
+      type: array
+      items: { $ref: '#/MyStudyResponse' }
+LeaderNoticeSummary:
+  type: object
+  additionalProperties: false
+  required: [id, title, memberCount, completeCount]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    title: { type: string, example: 이번 주 공지 }
+    memberCount: { type: integer, example: 5 }
+    completeCount: { type: integer, example: 3 }
+LeaderAssignmentSummary:
+  type: object
+  additionalProperties: false
+  required: [id, title, memberCount, completeCount]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    title: { type: string, example: 1주 차 과제 }
+    memberCount: { type: integer, example: 5 }
+    completeCount: { type: integer, example: 3 }
+LeaderStudyDetailResponse:
+  type: object
+  additionalProperties: false
+  required: [notices, assignments]
+  properties:
+    notices:
+      type: object
+      additionalProperties: false
+      required: [count, items]
+      properties:
+        count: { type: integer, example: 1 }
+        items: { type: array, items: { $ref: '#/LeaderNoticeSummary' } }
+    assignments:
+      type: object
+      additionalProperties: false
+      required: [count, items]
+      properties:
+        count: { type: integer, example: 1 }
+        items: { type: array, items: { $ref: '#/LeaderAssignmentSummary' } }
+MemberSummary:
+  type: object
+  additionalProperties: false
+  required: [id, title]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    title: { type: string, example: 이번 주 공지 }
+MemberStudyDetailResponse:
+  type: object
+  additionalProperties: false
+  required: [totalCount, notices, assignments]
+  properties:
+    totalCount: { type: integer, example: 2 }
+    notices:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/MemberSummary' } }
+    assignments:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/MemberSummary' } }

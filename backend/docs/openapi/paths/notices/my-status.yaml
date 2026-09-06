@@ -1,0 +1,20 @@
+get:
+  tags: [Notice]
+  operationId: getMyReadStatus
+  summary: 내 공지 읽음 상태 조회
+  description: 현재 사용자의 공지 읽음 여부와 읽은 시각을 조회한다. 읽지 않았다면 readAt은 null이다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 또는 수신자 정보 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/StudyId' }
+    - { $ref: '../../components/parameters.yaml#/NoticeId' }
+  responses:
+    '200':
+      description: 내 읽음 상태 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/notices.yaml#/NoticeReadStatusResponse' }
+          example: { isRead: true, readAt: '2026-08-27T10:30:00' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeOrRecipientNotFound' }

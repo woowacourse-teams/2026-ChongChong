@@ -1,0 +1,54 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+get:
+  tags: [Study]
+  operationId: getStudyDetail
+  summary: 스터디 상세 조회
+  description: 사용자의 역할에 맞는 스터디 상세를 조회한다. 리더는 전체 현황을, 멤버는 미확인·미제출 항목을 받는다. 경로 오류(400), 인증 실패(401), 접근 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 스터디 상세 조회 성공
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - { $ref: '../../components/schemas/studies.yaml#/LeaderStudyDetailResponse' }
+              - { $ref: '../../components/schemas/studies.yaml#/MemberStudyDetailResponse' }
+          examples:
+            leader: { value: { notices: { count: 1, items: [{ id: 1, title: 이번 주 공지, memberCount: 5, completeCount: 3 }] }, assignments: { count: 1, items: [{ id: 1, title: 1주 차 과제, memberCount: 5, completeCount: 3 }] } } }
+            member: { value: { totalCount: 2, notices: { items: [{ id: 1, title: 이번 주 공지 }] }, assignments: { items: [{ id: 1, title: 1주 차 과제 }] } } }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }
+patch:
+  tags: [Study]
+  operationId: updateStudy
+  summary: 스터디 수정
+  description: 스터디 리더가 이름과 설명을 부분 수정한다. 입력·경로 오류(400), 인증 실패(401), 접근 또는 리더 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/studies.yaml#/StudyUpdateRequest' }
+        example: { name: 수정된 스터디, description: 매주 화요일에 진행한다. }
+  responses:
+    '204': { description: 스터디 수정 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrLeaderDenied' }
+    '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }
+delete:
+  tags: [Study]
+  operationId: deleteStudy
+  summary: 스터디 삭제
+  description: 스터디 리더가 스터디와 종속 데이터를 삭제한다. 경로 오류(400), 인증 실패(401), 접근 또는 리더 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '204': { description: 스터디 삭제 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrLeaderDenied' }
+    '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }

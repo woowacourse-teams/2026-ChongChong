@@ -12,8 +12,9 @@ Notion 명세와 구현이 별도로 바뀌면 API 계약이 늦게 갱신될 �
 
 ## 결정
 
-`backend/docs/openapi/openapi.yaml`과 `backend/docs/openapi/components.yaml`을 API 계약의 원본으로 둔다. 구현 전에 경로,
-인증, 요청, 응답, 오류 코드, 예시와 전달사항을 두 파일에 작성한다. OpenAPI의 Markdown 설명을 사용해 요청 body가 없는 이유나 서버가 시간을
+`backend/docs/openapi/openapi.yaml`(목차), `paths/`(URL별 API), `components/`(공유 정의)를 API 계약의 원본으로 둔다.
+`paths/`와 `components/`는 목차와 같은 디렉터리에 두고, 도메인별로 나누어 필요한 API를 쉽게 찾아 수정한다. 구현 전에 경로,
+인증, 요청, 응답, 오류 코드, 예시와 전달사항을 해당 YAML 파일에 작성한다. OpenAPI의 Markdown 설명을 사용해 요청 body가 없는 이유나 서버가 시간을
 기록하는 규칙 같은 전달사항도 함께 기록한다.
 
 API 계약을 변경하는 기능 PR은 구현과 명세를 함께 수정한다. PR의 Backend CI는 Redocly로 명세를 lint·bundle하고

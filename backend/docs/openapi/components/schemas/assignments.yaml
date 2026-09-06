@@ -1,0 +1,59 @@
+AssignmentCreateRequest:
+  type: object
+  additionalProperties: false
+  required: [title, content, submissionMethod, closeAt]
+  properties:
+    title: { type: string, minLength: 1, maxLength: 20, example: 1주 차 과제 }
+    content: { type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
+    submissionMethod: { type: string, minLength: 1, maxLength: 10000, example: 링크 제출 }
+    closeAt: { $ref: './common.yaml#/LocalDateTime' }
+    remindAts: { type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
+AssignmentUpdateRequest:
+  type: object
+  additionalProperties: false
+  properties:
+    title: { type: [string, 'null'], maxLength: 20, example: 수정된 과제 }
+    content: { type: [string, 'null'], maxLength: 10000, example: 수정된 과제 내용입니다. }
+    submissionMethod: { type: [string, 'null'], maxLength: 10000, example: 텍스트 제출 }
+    closeAt:
+      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
+    remindAts: { type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
+AssignmentCreateResponse:
+  type: object
+  additionalProperties: false
+  required: [assignmentId]
+  properties:
+    assignmentId: { type: integer, format: int64, example: 1 }
+AssignmentDetailResponse:
+  type: object
+  additionalProperties: false
+  required: [id, title, content, submissionMethod, closeAt]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    title: { type: string, example: 1주 차 과제 }
+    content: { type: string, example: 이번 주 과제를 제출해주세요. }
+    submissionMethod: { type: string, example: 링크 제출 }
+    closeAt: { $ref: './common.yaml#/LocalDateTime' }
+AssignmentSummaryResponse:
+  type: object
+  additionalProperties: false
+  required: [id, title, content, submissionMethod, closeAt, isComplete]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    title: { type: string, example: 1주 차 과제 }
+    content: { type: string, example: 이번 주 과제를 제출해주세요. }
+    submissionMethod: { type: string, example: 링크 제출 }
+    closeAt: { $ref: './common.yaml#/LocalDateTime' }
+    memberCount: { type: [integer, 'null'], example: 5 }
+    completeCount: { type: [integer, 'null'], example: 3 }
+    remindAt:
+      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
+    isComplete: { type: boolean, example: false }
+AssignmentListResponse:
+  type: object
+  additionalProperties: false
+  required: [nextCursor, hasNext, assignments]
+  properties:
+    nextCursor: { type: [integer, 'null'], format: int64, example: 10 }
+    hasNext: { type: boolean, example: false }
+    assignments: { type: array, items: { $ref: '#/AssignmentSummaryResponse' } }

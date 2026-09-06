@@ -1,0 +1,17 @@
+get:
+  tags: [Auth]
+  operationId: csrf
+  summary: CSRF 토큰 조회
+  description: 웹 인증 요청에 사용할 CSRF 토큰을 조회한다. 응답과 함께 XSRF-TOKEN 쿠키가 발급된다.
+  security: []
+  responses:
+    '200':
+      description: CSRF 토큰 조회 성공
+      headers:
+        Set-Cookie:
+          description: 이후 웹 인증 요청에 사용할 XSRF-TOKEN 쿠키
+          schema: { type: string }
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/auth.yaml#/WebCsrfTokenResponse' }
+          example: { headerName: X-XSRF-TOKEN, token: csrf-token }

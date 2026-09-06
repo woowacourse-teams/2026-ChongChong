@@ -1,0 +1,39 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+  - { $ref: '../../components/parameters.yaml#/AssignmentId' }
+  - { $ref: '../../components/parameters.yaml#/SubmissionId' }
+get:
+  tags: [Assignment Submission]
+  operationId: getSubmissionDetail
+  summary: 과제 제출 상세 조회
+  description: 스터디 리더가 제출물 상세를 조회한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 과제 제출 상세 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/assignment-submissions.yaml#/SubmissionDetailResponse' }
+          example: { id: 1, name: 홍길동, profileImage: null, createdAt: '2026-08-27T10:30:00', content: 이번 주 과제를 완료했습니다., link: 'https://github.com/example/project' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentOrSubmissionNotFound' }
+patch:
+  tags: [Assignment Submission]
+  operationId: updateSubmission
+  summary: 과제 제출 수정
+  description: 현재 사용자가 자신의 제출 내용을 수정한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/assignment-submissions.yaml#/AssignmentSubmitRequest' }
+        example: { content: 수정한 제출 내용입니다., link: 'https://github.com/example/project-v2' }
+  responses:
+    '204': { description: 과제 제출 수정 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/SubmissionWriteBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentOrSubmissionNotFound' }

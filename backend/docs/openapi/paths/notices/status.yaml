@@ -1,0 +1,20 @@
+get:
+  tags: [Notice]
+  operationId: getAllReadStatuses
+  summary: 공지 읽음 현황 조회
+  description: 스터디 리더가 전체 멤버의 읽음 현황을 조회한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/StudyId' }
+    - { $ref: '../../components/parameters.yaml#/NoticeId' }
+  responses:
+    '200':
+      description: 공지 읽음 현황 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/notices.yaml#/NoticeStatusesResponse' }
+          example: { id: 1, memberCount: 2, readCount: 1, unreadCount: 1, remindAt: '2026-08-28T10:00:00', readMembers: [{ id: 1, name: 홍길동, profileImage: null }], unreadMembers: [{ id: 2, name: 김철수, profileImage: null, lastRemindAt: null }] }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeNotFound' }

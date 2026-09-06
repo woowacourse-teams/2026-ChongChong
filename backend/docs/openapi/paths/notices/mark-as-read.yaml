@@ -1,0 +1,46 @@
+patch:
+  tags: [Notice]
+  operationId: readNotice
+  summary: 공지 읽음 처리
+  description: |
+    요청 본문 없이 현재 사용자의 공지를 읽음 처리하며, 시간은 서버에서 기록한다.
+    이미 읽은 공지를 다시 요청하면 최초 읽음 시각을 유지한다.
+    요청 형식 오류(400), 인증 실패(401), 스터디 접근 권한 없음(403),
+    공지 없음 또는 공지 수신자 정보 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/StudyId' }
+    - { $ref: '../../components/parameters.yaml#/NoticeId' }
+  responses:
+    '200':
+      description: 공지 읽음 처리 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/notices.yaml#/NoticeReadResponse' }
+          example: { readAt: '2026-08-24T02:09:18.441601' }
+    '400':
+      description: 요청 형식이 잘못됨
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/errors.yaml#/InvalidRequestError' }
+          example: { code: INVALID_REQUEST, message: 요청 형식이 잘못되었습니다. }
+    '401':
+      description: 인증 정보가 없음
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/errors.yaml#/AuthenticationRequiredError' }
+          example: { code: AUTHENTICATION_REQUIRED, message: 인증이 필요합니다. }
+    '403':
+      description: 스터디 접근 권한이 없음
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/errors.yaml#/StudyAccessDeniedError' }
+          example: { code: STUDY_ACCESS_DENIED, message: 해당 스터디에 대한 접근 권한이 없습니다. }
+    '404':
+      description: 공지 또는 공지 수신자 정보가 없음
+      content:
+        application/json:
+          schema: { oneOf: [{ $ref: '../../components/schemas/errors.yaml#/NoticeNotFoundError' }, { $ref: '../../components/schemas/errors.yaml#/NoticeRecipientNotFoundError' }] }
+          examples:
+            noticeNotFound: { value: { code: NOTICE_NOT_FOUND, message: 존재하지 않는 공지입니다. } }
+            recipientNotFound: { value: { code: NOTICE_RECIPIENT_NOT_FOUND, message: 공지 수신자 정보를 찾을 수 없습니다. } }

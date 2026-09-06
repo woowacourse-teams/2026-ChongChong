@@ -1,0 +1,5 @@
+LocalDateTime:
+  type: string
+  description: 서버 기준 시각. UTC 오프셋을 포함하지 않는 ISO-8601 로컬 날짜·시간이다.
+  pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?$'
+  example: '2026-08-27T10:30:00'

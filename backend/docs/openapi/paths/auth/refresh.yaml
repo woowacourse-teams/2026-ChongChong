@@ -1,0 +1,22 @@
+post:
+  tags: [Auth]
+  operationId: refresh
+  summary: 액세스 토큰 갱신
+  security: []
+  description: Refresh Token 쿠키를 회전시키고 새 액세스 토큰을 발급한다. 요청 형식 오류(400), 유효하지 않은 Refresh Token(401), CSRF 불일치(403)를 반환할 수 있다.
+  parameters:
+    - { name: X-XSRF-TOKEN, in: header, required: true, description: CSRF 토큰, schema: { type: string }, example: csrf-token }
+    - { name: XSRF-TOKEN, in: cookie, required: true, description: CSRF 쿠키, schema: { type: string }, example: csrf-token }
+    - { name: refresh_token, in: cookie, required: true, description: 로그인 시 발급된 Refresh Token 쿠키, schema: { type: string }, example: refresh-token }
+  responses:
+    '200':
+      description: 토큰 갱신 성공
+      headers:
+        Set-Cookie: { description: 회전된 HttpOnly Refresh Token 쿠키, schema: { type: string } }
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/auth.yaml#/SocialLoginResponse' }
+          example: { tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9..., accessTokenExpiresAt: '2026-08-27T12:00:00Z' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/InvalidRefreshToken' }
+    '403': { $ref: '../../components/responses.yaml#/InvalidCsrfToken' }

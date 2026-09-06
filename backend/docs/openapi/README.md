@@ -1,7 +1,62 @@
 # API 명세
 
-`openapi.yaml`과 `components.yaml`은 ChongChong HTTP API의 계약 원본이다. API를 추가하거나 요청·응답·인증·상태 코드·오류 코드를
-바꾸는 PR에는 해당 operation과 재사용 component 변경을 함께 포함한다.
+명세 원본은 `openapi.yaml`(목차), `paths/`(URL별 API), `components/`(공유 정의)로 나눈다.
+API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·응답·예시를 수정한다. 같은 URL의 여러 HTTP 메서드는 한 파일에서 관리한다.
+요청·응답 필드가 참조 스키마에 있으면 해당 `$ref` 파일도 함께 수정한다. API를 추가할 때는 Path Item 파일을 만들고
+`openapi.yaml`의 `paths`에 연결한 뒤 아래 표를 갱신한다.
+
+## API별 수정 파일
+
+| API | 메서드와 URL | 수정 파일 |
+| --- | --- | --- |
+| CSRF 토큰 조회 | `GET /api/auth/csrf` | [paths/auth/csrf.yaml](paths/auth/csrf.yaml) |
+| 소셜 로그인 | `POST /api/auth/login` | [paths/auth/login.yaml](paths/auth/login.yaml) |
+| 액세스 토큰 갱신 | `POST /api/auth/refresh` | [paths/auth/refresh.yaml](paths/auth/refresh.yaml) |
+| 로그아웃 | `POST /api/auth/logout` | [paths/auth/logout.yaml](paths/auth/logout.yaml) |
+| 스터디 생성 | `POST /api/studies` | [paths/studies/collection.yaml](paths/studies/collection.yaml) |
+| 스터디 상세 조회 | `GET /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
+| 스터디 수정 | `PATCH /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
+| 스터디 삭제 | `DELETE /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
+| 스터디 기본 정보 조회 | `GET /api/studies/{studyId}/info` | [paths/studies/info.yaml](paths/studies/info.yaml) |
+| 내 스터디 목록 조회 | `GET /api/studies/me` | [paths/studies/my-studies.yaml](paths/studies/my-studies.yaml) |
+| 스터디 초대 링크 조회 | `GET /api/studies/{studyId}/invite-link` | [paths/studies/invite-link.yaml](paths/studies/invite-link.yaml) |
+| 스터디 참여 | `POST /api/studies/join` | [paths/studies/join.yaml](paths/studies/join.yaml) |
+| 스터디 멤버 목록 조회 | `GET /api/studies/{studyId}/members` | [paths/study-members/collection.yaml](paths/study-members/collection.yaml) |
+| 스터디 멤버 방출 | `DELETE /api/studies/{studyId}/members/{memberId}` | [paths/study-members/detail.yaml](paths/study-members/detail.yaml) |
+| 스터디 탈퇴 | `DELETE /api/studies/{studyId}/members/me` | [paths/study-members/leave.yaml](paths/study-members/leave.yaml) |
+| 공지 생성 | `POST /api/studies/{studyId}/notices` | [paths/notices/collection.yaml](paths/notices/collection.yaml) |
+| 공지 목록 조회 | `GET /api/studies/{studyId}/notices` | [paths/notices/collection.yaml](paths/notices/collection.yaml) |
+| 공지 상세 조회 | `GET /api/studies/{studyId}/notices/{noticeId}` | [paths/notices/detail.yaml](paths/notices/detail.yaml) |
+| 공지 수정 | `PATCH /api/studies/{studyId}/notices/{noticeId}` | [paths/notices/detail.yaml](paths/notices/detail.yaml) |
+| 공지 삭제 | `DELETE /api/studies/{studyId}/notices/{noticeId}` | [paths/notices/detail.yaml](paths/notices/detail.yaml) |
+| 공지 읽음 현황 조회 | `GET /api/studies/{studyId}/notices/{noticeId}/status` | [paths/notices/status.yaml](paths/notices/status.yaml) |
+| 공지 읽음 처리 | `PATCH /api/studies/{studyId}/notices/{noticeId}/read` | [paths/notices/mark-as-read.yaml](paths/notices/mark-as-read.yaml) |
+| 내 공지 읽음 상태 조회 | `GET /api/studies/{studyId}/notices/{noticeId}/status/me` | [paths/notices/my-status.yaml](paths/notices/my-status.yaml) |
+| 과제 생성 | `POST /api/studies/{studyId}/assignments` | [paths/assignments/collection.yaml](paths/assignments/collection.yaml) |
+| 과제 목록 조회 | `GET /api/studies/{studyId}/assignments` | [paths/assignments/collection.yaml](paths/assignments/collection.yaml) |
+| 과제 상세 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}` | [paths/assignments/detail.yaml](paths/assignments/detail.yaml) |
+| 과제 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}` | [paths/assignments/detail.yaml](paths/assignments/detail.yaml) |
+| 과제 삭제 | `DELETE /api/studies/{studyId}/assignments/{assignmentId}` | [paths/assignments/detail.yaml](paths/assignments/detail.yaml) |
+| 과제 제출 현황 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/status` | [paths/assignments/status.yaml](paths/assignments/status.yaml) |
+| 과제 제출 | `POST /api/studies/{studyId}/assignments/{assignmentId}/submissions` | [paths/assignment-submissions/collection.yaml](paths/assignment-submissions/collection.yaml) |
+| 과제 제출 목록 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions` | [paths/assignment-submissions/collection.yaml](paths/assignment-submissions/collection.yaml) |
+| 내 과제 제출 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my` | [paths/assignment-submissions/my-submission.yaml](paths/assignment-submissions/my-submission.yaml) |
+| 과제 제출 상세 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
+| 과제 제출 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
+| 푸시 토큰 등록 | `POST /api/push-tokens` | [paths/push-tokens/collection.yaml](paths/push-tokens/collection.yaml) |
+
+## 공통 정의 수정 위치
+
+- [인증](components/security.yaml): Bearer JWT 정의
+- [파라미터](components/parameters.yaml): 경로 식별자와 페이지네이션
+- [공통 오류 응답](components/responses.yaml): 상태별 오류 조합과 예시
+- [오류 스키마](components/schemas/errors.yaml): 오류 코드·메시지·필드 오류 구조
+- [공통 타입](components/schemas/common.yaml): 서버 날짜·시간
+- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [푸시 토큰](components/schemas/push-tokens.yaml)
+
+공통 정의를 바꾸면 이를 참조하는 여러 API에 적용된다. 특정 API만 달라져야 한다면 해당 API에 맞는 정의를 분리한다.
+`$ref` 경로는 작성 중인 파일 기준 상대경로이며, 아래 검증 명령으로 참조가 정상인지 확인한다.
+`dist/openapi.yaml`과 `dist/index.html`은 자동 생성 결과이므로 직접 수정하지 않는다.
 
 ## 로컬 검증과 미리 보기
 

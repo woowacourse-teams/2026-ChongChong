@@ -1,0 +1,17 @@
+post:
+  tags: [Push Token]
+  operationId: createPushToken
+  summary: 푸시 토큰 등록
+  description: 현재 사용자의 설치 단위 푸시 토큰을 등록하거나 갱신한다. 입력·형식 오류(400), 인증 실패(401), 사용자 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/push-tokens.yaml#/PushTokenCreateRequest' }
+        example: { installationId: installation-1, provider: EXPO, token: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]', platform: ANDROID }
+  responses:
+    '204': { description: 푸시 토큰 등록 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidInputAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
