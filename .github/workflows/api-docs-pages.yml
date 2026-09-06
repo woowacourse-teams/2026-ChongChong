@@ -1,21 +1,24 @@
-name: Backend CI
+name: Deploy API documentation
 
 on:
   push:
-    branches: [main, dev, prod]
-  pull_request:
-    branches: [main, dev, prod]
+    branches: [dev]
+    paths:
+      - "backend/docs/openapi/**"
+      - ".github/workflows/api-docs-pages.yml"
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: api-docs-pages
+  cancel-in-progress: false
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  api-documentation:
-    name: API documentation
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,17 +44,6 @@ jobs:
         run: npm run bundle
       - name: Build static API documentation
         run: npm run build
-
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
@@ -61,5 +53,23 @@ jobs:
           cache-dependency-path: |
             backend/*.gradle
             backend/gradle/wrapper/gradle-wrapper.properties
-      - name: Test and build executable JAR
+      - name: Verify API contract and build executable JAR
+        working-directory: backend
         run: ./gradlew test bootJar
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: backend/docs/openapi/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
