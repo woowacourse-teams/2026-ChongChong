@@ -39,8 +39,6 @@ import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.user.entity.User;
-import withoutc.chongchong.user.exception.UserErrorCode;
-import withoutc.chongchong.user.exception.UserException;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @Service
@@ -48,7 +46,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @Transactional(readOnly = true)
 public class StudyService {
 
-    private static final int MAX_JOINED_STUDY_COUNT = 50;
+    static final int MAX_JOINED_STUDY_COUNT = 50;
 
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
@@ -63,8 +61,7 @@ public class StudyService {
 
     @Transactional
     public StudyCreateResponse createStudy(Long userId, StudyCreateRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User user = userRepository.getByIdForUpdateOrThrow(userId);
         validateStudyCountLimit(userId);
 
         Study study = studyRepository.save(Study.create(request.name(), request.description()));

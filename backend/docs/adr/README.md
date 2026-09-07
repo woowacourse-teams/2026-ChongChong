@@ -44,3 +44,5 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0025](0025-own-stable-invariants-in-domain-model.md)                         | 모든 생성 경로에서 성립할 불변식은 도메인 모델이 보호한다 |
 | [0026](0026-separate-application-service-and-access-policy-responsibilities.md) | 애플리케이션 서비스와 접근 정책의 책임을 분리한다 |
 | [0027](0027-separate-study-response-assembly-from-persistence-types.md)         | 스터디 조회 응답 조립과 영속 타입 의존을 분리한다   |
+| [0028](0028-adopt-spec-first-api-contracts.md)                                  | 명세 우선 API 계약을 채택한다 |
+| [0029](0029-protect-study-membership-limits-with-row-locks.md)                  | 스터디 멤버십 상한을 행 잠금과 트랜잭션으로 보호한다 |

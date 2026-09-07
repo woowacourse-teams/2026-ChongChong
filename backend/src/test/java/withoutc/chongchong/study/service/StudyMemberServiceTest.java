@@ -68,9 +68,9 @@ class StudyMemberServiceTest {
         when(study.getId()).thenReturn(studyId);
         StudyInviteTokenRequest request = new StudyInviteTokenRequest(token);
         ArgumentCaptor<StudyMember> captor = ArgumentCaptor.forClass(StudyMember.class);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyInviteTokenProvider.verifyAndExtractStudyId(token)).thenReturn(studyId);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
         when(studyMemberRepository.save(any(StudyMember.class)))
@@ -98,9 +98,9 @@ class StudyMemberServiceTest {
         when(study.getId()).thenReturn(studyId);
         StudyMember member = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.MEMBER);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(studyId);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.of(member));
 
         assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
@@ -120,9 +120,9 @@ class StudyMemberServiceTest {
         when(user.getId()).thenReturn(userId);
         Study study = mock(Study.class);
         when(study.getId()).thenReturn(studyId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(studyId);
-        when(studyRepository.findById(studyId)).thenReturn(Optional.of(study));
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(30);
 
@@ -135,11 +135,30 @@ class StudyMemberServiceTest {
     }
 
     @Test
+    @DisplayName("가입한 스터디가 50개 이상이면 초대 수락을 할 수 없다")
+    void joinWhenJoinedStudyCountLimitExceededTest() {
+        Long userId = 1L;
+        User user = mock(User.class);
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
+        when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
+
+        assertThatThrownBy(() -> studyMemberService.join(
+                userId, new StudyInviteTokenRequest("invite-token")
+        ))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
+
+        verify(studyInviteTokenProvider, never()).verifyAndExtractStudyId(any());
+        verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
     @DisplayName("유효하지 않은 초대 토큰이면 참여할 수 없다")
     void joinInvalidInviteTokenTest() {
         Long userId = 1L;
         User user = User.create("사용자", "profile-image-url");
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invalid-token"))
                 .thenThrow(new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN));
 
@@ -148,7 +167,7 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN);
 
-        verify(studyRepository, never()).findById(any());
+        verify(studyRepository, never()).getByIdForUpdateOrThrow(any());
         verify(studyMemberRepository, never()).save(any(StudyMember.class));
     }
 
