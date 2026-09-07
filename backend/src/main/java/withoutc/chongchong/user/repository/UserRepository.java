@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import withoutc.chongchong.user.entity.User;
+import withoutc.chongchong.user.exception.UserErrorCode;
+import withoutc.chongchong.user.exception.UserException;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -15,4 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT targetUser FROM User targetUser WHERE targetUser.id = :userId")
     Optional<User> findByIdForUpdate(@Param("userId") Long userId);
+
+    default User getByIdForUpdateOrThrow(Long userId) {
+        return findByIdForUpdate(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    }
 }
