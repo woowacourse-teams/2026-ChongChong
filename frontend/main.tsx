@@ -12,6 +12,7 @@ import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
+import { ToastProvider } from './src/shared/providers/ToastProvider';
 
 const appRoutes = [
   {
@@ -69,8 +70,10 @@ async function bootstrap() {
         }}
       >
         <QueryClientProvider client={queryClient}>
-          <Global styles={globalStyles} />
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <Global styles={globalStyles} />
+            <RouterProvider router={router} />
+          </ToastProvider>
         </QueryClientProvider>
       </PostHogProvider>
     </StrictMode>,
