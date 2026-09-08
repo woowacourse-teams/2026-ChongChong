@@ -1,0 +1,12 @@
+delete:
+  tags: [Push Token]
+  operationId: deactivatePushToken
+  summary: 푸시 토큰 비활성화
+  description: 현재 사용자의 설치 단위 푸시 토큰을 비활성화한다. 등록 정보가 없거나 다른 사용자의 설치 식별자면 변경 없이 204를 반환한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/InstallationId' }
+  responses:
+    '204': { description: 푸시 토큰 비활성화 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

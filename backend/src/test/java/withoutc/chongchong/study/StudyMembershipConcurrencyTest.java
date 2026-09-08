@@ -14,8 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
 import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
@@ -30,15 +28,12 @@ import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.study.service.StudyMemberService;
 import withoutc.chongchong.study.service.StudyService;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
+import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:study-membership-concurrency-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000"
-})
-@ActiveProfiles("test")
-class StudyMembershipConcurrencyTest {
+class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
     @Autowired
     private StudyService studyService;

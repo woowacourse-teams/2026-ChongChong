@@ -2,9 +2,9 @@ name: Backend CI
 
 on:
   push:
-    branches: [main, dev, prod]
+    branches: [ main, dev, prod ]
   pull_request:
-    branches: [main, dev, prod]
+    branches: [ main, dev, prod ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -61,5 +61,7 @@ jobs:
           cache-dependency-path: |
             backend/*.gradle
             backend/gradle/wrapper/gradle-wrapper.properties
+      - name: Check Docker
+        run: docker info
       - name: Test and build executable JAR
         run: ./gradlew test bootJar

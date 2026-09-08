@@ -67,6 +67,8 @@ paths:
     $ref: './paths/assignment-submissions/detail.yaml'
   /api/push-tokens:
     $ref: './paths/push-tokens/collection.yaml'
+  /api/push-tokens/{installationId}:
+    $ref: './paths/push-tokens/detail.yaml'
 
 components:
   securitySchemes:

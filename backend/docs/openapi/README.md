@@ -44,6 +44,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 과제 제출 상세 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
 | 과제 제출 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
 | 푸시 토큰 등록 | `POST /api/push-tokens` | [paths/push-tokens/collection.yaml](paths/push-tokens/collection.yaml) |
+| 푸시 토큰 비활성화 | `DELETE /api/push-tokens/{installationId}` | [paths/push-tokens/detail.yaml](paths/push-tokens/detail.yaml) |
 
 ## 공통 정의 수정 위치
 
