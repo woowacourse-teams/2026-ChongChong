@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,14 +20,7 @@ import withoutc.chongchong.user.entity.User;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "push_tokens",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_push_tokens_user_installation_id",
-                columnNames = {
-                        "user_id",
-                        "installation_id"
-                }
-        ))
+@Table(name = "push_tokens")
 public class PushToken extends BaseEntity {
 
     @Id
@@ -39,7 +31,7 @@ public class PushToken extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String installationId;
 
     @Column(nullable = false)
@@ -61,9 +53,22 @@ public class PushToken extends BaseEntity {
             String installationId,
             TokenProvider provider,
             String token,
-            DevicePlatform devicePlatform
+            DevicePlatform platform
     ) {
-        return new PushToken(user, installationId, provider, token, devicePlatform);
+        return new PushToken(user, installationId, provider, token, platform);
+    }
+
+    public void update(
+            User user,
+            TokenProvider provider,
+            String token,
+            DevicePlatform platform
+    ) {
+        this.user = user;
+        this.provider = provider;
+        this.token = token;
+        this.platform = platform;
+        this.isActive = true;
     }
 
     private PushToken(
@@ -81,7 +86,7 @@ public class PushToken extends BaseEntity {
         this.isActive = true;
     }
 
-    public void changeActiveState() {
-        isActive = true;
+    public void deactivate() {
+        isActive = false;
     }
 }

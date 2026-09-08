@@ -33,6 +33,13 @@ MemberId:
   description: 스터디 멤버 식별자
   schema: { type: integer, format: int64, minimum: 1 }
   example: 1
+InstallationId:
+  name: installationId
+  in: path
+  required: true
+  description: 설치된 앱 식별자
+  schema: { type: string, minLength: 1, maxLength: 255 }
+  example: installation-1
 Cursor:
   name: cursor
   in: query
