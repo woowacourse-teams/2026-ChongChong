@@ -1,6 +1,3 @@
-/**
- * @jest-environment-options {"url":"http://localhost/"}
- */
 import { Suspense } from 'react';
 import { Routes, Route } from 'react-router';
 import { render, screen, waitFor } from '@testing-library/react';
