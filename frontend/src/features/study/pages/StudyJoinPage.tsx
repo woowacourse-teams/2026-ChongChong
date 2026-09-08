@@ -16,7 +16,9 @@ import { usePostHog } from '@posthog/react';
 
 function extractInviteToken(inviteLink: string) {
   try {
-    return new URL(inviteLink, window.location.origin).searchParams.get('token');
+    const url = new URL(inviteLink, window.location.origin);
+    const tokenParam = url.searchParams.get('token');
+    return tokenParam;
   } catch {
     return null;
   }
@@ -30,8 +32,11 @@ export default function StudyJoinPage() {
   const [inviteLink, handleInviteLink] = useInputState(() => {
     if (!searchParams.has('token')) return '';
 
-    return new URL(`${location.pathname}${location.search}${location.hash}`, window.location.origin)
-      .href;
+    const currentUrl = new URL(
+      `${location.pathname}${location.search}${location.hash}`,
+      window.location.origin,
+    ).href;
+    return currentUrl;
   });
 
   const posthog = usePostHog();
