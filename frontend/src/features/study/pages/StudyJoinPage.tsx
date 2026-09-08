@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams, useLocation } from 'react-router';
 import { useMemo } from 'react';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
@@ -14,15 +14,29 @@ import isBlank from '../../../shared/utils/isBlank';
 import useStudyJoin from '../hooks/useStudyJoin';
 import { usePostHog } from '@posthog/react';
 
+function extractInviteToken(inviteLink: string) {
+  try {
+    const url = new URL(inviteLink, window.location.origin);
+    const tokenParam = url.searchParams.get('token');
+    return tokenParam;
+  } catch {
+    return null;
+  }
+}
+
 export default function StudyJoinPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [joinToken, handleJoinToken] = useInputState(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      return token;
-    }
-    return '';
+
+  const [inviteLink, handleInviteLink] = useInputState(() => {
+    if (!searchParams.has('token')) return '';
+
+    const currentUrl = new URL(
+      `${location.pathname}${location.search}${location.hash}`,
+      window.location.origin,
+    ).href;
+    return currentUrl;
   });
 
   const posthog = usePostHog();
@@ -36,8 +50,14 @@ export default function StudyJoinPage() {
       location: 'study_join_page',
     });
 
+    const token = extractInviteToken(inviteLink);
+
+    if (!token) {
+      return;
+    }
+
     joinStudy(
-      { token: joinToken },
+      { token },
       {
         onSuccess: (data) => navigate(`/studies/${data.studyId}`),
       },
@@ -68,8 +88,8 @@ export default function StudyJoinPage() {
             <Input
               id="study-join-link"
               placeholder="chongchong.app/welcome/join/15"
-              value={joinToken}
-              onChange={handleJoinToken}
+              value={inviteLink}
+              onChange={handleInviteLink}
             />
           </Field>
           <Button
@@ -77,7 +97,7 @@ export default function StudyJoinPage() {
             css={{ marginTop: tokens.spacing[5] }}
             variant="brandSolid"
             size="large"
-            disabled={isBlank(joinToken) || isPending}
+            disabled={isBlank(inviteLink) || isPending}
           >
             스터디 참여하기
           </Button>

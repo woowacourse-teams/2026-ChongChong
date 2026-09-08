@@ -14,9 +14,13 @@ import { mockStudies } from '../../mocks/db';
 import { invalidInputResponse } from '../../../../mocks/errors';
 
 const STUDY_JOIN_URL = `${API_URL}${STUDY_URLS.join}`;
+const createInviteLink = (token: string) =>
+  new URL(`${STUDY_URLS.join}?token=${token}`, 'http://localhost').href;
 
 describe('스터디 참가 폼 테스트', () => {
-  afterEach(() => clearAccessToken());
+  afterEach(() => {
+    clearAccessToken();
+  });
 
   test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {
     render(<StudyJoinPage />, { wrapper: createWrapper() });
@@ -56,7 +60,7 @@ describe('스터디 참가 폼 테스트', () => {
     render(<StudyJoinPage />, { wrapper: createWrapper() });
 
     const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
-    await user.type(linkInput, inviteLink);
+    await user.type(linkInput, createInviteLink(inviteLink));
     const button = screen.getByRole('button', { name: '스터디 참여하기' });
     await user.click(button);
 
@@ -81,38 +85,50 @@ describe('스터디 참가 폼 테스트', () => {
     );
 
     const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
-    await user.type(linkInput, inviteLink);
+    await user.type(linkInput, createInviteLink(inviteLink));
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
 
     expect(await screen.findByText('농구 스터디')).toBeInTheDocument();
     expect(await screen.findByText('안톨리니 · 스터디원')).toBeInTheDocument();
   });
 
-  test('쿼리 파라미터로 토큰 값이 존재하지 않으면 스터디 참여 입력은 빈값이다', async () => {
-    render(
-      <Routes>
-        <Route path={STUDY_URLS.join} element={<StudyJoinPage />}></Route>
-      </Routes>,
-      {
-        wrapper: createWrapper({ initialEntries: [STUDY_URLS.join] }),
-      },
-    );
+  test.each([
+    '/studies/join',
+    '/studies/join?lunch=chicken',
+    '/studies/join#token=some-token-exist',
+  ])('쿼리 파라미터로 토큰 값이 존재하지 않으면 스터디 참여 입력은 빈값이다', (path) => {
+    render(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: [path] }),
+    });
+
     const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
     expect(linkInput).toHaveValue('');
   });
 
-  test('쿼리 파라미터로 토큰 값이 존재하면 스터디 참여 입력에 토큰 값이 채워진다', async () => {
-    render(
-      <Routes>
-        <Route path={STUDY_URLS.join} element={<StudyJoinPage />}></Route>
-      </Routes>,
-      {
-        wrapper: createWrapper({ initialEntries: [`${STUDY_URLS.join}?token=some-token-exist`] }),
-      },
-    );
-    const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
-    expect(linkInput).toHaveValue('some-token-exist');
-  });
+  test.each([
+    [
+      '/studies/join?token=some-token-exist',
+      'http://localhost/studies/join?token=some-token-exist',
+    ],
+    [
+      '/studies/join?token=some-token-exist&lunch=chicken',
+      'http://localhost/studies/join?token=some-token-exist&lunch=chicken',
+    ],
+    [
+      '/studies/join?token=hello-world#chongchong',
+      'http://localhost/studies/join?token=hello-world#chongchong',
+    ],
+  ])(
+    '쿼리 파라미터에 토큰 값이 존재하면 스터디 참여 입력에 전체 초대 링크가 채워진다',
+    (path, expectedLink) => {
+      render(<StudyJoinPage />, {
+        wrapper: createWrapper({ initialEntries: [path] }),
+      });
+
+      const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
+      expect(linkInput).toHaveValue(expectedLink);
+    },
+  );
 
   // 에러처리 + Toast UI가 추가된 뒤에 skip을 해제합니다.
   test.skip('이미 참여한 스터디를 참여하려고 하면 에러 메시지를 보여준다', async () => {
@@ -122,7 +138,7 @@ describe('스터디 참가 폼 테스트', () => {
     render(<StudyJoinPage />, { wrapper: createWrapper() });
 
     const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
-    await user.type(linkInput, inviteLink);
+    await user.type(linkInput, createInviteLink(inviteLink));
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('이미 참여한 스터디예요.');
@@ -153,7 +169,7 @@ describe('스터디 참가 폼 테스트', () => {
     render(<StudyJoinPage />, { wrapper: createWrapper() });
 
     const inviteLinkInput = screen.getByRole('textbox', { name: '초대 링크' });
-    await user.type(inviteLinkInput, '우아한테크코스9기');
+    await user.type(inviteLinkInput, createInviteLink('우아한테크코스9기'));
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
     expect(await screen.findByText('토큰값이 문제가 있어요')).toBeInTheDocument();
   });
