@@ -20,7 +20,6 @@ const createInviteLink = (token: string) =>
 describe('스터디 참가 폼 테스트', () => {
   afterEach(() => {
     clearAccessToken();
-    window.history.replaceState({}, '', '/');
   });
 
   test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {
@@ -108,7 +107,6 @@ describe('스터디 참가 폼 테스트', () => {
 
   test('쿼리 파라미터로 토큰 값이 존재하면 스터디 참여 입력에 전체 초대 링크가 채워진다', async () => {
     const inviteLink = createInviteLink('some-token-exist');
-    window.history.replaceState({}, '', inviteLink);
 
     render(
       <Routes>
