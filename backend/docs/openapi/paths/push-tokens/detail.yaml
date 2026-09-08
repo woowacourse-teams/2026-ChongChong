@@ -8,4 +8,5 @@ delete:
     - { $ref: '../../components/parameters.yaml#/InstallationId' }
   responses:
     '204': { description: 푸시 토큰 비활성화 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

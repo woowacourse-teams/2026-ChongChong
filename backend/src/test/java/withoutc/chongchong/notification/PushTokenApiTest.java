@@ -261,6 +261,25 @@ class PushTokenApiTest {
     }
 
     @Test
+    @DisplayName("푸시 토큰 비활성화 요청의 설치 식별자가 255자를 초과하면 요청 파라미터 오류를 반환한다")
+    void rejectTooLongInstallationIdWhenDeactivatingTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+        String tooLongInstallationId = "a".repeat(256);
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/push-tokens/{installationId}", tooLongInstallationId)
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.field", hasItems("installationId"))
+                .body("errors.reason", hasItems("설치된 앱 식별자는 255자 이내여야 합니다."));
+
+        assertThat(pushTokenRepository.count()).isZero();
+    }
+
+    @Test
     @DisplayName("다른 사용자는 푸시 토큰을 비활성화할 수 없다")
     void doNotDeactivateAnotherUsersPushTokenTest() {
         User owner = userRepository.saveAndFlush(User.create("소유자", null));

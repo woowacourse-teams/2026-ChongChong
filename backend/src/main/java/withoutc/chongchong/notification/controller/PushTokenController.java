@@ -1,6 +1,7 @@
 package withoutc.chongchong.notification.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,8 +36,11 @@ public class PushTokenController {
 
     @DeleteMapping("/{installationId}")
     public ResponseEntity<Void> deactivatePushToken(
-            @AuthenticationPrincipal AuthenticatedUser user,
-            @PathVariable String installationId
+            @AuthenticationPrincipal
+            AuthenticatedUser user,
+            @PathVariable
+            @Size(max = 255, message = "설치된 앱 식별자는 255자 이내여야 합니다.")
+            String installationId
     ) {
         pushTokenService.deactivatePushToken(user.id(), installationId);
 
