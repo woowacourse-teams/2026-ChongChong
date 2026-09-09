@@ -1,5 +1,5 @@
 import api from '../../client';
-import { FIELD_ERROR_CODE, getErrorResponse, ValidationError } from '../../shared/api/error';
+import { FIELD_ERROR_CODE, ErrorResponse, ValidationError } from '../../shared/api/error';
 import type { NoticeFormValues, UpdateNoticeValue } from './types';
 import {
   isNoticeListResponse,
@@ -85,7 +85,7 @@ export async function createNotice(studyId: number, values: NoticeFormValues) {
 
     return data;
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
@@ -113,7 +113,7 @@ export async function updateNotice(studyId: number, noticeId: number, values: Up
       json: values,
     });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({

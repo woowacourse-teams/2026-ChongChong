@@ -1,6 +1,6 @@
 import api from '../../client';
 import { AssignmentValue, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
-import { getErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
+import { ErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
 import {
   isAssignmentListResponse,
   isCreateAssignmentResponse,
@@ -147,7 +147,7 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
 
     return data;
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
@@ -175,7 +175,7 @@ export async function updateAssignment(
       json: values,
     });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
