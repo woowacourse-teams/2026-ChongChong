@@ -1,6 +1,11 @@
 post:
   tags: [Auth]
   operationId: login
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      카카오 인가 코드로 로그인한다. Access Token은 JSON, Refresh Token은 HttpOnly 쿠키로 전달한다.
   summary: 소셜 로그인
   security: []
   description: |

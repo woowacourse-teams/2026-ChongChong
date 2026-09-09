@@ -3,6 +3,12 @@ parameters:
 post:
   tags: [Notice]
   operationId: createNotice
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      공지를 생성하고 수신자와 리마인더를 초기화한다.
+      후속 예정: 이미지 첨부(#275), 공지 서비스·권한 책임 분리(#256).
   summary: 공지 생성
   description: 스터디 리더가 공지를 생성한다. 입력·형식·도메인 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다. 리마인드 시각은 현재보다 미래여야 한다.
   security: [{ bearerAuth: [] }]
@@ -25,6 +31,12 @@ post:
 get:
   tags: [Notice]
   operationId: getNotices
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      공지 목록을 커서 방식으로 조회하고 역할별 읽음 현황을 반환한다. 리더 집계와 멤버의 개인 읽음 상태를 구분한다.
+      후속 예정: 가입 전 공지 노출(#277), 서비스·권한 책임 분리(#256).
   summary: 공지 목록 조회
   description: 역할에 맞는 공지 목록을 커서 방식으로 조회한다. 리더 전용 집계 필드는 멤버 응답에서 null이다. 쿼리·형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 수신자 정보 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

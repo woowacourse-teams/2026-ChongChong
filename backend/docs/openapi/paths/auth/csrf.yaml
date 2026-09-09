@@ -1,6 +1,11 @@
 get:
   tags: [Auth]
   operationId: csrf
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      CSRF 토큰을 반환하고 XSRF-TOKEN 쿠키를 발급한다. 웹 인증 요청 전 토큰을 조회한다.
   summary: CSRF 토큰 조회
   description: 웹 인증 요청에 사용할 CSRF 토큰을 조회한다. 응답과 함께 XSRF-TOKEN 쿠키가 발급된다.
   security: []

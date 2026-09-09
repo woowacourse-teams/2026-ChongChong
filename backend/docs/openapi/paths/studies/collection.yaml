@@ -1,6 +1,11 @@
 post:
   tags: [Study]
   operationId: createStudy
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      스터디와 리더 멤버십을 생성한다. 생성·참여 동시 요청에도 사용자별 가입 상한을 적용한다.
   summary: 스터디 생성
   description: 인증된 사용자가 새 스터디를 생성한다. 입력 오류(400), 인증 실패(401), 사용자 없음(404), 가입 스터디 상한 초과(409)를 반환할 수 있다.
   security: [{ bearerAuth: [] }]

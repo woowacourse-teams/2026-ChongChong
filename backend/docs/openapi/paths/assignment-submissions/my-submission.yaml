@@ -1,6 +1,12 @@
 get:
   tags: [Assignment Submission]
   operationId: getMySubmissionDetail
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      현재 사용자의 제출 정보를 조회한다. 미제출 행도 submissionId를 반환하며, 행이 없으면 200 빈 본문이다.
+      후속 예정: 리드 제출 지원(#276).
   summary: 내 과제 제출 조회
   description: 현재 사용자의 제출 정보를 조회한다. 멤버가 아직 제출하지 않았다면 submitted=false인 객체를, 제출 행이 생성되지 않는 스터디 리더에게는 200과 빈 본문을 반환한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

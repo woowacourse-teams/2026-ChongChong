@@ -1,6 +1,11 @@
 delete:
   tags: [Study Member]
   operationId: expel
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      리더가 일반 멤버를 방출한다. 연관 데이터는 DB CASCADE로 삭제한다.
   summary: 스터디 멤버 방출
   description: 리더가 다른 멤버를 방출한다. 경로 오류(400), 인증 실패(401), 접근·리더 권한 없음 또는 리더 방출 시도(403), 멤버 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

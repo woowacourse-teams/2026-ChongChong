@@ -104,3 +104,105 @@ OpenAPI의 표준 nullable JSON과 달리 실제 빈 본문을 반환하는 경�
 반드시 전체 `./gradlew test`를 실행한다.
 따라서 명세의 설명 문장만으로 서버 시간 기록, 권한 판단, 저장 동작 같은 업무 의미가 자동으로 증명되지는 않는다.
 그런 동작을 바꿀 때는 해당 HTTP 시나리오 테스트도 같은 PR에서 수정하거나 추가한다.
+
+## 백엔드 개발 진행 정보
+
+각 operation(`get`, `post` 등)에 `x-backend`를 작성한다. 같은 URL에서도 메서드마다 담당자와 상태가 다를 수 있다.
+
+```yaml
+post:
+  operationId: createStudy
+  summary: 스터디 생성
+  description: 인증된 사용자가 새 스터디를 생성한다.
+  x-backend:
+    status: in-progress
+    owner: frombunny
+    description: |
+      신규 응답 필드를 구현하고 있다.
+      구버전 응답 호환성 테스트가 남아 있다.
+```
+
+위 진행 정보는 작성 예시이며 실제 API 상태를 뜻하지 않는다.
+
+| 필드 | 작성 규칙 |
+| --- | --- |
+| `status` | `null`(미확인), `todo`(대기), `in-progress`(진행 중), `review`(리뷰 중), `done`(완료) |
+| `owner` | `@`를 제외한 GitHub 아이디. 미배정이면 `null`. 진행 중·리뷰 중·완료에는 담당자 필수 |
+| `description` | 현재 작업, 남은 작업, 막힌 이유를 적는 문자열. 전달사항이 없으면 `""`. 여러 줄은 `|` 사용 |
+
+세 필드는 모두 작성하며, 필드 이름 오타나 잘못된 값은 `npm run lint`와 `npm run build`에서 실패한다.
+상태나 담당자를 확인할 근거가 없으면 `status: null`, `owner: null`로 둔다.
+담당자는 관련 구현 이력과 이슈 배정을 확인한 뒤 갱신한다.
+
+- `todo`: 작업 범위가 정해졌고 착수 전이다.
+- `in-progress`: 담당자가 구현 또는 관련 검증을 진행한다.
+- `review`: 구현과 관련 검증을 마치고 코드 리뷰를 기다리거나 받고 있다.
+- `done`: 구현이 병합되었고 관련 검증이 통과했다. 배포 여부를 뜻하지 않는다.
+
+상태는 자동 동기화되지 않는다. 작업 변경 시 명세도 갱신하고, 완료 표시는 병합·검증 결과를 확인한 뒤 반영한다.
+작업이 막혀도 현재 상태를 유지하고 `description`에 원인과 필요한 조치를 적는다.
+기존 전체 operation 매핑·HTTP 호출 검증은 상태와 관계없이 유지한다. 미구현 API를 명세에 추가하면 현재 계약 검증은
+실패하므로, 기획 단계의 API는 이슈에서 관리하고 구현과 함께 명세에 추가한다.
+
+### 2026-09-09 초기 현황 입력 근거
+
+현재 명세의 36개 API는 병합된 구현과 전체 계약 테스트를 기준으로 `done`으로 입력했다.
+기준 코드는 `fb87aa0f03d4ccd077faff7f1e453586a673b2ba`이며, 상태는 **현재 명세의 구현 범위**에 해당한다.
+열린 후속 이슈가 모두 완료되었다는 의미는 아니다. 후속 작업은 개발 설명에 이슈 번호와 함께 별도로 적었다.
+착수 여부는 열린 이슈만으로 판단하지 않았다.
+
+초기 `owner`는 핵심 API 구현 PR 작성자를 기준으로 입력했다. 팀의 공식 유지보수 담당 배정을 뜻하지 않으며,
+향후 실제 작업 담당자가 달라지면 변경한다. 문서화·공통 리팩터링 작성자를 API 담당자로 일괄 지정하지 않는다.
+
+| API 범위 | 초기 담당자 | 구현 근거 |
+| --- | --- | --- |
+| 인증 4개 | `JYL35` | [웹 인증·세션 #112](https://github.com/woowacourse-teams/2026-ChongChong/pull/112), [카카오 연동 #115](https://github.com/woowacourse-teams/2026-ChongChong/pull/115) |
+| 스터디·참여 8개 | `wontop02` | [생성·초대 #49](https://github.com/woowacourse-teams/2026-ChongChong/pull/49), [핵심 API #73](https://github.com/woowacourse-teams/2026-ChongChong/pull/73), [수정 #253](https://github.com/woowacourse-teams/2026-ChongChong/pull/253) |
+| 멤버 목록·방출·탈퇴 3개 | `JYL35` | [멤버 API #167](https://github.com/woowacourse-teams/2026-ChongChong/pull/167) |
+| 공지 8개 | `frombunny` | [CRUD #81](https://github.com/woowacourse-teams/2026-ChongChong/pull/81), [읽음 상태 #107](https://github.com/woowacourse-teams/2026-ChongChong/pull/107) |
+| 과제·제출 11개 | `frombunny` | [CRUD #121](https://github.com/woowacourse-teams/2026-ChongChong/pull/121), [제출·현황 #137](https://github.com/woowacourse-teams/2026-ChongChong/pull/137), [내 제출 #221](https://github.com/woowacourse-teams/2026-ChongChong/pull/221) |
+| 푸시 토큰 2개 | `wontop02` | [등록 #157](https://github.com/woowacourse-teams/2026-ChongChong/pull/157), [재등록·비활성화 #288](https://github.com/woowacourse-teams/2026-ChongChong/pull/288) |
+
+개발 설명에는 API 동작과 남은 작업을 적고, 개인별 기여 이력은 적지 않는다.
+
+후속 작업은 [공지 책임 분리 #256](https://github.com/woowacourse-teams/2026-ChongChong/issues/256),
+[전체 초대 링크 요청 #274](https://github.com/woowacourse-teams/2026-ChongChong/issues/274),
+[이미지·제출 형식 #275](https://github.com/woowacourse-teams/2026-ChongChong/issues/275),
+[리드 제출 #276](https://github.com/woowacourse-teams/2026-ChongChong/issues/276),
+[신규 멤버 노출 #277](https://github.com/woowacourse-teams/2026-ChongChong/issues/277),
+[제출물 공개 #278](https://github.com/woowacourse-teams/2026-ChongChong/issues/278)를 확인했다.
+
+### API 설명과 개발 설명의 구분
+
+- operation의 표준 `description`: API 동작, 호환성 유지 이유, API 사용 시 주의사항. Redoc 상세 문서에 표시한다.
+- 응답 스키마 필드의 표준 `description`: 필드의 의미와 사용 기준. 공유 스키마라면 `components/schemas/`에서 작성한다.
+- `x-backend.description`: 개발 진행을 위한 메모. 보드에서 일반 텍스트로 표시하며 Markdown·HTML은 렌더링하지 않는다.
+
+다음은 구버전 호환을 위한 가상의 필드 설명 예시다. 실제 API에서 확인되지 않은 호환성 정책을 복사하지 않는다.
+
+```yaml
+properties:
+  memberName:
+    type: string
+    deprecated: true
+    description: |
+      구버전 클라이언트 호환용 이름이다.
+      신규 개발에서는 member.name을 사용한다.
+      제거 일정은 아직 정해지지 않았다.
+```
+
+`deprecated: true`는 제공 중이지만 신규 사용을 권장하지 않는다는 의미다. 대체하기로 결정한 필드에만 표시한다.
+두 필드의 관계와 제거 조건은 확인된 정책에 따라 API 전체 `description`에도 적는다.
+
+### 보드 생성과 확인
+
+`npm run build`는 최신 명세를 JSON으로 번들하고 메타데이터를 검증한 뒤 `dist/index.html`과
+`dist/board.html`, `dist/board.css`를 생성한다. 추가 런타임 서버나 의존성은 없다.
+기존 문서 빌드·Pages 업로드 흐름에서 보드도 함께 생성되며 `dist/`는 직접 수정하거나 커밋하지 않는다.
+
+로컬 미리 보기 서버에서 `/board.html`을 열거나 API 문서 소개의 **백엔드 개발 보드** 링크를 선택한다.
+메서드·이름·URI·상태·담당자를 열별로 비교하고, 개발 설명은 표에서 바로 읽는다.
+API 이름을 선택하면 `operationId`에 해당하는 상세 문서로 이동한다. 좁은 화면에서는 API별 카드로 재배치하여 상태·담당자·개발 설명을 함께 확인한다.
+JavaScript를 사용할 수 없어도 전체 API 표와 상세 링크는 제공된다.
+
+보드는 생성 시점의 명세 정보를 보여준다. 기존 배포 설정에서는 API 문서와 보드가 함께 공개될 수 있다.

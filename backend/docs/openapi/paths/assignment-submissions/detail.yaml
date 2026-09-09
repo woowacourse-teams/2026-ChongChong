@@ -5,6 +5,12 @@ parameters:
 get:
   tags: [Assignment Submission]
   operationId: getSubmissionDetail
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      제출물 상세를 조회하며 제출자·리더의 접근 권한을 검증한다.
+      후속 예정: 공개 과제의 다른 제출자 조회(#278), 리드 제출 지원(#276).
   summary: 과제 제출 상세 조회
   description: 스터디 리더가 제출물 상세를 조회한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -22,6 +28,12 @@ get:
 patch:
   tags: [Assignment Submission]
   operationId: updateSubmission
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      본인 제출물을 수정하며 과제와 제출물의 소속을 검증한다.
+      후속 예정: 이미지·파일 제출 검증(#275), 리드 제출 수정 지원(#276).
   summary: 과제 제출 수정
   description: 현재 사용자가 자신의 제출 내용을 수정한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

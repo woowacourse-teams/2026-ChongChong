@@ -5,6 +5,8 @@ info:
   description: |
     총총 서비스의 사전 설계 API 계약이다. 이 파일과 `paths/`, `components/`의 YAML 파일이 명세의 원본이며,
     구현 코드와 분리해 관리한다. 모든 응답 객체는 명시된 필드 외의 추가 필드를 허용하지 않는다.
+
+    [백엔드 개발 보드](board.html)에서 API별 진행 상태, 담당자와 개발 설명을 확인할 수 있다.
 servers:
   - url: /
 tags:

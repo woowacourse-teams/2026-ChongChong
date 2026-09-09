@@ -1,6 +1,12 @@
 patch:
   tags: [Notice]
   operationId: readNotice
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      공지를 읽음 처리하고 최초 읽은 시각을 서버에서 기록한다. 다시 요청해도 최초 시각을 유지한다.
+      후속 예정: 신규 스터디원의 기존 공지 읽음 정책(#277), 권한 책임 분리(#256).
   summary: 공지 읽음 처리
   description: |
     요청 본문 없이 현재 사용자의 공지를 읽음 처리하며, 시간은 서버에서 기록한다.
