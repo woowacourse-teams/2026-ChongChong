@@ -1,15 +1,13 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import useStudyId from '../../study/hooks/useStudyId';
-import studyQueries from '../../study/queries';
 import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import MemberList from './MemberList';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import InviteLinkBox from './InviteLinkBox';
+import InviteStudyLinkBox, { InviteStudyLinkBoxFallback } from './InviteStudyLinkBox';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
 import useDeleteStudy from '../../study/hooks/useDeleteStudy';
 import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
@@ -23,10 +21,6 @@ const actionButtonStyle = {
 function LeaderContent() {
   const { studyId } = useStudyId();
   const navigate = useNavigate();
-
-  const {
-    data: { inviteLink },
-  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
 
   const { dialogRef, open, close } = useDialogControl();
 
@@ -60,7 +54,15 @@ function LeaderContent() {
         >
           <MemberList.Leader />
         </ErrorBoundary>
-        <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <InviteStudyLinkBoxFallback
+              message={getErrorMessage(error) ?? '스터디 참여 링크를 가져오지 못했습니다.'}
+            />
+          )}
+        >
+          <InviteStudyLinkBox studyId={studyId} />
+        </ErrorBoundary>
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
         스터디 삭제하기
@@ -82,10 +84,6 @@ function LeaderContent() {
 
 function MemberContent() {
   const { studyId } = useStudyId();
-
-  const {
-    data: { inviteLink },
-  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
 
   const navigate = useNavigate();
 
@@ -121,7 +119,15 @@ function MemberContent() {
         >
           <MemberList.Member />
         </ErrorBoundary>
-        <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <InviteStudyLinkBoxFallback
+              message={getErrorMessage(error) ?? '스터디 참여 링크를 가져오지 못했습니다.'}
+            />
+          )}
+        >
+          <InviteStudyLinkBox studyId={studyId} />
+        </ErrorBoundary>
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
         스터디 탈퇴하기

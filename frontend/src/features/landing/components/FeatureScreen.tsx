@@ -21,7 +21,7 @@ import { formatDateToString } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
-import InviteLinkBox from '../../member/components/InviteLinkBox';
+import { InviteLinkBox } from '../../member/components/InviteStudyLinkBox';
 import MemberRow from '../../member/components/MemberRow';
 import {
   MemberActiveAssignmentCard,
