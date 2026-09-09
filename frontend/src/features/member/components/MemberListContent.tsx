@@ -14,6 +14,8 @@ import useDialogControl from '../../../shared/hooks/useDialogControl';
 import useDeleteStudy from '../../study/hooks/useDeleteStudy';
 import useKickStudyMember from '../hooks/useKickMember';
 import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 const listStyle = {
   marginBottom: tokens.spacing[6],
@@ -44,11 +46,17 @@ function LeaderContent() {
 
   const { mutate: deleteStudy, isPending } = useDeleteStudy();
 
+  const toast = useToast();
+
   function handleDeleteStudy() {
     deleteStudy(
       { studyId },
       {
         onSuccess: () => navigate('/studies'),
+        onError: (error) => {
+          close();
+          toast.open(<StatusToast message={error.message} status={'Error'} />);
+        },
       },
     );
   }

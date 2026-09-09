@@ -146,7 +146,16 @@ export async function joinStudy(body: { token: string }) {
 export async function removeStudy(studyId: number) {
   try {
     await api.delete(`/studies/${studyId}`);
-  } catch {
-    throw new Error('스터디를 삭제하는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+    throw new Error('스터디를 삭제하는데 실패했습니다.', { cause: error });
   }
 }

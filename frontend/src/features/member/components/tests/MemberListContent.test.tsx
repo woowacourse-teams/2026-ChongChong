@@ -77,7 +77,7 @@ describe('스터디 리드 화면 테스트', () => {
     await waitFor(() => expect(screen.queryByText('안톨리니')).not.toBeInTheDocument());
   });
 
-  test('스터디를 삭제하면 스터디 리스트 페이지로 이동한다.', async () => {
+  test('스터디를 삭제하면 스터디 리스트 페이지로 이동한다', async () => {
     const user = userEvent.setup();
     renderMemberListContent(<MemberListContent.Leader />);
 
@@ -85,6 +85,48 @@ describe('스터디 리드 화면 테스트', () => {
     await user.click(screen.getByRole('button', { name: '삭제' }));
 
     expect(await screen.findByText('내 스터디')).toBeInTheDocument();
+  });
+
+  test('스터디 삭제 요청이 404로 실패하면 Toast를 표시하고 다이얼로그를 닫는다', async () => {
+    server.use(
+      http.delete(`${API_URL}${STUDY_URLS.remove}`, () =>
+        HttpResponse.json(
+          {
+            code: 'STUDY_NOT_FOUND',
+            message: '존재하지 않는 스터디입니다.',
+          },
+          { status: 404 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderMemberListContent(<MemberListContent.Leader />);
+
+    await user.click(await screen.findByRole('button', { name: '스터디 삭제하기' }));
+    const dialog = screen.getByRole('alertdialog', { name: '스터디를 삭제할까요?' });
+    expect(dialog).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('존재하지 않는 스터디입니다.');
+    expect(toast).toBeVisible();
+    expect(dialog).not.toBeVisible();
+  });
+
+  test('스터디 삭제 중 네트워크 오류가 발생하면 기본 Toast를 표시하고 다이얼로그를 닫는다', async () => {
+    server.use(http.delete(`${API_URL}${STUDY_URLS.remove}`, () => HttpResponse.error()));
+    const user = userEvent.setup();
+    renderMemberListContent(<MemberListContent.Leader />);
+
+    await user.click(await screen.findByRole('button', { name: '스터디 삭제하기' }));
+    const dialog = screen.getByRole('alertdialog', { name: '스터디를 삭제할까요?' });
+    expect(dialog).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('스터디를 삭제하는데 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(dialog).not.toBeVisible();
   });
 });
 
