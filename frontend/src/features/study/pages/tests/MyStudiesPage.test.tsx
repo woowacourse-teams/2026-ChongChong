@@ -31,40 +31,42 @@ const studies: Study[] = [
 
 const STUDIES_URL = `${API_URL}${STUDY_URLS.list}`;
 
-test('응답으로 받은 스터디들을 렌더링 한다', async () => {
-  mockResponse(STUDIES_URL, studies);
+describe('스터디 목록 페이지 테스트', () => {
+  test('응답으로 받은 스터디들을 렌더링 한다', async () => {
+    mockResponse(STUDIES_URL, studies);
 
-  render(<MyStudiesPage />, { wrapper: createWrapper() });
+    render(<MyStudiesPage />, { wrapper: createWrapper() });
 
-  expect(await screen.findAllByRole('listitem')).toHaveLength(studies.length);
+    expect(await screen.findAllByRole('listitem')).toHaveLength(studies.length);
 
-  expect(screen.getByText('점심메뉴 스터디')).toBeInTheDocument();
-  expect(screen.getByText('저녁메뉴 스터디')).toBeInTheDocument();
-});
+    expect(screen.getByText('점심메뉴 스터디')).toBeInTheDocument();
+    expect(screen.getByText('저녁메뉴 스터디')).toBeInTheDocument();
+  });
 
-test('스터디 역할에 따라 다른 뱃지를 렌더링 한다', async () => {
-  mockResponse(STUDIES_URL, studies);
+  test('스터디 역할에 따라 다른 뱃지를 렌더링 한다', async () => {
+    mockResponse(STUDIES_URL, studies);
 
-  render(<MyStudiesPage />, { wrapper: createWrapper() });
+    render(<MyStudiesPage />, { wrapper: createWrapper() });
 
-  expect(await screen.findByText('스터디 리드')).toBeInTheDocument();
-  expect(screen.getByText('스터디원')).toBeInTheDocument();
-});
+    expect(await screen.findByText('스터디 리드')).toBeInTheDocument();
+    expect(screen.getByText('스터디원')).toBeInTheDocument();
+  });
 
-test('스터디 목록 요청이 실패하면 에러 메시지가 렌더링 한다', async () => {
-  jest.spyOn(console, 'error').mockImplementation(() => {});
-  server.use(http.get(STUDIES_URL, () => HttpResponse.error()));
+  test('스터디 목록 요청이 실패하면 에러 메시지가 렌더링 한다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(http.get(STUDIES_URL, () => HttpResponse.error()));
 
-  render(<MyStudiesPage />, { wrapper: createWrapper() });
+    render(<MyStudiesPage />, { wrapper: createWrapper() });
 
-  expect(await screen.findByText('스터디 목록을 불러오는데 실패했습니다.')).toBeInTheDocument();
-});
+    expect(await screen.findByText('스터디 목록을 불러오는데 실패했습니다.')).toBeInTheDocument();
+  });
 
-test('참여 중인 스터디가 없으면 비어있는 상태를 렌더링 한다', async () => {
-  mockResponse(STUDIES_URL, []);
+  test('참여 중인 스터디가 없으면 비어있는 상태를 렌더링 한다', async () => {
+    mockResponse(STUDIES_URL, []);
 
-  render(<MyStudiesPage />, { wrapper: createWrapper() });
+    render(<MyStudiesPage />, { wrapper: createWrapper() });
 
-  expect(await screen.findByRole('heading', { name: '내 스터디' })).toBeInTheDocument();
-  expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+    expect(await screen.findByRole('heading', { name: '내 스터디' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+  });
 });
