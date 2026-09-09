@@ -1,5 +1,5 @@
 import api from '../../client';
-import { getErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
+import { ErrorResponse, ValidationError, FIELD_ERROR_CODE, ApiError } from '../../shared/api/error';
 import { STUDY_URLS } from './urls';
 import type { Role } from './types';
 import {
@@ -9,6 +9,7 @@ import {
   isStudyInfoResponse,
   isStudyResponse,
 } from './responseSchemas';
+import { HTTPError } from 'ky';
 
 export async function fetchStudies() {
   try {
@@ -54,7 +55,7 @@ export async function createStudy(body: {
 
     return data;
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
@@ -63,6 +64,15 @@ export async function createStudy(body: {
         options: {
           cause: error,
         },
+      });
+    }
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
       });
     }
 
@@ -108,7 +118,7 @@ export async function joinStudy(body: { token: string }) {
     const response = await api.post(STUDY_URLS.join, { json: body });
     return await response.json<{ studyId: number }>();
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
@@ -117,6 +127,15 @@ export async function joinStudy(body: { token: string }) {
         options: {
           cause: error,
         },
+      });
+    }
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
       });
     }
 
