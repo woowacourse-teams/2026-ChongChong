@@ -92,9 +92,19 @@ export async function fetchStudyInfo(studyId: number) {
     }
 
     return data;
-  } catch {
-    // TODO: 에러코드별로 에러 분기가 필요합니다.
-    throw new Error('스터디 정보를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('스터디 정보를 불러오는데 실패했습니다.', { cause: error });
   }
 }
 

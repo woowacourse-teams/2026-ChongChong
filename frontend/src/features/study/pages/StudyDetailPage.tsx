@@ -1,26 +1,52 @@
-import { useParams } from 'react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import studyQueries from '../queries';
 import Main from '../../../shared/ui/Main';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import TopHeader from '../../../shared/ui/TopHeader';
+import useStudyId from '../hooks/useStudyId';
+import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import Page from '../../../shared/ui/Page';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import {
   LeaderStudyDetailContent,
   MemberStudyDetailContent,
 } from '../components/StudyDetailContent';
+import ErrorContent from '../../../shared/ui/ErrorContent';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
 
 export default function StudyDetailPage() {
-  const { studyId } = useParams();
-  const {
-    data: { studyName, role, userName },
-  } = useSuspenseQuery(studyQueries.info(Number(studyId)));
-
   return (
     <Page>
+      <ErrorBoundary
+        fallbackRender={({ error }) => (
+          <>
+            <TopHeader left={<PrevButton />} />
+            <Main>
+              <ErrorContent
+                message={getErrorMessage(error) ?? '스터디 정보를 불러오는데 실패했습니다.'}
+              />
+            </Main>
+          </>
+        )}
+      >
+        <Suspense fallback={<Loading />}>
+          <StudyDetailScreen />
+        </Suspense>
+      </ErrorBoundary>
+      <BottomTab />
+    </Page>
+  );
+}
+
+function StudyDetailScreen() {
+  const { studyId } = useStudyId();
+  const {
+    data: { studyName, role, userName },
+  } = useSuspenseQuery(studyQueries.info(studyId));
+
+  return (
+    <>
       <TopHeader
         left={<PrevButton />}
         middle={
@@ -33,15 +59,12 @@ export default function StudyDetailPage() {
         }
       />
       <Main>
-        <Suspense fallback={<Loading />}>
-          {role === 'LEADER' ? (
-            <LeaderStudyDetailContent username={userName} />
-          ) : (
-            <MemberStudyDetailContent username={userName} />
-          )}
-        </Suspense>
+        {role === 'LEADER' ? (
+          <LeaderStudyDetailContent username={userName} />
+        ) : (
+          <MemberStudyDetailContent username={userName} />
+        )}
       </Main>
-      <BottomTab />
-    </Page>
+    </>
   );
 }
