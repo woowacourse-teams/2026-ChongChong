@@ -1,25 +1,20 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import { useSuspenseQueries } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import useStudyId from '../../study/hooks/useStudyId';
-import { memberQueries } from '../queries';
 import studyQueries from '../../study/queries';
 import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
-import List from '../../../shared/ui/List';
-import MemberRow from './MemberRow';
+import ErrorContent from '../../../shared/ui/ErrorContent';
+import MemberList from './MemberList';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteLinkBox from './InviteLinkBox';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
 import useDeleteStudy from '../../study/hooks/useDeleteStudy';
-import useKickStudyMember from '../hooks/useKickMember';
 import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
-
-const listStyle = {
-  marginBottom: tokens.spacing[6],
-} satisfies CSSProperties;
 
 const actionButtonStyle = {
   margin: `${tokens.spacing[5]} 0`,
@@ -29,18 +24,9 @@ function LeaderContent() {
   const { studyId } = useStudyId();
   const navigate = useNavigate();
 
-  const [
-    {
-      data: { members },
-    },
-    {
-      data: { inviteLink },
-    },
-  ] = useSuspenseQueries({
-    queries: [memberQueries.list(studyId), studyQueries.inviteLink(studyId)],
-  });
-
-  const { mutate: kickStudyMember } = useKickStudyMember();
+  const {
+    data: { inviteLink },
+  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
 
   const { dialogRef, open, close } = useDialogControl();
 
@@ -65,18 +51,15 @@ function LeaderContent() {
     <>
       <section>
         <h2 css={typography.subtitle}>스터디 멤버</h2>
-        <List css={listStyle}>
-          {members.map((member) => (
-            <List.Item key={member.id}>
-              <MemberRow.Leader
-                data-testid="member-row"
-                name={member.name}
-                role={member.role}
-                onKick={() => kickStudyMember({ studyId, memberId: member.id })}
-              />
-            </List.Item>
-          ))}
-        </List>
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <ErrorContent
+              message={getErrorMessage(error) ?? '멤버 목록을 불러오는데 실패했습니다.'}
+            />
+          )}
+        >
+          <MemberList.Leader />
+        </ErrorBoundary>
         <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
       </section>
       <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
@@ -100,47 +83,60 @@ function LeaderContent() {
 function MemberContent() {
   const { studyId } = useStudyId();
 
-  const [
-    {
-      data: { members },
-    },
-    {
-      data: { inviteLink },
-    },
-  ] = useSuspenseQueries({
-    queries: [memberQueries.list(studyId), studyQueries.inviteLink(studyId)],
-  });
+  const {
+    data: { inviteLink },
+  } = useSuspenseQuery(studyQueries.inviteLink(studyId));
 
   const navigate = useNavigate();
 
-  const { mutate: leaveStudyMember } = useLeaveStudyMember();
+  const { dialogRef, open, close } = useDialogControl();
+
+  const { mutate: leaveStudyMember, isPending } = useLeaveStudyMember();
+
+  const toast = useToast();
 
   function handleLeaveStudyMember() {
-    leaveStudyMember({ studyId });
-    navigate('/studies');
+    leaveStudyMember(
+      { studyId },
+      {
+        onSuccess: () => navigate('/studies'),
+        onError: (error) => {
+          close();
+          toast.open(<StatusToast message={error.message} status="Error" />);
+        },
+      },
+    );
   }
 
   return (
     <>
       <section>
         <h2 css={typography.subtitle}>스터디 멤버</h2>
-        <List css={listStyle}>
-          {members.map((member) => (
-            <List.Item key={member.id}>
-              <MemberRow.Member data-testid="member-row" name={member.name} role={member.role} />
-            </List.Item>
-          ))}
-        </List>
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <ErrorContent
+              message={getErrorMessage(error) ?? '멤버 목록을 불러오는데 실패했습니다.'}
+            />
+          )}
+        >
+          <MemberList.Member />
+        </ErrorBoundary>
         <InviteLinkBox title={'링크를 통해 새로운 스터디원을 초대해요'} inviteLink={inviteLink} />
       </section>
-      <Button
-        variant="criticalSolid"
-        size="large"
-        css={actionButtonStyle}
-        onClick={handleLeaveStudyMember}
-      >
+      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
         스터디 탈퇴하기
       </Button>
+      <ConfirmDialog
+        ref={dialogRef}
+        title={'스터디를 탈퇴하시겠습니까?'}
+        description={'스터디를 탈퇴하면 이전 스터디 활동 기록이 전부 사라져요'}
+        closeButton={<ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>}
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={handleLeaveStudyMember} disabled={isPending}>
+            탈퇴
+          </ConfirmDialog.ConfirmButton>
+        }
+      />
     </>
   );
 }

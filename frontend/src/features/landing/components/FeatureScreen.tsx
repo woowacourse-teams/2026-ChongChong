@@ -173,7 +173,14 @@ function InviteScreen() {
           <List css={{ marginBottom: tokens.spacing[6] }}>
             {['서연', '지우', '민준', '하은'].map((name, index) => (
               <List.Item key={name}>
-                <MemberRow.Member name={name} role={index === 0 ? 'LEADER' : 'MEMBER'} />
+                <MemberRow.Member
+                  member={{
+                    id: index + 1,
+                    name,
+                    profileImage: null,
+                    role: index === 0 ? 'LEADER' : 'MEMBER',
+                  }}
+                />
               </List.Item>
             ))}
           </List>
