@@ -56,6 +56,7 @@ cd backend
 ```text
 fe/*      ─┐
 be/*      ─┼→ dev → prod
+app/*     ─┤
 common/*  ─┘
 ```
 
