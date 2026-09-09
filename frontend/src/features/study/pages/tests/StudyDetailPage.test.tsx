@@ -43,7 +43,7 @@ describe('스터디 리드', () => {
   test('스터디 리드일 경우 헤더에 리드로 렌더링 한다', async () => {
     renderStudyDetailPage();
 
-    expect(await screen.findByText('안톨리니 · 리드')).toBeInTheDocument();
+    expect(await screen.findByText('안톨리니 · 리드')).toBeVisible();
     expect(screen.getByRole('navigation')).toBeVisible();
   });
 });
@@ -56,7 +56,7 @@ describe('스터디원', () => {
   test('스터디원일 경우 헤더에 스터디원으로 렌더링 한다', async () => {
     renderStudyDetailPage();
 
-    expect(await screen.findByText('안톨리니 · 스터디원')).toBeInTheDocument();
+    expect(await screen.findByText('안톨리니 · 스터디원')).toBeVisible();
     expect(screen.getByRole('navigation')).toBeVisible();
   });
 });
@@ -127,4 +127,60 @@ describe('기본 정보 조회 실패', () => {
     expect(screen.getByRole('navigation')).toBeVisible();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
+});
+
+describe('상세 조회 실패', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  test.each([
+    { role: 'LEADER', roleName: '리드' },
+    { role: 'MEMBER', roleName: '스터디원' },
+  ] as const)(
+    '$roleName 상세 조회에 실패하면 본문에 오류를 표시하고 헤더와 하단 탭을 유지한다',
+    async ({ role, roleName }) => {
+      mockStudyResponses(role);
+      server.use(http.get(STUDY_DETAIL_URL, () => HttpResponse.error()));
+      renderStudyDetailPage();
+
+      expect(await screen.findByText('스터디 정보를 불러오는데 실패했습니다.')).toBeVisible();
+
+      const header = screen.getByRole('banner');
+      expect(within(header).getByRole('heading', { name: '객체지향 스터디' })).toBeVisible();
+      expect(within(header).getByText(`안톨리니 · ${roleName}`)).toBeVisible();
+      expect(within(header).getByRole('button', { name: '뒤로 가기' })).toBeVisible();
+      expect(screen.getByRole('navigation')).toBeVisible();
+    },
+  );
+
+  test.each([
+    { role: 'LEADER', roleName: '리드' },
+    { role: 'MEMBER', roleName: '스터디원' },
+  ] as const)(
+    '$roleName 이 현재 멤버가 아닐경우 본문에 오류를 표시하고 헤더와 하단 탭을 유지한다',
+    async ({ role, roleName }) => {
+      mockStudyResponses(role);
+      server.use(
+        http.get(STUDY_DETAIL_URL, () => {
+          return HttpResponse.json(
+            {
+              code: 'STUDY_ACCESS_DENIED',
+              message: '해당 스터디에 대한 접근 권한이 없습니다.',
+            },
+            { status: 403 },
+          );
+        }),
+      );
+      renderStudyDetailPage();
+
+      expect(await screen.findByText('해당 스터디에 대한 접근 권한이 없습니다.')).toBeVisible();
+
+      const header = screen.getByRole('banner');
+      expect(within(header).getByRole('heading', { name: '객체지향 스터디' })).toBeVisible();
+      expect(within(header).getByText(`안톨리니 · ${roleName}`)).toBeVisible();
+      expect(within(header).getByRole('button', { name: '뒤로 가기' })).toBeVisible();
+      expect(screen.getByRole('navigation')).toBeVisible();
+    },
+  );
 });

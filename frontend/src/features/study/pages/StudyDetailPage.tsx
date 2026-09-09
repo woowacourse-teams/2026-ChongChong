@@ -59,11 +59,19 @@ function StudyDetailScreen() {
         }
       />
       <Main>
-        {role === 'LEADER' ? (
-          <LeaderStudyDetailContent username={userName} />
-        ) : (
-          <MemberStudyDetailContent username={userName} />
-        )}
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <ErrorContent
+              message={getErrorMessage(error) ?? '스터디 정보를 불러오는데 실패했습니다.'}
+            />
+          )}
+        >
+          {role === 'LEADER' ? (
+            <LeaderStudyDetailContent username={userName} />
+          ) : (
+            <MemberStudyDetailContent username={userName} />
+          )}
+        </ErrorBoundary>
       </Main>
     </>
   );
