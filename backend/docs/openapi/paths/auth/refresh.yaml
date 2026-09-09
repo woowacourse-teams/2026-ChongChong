@@ -1,6 +1,11 @@
 post:
   tags: [Auth]
   operationId: refresh
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      Refresh Token을 갱신하고 이전 토큰의 재사용을 차단한다. 쿠키와 CSRF 헤더를 함께 전송한다.
   summary: 액세스 토큰 갱신
   security: []
   description: Refresh Token 쿠키를 회전시키고 새 액세스 토큰을 발급한다. 요청 형식 오류(400), 유효하지 않은 Refresh Token(401), CSRF 불일치(403)를 반환할 수 있다.

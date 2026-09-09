@@ -1,6 +1,12 @@
 get:
   tags: [Notice]
   operationId: getAllReadStatuses
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      리더가 읽음·미읽음 구성원과 최근 리마인드 시각을 조회한다.
+      후속 예정: 공지·읽음 상태 책임 및 인가 규칙 분리(#256).
   summary: 공지 읽음 현황 조회
   description: 스터디 리더가 전체 멤버의 읽음 현황을 조회한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

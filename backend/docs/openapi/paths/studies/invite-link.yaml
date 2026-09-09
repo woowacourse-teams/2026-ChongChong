@@ -1,6 +1,12 @@
 get:
   tags: [Study]
   operationId: getInviteLink
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      서명된 초대 토큰이 포함된 /studies/join 링크를 생성한다.
+      후속 예정: 전체 링크를 받는 참여 요청(#274)에서도 링크 생성 계약은 유지한다.
   summary: 스터디 초대 링크 조회
   description: 유효한 스터디 멤버가 참여용 초대 링크를 조회한다. 경로 오류(400), 인증 실패(401), 접근 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

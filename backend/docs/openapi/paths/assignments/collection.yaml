@@ -3,6 +3,12 @@ parameters:
 post:
   tags: [Assignment]
   operationId: createAssignment
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      과제를 생성하고 일반 멤버의 제출 행과 리마인더를 초기화한다.
+      후속 예정: 이미지·제출 형식(#275), 리드 제출 대상 포함(#276), 제출물 공개 설정(#278).
   summary: 과제 생성
   description: 스터디 리더가 과제를 생성한다. 입력·형식 및 제목·내용·제출 방법·마감·리마인드 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -25,6 +31,12 @@ post:
 get:
   tags: [Assignment]
   operationId: getAssignments
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      과제 목록을 커서 방식으로 조회하고 역할별 제출 상태 집계를 반환한다. 제출 방법 필드명은 submissionMethod이다.
+      후속 예정: 가입 전 과제 노출과 제출 대상 분리(#277).
   summary: 과제 목록 조회
   description: 역할에 맞는 과제 목록을 커서 방식으로 조회한다. 리더 전용 집계 필드는 멤버 응답에서 null이다. 쿼리·형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 제출 정보 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

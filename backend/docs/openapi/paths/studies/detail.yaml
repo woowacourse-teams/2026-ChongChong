@@ -3,6 +3,12 @@ parameters:
 get:
   tags: [Study]
   operationId: getStudyDetail
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      역할에 맞는 스터디 상세 정보와 공지·과제 상태 집계를 반환한다. 대상자 수는 각 항목 생성 당시 기준이다.
+      후속 예정: 신규 스터디원의 기존 공지·과제 노출 정책(#277).
   summary: 스터디 상세 조회
   description: 사용자의 역할에 맞는 스터디 상세를 조회한다. 리더는 전체 현황을, 멤버는 미확인·미제출 항목을 받는다. 경로 오류(400), 인증 실패(401), 접근 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -25,6 +31,11 @@ get:
 patch:
   tags: [Study]
   operationId: updateStudy
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      리더가 스터디 이름과 설명을 수정하며 입력값의 제약 조건을 검증한다. 응답은 본문 없는 204이다.
   summary: 스터디 수정
   description: 스터디 리더가 이름과 설명을 부분 수정한다. 입력·경로 오류(400), 인증 실패(401), 접근 또는 리더 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -43,6 +54,11 @@ patch:
 delete:
   tags: [Study]
   operationId: deleteStudy
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      리더가 스터디를 삭제한다. 스터디 소속과 삭제 권한을 검증한다.
   summary: 스터디 삭제
   description: 스터디 리더가 스터디와 종속 데이터를 삭제한다. 경로 오류(400), 인증 실패(401), 접근 또는 리더 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

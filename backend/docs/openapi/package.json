@@ -6,10 +6,12 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "test": "node --test scripts/render-client-only.test.mjs",
-    "lint": "redocly lint openapi.yaml --config redocly.yaml",
+    "test": "node --test scripts/*.test.mjs",
+    "lint": "redocly lint openapi.yaml --config redocly.yaml && npm run check:backend",
     "bundle": "redocly bundle openapi.yaml --config redocly.yaml --output dist/openapi.yaml",
-    "build": "redocly build-docs openapi.yaml --config redocly.yaml --output dist/index.html && node scripts/render-client-only.mjs dist/index.html"
+    "build": "npm run check:backend && redocly build-docs openapi.yaml --config redocly.yaml --output dist/index.html && node scripts/render-client-only.mjs dist/index.html && node scripts/build-backend-board.mjs dist/openapi.json dist/board.html",
+    "bundle:json": "redocly bundle openapi.yaml --config redocly.yaml --output dist/openapi.json",
+    "check:backend": "npm run bundle:json && node scripts/check-backend.mjs dist/openapi.json"
   },
   "devDependencies": {
     "@redocly/cli": "2.51.2"

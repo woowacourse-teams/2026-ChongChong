@@ -1,6 +1,11 @@
 delete:
   tags: [Study Member]
   operationId: leave
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      일반 멤버가 스터디에서 탈퇴한다. 리더는 탈퇴할 수 없으며 연관 데이터는 DB CASCADE로 삭제한다.
   summary: 스터디 탈퇴
   description: 현재 멤버가 스터디에서 탈퇴한다. 경로 오류(400), 인증 실패(401), 접근 권한 없음 또는 리더의 탈퇴 시도(403)를 반환할 수 있다.
   security: [{ bearerAuth: [] }]

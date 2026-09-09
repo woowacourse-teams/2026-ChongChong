@@ -4,6 +4,12 @@ parameters:
 get:
   tags: [Notice]
   operationId: getNoticeDetail
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      공지 상세를 조회하며 스터디 소속을 검증한다.
+      후속 예정: 이미지 첨부 정보(#275), 신규 스터디원 노출 정책(#277), 권한 책임 분리(#256).
   summary: 공지 상세 조회
   description: 스터디 공지의 상세 내용을 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -26,6 +32,12 @@ get:
 patch:
   tags: [Notice]
   operationId: updateNotice
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      공지를 부분 수정하고 대기 중인 리마인더를 교체한다. 이미 발송된 기록은 유지한다.
+      후속 예정: 이미지 첨부 계약(#275), 서비스·권한 책임 분리(#256).
   summary: 공지 수정
   description: 스터디 리더가 공지를 부분 수정한다. 입력·형식·도메인 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -44,6 +56,12 @@ patch:
 delete:
   tags: [Notice]
   operationId: deleteNotice
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      리더가 공지를 삭제하면 연관 데이터도 정리한다.
+      후속 예정: 기존 계약을 유지하는 서비스·권한 책임 분리(#256).
   summary: 공지 삭제
   description: 스터디 리더가 공지를 삭제한다. 형식 오류(400), 인증 실패(401), 접근·삭제 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

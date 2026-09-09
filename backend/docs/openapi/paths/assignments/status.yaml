@@ -1,6 +1,12 @@
 get:
   tags: [Assignment]
   operationId: getAssignmentSubmissionStatus
+  x-backend:
+    status: done
+    owner: frombunny
+    description: |
+      리더가 제출·미제출 현황과 최근 리마인드 시각을 조회한다.
+      후속 예정: 리드 제출 현황 반영(#276), 신규 멤버의 가입 전 과제 집계 제외(#277).
   summary: 과제 제출 현황 조회
   description: 스터디 리더가 전체 멤버의 제출 현황을 조회한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

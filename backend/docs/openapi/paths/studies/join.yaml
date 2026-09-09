@@ -1,6 +1,12 @@
 post:
   tags: [Study Member]
   operationId: join
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      초대 토큰으로 스터디에 참여하고 studyId를 반환한다. 동시 요청에도 정원과 사용자별 가입 상한을 검증한다.
+      후속 예정: token 대신 전체 inviteLink를 받는 요청 계약(#274). 현재는 token 요청을 사용한다.
   summary: 스터디 참여
   description: 초대 토큰으로 스터디에 참여한다. 입력·초대 토큰 오류(400), 인증 실패(401), 사용자·스터디 없음(404), 이미 참여·정원·가입 상한 충돌(409)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
