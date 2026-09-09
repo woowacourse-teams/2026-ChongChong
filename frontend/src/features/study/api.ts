@@ -21,8 +21,8 @@ export async function fetchStudies() {
     }
 
     return data;
-  } catch {
-    throw new Error('스터디 목록을 불러오는데 실패했습니다.');
+  } catch (error) {
+    throw new Error('스터디 목록을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
