@@ -1,11 +1,11 @@
 import LeaderNoticeListPage from './LeaderNoticeListPage';
 import MemberNoticeListPage from './MemberNoticeListPage';
 import studyQueries from '../../study/queries';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 export default function NoticeListPage() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { role, studyName, userName },
   } = useSuspenseQuery(studyQueries.info(studyId));

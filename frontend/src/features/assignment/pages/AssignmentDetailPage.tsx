@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import LeaderAssignmentDetailContent from '../components/LeaderAssignmentDetailContent';
 import MemberAssignmentDetailContent from '../components/MemberAssignmentDetailContent';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
@@ -32,7 +32,7 @@ export default function AssignmentDetailPage() {
 }
 
 AssignmentDetailPage.Content = function Content() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));

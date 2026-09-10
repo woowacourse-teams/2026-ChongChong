@@ -1,7 +1,7 @@
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { tokens, typography } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import ErrorContent from '../../../shared/ui/ErrorContent';
@@ -19,7 +19,7 @@ const actionButtonStyle = {
 } satisfies CSSProperties;
 
 function LeaderContent() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const navigate = useNavigate();
 
   const { dialogRef, open, close } = useDialogControl();
@@ -77,7 +77,7 @@ function LeaderContent() {
 }
 
 function MemberContent() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
 
   const navigate = useNavigate();
 

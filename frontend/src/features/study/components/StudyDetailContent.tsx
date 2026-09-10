@@ -13,7 +13,7 @@ import {
   MemberActiveAssignmentCard,
 } from './ActiveStudyCard';
 import { StudyLeaderWelcomeBanner, StudyMemberWelcomeBanner } from './WelcomeBanner';
-import useStudyId from '../hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import SleepIcon from '../../../shared/assets/icons/sleep-icon.webp';
 import WritingLogo from '../../../shared/assets/icons/writing-logo.webp';
 
@@ -109,7 +109,7 @@ const IconStyle = {
 } satisfies CSSProperties;
 
 export function LeaderStudyDetailContent({ username }: { username: string }) {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'LEADER'));
   const activeContentCount = data.notices.count + data.assignments.count;
 
@@ -172,7 +172,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
 }
 
 export function MemberStudyDetailContent({ username }: { username: string }) {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'MEMBER'));
   const todoCount = data.totalCount;
 

@@ -10,7 +10,7 @@ import { PrevButton } from '../../../shared/widgets/PrevButton';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import studyQueries from '../../study/queries';
 
 export default function AssignmentListPage() {
@@ -36,7 +36,7 @@ export default function AssignmentListPage() {
 }
 
 AssignmentListPage.Content = function Content() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
 
   const {
     data: { role, studyName, userName },

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import useAssignmentId from '../hooks/useAssignmentId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import { deleteAssignment } from '../api';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
@@ -16,7 +16,7 @@ interface Props {
 
 export default function LeaderAssignmentDetailContent({ studyId }: Props) {
   const navigate = useNavigate();
-  const { assignmentId } = useAssignmentId();
+  const { assignmentId } = useIntegerParams(['assignmentId']);
   const queryClient = useQueryClient();
   const {
     dialogRef: deleteConfirmDialog,

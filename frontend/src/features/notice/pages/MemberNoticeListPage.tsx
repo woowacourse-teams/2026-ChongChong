@@ -4,7 +4,7 @@ import Page from '../../../shared/ui/Page';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import MemberNoticeListSection from '../components/MemerNoticeListSection';
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function MemberNoticeListPage({ studyName, userName }: Props) {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
 
   return (
     <Page>

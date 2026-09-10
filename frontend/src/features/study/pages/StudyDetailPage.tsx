@@ -3,7 +3,7 @@ import studyQueries from '../queries';
 import Main from '../../../shared/ui/Main';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import TopHeader from '../../../shared/ui/TopHeader';
-import useStudyId from '../hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import Page from '../../../shared/ui/Page';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
@@ -38,7 +38,7 @@ export default function StudyDetailPage() {
 }
 
 StudyDetailPage.Content = function Content() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { studyName, role, userName },
   } = useSuspenseQuery(studyQueries.info(studyId));

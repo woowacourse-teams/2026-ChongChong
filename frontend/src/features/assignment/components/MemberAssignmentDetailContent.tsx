@@ -1,5 +1,5 @@
 import { useQueryClient, useSuspenseQueries, useMutation } from '@tanstack/react-query';
-import useAssignmentId from '../hooks/useAssignmentId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import assignmentQueries from '../queries';
 import AssignmentArticle from './AssignmentArticle';
 import { AssignmentSubmissionValue } from '../types';
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function MemberAssignmentDetailContent({ studyId }: Props) {
-  const { assignmentId } = useAssignmentId();
+  const { assignmentId } = useIntegerParams(['assignmentId']);
   const queryClient = useQueryClient();
 
   const [{ data: assignment }, { data: submission }] = useSuspenseQueries({

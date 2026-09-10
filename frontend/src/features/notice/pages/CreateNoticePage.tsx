@@ -4,14 +4,14 @@ import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import noticeQueries from '../queries';
 import { NoticeFormValues } from '../types';
 import { createNotice } from '../api';
 
 export default function CreateNoticePage() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

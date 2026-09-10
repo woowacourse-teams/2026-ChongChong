@@ -4,7 +4,7 @@ import { tokens } from '../../../styles/global';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import List from '../../../shared/ui/List';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
-import useStudyId from '../../study/hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import useKickStudyMember from '../hooks/useKickMember';
 import { memberQueries } from '../queries';
 import MemberRow from './MemberRow';
@@ -14,7 +14,7 @@ const listStyle = {
 } satisfies CSSProperties;
 
 function LeaderListView() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { members },
   } = useSuspenseQuery(memberQueries.list(studyId));
@@ -50,7 +50,7 @@ function LeaderListView() {
 }
 
 function MemberListView() {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { members },
   } = useSuspenseQuery(memberQueries.list(studyId));
