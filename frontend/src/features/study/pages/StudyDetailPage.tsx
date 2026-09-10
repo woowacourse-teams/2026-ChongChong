@@ -23,9 +23,7 @@ export default function StudyDetailPage() {
           <>
             <TopHeader left={<PrevButton />} />
             <Main>
-              <ErrorContent
-                message={getErrorMessage(error) ?? '스터디 정보를 불러오는데 실패했습니다.'}
-              />
+              <ErrorContent message={getErrorMessage(error)} />
             </Main>
           </>
         )}
@@ -60,11 +58,7 @@ StudyDetailPage.Content = function Content() {
       />
       <Main>
         <ErrorBoundary
-          fallbackRender={({ error }) => (
-            <ErrorContent
-              message={getErrorMessage(error) ?? '스터디 정보를 불러오는데 실패했습니다.'}
-            />
-          )}
+          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           {role === 'LEADER' ? (
             <LeaderStudyDetailContent username={userName} />

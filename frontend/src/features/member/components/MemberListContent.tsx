@@ -46,19 +46,13 @@ function LeaderContent() {
       <section>
         <h2 css={typography.subtitle}>스터디 멤버</h2>
         <ErrorBoundary
-          fallbackRender={({ error }) => (
-            <ErrorContent
-              message={getErrorMessage(error) ?? '멤버 목록을 불러오는데 실패했습니다.'}
-            />
-          )}
+          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <MemberList.Leader />
         </ErrorBoundary>
         <ErrorBoundary
           fallbackRender={({ error }) => (
-            <InviteStudyLinkBoxFallback
-              message={getErrorMessage(error) ?? '스터디 참여 링크를 가져오지 못했습니다.'}
-            />
+            <InviteStudyLinkBoxFallback message={getErrorMessage(error)} />
           )}
         >
           <InviteStudyLinkBox studyId={studyId} />
@@ -111,19 +105,13 @@ function MemberContent() {
       <section>
         <h2 css={typography.subtitle}>스터디 멤버</h2>
         <ErrorBoundary
-          fallbackRender={({ error }) => (
-            <ErrorContent
-              message={getErrorMessage(error) ?? '멤버 목록을 불러오는데 실패했습니다.'}
-            />
-          )}
+          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <MemberList.Member />
         </ErrorBoundary>
         <ErrorBoundary
           fallbackRender={({ error }) => (
-            <InviteStudyLinkBoxFallback
-              message={getErrorMessage(error) ?? '스터디 참여 링크를 가져오지 못했습니다.'}
-            />
+            <InviteStudyLinkBoxFallback message={getErrorMessage(error)} />
           )}
         >
           <InviteStudyLinkBox studyId={studyId} />
