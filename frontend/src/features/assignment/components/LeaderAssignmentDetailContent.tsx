@@ -9,6 +9,8 @@ import AssignmentArticle from './AssignmentArticle';
 import SubmissionList from './SubmissionList';
 import DetailActions from '../../../shared/widgets/DetailActions';
 import assignmentQueries from '../queries';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 interface Props {
   studyId: number;
@@ -18,13 +20,14 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
   const navigate = useNavigate();
   const { assignmentId } = useIntegerParams(['assignmentId']);
   const queryClient = useQueryClient();
+  const toast = useToast();
   const {
     dialogRef: deleteConfirmDialog,
     open: openDeleteConfirmDialog,
     close: closeDeleteConfirmDialog,
   } = useDialogControl();
 
-  const deleteMutation = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: () => deleteAssignment(studyId, assignmentId),
     onSuccess: () => {
       queryClient.removeQueries({
@@ -34,6 +37,10 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
         queryKey: assignmentQueries.lists(studyId),
       });
       navigate(`/studies/${studyId}/assignments`);
+    },
+    onError: (error) => {
+      closeDeleteConfirmDialog();
+      toast.open(<StatusToast status="Error" message={error.message} />);
     },
   });
 
@@ -66,11 +73,8 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
           </ConfirmDialog.CloseButton>
         }
         confirmButton={
-          <ConfirmDialog.ConfirmButton
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutate()}
-          >
-            {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+          <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
+            {isPending ? '삭제 중...' : '삭제'}
           </ConfirmDialog.ConfirmButton>
         }
       />
