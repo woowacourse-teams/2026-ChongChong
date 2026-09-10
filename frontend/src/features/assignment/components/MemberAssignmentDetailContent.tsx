@@ -1,14 +1,18 @@
-import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
-import { useParams } from 'react-router';
-import { createAssignmentSubmission } from '../api';
+import { useQueryClient, useSuspenseQueries, useMutation } from '@tanstack/react-query';
+import useAssignmentId from '../hooks/useAssignmentId';
 import assignmentQueries from '../queries';
-import type { AssignmentSubmissionValue } from '../types';
 import AssignmentArticle from './AssignmentArticle';
-import AssignmentSubmissionForm from './AssignmentSubmissionForm';
+import { AssignmentSubmissionValue } from '../types';
+import { createAssignmentSubmission } from '../api';
 import CompletedAssignmentSubmission from './CompletedAssignmentSubmission';
+import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 
-export default function MemberAssignmentDetailContent() {
-  const { studyId, assignmentId } = useParams();
+interface Props {
+  studyId: number;
+}
+
+export default function MemberAssignmentDetailContent({ studyId }: Props) {
+  const { assignmentId } = useAssignmentId();
   const queryClient = useQueryClient();
 
   const [{ data: assignment }, { data: submission }] = useSuspenseQueries({
