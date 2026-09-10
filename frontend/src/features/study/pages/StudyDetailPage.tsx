@@ -31,7 +31,7 @@ export default function StudyDetailPage() {
         )}
       >
         <Suspense fallback={<Loading />}>
-          <StudyDetailScreen />
+          <StudyDetailPage.Content />
         </Suspense>
       </ErrorBoundary>
       <BottomTab />
@@ -39,7 +39,7 @@ export default function StudyDetailPage() {
   );
 }
 
-function StudyDetailScreen() {
+StudyDetailPage.Content = function Content() {
   const { studyId } = useStudyId();
   const {
     data: { studyName, role, userName },
@@ -75,4 +75,4 @@ function StudyDetailScreen() {
       </Main>
     </>
   );
-}
+};
