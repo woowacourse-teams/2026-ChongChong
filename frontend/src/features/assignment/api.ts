@@ -1,6 +1,7 @@
 import api from '../../client';
+import { HTTPError } from 'ky';
 import { AssignmentValue, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
-import { ErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
+import { ErrorResponse, ValidationError, FIELD_ERROR_CODE, ApiError } from '../../shared/api/error';
 import {
   isAssignmentListResponse,
   isCreateAssignmentResponse,
@@ -24,8 +25,19 @@ export async function fetchAssignmentList(studyId: number, cursor?: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('과제 목록을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('과제 목록을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 

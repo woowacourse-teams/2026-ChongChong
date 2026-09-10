@@ -15,7 +15,7 @@ interface InviteLinkBoxProps {
 }
 
 interface InviteStudyLinkBoxFallbackProps {
-  message: string;
+  message: string | undefined;
 }
 
 const inviteDescriptionStyle = {
@@ -81,7 +81,9 @@ export function InviteLinkBox({ title, inviteLink }: InviteLinkBoxProps) {
   );
 }
 
-export function InviteStudyLinkBoxFallback({ message }: InviteStudyLinkBoxFallbackProps) {
+export function InviteStudyLinkBoxFallback({
+  message = '요청이 실패했습니다.',
+}: InviteStudyLinkBoxFallbackProps) {
   return (
     <div css={inviteLinkBlockStyle}>
       <span css={inviteLinkStyle} role="alert">

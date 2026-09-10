@@ -28,7 +28,7 @@ const buttonAreaStyle = {
   marginTop: tokens.spacing[3],
 } satisfies CSSProperties;
 
-export default function LeaderAssignmentListSection({ studyId }: Props) {
+export default function LeaderAssignmentListContent({ studyId }: Props) {
   const navigate = useNavigate();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
