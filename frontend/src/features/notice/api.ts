@@ -49,8 +49,19 @@ export async function fetchNoticeReadStatus(studyId: number, noticeId: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 읽음 현황을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 읽음 현황을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 

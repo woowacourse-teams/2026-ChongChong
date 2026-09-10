@@ -131,3 +131,55 @@ describe('스터디원 공지 상세 조회 실패', () => {
     ).toBeVisible();
   });
 });
+
+describe('리드 공지 읽음 현황 조회 실패', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(
+      http.get(STUDY_INFO_URL, () =>
+        HttpResponse.json({
+          studyName: '객체지향 스터디',
+          role: 'LEADER',
+          userName: '안톨리니',
+        }),
+      ),
+      http.get(NOTICE_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          title: '스터디 일정 안내',
+          content: '이번 주 스터디는 토요일에 진행합니다.',
+          createdAt: '2026-09-01T09:00:00',
+        }),
+      ),
+    );
+  });
+
+  test('공지 읽음 현황을 조회할 권한이 없으면 본문에 권한 안내를 표시한다', async () => {
+    server.use(
+      http.get(`${NOTICE_DETAIL_URL}/status`, () =>
+        HttpResponse.json(
+          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderNoticeDetailPage();
+
+    expect(
+      await within(screen.getByRole('main')).findByText('요청한 작업을 수행할 권한이 없습니다.'),
+    ).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 본문에 공지 읽음 현황 조회 실패 안내를 표시한다', async () => {
+    server.use(http.get(`${NOTICE_DETAIL_URL}/status`, () => HttpResponse.error()));
+    renderNoticeDetailPage();
+
+    expect(
+      await within(screen.getByRole('main')).findByText(
+        '공지 읽음 현황을 불러오는데 실패했습니다.',
+        {},
+        { timeout: 3000 },
+      ),
+    ).toBeVisible();
+  });
+});
