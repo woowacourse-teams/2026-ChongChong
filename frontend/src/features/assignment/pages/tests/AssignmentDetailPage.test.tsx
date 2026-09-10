@@ -396,3 +396,104 @@ describe('스터디원 과제 제출 실패', () => {
     expect(toast).toBeVisible();
   });
 });
+
+describe('스터디원 과제 제출물 수정 실패', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(STUDY_INFO_URL, () =>
+        HttpResponse.json({
+          studyName: '객체지향 스터디',
+          role: 'MEMBER',
+          userName: '안톨리니',
+        }),
+      ),
+      http.get(ASSIGNMENT_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          title: '객체지향 설계 과제',
+          content: '객체의 역할과 책임을 정리해주세요.',
+          submissionMethod: '텍스트로 제출하세요',
+          closeAt: '2999-12-31T23:59:59',
+        }),
+      ),
+      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions/my`, () =>
+        HttpResponse.json({
+          submitted: true,
+          submissionId: 1,
+          createdAt: '2026-09-01T09:00:00',
+          content: '기존 제출 내용',
+          link: 'https://example.com/submission',
+        }),
+      ),
+    );
+  });
+
+  test('수정한 내용과 링크가 유효하지 않으면 각 필드에 오류 메시지를 표시한다', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch(`${ASSIGNMENT_DETAIL_URL}/submissions/:submissionId`, () =>
+        invalidInputResponse([
+          { field: 'content', code: 'INVALID', reason: '제출 내용을 확인해주세요.' },
+          { field: 'link', code: 'INVALID', reason: '제출 링크를 확인해주세요.' },
+        ]),
+      ),
+    );
+    renderAssignmentDetailPage();
+
+    await user.click(await screen.findByRole('button', { name: '편집하기' }));
+    const contentInput = screen.getByRole('textbox', { name: '내용' });
+    const linkInput = screen.getByRole('textbox', { name: '링크' });
+    await user.clear(contentInput);
+    await user.type(contentInput, '수정한 제출 내용');
+    await user.clear(linkInput);
+    await user.type(linkInput, 'https://example.com/revised-submission');
+    await user.click(screen.getByRole('button', { name: '수정하기' }));
+
+    const submissionForm = within(screen.getByRole('region', { name: '내 제출' }));
+    expect(await submissionForm.findByText('제출 내용을 확인해주세요.')).toBeVisible();
+    expect(await submissionForm.findByText('제출 링크를 확인해주세요.')).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  test('스터디에 대한 접근 권한이 없으면 접근 권한 안내를 토스트로 표시한다', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch(`${ASSIGNMENT_DETAIL_URL}/submissions/:submissionId`, () =>
+        HttpResponse.json(
+          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderAssignmentDetailPage();
+
+    await user.click(await screen.findByRole('button', { name: '편집하기' }));
+    const contentInput = screen.getByRole('textbox', { name: '내용' });
+    await user.clear(contentInput);
+    await user.type(contentInput, '수정한 제출 내용');
+    await user.click(screen.getByRole('button', { name: '수정하기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('해당 스터디에 대한 접근 권한이 없습니다.');
+    expect(toast).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 제출물 수정 실패 안내를 토스트로 표시한다', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch(`${ASSIGNMENT_DETAIL_URL}/submissions/:submissionId`, () => HttpResponse.error()),
+    );
+    renderAssignmentDetailPage();
+
+    await user.click(await screen.findByRole('button', { name: '편집하기' }));
+    const contentInput = screen.getByRole('textbox', { name: '내용' });
+    await user.clear(contentInput);
+    await user.type(contentInput, '수정한 제출 내용');
+    await user.click(screen.getByRole('button', { name: '수정하기' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('과제 제출물 수정에 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(screen.getByRole('textbox', { name: '내용' })).toHaveValue('수정한 제출 내용');
+  });
+});
