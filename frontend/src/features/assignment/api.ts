@@ -172,8 +172,29 @@ export async function createAssignmentSubmission(
     }
 
     return data;
-  } catch {
-    throw new Error('과제 제출에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (errorResponse?.code === FIELD_ERROR_CODE) {
+      throw new ValidationError({
+        message: errorResponse.message,
+        errors: errorResponse.errors,
+        options: {
+          cause: error,
+        },
+      });
+    }
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('과제 제출에 실패했습니다.', { cause: error });
   }
 }
 
