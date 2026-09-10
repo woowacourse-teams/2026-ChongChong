@@ -1,5 +1,4 @@
-import { Suspense } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
@@ -8,6 +7,22 @@ import { createWrapper } from '../../../../test/render';
 import { server } from '../../../../mocks/msw-node';
 import { assignmentTable } from '../../mocks/db';
 import { API_URL } from '../../../../../config';
+
+function renderEditPage() {
+  render(
+    <Routes>
+      <Route
+        path="studies/:studyId/assignments/:assignmentId/edit"
+        element={<EditAssignmentPage />}
+      />
+    </Routes>,
+    {
+      wrapper: createWrapper({
+        initialEntries: ['/studies/2/assignments/999/edit'],
+      }),
+    },
+  );
+}
 
 describe('과제수정폼 테스트', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -24,24 +39,6 @@ describe('과제수정폼 테스트', () => {
       completeUserIds: [],
     });
   });
-
-  function renderEditPage() {
-    render(
-      <Suspense fallback={<div>로딩중</div>}>
-        <Routes>
-          <Route
-            path="studies/:studyId/assignments/:assignmentId/edit"
-            element={<EditAssignmentPage />}
-          />
-        </Routes>
-      </Suspense>,
-      {
-        wrapper: createWrapper({
-          initialEntries: [`/studies/2/assignments/999/edit`],
-        }),
-      },
-    );
-  }
 
   async function findTitleInput() {
     return screen.findByRole('textbox', { name: '제목' });
@@ -112,5 +109,42 @@ describe('과제수정폼 테스트', () => {
     expect(toast).toHaveTextContent('과제 수정에 실패했습니다.');
     expect(toast).toBeVisible();
     expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('수정한 드리블 연습');
+  });
+});
+
+describe('과제 수정 페이지 조회 실패', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  test('스터디에 대한 접근 권한이 없으면 본문에 접근 권한 안내를 표시한다', async () => {
+    server.use(
+      http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () =>
+        HttpResponse.json(
+          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderEditPage();
+
+    expect(await screen.findByText('해당 스터디에 대한 접근 권한이 없습니다.')).toBeVisible();
+    expect(
+      within(screen.getByRole('main')).getByText('해당 스터디에 대한 접근 권한이 없습니다.'),
+    ).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 본문에 과제 조회 실패 안내를 표시한다', async () => {
+    server.use(
+      http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () => HttpResponse.error()),
+    );
+    renderEditPage();
+
+    expect(
+      await screen.findByText('과제 정보를 불러오는데 실패했습니다.', {}, { timeout: 3000 }),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole('main')).getByText('과제 정보를 불러오는데 실패했습니다.'),
+    ).toBeVisible();
   });
 });
