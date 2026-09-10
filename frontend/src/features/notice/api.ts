@@ -177,6 +177,15 @@ export async function updateNotice(studyId: number, noticeId: number, values: Up
       });
     }
 
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
     throw new Error('공지 수정에 실패했습니다.', { cause: error });
   }
 }
