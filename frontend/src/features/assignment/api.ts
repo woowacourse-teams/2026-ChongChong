@@ -257,6 +257,15 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
       });
     }
 
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
     throw new Error('과제를 생성하는데 실패했습니다.', {
       cause: error,
     });
