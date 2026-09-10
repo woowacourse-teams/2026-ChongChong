@@ -16,7 +16,7 @@ const sectionStyle = {
   flexDirection: 'column',
 } satisfies CSSProperties;
 
-export default function MemberNoticeListSection({ studyId }: Props) {
+export default function MemberNoticeListContent({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     noticeQueries.list(studyId),
   );

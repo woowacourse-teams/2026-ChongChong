@@ -1,5 +1,6 @@
 import api from '../../client';
-import { FIELD_ERROR_CODE, ErrorResponse, ValidationError } from '../../shared/api/error';
+import { HTTPError } from 'ky';
+import { FIELD_ERROR_CODE, ErrorResponse, ValidationError, ApiError } from '../../shared/api/error';
 import type { NoticeFormValues, UpdateNoticeValue } from './types';
 import {
   isNoticeListResponse,
@@ -22,8 +23,19 @@ export async function fetchNoticeList(studyId: number, cursor?: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 목록을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 목록을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
