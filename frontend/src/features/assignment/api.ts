@@ -139,8 +139,19 @@ export async function fetchAssignmentSubmissionDetail(
     }
 
     return data;
-  } catch {
-    throw new Error('제출 정보를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('제출 정보를 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -257,7 +268,18 @@ export async function fetchMyAssignmentSubmission(studyId: number, assignmentId:
     }
 
     return data;
-  } catch {
-    throw new Error('내 제출 정보를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('내 제출 정보를 불러오는데 실패했습니다.', { cause: error });
   }
 }
