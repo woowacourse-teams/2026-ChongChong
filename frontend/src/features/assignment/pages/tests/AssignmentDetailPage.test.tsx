@@ -91,6 +91,125 @@ describe('리드 과제 상세 조회 실패', () => {
   });
 });
 
+describe('리드 과제 제출 현황 조회 실패', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(
+      http.get(STUDY_INFO_URL, () =>
+        HttpResponse.json({
+          studyName: '객체지향 스터디',
+          role: 'LEADER',
+          userName: '안톨리니',
+        }),
+      ),
+      http.get(ASSIGNMENT_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          title: '객체지향 설계 과제',
+          content: '객체의 역할과 책임을 정리해주세요.',
+          submissionMethod: '텍스트로 제출하세요',
+          closeAt: '2999-12-31T23:59:59',
+        }),
+      ),
+      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions`, () =>
+        HttpResponse.json({ submissions: [] }),
+      ),
+    );
+  });
+
+  test('백엔드 에러가 발생하면 본문에 전달받은 에러 메시지를 표시한다', async () => {
+    server.use(
+      http.get(`${ASSIGNMENT_DETAIL_URL}/status`, () =>
+        HttpResponse.json(
+          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderAssignmentDetailPage();
+
+    expect(
+      await within(screen.getByRole('main')).findByText('해당 스터디에 대한 접근 권한이 없습니다.'),
+    ).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 본문에 기본 에러 메시지를 표시한다', async () => {
+    server.use(http.get(`${ASSIGNMENT_DETAIL_URL}/status`, () => HttpResponse.error()));
+    renderAssignmentDetailPage();
+
+    expect(
+      await within(screen.getByRole('main')).findByText(
+        '과제 제출 현황을 불러오는데 실패했습니다.',
+        {},
+        { timeout: 3000 },
+      ),
+    ).toBeVisible();
+  });
+});
+
+describe('리드 과제 제출 내역 조회 실패', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(
+      http.get(STUDY_INFO_URL, () =>
+        HttpResponse.json({
+          studyName: '객체지향 스터디',
+          role: 'LEADER',
+          userName: '안톨리니',
+        }),
+      ),
+      http.get(ASSIGNMENT_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          title: '객체지향 설계 과제',
+          content: '객체의 역할과 책임을 정리해주세요.',
+          submissionMethod: '텍스트로 제출하세요',
+          closeAt: '2999-12-31T23:59:59',
+        }),
+      ),
+      http.get(`${ASSIGNMENT_DETAIL_URL}/status`, () =>
+        HttpResponse.json({
+          id: 1,
+          memberCount: 1,
+          completeCount: 0,
+          incompleteCount: 1,
+          completeMembers: [],
+          incompleteMembers: [{ id: 1, name: '안톨리니', profileImage: null }],
+        }),
+      ),
+    );
+  });
+
+  test('백엔드 에러가 발생하면 본문에 전달받은 에러 메시지를 표시한다', async () => {
+    server.use(
+      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions`, () =>
+        HttpResponse.json(
+          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderAssignmentDetailPage();
+
+    expect(
+      await within(screen.getByRole('main')).findByText('해당 스터디에 대한 접근 권한이 없습니다.'),
+    ).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 본문에 기본 에러 메시지를 표시한다', async () => {
+    server.use(http.get(`${ASSIGNMENT_DETAIL_URL}/submissions`, () => HttpResponse.error()));
+    renderAssignmentDetailPage();
+
+    expect(
+      await within(screen.getByRole('main')).findByText(
+        '제출 내역을 불러오는데 실패했습니다.',
+        {},
+        { timeout: 3000 },
+      ),
+    ).toBeVisible();
+  });
+});
+
 describe('스터디원 과제 상세 조회 실패', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});

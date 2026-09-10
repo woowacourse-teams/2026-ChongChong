@@ -52,8 +52,19 @@ export async function fetchAssignmentSubmitStatus(studyId: number, assignmentId:
     }
 
     return data;
-  } catch {
-    throw new Error('과제 제출 현황을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('과제 제출 현황을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -95,8 +106,19 @@ export async function fetchAssignmentSubmission(studyId: number, assignmentId: n
     }
 
     return data;
-  } catch {
-    throw new Error('제출 내역을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('제출 내역을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
