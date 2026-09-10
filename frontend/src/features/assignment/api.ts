@@ -294,6 +294,15 @@ export async function updateAssignment(
       });
     }
 
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
     throw new Error('과제 수정에 실패했습니다.', { cause: error });
   }
 }

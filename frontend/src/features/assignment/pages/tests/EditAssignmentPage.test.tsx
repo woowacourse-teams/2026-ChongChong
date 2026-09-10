@@ -1,10 +1,13 @@
 import { Suspense } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import EditAssignmentPage from '../EditAssignmentPage';
 import { createWrapper } from '../../../../test/render';
+import { server } from '../../../../mocks/msw-node';
 import { assignmentTable } from '../../mocks/db';
+import { API_URL } from '../../../../../config';
 
 describe('과제수정폼 테스트', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -69,5 +72,45 @@ describe('과제수정폼 테스트', () => {
     expect(await screen.findByText('제출 방법은 필수입니다.')).toBeInTheDocument();
     // 이전 에러메시지 제거 확인
     expect(screen.queryByText('과제 제목은 필수입니다.')).not.toBeInTheDocument();
+  });
+
+  test('스터디 리더가 아니면 과제 수정 권한 안내를 토스트로 표시한다', async () => {
+    server.use(
+      http.patch(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () =>
+        HttpResponse.json(
+          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderEditPage();
+
+    const titleInput = await findTitleInput();
+    await user.clear(titleInput);
+    await user.type(titleInput, '수정한 드리블 연습');
+    await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
+    expect(toast).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 과제 수정 실패 안내를 토스트로 표시한다', async () => {
+    server.use(
+      http.patch(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () =>
+        HttpResponse.error(),
+      ),
+    );
+    renderEditPage();
+
+    const titleInput = await findTitleInput();
+    await user.clear(titleInput);
+    await user.type(titleInput, '수정한 드리블 연습');
+    await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('과제 수정에 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('수정한 드리블 연습');
   });
 });
