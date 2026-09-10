@@ -9,6 +9,8 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { UpdateNoticeValue } from '../types';
 import { updateNotice } from '../api';
+import { useMemo } from 'react';
+import { ValidationError } from '../../../shared/api/error';
 
 export default function EditNoticePage() {
   const { studyId, noticeId } = useParams();
@@ -35,6 +37,10 @@ export default function EditNoticePage() {
     },
   });
 
+  const fieldErrors = useMemo(() => {
+    return updateMutation.error instanceof ValidationError ? updateMutation.error.fieldErrors : {};
+  }, [updateMutation.error]);
+
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<TopHeader.Title>공지</TopHeader.Title>} />
@@ -43,7 +49,7 @@ export default function EditNoticePage() {
         <NoticeForm
           submitLabel="수정하기"
           isSubmitting={updateMutation.isPending}
-          error={updateMutation.error}
+          fieldErrors={fieldErrors}
           onSubmit={updateMutation.mutate}
           initialValues={{
             title: notice.title,

@@ -9,13 +9,18 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import noticeQueries from '../queries';
 import { NoticeFormValues } from '../types';
 import { createNotice } from '../api';
+import { useMemo } from 'react';
+import { ValidationError } from '../../../shared/api/error';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 export default function CreateNoticePage() {
   const { studyId } = useIntegerParams(['studyId']);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
-  const createMutation = useMutation({
+  const { mutate, isPending, error } = useMutation({
     mutationFn: (values: NoticeFormValues) => createNotice(studyId, values),
 
     onSuccess: ({ noticeId }) => {
@@ -25,7 +30,16 @@ export default function CreateNoticePage() {
 
       navigate(`/studies/${studyId}/notices/${noticeId}`);
     },
+
+    onError: (error) => {
+      if (error instanceof ValidationError) return;
+      toast.open(<StatusToast status="Error" message={error.message} />);
+    },
   });
+
+  const fieldErrors = useMemo(() => {
+    return error instanceof ValidationError ? error.fieldErrors : {};
+  }, [error]);
 
   return (
     <Page>
@@ -33,9 +47,9 @@ export default function CreateNoticePage() {
       <Main>
         <NoticeForm
           submitLabel="공지 올리기"
-          isSubmitting={createMutation.isPending}
-          error={createMutation.error}
-          onSubmit={(values) => createMutation.mutate(values)}
+          isSubmitting={isPending}
+          fieldErrors={fieldErrors}
+          onSubmit={mutate}
         />
       </Main>
     </Page>
