@@ -2,6 +2,8 @@ import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react
 import type { CSSProperties, UIEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime } from '../../../shared/utils/formatDate';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import { tokens } from '../../../styles/global';
 import { updateNoticeRead } from '../api';
 import noticeQueries from '../queries';
@@ -38,6 +40,7 @@ function calculateReadProgress(content: HTMLElement) {
 
 export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
   const contentBodyRef = useRef<HTMLDivElement>(null);
   const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
@@ -56,8 +59,9 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
       });
       queryClient.invalidateQueries({ queryKey: noticeQueries.lists(studyId) });
     },
-    onError: () => {
+    onError: (error) => {
       hasRequestedReadRef.current = false;
+      toast.open(<StatusToast status="Error" message={error.message} />);
     },
   });
   const markAsRead = updateReadMutation.mutate;
