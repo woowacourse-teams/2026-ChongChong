@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { API_URL } from '../../../../../config';
@@ -82,6 +83,77 @@ describe('리드 공지 상세 조회 실패', () => {
     expect(within(header).getByRole('heading', { name: '공지' })).toBeVisible();
     expect(within(header).getByRole('button', { name: '뒤로 가기' })).toBeVisible();
     expect(screen.getByRole('navigation')).toBeVisible();
+  });
+});
+
+describe('리드 공지 삭제 실패', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(STUDY_INFO_URL, () =>
+        HttpResponse.json({
+          studyName: '객체지향 스터디',
+          role: 'LEADER',
+          userName: '안톨리니',
+        }),
+      ),
+      http.get(NOTICE_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          title: '스터디 일정 안내',
+          content: '이번 주 스터디는 토요일에 진행합니다.',
+          createdAt: '2026-09-01T09:00:00',
+        }),
+      ),
+      http.get(`${NOTICE_DETAIL_URL}/status`, () =>
+        HttpResponse.json({
+          id: 1,
+          memberCount: 1,
+          readCount: 0,
+          unreadCount: 1,
+          readMembers: [],
+          unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null }],
+        }),
+      ),
+    );
+  });
+
+  test('공지 삭제 권한이 없으면 권한 안내를 토스트로 표시하고 확인창을 닫는다', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.delete(NOTICE_DETAIL_URL, () =>
+        HttpResponse.json(
+          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderNoticeDetailPage();
+
+    await user.click(await screen.findByRole('button', { name: '삭제' }));
+    const dialog = screen.getByRole('alertdialog', { name: '공지를 삭제할까요?' });
+    expect(dialog).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
+    expect(toast).toBeVisible();
+    expect(dialog).not.toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 공지 삭제 실패 안내를 토스트로 표시하고 확인창을 닫는다', async () => {
+    const user = userEvent.setup();
+    server.use(http.delete(NOTICE_DETAIL_URL, () => HttpResponse.error()));
+    renderNoticeDetailPage();
+
+    await user.click(await screen.findByRole('button', { name: '삭제' }));
+    const dialog = screen.getByRole('alertdialog', { name: '공지를 삭제할까요?' });
+    expect(dialog).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('공지 삭제에 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(dialog).not.toBeVisible();
   });
 });
 

@@ -7,6 +7,8 @@ import noticeQueries from '../queries';
 import NoticeArticle from './NoticeArticle';
 import NoticeReadStatus from './NoticeReadStatus';
 import useDialogControl from '../../../shared/hooks/useDialogControl';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 interface Props {
   studyId: number;
@@ -16,8 +18,15 @@ interface Props {
 export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
-  const deleteMutation = useMutation({
+  const {
+    dialogRef: deleteConfirmDialogRef,
+    open: openDeleteConfimDialog,
+    close: closeDeleteConfirmDialog,
+  } = useDialogControl();
+
+  const { mutate, isPending } = useMutation({
     mutationFn: () => deleteNotice(studyId, noticeId),
     onSuccess: () => {
       queryClient.removeQueries({
@@ -29,13 +38,11 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
       queryClient.invalidateQueries({ queryKey: noticeQueries.lists(studyId) });
       navigate(`/studies/${studyId}/notices`);
     },
+    onError: (error) => {
+      closeDeleteConfirmDialog();
+      toast.open(<StatusToast status="Error" message={error.message} />);
+    },
   });
-
-  const {
-    dialogRef: deleteConfirmDialogRef,
-    open: openDeleteConfimDialog,
-    close: closeDeleteConfirmDialog,
-  } = useDialogControl();
 
   const goToEditNotice = () => navigate(`/studies/${studyId}/notices/${noticeId}/edit`);
 
@@ -61,11 +68,8 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
           </ConfirmDialog.CloseButton>
         }
         confirmButton={
-          <ConfirmDialog.ConfirmButton
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutate()}
-          >
-            {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+          <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
+            {isPending ? '삭제 중...' : '삭제'}
           </ConfirmDialog.ConfirmButton>
         }
       />
