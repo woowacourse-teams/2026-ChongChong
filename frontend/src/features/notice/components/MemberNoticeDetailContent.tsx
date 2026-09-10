@@ -2,7 +2,6 @@ import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react
 import type { CSSProperties, UIEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime } from '../../../shared/utils/formatDate';
-import Main from '../../../shared/ui/Main';
 import { tokens } from '../../../styles/global';
 import { updateNoticeRead } from '../api';
 import noticeQueries from '../queries';
@@ -15,11 +14,19 @@ interface Props {
 }
 
 const contentStyle = {
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
   width: '100%',
   minHeight: 0,
-  margin: '0 auto',
-  padding: `${tokens.spacing[5]} ${tokens.layout.gutter} ${tokens.spacing[8]}`,
+  paddingBottom: tokens.spacing[8],
   overflowY: 'auto',
+} satisfies CSSProperties;
+
+const readStateStyle = {
+  flexShrink: 0,
+  // 공통 Main의 좌우·하단 여백을 상쇄해 읽음 상태 영역을 하단 탭에 맞춘다.
+  margin: `0 calc(${tokens.layout.gutter} * -1) calc(${tokens.spacing[5]} * -1)`,
 } satisfies CSSProperties;
 
 function calculateReadProgress(content: HTMLElement) {
@@ -31,7 +38,7 @@ function calculateReadProgress(content: HTMLElement) {
 
 export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) {
   const queryClient = useQueryClient();
-  const contentRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const contentBodyRef = useRef<HTMLDivElement>(null);
   const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.myRead(studyId, noticeId)],
@@ -87,7 +94,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     return () => resizeObserver.disconnect();
   }, [markAsRead]);
 
-  const updateReadProgress = (event: UIEvent<HTMLElement>) => {
+  const updateReadProgress = (event: UIEvent<HTMLDivElement>) => {
     const nextProgress = calculateReadProgress(event.currentTarget);
 
     setReadProgress((current) => Math.max(current, nextProgress));
@@ -102,18 +109,20 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
 
   return (
     <>
-      <Main ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
+      <div ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
         <div ref={contentBodyRef}>
           <NoticeArticle notice={notice} hasTopMargin={false} />
         </div>
-      </Main>
+      </div>
 
-      <MemberNoticeReadState
-        progress={readProgress}
-        isRead={isRead}
-        readAt={readAt ? formatRelativeTime(readAt) : undefined}
-        showCompletionToast={updateReadMutation.isSuccess && !readStatus.isRead}
-      />
+      <div css={readStateStyle}>
+        <MemberNoticeReadState
+          progress={readProgress}
+          isRead={isRead}
+          readAt={readAt ? formatRelativeTime(readAt) : undefined}
+          showCompletionToast={updateReadMutation.isSuccess && !readStatus.isRead}
+        />
+      </div>
     </>
   );
 }
