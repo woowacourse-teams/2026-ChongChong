@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import assignmentIcon from '../../../shared/assets/assign-green.svg';
 import linkIcon from '../../../shared/assets/link-green.svg';
@@ -11,6 +11,9 @@ import assignmentQueries from '../queries';
 import type { AssignmentSubmissionValue, UserAssignmentSubmitDetail } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import InfoCard from './InfoCard';
+import { ValidationError } from '../../../shared/api/error';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 type SubmittedAssignment = Extract<UserAssignmentSubmitDetail, { submitted: true }>;
 
@@ -62,8 +65,9 @@ export default function CompletedAssignmentSubmission({
 }: Props) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const toast = useToast();
 
-  const updateMutation = useMutation({
+  const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
 
@@ -75,15 +79,25 @@ export default function CompletedAssignmentSubmission({
 
       setIsEditing(false);
     },
+
+    onError: (error) => {
+      if (error instanceof ValidationError) return;
+      toast.open(<StatusToast status="Error" message={error.message} />);
+    },
   });
+
+  const fieldErrors = useMemo(() => {
+    return error instanceof ValidationError ? error.fieldErrors : {};
+  }, [error]);
 
   return isEditing ? (
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
       initialValues={{ content: submission.content, link: submission.link }}
-      isSubmitting={updateMutation.isPending}
+      isSubmitting={isPending}
       submitLabel="수정하기"
-      onSubmit={updateMutation.mutate}
+      onSubmit={mutate}
+      fieldErrors={fieldErrors}
     />
   ) : (
     <section css={sectionStyle} aria-labelledby="my-submission-title">

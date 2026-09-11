@@ -1,10 +1,10 @@
-import AssignmentList from './AssignmentList';
 import { CSSProperties } from 'react';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
-import assignmentQueries from '../queries';
 import Badge from '../../../shared/ui/Badge';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
+import noticeQueries from '../queries';
+import NoticeList from './NoticeList';
 
 interface Props {
   studyId: number;
@@ -16,11 +16,11 @@ const sectionStyle = {
   flexDirection: 'column',
 } satisfies CSSProperties;
 
-export default function MemberAssignmentListSection({ studyId }: Props) {
+export default function MemberNoticeListContent({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-    assignmentQueries.list(studyId),
+    noticeQueries.list(studyId),
   );
-  const assignments = data.pages.flatMap((page) => page.assignments);
+  const notices = data.pages.flatMap((page) => page.notices);
   const loadMoreRef = useInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -29,27 +29,27 @@ export default function MemberAssignmentListSection({ studyId }: Props) {
 
   return (
     <section css={sectionStyle}>
-      {assignments.length === 0 ? (
-        <EmptyContent message="아직 과제가 없어요" />
+      {notices.length === 0 ? (
+        <EmptyContent message="아직 공지가 없어요" />
       ) : (
         <>
-          <AssignmentList assignments={assignments} studyId={studyId}>
-            {(assignment) => (
+          <NoticeList notices={notices} studyId={studyId}>
+            {(notice) => (
               <>
-                {assignment.isComplete ? (
+                {notice.isComplete ? (
                   <Badge variant="brandSolid" size="small">
-                    제출 완료
+                    읽음
                   </Badge>
                 ) : (
                   <Badge variant="brandOutline" size="small">
-                    미제출
+                    읽지 않음
                   </Badge>
                 )}
               </>
             )}
-          </AssignmentList>
+          </NoticeList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">과제를 더 불러오는 중...</p>}
+          {isFetchingNextPage && <p role="status">공지를 더 불러오는 중...</p>}
         </>
       )}
     </section>

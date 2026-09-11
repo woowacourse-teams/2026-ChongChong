@@ -21,7 +21,7 @@ import { formatDateToString } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
-import InviteLinkBox from '../../member/components/InviteLinkBox';
+import { InviteLinkBox } from '../../member/components/InviteStudyLinkBox';
 import MemberRow from '../../member/components/MemberRow';
 import {
   MemberActiveAssignmentCard,
@@ -173,7 +173,14 @@ function InviteScreen() {
           <List css={{ marginBottom: tokens.spacing[6] }}>
             {['서연', '지우', '민준', '하은'].map((name, index) => (
               <List.Item key={name}>
-                <MemberRow.Member name={name} role={index === 0 ? 'LEADER' : 'MEMBER'} />
+                <MemberRow.Member
+                  member={{
+                    id: index + 1,
+                    name,
+                    profileImage: null,
+                    role: index === 0 ? 'LEADER' : 'MEMBER',
+                  }}
+                />
               </List.Item>
             ))}
           </List>

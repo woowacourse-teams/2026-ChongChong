@@ -1,5 +1,5 @@
 import api from '../../client';
-import { getErrorResponse, ValidationError, FIELD_ERROR_CODE } from '../../shared/api/error';
+import { ErrorResponse, ValidationError, FIELD_ERROR_CODE, ApiError } from '../../shared/api/error';
 import { STUDY_URLS } from './urls';
 import type { Role } from './types';
 import {
@@ -9,6 +9,7 @@ import {
   isStudyInfoResponse,
   isStudyResponse,
 } from './responseSchemas';
+import { HTTPError } from 'ky';
 
 export async function fetchStudies() {
   try {
@@ -20,8 +21,8 @@ export async function fetchStudies() {
     }
 
     return data;
-  } catch {
-    throw new Error('스터디 목록을 불러오는데 실패했습니다.');
+  } catch (error) {
+    throw new Error('스터디 목록을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -35,8 +36,19 @@ export async function fetchStudyDetail<R extends Role>(studyId: number, role: R)
     }
 
     return data;
-  } catch {
-    throw new Error('스터디 정보를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('스터디 정보를 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -54,7 +66,7 @@ export async function createStudy(body: {
 
     return data;
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
@@ -63,6 +75,15 @@ export async function createStudy(body: {
         options: {
           cause: error,
         },
+      });
+    }
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
       });
     }
 
@@ -82,9 +103,19 @@ export async function fetchStudyInfo(studyId: number) {
     }
 
     return data;
-  } catch {
-    // TODO: 에러코드별로 에러 분기가 필요합니다.
-    throw new Error('스터디 정보를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('스터디 정보를 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -98,8 +129,19 @@ export async function fetchStudyInviteLink(studyId: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('초대 링크를 가져오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('초대 링크를 가져오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -108,7 +150,7 @@ export async function joinStudy(body: { token: string }) {
     const response = await api.post(STUDY_URLS.join, { json: body });
     return await response.json<{ studyId: number }>();
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
@@ -120,6 +162,15 @@ export async function joinStudy(body: { token: string }) {
       });
     }
 
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
     throw new Error('스터디 참여에 실패했습니다.', { cause: error });
   }
 }
@@ -127,7 +178,16 @@ export async function joinStudy(body: { token: string }) {
 export async function removeStudy(studyId: number) {
   try {
     await api.delete(`/studies/${studyId}`);
-  } catch {
-    throw new Error('스터디를 삭제하는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+    throw new Error('스터디를 삭제하는데 실패했습니다.', { cause: error });
   }
 }

@@ -13,6 +13,8 @@ import { ValidationError } from '../../../shared/api/error';
 import isBlank from '../../../shared/utils/isBlank';
 import useStudyJoin from '../hooks/useStudyJoin';
 import { usePostHog } from '@posthog/react';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 function extractInviteToken(inviteLink: string) {
   try {
@@ -28,6 +30,7 @@ export default function StudyJoinPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const toast = useToast();
 
   const [inviteLink, handleInviteLink] = useInputState(() => {
     if (!searchParams.has('token')) return '';
@@ -60,6 +63,10 @@ export default function StudyJoinPage() {
       { token },
       {
         onSuccess: (data) => navigate(`/studies/${data.studyId}`),
+        onError: (error) => {
+          if (error instanceof ValidationError) return;
+          toast.open(<StatusToast message={error.message} status={'Error'} />);
+        },
       },
     );
   }
