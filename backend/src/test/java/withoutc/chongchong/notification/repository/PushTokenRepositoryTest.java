@@ -8,21 +8,18 @@ import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.PushToken;
 import withoutc.chongchong.notification.entity.TokenProvider;
+import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@ActiveProfiles("test")
 @Transactional
-@SpringBootTest
-class PushTokenRepositoryTest {
+class PushTokenRepositoryTest extends PostgresContainerTest {
 
     private static final String TOKEN = "push-token";
     private static final String INSTALLATION_ID = "installation-1";

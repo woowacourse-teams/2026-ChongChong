@@ -15,16 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notification.repository.PushTokenRepository;
+import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class PushTokenApiTest {
+class PushTokenApiTest extends PostgresContainerTest {
 
     private static final String TOKEN = "ExponentPushToken[test-token]";
     private static final String INSTALLATION_ID = "installation-1";
