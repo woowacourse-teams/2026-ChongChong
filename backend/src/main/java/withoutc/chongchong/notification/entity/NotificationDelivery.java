@@ -17,6 +17,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
+import withoutc.chongchong.notification.exception.NotificationErrorCode;
+import withoutc.chongchong.notification.exception.NotificationException;
 
 @Entity
 @Getter
@@ -63,11 +65,18 @@ public class NotificationDelivery extends BaseEntity {
             Notification notification,
             PushToken pushToken
     ) {
+        validateRequiredValues(notification, pushToken);
         this.notification = notification;
         this.pushToken = pushToken;
         this.status = DeliveryStatus.PENDING;
         this.attemptCount = 0;
         this.nextRetryAt = null;
         this.lastError = null;
+    }
+
+    private void validateRequiredValues(Notification notification, PushToken pushToken) {
+        if (notification == null || pushToken == null) {
+            throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY);
+        }
     }
 }
