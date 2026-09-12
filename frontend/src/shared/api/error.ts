@@ -1,7 +1,5 @@
 import { HTTPError } from 'ky';
 
-export const FIELD_ERROR_CODE = 'INVALID_INPUT_VALUE';
-
 export interface FieldError {
   code: string;
   field: string;
@@ -45,6 +43,7 @@ export const ErrorResponse = {
 export class ValidationError extends Error {
   public readonly fieldErrors: Record<string, string>;
   private readonly errors: FieldError[] | undefined;
+  private static readonly errorCode = 'INVALID_INPUT_VALUE';
 
   constructor({
     message,
@@ -59,6 +58,31 @@ export class ValidationError extends Error {
     this.name = 'ValidationError';
     this.errors = errors;
     this.fieldErrors = this.toFieldErrors() ?? {};
+  }
+
+  static tryFrom(error: unknown) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (!errorResponse || !this.is(errorResponse)) {
+      return null;
+    }
+
+    return this.from(error, errorResponse!);
+  }
+
+  private static is(errorResponse: ErrorResponse): boolean {
+    if (errorResponse?.code === this.errorCode) return true;
+    return false;
+  }
+
+  private static from(error: unknown, errorResponse: ErrorResponse) {
+    return new ValidationError({
+      message: errorResponse.message,
+      errors: errorResponse.errors,
+      options: {
+        cause: error,
+      },
+    });
   }
 
   private toFieldErrors() {
@@ -88,4 +112,46 @@ export class ApiError extends Error {
     this.code = code;
     this.status = status;
   }
+
+  static tryFrom(error: unknown) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (!errorResponse || !this.is(error, errorResponse)) {
+      return null;
+    }
+
+    return this.from(error, errorResponse!);
+  }
+
+  private static is(error: unknown, errorResponse: ErrorResponse): error is HTTPError {
+    if (error instanceof HTTPError && errorResponse) return true;
+    return false;
+  }
+
+  private static from(error: HTTPError, errorResponse: ErrorResponse) {
+    return new ApiError({
+      code: errorResponse.code,
+      message: errorResponse.message,
+      status: error.response.status,
+      options: { cause: error },
+    });
+  }
+}
+
+interface Mapper {
+  tryFrom(error: unknown): Error | null;
+}
+
+export function handleError(
+  error: unknown,
+  { mappers, fallback }: { mappers: Mapper[]; fallback: Error },
+): Error {
+  for (const mapper of mappers) {
+    const mappedError = mapper.tryFrom(error);
+    if (mappedError) {
+      return mappedError;
+    }
+  }
+
+  return fallback;
 }
