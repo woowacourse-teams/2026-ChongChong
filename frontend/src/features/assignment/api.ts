@@ -1,7 +1,6 @@
 import api from '../../client';
-import { HTTPError } from 'ky';
 import { AssignmentValue, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
-import { ErrorResponse, ValidationError, FIELD_ERROR_CODE, ApiError } from '../../shared/api/error';
+import { ValidationError, handleError, ApiError } from '../../shared/api/error';
 import {
   isAssignmentListResponse,
   isCreateAssignmentResponse,
@@ -26,18 +25,10 @@ export async function fetchAssignmentList(studyId: number, cursor?: number) {
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 목록을 불러오는데 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('과제 목록을 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -53,18 +44,10 @@ export async function fetchAssignmentSubmitStatus(studyId: number, assignmentId:
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 제출 현황을 불러오는데 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('과제 제출 현황을 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -80,18 +63,10 @@ export async function fetchAssignment(studyId: number, assignmentId: number) {
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 정보를 불러오는데 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('과제 정보를 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -107,18 +82,10 @@ export async function fetchAssignmentSubmission(studyId: number, assignmentId: n
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('제출 내역을 불러오는데 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('제출 내역을 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -140,18 +107,10 @@ export async function fetchAssignmentSubmissionDetail(
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('제출 정보를 불러오는데 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('제출 정보를 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -173,28 +132,10 @@ export async function createAssignmentSubmission(
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (errorResponse?.code === FIELD_ERROR_CODE) {
-      throw new ValidationError({
-        message: errorResponse.message,
-        errors: errorResponse.errors,
-        options: {
-          cause: error,
-        },
-      });
-    }
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 제출에 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('과제 제출에 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -209,28 +150,10 @@ export async function updateAssignmentSubmission(
       json: values,
     });
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (errorResponse?.code === FIELD_ERROR_CODE) {
-      throw new ValidationError({
-        message: errorResponse.message,
-        errors: errorResponse.errors,
-        options: {
-          cause: error,
-        },
-      });
-    }
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 제출물 수정에 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('과제 제출물 수정에 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -245,29 +168,9 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (errorResponse?.code === FIELD_ERROR_CODE) {
-      throw new ValidationError({
-        message: errorResponse.message,
-        errors: errorResponse.errors,
-        options: {
-          cause: error,
-        },
-      });
-    }
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제를 생성하는데 실패했습니다.', {
-      cause: error,
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('과제를 생성하는데 실패했습니다.', { cause: error }),
     });
   }
 }
@@ -282,28 +185,10 @@ export async function updateAssignment(
       json: values,
     });
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (errorResponse?.code === FIELD_ERROR_CODE) {
-      throw new ValidationError({
-        message: errorResponse.message,
-        errors: errorResponse.errors,
-        options: {
-          cause: error,
-        },
-      });
-    }
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 수정에 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('과제 수정에 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -311,18 +196,10 @@ export async function deleteAssignment(studyId: number, assignmentId: number) {
   try {
     await api.delete(`/studies/${studyId}/assignments/${assignmentId}`);
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('과제 삭제에 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('과제 삭제에 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -340,17 +217,9 @@ export async function fetchMyAssignmentSubmission(studyId: number, assignmentId:
 
     return data;
   } catch (error) {
-    const errorResponse = ErrorResponse.from(error);
-
-    if (error instanceof HTTPError && errorResponse) {
-      throw new ApiError({
-        code: errorResponse.code,
-        message: errorResponse.message,
-        status: error.response.status,
-        options: { cause: error },
-      });
-    }
-
-    throw new Error('내 제출 정보를 불러오는데 실패했습니다.', { cause: error });
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('내 제출 정보를 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
