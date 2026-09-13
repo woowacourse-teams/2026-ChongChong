@@ -1,0 +1,60 @@
+version: 0.2
+
+env:
+  shell: bash
+  variables:
+    CI: 'true'
+
+phases:
+  install:
+    on-failure: ABORT
+    runtime-versions:
+      nodejs: 24.19.0
+    commands:
+      - cd "$CODEBUILD_SRC_DIR/frontend"
+      - test "$(node --version)" = "v$(tr -d '[:space:]' < .nvmrc)"
+      - npm install --global "$(node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).packageManager')"
+      - node --version
+      - pnpm --version
+      - pnpm install --frozen-lockfile --prod=false
+
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - cd "$CODEBUILD_SRC_DIR/frontend"
+      - |
+        node --input-type=module <<'NODE'
+        const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY'];
+        for (const name of required) {
+          if (!process.env[name]?.trim()) {
+            throw new Error(`Missing CodeBuild environment variable: ${name}`);
+          }
+        }
+        const origin = new URL(process.env.API_BASE_URL);
+        if (origin.protocol !== 'https:' || origin.origin !== process.env.API_BASE_URL) {
+          throw new Error('API_BASE_URL must be an HTTPS origin without a path or trailing slash');
+        }
+        if (process.env.USE_MSW !== 'false') {
+          throw new Error('USE_MSW must be false for deployed builds');
+        }
+        if (Boolean(process.env.POSTHOG_HOST) !== Boolean(process.env.POSTHOG_PROJECT_TOKEN)) {
+          throw new Error('Set both PostHog variables, or leave both unset');
+        }
+        NODE
+      - pnpm lint
+      - pnpm format:check
+      - pnpm type-check
+      - pnpm exec jest --ci --runInBand
+
+  build:
+    on-failure: ABORT
+    commands:
+      - cd "$CODEBUILD_SRC_DIR/frontend"
+      - rm -rf dist
+      - pnpm build
+      - test -s dist/index.html
+
+artifacts:
+  base-directory: frontend
+  files:
+    - 'dist/**/*'
