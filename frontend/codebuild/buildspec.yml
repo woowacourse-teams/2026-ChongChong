@@ -24,6 +24,12 @@ phases:
       - cd "$CODEBUILD_SRC_DIR/frontend"
       - |
         node --input-type=module <<'NODE'
+        const expectedOrigin = process.env.DEPLOY_ENV === 'dev'
+          ? 'https://d2ujjy0977rfbd.cloudfront.net'
+          : process.env.DEPLOY_ENV === 'prod' ? 'https://chongchong.kr' : undefined;
+        if (!expectedOrigin || process.env.API_BASE_URL !== expectedOrigin) {
+          throw new Error('DEPLOY_ENV must be dev or prod and match API_BASE_URL');
+        }
         const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY'];
         for (const name of required) {
           if (!process.env[name]?.trim()) {
@@ -49,10 +55,48 @@ phases:
   build:
     on-failure: ABORT
     commands:
-      - cd "$CODEBUILD_SRC_DIR/frontend"
-      - rm -rf dist
-      - pnpm build
-      - test -s dist/index.html
+      - |
+        set -euo pipefail
+        cd "$CODEBUILD_SRC_DIR/frontend"
+
+        # 빌드가 실패하면 아래 배포 명령은 실행하지 않습니다.
+        rm -rf dist
+        pnpm build
+
+        # 환경별로 업로드 경로와 CloudFront 배포를 선택합니다.
+        case "${DEPLOY_ENV:-}" in
+          dev)
+            SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/dev"
+            DISTRIBUTION_ID="E3QKIZ08X8L5CD"
+            ;;
+          prod)
+            SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/prod"
+            DISTRIBUTION_ID="E3ADSTISVSMGFQ"
+            ;;
+          *)
+            echo "DEPLOY_ENV must be dev or prod" >&2
+            exit 1
+            ;;
+        esac
+
+        test -s dist/index.html
+
+        # 자산을 먼저 올립니다. 기존 S3 파일은 삭제하지 않습니다.
+        aws s3 cp dist/ "$SITE_PATH/" --recursive --exclude "index.html" \
+          --no-follow-symlinks --cache-control "public,max-age=31536000,immutable" \
+          --only-show-errors --region ap-northeast-2
+
+        # 자산 업로드가 성공한 뒤 HTML을 교체합니다.
+        aws s3 cp dist/index.html "$SITE_PATH/index.html" \
+          --content-type "text/html; charset=utf-8" --cache-control "no-cache" \
+          --only-show-errors --region ap-northeast-2
+
+        # CloudFront 캐시를 무효화하고 완료될 때까지 기다립니다.
+        INVALIDATION_ID=$(aws cloudfront create-invalidation \
+          --distribution-id "$DISTRIBUTION_ID" --paths "/*" \
+          --query "Invalidation.Id" --output text)
+        aws cloudfront wait invalidation-completed \
+          --distribution-id "$DISTRIBUTION_ID" --id "$INVALIDATION_ID"
 
 artifacts:
   base-directory: frontend
