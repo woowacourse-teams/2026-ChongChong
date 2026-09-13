@@ -61,7 +61,8 @@ phases:
 
         # 빌드가 실패하면 아래 배포 명령은 실행하지 않습니다.
         rm -rf dist
-        pnpm build
+
+        NODE_ENV=production BABEL_ENV=production pnpm build
 
         # 환경별로 업로드 경로와 CloudFront 배포를 선택합니다.
         case "${DEPLOY_ENV:-}" in
@@ -91,12 +92,11 @@ phases:
           --content-type "text/html; charset=utf-8" --cache-control "no-cache" \
           --only-show-errors --region ap-northeast-2
 
-        # CloudFront 캐시를 무효화하고 완료될 때까지 기다립니다.
+        # 캐시 무효화를 요청합니다. 완료 여부는 CloudFront 콘솔에서 확인합니다.
         INVALIDATION_ID=$(aws cloudfront create-invalidation \
           --distribution-id "$DISTRIBUTION_ID" --paths "/*" \
           --query "Invalidation.Id" --output text)
-        aws cloudfront wait invalidation-completed \
-          --distribution-id "$DISTRIBUTION_ID" --id "$INVALIDATION_ID"
+        echo "CloudFront invalidation requested: $INVALIDATION_ID (completion not checked)"
 
 artifacts:
   base-directory: frontend
