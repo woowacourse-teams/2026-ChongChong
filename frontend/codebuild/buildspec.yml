@@ -58,3 +58,4 @@ artifacts:
   base-directory: frontend
   files:
     - 'dist/**/*'
+    - 'codebuild/publish-buildspec.yml'
