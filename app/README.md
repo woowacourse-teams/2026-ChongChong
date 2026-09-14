@@ -3,7 +3,8 @@
 이슈: https://github.com/woowacourse-teams/2026-ChongChong/issues/311
 
 React Native + Expo SDK 57 기반 네이티브 앱의 공통 UI와 내비게이션 골격입니다.
-실제 로그인·스터디·공지·과제 기능 화면은 후속 이슈에서 구현합니다.
+앱 진입·내 스터디·계정 UI는 #317에서 목 상태로 구현했습니다.
+스터디 내부 홈·공지·과제·멤버 기능 화면은 후속 이슈에서 구현합니다.
 API·인증·푸시·업로드와 연결하지 않습니다.
 
 ## 실행
@@ -49,7 +50,8 @@ pnpm export:all
 
 ## 확인 시나리오
 
-1. 시작 화면에서 역할을 전환하고 스터디로 진입한다.
+1. 시작 화면 → 소셜 진입 → 알림 안내 → 내 스터디로 이동한다.
+   `/scenarios`에서 리더·스터디원·빈 상태를 선택할 수 있다.
 2. 홈·공지·과제·멤버 탭을 이동하고 같은 역할이 표시되는지 확인한다.
 3. 뒤로 가기로 복귀해 역할 상태가 유지되는지 확인한다.
 4. 공통 UI에서 빈 입력/10자 초과 시 저장 비활성화, 정상 입력 시 안내 표시를 확인한다.
@@ -86,3 +88,9 @@ Android SDK를 준비한 뒤 위 확인 시나리오를 각 플랫폼에서 수�
 - https://docs.expo.dev/more/create-expo/
 - https://github.com/orioncactus/pretendard
 - https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-18637
+
+## 앱 진입 및 내 스터디 (#317)
+
+목록·생성·참여·마이페이지·알림 안내를 로컬 상태로 확인할 수 있습니다.
+프로필 이름 제한은 8자입니다. 실행 경로와 Figma 대조·네이티브 미검증 사항은
+[docs/ISSUE-317.md](docs/ISSUE-317.md)에 기록했습니다.
