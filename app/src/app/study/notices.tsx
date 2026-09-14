@@ -1,4 +1,5 @@
-import { RoutePreview } from '../../ui/RoutePreview';
+import { ActivityList } from '../../features/home/ActivityList';
+
 export default function NoticesScreen() {
-  return <RoutePreview title="공지" />;
+  return <ActivityList kind="notice" />;
 }

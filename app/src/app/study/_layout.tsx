@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { PlatformPressable } from 'expo-router/react-navigation';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StudyHeader } from '../../features/home/StudyHeader';
 import { StudyTabIcon } from '../../ui/StudyTabIcon';
 import { tokens as t } from '../../ui/tokens';
 
@@ -10,7 +11,7 @@ export default function StudyLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        header: () => <StudyHeader />,
         tabBarActiveTintColor: t.color.brand,
         tabBarInactiveTintColor: t.color.tertiary,
         tabBarLabelStyle: {

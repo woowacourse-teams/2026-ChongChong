@@ -1,0 +1,310 @@
+- application "Figma Design 1개의 항목 선택됨" [active]
+- status: 현재 보드에 대한 스크린 리더 지원이 비활성화되어 있습니다. 접근성 설정에서 사용 설정하려면 ⌘K을(를) 누르고, 접근성 설정을 입력한 후 Enter 키를 누릅니다. 사용 가능한 키보드 단축키를 보려면 ⌃⇧물음표을(를) 입력하세요.
+- status
+- region "캔버스 댓글 영역":
+  - button "새 댓글 만들기"
+- region "왼쪽 사이드바":
+  - toolbar "탐색 표시줄":
+    - button "메인 메뉴":
+    - separator
+    - button "파일" [expanded]:
+    - separator
+    - button "변수":
+    - status
+  - button "[WoowaCourse] 총총, 파일 이름": "[WoowaCourse] 총총"
+  - generic: 파일 이름
+  - button "파일 편집 메뉴":
+  - button "UI 최소화":
+  - link "초안":
+  - heading "페이지 찾기" [level=2]:
+    - button "페이지" [expanded]:
+      - generic: 페이지
+    - button "찾기":
+  - grid:
+    - row "Design ver2 Ready for dev":
+      - gridcell "Design ver2 Ready for dev":
+        - button "Design ver2 Ready for dev":
+          - generic: Design ver2
+          - img "Ready for dev"
+  - button "모든 페이지 표시":
+    - generic: 모든 페이지 표시
+  - slider "크기 조정 핸들"
+  - button "Ready for dev" [expanded]:
+    - generic: Ready for dev
+  - button "썸네일 01-02-01 마이페이지 · 공통 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-02-01 마이페이지 · 공통
+    - generic: 6일 전 편집됨
+  - button "썸네일 01-02-02 마이페이지 · 공통 · 이름 길이 초과 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-02-02 마이페이지 · 공통 · 이름 길이 초과
+    - generic: 6일 전 편집됨
+  - button "썸네일 01-02-03 회원 탈퇴 · 리더 · 안내 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-02-03 회원 탈퇴 · 리더 · 안내
+    - generic: 6일 전 편집됨
+  - button "썸네일 01-03-01 스터디 생성 · 공통 · 입력 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-03-01 스터디 생성 · 공통 · 입력
+    - generic: 6일 전 편집됨
+  - button "썸네일 01-03-02 스터디 생성 · 공통 · 이름 길이 초과 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-03-02 스터디 생성 · 공통 · 이름 길이 초과
+    - generic: 6일 전 편집됨
+  - button "썸네일 01-03-03 스터디 생성 · 공통 · 설명 길이 초과 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-03-03 스터디 생성 · 공통 · 설명 길이 초과
+    - generic: 6일 전 편집됨
+  - button "썸네일 01-04-01 스터디 참여 · 공통 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 01-04-01 스터디 참여 · 공통
+    - generic: 6일 전 편집됨
+  - button "썸네일 02. 스터디 홈 · 구역 제목 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 02. 스터디 홈 · 구역 제목
+    - generic: 6일 전 편집됨
+  - button "썸네일 02. 스터디 홈 · 리더 구역 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 02. 스터디 홈 · 리더 구역
+    - generic: 6일 전 편집됨
+  - button "썸네일 02. 스터디 홈 · 스터디원 구역 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 02. 스터디 홈 · 스터디원 구역
+    - generic: 6일 전 편집됨
+  - button "썸네일 02-01-01 스터디 홈 · 리더 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 02-01-01 스터디 홈 · 리더
+    - generic: 6일 전 편집됨
+  - button "썸네일 02-01-02 스터디 홈 · 스터디원 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 02-01-02 스터디 홈 · 스터디원
+    - generic: 6일 전 편집됨
+  - button "썸네일 03. 공지 · 구역 제목 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03. 공지 · 구역 제목
+    - generic: 6일 전 편집됨
+  - button "썸네일 03. 공지 · 리더 구역 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03. 공지 · 리더 구역
+    - generic: 6일 전 편집됨
+  - button "썸네일 03. 공지 · 스터디원 구역 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03. 공지 · 스터디원 구역
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-01-01 공지 목록 · 리더 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-01-01 공지 목록 · 리더
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-02-01 공지 요약 · 리더 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-02-01 공지 요약 · 리더
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-02-02 공지 요약 · 리더 · 더보기 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-02-02 공지 요약 · 리더 · 더보기
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-02-03 공지 요약 · 리더 · 삭제 확인 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-02-03 공지 요약 · 리더 · 삭제 확인
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-02-04 공지 상세 · 리더 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-02-04 공지 상세 · 리더
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-03-01 공지 작성·수정 · 리더 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-03-01 공지 작성·수정 · 리더
+    - generic: 6일 전 편집됨
+  - button "썸네일 03-03-02 공지 작성·수정 · 리더 · 날짜 선택 6일 전 편집됨":
+    - img "썸네일"
+    - generic: 03-03-02 공지 작성·수정 · 리더 · 날짜 선택
+    - generic: 6일 전 편집됨
+  - button "레이어":
+    - generic: 레이어
+  - button "레이어 접기":
+  - button "프레임 02-01-02 스터디 홈 · 스터디원":
+    - img "프레임":
+    - generic: 02-01-02 스터디 홈 · 스터디원
+  - button "인스턴스 Safe Area / Status Bar":
+    - img "인스턴스":
+    - generic: Safe Area / Status Bar
+  - button "텍스트 “읽지 않은 공지”":
+    - img "텍스트":
+    - generic: “읽지 않은 공지”
+  - button "텍스트 “제출하지 않은 과제”":
+    - img "텍스트":
+    - generic: “제출하지 않은 과제”
+  - button "프레임 Container":
+    - img "프레임":
+    - generic: Container
+  - button "프레임 Container":
+    - img "프레임":
+    - generic: Container
+  - button "Icon · 18 x 18":
+    - generic: Icon
+    - generic: · 18 x 18
+  - button "텍스트 “리액트 렌더링 최적화 정리”":
+    - img "텍스트":
+    - generic: “리액트 렌더링 최적화 정리”
+  - button "텍스트 “미제출”":
+    - img "텍스트":
+    - generic: “미제출”
+  - button "프레임 Container":
+    - img "프레임":
+    - generic: Container
+  - button "인스턴스 Safe Area / Home Indicator":
+    - img "인스턴스":
+    - generic: Safe Area / Home Indicator
+  - button "프레임 Container":
+    - img "프레임":
+    - generic: Container
+  - button "프레임 Navigation / Bottom / 4 Tabs":
+    - img "프레임":
+    - generic: Navigation / Bottom / 4 Tabs
+  - slider "크기 조정 핸들"
+- region "속성과 플러그인":
+  - button "멀티플레이어 도구":
+  - group "프로토타입 보기":
+    - button "프레젠테이션":
+    - button "프로토타입 보기":
+  - button "공유하기"
+  - status
+  - tablist:
+    - tab "검사" [selected]:
+      - generic: 검사
+      - generic: 검사
+    - tab "플러그인":
+      - generic: 플러그인
+      - generic: 플러그인
+  - button "68%, 확대/축소 및 보기 옵션":
+    - text: 68%
+  - tabpanel "검사":
+    - 'button "레이어 이름 클릭하여 복사: Icon"':
+      - generic: Icon
+    - button "선택된 레이어의 URL 복사":
+    - button "추가 액션":
+    - img "프레임":
+    - generic: 프레임
+    - button "MCP" [expanded]:
+      - heading "MCP" [level=3]
+    - button "도움말 열기":
+    - button "Figma MCP용 서드파티 에이전트 설정":
+    - generic: 선택 세부사항
+    - generic: 세션 활동
+    - generic: 전송되지 않음
+    - generic: 예상 토큰 수
+    - generic: "250"
+    - button "이 1개의 디자인을 Figma에서 구현하세요. @https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl/-WoowaCourse--%EC%B4%9D%EC%B4%9D?node-id=1702-19568&m=dev":
+      - generic: 이 1개의 디자인을 Figma에서 구현하세요.
+      - generic: "@https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl/-WoowaCourse--%EC%B4%9D%EC%B4%9D?node-id=1702-19568&m=dev"
+    - button "예제 프롬프트 복사":
+      - generic: 예제 프롬프트 복사
+    - button "레이어 속성" [expanded]:
+      - heading "레이어 속성" [level=3]
+    - img "요소 레이아웃 속성의 시각적 표현에는 패딩, 테두리 박스 및 간격이 포함됩니다.":
+      - 'button "상단 컨테이너 가장자리까지의 거리 복사: 24"':
+        - generic: "24"
+      - 'button "왼쪽 컨테이너 가장자리까지의 거리 복사: 24"':
+        - generic: "24"
+      - generic: "-"
+      - generic: Border
+      - generic: "-"
+      - generic: "-"
+      - generic: "-"
+      - generic: 아이콘 · 18 x 18
+      - generic: "-"
+      - generic: "-"
+      - generic: "-"
+      - generic: "-"
+      - 'button "오른쪽 컨테이너 가장자리까지의 거리 복사: 308"':
+        - generic: "308"
+      - 'button "하단 컨테이너 가장자리까지의 거리 복사: 24"':
+        - generic: "24"
+      - 'button "box-sizing: border-box 복사"': border-box
+    - radiogroup "보기":
+      - generic: 보기
+      - radio "목록"
+      - generic: 목록
+      - radio "코드" [checked]
+      - generic: 코드
+    - generic: "언어: CSS"
+    - 'button "언어: CSS"':
+      - generic: CSS
+    - heading "레이아웃" [level=3]
+    - button "Layout 복사, Shift 키를 눌러 모든 코드 복사":
+    - generic: "1"
+    - generic: "2"
+    - code:
+      - text: "width:"
+      - button "18px":
+        - generic: 18px
+      - text: ;
+      - text: "height:"
+      - button "18px":
+        - generic: 18px
+      - text: ;
+    - heading "SVG" [level=3]
+    - button "SVG 복사, Shift 키를 눌러 모든 코드 복사":
+    - generic: "1"
+    - generic: "2"
+    - generic: "3"
+    - generic: "4"
+    - generic: "5"
+    - code:
+      - generic: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+      - text: <path d="M11.25 1.5H6.75C6.33579 1.5 6 1.83579 6 2.25V3.75C6 4.16421 6.33579 4.5 6.75 4.5H11.25C11.6642 4.5 12 4.16421 12 3.75V2.25C12 1.83579 11.6642 1.5 11.25 1.5Z" stroke="
+      - generic: "#00C471"
+      - text: "\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+      - text: <path d="M12 3H13.5C13.8978 3 14.2794 3.15804 14.5607 3.43934C14.842 3.72064 15 4.10218 15 4.5V15C15 15.3978 14.842 15.7794 14.5607 16.0607C14.2794 16.342 13.8978 16.5 13.5 16.5H4.5C4.10218 16.5 3.72064 16.342 3.43934 16.0607C3.15804 15.7794 3 15.3978 3 15V4.5C3 4.10218 3.15804 3.72064 3.43934 3.43934C3.72064 3.15804 4.10218 3 4.5 3H6" stroke="
+      - generic: "#00C471"
+      - text: "\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+      - text: <path d="M6.75 9.75H11.25M6.75 12.75H9.75" stroke="
+      - generic: "#00C471"
+      - text: "\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+      - generic: </svg>
+    - heading "Modes" [level=3]
+    - 'button "총총 v2 복사: 자동 (Mode 1)"':
+      - generic "총총 v2"
+      - generic "자동 (Mode 1)"
+    - heading "색상" [level=3]
+    - generic: 색상 형식
+    - combobox "색상 형식":
+      - generic: Hex
+    - heading "선택 색상" [level=3]
+    - button "color/brand/primary 복사":
+      - generic "color/brand/primary"
+    - 'button "변수 세부 정보: color/brand/primary"':
+    - button "에셋" [expanded]:
+      - heading "에셋" [level=3]
+    - heading "아이콘" [level=3]
+    - button "아이콘 다운로드":
+    - button:
+    - generic: Icon
+    - generic: 18 x 18
+    - button "내보내기":
+      - generic: 내보내기
+    - button "내보내기 설정 추가":
+  - slider "크기 조정 핸들"
+- region "애플리케이션 도구 모음":
+  - toolbar "편집기":
+    - button "이동" [pressed]:
+    - button "색상 복사":
+    - button "측정값":
+    - button "주석":
+    - button "댓글":
+    - radiogroup "공구 벨트 모드":
+      - generic: 공구 벨트 모드
+      - radio "그리기"
+      - generic: 그리기
+      - radio "디자인"
+      - generic: 디자인
+      - radio "모션"
+      - generic: 모션
+      - radio "Dev Mode" [checked]
+      - generic: Dev Mode
+- region "도움말/확대/축소 도구 모음":
+  - toolbar "도움말/확대/축소 도구 모음":
+    - button "도움말":
+- status
+- alert
+- alert

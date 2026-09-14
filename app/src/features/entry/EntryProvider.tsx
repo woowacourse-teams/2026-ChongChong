@@ -16,6 +16,9 @@ type EntryScenario = {
   readonly notifications: boolean;
   readonly setNotifications: (enabled: boolean) => void;
   readonly studies: readonly EntryStudy[];
+  readonly selectedStudyId: string | undefined;
+  readonly selectedStudy: EntryStudy | undefined;
+  readonly selectStudy: (id: string) => void;
   readonly createStudy: (name: string, description: string) => void;
   readonly joinStudy: () => void;
   readonly logout: () => void;
@@ -47,6 +50,13 @@ export function EntryProvider({ children }: PropsWithChildren) {
   const [name, setName] = useState('바니');
   const [notifications, setNotifications] = useState(true);
   const [studies, setStudies] = useState<readonly EntryStudy[]>(initialStudies);
+  const [selectedStudyId, setSelectedStudyId] = useState<string | undefined>(
+    'frontend-cs',
+  );
+  const selectedStudy = studies.find((study) => study.id === selectedStudyId);
+  const selectStudy = (id: string) => {
+    if (studies.some((study) => study.id === id)) setSelectedStudyId(id);
+  };
   const createStudy = (studyName: string, description: string) => {
     setStudies((current) => [
       ...current,
@@ -83,8 +93,10 @@ export function EntryProvider({ children }: PropsWithChildren) {
     setName('바니');
     setNotifications(true);
     setStudies(initialStudies);
+    setSelectedStudyId('frontend-cs');
   };
   const setScenario = (scenario: 'leader' | 'member' | 'empty') => {
+    setSelectedStudyId(scenario === 'empty' ? undefined : 'frontend-cs');
     switch (scenario) {
       case 'leader':
         setStudies(initialStudies);
@@ -107,6 +119,9 @@ export function EntryProvider({ children }: PropsWithChildren) {
         notifications,
         setNotifications,
         studies,
+        selectedStudyId,
+        selectedStudy,
+        selectStudy,
         createStudy,
         joinStudy,
         logout,

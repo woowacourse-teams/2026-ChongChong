@@ -1,0 +1,116 @@
+{
+  "rows": [
+    {
+      "box": {
+        "bottom": 179,
+        "height": 95,
+        "left": 20,
+        "right": 370,
+        "top": 84,
+        "width": 350,
+        "x": 20,
+        "y": 84
+      },
+      "label": "공지를 확인해주세요, 4주차부터 선택 미션이 추가됩니다, 읽지 않음",
+      "text": [
+        {
+          "color": "rgb(23, 32, 51)",
+          "font": "Pretendard",
+          "line": "24px",
+          "size": "16px",
+          "text": "공지를 확인해주세요"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "13px",
+          "text": "4주차부터 선택 미션이 추가됩니다"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "12px",
+          "text": "3시간 전"
+        }
+      ]
+    },
+    {
+      "box": {
+        "bottom": 282,
+        "height": 95,
+        "left": 20,
+        "right": 370,
+        "top": 187,
+        "width": 350,
+        "x": 20,
+        "y": 187
+      },
+      "label": "새 공지가 올라왔어요, 4주차부터 선택 미션이 추가됩니다, 읽지 않음",
+      "text": [
+        {
+          "color": "rgb(23, 32, 51)",
+          "font": "Pretendard",
+          "line": "24px",
+          "size": "16px",
+          "text": "새 공지가 올라왔어요"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "13px",
+          "text": "4주차부터 선택 미션이 추가됩니다"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "12px",
+          "text": "3시간 전"
+        }
+      ]
+    },
+    {
+      "box": {
+        "bottom": 385,
+        "height": 95,
+        "left": 20,
+        "right": 370,
+        "top": 290,
+        "width": 350,
+        "x": 20,
+        "y": 290
+      },
+      "label": "새 공지가 올라왔어요, 3주차부터 풀이 발표를 돌아가면서 합니다, 읽음",
+      "text": [
+        {
+          "color": "rgb(23, 32, 51)",
+          "font": "Pretendard",
+          "line": "24px",
+          "size": "16px",
+          "text": "새 공지가 올라왔어요"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "13px",
+          "text": "3주차부터 풀이 발표를 돌아가면서 합니다"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "12px",
+          "text": "3시간 전"
+        }
+      ]
+    }
+  ],
+  "viewport": [
+    390,
+    763
+  ]
+}

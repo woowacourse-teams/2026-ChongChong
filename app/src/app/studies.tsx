@@ -1,22 +1,21 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useActivity } from '../features/activity/ActivityProvider';
 import { entryAssets } from '../features/entry/assets';
 import { EntryIcon } from '../features/entry/EntryIcon';
 import { useEntryScenario } from '../features/entry/EntryProvider';
 import { StudyCard } from '../features/studies/StudyCard';
 import { useScenario } from '../mocks/ScenarioProvider';
-import { Toast } from '../ui/feedback';
 import { AppText, Button, EmptyState } from '../ui/primitives';
 import { Screen } from '../ui/Screen';
 import { tokens as t } from '../ui/tokens';
 
 export default function StudiesScreen() {
   const router = useRouter();
-  const { studies } = useEntryScenario();
+  const { studies, selectStudy } = useEntryScenario();
+  const { unreadCount } = useActivity();
   const { setRole } = useScenario();
-  const [notice, setNotice] = useState(false);
   return (
     <>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
@@ -31,11 +30,11 @@ export default function StudiesScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="알림"
-              onPress={() => setNotice(true)}
+              onPress={() => router.push('/notifications')}
               style={styles.touch}
             >
               <EntryIcon name="bell" />
-              <View style={styles.notificationDot} />
+              {unreadCount > 0 && <View style={styles.notificationDot} />}
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -59,6 +58,7 @@ export default function StudiesScreen() {
                 key={study.id}
                 study={study}
                 onPress={() => {
+                  selectStudy(study.id);
                   setRole(study.role);
                   router.push('/study');
                 }}
@@ -85,12 +85,6 @@ export default function StudiesScreen() {
               </AppText>
             </View>
           </View>
-        )}
-        {notice && (
-          <Toast
-            message="알림 기능은 준비 중이에요."
-            onDismiss={() => setNotice(false)}
-          />
         )}
       </Screen>
     </>

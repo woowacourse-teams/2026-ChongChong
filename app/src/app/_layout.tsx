@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActivityProvider } from '../features/activity/ActivityProvider';
 import { EntryProvider } from '../features/entry/EntryProvider';
 import { ScenarioProvider } from '../mocks/ScenarioProvider';
 import { AppHeader } from '../ui/AppHeader';
@@ -24,31 +25,41 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ScenarioProvider>
         <EntryProvider>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              header: ({ navigation, options, route, back }) => (
-                <AppHeader
-                  title={options.title ?? route.name}
-                  {...(back ? { onBack: () => navigation.goBack() } : {})}
-                />
-              ),
-              contentStyle: { backgroundColor: t.color.background },
-            }}
-          >
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="studies" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="create-study"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name="join-study" options={{ headerShown: false }} />
-            <Stack.Screen name="account" options={{ headerShown: false }} />
-            <Stack.Screen name="scenarios" options={{ title: 'UI 시나리오' }} />
-            <Stack.Screen name="showcase" options={{ title: '공통 UI' }} />
-            <Stack.Screen name="study" options={{ title: '스터디' }} />
-          </Stack>
+          <ActivityProvider>
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                header: ({ navigation, options, route, back }) => (
+                  <AppHeader
+                    title={options.title ?? route.name}
+                    {...(back ? { onBack: () => navigation.goBack() } : {})}
+                  />
+                ),
+                contentStyle: { backgroundColor: t.color.background },
+              }}
+            >
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="studies" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="create-study"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="join-study"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="account" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="scenarios"
+                options={{ title: 'UI 시나리오' }}
+              />
+              <Stack.Screen name="showcase" options={{ title: '공통 UI' }} />
+              <Stack.Screen name="study" options={{ headerShown: false }} />
+              <Stack.Screen name="notifications" options={{ title: '알림' }} />
+              <Stack.Screen name="activity/[id]" options={{ title: '상세' }} />
+            </Stack>
+          </ActivityProvider>
         </EntryProvider>
       </ScenarioProvider>
     </SafeAreaProvider>
