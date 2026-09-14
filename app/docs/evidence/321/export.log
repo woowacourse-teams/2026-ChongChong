@@ -1,0 +1,75 @@
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+| (node:13869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:13869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+Web Bundled 801ms index.ts (763 modules)
+iOS Bundled 5491ms index.ts (1275 modules)
+Android Bundled 7900ms index.ts (1399 modules)
+
+› Assets (72):
+assets/fonts/Pretendard-Regular.84c0ea9d65324c758c8bd9686207afea.otf (1.6MB)
+assets/fonts/Pretendard-Regular.otf (1.6MB)
+assets/fonts/Pretendard-SemiBold.6fe301765c4f438e2034a0a47b609c61.otf (1.6MB)
+assets/fonts/Pretendard-SemiBold.otf (1.6MB)
+assets/images/empty-study.51420efd94fd683b3dcbc89370b54672.png (117KB)
+assets/images/empty-study.png (117KB)
+assets/images/entry/rabbit.633a015791d2b7ebd5b42009c43be69d.png (60KB)
+assets/images/entry/rabbit.png (60KB)
+assets/images/entry/reminder.d11a8038f72ea3cd85de74ff8bf3256d.png (20KB)
+assets/images/entry/reminder.png (20KB)
+assets/images/entry/study-card.7d79a8f6d42641805e73a412c88947d3.png (46KB)
+assets/images/entry/study-card.png (46KB)
+assets/images/entry/study.33f5b74566d199206c8f264dd165fb25.png (51KB)
+assets/images/entry/study.png (51KB)
+assets/images/entry/wordmark.1f8fdcbce78f7b4e735e2acb3f02b27f.png (113KB)
+assets/images/entry/wordmark.png (113KB)
+assets/images/home/leader.59d8a1ed7427dc8c4693b63bc2b8f08f.png (98KB)
+assets/images/home/leader.png (98KB)
+assets/images/home/member.de122627b1d0436c5f07dc21cd77f9e4.png (97KB)
+assets/images/home/member.png (97KB)
+node_modules/.pnpm/@expo-google-fonts+material-symbols@0.4.47/node_modules/@expo-google-fonts/material-symbols/400Regular/MaterialSymbols_400Regular.ttf (967KB)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/arrow_down.017bc6ba3fc25503e5eb5e53826d48a8.png (9.5KB)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/arrow_right.xml (307B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/checkmark.xml (312B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/error.d1ea1496f9057eb392d5bbf3732a61b7.png (469B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/error.png (469B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/file.19eeb73b9593a38f8e9f418337fc7d10.png (138B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/file.png (138B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/forward.d8b800c443b8972542883e0b9de2bdc6.png (188B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/forward.png (188B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/pkg.ab19f4cbc543357183a20571f68380a3.png (364B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/pkg.png (364B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/back-icon.png (8 variations | 359B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/react-navigation/elements/search-icon.png (7 variations | 592B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/sitemap.412dd9275b6b48ad28f5e3d81bb1f626.png (465B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/unmatched.20e71bdf79e3a97bf55fd9e164041578.png (4.8KB)
+node_modules/.pnpm/expo-router@57.0.21_aab19f4a96add70e373abe9f80f574ed/node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› web bundles (1):
+_expo/static/js/web/index-a3fe1e9fd6152591d383588d863a8326.js (1.3MB)
+
+› ios bundles (1):
+_expo/static/js/ios/index-d13ccbffbf508530a162de83ee3fd819.hbc (2.6MB)
+
+› android bundles (1):
+_expo/static/js/android/index-4613078d510060564770126aa33e7dbc.hbc (2.9MB)
+
+› Files (3):
+favicon.ico (15KB)
+index.html (1.2KB)
+metadata.json (4.7KB)
+
+Exported: /tmp/chongchong-321-final
