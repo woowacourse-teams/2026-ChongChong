@@ -11,7 +11,7 @@ import userIcon from '../../../shared/assets/user.svg';
 import userGreenIcon from '../../../shared/assets/user-green.svg';
 import studyArt from '../../../shared/assets/icons/header-icon.svg';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
+import { InputField } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import List from '../../../shared/ui/List';
@@ -135,26 +135,23 @@ function StudyScreen() {
           <img src={studyArt} alt="" width={70} height={70} />
         </div>
         <div css={{ ...formStyle, flex: 'initial' }}>
-          <Field
-            id={id + '-name'}
-            isRequired
-            label="스터디 이름"
-            helpText="스터디원에게 그대로 보여요"
-          >
+          <InputField>
+            <InputField.Label htmlFor={id + '-name'} isRequired>
+              스터디 이름
+            </InputField.Label>
             <Input id={id + '-name'} value={studyName} readOnly maxLength={15} />
-          </Field>
-          <Field
-            id={id + '-description'}
-            label="어떤 스터디인가요?"
-            helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요"
-          >
+            <InputField.SubText helpText="스터디원에게 그대로 보여요" />
+          </InputField>
+          <InputField>
+            <InputField.Label htmlFor={id + '-description'}>어떤 스터디인가요?</InputField.Label>
             <TextArea
               id={id + '-description'}
               value="매주 수요일 저녁 8시, 함께 읽고 생각을 나눠요."
               readOnly
               maxLength={30}
             />
-          </Field>
+            <InputField.SubText helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요" />
+          </InputField>
           <Button variant="brandSolid" size="large" css={{ marginTop: tokens.spacing[1] }}>
             스터디 만들기
           </Button>
@@ -207,20 +204,32 @@ function AssignmentScreen() {
       <ScreenHeader title="과제" />
       <Main>
         <div css={formStyle}>
-          <Field id={id + '-title'} label="제목" isRequired>
+          <InputField>
+            <InputField.Label htmlFor={id + '-title'} isRequired>
+              제목
+            </InputField.Label>
             <Input id={id + '-title'} value={assignment.title} readOnly maxLength={20} />
-          </Field>
-          <Field id={id + '-content'} label="내용" isRequired>
+          </InputField>
+          <InputField>
+            <InputField.Label htmlFor={id + '-content'} isRequired>
+              내용
+            </InputField.Label>
             <TextArea id={id + '-content'} value={assignment.content} readOnly maxLength={10000} />
-          </Field>
-          <Field id={id + '-method'} label="제출 방법" isRequired>
+          </InputField>
+          <InputField>
+            <InputField.Label htmlFor={id + '-method'} isRequired>
+              제출 방법
+            </InputField.Label>
             <Input id={id + '-method'} value={assignment.submissionMethod} readOnly />
-          </Field>
-          <Field id={id + '-close'} label="마감 시각" isRequired>
+          </InputField>
+          <InputField>
+            <InputField.Label htmlFor={id + '-close'} isRequired>
+              마감 시각
+            </InputField.Label>
             <Button id={id + '-close'} variant="neutralOutline" size="large">
               {formatDateToString(assignment.closeAt)}
             </Button>
-          </Field>
+          </InputField>
           <Button variant="brandSolid" size="large" css={{ marginTop: tokens.spacing[8] }}>
             과제 올리기
           </Button>
@@ -239,15 +248,16 @@ function NoticeScreen() {
       <ScreenHeader title="공지" />
       <Main>
         <div css={formStyle}>
-          <Field id={id + '-title'} label="제목" isRequired>
+          <InputField>
+            <InputField.Label htmlFor={id + '-title'} isRequired>
+              제목
+            </InputField.Label>
             <Input id={id + '-title'} value={noticeTitle} readOnly maxLength={20} />
-          </Field>
-          <Field
-            id={id + '-content'}
-            label="내용"
-            isRequired
-            helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
-          >
+          </InputField>
+          <InputField>
+            <InputField.Label htmlFor={id + '-content'} isRequired>
+              내용
+            </InputField.Label>
             <TextArea
               id={id + '-content'}
               value={
@@ -257,7 +267,8 @@ function NoticeScreen() {
               rows={5}
               maxLength={10000}
             />
-          </Field>
+            <InputField.SubText helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요" />
+          </InputField>
           <Button variant="brandSolid" size="large" css={{ marginTop: tokens.spacing[8] }}>
             공지 올리기
           </Button>

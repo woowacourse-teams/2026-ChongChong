@@ -1,10 +1,11 @@
 import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens } from '../../../styles/global';
+import { InputField } from '../../../shared/ui/inputs/Field';
+import { NOTICE_TITLE, NOTICE_CONTENT } from '../constants';
 import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
 
@@ -63,44 +64,50 @@ export default function NoticeForm({
 
   return (
     <form css={formStyle} onSubmit={submitNotice}>
-      <Field
-        id="notice-title"
-        label="제목"
-        isRequired
-        isError={Boolean(fieldErrors.title)}
-        errorText={fieldErrors.title}
-      >
+      <InputField data-testid="notice-title-field">
+        <InputField.Label htmlFor="notice-title" isRequired={true}>
+          제목
+        </InputField.Label>
         <Input
           id="notice-title"
-          name="title"
           value={title}
-          maxLength={20}
+          maxLength={NOTICE_TITLE.length}
           autoFocus
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="제목을 입력해주세요"
+          placeholder="제목을 입력해 주세요"
+          required={true}
         />
-      </Field>
-
-      <Field
-        id="notice-content"
-        label="내용"
-        isRequired
-        helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
-        isError={Boolean(fieldErrors.content)}
-        errorText={fieldErrors.content}
-      >
+        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+          <InputField.SubText errorText={fieldErrors.title} />
+          <InputField.CurrentLength currentLength={title.length} maxLength={NOTICE_TITLE.length} />
+        </div>
+      </InputField>
+      <InputField data-testid="notice-content-field">
+        <InputField.Label htmlFor="notice-content" isRequired={true}>
+          내용
+        </InputField.Label>
         <TextArea
           ref={contentRef}
           id="notice-content"
           name="content"
           value={content}
-          maxLength={10000}
+          maxLength={NOTICE_CONTENT.length}
           placeholder="내용을 입력해주세요"
           css={{ overflowY: 'hidden' }}
           onChange={(event) => setContent(event.currentTarget.value)}
+          required={true}
         />
-      </Field>
-
+        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+          <InputField.SubText
+            errorText={fieldErrors.content}
+            helpText={'스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요'}
+          />
+          <InputField.CurrentLength
+            currentLength={content.length}
+            maxLength={NOTICE_CONTENT.length}
+          />
+        </div>
+      </InputField>
       <Button
         type="submit"
         variant="brandSolid"
