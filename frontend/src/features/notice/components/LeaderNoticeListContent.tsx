@@ -50,7 +50,7 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
               <>
                 {notice.isComplete ? (
                   <Badge variant="brandSolid" size="small">
-                    모두 제출
+                    모두 읽음
                   </Badge>
                 ) : (
                   <Badge variant="brandOutline" size="small">
