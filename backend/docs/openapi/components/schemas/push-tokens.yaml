@@ -1,4 +1,4 @@
-PushTokenCreateRequest:
+PushTokenRegisterRequest:
   type: object
   additionalProperties: false
   required: [installationId, token, platform]
