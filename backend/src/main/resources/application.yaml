@@ -20,6 +20,9 @@ spring:
     baseline-version: '1'
     clean-disabled: true
 
+aws:
+  region: ${AWS_REGION}
+
 jwt:
   study-invite-secret: ${STUDY_INVITE_JWT_SECRET}
 
