@@ -14,7 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import withoutc.chongchong.notification.controller.dto.PushTokenCreateRequest;
+import withoutc.chongchong.notification.controller.dto.PushTokenRegisterRequest;
 import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.TokenProvider;
 import withoutc.chongchong.notification.service.PushTokenService;
@@ -87,7 +87,7 @@ class PushTokenConcurrencyTest extends PostgresContainerTest {
             barrier.await(10, SECONDS);
             pushTokenService.registerPushToken(
                     userId,
-                    new PushTokenCreateRequest(INSTALLATION_ID, token, platform)
+                    new PushTokenRegisterRequest(INSTALLATION_ID, token, platform)
             );
             return null;
         };
@@ -96,10 +96,10 @@ class PushTokenConcurrencyTest extends PostgresContainerTest {
     private PushTokenRow findPushToken() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT user_id, installation_id, provider, token, platform, is_active
-                FROM push_tokens
-                WHERE installation_id = ?
-                """,
+                        SELECT user_id, installation_id, provider, token, platform, is_active
+                        FROM push_tokens
+                        WHERE installation_id = ?
+                        """,
                 (resultSet, rowNum) -> new PushTokenRow(
                         resultSet.getLong("user_id"),
                         resultSet.getString("installation_id"),

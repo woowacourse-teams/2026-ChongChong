@@ -50,7 +50,7 @@ class PushTokenRepositoryTest extends PostgresContainerTest {
 
         assertThat(found.getUser().getId()).isEqualTo(user.getId());
         assertThat(found.getInstallationId()).isEqualTo(INSTALLATION_ID);
-        assertThat(found.getToken()).isEqualTo(TOKEN);
+        assertThat(found.getTokenValue()).isEqualTo(TOKEN);
         assertThat(found.getPlatform()).isEqualTo(DevicePlatform.ANDROID);
         assertThat(found.getProvider()).isEqualTo(TokenProvider.EXPO);
         assertThat(found.isActive()).isTrue();
