@@ -32,6 +32,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-flyway'
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 
+    implementation platform('software.amazon.awssdk:bom:2.54.17')
+    implementation 'software.amazon.awssdk:s3'
+
     def jjwtVersion = '0.13.0'
     implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
