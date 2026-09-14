@@ -1,7 +1,8 @@
 import type { CSSProperties, SubmitEventHandler } from 'react';
 import { useState } from 'react';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
+import { ASSIGNMENT_SUBMISSION_CONTENT } from '../constants';
+import { InputField } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens, typography } from '../../../styles/global';
@@ -75,29 +76,28 @@ export default function AssignmentSubmissionForm({
       </h2>
 
       <form css={formStyle} onSubmit={submitAssignment}>
-        <Field
-          id="assignment-submission-content"
-          label="내용"
-          isRequired
-          errorText={fieldErrors.content}
-          isError={Boolean(fieldErrors.content)}
-        >
+        <InputField data-testid="assignment-submission-content-field">
+          <InputField.Label htmlFor={'assignment-submission-content'}>내용</InputField.Label>
           <TextArea
             id="assignment-submission-content"
             name="content"
             value={content}
-            required
             onChange={(event) => setContent(event.target.value)}
+            maxLength={ASSIGNMENT_SUBMISSION_CONTENT.length}
             placeholder="과제 내용을 입력해주세요"
           />
-        </Field>
-
-        <Field
-          id="assignment-submission-link"
-          label="링크"
-          errorText={fieldErrors.link}
-          isError={Boolean(fieldErrors.link)}
-        >
+          <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+            <InputField.SubText errorText={fieldErrors.content} />
+            <InputField.CurrentLength
+              currentLength={content.length}
+              maxLength={ASSIGNMENT_SUBMISSION_CONTENT.length}
+            />
+          </div>
+        </InputField>
+        <InputField>
+          <InputField.Label htmlFor={'assignment-submission-link'} isRequired={true}>
+            링크
+          </InputField.Label>
           <Input
             id="assignment-submission-link"
             name="link"
@@ -106,7 +106,8 @@ export default function AssignmentSubmissionForm({
             onChange={(event) => setLink(event.target.value)}
             placeholder="https://"
           />
-        </Field>
+          <InputField.SubText errorText={fieldErrors.link} />
+        </InputField>
 
         <Button
           type="submit"
