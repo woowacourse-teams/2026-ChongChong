@@ -20,6 +20,28 @@ function renderAssignmentSubmissionDetailPage() {
   );
 }
 
+describe('과제 제출물 상세 조회', () => {
+  test('링크가 null인 제출 정보를 정상적으로 표시하고 링크 영역은 표시하지 않는다', async () => {
+    server.use(
+      http.get(ASSIGNMENT_SUBMISSION_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          name: '안톨리니',
+          profileImage: null,
+          createdAt: '2026-09-01T09:00:00',
+          content: '링크 없이 제출한 내용',
+          link: null,
+        }),
+      ),
+    );
+    renderAssignmentSubmissionDetailPage();
+
+    const main = within(screen.getByRole('main'));
+    expect(await main.findByText('링크 없이 제출한 내용')).toBeVisible();
+    expect(main.queryByRole('link')).not.toBeInTheDocument();
+  });
+});
+
 describe('과제 제출물 상세 조회 실패', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});

@@ -58,7 +58,7 @@ export interface SubmissionListResponse {
 
 export interface SubmissionDetail extends Submission {
   content: string;
-  link?: string;
+  link: string | null;
 }
 
 export interface AssignmentSubmissionValue {
@@ -79,7 +79,7 @@ export interface SubmittedAssignment {
   submissionId: number;
   createdAt: string;
   content: string;
-  link?: string;
+  link?: string | null;
 }
 
 export interface UnsubmittedAssignment {

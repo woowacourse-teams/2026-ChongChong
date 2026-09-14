@@ -65,7 +65,7 @@ const submissionDetailSchema = z.object({
   profileImage: z.string().nullable(),
   createdAt: z.string(),
   content: z.string(),
-  link: z.string().optional(),
+  link: z.string().nullable(),
 }) satisfies z.ZodType<SubmissionDetail>;
 
 const memberSchema = z.object({
@@ -91,7 +91,7 @@ const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submitted', [
     submissionId: z.number(),
     createdAt: z.string(),
     content: z.string(),
-    link: z.url().optional(),
+    link: z.url().nullish(),
   }),
   z.object({
     submitted: z.literal(false),
