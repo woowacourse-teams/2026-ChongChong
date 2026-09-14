@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccountAlert } from '../features/account/AccountAlert';
+import { useActivity } from '../features/activity/ActivityProvider';
 import { EntryIcon } from '../features/entry/EntryIcon';
 import { useEntryScenario } from '../features/entry/EntryProvider';
 import { ConfirmDialog, Toast } from '../ui/feedback';
@@ -11,6 +12,7 @@ import { tokens as t } from '../ui/tokens';
 
 export default function AccountScreen() {
   const router = useRouter();
+  const { resetActivity } = useActivity();
   const { name, setName, notifications, setNotifications, studies, logout } =
     useEntryScenario();
   const [draft, setDraft] = useState(name);
@@ -22,6 +24,7 @@ export default function AccountScreen() {
   } | null>(null);
   const tooLong = [...draft].length > 8;
   const exit = () => {
+    resetActivity();
     logout();
     if (router.canDismiss()) router.dismissAll();
     router.replace('/login');

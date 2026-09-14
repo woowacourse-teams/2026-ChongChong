@@ -1,4 +1,5 @@
-import { RoutePreview } from '../../ui/RoutePreview';
+import { ActivityList } from '../../features/home/ActivityList';
+
 export default function AssignmentsScreen() {
-  return <RoutePreview title="과제" />;
+  return <ActivityList kind="assignment" />;
 }

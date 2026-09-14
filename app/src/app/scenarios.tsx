@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
+import { useActivity } from '../features/activity/ActivityProvider';
 import { useEntryScenario } from '../features/entry/EntryProvider';
 import { AppText, Button } from '../ui/primitives';
 import { Screen } from '../ui/Screen';
 export default function ScenariosScreen() {
   const { setScenario } = useEntryScenario();
+  const { resetActivity } = useActivity();
   return (
     <Screen>
       <AppText>
@@ -20,6 +22,7 @@ export default function ScenariosScreen() {
                 : '빈 스터디 목록'
           }
           onPress={() => {
+            resetActivity();
             setScenario(s);
             router.replace('/studies');
           }}
