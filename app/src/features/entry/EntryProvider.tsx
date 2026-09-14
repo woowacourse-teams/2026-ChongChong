@@ -1,0 +1,130 @@
+import type { PropsWithChildren } from 'react';
+import { createContext, useContext, useState } from 'react';
+
+export type EntryStudy = {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly role: 'leader' | 'member';
+  readonly notices: number;
+  readonly assignments: number;
+  readonly members: number;
+};
+type EntryScenario = {
+  readonly name: string;
+  readonly setName: (name: string) => void;
+  readonly notifications: boolean;
+  readonly setNotifications: (enabled: boolean) => void;
+  readonly studies: readonly EntryStudy[];
+  readonly createStudy: (name: string, description: string) => void;
+  readonly joinStudy: () => void;
+  readonly logout: () => void;
+  readonly setScenario: (scenario: 'leader' | 'member' | 'empty') => void;
+};
+const initialStudies: readonly EntryStudy[] = [
+  {
+    id: 'frontend-cs',
+    name: '프론트엔드 CS 스터디',
+    description: '매주 화요일 저녁 9시,\n프론트엔드 CS와 코드 리뷰',
+    role: 'leader',
+    notices: 2,
+    assignments: 1,
+    members: 5,
+  },
+  {
+    id: 'algorithm',
+    name: '알고리즘 스터디',
+    description: '매주 수요일 저녁 6시,\n알고리즘 풀이 공유',
+    role: 'leader',
+    notices: 2,
+    assignments: 1,
+    members: 5,
+  },
+];
+const EntryContext = createContext<EntryScenario | null>(null);
+
+export function EntryProvider({ children }: PropsWithChildren) {
+  const [name, setName] = useState('바니');
+  const [notifications, setNotifications] = useState(true);
+  const [studies, setStudies] = useState<readonly EntryStudy[]>(initialStudies);
+  const createStudy = (studyName: string, description: string) => {
+    setStudies((current) => [
+      ...current,
+      {
+        id: `created-${Date.now()}-${current.length}`,
+        name: studyName,
+        description,
+        role: 'leader',
+        notices: 0,
+        assignments: 0,
+        members: 1,
+      },
+    ]);
+  };
+  const joinStudy = () => {
+    setStudies((current) =>
+      current.some((study) => study.id === 'invited-study')
+        ? current
+        : [
+            ...current,
+            {
+              id: 'invited-study',
+              name: '프론트엔드 CS 스터디',
+              description: '매주 화요일 저녁 9시,\n프론트엔드 CS와 코드 리뷰',
+              role: 'member',
+              notices: 2,
+              assignments: 1,
+              members: 6,
+            },
+          ],
+    );
+  };
+  const logout = () => {
+    setName('바니');
+    setNotifications(true);
+    setStudies(initialStudies);
+  };
+  const setScenario = (scenario: 'leader' | 'member' | 'empty') => {
+    switch (scenario) {
+      case 'leader':
+        setStudies(initialStudies);
+        break;
+      case 'member':
+        setStudies(
+          initialStudies.map((study) => ({ ...study, role: 'member' })),
+        );
+        break;
+      case 'empty':
+        setStudies([]);
+        break;
+    }
+  };
+  return (
+    <EntryContext
+      value={{
+        name,
+        setName,
+        notifications,
+        setNotifications,
+        studies,
+        createStudy,
+        joinStudy,
+        logout,
+        setScenario,
+      }}
+    >
+      {children}
+    </EntryContext>
+  );
+}
+export function useEntryScenario() {
+  const value = useContext(EntryContext);
+  if (!value) throw new MissingEntryProviderError();
+  return value;
+}
+class MissingEntryProviderError extends Error {
+  constructor() {
+    super('EntryProvider 안에서 사용해야 합니다.');
+    this.name = 'MissingEntryProviderError';
+  }
+}

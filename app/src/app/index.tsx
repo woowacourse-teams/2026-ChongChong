@@ -1,36 +1,32 @@
-import { router } from 'expo-router';
-import {
-  roleLabels,
-  studyFixture,
-  useScenario,
-} from '../mocks/ScenarioProvider';
-import { AppText, Badge, Button, Card } from '../ui/primitives';
-import { Screen } from '../ui/Screen';
-
-export default function FoundationScreen() {
-  const { role, setRole } = useScenario();
+import { router, usePathname } from 'expo-router';
+import { useEffect } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
+import { entryAssets } from '../features/entry/assets';
+import { tokens as t } from '../ui/tokens';
+export default function SplashScreen() {
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname !== '/') return;
+    const timer = setTimeout(() => router.replace('/login'), 1200);
+    return () => clearTimeout(timer);
+  }, [pathname]);
   return (
-    <Screen>
-      <AppText variant="title">함께하는 스터디, 총총</AppText>
-      <AppText muted>
-        앱 기반 확인 화면입니다. 실제 서비스 화면은 다음 작업에서 연결합니다.
-      </AppText>
-      <Card>
-        <Badge>{roleLabels[role]}</Badge>
-        <AppText variant="subtitle">{studyFixture.name}</AppText>
-        <AppText muted>{studyFixture.description}</AppText>
-      </Card>
-      <Button
-        label={`역할 전환: ${role === 'leader' ? '스터디원' : '리더'}`}
-        variant="secondary"
-        onPress={() => setRole(role === 'leader' ? 'member' : 'leader')}
+    <View style={styles.screen}>
+      <Image
+        source={entryAssets.wordmark}
+        style={styles.logo}
+        resizeMode="contain"
+        accessibilityLabel="총총"
       />
-      <Button label="스터디 탭 확인" onPress={() => router.push('/study')} />
-      <Button
-        label="공통 UI 확인"
-        variant="secondary"
-        onPress={() => router.push('/showcase')}
-      />
-    </Screen>
+    </View>
   );
 }
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: t.color.background,
+  },
+  logo: { width: 200, height: 100 },
+});

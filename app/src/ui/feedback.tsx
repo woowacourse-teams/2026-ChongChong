@@ -8,6 +8,7 @@ type ConfirmDialogProps = {
   readonly title: string;
   readonly description: string;
   readonly confirmLabel?: string;
+  readonly cancelLabel?: string;
   readonly destructive?: boolean;
   readonly onCancel: () => void;
   readonly onConfirm: () => void;
@@ -19,6 +20,7 @@ export function ConfirmDialog({
   onCancel,
   onConfirm,
   confirmLabel = '확인',
+  cancelLabel = '취소',
   destructive = false,
 }: ConfirmDialogProps) {
   return (
@@ -44,7 +46,7 @@ export function ConfirmDialog({
               style={styles.action}
             >
               <AppText variant="large" style={styles.cancelLabel}>
-                취소
+                {cancelLabel}
               </AppText>
             </Pressable>
             <Pressable
