@@ -1,11 +1,12 @@
-import { CSSProperties, useId } from 'react';
+import { CSSProperties, useId, useRef, useEffect } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import { CSSObject } from '@emotion/react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export interface DialogProps {
-  ref: React.RefObject<HTMLDialogElement | null>;
   title: string;
   description?: string;
+  onClose: () => void;
   actions: React.ReactNode;
   role?: 'dialog' | 'alertdialog';
 }
@@ -60,18 +61,32 @@ const descriptionStyle = {
   margin: 0,
 } satisfies CSSProperties;
 
-export default function Dialog({ ref, title, description, actions, role = 'dialog' }: DialogProps) {
+export default function Dialog({
+  title,
+  description,
+  onClose,
+  actions,
+  role = 'dialog',
+}: DialogProps) {
   const id = useId();
   const titleId = `${id}-title`;
   const descriptionId = `${id}-description`;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.showModal();
+  }, []);
+
+  useBodyScrollLock();
 
   return (
     <dialog
-      ref={ref}
+      ref={dialogRef}
       role={role}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       css={dialogStyle}
+      onClose={onClose}
     >
       <div css={bodyStyle}>
         <h2 id={titleId} css={titleStyle}>

@@ -3,6 +3,7 @@ import { CSSProperties } from 'react';
 import Dialog, { DialogProps } from './Dialog';
 
 interface ConfirmDialogProps extends Omit<DialogProps, 'actions' | 'role'> {
+  onClose: () => void;
   closeButton: React.ReactNode;
   confirmButton: React.ReactNode;
 }
@@ -34,18 +35,18 @@ const confirmButtonStyle = {
 } satisfies CSSProperties;
 
 function ConfirmDialogRoot({
-  ref,
   title,
   description,
+  onClose,
   closeButton,
   confirmButton,
 }: ConfirmDialogProps) {
   return (
     <Dialog
-      ref={ref}
       role="alertdialog"
       title={title}
       description={description}
+      onClose={onClose}
       actions={
         <>
           {closeButton}

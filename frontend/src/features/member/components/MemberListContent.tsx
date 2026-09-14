@@ -8,10 +8,10 @@ import ErrorContent from '../../../shared/ui/ErrorContent';
 import MemberList from './MemberList';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteStudyLinkBox, { InviteStudyLinkBoxFallback } from './InviteStudyLinkBox';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
 import useDeleteStudy from '../../study/hooks/useDeleteStudy';
 import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
 import { useToast } from '../../../shared/providers/ToastProvider';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 const actionButtonStyle = {
@@ -22,7 +22,7 @@ function LeaderContent() {
   const { studyId } = useIntegerParams(['studyId']);
   const navigate = useNavigate();
 
-  const { dialogRef, open, close } = useDialogControl();
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   const { mutate: deleteStudy, isPending } = useDeleteStudy();
 
@@ -34,7 +34,7 @@ function LeaderContent() {
       {
         onSuccess: () => navigate('/studies'),
         onError: (error) => {
-          close();
+          closeDialog();
           toast.open(<StatusToast message={error.message} status={'Error'} />);
         },
       },
@@ -58,20 +58,24 @@ function LeaderContent() {
           <InviteStudyLinkBox studyId={studyId} />
         </ErrorBoundary>
       </section>
-      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
+      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={openDialog}>
         스터디 삭제하기
       </Button>
-      <ConfirmDialog
-        ref={dialogRef}
-        title={'스터디를 삭제할까요?'}
-        description={'삭제한 스터디는 다시 복구할 수 없어요. 정말 삭제하시겠어요?'}
-        closeButton={<ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>}
-        confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={handleDeleteStudy} disabled={isPending}>
-            삭제
-          </ConfirmDialog.ConfirmButton>
-        }
-      />
+      {isOpen && (
+        <ConfirmDialog
+          title={'스터디를 삭제할까요?'}
+          description={'삭제한 스터디는 다시 복구할 수 없어요. 정말 삭제하시겠어요?'}
+          onClose={closeDialog}
+          closeButton={
+            <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+          }
+          confirmButton={
+            <ConfirmDialog.ConfirmButton onClick={handleDeleteStudy} disabled={isPending}>
+              삭제
+            </ConfirmDialog.ConfirmButton>
+          }
+        />
+      )}
     </>
   );
 }
@@ -81,7 +85,7 @@ function MemberContent() {
 
   const navigate = useNavigate();
 
-  const { dialogRef, open, close } = useDialogControl();
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   const { mutate: leaveStudyMember, isPending } = useLeaveStudyMember();
 
@@ -93,7 +97,7 @@ function MemberContent() {
       {
         onSuccess: () => navigate('/studies'),
         onError: (error) => {
-          close();
+          closeDialog();
           toast.open(<StatusToast message={error.message} status="Error" />);
         },
       },
@@ -117,20 +121,24 @@ function MemberContent() {
           <InviteStudyLinkBox studyId={studyId} />
         </ErrorBoundary>
       </section>
-      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={open}>
+      <Button variant="criticalSolid" size="large" css={actionButtonStyle} onClick={openDialog}>
         스터디 탈퇴하기
       </Button>
-      <ConfirmDialog
-        ref={dialogRef}
-        title={'스터디를 탈퇴하시겠습니까?'}
-        description={'스터디를 탈퇴하면 이전 스터디 활동 기록이 전부 사라져요'}
-        closeButton={<ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>}
-        confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={handleLeaveStudyMember} disabled={isPending}>
-            탈퇴
-          </ConfirmDialog.ConfirmButton>
-        }
-      />
+      {isOpen && (
+        <ConfirmDialog
+          title={'스터디를 탈퇴하시겠습니까?'}
+          description={'스터디를 탈퇴하면 이전 스터디 활동 기록이 전부 사라져요'}
+          onClose={closeDialog}
+          closeButton={
+            <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+          }
+          confirmButton={
+            <ConfirmDialog.ConfirmButton onClick={handleLeaveStudyMember} disabled={isPending}>
+              탈퇴
+            </ConfirmDialog.ConfirmButton>
+          }
+        />
+      )}
     </>
   );
 }
