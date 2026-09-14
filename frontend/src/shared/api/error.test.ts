@@ -1,4 +1,4 @@
-import { getErrorResponse, ValidationError } from './error';
+import { ErrorResponse, ValidationError } from './error';
 import { HTTPError, type NormalizedOptions } from 'ky';
 
 function createHTTPError(data: unknown) {
@@ -15,7 +15,7 @@ describe('getErrorResponse 테스트', () => {
   test('HTTPError의 응답 본문이 에러 응답 형식이면 그대로 반환한다', () => {
     const data = { code: 'INTERNAL_SERVER_ERROR', message: '서버에서 문제가 발생했어요' };
 
-    expect(getErrorResponse(createHTTPError(data))).toEqual(data);
+    expect(ErrorResponse.from(createHTTPError(data))).toEqual(data);
   });
 
   test('필드 에러 목록이 있으면 함께 반환한다', () => {
@@ -25,7 +25,57 @@ describe('getErrorResponse 테스트', () => {
       errors: [{ code: 'REQUIRED', field: 'name', reason: '필수에요' }],
     };
 
-    expect(getErrorResponse(createHTTPError(data))).toEqual(data);
+    expect(ErrorResponse.from(createHTTPError(data))).toEqual(data);
+  });
+
+  test.each([{ errors: undefined }, { errors: [] }])(
+    '필드 에러 목록이 $errors이면 응답을 반환한다',
+    ({ errors }) => {
+      const data = { code: 'INVALID_INPUT_VALUE', message: '입력값이 올바르지 않아요', errors };
+
+      expect(ErrorResponse.from(createHTTPError(data))).toEqual(data);
+    },
+  );
+
+  test.each([null, 123, 'invalid', {}])(
+    '필드 에러 목록이 배열이 아니면 null을 반환한다: %p',
+    (errors) => {
+      const data = { code: 'INVALID_INPUT_VALUE', message: '입력값이 올바르지 않아요', errors };
+
+      expect(ErrorResponse.from(createHTTPError(data))).toBeNull();
+    },
+  );
+
+  test.each([
+    null,
+    undefined,
+    123,
+    'invalid',
+    {},
+    { field: 'name', reason: '필수에요' },
+    { code: 'REQUIRED', reason: '필수에요' },
+    { code: 'REQUIRED', field: 'name' },
+    { code: 123, field: 'name', reason: '필수에요' },
+    { code: 'REQUIRED', field: 123, reason: '필수에요' },
+    { code: 'REQUIRED', field: 'name', reason: 123 },
+  ])('필드 에러 항목의 형식이 잘못되면 null을 반환한다: %p', (fieldError) => {
+    const data = {
+      code: 'INVALID_INPUT_VALUE',
+      message: '입력값이 올바르지 않아요',
+      errors: [fieldError],
+    };
+
+    expect(ErrorResponse.from(createHTTPError(data))).toBeNull();
+  });
+
+  test('정상 항목 뒤에 잘못된 필드 에러가 있어도 null을 반환한다', () => {
+    const data = {
+      code: 'INVALID_INPUT_VALUE',
+      message: '입력값이 올바르지 않아요',
+      errors: [{ code: 'REQUIRED', field: 'name', reason: '필수에요' }, null],
+    };
+
+    expect(ErrorResponse.from(createHTTPError(data))).toBeNull();
   });
 
   test.each([
@@ -33,13 +83,13 @@ describe('getErrorResponse 테스트', () => {
     { code: 'INVALID_INPUT_VALUE' },
     { code: 400, message: '입력값이 올바르지 않아요' },
   ])('응답 본문이 에러 응답 형식이 아니면 null을 반환한다', (data) => {
-    expect(getErrorResponse(createHTTPError(data))).toBeNull();
+    expect(ErrorResponse.from(createHTTPError(data))).toBeNull();
   });
 
   test.each([undefined, null, '서버에서 문제가 발생했어요'])(
     '응답 본문이 객체가 아니면 null을 반환한다',
     (data) => {
-      expect(getErrorResponse(createHTTPError(data))).toBeNull();
+      expect(ErrorResponse.from(createHTTPError(data))).toBeNull();
     },
   );
 });

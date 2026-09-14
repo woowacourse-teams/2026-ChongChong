@@ -1,4 +1,4 @@
-import { http } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { render, screen } from '@testing-library/react';
 import { server } from '../../../../mocks/msw-node';
 import userEvent from '@testing-library/user-event';
@@ -85,5 +85,46 @@ describe('스터디폼 테스트', () => {
 
     expect(await screen.findByText('이름에 문제가 있어요')).toBeInTheDocument();
     expect(await screen.findByText('설명에 문제가 있어요')).toBeInTheDocument();
+
+    const toast = screen.queryByRole('status');
+    expect(toast).not.toBeInTheDocument();
+  });
+
+  test('스터디 가입 상한을 초과했을때 에러메시지가 Toast로 렌더링 된다', async () => {
+    server.use(
+      http.post(`${API_URL}${STUDY_URLS.create}`, () => {
+        return HttpResponse.json(
+          {
+            code: 'JOINED_STUDY_LIMIT_EXCEEDED',
+            message: '가입할 수 있는 스터디는 최대 50개입니다.',
+          },
+          { status: 409 },
+        );
+      }),
+    );
+    render(<StudyForm />, { wrapper: createWrapper() });
+
+    await user.type(screen.getByRole('textbox', { name: '스터디 이름' }), '치킨');
+    await user.click(screen.getByRole('button', { name: '스터디 만들기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('가입할 수 있는 스터디는 최대 50개입니다.');
+    expect(toast).toBeVisible();
+
+    expect(screen.getByRole('textbox', { name: '스터디 이름' })).toHaveValue('치킨');
+  });
+
+  test('네트워크 에러가 발생했을때 에러메시지는 Toast로 렌더링 된다', async () => {
+    server.use(http.post(`${API_URL}${STUDY_URLS.create}`, () => HttpResponse.error()));
+    render(<StudyForm />, { wrapper: createWrapper() });
+
+    const nameInput = screen.getByRole('textbox', { name: '스터디 이름' });
+    await user.type(nameInput, '치킨');
+    await user.click(screen.getByRole('button', { name: '스터디 만들기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('스터디를 생성하는데 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(nameInput).toHaveValue('치킨');
   });
 });

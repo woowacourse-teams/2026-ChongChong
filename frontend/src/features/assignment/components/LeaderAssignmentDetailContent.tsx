@@ -1,23 +1,49 @@
-import { useSuspenseQueries } from '@tanstack/react-query';
-import DetailActions from '../../../shared/widgets/DetailActions';
-import assignmentQueries from '../queries';
+import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
+import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
+import { deleteAssignment } from '../api';
+import useDialogControl from '../../../shared/hooks/useDialogControl';
+import SubmitStatusSection from './SubmitStatusSection';
 import AssignmentArticle from './AssignmentArticle';
 import SubmissionList from './SubmissionList';
-import SubmitStatusSection from './SubmitStatusSection';
+import DetailActions from '../../../shared/widgets/DetailActions';
+import assignmentQueries from '../queries';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 interface Props {
   studyId: number;
-  assignmentId: number;
-  onEdit: () => void;
-  onDelete: () => void;
 }
 
-export default function LeaderAssignmentDetailContent({
-  studyId,
-  assignmentId,
-  onEdit,
-  onDelete,
-}: Props) {
+export default function LeaderAssignmentDetailContent({ studyId }: Props) {
+  const navigate = useNavigate();
+  const { assignmentId } = useIntegerParams(['assignmentId']);
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const {
+    dialogRef: deleteConfirmDialog,
+    open: openDeleteConfirmDialog,
+    close: closeDeleteConfirmDialog,
+  } = useDialogControl();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => deleteAssignment(studyId, assignmentId),
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: assignmentQueries.detail(studyId, assignmentId).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: assignmentQueries.lists(studyId),
+      });
+      navigate(`/studies/${studyId}/assignments`);
+    },
+    onError: (error) => {
+      closeDeleteConfirmDialog();
+      toast.open(<StatusToast status="Error" message={error.message} />);
+    },
+  });
+
   const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
     useSuspenseQueries({
       queries: [
@@ -27,13 +53,31 @@ export default function LeaderAssignmentDetailContent({
       ],
     });
 
+  const handleEditAssignment = () =>
+    navigate(`/studies/${studyId}/assignments/${assignmentId}/edit`);
+
   return (
     <>
       <SubmitStatusSection status={submitStatusResponse} />
       <AssignmentArticle assignment={assignment} />
       <SubmissionList submissions={submissions.submissions} />
 
-      <DetailActions onEdit={onEdit} onDelete={onDelete} />
+      <DetailActions onEdit={handleEditAssignment} onDelete={openDeleteConfirmDialog} />
+      <ConfirmDialog
+        ref={deleteConfirmDialog}
+        title="과제를 삭제할까요?"
+        description={'삭제한 과제는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
+        closeButton={
+          <ConfirmDialog.CloseButton onClick={closeDeleteConfirmDialog}>
+            취소
+          </ConfirmDialog.CloseButton>
+        }
+        confirmButton={
+          <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
+            {isPending ? '삭제 중...' : '삭제'}
+          </ConfirmDialog.ConfirmButton>
+        }
+      />
     </>
   );
 }

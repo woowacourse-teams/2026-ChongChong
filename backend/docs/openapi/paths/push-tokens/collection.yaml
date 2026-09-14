@@ -13,7 +13,7 @@ post:
     required: true
     content:
       application/json:
-        schema: { $ref: '../../components/schemas/push-tokens.yaml#/PushTokenCreateRequest' }
+        schema: { $ref: '../../components/schemas/push-tokens.yaml#/PushTokenRegisterRequest' }
         example: { installationId: installation-1, token: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]', platform: ANDROID }
   responses:
     '204': { description: 푸시 토큰 등록 성공. 응답 본문 없음. }

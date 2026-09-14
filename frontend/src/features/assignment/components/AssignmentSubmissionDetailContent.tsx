@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import assignmentIcon from '../../../shared/assets/assign-green.svg';
 import linkIcon from '../../../shared/assets/link-green.svg';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
@@ -61,10 +61,14 @@ const linkStyle = {
 } satisfies CSSProperties;
 
 export default function AssignmentSubmissionDetailContent() {
-  const { studyId, assignmentId, submissionId } = useParams();
+  const { studyId, assignmentId, submissionId } = useIntegerParams([
+    'studyId',
+    'assignmentId',
+    'submissionId',
+  ]);
 
   const { data: submission } = useSuspenseQuery(
-    assignmentQueries.submissionDetail(Number(studyId), Number(assignmentId), Number(submissionId)),
+    assignmentQueries.submissionDetail(studyId, assignmentId, submissionId),
   );
 
   return (

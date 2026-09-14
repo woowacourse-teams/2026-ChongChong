@@ -1,5 +1,6 @@
 import { Suspense, CSSProperties } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
+import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { Link } from 'react-router';
 import logo from '../../../shared/assets/icons/header-icon.svg';
@@ -29,7 +30,9 @@ export default function MyStudiesPage() {
       />
 
       <Main>
-        <ErrorBoundary fallbackRender={({ error }) => <p>{getErrorMessage(error)}</p>}>
+        <ErrorBoundary
+          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+        >
           <Suspense fallback={<Loading />}>
             <MyStudies />
 

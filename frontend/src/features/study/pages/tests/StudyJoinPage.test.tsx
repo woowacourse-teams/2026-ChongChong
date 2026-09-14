@@ -130,8 +130,7 @@ describe('스터디 참가 폼 테스트', () => {
     },
   );
 
-  // 에러처리 + Toast UI가 추가된 뒤에 skip을 해제합니다.
-  test.skip('이미 참여한 스터디를 참여하려고 하면 에러 메시지를 보여준다', async () => {
+  test('이미 참여한 스터디를 참여하려고 하면 Toast 에러 메시지가 렌더링 된다', async () => {
     setAccessToken('2');
     const { inviteLink } = mockStudies[0];
     const user = userEvent.setup();
@@ -141,19 +140,10 @@ describe('스터디 참가 폼 테스트', () => {
     await user.type(linkInput, createInviteLink(inviteLink));
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('이미 참여한 스터디예요.');
-  });
-
-  test.skip('유효하지 않은 초대 링크로 참여하면 에러 메시지를 보여준다', async () => {
-    setAccessToken('2');
-    const user = userEvent.setup();
-    render(<StudyJoinPage />, { wrapper: createWrapper() });
-
-    const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
-    await user.type(linkInput, 'chongchong.app/join/없는링크');
-    await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
-
-    expect(await screen.findByRole('status')).toHaveTextContent('스터디 참여에 실패했습니다.');
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('해당 스터디에 이미 가입되어 있습니다.');
+    expect(toast).toBeVisible();
+    expect(linkInput).toHaveValue(createInviteLink(inviteLink));
   });
 
   test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {
@@ -172,5 +162,21 @@ describe('스터디 참가 폼 테스트', () => {
     await user.type(inviteLinkInput, createInviteLink('우아한테크코스9기'));
     await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
     expect(await screen.findByText('토큰값이 문제가 있어요')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  test('네트워크 오류가 발생하면 Toast 에러 메시지가 렌더링 된다', async () => {
+    const user = userEvent.setup();
+    server.use(http.post(STUDY_JOIN_URL, () => HttpResponse.error()));
+    render(<StudyJoinPage />, { wrapper: createWrapper() });
+
+    const linkInput = screen.getByRole('textbox', { name: '초대 링크' });
+    await user.type(linkInput, 'https://www.naver.com?token=안녕하세요 저 안톨리니입니다.');
+    await user.click(screen.getByRole('button', { name: '스터디 참여하기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('스터디 참여에 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(linkInput).toHaveValue('https://www.naver.com?token=안녕하세요 저 안톨리니입니다.');
   });
 });

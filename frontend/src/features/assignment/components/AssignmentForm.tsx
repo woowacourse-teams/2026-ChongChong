@@ -1,5 +1,4 @@
-import { CSSProperties, useState, useMemo } from 'react';
-import { ValidationError } from '../../../shared/api/error';
+import { CSSProperties, useState } from 'react';
 import Button from '../../../shared/ui/Button';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
@@ -22,7 +21,7 @@ interface AssignmentFormProps {
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: AssignmentValue) => void;
-  error?: Error | null;
+  fieldErrors?: Partial<Record<'title' | 'content' | 'submissionMethod' | 'closeAt', string>>;
 }
 
 const emptyValues = {
@@ -34,10 +33,10 @@ const emptyValues = {
 
 export default function AssignmentForm({
   initialValues = emptyValues,
-  submitLabel,
   isSubmitting = false,
+  fieldErrors = {},
+  submitLabel,
   onSubmit,
-  error,
 }: AssignmentFormProps) {
   const [title, setTitle] = useState(initialValues.title);
   const [content, setContent] = useState(initialValues.content);
@@ -56,11 +55,6 @@ export default function AssignmentForm({
 
     onSubmit({ title, content, submissionMethod, closeAt });
   }
-
-  const fieldErrors = useMemo(
-    () => (error instanceof ValidationError ? error.fieldErrors : {}),
-    [error],
-  );
 
   return (
     <form css={formStyle} onSubmit={handleSubmit}>

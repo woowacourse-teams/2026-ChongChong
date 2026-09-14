@@ -1,5 +1,6 @@
 import api from '../../client';
-import { FIELD_ERROR_CODE, getErrorResponse, ValidationError } from '../../shared/api/error';
+import { HTTPError } from 'ky';
+import { FIELD_ERROR_CODE, ErrorResponse, ValidationError, ApiError } from '../../shared/api/error';
 import type { NoticeFormValues, UpdateNoticeValue } from './types';
 import {
   isNoticeListResponse,
@@ -22,8 +23,19 @@ export async function fetchNoticeList(studyId: number, cursor?: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 목록을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 목록을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -37,8 +49,19 @@ export async function fetchNoticeReadStatus(studyId: number, noticeId: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 읽음 현황을 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 읽음 현황을 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -52,8 +75,19 @@ export async function fetchNoticeDetail(studyId: number, noticeId: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 정보를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 정보를 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -67,8 +101,19 @@ export async function fetchNoticeMyRead(studyId: number, noticeId: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('내 공지 읽음 상태를 불러오는데 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('내 공지 읽음 상태를 불러오는데 실패했습니다.', { cause: error });
   }
 }
 
@@ -85,12 +130,21 @@ export async function createNotice(studyId: number, values: NoticeFormValues) {
 
     return data;
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
         message: errorResponse.message,
         errors: errorResponse.errors,
+        options: { cause: error },
+      });
+    }
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
         options: { cause: error },
       });
     }
@@ -102,8 +156,19 @@ export async function createNotice(studyId: number, values: NoticeFormValues) {
 export async function deleteNotice(studyId: number, noticeId: number) {
   try {
     await api.delete(`/studies/${studyId}/notices/${noticeId}`);
-  } catch {
-    throw new Error('공지 삭제에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 삭제에 실패했습니다.', { cause: error });
   }
 }
 
@@ -113,12 +178,21 @@ export async function updateNotice(studyId: number, noticeId: number, values: Up
       json: values,
     });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
+    const errorResponse = ErrorResponse.from(error);
 
     if (errorResponse?.code === FIELD_ERROR_CODE) {
       throw new ValidationError({
         message: errorResponse.message,
         errors: errorResponse.errors,
+        options: { cause: error },
+      });
+    }
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
         options: { cause: error },
       });
     }
@@ -137,7 +211,18 @@ export async function updateNoticeRead(studyId: number, noticeId: number) {
     }
 
     return data;
-  } catch {
-    throw new Error('공지 읽음 처리에 실패했습니다.');
+  } catch (error) {
+    const errorResponse = ErrorResponse.from(error);
+
+    if (error instanceof HTTPError && errorResponse) {
+      throw new ApiError({
+        code: errorResponse.code,
+        message: errorResponse.message,
+        status: error.response.status,
+        options: { cause: error },
+      });
+    }
+
+    throw new Error('공지 읽음 처리에 실패했습니다.', { cause: error });
   }
 }

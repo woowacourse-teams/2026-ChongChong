@@ -1,0 +1,105 @@
+version: 0.2
+
+env:
+  shell: bash
+  variables:
+    CI: 'true'
+
+phases:
+  install:
+    on-failure: ABORT
+    runtime-versions:
+      nodejs: 24.19.0
+    commands:
+      - cd "$CODEBUILD_SRC_DIR/frontend"
+      - test "$(node --version)" = "v$(tr -d '[:space:]' < .nvmrc)"
+      - npm install --global "$(node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).packageManager')"
+      - node --version
+      - pnpm --version
+      - pnpm install --frozen-lockfile --prod=false
+
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - cd "$CODEBUILD_SRC_DIR/frontend"
+      - |
+        node --input-type=module <<'NODE'
+        const expectedOrigin = process.env.DEPLOY_ENV === 'dev'
+          ? 'https://d2ujjy0977rfbd.cloudfront.net'
+          : process.env.DEPLOY_ENV === 'prod' ? 'https://chongchong.kr' : undefined;
+        if (!expectedOrigin || process.env.API_BASE_URL !== expectedOrigin) {
+          throw new Error('DEPLOY_ENV must be dev or prod and match API_BASE_URL');
+        }
+        const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY'];
+        for (const name of required) {
+          if (!process.env[name]?.trim()) {
+            throw new Error(`Missing CodeBuild environment variable: ${name}`);
+          }
+        }
+        const origin = new URL(process.env.API_BASE_URL);
+        if (origin.protocol !== 'https:' || origin.origin !== process.env.API_BASE_URL) {
+          throw new Error('API_BASE_URL must be an HTTPS origin without a path or trailing slash');
+        }
+        if (process.env.USE_MSW !== 'false') {
+          throw new Error('USE_MSW must be false for deployed builds');
+        }
+        if (Boolean(process.env.POSTHOG_HOST) !== Boolean(process.env.POSTHOG_PROJECT_TOKEN)) {
+          throw new Error('Set both PostHog variables, or leave both unset');
+        }
+        NODE
+      - pnpm lint
+      - pnpm format:check
+      - pnpm type-check
+      - pnpm exec jest --ci --runInBand
+
+  build:
+    on-failure: ABORT
+    commands:
+      - |
+        set -euo pipefail
+        cd "$CODEBUILD_SRC_DIR/frontend"
+
+        # 빌드가 실패하면 아래 배포 명령은 실행하지 않습니다.
+        rm -rf dist
+
+        NODE_ENV=production BABEL_ENV=production pnpm build
+
+        # 환경별로 업로드 경로와 CloudFront 배포를 선택합니다.
+        case "${DEPLOY_ENV:-}" in
+          dev)
+            SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/dev"
+            DISTRIBUTION_ID="E3QKIZ08X8L5CD"
+            ;;
+          prod)
+            SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/prod"
+            DISTRIBUTION_ID="E3ADSTISVSMGFQ"
+            ;;
+          *)
+            echo "DEPLOY_ENV must be dev or prod" >&2
+            exit 1
+            ;;
+        esac
+
+        test -s dist/index.html
+
+        # 자산을 먼저 올립니다. 기존 S3 파일은 삭제하지 않습니다.
+        aws s3 cp dist/ "$SITE_PATH/" --recursive --exclude "index.html" \
+          --no-follow-symlinks --cache-control "public,max-age=31536000,immutable" \
+          --only-show-errors --region ap-northeast-2
+
+        # 자산 업로드가 성공한 뒤 HTML을 교체합니다.
+        aws s3 cp dist/index.html "$SITE_PATH/index.html" \
+          --content-type "text/html; charset=utf-8" --cache-control "no-cache" \
+          --only-show-errors --region ap-northeast-2
+
+        # 캐시 무효화를 요청합니다. 완료 여부는 CloudFront 콘솔에서 확인합니다.
+        INVALIDATION_ID=$(aws cloudfront create-invalidation \
+          --distribution-id "$DISTRIBUTION_ID" --paths "/*" \
+          --query "Invalidation.Id" --output text)
+        echo "CloudFront invalidation requested: $INVALIDATION_ID (completion not checked)"
+
+artifacts:
+  base-directory: frontend
+  files:
+    - 'dist/**/*'
+    - 'codebuild/publish-buildspec.yml'

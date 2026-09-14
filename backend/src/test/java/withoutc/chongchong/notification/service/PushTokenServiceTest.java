@@ -11,9 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import withoutc.chongchong.notification.controller.dto.PushTokenCreateRequest;
+import withoutc.chongchong.notification.controller.dto.PushTokenRegisterRequest;
 import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.TokenProvider;
+import withoutc.chongchong.notification.exception.PushTokenErrorCode;
+import withoutc.chongchong.notification.exception.PushTokenException;
 import withoutc.chongchong.notification.repository.PushTokenRepository;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.exception.UserErrorCode;
@@ -43,7 +45,7 @@ class PushTokenServiceTest {
 
         pushTokenService.registerPushToken(
                 USER_ID,
-                new PushTokenCreateRequest(INSTALLATION_ID, "push-token", DevicePlatform.ANDROID)
+                new PushTokenRegisterRequest(INSTALLATION_ID, "push-token", DevicePlatform.ANDROID)
         );
 
         verify(userRepository).getByIdForUpdateOrThrow(USER_ID);
@@ -67,7 +69,7 @@ class PushTokenServiceTest {
 
         pushTokenService.registerPushToken(
                 USER_ID,
-                new PushTokenCreateRequest(INSTALLATION_ID, "rotated-token", DevicePlatform.IOS)
+                new PushTokenRegisterRequest(INSTALLATION_ID, "rotated-token", DevicePlatform.IOS)
         );
 
         verify(pushTokenRepository).upsert(
@@ -89,8 +91,27 @@ class PushTokenServiceTest {
 
         assertThatThrownBy(() -> pushTokenService.registerPushToken(
                 USER_ID,
-                new PushTokenCreateRequest(INSTALLATION_ID, "push-token", DevicePlatform.ANDROID)
+                new PushTokenRegisterRequest(INSTALLATION_ID, "push-token", DevicePlatform.ANDROID)
         )).isSameAs(exception);
+
+        verifyNoInteractions(pushTokenRepository);
+    }
+
+    @Test
+    @DisplayName("도메인 검증에 실패하면 푸시 토큰을 upsert하지 않는다")
+    void rejectInvalidPushTokenRegistration() {
+        User user = mock(User.class);
+        when(userRepository.getByIdForUpdateOrThrow(USER_ID)).thenReturn(user);
+
+        PushTokenService pushTokenService = new PushTokenService(pushTokenRepository, userRepository);
+
+        assertThatThrownBy(() -> pushTokenService.registerPushToken(
+                USER_ID,
+                new PushTokenRegisterRequest(" ", "push-token", DevicePlatform.ANDROID)
+        ))
+                .isInstanceOf(PushTokenException.class)
+                .extracting(exception -> ((PushTokenException) exception).getErrorCode())
+                .isEqualTo(PushTokenErrorCode.INVALID_INSTALLATION_ID);
 
         verifyNoInteractions(pushTokenRepository);
     }

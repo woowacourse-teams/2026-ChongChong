@@ -11,6 +11,8 @@ import { createStudy } from '../api';
 import isBlank from '../../../shared/utils/isBlank';
 import { ValidationError } from '../../../shared/api/error';
 import { usePostHog } from '@posthog/react';
+import { useToast } from '../../../shared/providers/ToastProvider';
+import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 const StudyFormStyle = {
   display: 'flex',
@@ -23,10 +25,15 @@ export default function StudyForm() {
   const [nameValue, handleNameValue] = useInputState('');
   const [descriptionValue, handleDescriptionValue] = useInputState('');
   const posthog = usePostHog();
+  const toast = useToast();
 
   const { mutate, error } = useMutation({
     mutationFn: createStudy,
     onSuccess: (data) => navigate(`/studies/${data.studyId}`),
+    onError: (error) => {
+      if (error instanceof ValidationError) return;
+      toast.open(<StatusToast message={error.message} status={'Error'} />);
+    },
   });
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
