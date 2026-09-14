@@ -91,7 +91,7 @@ const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submitted', [
     submissionId: z.number(),
     createdAt: z.string(),
     content: z.string(),
-    link: z.url().nullish(),
+    link: z.union([z.url(), z.literal('')]).nullish(),
   }),
   z.object({
     submitted: z.literal(false),
