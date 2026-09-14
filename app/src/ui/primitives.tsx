@@ -156,12 +156,16 @@ export function Badge({ children }: PropsWithChildren) {
 export function EmptyState({
   title,
   description,
+  compact = false,
 }: {
   readonly title: string;
   readonly description?: string;
+  readonly compact?: boolean;
 }) {
   return (
-    <View style={styles.empty}>
+    <View
+      style={[styles.empty, compact && { paddingTop: 0, paddingBottom: 16 }]}
+    >
       <Image
         source={require('../../assets/images/empty-study.png')}
         style={styles.emptyImage}
@@ -211,7 +215,11 @@ const styles = StyleSheet.create({
     color: t.color.text,
     ...t.typography.large,
   },
-  focused: { borderColor: t.color.brand, outlineColor: t.color.brand },
+  focused: {
+    borderColor: t.color.brand,
+    outlineWidth: 0,
+    outlineStyle: 'solid',
+  },
   card: {
     minHeight: t.size.cardMinHeight,
     borderRadius: t.radius.lg,
