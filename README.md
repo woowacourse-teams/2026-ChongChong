@@ -65,6 +65,7 @@ common/*  ─┘
 
 ## 협업 문서
 
+- 현재 백엔드·프론트엔드 기능과 제약: [v1 PRD](docs/common/v1/README.md)
 - 브랜치 이름, PR 타깃, 머지 방식과 보호 규칙: [기여 가이드](docs/CONTRIBUTING.md)
 - 커밋 메시지와 PR 제목 형식: [커밋 컨벤션](docs/COMMIT_CONVENTION.md)
 - 백엔드의 주요 기술적 의사결정과 변경 이력: [Architecture Decision Records](backend/docs/adr/README.md)
