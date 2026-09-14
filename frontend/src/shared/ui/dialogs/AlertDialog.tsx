@@ -3,6 +3,7 @@ import { CSSProperties } from 'react';
 import Dialog, { DialogProps } from './Dialog';
 
 interface AlertDialogProps extends Omit<DialogProps, 'actions' | 'role'> {
+  onClose: () => void;
   closeButton: React.ReactNode;
 }
 
@@ -21,13 +22,13 @@ const closeButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-function AlertDialogRoot({ ref, title, description, closeButton }: AlertDialogProps) {
+function AlertDialogRoot({ title, description, onClose, closeButton }: AlertDialogProps) {
   return (
     <Dialog
-      ref={ref}
       role="alertdialog"
       title={title}
       description={description}
+      onClose={onClose}
       actions={closeButton}
     />
   );
