@@ -72,7 +72,7 @@ URL에 `?node-id=위값&m=dev`를 붙이면 해당 프레임을 열 수 있다. 
 | 빈 공지 | 원본 토끼 이미지150, 제목 위치 확인, 작성 버튼 없음 |
 | 작은 화면 | 단일 이미지280×300, document 폭320으로 가로 넘침 없음 |
 
-캡처는 `evidence/323/`의 leader-list, leader-summary, leader-detail, delete, editor, calendar, time, empty, member-list, member-reading, member-toast, member-read, member-nontarget, member-single-320 JPG다. Figma 요약/완료 PNG는 UI로 내보낸 원본이고 `*-web.png`는 그림자와 OS 영역을 제외한 비교용 크롭이다.
+검증용 이미지는 사용자 요청으로 제거했다. 당시 실행 결과는 이 문서의 검증 항목과 텍스트 검토 보고서에 남긴다. 이미지 재대조에는 새 캡처가 필요하다.
 
 타입 검사·Biome 검사·Expo web/iOS/Android export를 실행했다. 네이티브 export 성공은 실기기 실행 검증을 뜻하지 않는다.
 
@@ -102,4 +102,4 @@ URL에 `?node-id=위값&m=dev`를 붙이면 해당 프레임을 열 수 있다. 
 - 과거일·자정·당일 과거·동일 시각·미래·다음 달을 포함한 실제 함수 경계 검사9개 통과.
 - 타입·린트·세 플랫폼 export·diff 검사 재통과. 실기기는 미검증.
 
-화면 증거: [비활성 시간](evidence/323/reminder-disabled.jpg), [저장 후 목록](evidence/323/reminder-saved.jpg). 이 캡처는 기존 시간 선택 캡처 이후의 수정 상태다.
+검증용 이미지는 사용자 요청으로 제거했다. 당시 실행 결과는 이 문서의 검증 항목과 텍스트 검토 보고서에 남긴다. 이미지 재대조에는 새 캡처가 필요하다.
