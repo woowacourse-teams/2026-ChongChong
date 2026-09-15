@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useActivity } from '../features/activity/ActivityProvider';
+import { useAssignments } from '../features/assignments/AssignmentProvider';
 import { entryAssets } from '../features/entry/assets';
 import { EntryIcon } from '../features/entry/EntryIcon';
 import { useEntryScenario } from '../features/entry/EntryProvider';
@@ -13,6 +14,7 @@ import { Screen } from '../ui/Screen';
 import { tokens as t } from '../ui/tokens';
 
 export default function StudiesScreen() {
+  const { getAssignments } = useAssignments();
   const { getNotices } = useNotices();
   const router = useRouter();
   const { studies, selectStudy } = useEntryScenario();
@@ -58,7 +60,11 @@ export default function StudiesScreen() {
             studies.map((study) => (
               <StudyCard
                 key={study.id}
-                study={{ ...study, notices: getNotices(study.id).length }}
+                study={{
+                  ...study,
+                  notices: getNotices(study.id).length,
+                  assignments: getAssignments(study.id).length,
+                }}
                 onPress={() => {
                   selectStudy(study.id);
                   setRole(study.role);

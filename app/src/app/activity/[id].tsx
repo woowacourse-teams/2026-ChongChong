@@ -11,6 +11,10 @@ export default function ActivityDetailScreen() {
   const activity = activities.find((item) => item.id === id);
   if (activity?.kind === 'notice')
     return <Redirect href={{ pathname: '/notices/[id]', params: { id } }} />;
+  if (activity?.kind === 'assignment')
+    return (
+      <Redirect href={{ pathname: '/assignments/[id]', params: { id } }} />
+    );
   return (
     <Screen>
       <Stack.Screen

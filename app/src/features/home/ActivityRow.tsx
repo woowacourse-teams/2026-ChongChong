@@ -20,7 +20,11 @@ export function ActivityRow({
       ? activity.read
         ? '읽음'
         : '읽지 않음'
-      : '미제출';
+      : activity.target === false
+        ? '제출 대상 아님'
+        : activity.read
+          ? '제출 완료'
+          : '미제출';
   return (
     <Pressable
       accessibilityRole="button"
