@@ -43,7 +43,7 @@ export function AppHeader({ title, onBack }: AppHeaderProps) {
           </View>
         )}
         <AppText
-          variant="subtitle"
+          variant="large"
           accessibilityRole="header"
           style={styles.title}
         >
