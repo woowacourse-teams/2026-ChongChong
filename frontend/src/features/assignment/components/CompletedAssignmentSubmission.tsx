@@ -93,7 +93,7 @@ export default function CompletedAssignmentSubmission({
   return isEditing ? (
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
-      initialValues={{ content: submission.content, link: submission.link }}
+      initialValues={{ content: submission.content, link: submission.link ?? '' }}
       isSubmitting={isPending}
       submitLabel="수정하기"
       onSubmit={mutate}

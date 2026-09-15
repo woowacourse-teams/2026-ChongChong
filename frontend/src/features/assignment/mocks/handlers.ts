@@ -227,7 +227,7 @@ export const handlers = [
         submissionId: submission.id,
         createdAt: submission.createdAt,
         content: submission.content,
-        ...(submission.link && { link: submission.link }),
+        link: submission.link,
       });
     },
   ),

@@ -9,8 +9,11 @@ import withoutc.chongchong.global.exception.code.ErrorCode;
 @RequiredArgsConstructor
 public enum NotificationErrorCode implements ErrorCode {
 
+    INVALID_NOTIFICATION(HttpStatus.BAD_REQUEST, "INVALID_NOTIFICATION",
+            "알림의 필수 정보가 올바르지 않습니다."),
+
     INVALID_NOTIFICATION_DELIVERY(HttpStatus.BAD_REQUEST, "INVALID_NOTIFICATION_DELIVERY",
-            "알림 발송 기록의 필수 정보가 올바르지 않습니다.");
+            "알림 발송 내역의 필수 정보가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

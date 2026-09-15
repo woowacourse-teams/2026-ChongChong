@@ -39,14 +39,17 @@ export default (_, argv) => {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
           type: 'asset/resource',
           generator: {
-            filename: 'assets/[name][ext]',
+            filename:
+              mode === 'production' ? 'assets/[name].[contenthash:16][ext]' : 'assets/[name][ext]',
           },
         },
       ],
     },
 
     output: {
-      filename: 'bundle.js',
+      filename: mode === 'production' ? '[name].[contenthash:16].js' : 'bundle.js',
+      chunkFilename: mode === 'production' ? '[name].[contenthash:16].js' : '[name].js',
+      clean: true,
       path: path.resolve(__dirname, 'dist'),
       publicPath: '/',
     },

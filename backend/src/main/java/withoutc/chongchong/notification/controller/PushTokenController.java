@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
-import withoutc.chongchong.notification.controller.dto.PushTokenCreateRequest;
+import withoutc.chongchong.notification.controller.dto.PushTokenRegisterRequest;
 import withoutc.chongchong.notification.service.PushTokenService;
 
 @RestController
@@ -25,7 +25,7 @@ public class PushTokenController {
     @PostMapping
     public ResponseEntity<Void> registerPushToken(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @RequestBody @Valid PushTokenCreateRequest request
+            @RequestBody @Valid PushTokenRegisterRequest request
     ) {
         pushTokenService.registerPushToken(user.id(), request);
 

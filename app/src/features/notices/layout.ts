@@ -1,0 +1,35 @@
+/** Design ver2 공지 프레임에서 확인한 화면 전용 치수. 전역 Figma 변수와 구분한다. */
+export const noticeLayout = {
+  // 목록 1702:19500, 요약 1702:20772, 삭제 확인 1702:21138.
+  cardHeight: 168,
+  thumbnailSize: 80,
+  badgeVertical: 3,
+  summaryTop: 28,
+  countFontSize: 34,
+  countLineHeight: 32,
+  recipientHeight: 77,
+  avatarSize: 28,
+  recipientBottomPadding: 18,
+  recipientTextGap: 2,
+  menuWidth: 100,
+  menuTop: 28,
+  menuItemPadding: 10,
+  dialogHeight: 188,
+  titleTop: 18,
+  tabPadding: 7,
+  // 단일 이미지 1702:19307, 복수 이미지 1702:19318, 빈 상태 1702:19449.
+  imageWidth: 350,
+  imageHeight: 375,
+  galleryImageSize: 200,
+  readingFooterHeight: 84,
+  emptyTop: 140,
+  // 작성 1702:18804, 날짜 1702:18848, 시간 1702:18987.
+  bodyFieldHeight: 96,
+  sheetHandleWidth: 36,
+  sheetHandleTop: 14,
+  selectionHeight: 44,
+  calendarDayHeight: 28,
+  timeViewportHeight: 234,
+  timeRowHeight: 40,
+  initialTimeRow: 34,
+} as const;

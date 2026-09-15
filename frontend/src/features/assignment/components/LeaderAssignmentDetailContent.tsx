@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import { deleteAssignment } from '../api';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
 import SubmitStatusSection from './SubmitStatusSection';
 import AssignmentArticle from './AssignmentArticle';
 import SubmissionList from './SubmissionList';
@@ -21,11 +21,7 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
   const queryClient = useQueryClient();
   const toast = useToast();
-  const {
-    dialogRef: deleteConfirmDialog,
-    open: openDeleteConfirmDialog,
-    close: closeDeleteConfirmDialog,
-  } = useDialogControl();
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => deleteAssignment(studyId, assignmentId),
@@ -39,7 +35,7 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
       navigate(`/studies/${studyId}/assignments`);
     },
     onError: (error) => {
-      closeDeleteConfirmDialog();
+      closeDialog();
       toast.open(<StatusToast status="Error" message={error.message} />);
     },
   });
@@ -62,22 +58,22 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
       <AssignmentArticle assignment={assignment} />
       <SubmissionList submissions={submissions.submissions} />
 
-      <DetailActions onEdit={handleEditAssignment} onDelete={openDeleteConfirmDialog} />
-      <ConfirmDialog
-        ref={deleteConfirmDialog}
-        title="과제를 삭제할까요?"
-        description={'삭제한 과제는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
-        closeButton={
-          <ConfirmDialog.CloseButton onClick={closeDeleteConfirmDialog}>
-            취소
-          </ConfirmDialog.CloseButton>
-        }
-        confirmButton={
-          <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
-            {isPending ? '삭제 중...' : '삭제'}
-          </ConfirmDialog.ConfirmButton>
-        }
-      />
+      <DetailActions onEdit={handleEditAssignment} onDelete={openDialog} />
+      {isOpen && (
+        <ConfirmDialog
+          title="과제를 삭제할까요?"
+          description={'삭제한 과제는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
+          onClose={closeDialog}
+          closeButton={
+            <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+          }
+          confirmButton={
+            <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
+              {isPending ? '삭제 중...' : '삭제'}
+            </ConfirmDialog.ConfirmButton>
+          }
+        />
+      )}
     </>
   );
 }

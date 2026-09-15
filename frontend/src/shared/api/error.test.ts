@@ -1,8 +1,8 @@
-import { ErrorResponse, ValidationError } from './error';
+import { ApiError, ErrorResponse, handleError, ValidationError } from './error';
 import { HTTPError, type NormalizedOptions } from 'ky';
 
-function createHTTPError(data: unknown) {
-  const response = new Response(null, { status: 400, statusText: 'Bad Request' });
+function createHTTPError(data: unknown, status = 400) {
+  const response = new Response(null, { status });
   const request = new Request('https://chongchong.test/studies', { method: 'POST' });
   const error = new HTTPError(response, request, {} as NormalizedOptions);
 
@@ -11,7 +11,7 @@ function createHTTPError(data: unknown) {
   return error;
 }
 
-describe('getErrorResponse 테스트', () => {
+describe('ErrorResponse.from 테스트', () => {
   test('HTTPError의 응답 본문이 에러 응답 형식이면 그대로 반환한다', () => {
     const data = { code: 'INTERNAL_SERVER_ERROR', message: '서버에서 문제가 발생했어요' };
 
@@ -124,5 +124,135 @@ describe('ValidationError 테스트', () => {
       errors: [],
     });
     expect(error.fieldErrors).toEqual({});
+  });
+});
+
+describe('ValidationError 테스트', () => {
+  test('입력값 에러를 필드별 메시지와 원본 원인을 가진 ValidationError로 변환한다', () => {
+    const cause = createHTTPError({
+      code: 'INVALID_INPUT_VALUE',
+      message: '입력값이 올바르지 않아요',
+      errors: [
+        { code: 'REQUIRED', field: 'name', reason: '이름은 필수에요' },
+        { code: 'SIZE', field: 'description', reason: '설명이 너무 길어요' },
+      ],
+    });
+
+    const mapped = ValidationError.tryFrom(cause);
+
+    expect(mapped).toBeInstanceOf(ValidationError);
+    expect(mapped).toMatchObject({
+      message: '입력값이 올바르지 않아요',
+      fieldErrors: { name: '이름은 필수에요', description: '설명이 너무 길어요' },
+    });
+  });
+
+  test('필드 에러 목록이 비어있으면 빈 fieldErrors로 변환한다', () => {
+    const cause = createHTTPError({
+      code: 'INVALID_INPUT_VALUE',
+      message: '입력값이 올바르지 않아요',
+      errors: [],
+    });
+    const mapped = ValidationError.tryFrom(cause);
+
+    expect(mapped).toBeInstanceOf(ValidationError);
+    expect(mapped?.fieldErrors).toEqual({});
+  });
+
+  test('필드 에러 목록이 있어도 입력값 에러 코드가 아니면 null을 반환한다', () => {
+    const cause = createHTTPError({
+      code: 'INVALID_REQUEST_PARAMETER',
+      message: '요청 파라미터가 올바르지 않아요',
+      errors: [{ code: 'TYPE_MISMATCH', field: 'studyId', reason: '숫자여야 해요' }],
+    });
+
+    expect(ValidationError.tryFrom(cause)).toBeNull();
+  });
+
+  test('HTTPError 가 아닐 경우 null을 반환한다', () => {
+    expect(ValidationError.tryFrom('알 수 없는 에러 형식')).toBeNull();
+  });
+
+  test('HTTPError지만 본문이 에러 응답 형식이 아니면 null을 반환한다', () => {
+    const error = { message: '에러 코드가 없는 응답이에요' };
+    expect(ValidationError.tryFrom(createHTTPError(error))).toBeNull();
+  });
+});
+
+describe('ApiError 테스트', () => {
+  test('에러의 코드, 메시지를 보존한 ApiError 클래스를 반환한다', () => {
+    const cause = createHTTPError({
+      code: 'FORBIDDEN',
+      message: '접근 권한이 없어요',
+    });
+    const mapped = ApiError.tryFrom(cause);
+
+    expect(mapped).toBeInstanceOf(ApiError);
+    expect(mapped).toMatchObject({
+      code: 'FORBIDDEN',
+      message: '접근 권한이 없어요',
+    });
+  });
+
+  test('HTTPError 가 아닐 경우 null을 반환한다', () => {
+    expect(ApiError.tryFrom('알 수 없는 에러 형식')).toBeNull();
+  });
+
+  test('HTTPError지만 본문이 에러 응답 형식이 아니면 null을 반환한다', () => {
+    const error = { message: '에러 코드가 없는 응답이에요' };
+    expect(ApiError.tryFrom(createHTTPError(error))).toBeNull();
+  });
+});
+
+describe('handleError 테스트', () => {
+  test('여러 mapper에 일치하면 먼저 지정한 에러를 반환한다', () => {
+    const cause = createHTTPError({
+      code: 'INVALID_INPUT_VALUE',
+      message: '입력값이 올바르지 않아요',
+      errors: [{ code: 'REQUIRED', field: 'name', reason: '이름은 필수에요' }],
+    });
+
+    const mapped = handleError(cause, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('요청에 실패했어요', { cause }),
+    });
+
+    expect(mapped).toBeInstanceOf(ValidationError);
+    expect(mapped).toMatchObject({ fieldErrors: { name: '이름은 필수에요' } });
+    expect(mapped.cause).toBe(cause);
+  });
+
+  test('순차적으로 일치한 mapper가 먼저 반환된다', () => {
+    const cause = createHTTPError({ code: 'FORBIDDEN', message: '접근 권한이 없어요' }, 403);
+
+    const mapped = handleError(cause, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('요청에 실패했어요', { cause }),
+    });
+
+    expect(mapped).toBeInstanceOf(ApiError);
+    expect(mapped).toMatchObject({ code: 'FORBIDDEN', message: '접근 권한이 없어요', status: 403 });
+    expect(mapped.cause).toBe(cause);
+  });
+
+  test('일치하는 mapper가 없으면 전달한 fallback 인스턴스를 반환한다', () => {
+    const cause = new TypeError('Failed to fetch');
+    const fallback = new Error('스터디 생성에 실패했어요', { cause });
+
+    const mapped = handleError(cause, { mappers: [ValidationError, ApiError], fallback });
+
+    expect(mapped).toBe(fallback);
+  });
+
+  test('mapper 목록이 비어 있으면 fallback이 반환된다', () => {
+    const cause = createHTTPError({ code: 'FORBIDDEN', message: '접근 권한이 없어요' }, 403);
+    const fallback = new ApiError({
+      code: 'REQUEST_FAILED',
+      message: '요청에 실패했어요',
+      status: 403,
+      options: { cause },
+    });
+
+    expect(handleError(cause, { mappers: [], fallback })).toBe(fallback);
   });
 });

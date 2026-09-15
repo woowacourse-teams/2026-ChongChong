@@ -12,8 +12,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,14 +50,11 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String link;
 
-    @Column(nullable = false)
-    private boolean submitted;
-
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
     public static AssignmentSubmission create(StudyMember member, Assignment assignment) {
-        return new AssignmentSubmission(member, assignment, null, null, false, null);
+        return new AssignmentSubmission(member, assignment, null, null, null);
     }
 
     public void submit(String content, String link, LocalDateTime now) {
@@ -68,7 +63,6 @@ public class AssignmentSubmission extends BaseEntity {
 
         this.content = content;
         this.link = link;
-        this.submitted = true;
         if (submittedAt == null) {
             this.submittedAt = now.truncatedTo(ChronoUnit.MICROS);
         }
@@ -87,23 +81,16 @@ public class AssignmentSubmission extends BaseEntity {
         }
     }
 
-    public LocalDateTime getSubmittedAt() {
-        if (!submitted) {
-            return null;
-        }
-        if (submittedAt != null) {
-            return submittedAt;
-        }
-        return getUpdatedAt();
+    public boolean isSubmitted() {
+        return submittedAt != null;
     }
 
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,
-                                 boolean submitted, LocalDateTime submittedAt) {
+                                 LocalDateTime submittedAt) {
         this.member = member;
         this.assignment = assignment;
         this.content = content;
         this.link = link;
-        this.submitted = submitted;
         this.submittedAt = submittedAt;
     }
 

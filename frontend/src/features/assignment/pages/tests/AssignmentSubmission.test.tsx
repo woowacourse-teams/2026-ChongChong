@@ -197,6 +197,51 @@ describe('스터디원 본인 제출 정보 조회 실패', () => {
   });
 });
 
+describe('스터디원 본인 제출 정보 조회', () => {
+  beforeEach(() => {
+    server.use(
+      http.get(STUDY_INFO_URL, () =>
+        HttpResponse.json({
+          studyName: '객체지향 스터디',
+          role: 'MEMBER',
+          userName: '안톨리니',
+        }),
+      ),
+      http.get(ASSIGNMENT_DETAIL_URL, () =>
+        HttpResponse.json({
+          id: 1,
+          title: '객체지향 설계 과제',
+          content: '객체의 역할과 책임을 정리해주세요.',
+          submissionMethod: '텍스트로 제출하세요',
+          closeAt: '2999-12-31T23:59:59',
+        }),
+      ),
+      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions/my`, () =>
+        HttpResponse.json({
+          submitted: true,
+          submissionId: 1,
+          createdAt: '2026-09-01T09:00:00',
+          content: '링크 없이 제출한 내용',
+          link: null,
+        }),
+      ),
+    );
+  });
+
+  test('링크가 null인 제출 정보를 정상적으로 표시하고 편집 폼에는 빈 링크를 보여준다', async () => {
+    const user = userEvent.setup();
+    renderAssignmentDetailPage();
+
+    const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+    expect(mySubmission.getByText('링크 없이 제출한 내용')).toBeVisible();
+    expect(mySubmission.queryByRole('link')).not.toBeInTheDocument();
+
+    await user.click(mySubmission.getByRole('button', { name: '편집하기' }));
+
+    expect(screen.getByRole('textbox', { name: '링크' })).toHaveValue('');
+  });
+});
+
 describe('스터디원 과제 제출 실패', () => {
   beforeEach(() => {
     server.use(
