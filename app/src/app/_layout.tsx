@@ -70,6 +70,10 @@ export default function RootLayout() {
                   />
                   <Stack.Screen name="study" options={{ headerShown: false }} />
                   <Stack.Screen
+                    name="study-settings"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
                     name="notifications"
                     options={{ title: '알림' }}
                   />

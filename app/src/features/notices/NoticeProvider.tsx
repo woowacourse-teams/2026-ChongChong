@@ -32,7 +32,9 @@ export function NoticeProvider({ children }: PropsWithChildren) {
     if (!study) return [];
     return (
       byStudy[studyId] ??
-      (study.notices > 0 ? createNoticeFixtures(study.role === 'member') : [])
+      (study.notices > 0
+        ? createNoticeFixtures((study.fixtureRole ?? study.role) === 'member')
+        : [])
     );
   };
   const notices = selectedStudy ? getNotices(selectedStudy.id) : [];
@@ -46,7 +48,9 @@ export function NoticeProvider({ children }: PropsWithChildren) {
       [study.id]: transform(
         current[study.id] ??
           (study.notices > 0
-            ? createNoticeFixtures(study.role === 'member')
+            ? createNoticeFixtures(
+                (study.fixtureRole ?? study.role) === 'member',
+              )
             : []),
       ),
     }));

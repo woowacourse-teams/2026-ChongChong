@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '../../ui/primitives';
@@ -11,7 +10,6 @@ import { homeLayout as layout } from './layout';
 export function StudyHeader() {
   const router = useRouter();
   const { name, selectedStudy } = useEntryScenario();
-  const [menu, setMenu] = useState(false);
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
       <View style={styles.header}>
@@ -24,47 +22,23 @@ export function StudyHeader() {
           <EntryIcon name="back" />
         </Pressable>
         <View style={styles.copy}>
-          <AppText variant="subtitle" numberOfLines={1}>
+          <AppText variant="large" numberOfLines={1}>
             {selectedStudy?.name ?? '스터디'}
           </AppText>
           <AppText variant="caption" tone="tertiary">
-            {name} · {selectedStudy?.role === 'leader' ? '리드' : '스터디원'}
+            {selectedStudy?.profileName ?? name} ·{' '}
+            {selectedStudy?.role === 'leader' ? '리드' : '스터디원'}
           </AppText>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="스터디 메뉴"
-          accessibilityState={{ expanded: menu }}
-          onPress={() => setMenu(!menu)}
+          onPress={() => router.push('/study-settings')}
           style={styles.touch}
         >
           <EntryIcon name="menu" size={layout.header.menuSize} />
         </Pressable>
       </View>
-      {menu && (
-        <View style={styles.menu}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setMenu(false);
-              router.push('/notifications');
-            }}
-            style={styles.menuItem}
-          >
-            <AppText>알림</AppText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setMenu(false);
-              router.replace('/studies');
-            }}
-            style={styles.menuItem}
-          >
-            <AppText>내 스터디</AppText>
-          </Pressable>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -93,13 +67,4 @@ const styles = StyleSheet.create({
     gap: layout.header.copyGap,
     transform: [{ translateY: layout.header.copyOffset }],
   },
-  menu: {
-    width: '100%',
-    maxWidth: t.size.content,
-    alignSelf: 'center',
-    paddingHorizontal: t.space.gutter,
-    borderBottomWidth: t.size.line,
-    borderColor: t.color.border,
-  },
-  menuItem: { minHeight: t.size.touch, justifyContent: 'center' },
 });
