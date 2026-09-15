@@ -40,6 +40,9 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class NoticeApiTest {
 
+    private static final DateTimeFormatter REQUEST_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
     @Autowired
     private UserRepository userRepository;
 
@@ -117,7 +120,7 @@ class NoticeApiTest {
                           "content": "새 공지 내용",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(maxLengthTitle, newRemindAt))
+                        """.formatted(maxLengthTitle, newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .post("/studies/{studyId}/notices", study.getId())
                 .then()
@@ -352,7 +355,7 @@ class NoticeApiTest {
                           "content": "수정 공지 내용",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(newRemindAt))
+                        """.formatted(newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .patch("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
                 .then()

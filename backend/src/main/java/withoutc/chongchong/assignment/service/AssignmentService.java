@@ -21,8 +21,8 @@ import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
-import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -93,7 +93,7 @@ public class AssignmentService {
     }
 
     public AssignmentSubmissionStatusResponse getAssignmentSubmissionStatus(Long userId, Long studyId,
-                                                                             Long assignmentId) {
+                                                                            Long assignmentId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanReadAssignmentSubmissionStatus(actor);
 
@@ -172,7 +172,7 @@ public class AssignmentService {
         Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository
                 .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
                 .stream().collect(Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::submitted));
+                        AssignmentSubmissionStatusProjection::isSubmitted));
 
         return assignments.stream().map(assignment -> AssignmentSummaryResponse.forMember(assignment,
                 requireSubmissionStatus(submissionStatusByAssignmentId, assignment.getId()))).toList();

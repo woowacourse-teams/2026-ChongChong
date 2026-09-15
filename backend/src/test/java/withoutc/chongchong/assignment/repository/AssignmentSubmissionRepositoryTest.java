@@ -78,7 +78,7 @@ class AssignmentSubmissionRepositoryTest {
                 member.getId()
         ))
                 .extracting(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::submitted)
+                        AssignmentSubmissionStatusProjection::isSubmitted)
                 .containsExactlyInAnyOrder(
                         tuple(submittedAssignment.getId(), true),
                         tuple(unsubmittedAssignment.getId(), false)

@@ -12,7 +12,6 @@ import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse.SubmissionSummary;
-import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -91,7 +90,7 @@ public class AssignmentSubmissionService {
         assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         List<AssignmentSubmission> submissions = assignmentSubmissionRepository
-                .findAllByAssignmentIdAndSubmittedTrue(assignmentId);
+                .findAllByAssignmentIdAndSubmittedAtIsNotNull(assignmentId);
 
         return SubmissionListResponse.from(submissions.stream().map(SubmissionSummary::from).toList());
     }

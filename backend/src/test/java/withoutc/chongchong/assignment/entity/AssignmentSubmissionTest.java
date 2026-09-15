@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -84,14 +83,12 @@ class AssignmentSubmissionTest {
     }
 
     @Test
-    @DisplayName("기존 제출 데이터에 제출 시각이 없으면 마지막 수정 시각을 반환한다")
-    void getLegacySubmittedAtTest() {
+    @DisplayName("제출 시각이 없으면 미제출 상태로 판단한다")
+    void isNotSubmittedWhenSubmittedAtIsNullTest() {
         AssignmentSubmission submission = createSubmission();
-        LocalDateTime legacyUpdatedAt = NOW.minusDays(1);
-        ReflectionTestUtils.setField(submission, "submitted", true);
-        ReflectionTestUtils.setField(submission, "updatedAt", legacyUpdatedAt);
 
-        assertThat(submission.getSubmittedAt()).isEqualTo(legacyUpdatedAt);
+        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.getSubmittedAt()).isNull();
     }
 
     @Test

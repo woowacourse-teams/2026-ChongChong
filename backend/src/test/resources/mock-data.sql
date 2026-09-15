@@ -85,7 +85,6 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     assignment_id BIGINT NOT NULL,
     content TEXT,
     link TEXT,
-    submitted BOOLEAN NOT NULL,
     submitted_at TIMESTAMP(6),
     created_at TIMESTAMP(6),
     updated_at TIMESTAMP(6),
@@ -232,7 +231,6 @@ INSERT INTO assignment_submissions (
     assignment_id,
     content,
     link,
-    submitted,
     submitted_at,
     created_at,
     updated_at
@@ -248,10 +246,6 @@ SELECT member.id,
                THEN CONCAT('https://github.com/chongchong/study-', assignment.study_id,
                            '/assignments/', assignment.id, '/members/', member.id)
            ELSE NULL
-       END,
-       CASE
-           WHEN MOD(member.id + assignment.id, 3) = 0 THEN TRUE
-           ELSE FALSE
        END,
        CASE
            WHEN MOD(member.id + assignment.id, 3) = 0 THEN assignment.created_at

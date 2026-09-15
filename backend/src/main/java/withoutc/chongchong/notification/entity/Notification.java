@@ -15,6 +15,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
+import withoutc.chongchong.notification.exception.NotificationErrorCode;
+import withoutc.chongchong.notification.exception.NotificationException;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
@@ -48,4 +50,37 @@ public class Notification extends BaseEntity {
 
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
+
+    public static Notification create(
+            Study study,
+            StudyMember recipient,
+            NotificationType type,
+            Long resourceId,
+            NotificationResourceType resourceType
+    ) {
+        return new Notification(study, recipient, type, resourceId, resourceType);
+    }
+
+    private void validateRequiredValues(Study study, StudyMember recipient, NotificationType type, Long resourceId,
+                                        NotificationResourceType resourceType) {
+        if (study == null || recipient == null || type == null || resourceId == null || resourceType == null) {
+            throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION);
+        }
+    }
+
+    private Notification(
+            Study study,
+            StudyMember recipient,
+            NotificationType type,
+            Long resourceId,
+            NotificationResourceType resourceType
+    ) {
+        validateRequiredValues(study, recipient, type, resourceId, resourceType);
+        this.study = study;
+        this.recipient = recipient;
+        this.type = type;
+        this.resourceId = resourceId;
+        this.resourceType = resourceType;
+        this.isRead = false;
+    }
 }
