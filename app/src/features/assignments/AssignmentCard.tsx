@@ -88,8 +88,13 @@ export function AssignmentCard({
           </AppText>
           <View style={styles.link}>
             <LinkIcon size={13} />
-            <AppText variant="caption" tone="tertiary">
-              정리 글 링크로 제출
+            <AppText
+              variant="caption"
+              tone="tertiary"
+              numberOfLines={1}
+              style={{ flex: 1 }}
+            >
+              {assignment.method}
             </AppText>
           </View>
         </View>

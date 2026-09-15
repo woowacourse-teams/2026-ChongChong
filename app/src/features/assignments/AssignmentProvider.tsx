@@ -126,7 +126,6 @@ export function AssignmentProvider({ children }: PropsWithChildren) {
     if (
       !item ||
       !item.members.some((person) => person.id === 'self') ||
-      !isFutureReminder(item.deadline) ||
       !draft.body.trim() ||
       !validSubmissionLink(draft.link)
     )

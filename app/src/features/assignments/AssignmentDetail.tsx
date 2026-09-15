@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { Image, View } from 'react-native';
 import { AppText, Button } from '../../ui/primitives';
 import { ActivityIcon } from '../home/ActivityIcon';
-import { isFutureReminder } from '../notices/previewClock';
 import { LinkIcon } from './LinkIcon';
 import type { Assignment, Submission } from './model';
 import { assignmentStyles as s } from './styles';
@@ -49,7 +48,6 @@ export function AssignmentDetail({
   readonly assignment: Assignment;
 }) {
   const self = assignment.members.find((person) => person.id === 'self');
-  const open = isFutureReminder(assignment.deadline);
   return (
     <View style={s.detail}>
       {[
@@ -86,14 +84,7 @@ export function AssignmentDetail({
             </View>
           )}
           <Button
-            label={
-              !open
-                ? '마감된 과제예요'
-                : self.submission
-                  ? '제출물 수정하기'
-                  : '과제 제출하기'
-            }
-            disabled={!open}
+            label={self.submission ? '제출물 수정하기' : '과제 제출하기'}
             onPress={() =>
               router.push({
                 pathname: '/assignments/submit',

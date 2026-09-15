@@ -23,7 +23,11 @@ export default function HomeScreen() {
   const unread = activities.filter(
     (item) => item.kind === 'notice' && !item.read,
   );
-  const assignments = activities.filter((item) => item.kind === 'assignment');
+  const assignments = activities.filter(
+    (item) =>
+      item.kind === 'assignment' &&
+      (leader || (!item.read && item.target !== false)),
+  );
   if (!selectedStudy)
     return (
       <View style={styles.empty}>

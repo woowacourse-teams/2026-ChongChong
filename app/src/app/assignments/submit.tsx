@@ -7,7 +7,6 @@ import { validSubmissionLink } from '../../features/assignments/model';
 import { assignmentStyles as s } from '../../features/assignments/styles';
 import { useDraftGuard } from '../../features/assignments/useDraftGuard';
 import type { NoticeImage } from '../../features/notices/model';
-import { isFutureReminder } from '../../features/notices/previewClock';
 import { AppHeader } from '../../ui/AppHeader';
 import { ConfirmDialog } from '../../ui/feedback';
 import { AppText, Button, Field } from '../../ui/primitives';
@@ -40,7 +39,7 @@ export default function AssignmentSubmit() {
         }
       />
       <Screen>
-        {!assignment || !self || !isFutureReminder(assignment.deadline) ? (
+        {!assignment || !self ? (
           <AppText>제출할 수 없는 과제예요</AppText>
         ) : (
           <>
