@@ -50,13 +50,13 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             a.id,
             a.title,
             COUNT(s.id),
-            SUM(CASE WHEN s.submitted = TRUE THEN 1 ELSE 0 END)
+            SUM(CASE WHEN s.submittedAt IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Assignment a
             JOIN AssignmentSubmission s ON s.assignment.id = a.id
             WHERE a.study.id = :studyId
             GROUP BY a.id, a.title, a.createdAt
-            HAVING SUM(CASE WHEN s.submitted = FALSE THEN 1 ELSE 0 END) > 0
+            HAVING SUM(CASE WHEN s.submittedAt IS NULL THEN 1 ELSE 0 END) > 0
             ORDER BY a.createdAt DESC
             """)
     List<LeaderAssignmentSummaryProjection> findIncompleteAssignmentSummariesByStudyId(
@@ -72,7 +72,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             SELECT s.id
             FROM AssignmentSubmission s
             WHERE s.assignment = a AND s.member.id = :memberId
-            AND s.submitted IS FALSE
+            AND s.submittedAt IS NULL
             )
             ORDER BY a.createdAt DESC
             """)
@@ -89,7 +89,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             AND EXISTS (
             SELECT s.id
             FROM AssignmentSubmission s
-            WHERE s.assignment.id = a.id AND s.submitted IS FALSE
+            WHERE s.assignment.id = a.id AND s.submittedAt IS NULL
             )
             """)
     long countIncompleteAssignmentByStudyId(
@@ -104,7 +104,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             AND EXISTS (
             SELECT s.id
             FROM AssignmentSubmission s
-            WHERE s.assignment.id = a.id AND s.member.id = :memberId AND s.submitted IS FALSE
+            WHERE s.assignment.id = a.id AND s.member.id = :memberId AND s.submittedAt IS NULL
             )
             """)
     long countIncompleteAssignmentByStudyIdAndMemberId(

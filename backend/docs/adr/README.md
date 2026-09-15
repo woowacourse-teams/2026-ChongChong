@@ -48,3 +48,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0029](0029-protect-study-membership-limits-with-row-locks.md)                  | 스터디 멤버십 상한을 행 잠금과 트랜잭션으로 보호한다 |
 | [0030](0030-manage-push-tokens-by-installation.md)                              | 설치 단위 upsert와 활성 상태로 푸시 토큰을 관리한다 |
 | [0031](0031-run-postgresql-specific-tests-with-testcontainers.md)               | Testcontainers PostgreSQL로 데이터베이스 특화 테스트를 실행하고 CI에서 Docker를 확인한다 |
+| [0032](0032-use-submitted-at-as-assignment-submission-state.md)                  | 제출 시각을 과제 제출 상태의 단일 기준으로 사용한다 |

@@ -278,7 +278,7 @@ class AssignmentSubmissionServiceTest {
         submission.submit("제출 내용", null, NOW);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedTrue(ASSIGNMENT_ID))
+        when(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedAtIsNotNull(ASSIGNMENT_ID))
                 .thenReturn(List.of(submission));
 
         SubmissionListResponse response = assignmentSubmissionService.getSubmissionList(USER_ID, STUDY_ID,
@@ -287,7 +287,7 @@ class AssignmentSubmissionServiceTest {
         assertThat(response.submissions()).singleElement()
                 .satisfies(summary -> assertThat(summary.id()).isEqualTo(300L));
         verify(assignmentAccessPolicy).requireCanReadSubmissionList(leader);
-        verify(assignmentSubmissionRepository).findAllByAssignmentIdAndSubmittedTrue(ASSIGNMENT_ID);
+        verify(assignmentSubmissionRepository).findAllByAssignmentIdAndSubmittedAtIsNotNull(ASSIGNMENT_ID);
     }
 
     @Test
