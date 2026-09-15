@@ -11,7 +11,7 @@ export default function ScenariosScreen() {
       <AppText>
         API 연결 전 UI 검증용 시나리오입니다. 새로고침하면 초기화됩니다.
       </AppText>
-      {(['leader', 'member', 'empty'] as const).map((s) => (
+      {(['leader', 'member', 'empty', 'empty-notices'] as const).map((s) => (
         <Button
           key={s}
           label={
@@ -19,7 +19,9 @@ export default function ScenariosScreen() {
               ? '리더 스터디 목록'
               : s === 'member'
                 ? '스터디원 목록'
-                : '빈 스터디 목록'
+                : s === 'empty'
+                  ? '빈 스터디 목록'
+                  : '공지 없는 스터디'
           }
           onPress={() => {
             resetActivity();

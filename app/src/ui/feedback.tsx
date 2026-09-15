@@ -5,6 +5,8 @@ import { tokens as t } from './tokens';
 
 type ConfirmDialogProps = {
   readonly visible: boolean;
+  readonly minHeight?: number;
+  readonly cancelTone?: 'placeholder' | 'tertiary';
   readonly title: string;
   readonly description: string;
   readonly confirmLabel?: string;
@@ -15,6 +17,8 @@ type ConfirmDialogProps = {
 };
 export function ConfirmDialog({
   visible,
+  minHeight,
+  cancelTone = 'placeholder',
   title,
   description,
   onCancel,
@@ -26,7 +30,12 @@ export function ConfirmDialog({
   return (
     <Modal visible={visible} transparent onRequestClose={onCancel}>
       <View style={styles.overlay} accessibilityViewIsModal>
-        <View style={styles.dialog}>
+        <View
+          style={[
+            styles.dialog,
+            minHeight === undefined ? undefined : { minHeight },
+          ]}
+        >
           <View style={styles.dialogBody}>
             <AppText
               variant="subtitle"
@@ -45,7 +54,7 @@ export function ConfirmDialog({
               onPress={onCancel}
               style={styles.action}
             >
-              <AppText variant="large" style={styles.cancelLabel}>
+              <AppText variant="large" style={{ color: t.color[cancelTone] }}>
                 {cancelLabel}
               </AppText>
             </Pressable>
