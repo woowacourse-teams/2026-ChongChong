@@ -6,7 +6,7 @@ import { deleteNotice } from '../api';
 import noticeQueries from '../queries';
 import NoticeArticle from './NoticeArticle';
 import NoticeReadStatus from './NoticeReadStatus';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
@@ -20,11 +20,7 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
   const queryClient = useQueryClient();
   const toast = useToast();
 
-  const {
-    dialogRef: deleteConfirmDialogRef,
-    open: openDeleteConfimDialog,
-    close: closeDeleteConfirmDialog,
-  } = useDialogControl();
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => deleteNotice(studyId, noticeId),
@@ -39,7 +35,7 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
       navigate(`/studies/${studyId}/notices`);
     },
     onError: (error) => {
-      closeDeleteConfirmDialog();
+      closeDialog();
       toast.open(<StatusToast status="Error" message={error.message} />);
     },
   });
@@ -55,24 +51,24 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
       <NoticeReadStatus status={readStatus} />
       <NoticeArticle notice={notice} />
       <div css={{ marginTop: 'auto' }}>
-        <DetailActions onEdit={goToEditNotice} onDelete={openDeleteConfimDialog} />
+        <DetailActions onEdit={goToEditNotice} onDelete={openDialog} />
       </div>
 
-      <ConfirmDialog
-        ref={deleteConfirmDialogRef}
-        title="공지를 삭제할까요?"
-        description={'삭제한 공지는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
-        closeButton={
-          <ConfirmDialog.CloseButton onClick={closeDeleteConfirmDialog}>
-            취소
-          </ConfirmDialog.CloseButton>
-        }
-        confirmButton={
-          <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
-            {isPending ? '삭제 중...' : '삭제'}
-          </ConfirmDialog.ConfirmButton>
-        }
-      />
+      {isOpen && (
+        <ConfirmDialog
+          title="공지를 삭제할까요?"
+          description={'삭제한 공지는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
+          onClose={closeDialog}
+          closeButton={
+            <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+          }
+          confirmButton={
+            <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
+              {isPending ? '삭제 중...' : '삭제'}
+            </ConfirmDialog.ConfirmButton>
+          }
+        />
+      )}
     </>
   );
 }
