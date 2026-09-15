@@ -69,7 +69,7 @@ PR 검토 보완: 카드 제출 방법을 입력 상태에 연결하고, 스터�
 
 ## 증거와 판정 한계
 
-스크린샷은 [evidence/325](evidence/325)에 있다. Figma 원본 참고는 `figma-card.jpg`, `figma-summary.jpg`, `figma-editor.jpg`다. 최종 줄바꿈 증거는 `submission-wrap-fixed.jpg`, `list-320-fixed.jpg`이며 `submission-file.jpg`와 `list-320.jpg`는 수정 전 이력이다. `leader-list.jpg`·`member-list.jpg`도 마지막 어절 줄바꿈 보정 이전 캡처다. 넓은 화면은 `list-desktop.jpg`, `detail-desktop.jpg`, 상태 검증은 `private-submitted.jpg`, `non-target-detail.jpg`, `public-submission.jpg`, `delete-dialog.jpg`를 참고한다.
+검증용 이미지는 사용자 요청으로 제거했다. 당시 실행 결과는 이 문서의 검증 항목과 텍스트 검토 보고서에 남긴다. 이미지 재대조에는 새 캡처가 필요하다.
 
 확인한 화면·속성·상태 범위에서 차단할 불일치는 남지 않았다. Figma 축소 캔버스와 실제 뷰포트 크기가 달라 유효한 동일 크기 픽셀 diff/일치율은 산정하지 않았다. 모든 레이어를 개별 실측한 결과로 주장하지 않는다. JPEG 캡처의 알파 채널은 검증하지 않았다.
 

@@ -60,7 +60,7 @@ Figma Design ver2를 Chrome Computer Use로 확대하고 실제 하위 레이어
 
 ## 증거와 판정 범위
 
-`evidence/321`의 `figma-*.jpg`는 Figma 편집기 원본 캡처이고, `leader.jpg`, `member.jpg`, `notifications.jpg`는 구현 캡처다. `*-after-read.jpg`, `notifications-logout-reset.jpg`, `home-empty.jpg`, `notifications-empty.jpg`는 상태별 증거다. 초기 캡처보다 늦은 코드 변경이 있을 때 기본 상태는 다시 촬영한다.
+검증용 이미지는 사용자 요청으로 제거했다. 당시 실행 결과는 이 문서의 검증 항목과 텍스트 검토 보고서에 남긴다. 이미지 재대조에는 새 캡처가 필요하다.
 
 | 항목 | 판정 |
 | --- | --- |

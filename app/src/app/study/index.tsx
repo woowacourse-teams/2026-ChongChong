@@ -40,8 +40,8 @@ export default function HomeScreen() {
         <View style={styles.bannerCopy}>
           <AppText variant="subtitle" style={styles.white}>
             {leader
-              ? `${name}님, 오늘도 화이팅!`
-              : `${name}님, 할 일이 ${unread.length + assignments.length}건 있어요`}
+              ? `${selectedStudy?.profileName ?? name}님, 오늘도 화이팅!`
+              : `${selectedStudy?.profileName ?? name}님, 할 일이 ${unread.length + assignments.length}건 있어요`}
           </AppText>
           <AppText style={styles.white}>
             {leader ? '리마인드는 총총이 대신 보낼게요' : '오늘 하루도 화이팅!'}

@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import { createContext, useContext, useState } from 'react';
+import type { StudyPerson } from '../members/model';
 
 export type EntryStudy = {
   readonly id: string;
@@ -9,6 +10,9 @@ export type EntryStudy = {
   readonly notices: number;
   readonly assignments: number;
   readonly members: number;
+  readonly profileName?: string;
+  readonly fixtureRole?: 'leader' | 'member';
+  readonly people?: readonly StudyPerson[];
 };
 type EntryScenario = {
   readonly name: string;
@@ -21,6 +25,11 @@ type EntryScenario = {
   readonly selectStudy: (id: string) => void;
   readonly createStudy: (name: string, description: string) => void;
   readonly joinStudy: () => void;
+  readonly updateStudy: (
+    id: string,
+    update: (study: EntryStudy) => EntryStudy,
+  ) => void;
+  readonly removeStudy: (id: string) => void;
   readonly logout: () => void;
   readonly setScenario: (
     scenario:
@@ -156,6 +165,14 @@ export function EntryProvider({ children }: PropsWithChildren) {
         selectStudy,
         createStudy,
         joinStudy,
+        updateStudy: (id, update) =>
+          setStudies((current) =>
+            current.map((study) => (study.id === id ? update(study) : study)),
+          ),
+        removeStudy: (id) => {
+          setStudies((current) => current.filter((study) => study.id !== id));
+          if (selectedStudyId === id) setSelectedStudyId(undefined);
+        },
         logout,
         setScenario,
       }}

@@ -42,7 +42,9 @@ export function AssignmentProvider({ children }: PropsWithChildren) {
     return (
       byStudy[studyId] ??
       (study.assignments
-        ? createAssignmentFixtures(study.role === 'member')
+        ? createAssignmentFixtures(
+            (study.fixtureRole ?? study.role) === 'member',
+          )
         : [])
     );
   };
@@ -57,7 +59,9 @@ export function AssignmentProvider({ children }: PropsWithChildren) {
       [study.id]: transform(
         current[study.id] ??
           (study.assignments
-            ? createAssignmentFixtures(study.role === 'member')
+            ? createAssignmentFixtures(
+                (study.fixtureRole ?? study.role) === 'member',
+              )
             : []),
       ),
     }));
