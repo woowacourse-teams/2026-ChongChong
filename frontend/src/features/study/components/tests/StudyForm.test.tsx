@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { server } from '../../../../mocks/msw-node';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
@@ -32,6 +32,26 @@ describe('스터디폼 테스트', () => {
     await user.type(nameInput, '치킨');
     const button = screen.getByRole('button', { name: '스터디 만들기' });
     expect(button).toBeEnabled();
+  });
+
+  test.each([
+    ['스터디 이름', 'study-name-field'],
+    ['어떤 스터디인가요?', 'study-description-field'],
+  ])('입력에 따라 글자 수가 표시된다', async (label, testId) => {
+    render(<StudyForm />, { wrapper: createWrapper() });
+
+    const field = within(screen.getByTestId(testId));
+    const textbox = field.getByRole('textbox', { name: label });
+    const countOptions = { normalizer: (text: string) => text.split('/')[0].trim() };
+
+    expect(field.getByText(0, countOptions)).toBeVisible();
+    await user.type(textbox, '공부');
+    expect(field.getByText(2, countOptions)).toBeVisible();
+
+    await user.clear(textbox);
+    expect(field.getByText(0, countOptions)).toBeVisible();
+    await user.type(textbox, '치킨 먹을게요');
+    expect(field.getByText(7, countOptions)).toBeVisible();
   });
 
   test('스터디를 생성하면 해당 스터디 페이지로 이동한다', async () => {

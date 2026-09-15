@@ -55,6 +55,7 @@ describe('과제생성폼 테스트', () => {
       ),
     );
     renderCreatePage();
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크로 제출하세요');
     const submitButton = screen.getByRole('button', { name: '과제 올리기' });
     await user.click(submitButton);
 
@@ -76,6 +77,7 @@ describe('과제생성폼 테스트', () => {
     renderCreatePage();
 
     await user.type(screen.getByRole('textbox', { name: '제목' }), '객체지향 설계 과제');
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크로 제출하세요');
     await user.click(screen.getByRole('button', { name: '과제 올리기' }));
 
     const toast = await screen.findByRole('status');
@@ -89,6 +91,7 @@ describe('과제생성폼 테스트', () => {
 
     const titleInput = screen.getByRole('textbox', { name: '제목' });
     await user.type(titleInput, '객체지향 설계 과제');
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크로 제출하세요');
     await user.click(screen.getByRole('button', { name: '과제 올리기' }));
 
     const toast = await screen.findByRole('status', {}, { timeout: 3000 });

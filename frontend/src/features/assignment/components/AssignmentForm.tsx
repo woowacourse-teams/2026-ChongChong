@@ -1,11 +1,12 @@
 import { CSSProperties, useState } from 'react';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
+import { InputField } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
+import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../constants';
 import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
 
@@ -58,48 +59,51 @@ export default function AssignmentForm({
 
   return (
     <form css={formStyle} onSubmit={handleSubmit}>
-      <Field
-        id="assignment-title"
-        label="제목"
-        isRequired
-        isError={Boolean(fieldErrors.title)}
-        errorText={fieldErrors.title}
-      >
+      <InputField data-testid="assignment-title-field">
+        <InputField.Label htmlFor={'assignment-title'} isRequired={true}>
+          제목
+        </InputField.Label>
         <Input
           id="assignment-title"
           name="title"
           value={title}
           autoFocus
           onChange={(event) => setTitle(event.target.value)}
-          maxLength={20}
+          maxLength={ASSIGNMENT_TITLE.length}
           placeholder="제목을 입력해주세요"
         />
-      </Field>
-
-      <Field
-        id="assignment-content"
-        label="내용"
-        isRequired
-        isError={Boolean(fieldErrors.content)}
-        errorText={fieldErrors.content}
-      >
+        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+          <InputField.SubText errorText={fieldErrors.title} />
+          <InputField.CurrentLength
+            currentLength={title.length}
+            maxLength={ASSIGNMENT_TITLE.length}
+          />
+        </div>
+      </InputField>
+      <InputField data-testid="assignment-content-field">
+        <InputField.Label htmlFor={'assignment-content'} isRequired={true}>
+          내용
+        </InputField.Label>
         <TextArea
           id="assignment-content"
           name="content"
           value={content}
           placeholder="내용을 입력해주세요"
-          maxLength={10000}
+          maxLength={ASSIGNMENT_CONTENT.length}
           onChange={(event) => setContent(event.target.value)}
         />
-      </Field>
-
-      <Field
-        id="submit-method"
-        label="제출 방법"
-        isRequired
-        isError={Boolean(fieldErrors.submissionMethod)}
-        errorText={fieldErrors.submissionMethod}
-      >
+        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+          <InputField.SubText errorText={fieldErrors.content} />
+          <InputField.CurrentLength
+            currentLength={content.length}
+            maxLength={ASSIGNMENT_CONTENT.length}
+          />
+        </div>
+      </InputField>
+      <InputField>
+        <InputField.Label htmlFor={'submit-method'} isRequired={true}>
+          제출 방법
+        </InputField.Label>
         <Input
           id="submit-method"
           name="method"
@@ -107,16 +111,14 @@ export default function AssignmentForm({
           autoFocus
           onChange={(event) => setsubmissionMethod(event.target.value)}
           placeholder="제출 방법을 입력해주세요"
+          required={true}
         />
-      </Field>
-
-      <Field
-        id="assignment-close-at"
-        label="마감 시각"
-        isRequired
-        isError={Boolean(fieldErrors.closeAt)}
-        errorText={fieldErrors.closeAt}
-      >
+        <InputField.SubText errorText={fieldErrors.submissionMethod} />
+      </InputField>
+      <InputField>
+        <InputField.Label htmlFor={'assignment-close-at'} isRequired={true}>
+          마감 시각
+        </InputField.Label>
         <DateTimePicker
           id="assignment-close-at"
           title="마감 시각 설정"
@@ -127,7 +129,8 @@ export default function AssignmentForm({
             setCloseAt(toLocalDateTime(value));
           }}
         />
-      </Field>
+        <InputField.SubText errorText={fieldErrors.closeAt} />
+      </InputField>
 
       <Button
         type="submit"

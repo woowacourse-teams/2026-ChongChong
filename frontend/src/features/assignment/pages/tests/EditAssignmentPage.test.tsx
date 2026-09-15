@@ -64,6 +64,7 @@ describe('과제수정폼 테스트', () => {
 
     await user.type(await findTitleInput(), '치킨 먹고싶다');
     await user.clear(screen.getByRole('textbox', { name: '제출 방법' }));
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), ' ');
     await user.click(submitButton);
 
     expect(await screen.findByText('제출 방법은 필수입니다.')).toBeInTheDocument();
