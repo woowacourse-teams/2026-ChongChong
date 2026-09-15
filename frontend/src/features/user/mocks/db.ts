@@ -4,7 +4,7 @@ import { Collection } from '@msw/data';
 const userSchema = z.object({
   id: z.number(),
   name: z.string(),
-  profileImage: z.string(),
+  profileImage: z.string().nullable(),
 });
 
 export const userTable = new Collection({
