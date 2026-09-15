@@ -23,7 +23,12 @@ type EntryScenario = {
   readonly joinStudy: () => void;
   readonly logout: () => void;
   readonly setScenario: (
-    scenario: 'leader' | 'member' | 'empty' | 'empty-notices',
+    scenario:
+      | 'leader'
+      | 'member'
+      | 'empty'
+      | 'empty-notices'
+      | 'empty-assignments',
   ) => void;
 };
 const initialStudies: readonly EntryStudy[] = [
@@ -98,7 +103,12 @@ export function EntryProvider({ children }: PropsWithChildren) {
     setSelectedStudyId('frontend-cs');
   };
   const setScenario = (
-    scenario: 'leader' | 'member' | 'empty' | 'empty-notices',
+    scenario:
+      | 'leader'
+      | 'member'
+      | 'empty'
+      | 'empty-notices'
+      | 'empty-assignments',
   ) => {
     setSelectedStudyId(scenario === 'empty' ? undefined : 'frontend-cs');
     switch (scenario) {
@@ -108,6 +118,15 @@ export function EntryProvider({ children }: PropsWithChildren) {
       case 'member':
         setStudies(
           initialStudies.map((study) => ({ ...study, role: 'member' })),
+        );
+        break;
+      case 'empty-assignments':
+        setStudies(
+          initialStudies.map((study) => ({
+            ...study,
+            role: 'member',
+            assignments: 0,
+          })),
         );
         break;
       case 'empty-notices':

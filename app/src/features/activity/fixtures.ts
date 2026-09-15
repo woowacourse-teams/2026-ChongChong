@@ -6,6 +6,7 @@ export type StudyActivity = {
   readonly readCount: number;
   readonly totalCount: number;
   readonly read: boolean;
+  readonly target?: boolean;
 };
 
 export type ActivityNotification = {

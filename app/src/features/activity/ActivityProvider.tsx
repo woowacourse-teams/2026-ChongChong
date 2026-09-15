@@ -1,9 +1,10 @@
 import type { PropsWithChildren } from 'react';
 import { createContext, useContext, useState } from 'react';
+import { useAssignments } from '../assignments/AssignmentProvider';
 import { useEntryScenario } from '../entry/EntryProvider';
 import { useNotices } from '../notices/NoticeProvider';
 import type { ActivityNotification, StudyActivity } from './fixtures';
-import { activityFixtures, notificationFixtures } from './fixtures';
+import { notificationFixtures } from './fixtures';
 
 type ActivityState = {
   readonly activities: readonly StudyActivity[];
@@ -19,6 +20,7 @@ const ActivityContext = createContext<ActivityState | null>(null);
 export function ActivityProvider({ children }: PropsWithChildren) {
   const { studies, selectedStudy } = useEntryScenario();
   const { notices, getNotices, markRead, resetNotices } = useNotices();
+  const { assignments, resetAssignments } = useAssignments();
   const [readNotifications, setReadNotifications] = useState<readonly string[]>(
     [],
   );
@@ -37,8 +39,19 @@ export function ActivityProvider({ children }: PropsWithChildren) {
             ),
           }),
         ),
-        ...activityFixtures.filter(
-          (item) => item.kind === 'assignment' && selectedStudy.assignments > 0,
+        ...assignments.map(
+          (item): StudyActivity => ({
+            id: item.id,
+            kind: 'assignment',
+            title: item.title,
+            body: item.body,
+            readCount: item.members.filter((person) => person.submission)
+              .length,
+            totalCount: item.members.length,
+            read: !!item.members.find((person) => person.id === 'self')
+              ?.submission,
+            target: item.members.some((person) => person.id === 'self'),
+          }),
         ),
       ]
     : [];
@@ -64,6 +77,7 @@ export function ActivityProvider({ children }: PropsWithChildren) {
   };
   const resetActivity = () => {
     resetNotices();
+    resetAssignments();
     setReadNotifications([]);
   };
   return (

@@ -6,9 +6,11 @@ import { noticeLayout as n } from './layout';
 import { isFutureReminder, previewDate } from './previewClock';
 import { styles } from './ReminderSheet.styles';
 export function ReminderSheet({
+  title = '리마인드 시각 설정',
   onClose,
   onSave,
 }: {
+  readonly title?: string;
   readonly onClose: () => void;
   readonly onSave: (value: string) => void;
 }) {
@@ -41,7 +43,7 @@ export function ReminderSheet({
         <View style={styles.sheet} accessibilityViewIsModal>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <AppText variant="subtitle">리마인드 시각 설정</AppText>
+            <AppText variant="subtitle">{title}</AppText>
             <Pressable
               accessibilityRole="button"
               disabled={step === 'time' && !validTime}
