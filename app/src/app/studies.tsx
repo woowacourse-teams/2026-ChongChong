@@ -5,6 +5,7 @@ import { useActivity } from '../features/activity/ActivityProvider';
 import { entryAssets } from '../features/entry/assets';
 import { EntryIcon } from '../features/entry/EntryIcon';
 import { useEntryScenario } from '../features/entry/EntryProvider';
+import { useNotices } from '../features/notices/NoticeProvider';
 import { StudyCard } from '../features/studies/StudyCard';
 import { useScenario } from '../mocks/ScenarioProvider';
 import { AppText, Button, EmptyState } from '../ui/primitives';
@@ -12,6 +13,7 @@ import { Screen } from '../ui/Screen';
 import { tokens as t } from '../ui/tokens';
 
 export default function StudiesScreen() {
+  const { getNotices } = useNotices();
   const router = useRouter();
   const { studies, selectStudy } = useEntryScenario();
   const { unreadCount } = useActivity();
@@ -56,7 +58,7 @@ export default function StudiesScreen() {
             studies.map((study) => (
               <StudyCard
                 key={study.id}
-                study={study}
+                study={{ ...study, notices: getNotices(study.id).length }}
                 onPress={() => {
                   selectStudy(study.id);
                   setRole(study.role);

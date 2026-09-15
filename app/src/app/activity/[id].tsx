@@ -1,5 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
+import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
 import { useActivity } from '../../features/activity/ActivityProvider';
 import { useEntryScenario } from '../../features/entry/EntryProvider';
 import { AppText } from '../../ui/primitives';
@@ -7,13 +6,11 @@ import { Screen } from '../../ui/Screen';
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { activities, markActivityRead } = useActivity();
+  const { activities } = useActivity();
   const { selectedStudy } = useEntryScenario();
   const activity = activities.find((item) => item.id === id);
-  useEffect(() => {
-    if (selectedStudy && activity?.kind === 'notice' && !activity.read)
-      markActivityRead(selectedStudy.id, activity.id);
-  }, [selectedStudy, activity, markActivityRead]);
+  if (activity?.kind === 'notice')
+    return <Redirect href={{ pathname: '/notices/[id]', params: { id } }} />;
   return (
     <Screen>
       <Stack.Screen
