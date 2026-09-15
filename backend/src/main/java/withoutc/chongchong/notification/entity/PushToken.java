@@ -11,25 +11,22 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
+import withoutc.chongchong.notification.exception.PushTokenErrorCode;
+import withoutc.chongchong.notification.exception.PushTokenException;
 import withoutc.chongchong.user.entity.User;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "push_tokens",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_push_tokens_user_installation_id",
-                columnNames = {
-                        "user_id",
-                        "installation_id"
-                }
-        ))
+@Table(name = "push_tokens")
 public class PushToken extends BaseEntity {
+
+    private static final int MAX_INSTALLATION_ID_SIZE = 255;
+    private static final int MAX_TOKEN_SIZE = 255;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,15 +36,15 @@ public class PushToken extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String installationId;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TokenProvider provider;
 
-    @Column(nullable = false)
-    private String token;
+    @Column(name = "token", nullable = false)
+    private String tokenValue;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -60,28 +57,49 @@ public class PushToken extends BaseEntity {
             User user,
             String installationId,
             TokenProvider provider,
-            String token,
-            DevicePlatform devicePlatform
+            String tokenValue,
+            DevicePlatform platform
     ) {
-        return new PushToken(user, installationId, provider, token, devicePlatform);
+        return new PushToken(user, installationId, provider, tokenValue, platform);
+    }
+
+    private void validateRequiredValues(User user, TokenProvider provider, DevicePlatform platform) {
+        if (user == null || provider == null || platform == null) {
+            throw new PushTokenException(PushTokenErrorCode.INVALID_PUSH_TOKEN);
+        }
+    }
+
+    private void validateInstallationId(String installationId) {
+        if (installationId == null || installationId.isBlank() || installationId.length() > MAX_INSTALLATION_ID_SIZE) {
+            throw new PushTokenException(PushTokenErrorCode.INVALID_INSTALLATION_ID);
+        }
+    }
+
+    private void validateTokenValue(String tokenValue) {
+        if (tokenValue == null || tokenValue.isBlank() || tokenValue.length() > MAX_TOKEN_SIZE) {
+            throw new PushTokenException(PushTokenErrorCode.INVALID_TOKEN_VALUE);
+        }
     }
 
     private PushToken(
             User user,
             String installationId,
             TokenProvider provider,
-            String token,
+            String tokenValue,
             DevicePlatform platform
     ) {
+        validateRequiredValues(user, provider, platform);
+        validateInstallationId(installationId);
+        validateTokenValue(tokenValue);
         this.user = user;
         this.installationId = installationId;
         this.provider = provider;
-        this.token = token;
+        this.tokenValue = tokenValue;
         this.platform = platform;
         this.isActive = true;
     }
 
-    public void changeActiveState() {
-        isActive = true;
+    public void deactivate() {
+        isActive = false;
     }
 }

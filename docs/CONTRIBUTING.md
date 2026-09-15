@@ -10,7 +10,8 @@
 <영역>/<타입>/[<이슈번호>-]<작업명>
 ```
 
-- 영역: `fe`, `be`, `common`
+- 영역: `fe`, `be`, `app`, `common`
+  - `app`: FE의 React Native 앱으로 교체하기 전까지 사용하는 앱 작업
   - `common`: CI, GitHub 설정, 공통 문서 등 저장소 전체 작업
 - 타입: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 - 이슈 번호(선택): 0으로 시작하지 않는 양의 정수
@@ -23,6 +24,7 @@ be/feat/77-ci-cd
 fe/fix/81-login-error
 be/chore/branch-policy
 fe/docs/contributing-guide
+app/feat/290-login
 common/chore/branch-policy
 ```
 
@@ -32,10 +34,14 @@ common/chore/branch-policy
 | ------------------------------------- | ----------- |
 | `fe/<타입>/[<이슈번호>-]<작업명>`     | `dev`       |
 | `be/<타입>/[<이슈번호>-]<작업명>`     | `dev`       |
+| `app/<타입>/[<이슈번호>-]<작업명>`    | `dev`       |
 | `common/<타입>/[<이슈번호>-]<작업명>` | `dev`       |
 | `dev`                                 | `prod`      |
 
 다른 조합으로 PR을 생성하면 `Branch policy / branch-policy` 검사가 실패합니다.
+
+`app/*` PR에는 `APP` 영역 라벨과 타입에 해당하는 기존 자동 라벨이 적용됩니다.
+자동 타입 라벨은 `feat`, `fix`, `docs`, `style`, `refactor`, `chore`에 적용됩니다.
 
 ## 머지 방식
 

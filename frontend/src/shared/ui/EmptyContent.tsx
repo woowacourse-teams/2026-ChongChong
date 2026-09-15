@@ -1,4 +1,4 @@
-import emptyIcon from '../assets/icons/empty-icon.svg';
+import emptyIcon from '../assets/icons/empty-icon.webp';
 import { CSSProperties } from 'react';
 import { tokens, typography } from '../../styles/global';
 
@@ -23,7 +23,7 @@ const messageStyle = {
 export default function EmptyState({ message }: EmptyContentProps) {
   return (
     <div css={divStyle}>
-      <img src={emptyIcon} width={150} height={150} alt="빈 목록" />
+      <img src={emptyIcon} width={300} height={300} alt="빈 목록" />
       <p css={messageStyle}>{message}</p>
     </div>
   );

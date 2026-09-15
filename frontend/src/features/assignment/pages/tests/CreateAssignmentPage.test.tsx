@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import CreateAssignmentPage from '../CreateAssignmentPage';
 import { createWrapper } from '../../../../test/render';
@@ -62,5 +62,38 @@ describe('과제생성폼 테스트', () => {
     expect(await screen.findByText('내용이 이상해요')).toBeInTheDocument();
     expect(await screen.findByText('제출방식이 이상해요')).toBeInTheDocument();
     expect(await screen.findByText('마감 시각이 이상해요')).toBeInTheDocument();
+  });
+
+  test('스터디 리더가 아니면 과제 생성 권한 안내를 토스트로 표시한다', async () => {
+    server.use(
+      http.post(`${API_URL}/studies/:studyId/assignments`, () =>
+        HttpResponse.json(
+          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderCreatePage();
+
+    await user.type(screen.getByRole('textbox', { name: '제목' }), '객체지향 설계 과제');
+    await user.click(screen.getByRole('button', { name: '과제 올리기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
+    expect(toast).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 과제 생성 실패 안내를 토스트로 표시한다', async () => {
+    server.use(http.post(`${API_URL}/studies/:studyId/assignments`, () => HttpResponse.error()));
+    renderCreatePage();
+
+    const titleInput = screen.getByRole('textbox', { name: '제목' });
+    await user.type(titleInput, '객체지향 설계 과제');
+    await user.click(screen.getByRole('button', { name: '과제 올리기' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('과제를 생성하는데 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('객체지향 설계 과제');
   });
 });

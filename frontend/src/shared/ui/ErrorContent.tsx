@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 import { tokens, typography } from '../../styles/global';
 
 interface ErrorContentProps {
-  message: string;
+  message: string | undefined;
 }
 
 const divStyle = {
@@ -20,7 +20,7 @@ const messageStyle = {
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
-export default function ErrorContent({ message }: ErrorContentProps) {
+export default function ErrorContent({ message = '요청이 실패했습니다.' }: ErrorContentProps) {
   return (
     <div css={divStyle}>
       <img src={emptyIcon} width={150} height={150} alt="오류" />

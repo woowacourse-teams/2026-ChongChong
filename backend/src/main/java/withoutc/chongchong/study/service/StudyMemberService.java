@@ -1,5 +1,7 @@
 package withoutc.chongchong.study.service;
 
+import static withoutc.chongchong.study.service.StudyService.MAX_JOINED_STUDY_COUNT;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,16 +11,12 @@ import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
-import withoutc.chongchong.study.exception.StudyErrorCode;
-import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
-import withoutc.chongchong.user.exception.UserErrorCode;
-import withoutc.chongchong.user.exception.UserException;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @Service
@@ -36,13 +34,12 @@ public class StudyMemberService {
 
     @Transactional
     public StudyMemberJoinResponse join(Long userId, StudyInviteTokenRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User user = userRepository.getByIdForUpdateOrThrow(userId);
+        validateStudyCountLimit(userId);
 
         Long studyId = studyInviteTokenProvider.verifyAndExtractStudyId(request.token());
 
-        Study study = studyRepository.findById(studyId)
-                .orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+        Study study = studyRepository.getByIdForUpdateOrThrow(studyId);
 
         validateJoin(study.getId(), user.getId());
 
@@ -79,6 +76,12 @@ public class StudyMemberService {
         }
 
         studyMemberRepository.delete(member);
+    }
+
+    private void validateStudyCountLimit(Long userId) {
+        if (studyMemberRepository.countByUserId(userId) >= MAX_JOINED_STUDY_COUNT) {
+            throw new StudyMemberException(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
+        }
     }
 
     private void validateJoin(Long studyId, Long userId) {

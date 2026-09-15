@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityManager;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -139,7 +138,7 @@ class StudyServiceTest {
         User user = User.create("사용자", "profile-image-url");
         ArgumentCaptor<Study> studyCaptor = ArgumentCaptor.forClass(Study.class);
         ArgumentCaptor<StudyMember> studyMemberCaptor = ArgumentCaptor.forClass(StudyMember.class);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyRepository.save(any(Study.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -165,7 +164,7 @@ class StudyServiceTest {
         Long userId = 1L;
         StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "설명");
         User user = User.create("사용자", "profile-image-url");
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
 
         assertThatThrownBy(() -> studyService.createStudy(userId, request))

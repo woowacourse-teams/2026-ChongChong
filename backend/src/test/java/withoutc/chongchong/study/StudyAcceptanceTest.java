@@ -521,7 +521,7 @@ class StudyAcceptanceTest {
                 )
         );
         assignment.initializeSubmissions(List.of(firstStudyMember, secondStudyMember));
-        ReflectionTestUtils.setField(assignment.getSubmissions().getFirst(), "submitted", true);
+        assignment.getSubmissions().getFirst().submit(null, null, ASSIGNMENT_NOW);
         assignmentRepository.saveAndFlush(assignment);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())

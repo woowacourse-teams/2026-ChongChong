@@ -1,0 +1,128 @@
+{
+  "images": [
+    {
+      "display": [
+        0,
+        0
+      ],
+      "natural": [
+        600,
+        300
+      ]
+    },
+    {
+      "display": [
+        0,
+        0
+      ],
+      "natural": [
+        192,
+        192
+      ]
+    },
+    {
+      "display": [
+        0,
+        0
+      ],
+      "natural": [
+        192,
+        192
+      ]
+    },
+    {
+      "display": [
+        0,
+        0
+      ],
+      "natural": [
+        156,
+        147
+      ]
+    },
+    {
+      "display": [
+        120,
+        120
+      ],
+      "natural": [
+        360,
+        360
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "border": "1px solid rgba(15, 23, 42, 0.08)",
+      "box": {
+        "bottom": 332,
+        "height": 66,
+        "left": 20,
+        "right": 370,
+        "top": 266,
+        "width": 350,
+        "x": 20,
+        "y": 266
+      },
+      "children": [
+        {
+          "color": "rgb(0, 0, 0)",
+          "font": "Arial",
+          "line": "normal",
+          "size": "13.3333px"
+        },
+        {
+          "color": "rgb(23, 32, 51)",
+          "font": "Pretendard",
+          "line": "20px",
+          "size": "14px"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "12px"
+        }
+      ],
+      "label": "8월 스터디 운영 방식이 바뀝니다, 읽지 않음"
+    },
+    {
+      "border": "1px solid rgba(15, 23, 42, 0.08)",
+      "box": {
+        "bottom": 458,
+        "height": 66,
+        "left": 20,
+        "right": 370,
+        "top": 392,
+        "width": 350,
+        "x": 20,
+        "y": 392
+      },
+      "children": [
+        {
+          "color": "rgb(0, 0, 0)",
+          "font": "Arial",
+          "line": "normal",
+          "size": "13.3333px"
+        },
+        {
+          "color": "rgb(23, 32, 51)",
+          "font": "Pretendard",
+          "line": "20px",
+          "size": "14px"
+        },
+        {
+          "color": "rgba(15, 23, 42, 0.55)",
+          "font": "Pretendard",
+          "line": "18px",
+          "size": "12px"
+        }
+      ],
+      "label": "리액트 렌더링 최적화 정리, 미제출"
+    }
+  ],
+  "viewport": [
+    390,
+    763
+  ]
+}

@@ -22,7 +22,7 @@ import withoutc.chongchong.study.service.StudyMemberService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/studies")
-public class StudyMemberController implements StudyMemberApi {
+public class StudyMemberController {
 
     private final StudyMemberService studyMemberService;
 

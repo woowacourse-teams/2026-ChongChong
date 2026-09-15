@@ -1,6 +1,8 @@
 package withoutc.chongchong.assignment.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +24,12 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
 
 @RequiredArgsConstructor
 @RequestMapping("/studies/{studyId}/assignments")
 @RestController
-public class AssignmentController implements AssignmentApi {
+public class AssignmentController {
     private final AssignmentService assignmentService;
 
     @PostMapping
@@ -55,8 +58,13 @@ public class AssignmentController implements AssignmentApi {
     public ResponseEntity<AssignmentListResponse> getAssignments(
             @AuthenticationPrincipal AuthenticatedUser currentUser,
             @PathVariable Long studyId,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(required = false)
+            @Positive(message = "cursor는 양수여야 합니다.")
+            Long cursor,
+            @RequestParam(defaultValue = "10")
+            @Positive(message = "size는 양수여야 합니다.")
+            @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
+            int size
     ) {
         AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size);
 

@@ -2,8 +2,8 @@ import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import crownIcon from '../../../shared/assets/lead.svg';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
-import { StudyRole } from '../types';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
+import { Member } from '../types';
 
 interface Props extends React.ComponentProps<'div'> {
   left?: React.ReactNode;
@@ -16,14 +16,12 @@ interface ProfileProps {
 }
 
 interface LeaderProps extends React.ComponentProps<'div'> {
-  name: string;
-  role: StudyRole;
-  onKick: () => void;
+  member: Member;
+  onKick: (memberId: number, dialogClose: () => void) => void;
 }
 
 interface MemberProps extends React.ComponentProps<'div'> {
-  name: string;
-  role: StudyRole;
+  member: Member;
 }
 
 const rowStyle = {
@@ -102,37 +100,43 @@ function Profile({ name, icon }: ProfileProps) {
   );
 }
 
-MemberRow.Leader = function Leader({ name, role, onKick, ...props }: LeaderProps) {
-  const { dialogRef, open, close } = useDialogControl();
+MemberRow.Leader = function Leader({ member, onKick, ...props }: LeaderProps) {
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   return (
     <MemberRow
       {...props}
       left={
         <Profile
-          name={name}
-          icon={role === 'LEADER' && <img css={iconStyle} src={crownIcon} alt="스터디 리드" />}
+          name={member.name}
+          icon={
+            member.role === 'LEADER' && <img css={iconStyle} src={crownIcon} alt="스터디 리드" />
+          }
         />
       }
       right={
-        role !== 'LEADER' && (
+        member.role !== 'LEADER' && (
           <>
-            <button css={kickButtonStyle} type="button" onClick={open}>
+            <button css={kickButtonStyle} type="button" onClick={openDialog}>
               방출하기
             </button>
-            <ConfirmDialog
-              ref={dialogRef}
-              title={`${name} 님을 추방하시겠습니까?`}
-              description={
-                '추방된 스터디원은 스터디 정보에 다시 접근할 수 없으며, 이 작업은 되돌릴 수 없습니다.'
-              }
-              closeButton={
-                <ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>
-              }
-              confirmButton={
-                <ConfirmDialog.ConfirmButton onClick={onKick}>추방</ConfirmDialog.ConfirmButton>
-              }
-            />
+            {isOpen && (
+              <ConfirmDialog
+                title={`${member.name} 님을 추방하시겠습니까?`}
+                description={
+                  '추방된 스터디원은 스터디 정보에 다시 접근할 수 없으며, 이 작업은 되돌릴 수 없습니다.'
+                }
+                onClose={closeDialog}
+                closeButton={
+                  <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+                }
+                confirmButton={
+                  <ConfirmDialog.ConfirmButton onClick={() => onKick(member.id, closeDialog)}>
+                    추방
+                  </ConfirmDialog.ConfirmButton>
+                }
+              />
+            )}
           </>
         )
       }
@@ -140,14 +144,16 @@ MemberRow.Leader = function Leader({ name, role, onKick, ...props }: LeaderProps
   );
 };
 
-MemberRow.Member = function Member({ name, role, ...props }: MemberProps) {
+MemberRow.Member = function Member({ member, ...props }: MemberProps) {
   return (
     <MemberRow
       {...props}
       left={
         <Profile
-          name={name}
-          icon={role === 'LEADER' && <img css={iconStyle} src={crownIcon} alt="스터디 리드" />}
+          name={member.name}
+          icon={
+            member.role === 'LEADER' && <img css={iconStyle} src={crownIcon} alt="스터디 리드" />
+          }
         />
       }
     />

@@ -1,0 +1,22 @@
+SocialLoginRequest:
+  type: object
+  additionalProperties: false
+  required: [provider, authorizationCode]
+  properties:
+    provider: { type: string, enum: [GOOGLE, KAKAO, APPLE], example: KAKAO }
+    authorizationCode: { type: string, minLength: 1, example: authorization-code-from-provider }
+SocialLoginResponse:
+  type: object
+  additionalProperties: false
+  required: [tokenType, accessToken, accessTokenExpiresAt]
+  properties:
+    tokenType: { type: string, const: Bearer }
+    accessToken: { type: string, minLength: 1, example: eyJhbGciOiJIUzI1NiJ9... }
+    accessTokenExpiresAt: { type: string, format: date-time, example: '2026-08-27T12:00:00Z' }
+WebCsrfTokenResponse:
+  type: object
+  additionalProperties: false
+  required: [headerName, token]
+  properties:
+    headerName: { type: string, const: X-XSRF-TOKEN }
+    token: { type: string, minLength: 1, example: csrf-token }

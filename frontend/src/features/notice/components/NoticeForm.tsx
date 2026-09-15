@@ -1,6 +1,5 @@
-import { CSSProperties, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
-import { ValidationError } from '../../../shared/api/error';
 import Button from '../../../shared/ui/Button';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
@@ -21,7 +20,7 @@ interface NoticeFormProps {
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: NoticeFormValues) => void;
-  error?: Error | null;
+  fieldErrors?: Partial<Record<'title' | 'content', string>>;
 }
 
 const emptyValues: NoticeFormValues = {
@@ -41,7 +40,7 @@ export default function NoticeForm({
   submitLabel,
   isSubmitting = false,
   onSubmit,
-  error,
+  fieldErrors = {},
 }: NoticeFormProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle] = useState(initialValues.title);
@@ -51,11 +50,6 @@ export default function NoticeForm({
   useLayoutEffect(() => {
     resizeTextArea(contentRef.current);
   }, [content]);
-
-  const fieldErrors = useMemo(
-    () => (error instanceof ValidationError ? error.fieldErrors : {}),
-    [error],
-  );
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();

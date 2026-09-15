@@ -13,7 +13,7 @@ import {
   MemberActiveAssignmentCard,
 } from './ActiveStudyCard';
 import { StudyLeaderWelcomeBanner, StudyMemberWelcomeBanner } from './WelcomeBanner';
-import useStudyId from '../hooks/useStudyId';
+import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import SleepIcon from '../../../shared/assets/icons/sleep-icon.webp';
 import WritingLogo from '../../../shared/assets/icons/writing-logo.webp';
 
@@ -109,7 +109,7 @@ const IconStyle = {
 } satisfies CSSProperties;
 
 export function LeaderStudyDetailContent({ username }: { username: string }) {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'LEADER'));
   const activeContentCount = data.notices.count + data.assignments.count;
 
@@ -172,7 +172,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
 }
 
 export function MemberStudyDetailContent({ username }: { username: string }) {
-  const { studyId } = useStudyId();
+  const { studyId } = useIntegerParams(['studyId']);
   const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'MEMBER'));
   const todoCount = data.totalCount;
 
@@ -192,22 +192,11 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
           </section>
         ) : (
           <>
-            {data.notices.length !== 0 && (
-              <List>
-                {data.notices.map((notice) => (
-                  <List.Item key={`notice-${notice.id}`}>
-                    <Link to={`notices/${notice.id}`}>
-                      <MemberActiveNoticeCard title={notice.title} />
-                    </Link>
-                  </List.Item>
-                ))}
-              </List>
-            )}
-            {data.notices.length !== 0 && (
+            {data.notices.items.length !== 0 && (
               <section css={SectionStyle}>
                 <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
                 <List>
-                  {data.notices.map((notice) => (
+                  {data.notices.items.map((notice) => (
                     <List.Item key={`notice-${notice.id}`}>
                       <Link to={`notices/${notice.id}`}>
                         <MemberActiveNoticeCard title={notice.title} />
@@ -217,11 +206,11 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                 </List>
               </section>
             )}
-            {data.assignments.length !== 0 && (
+            {data.assignments.items.length !== 0 && (
               <section css={SectionStyle}>
                 <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
                 <List>
-                  {data.assignments.map((assignment) => (
+                  {data.assignments.items.map((assignment) => (
                     <List.Item key={`assignment-${assignment.id}`}>
                       <Link to={`assignments/${assignment.id}`}>
                         <MemberActiveAssignmentCard title={assignment.title} />

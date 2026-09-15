@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { API_URL } from '../../../../../config';
 import { invalidInputResponse } from '../../../../mocks/errors';
@@ -61,5 +61,46 @@ describe('공지 생성 폼', () => {
 
     expect(await screen.findByText('제목이 이상해요')).toBeInTheDocument();
     expect(await screen.findByText('내용이 이상해요')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  test('스터디 리더가 아니면 공지 생성 권한 안내를 토스트로 표시한다', async () => {
+    server.use(
+      http.post(`${API_URL}/studies/:studyId/notices`, () =>
+        HttpResponse.json(
+          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderCreatePage();
+
+    await user.type(screen.getByRole('textbox', { name: '제목' }), '스터디 일정 안내');
+    await user.type(
+      screen.getByRole('textbox', { name: '내용' }),
+      '이번 주는 토요일에 진행합니다.',
+    );
+    await user.click(screen.getByRole('button', { name: '공지 올리기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
+    expect(toast).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 공지 생성 실패 안내를 토스트로 표시한다', async () => {
+    server.use(http.post(`${API_URL}/studies/:studyId/notices`, () => HttpResponse.error()));
+    renderCreatePage();
+
+    await user.type(screen.getByRole('textbox', { name: '제목' }), '스터디 일정 안내');
+    await user.type(
+      screen.getByRole('textbox', { name: '내용' }),
+      '이번 주는 토요일에 진행합니다.',
+    );
+    await user.click(screen.getByRole('button', { name: '공지 올리기' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('공지 생성에 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('스터디 일정 안내');
   });
 });

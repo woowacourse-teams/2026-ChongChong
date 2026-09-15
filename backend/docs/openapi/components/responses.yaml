@@ -1,0 +1,144 @@
+InvalidInputAndRequest:
+  description: 입력값 검증에 실패했거나 요청 JSON 형식이 잘못됨
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }] }
+InvalidParameterAndRequest:
+  description: 경로·쿼리 파라미터 검증에 실패했거나 요청 형식이 잘못됨
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }] }
+InvalidRequestOnly:
+  description: 요청 형식이 잘못됨
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/InvalidRequestError' } } }
+LoginBadRequest:
+  description: 입력값 검증 실패, 요청 형식 오류 또는 지원하지 않는 소셜 로그인 제공자
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/UnsupportedSocialProviderError' }] }
+NoticeWriteBadRequest:
+  description: 입력값 검증 실패, 요청 형식 오류 또는 공지 제목·내용·리마인드 시각 도메인 규칙 위반
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidTitleError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }] }
+AssignmentWriteBadRequest:
+  description: 입력값 검증 실패, 요청 형식 오류 또는 과제 필드 도메인 규칙 위반
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidTitleError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidSubmissionMethodError' }, { $ref: './schemas/errors.yaml#/InvalidCloseAtError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }] }
+SubmissionWriteBadRequest:
+  description: 입력값 검증 실패, 요청 형식 오류 또는 제출 내용·링크 도메인 규칙 위반
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidLinkError' }] }
+JoinBadRequest:
+  description: 입력값 검증 실패, 요청 형식 오류 또는 초대 토큰이 유효하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/InvalidInviteTokenError' }] }
+AuthenticationRequired:
+  description: Bearer 인증 정보가 없거나 유효하지 않음
+  headers:
+    WWW-Authenticate: { schema: { type: string, const: Bearer } }
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AuthenticationRequiredError' } } }
+SocialAuthenticationFailed:
+  description: 소셜 로그인 제공자 인증에 실패함
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/SocialAuthenticationFailedError' } } }
+InvalidRefreshToken:
+  description: Refresh Token이 없거나 유효하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/InvalidRefreshTokenError' } } }
+InvalidCsrfToken:
+  description: CSRF 헤더·쿠키가 없거나 서로 일치하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/InvalidCsrfTokenError' } } }
+StudyAccessDenied:
+  description: 현재 사용자가 해당 스터디의 멤버가 아님
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyAccessDeniedError' } } }
+StudyAccessOrActionDenied:
+  description: 스터디 접근 권한 또는 해당 작업 수행 권한이 없음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyAccessDeniedError' }, { $ref: './schemas/errors.yaml#/AccessDeniedError' }] }
+StudyAccessOrLeaderDenied:
+  description: 스터디 접근 권한이 없거나 스터디 리더가 아님
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyAccessDeniedError' }, { $ref: './schemas/errors.yaml#/NotStudyLeaderError' }] }
+ExpelForbidden:
+  description: 스터디 접근 권한이 없거나 리더가 아니거나 스터디 리더를 방출하려 함
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyAccessDeniedError' }, { $ref: './schemas/errors.yaml#/NotStudyLeaderError' }, { $ref: './schemas/errors.yaml#/StudyLeaderCannotBeRemovedError' }] }
+LeaveForbidden:
+  description: 스터디 접근 권한이 없거나 스터디 리더가 탈퇴하려 함
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyAccessDeniedError' }, { $ref: './schemas/errors.yaml#/StudyLeaderCannotLeaveError' }] }
+UserNotFound:
+  description: 사용자 정보가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/UserNotFoundError' } } }
+StudyNotFound:
+  description: 스터디가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyNotFoundError' } } }
+StudyMemberNotFound:
+  description: 스터디 멤버가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyMemberNotFoundError' } } }
+NoticeNotFound:
+  description: 공지가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeNotFoundError' } } }
+NoticeRecipientNotFound:
+  description: 현재 사용자의 공지 수신자 정보가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeRecipientNotFoundError' } } }
+NoticeOrRecipientNotFound:
+  description: 공지 또는 현재 사용자의 공지 수신자 정보가 존재하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/NoticeNotFoundError' }, { $ref: './schemas/errors.yaml#/NoticeRecipientNotFoundError' }] }
+AssignmentNotFound:
+  description: 과제가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AssignmentNotFoundError' } } }
+AssignmentSubmissionNotFound:
+  description: 제출물 또는 현재 사용자의 제출 정보가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AssignmentSubmissionNotFoundError' } } }
+AssignmentOrSubmissionNotFound:
+  description: 과제 또는 제출물이 존재하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/AssignmentNotFoundError' }, { $ref: './schemas/errors.yaml#/AssignmentSubmissionNotFoundError' }] }
+JoinedStudyLimitExceeded:
+  description: 사용자가 가입할 수 있는 스터디 수 상한을 초과함
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/JoinedStudyLimitExceededError' } } }
+JoinConflict:
+  description: 이미 참여한 스터디이거나 스터디 정원이 가득 참
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/AlreadyJoinedStudyError' }, { $ref: './schemas/errors.yaml#/StudyMemberLimitExceededError' }] }
+BadRequest:
+  description: 요청 본문·경로·쿼리 형식 또는 도메인 입력값이 올바르지 않음
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
+      example: { code: INVALID_REQUEST, message: 요청 형식이 잘못되었습니다. }
+Unauthorized:
+  description: 인증 정보가 없거나 유효하지 않음
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
+      example: { code: AUTHENTICATION_REQUIRED, message: 인증이 필요합니다. }
+Forbidden:
+  description: 요청한 작업을 수행할 권한이 없거나 CSRF 토큰이 유효하지 않음
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
+      example: { code: STUDY_ACCESS_DENIED, message: 해당 스터디에 대한 접근 권한이 없습니다. }
+NotFound:
+  description: 요청한 리소스를 찾을 수 없음
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
+      example: { code: STUDY_NOT_FOUND, message: 존재하지 않는 스터디입니다. }
+Conflict:
+  description: 현재 리소스 상태 또는 서비스 제한과 충돌함
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
+      example: { code: ALREADY_JOINED_STUDY, message: 해당 스터디에 이미 가입되어 있습니다. }

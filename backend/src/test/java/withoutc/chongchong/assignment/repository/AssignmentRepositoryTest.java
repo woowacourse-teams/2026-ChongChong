@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
@@ -258,7 +257,7 @@ class AssignmentRepositoryTest {
         assignment.initializeSubmissions(members);
         assignment.getSubmissions().stream()
                 .limit(submittedCount)
-                .forEach(submission -> ReflectionTestUtils.setField(submission, "submitted", true));
+                .forEach(submission -> submission.submit(null, null, NOW));
         return assignment;
     }
 

@@ -76,11 +76,13 @@ export const handlers = [
       const notices: { id: number; title: string }[] = [];
       return HttpResponse.json({
         totalCount: notices.length + assignments.length,
-        notices,
-        assignments: assignments.map((assignment) => ({
-          id: assignment.id,
-          title: assignment.title,
-        })),
+        notices: { items: notices },
+        assignments: {
+          items: assignments.map((assignment) => ({
+            id: assignment.id,
+            title: assignment.title,
+          })),
+        },
       });
     }
   }),

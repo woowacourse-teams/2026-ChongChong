@@ -358,8 +358,8 @@ class AssignmentServiceTest {
         Assignment firstAssignment = assignmentWithId(ASSIGNMENT_ID);
         Assignment secondAssignment = assignmentWithId(200L);
         List<AssignmentSubmissionStatusProjection> statuses = List.of(
-                new AssignmentSubmissionStatusProjection(ASSIGNMENT_ID, true),
-                new AssignmentSubmissionStatusProjection(200L, false)
+                new AssignmentSubmissionStatusProjection(ASSIGNMENT_ID, NOW),
+                new AssignmentSubmissionStatusProjection(200L, null)
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);

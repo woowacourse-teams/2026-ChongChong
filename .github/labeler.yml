@@ -4,20 +4,23 @@ FE:
 BE:
   - head-branch: ["^be/"]
 
+APP:
+  - head-branch: ["^app/"]
+
 ":sparkles: feature":
-  - head-branch: ["^(fe|be|common)/feat/"]
+  - head-branch: ["^(fe|be|app|common)/feat/"]
 
 "🐛 fix":
-  - head-branch: ["^(fe|be|common)/fix/"]
+  - head-branch: ["^(fe|be|app|common)/fix/"]
 
 "📄 documentation":
-  - head-branch: ["^(fe|be|common)/docs/"]
+  - head-branch: ["^(fe|be|app|common)/docs/"]
 
 ":art: style":
-  - head-branch: ["^(fe|be|common)/style/"]
+  - head-branch: ["^(fe|be|app|common)/style/"]
 
 ":recycle: refactor":
-  - head-branch: ["^(fe|be|common)/refactor/"]
+  - head-branch: ["^(fe|be|app|common)/refactor/"]
 
 "⚙️ chore":
-  - head-branch: ["^(fe|be|common)/chore/"]
+  - head-branch: ["^(fe|be|app|common)/chore/"]

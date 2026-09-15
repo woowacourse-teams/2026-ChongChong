@@ -23,7 +23,7 @@ import withoutc.chongchong.auth.security.AuthenticatedUser;
 @RequiredArgsConstructor
 @RequestMapping("/studies/{studyId}/assignments/{assignmentId}/submissions")
 @RestController
-public class AssignmentSubmissionController implements AssignmentSubmissionApi {
+public class AssignmentSubmissionController {
     private final AssignmentSubmissionService assignmentSubmissionService;
 
     @PostMapping("")

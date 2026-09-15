@@ -1,0 +1,8 @@
+PushTokenRegisterRequest:
+  type: object
+  additionalProperties: false
+  required: [installationId, token, platform]
+  properties:
+    installationId: { type: string, minLength: 1, maxLength: 255, example: installation-1 }
+    token: { type: string, minLength: 1, maxLength: 255, example: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]' }
+    platform: { type: string, enum: [ANDROID, IOS], example: ANDROID }

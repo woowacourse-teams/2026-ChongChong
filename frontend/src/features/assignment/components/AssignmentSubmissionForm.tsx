@@ -13,6 +13,7 @@ interface Props {
   isSubmitting?: boolean;
   submitLabel?: string;
   onSubmit: (values: AssignmentSubmissionValue) => void;
+  fieldErrors?: Partial<Record<'content' | 'link', string>>;
 }
 
 const emptyValues: AssignmentSubmissionValue = {
@@ -46,6 +47,7 @@ export default function AssignmentSubmissionForm({
   initialValues = emptyValues,
   isSubmitting = false,
   submitLabel = '제출하기',
+  fieldErrors = {},
   onSubmit,
 }: Props) {
   const [content, setContent] = useState(initialValues.content);
@@ -73,7 +75,13 @@ export default function AssignmentSubmissionForm({
       </h2>
 
       <form css={formStyle} onSubmit={submitAssignment}>
-        <Field id="assignment-submission-content" label="내용" isRequired>
+        <Field
+          id="assignment-submission-content"
+          label="내용"
+          isRequired
+          errorText={fieldErrors.content}
+          isError={Boolean(fieldErrors.content)}
+        >
           <TextArea
             id="assignment-submission-content"
             name="content"
@@ -84,7 +92,12 @@ export default function AssignmentSubmissionForm({
           />
         </Field>
 
-        <Field id="assignment-submission-link" label="링크">
+        <Field
+          id="assignment-submission-link"
+          label="링크"
+          errorText={fieldErrors.link}
+          isError={Boolean(fieldErrors.link)}
+        >
           <Input
             id="assignment-submission-link"
             name="link"

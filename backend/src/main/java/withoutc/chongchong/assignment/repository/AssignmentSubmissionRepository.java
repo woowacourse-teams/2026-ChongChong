@@ -18,7 +18,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
     @Query("""
             SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection(
                        submission.assignment.id,
-                       submission.submitted
+                       submission.submittedAt
                    )
             FROM AssignmentSubmission submission
             WHERE submission.assignment.id IN :assignmentIds
@@ -34,7 +34,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
                        member.id,
                        member.name,
                        member.profileImageUrl,
-                       submission.submitted,
+                       CASE WHEN submission.submittedAt IS NULL THEN false ELSE true END,
                        MAX(notification.createdAt)
                    )
             FROM AssignmentSubmission submission
@@ -48,13 +48,13 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
             GROUP BY member.id,
                      member.name,
                      member.profileImageUrl,
-                     submission.submitted
+                     submission.submittedAt
             """)
     List<AssignmentSubmitterStatusProjection> findAllSubmitterStatusesByAssignmentId(
             @Param("assignmentId") Long assignmentId);
 
     @EntityGraph(attributePaths = "member")
-    List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedTrue(Long assignmentId);
+    List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedAtIsNotNull(Long assignmentId);
 
     Optional<AssignmentSubmission> findByAssignmentIdAndMemberId(Long assignmentId, Long memberId);
 
@@ -71,6 +71,9 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
         return findByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
+
+    @EntityGraph(attributePaths = "member")
+    List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedAtIsNull(Long assignmentId);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM AssignmentSubmission submission WHERE submission.member.id = :memberId")

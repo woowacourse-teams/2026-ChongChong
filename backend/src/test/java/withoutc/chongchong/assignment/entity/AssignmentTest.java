@@ -14,7 +14,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
-import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.study.entity.Study;
@@ -213,7 +212,7 @@ class AssignmentTest {
     void calculateSubmissionCountsAndNextReminderTest() {
         Assignment assignment = createAssignment();
         assignment.initializeSubmissions(List.of(memberWithId(1L), memberWithId(2L)));
-        ReflectionTestUtils.setField(assignment.getSubmissions().getFirst(), "submitted", true);
+        assignment.getSubmissions().getFirst().submit(null, null, NOW);
 
         LocalDateTime firstRemindAt = NOW.plusHours(1);
         LocalDateTime nextRemindAt = NOW.plusHours(2);

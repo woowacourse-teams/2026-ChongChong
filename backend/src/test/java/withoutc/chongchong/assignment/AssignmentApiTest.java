@@ -46,6 +46,8 @@ import withoutc.chongchong.user.repository.UserRepository;
 class AssignmentApiTest {
 
     private static final Clock CLOCK = Clock.system(ZoneId.of("Asia/Seoul"));
+    private static final DateTimeFormatter REQUEST_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     @Autowired
     private UserRepository userRepository;
@@ -131,7 +133,11 @@ class AssignmentApiTest {
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(maxLengthTitle, newCloseAt, newRemindAt))
+                        """.formatted(
+                                maxLengthTitle,
+                                newCloseAt.format(REQUEST_DATE_TIME_FORMATTER),
+                                newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)
+                        ))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()
@@ -252,7 +258,10 @@ class AssignmentApiTest {
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(newCloseAt, newRemindAt))
+                        """.formatted(
+                                newCloseAt.format(REQUEST_DATE_TIME_FORMATTER),
+                                newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)
+                        ))
                 .when()
                 .patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
                 .then()
@@ -381,7 +390,7 @@ class AssignmentApiTest {
                           "closeAt": "%s",
                           "remindAts": []
                         }
-                        """.formatted(closeAt))
+                        """.formatted(closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()

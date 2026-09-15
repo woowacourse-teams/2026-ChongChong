@@ -1,10 +1,28 @@
-import { Suspense } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import EditAssignmentPage from '../EditAssignmentPage';
 import { createWrapper } from '../../../../test/render';
+import { server } from '../../../../mocks/msw-node';
 import { assignmentTable } from '../../mocks/db';
+import { API_URL } from '../../../../../config';
+
+function renderEditPage() {
+  render(
+    <Routes>
+      <Route
+        path="studies/:studyId/assignments/:assignmentId/edit"
+        element={<EditAssignmentPage />}
+      />
+    </Routes>,
+    {
+      wrapper: createWrapper({
+        initialEntries: ['/studies/2/assignments/999/edit'],
+      }),
+    },
+  );
+}
 
 describe('과제수정폼 테스트', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -21,24 +39,6 @@ describe('과제수정폼 테스트', () => {
       completeUserIds: [],
     });
   });
-
-  function renderEditPage() {
-    render(
-      <Suspense fallback={<div>로딩중</div>}>
-        <Routes>
-          <Route
-            path="studies/:studyId/assignments/:assignmentId/edit"
-            element={<EditAssignmentPage />}
-          />
-        </Routes>
-      </Suspense>,
-      {
-        wrapper: createWrapper({
-          initialEntries: [`/studies/2/assignments/999/edit`],
-        }),
-      },
-    );
-  }
 
   async function findTitleInput() {
     return screen.findByRole('textbox', { name: '제목' });
@@ -69,5 +69,82 @@ describe('과제수정폼 테스트', () => {
     expect(await screen.findByText('제출 방법은 필수입니다.')).toBeInTheDocument();
     // 이전 에러메시지 제거 확인
     expect(screen.queryByText('과제 제목은 필수입니다.')).not.toBeInTheDocument();
+  });
+
+  test('스터디 리더가 아니면 과제 수정 권한 안내를 토스트로 표시한다', async () => {
+    server.use(
+      http.patch(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () =>
+        HttpResponse.json(
+          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderEditPage();
+
+    const titleInput = await findTitleInput();
+    await user.clear(titleInput);
+    await user.type(titleInput, '수정한 드리블 연습');
+    await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
+    expect(toast).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 과제 수정 실패 안내를 토스트로 표시한다', async () => {
+    server.use(
+      http.patch(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () =>
+        HttpResponse.error(),
+      ),
+    );
+    renderEditPage();
+
+    const titleInput = await findTitleInput();
+    await user.clear(titleInput);
+    await user.type(titleInput, '수정한 드리블 연습');
+    await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
+
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
+    expect(toast).toHaveTextContent('과제 수정에 실패했습니다.');
+    expect(toast).toBeVisible();
+    expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('수정한 드리블 연습');
+  });
+});
+
+describe('과제 수정 페이지 조회 실패', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  test('스터디에 대한 접근 권한이 없으면 본문에 접근 권한 안내를 표시한다', async () => {
+    server.use(
+      http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () =>
+        HttpResponse.json(
+          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderEditPage();
+
+    expect(await screen.findByText('해당 스터디에 대한 접근 권한이 없습니다.')).toBeVisible();
+    expect(
+      within(screen.getByRole('main')).getByText('해당 스터디에 대한 접근 권한이 없습니다.'),
+    ).toBeVisible();
+  });
+
+  test('네트워크 에러가 발생하면 본문에 과제 조회 실패 안내를 표시한다', async () => {
+    server.use(
+      http.get(`${API_URL}/studies/:studyId/assignments/:assignmentId`, () => HttpResponse.error()),
+    );
+    renderEditPage();
+
+    expect(
+      await screen.findByText('과제 정보를 불러오는데 실패했습니다.', {}, { timeout: 3000 }),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole('main')).getByText('과제 정보를 불러오는데 실패했습니다.'),
+    ).toBeVisible();
   });
 });
