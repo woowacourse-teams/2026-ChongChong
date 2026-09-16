@@ -22,7 +22,6 @@ function setupStudyDetailPage(studyId = 1) {
       routes: (element) => (
         <>
           <Route path={STUDY_URLS.detail} element={element} />
-          <Route path="/studies" element={<h1>내 스터디</h1>} />
         </>
       ),
     }),

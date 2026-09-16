@@ -9,7 +9,6 @@ import { invalidInputResponse } from '../../../../mocks/errors';
 import { userTable } from '../../../user/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
 import CreateStudyPage from '../CreateStudyPage';
-import StudyDetailPage from '../StudyDetailPage';
 
 const STUDY_CREATE_URL = `${API_URL}${STUDY_URLS.create}`;
 
@@ -20,7 +19,6 @@ function setupStudyCreatePage() {
       routes: (element) => (
         <>
           <Route path="/studies/new" element={element} />
-          <Route path={STUDY_URLS.detail} element={<StudyDetailPage />} />
         </>
       ),
     }),
@@ -86,14 +84,15 @@ describe('스터디 생성 페이지', () => {
       logout();
     });
 
-    test('스터디를 생성하면 해당 스터디 페이지로 이동한다', async () => {
-      const { user } = setupStudyCreatePage();
+    // E2E 테스트로 전환합니다.
+    // test('스터디를 생성하면 해당 스터디 페이지로 이동한다', async () => {
+    //   const { user } = setupStudyCreatePage();
 
-      await user.type(studyNameInput(), '피자 스터디');
-      await user.click(studyCreateButton());
+    //   await user.type(studyNameInput(), '피자 스터디');
+    //   await user.click(studyCreateButton());
 
-      expect(await screen.findByRole('heading', { name: '피자 스터디' })).toBeInTheDocument();
-    });
+    //   expect(await screen.findByRole('heading', { name: '피자 스터디' })).toBeInTheDocument();
+    // });
 
     test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {
       server.use(
