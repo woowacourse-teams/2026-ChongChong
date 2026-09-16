@@ -7,7 +7,7 @@ import { MemoryRouter } from 'react-router';
 import { http, HttpResponse } from 'msw';
 import { ToastProvider } from '../shared/providers/ToastProvider';
 import { server } from '../mocks/msw-node';
-import { setAccessToken } from '../features/login/accessToken';
+import { clearAccessToken, setAccessToken } from '../features/login/accessToken';
 import { userTable } from '../features/user/mocks/db';
 
 interface WrapperParams {
@@ -54,4 +54,8 @@ export function login(userName: string) {
     throw new Error('존재하는 테스트 환경 유저입니다');
   }
   setAccessToken(String(user.id));
+}
+
+export function logout() {
+  clearAccessToken();
 }
