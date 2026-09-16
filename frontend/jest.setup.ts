@@ -1,28 +1,23 @@
 import '@testing-library/jest-dom';
 import { server } from './src/mocks/msw-node';
-import { studyTable, createSeedStudies } from './src/features/study/mocks/db';
-import { memberTable, createSeedMembers } from './src/features/member/mocks/db';
-import {
-  assignmentTable,
-  createSeedAssignments,
-  submissionTable,
-  createSeedSubmissions,
-} from './src/features/assignment/mocks/db';
-import { userTable, createSeedUsers } from './src/features/user/mocks/db';
+import { userTable } from './src/features/user/mocks/db';
+import { studyTable } from './src/features/study/mocks/db';
+import { memberTable } from './src/features/member/mocks/db';
+import { assignmentTable } from './src/features/assignment/mocks/db';
+import { submissionTable } from './src/features/assignment/mocks/db';
 
 beforeAll(() => server.listen());
 beforeEach(() => {
+  // jsdom은 window.scrollTo를 구현하지 않아서 mock을 설정합니다.
+  jest.spyOn(window, 'scrollTo').mockImplementation(() => {});
+});
+afterEach(() => {
   server.resetHandlers();
   userTable.clear();
   studyTable.clear();
   memberTable.clear();
   assignmentTable.clear();
   submissionTable.clear();
-  createSeedUsers();
-  createSeedStudies();
-  createSeedMembers();
-  createSeedAssignments();
-  createSeedSubmissions();
 });
 afterAll(() => server.close());
 
