@@ -5,6 +5,7 @@ import { createWrapper } from '../../../../test/render';
 import { server } from '../../../../mocks/msw-node';
 import StudyDetailPage from '../StudyDetailPage';
 import { API_URL } from '../../../../../config';
+import { setUpMockData } from '../../mocks/node-mock';
 import { STUDY_URLS } from '../../urls';
 
 const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
@@ -37,6 +38,7 @@ function renderStudyDetailPage() {
 
 describe('스터디 리드', () => {
   beforeEach(() => {
+    setUpMockData();
     mockStudyResponses('LEADER');
   });
 

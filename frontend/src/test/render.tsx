@@ -1,9 +1,13 @@
+import userEvent from '@testing-library/user-event';
+import { render, type RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router';
 import { http, HttpResponse } from 'msw';
 import { ToastProvider } from '../shared/providers/ToastProvider';
 import { server } from '../mocks/msw-node';
+import { setAccessToken } from '../features/login/accessToken';
+import { userTable } from '../features/user/mocks/db';
 
 export function mockResponse<T>(url: string, studies: T[]) {
   server.use(http.get(url, () => HttpResponse.json({ studies })));
@@ -27,4 +31,19 @@ export function createWrapper({ initialEntries }: { initialEntries?: string[] } 
       </QueryClientProvider>
     );
   };
+}
+
+export function setup(jsx: React.ReactNode, renderOptions?: RenderOptions) {
+  return {
+    user: userEvent.setup(),
+    ...render(jsx, renderOptions),
+  };
+}
+
+export function login(userName: string) {
+  const user = userTable.findFirst((q) => q.where({ name: userName }));
+  if (!user) {
+    throw new Error('존재하는 테스트 환경 유저입니다');
+  }
+  setAccessToken(String(user.id));
 }

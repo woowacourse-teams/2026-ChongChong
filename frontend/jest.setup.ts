@@ -8,6 +8,7 @@ import { submissionTable } from './src/features/assignment/mocks/db';
 
 beforeAll(() => server.listen());
 afterEach(() => {
+  server.resetHandlers();
   userTable.clear();
   studyTable.clear();
   memberTable.clear();

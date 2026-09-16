@@ -31,6 +31,12 @@ async function setUpMockData() {
     description: '2m 이든과 함께하는 농구 스터디',
     inviteLink: 'basketball',
   });
+  await studyTable.create({
+    id: 3,
+    name: '제빵 스터디',
+    description: '맛있는 소금빵 만듭니다',
+    inviteLink: 'bread',
+  });
 
   await memberTable.create({
     id: 1,
@@ -52,8 +58,8 @@ async function setUpMockData() {
 }
 
 describe('스터디 목록 페이지 테스트', () => {
-  beforeEach(() => {
-    setUpMockData();
+  beforeEach(async () => {
+    await setUpMockData();
   });
 
   test('응답으로 받은 스터디들을 렌더링 한다', async () => {
