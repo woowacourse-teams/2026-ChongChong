@@ -1,4 +1,5 @@
 import userEvent from '@testing-library/user-event';
+import { Routes } from 'react-router';
 import { render, type RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
@@ -9,11 +10,16 @@ import { server } from '../mocks/msw-node';
 import { setAccessToken } from '../features/login/accessToken';
 import { userTable } from '../features/user/mocks/db';
 
+interface WrapperParams {
+  initialEntries?: string[];
+  routes?: (element: React.ReactNode) => React.ReactNode;
+}
+
 export function mockResponse<T>(url: string, studies: T[]) {
   server.use(http.get(url, () => HttpResponse.json({ studies })));
 }
 
-export function createWrapper({ initialEntries }: { initialEntries?: string[] } = {}) {
+export function createWrapper({ initialEntries, routes }: WrapperParams = {}) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -26,7 +32,9 @@ export function createWrapper({ initialEntries }: { initialEntries?: string[] } 
     return (
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+          <MemoryRouter initialEntries={initialEntries}>
+            {routes ? <Routes>{routes(children)}</Routes> : children}
+          </MemoryRouter>
         </ToastProvider>
       </QueryClientProvider>
     );
