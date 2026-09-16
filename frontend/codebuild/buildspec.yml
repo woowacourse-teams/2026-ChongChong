@@ -25,7 +25,7 @@ phases:
       - |
         node --input-type=module <<'NODE'
         const expectedOrigin = process.env.DEPLOY_ENV === 'dev'
-          ? 'https://d2ujjy0977rfbd.cloudfront.net'
+          ? 'https://dev.chongchong.kr'
           : process.env.DEPLOY_ENV === 'prod' ? 'https://chongchong.kr' : undefined;
         if (!expectedOrigin || process.env.API_BASE_URL !== expectedOrigin) {
           throw new Error('DEPLOY_ENV must be dev or prod and match API_BASE_URL');
