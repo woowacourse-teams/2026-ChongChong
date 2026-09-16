@@ -7,6 +7,10 @@ import { assignmentTable } from './src/features/assignment/mocks/db';
 import { submissionTable } from './src/features/assignment/mocks/db';
 
 beforeAll(() => server.listen());
+beforeEach(() => {
+  // jsdom은 window.scrollTo를 구현하지 않아서 mock을 설정합니다.
+  jest.spyOn(window, 'scrollTo').mockImplementation(() => {});
+});
 afterEach(() => {
   server.resetHandlers();
   userTable.clear();
