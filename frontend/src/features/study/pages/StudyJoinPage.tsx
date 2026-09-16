@@ -4,7 +4,7 @@ import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import Field from '../../../shared/ui/inputs/Field';
+import { InputField } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
@@ -84,21 +84,22 @@ export default function StudyJoinPage() {
       />
       <Main>
         <form css={{ margin: `${tokens.spacing[5]} 0` }} onSubmit={handleJoinStudy}>
-          <Field
-            id="study-join-link"
-            isRequired={true}
-            label="초대 링크"
-            helpText="스터디 리드에게 받은 초대 링크를 붙여넣어 주세요"
-            isError={Boolean(fieldErrors.token)}
-            errorText={fieldErrors.token}
-          >
+          <InputField>
+            <InputField.Label htmlFor={'study-join-link'} isRequired={true}>
+              초대 링크
+            </InputField.Label>
             <Input
               id="study-join-link"
               placeholder="chongchong.app/welcome/join/15"
               value={inviteLink}
               onChange={handleInviteLink}
+              required={true}
             />
-          </Field>
+            <InputField.SubText
+              errorText={fieldErrors.token}
+              helpText={'스터디 리드에게 받은 초대 링크를 붙여넣어 주세요'}
+            />
+          </InputField>
           <Button
             type="submit"
             css={{ marginTop: tokens.spacing[5] }}
