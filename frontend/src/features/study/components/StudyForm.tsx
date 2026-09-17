@@ -1,18 +1,12 @@
-import { useNavigate } from 'react-router';
-import { CSSProperties, useMemo } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { CSSProperties } from 'react';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import Button from '../../../shared/ui/Button';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import { tokens } from '../../../styles/global';
-import { createStudy } from '../api';
 import isBlank from '../../../shared/utils/isBlank';
-import { ValidationError } from '../../../shared/api/error';
 import { usePostHog } from '@posthog/react';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 const StudyFormStyle = {
   display: 'flex',
@@ -20,37 +14,25 @@ const StudyFormStyle = {
   gap: tokens.spacing[4],
 } satisfies CSSProperties;
 
-export default function StudyForm() {
-  const navigate = useNavigate();
+interface Props {
+  onSubmit: ({ name, description }: { name: string; description: string }) => void;
+  isSubmitting: boolean;
+  fieldErrors: Partial<Record<'name' | 'description', string>>;
+}
+
+export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props) {
   const [nameValue, handleNameValue] = useInputState('');
   const [descriptionValue, handleDescriptionValue] = useInputState('');
   const posthog = usePostHog();
-  const toast = useToast();
-
-  const { mutate, error } = useMutation({
-    mutationFn: createStudy,
-    onSuccess: (data) => navigate(`/studies/${data.studyId}`),
-    onError: (error) => {
-      if (error instanceof ValidationError) return;
-      toast.open(<StatusToast message={error.message} status={'Error'} />);
-    },
-  });
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-
     posthog?.capture('study_form_submitted', {
       location: 'study_create_page',
     });
-
     const body = { name: nameValue, description: descriptionValue };
-    mutate(body);
+    onSubmit(body);
   }
-
-  const fieldErrors = useMemo(
-    () => (error instanceof ValidationError ? error.fieldErrors : {}),
-    [error],
-  );
 
   return (
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
@@ -82,7 +64,7 @@ export default function StudyForm() {
         variant="brandSolid"
         size="large"
         type="submit"
-        disabled={isBlank(nameValue)}
+        disabled={isBlank(nameValue) || isSubmitting}
         css={{ marginTop: tokens.spacing[1] }}
       >
         스터디 만들기
