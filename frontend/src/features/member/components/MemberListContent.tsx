@@ -1,5 +1,4 @@
 import { CSSProperties } from 'react';
-import { useNavigate } from 'react-router';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { tokens, typography } from '../../../styles/global';
@@ -10,9 +9,7 @@ import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import InviteStudyLinkBox, { InviteStudyLinkBoxFallback } from './InviteStudyLinkBox';
 import useDeleteStudy from '../../study/hooks/useDeleteStudy';
 import useLeaveStudyMember from '../hooks/useLeaveStudyMember';
-import { useToast } from '../../../shared/providers/ToastProvider';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 const actionButtonStyle = {
   margin: `${tokens.spacing[5]} 0`,
@@ -20,26 +17,10 @@ const actionButtonStyle = {
 
 function LeaderContent() {
   const { studyId } = useIntegerParams(['studyId']);
-  const navigate = useNavigate();
 
   const [isOpen, openDialog, closeDialog] = useBooleanState();
 
-  const { mutate: deleteStudy, isPending } = useDeleteStudy();
-
-  const toast = useToast();
-
-  function handleDeleteStudy() {
-    deleteStudy(
-      { studyId },
-      {
-        onSuccess: () => navigate('/studies'),
-        onError: (error) => {
-          closeDialog();
-          toast.open(<StatusToast message={error.message} status={'Error'} />);
-        },
-      },
-    );
-  }
+  const { mutate: deleteStudy, isPending } = useDeleteStudy({ onError: closeDialog });
 
   return (
     <>
@@ -70,7 +51,10 @@ function LeaderContent() {
             <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
           }
           confirmButton={
-            <ConfirmDialog.ConfirmButton onClick={handleDeleteStudy} disabled={isPending}>
+            <ConfirmDialog.ConfirmButton
+              onClick={() => deleteStudy({ studyId })}
+              disabled={isPending}
+            >
               삭제
             </ConfirmDialog.ConfirmButton>
           }
@@ -83,26 +67,9 @@ function LeaderContent() {
 function MemberContent() {
   const { studyId } = useIntegerParams(['studyId']);
 
-  const navigate = useNavigate();
-
   const [isOpen, openDialog, closeDialog] = useBooleanState();
 
-  const { mutate: leaveStudyMember, isPending } = useLeaveStudyMember();
-
-  const toast = useToast();
-
-  function handleLeaveStudyMember() {
-    leaveStudyMember(
-      { studyId },
-      {
-        onSuccess: () => navigate('/studies'),
-        onError: (error) => {
-          closeDialog();
-          toast.open(<StatusToast message={error.message} status="Error" />);
-        },
-      },
-    );
-  }
+  const { mutate: leaveStudyMember, isPending } = useLeaveStudyMember({ onError: closeDialog });
 
   return (
     <>
@@ -133,7 +100,10 @@ function MemberContent() {
             <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
           }
           confirmButton={
-            <ConfirmDialog.ConfirmButton onClick={handleLeaveStudyMember} disabled={isPending}>
+            <ConfirmDialog.ConfirmButton
+              onClick={() => leaveStudyMember({ studyId })}
+              disabled={isPending}
+            >
               탈퇴
             </ConfirmDialog.ConfirmButton>
           }
