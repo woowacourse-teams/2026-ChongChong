@@ -22,7 +22,7 @@ class OpenApiMappingContractTest {
     private RequestMappingHandlerMapping handlerMapping;
 
     @Test
-    void 명세와_업무_API의_HTTP_메서드와_경로가_양방향으로_일치한다() {
+    void 업무_API는_명세에_존재하고_대기와_진행중_외_명세는_구현되어_있다() {
         OpenApiOperationCatalog catalog = OpenApiOperationCatalog.load(
                 Path.of(System.getProperty("openapi.spec.path"))
         );
@@ -51,6 +51,7 @@ class OpenApiMappingContractTest {
         assertThat(mappingsWithoutHttpMethod)
                 .as("HTTP 메서드를 명시하지 않은 업무 API")
                 .isEmpty();
-        assertThat(implemented).containsExactlyInAnyOrderElementsOf(catalog.operations());
+        assertThat(implemented).containsAll(catalog.requiredOperations());
+        assertThat(catalog.operations()).containsAll(implemented);
     }
 }

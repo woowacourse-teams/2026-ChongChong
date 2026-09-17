@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.springframework.http.server.PathContainer;
@@ -17,11 +18,17 @@ import org.springframework.web.util.pattern.PathPatternParser;
 final class OpenApiOperationCatalog {
 
     private final Set<ApiOperation> operations;
+    private final Set<ApiOperation> requiredOperations;
     private final List<PatternOperation> patternOperations;
     private final Set<EmptyBodyResponse> emptyBodyResponses;
 
-    private OpenApiOperationCatalog(Set<ApiOperation> operations, Set<EmptyBodyResponse> emptyBodyResponses) {
+    private OpenApiOperationCatalog(
+            Set<ApiOperation> operations,
+            Set<ApiOperation> requiredOperations,
+            Set<EmptyBodyResponse> emptyBodyResponses
+    ) {
         this.operations = Set.copyOf(operations);
+        this.requiredOperations = Set.copyOf(requiredOperations);
         this.emptyBodyResponses = Set.copyOf(emptyBodyResponses);
         this.patternOperations = operations.stream()
                 .map(operation -> new PatternOperation(
@@ -41,10 +48,17 @@ final class OpenApiOperationCatalog {
         }
 
         Set<ApiOperation> operations = new TreeSet<>();
+        Set<ApiOperation> requiredOperations = new TreeSet<>();
         Set<EmptyBodyResponse> emptyBodyResponses = new TreeSet<>();
         openApi.getPaths().forEach((path, pathItem) -> pathItem.readOperationsMap().forEach((method, operation) -> {
             ApiOperation apiOperation = new ApiOperation(method.name(), path);
             operations.add(apiOperation);
+            Object backend = operation.getExtensions() == null ? null : operation.getExtensions().get("x-backend");
+            if (!(backend instanceof Map<?, ?> metadata)
+                    || !("todo".equals(metadata.get("status"))
+                    || "in-progress".equals(metadata.get("status")))) {
+                requiredOperations.add(apiOperation);
+            }
             operation.getResponses().forEach((status, response) -> {
                 if (response.getExtensions() != null
                         && Boolean.TRUE.equals(response.getExtensions().get("x-allow-empty-body"))) {
@@ -52,11 +66,15 @@ final class OpenApiOperationCatalog {
                 }
             });
         }));
-        return new OpenApiOperationCatalog(operations, emptyBodyResponses);
+        return new OpenApiOperationCatalog(operations, requiredOperations, emptyBodyResponses);
     }
 
     Set<ApiOperation> operations() {
         return operations;
+    }
+
+    Set<ApiOperation> requiredOperations() {
+        return requiredOperations;
     }
 
     ApiOperation resolve(String method, String concretePath) {
