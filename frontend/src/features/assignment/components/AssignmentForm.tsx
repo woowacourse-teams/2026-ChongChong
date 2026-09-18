@@ -111,7 +111,7 @@ export default function AssignmentForm({
           maxLength={ASSIGNMENT_TITLE.length}
           placeholder="제목을 입력해주세요"
         />
-        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div css={{ display: 'flex', justifyContent: 'flex-end' }}>
           <InputField.SubText errorText={fieldErrors.title} />
           <InputField.CurrentLength
             currentLength={title.length}
@@ -131,7 +131,7 @@ export default function AssignmentForm({
           maxLength={ASSIGNMENT_CONTENT.length}
           onChange={(event) => setContent(event.target.value)}
         />
-        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div css={{ display: 'flex', justifyContent: 'flex-end' }}>
           <InputField.SubText errorText={fieldErrors.content} />
           <InputField.CurrentLength
             currentLength={content.length}
