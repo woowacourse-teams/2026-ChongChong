@@ -76,6 +76,9 @@ LeaveForbidden:
 UserNotFound:
   description: 사용자 정보가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/UserNotFoundError' } } }
+StudyLeaderWithdrawalBlocked:
+  description: 리더인 스터디가 남아 있어 사용자 탈퇴가 차단됨
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyLeaderWithdrawalBlockedError' } } }
 StudyNotFound:
   description: 스터디가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyNotFoundError' } } }

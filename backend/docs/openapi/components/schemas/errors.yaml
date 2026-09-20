@@ -35,6 +35,7 @@ ErrorResponse:
         - INVALID_INVITE_TOKEN
         - STUDY_LEADER_CANNOT_BE_REMOVED
         - STUDY_LEADER_CANNOT_LEAVE
+        - STUDY_LEADER_WITHDRAWAL_BLOCKED
         - STUDY_NOT_FOUND
         - STUDY_MEMBER_NOT_FOUND
         - USER_NOT_FOUND
@@ -88,6 +89,7 @@ NotStudyLeaderError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { 
 InvalidInviteTokenError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_INVITE_TOKEN }, message: { const: 유효하지 않은 초대 토큰입니다. } } }], examples: [{ code: INVALID_INVITE_TOKEN, message: 유효하지 않은 초대 토큰입니다. }] }
 StudyLeaderCannotBeRemovedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_LEADER_CANNOT_BE_REMOVED }, message: { const: 스터디 리더는 방출할 수 없습니다. } } }], examples: [{ code: STUDY_LEADER_CANNOT_BE_REMOVED, message: 스터디 리더는 방출할 수 없습니다. }] }
 StudyLeaderCannotLeaveError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_LEADER_CANNOT_LEAVE }, message: { const: 스터디 리더는 탈퇴할 수 없습니다. } } }], examples: [{ code: STUDY_LEADER_CANNOT_LEAVE, message: 스터디 리더는 탈퇴할 수 없습니다. }] }
+StudyLeaderWithdrawalBlockedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_LEADER_WITHDRAWAL_BLOCKED }, message: { const: 리더인 스터디를 삭제한 뒤 회원 탈퇴할 수 있습니다. } } }], examples: [{ code: STUDY_LEADER_WITHDRAWAL_BLOCKED, message: 리더인 스터디를 삭제한 뒤 회원 탈퇴할 수 있습니다. }] }
 StudyNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_NOT_FOUND }, message: { const: 존재하지 않는 스터디입니다. } } }], examples: [{ code: STUDY_NOT_FOUND, message: 존재하지 않는 스터디입니다. }] }
 StudyMemberNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_MEMBER_NOT_FOUND }, message: { const: 존재하지 않는 스터디 멤버입니다. } } }], examples: [{ code: STUDY_MEMBER_NOT_FOUND, message: 존재하지 않는 스터디 멤버입니다. }] }
 UserNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: USER_NOT_FOUND }, message: { const: 해당 사용자를 찾을 수 없습니다. } } }], examples: [{ code: USER_NOT_FOUND, message: 해당 사용자를 찾을 수 없습니다. }] }
