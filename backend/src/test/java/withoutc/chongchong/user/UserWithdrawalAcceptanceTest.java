@@ -12,16 +12,12 @@ import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
-import withoutc.chongchong.user.service.UserService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public class UserWithdrawalAcceptanceTest {
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private UserRepository userRepository;
