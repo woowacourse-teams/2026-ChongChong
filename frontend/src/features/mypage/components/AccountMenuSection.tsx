@@ -57,7 +57,7 @@ export default function AccountMenuSection() {
         navigate('/login', { replace: true });
       },
       onError: (error) => {
-        close();
+        closeDialog();
         toast.open(<StatusToast message={error.message} status="Error" />);
       },
     });
