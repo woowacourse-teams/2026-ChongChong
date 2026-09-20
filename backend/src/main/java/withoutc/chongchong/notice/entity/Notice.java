@@ -33,6 +33,8 @@ import withoutc.chongchong.study.entity.StudyMember;
 @Table(name = "notices")
 public class Notice extends BaseEntity {
 
+    private static final int MAX_TITLE_LENGTH = 100;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -124,7 +126,7 @@ public class Notice extends BaseEntity {
     }
 
     private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.length() > 20) {
+        if (title == null || title.isBlank() || title.length() > MAX_TITLE_LENGTH) {
             throw new NoticeException(NoticeErrorCode.INVALID_TITLE);
         }
     }
