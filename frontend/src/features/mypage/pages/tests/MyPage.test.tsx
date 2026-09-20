@@ -65,7 +65,7 @@ describe('계정 메뉴', () => {
     const user = userEvent.setup();
     renderMyPage();
 
-    await user.click(screen.getByRole('button', { name: '로그아웃' }));
+    await user.click(await screen.findByRole('button', { name: '로그아웃' }));
 
     expect(await screen.findByRole('heading', { name: '로그인 페이지' })).toBeVisible();
     expect(getAccessToken()).toBeNull();
@@ -75,7 +75,7 @@ describe('계정 메뉴', () => {
     const user = userEvent.setup();
     renderMyPage();
 
-    await user.click(screen.getByRole('button', { name: '회원 탈퇴' }));
+    await user.click(await screen.findByRole('button', { name: '회원 탈퇴' }));
     const dialog = screen.getByRole('alertdialog', { name: '회원 탈퇴하시겠습니까?' });
     expect(dialog).toBeVisible();
 
@@ -91,7 +91,7 @@ describe('계정 메뉴', () => {
     const user = userEvent.setup();
     renderMyPage();
 
-    await user.click(screen.getByRole('button', { name: '회원 탈퇴' }));
+    await user.click(await screen.findByRole('button', { name: '회원 탈퇴' }));
     const dialog = screen.getByRole('alertdialog', { name: '회원 탈퇴하시겠습니까?' });
     await user.click(within(dialog).getByRole('button', { name: '취소' }));
 
