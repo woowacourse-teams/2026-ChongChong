@@ -71,7 +71,7 @@ export const handlers = [
     const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
 
-    const { title, content, submissionMethod, closeAt } = body;
+    const { title, content, submissionMethod, closeAt, submissionTarget } = body;
     const assignmentId = Date.now();
     await assignmentTable.create({
       id: assignmentId,
@@ -80,6 +80,7 @@ export const handlers = [
       content,
       submissionMethod,
       closeAt,
+      submissionTarget,
       completeUserIds: [],
     });
 
@@ -170,6 +171,7 @@ export const handlers = [
       closeAt: assignment.closeAt,
       content: assignment.content,
       submissionMethod: assignment.submissionMethod,
+      submissionTarget: assignment.submissionTarget,
     });
   }),
 

@@ -8,6 +8,7 @@ const assignmentSchema = z.object({
   content: z.string(),
   submissionMethod: z.string(),
   closeAt: z.string(),
+  submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
   completeUserIds: z.array(z.number()),
 });
 
@@ -25,6 +26,7 @@ export const mockAssigments = [
     content: '3점슛 10번씩 제발 해오세요.',
     submissionMethod: '링크로 제출하세요',
     closeAt: '2026-08-10T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [],
   },
   {
@@ -34,6 +36,7 @@ export const mockAssigments = [
     content: '엄청 긴 내용'.repeat(100),
     submissionMethod: '영상 링크로 제출하세요',
     closeAt: '2026-08-20T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [1, 5],
   },
   {
@@ -43,6 +46,7 @@ export const mockAssigments = [
     content: '이번 주 NBA 경기 하나를 골라서 전술 분석 글을 작성해주세요.',
     submissionMethod: '노션 링크로 제출하세요',
     closeAt: '2026-08-31T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [5],
   },
   {
@@ -52,6 +56,7 @@ export const mockAssigments = [
     content: '자유투 50개를 던지고 성공 개수를 기록해서 제출해주세요.',
     submissionMethod: '텍스트로 제출하세요',
     closeAt: '2026-09-07T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [1, 5],
   },
   {
@@ -61,6 +66,7 @@ export const mockAssigments = [
     content: '2주 동안 매일 드리블 루틴을 연습하고 일지를 작성해주세요.',
     submissionMethod: '링크로 제출하세요',
     closeAt: '2026-09-30T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [],
   },
   {
@@ -70,6 +76,7 @@ export const mockAssigments = [
     content: 'IoC 컨테이너와 빈 생명주기를 정리하고 예제 코드를 작성해주세요.',
     submissionMethod: 'GitHub 저장소 링크로 제출하세요',
     closeAt: '2026-08-10T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [1, 2, 3, 4, 5],
   },
   {
@@ -79,6 +86,7 @@ export const mockAssigments = [
     content: '생성자 주입과 필드 주입의 차이를 정리하고 리팩터링 예제를 올려주세요.',
     submissionMethod: 'GitHub PR 링크로 제출하세요',
     closeAt: '2026-08-17T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [2, 3, 5],
   },
   {
@@ -88,6 +96,7 @@ export const mockAssigments = [
     content: '로깅 기능을 AOP로 구현하고 적용 결과를 정리해주세요.',
     submissionMethod: '노션 링크로 제출하세요',
     closeAt: '2026-08-24T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [2, 4],
   },
   {
@@ -97,6 +106,7 @@ export const mockAssigments = [
     content: '트랜잭션 전파 옵션을 실험하고 결과를 기록해주세요.',
     submissionMethod: 'GitHub 저장소 링크로 제출하세요',
     closeAt: '2026-08-31T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [3],
   },
   {
@@ -106,6 +116,7 @@ export const mockAssigments = [
     content: '양방향 연관관계 매핑 시 주의할 점을 정리해주세요.',
     submissionMethod: '노션 링크로 제출하세요',
     closeAt: '2026-09-07T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [2, 3, 4],
   },
   {
@@ -115,6 +126,7 @@ export const mockAssigments = [
     content: 'N+1 문제를 재현하고 fetch join으로 해결한 과정을 기록해주세요.',
     submissionMethod: 'GitHub PR 링크로 제출하세요',
     closeAt: '2026-09-14T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [],
   },
   {
@@ -124,6 +136,7 @@ export const mockAssigments = [
     content: '슬라이스 테스트와 통합 테스트를 각각 작성해주세요.',
     submissionMethod: 'GitHub 저장소 링크로 제출하세요',
     closeAt: '2026-09-21T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [1, 2],
   },
   {
@@ -133,6 +146,7 @@ export const mockAssigments = [
     content: '동시성 문제를 재현하고 해결 과정을 기록해주세요.',
     submissionMethod: 'GitHub PR 링크로 제출하세요',
     closeAt: '2026-09-28T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [4, 5],
   },
   {
@@ -142,6 +156,7 @@ export const mockAssigments = [
     content: '강아지 저녁밥 꼭 줘야 합니다.',
     submissionMethod: '인증사진을 첨부하세요.',
     closeAt: '2030-09-28T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [],
   },
 ] satisfies AssignmentSchemaType[];
