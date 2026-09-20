@@ -35,6 +35,7 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -48,6 +49,7 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final NoticeRecipientRepository noticeRecipientRepository;
     private final StudyRepository studyRepository;
+    private final NotificationService notificationService;
 
     private final Clock clock;
 
@@ -66,6 +68,7 @@ public class NoticeService {
         notice.addRecipients(members);
 
         noticeRepository.save(notice);
+        notificationService.createNoticeCreatedEventNotifications(notice, members);
 
         return NoticeCreateResponse.from(notice);
     }

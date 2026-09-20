@@ -27,6 +27,7 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmission
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -41,6 +42,7 @@ public class AssignmentService {
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
+    private final NotificationService notificationService;
 
     private final Clock clock;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
@@ -62,6 +64,7 @@ public class AssignmentService {
         assignment.initializeSubmissions(submitters);
 
         assignmentRepository.save(assignment);
+        notificationService.createAssignmentCreatedEventNotifications(assignment, submitters);
 
         return AssignmentCreateResponse.from(assignment);
     }

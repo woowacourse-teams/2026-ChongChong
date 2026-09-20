@@ -27,7 +27,6 @@ import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.AssignmentReminderRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.entity.NoticeRecipient;
 import withoutc.chongchong.notice.entity.NoticeReminder;
 import withoutc.chongchong.notice.entity.NoticeReminderStatus;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
@@ -71,8 +70,8 @@ class NotificationServiceTest {
                 notificationRepository,
                 noticeRecipientRepository,
                 noticeReminderRepository,
-                assignmentReminderRepository,
                 assignmentSubmissionRepository,
+                assignmentReminderRepository,
                 CLOCK
         );
     }
@@ -83,7 +82,6 @@ class NotificationServiceTest {
         AssignmentReminder reminder = mock(AssignmentReminder.class);
         Assignment assignment = mock(Assignment.class);
         Study study = mock(Study.class);
-        AssignmentSubmission submission = mock(AssignmentSubmission.class);
         StudyMember recipient = mock(StudyMember.class);
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
@@ -94,11 +92,10 @@ class NotificationServiceTest {
         when(reminder.getAssignment()).thenReturn(assignment);
         when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
         when(assignment.getStudy()).thenReturn(study);
-        when(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedAtIsNull(ASSIGNMENT_ID))
-                .thenReturn(List.of(submission));
-        when(submission.getMember()).thenReturn(recipient);
+        when(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID))
+                .thenReturn(List.of(recipient));
 
-        notificationService.createNotification();
+        notificationService.createScheduledRemindNotifications();
 
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification notification = notificationCaptor.getValue();
@@ -109,7 +106,7 @@ class NotificationServiceTest {
         assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT);
         assertThat(notification.isRead()).isFalse();
         verify(reminder).markAsSent();
-        verify(assignmentSubmissionRepository).findAllByAssignmentIdAndSubmittedAtIsNull(ASSIGNMENT_ID);
+        verify(assignmentSubmissionRepository).findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID);
         verifyNoInteractions(noticeRecipientRepository);
     }
 
@@ -119,7 +116,6 @@ class NotificationServiceTest {
         NoticeReminder reminder = mock(NoticeReminder.class);
         Notice notice = mock(Notice.class);
         Study study = mock(Study.class);
-        NoticeRecipient noticeRecipient = mock(NoticeRecipient.class);
         StudyMember recipient = mock(StudyMember.class);
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
@@ -130,11 +126,10 @@ class NotificationServiceTest {
         when(reminder.getNotice()).thenReturn(notice);
         when(notice.getId()).thenReturn(NOTICE_ID);
         when(notice.getStudy()).thenReturn(study);
-        when(noticeRecipientRepository.findAllByNoticeIdAndReadAtIsNull(NOTICE_ID))
-                .thenReturn(List.of(noticeRecipient));
-        when(noticeRecipient.getMember()).thenReturn(recipient);
+        when(noticeRecipientRepository.findUnreadMembersByNoticeId(NOTICE_ID))
+                .thenReturn(List.of(recipient));
 
-        notificationService.createNotification();
+        notificationService.createScheduledRemindNotifications();
 
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification notification = notificationCaptor.getValue();
@@ -144,8 +139,33 @@ class NotificationServiceTest {
         assertThat(notification.getResourceId()).isEqualTo(NOTICE_ID);
         assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.NOTICE);
         verify(reminder).markAsSent();
-        verify(noticeRecipientRepository).findAllByNoticeIdAndReadAtIsNull(NOTICE_ID);
+        verify(noticeRecipientRepository).findUnreadMembersByNoticeId(NOTICE_ID);
         verifyNoInteractions(assignmentSubmissionRepository);
+    }
+
+    @Test
+    @DisplayName("과제 제출 이벤트 알림은 제출 리소스와 수신자를 저장한다")
+    void createAssignmentSubmissionSubmittedEventNotifications() {
+        AssignmentSubmission submission = mock(AssignmentSubmission.class);
+        Assignment assignment = mock(Assignment.class);
+        Study study = mock(Study.class);
+        StudyMember recipient = mock(StudyMember.class);
+        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+
+        when(submission.getAssignment()).thenReturn(assignment);
+        when(submission.getId()).thenReturn(300L);
+        when(assignment.getStudy()).thenReturn(study);
+
+        notificationService.createAssignmentSubmissionSubmittedEventNotifications(submission, List.of(recipient));
+
+        verify(notificationRepository).save(notificationCaptor.capture());
+        Notification notification = notificationCaptor.getValue();
+        assertThat(notification.getStudy()).isSameAs(study);
+        assertThat(notification.getRecipient()).isSameAs(recipient);
+        assertThat(notification.getType()).isEqualTo(NotificationType.SUBMITTED);
+        assertThat(notification.getResourceId()).isEqualTo(300L);
+        assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(notification.isRead()).isFalse();
     }
 
     @Test
@@ -156,7 +176,7 @@ class NotificationServiceTest {
         when(noticeReminderRepository.findAllByStatusAndRemindAtLessThanEqual(
                 NoticeReminderStatus.PENDING, NOW)).thenReturn(List.of());
 
-        notificationService.createNotification();
+        notificationService.createScheduledRemindNotifications();
 
         verify(notificationRepository, never()).save(any(Notification.class));
         verifyNoInteractions(noticeRecipientRepository, assignmentSubmissionRepository);

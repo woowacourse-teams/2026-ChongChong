@@ -21,6 +21,8 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
 
     List<StudyMember> findAllByStudyId(Long studyId);
 
+    List<StudyMember> findAllByStudyIdAndRole(Long studyId, StudyMemberRole role);
+
     default StudyMember getByStudyIdAndUserIdOrThrow(Long studyId, Long userId) {
         return findByStudyIdAndUserId(studyId, userId)
                 .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));

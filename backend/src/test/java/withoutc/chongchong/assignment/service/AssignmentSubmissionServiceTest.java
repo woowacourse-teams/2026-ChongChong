@@ -3,6 +3,8 @@ package withoutc.chongchong.assignment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,6 +40,7 @@ import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -62,6 +65,9 @@ class AssignmentSubmissionServiceTest {
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
 
     @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private AssignmentAccessPolicy assignmentAccessPolicy;
 
     private AssignmentSubmissionService assignmentSubmissionService;
@@ -74,22 +80,26 @@ class AssignmentSubmissionServiceTest {
                 assignmentRepository,
                 assignmentSubmissionRepository,
                 studyMemberRepository,
+                notificationService,
                 assignmentAccessPolicy,
                 clock
         );
     }
 
     @Test
-    @DisplayName("스터디원이 자신의 과제를 제출하면 해당 스터디원 제출물만 상태를 변경한다")
+    @DisplayName("스터디원이 과제를 최초 제출하면 스터디 리더에게 제출 알림을 생성한다")
     void submitAssignmentTest() {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        StudyMember leader = studyMember(assignment, 30L, StudyMemberRole.LEADER, "리더");
         StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
         AssignmentSubmission submission = submissionWithId(300L, member, assignment);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("제출 내용", "https://example.com");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
+        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
+        when(studyMemberRepository.findAllByStudyIdAndRole(STUDY_ID, StudyMemberRole.LEADER))
+                .thenReturn(List.of(leader));
 
         AssignmentSubmitResponse response = assignmentSubmissionService.submit(USER_ID, STUDY_ID, ASSIGNMENT_ID,
                 request);
@@ -100,7 +110,52 @@ class AssignmentSubmissionServiceTest {
         assertThat(submission.getLink()).isEqualTo("https://example.com");
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
         verify(assignmentRepository).getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID);
-        verify(assignmentSubmissionRepository).getByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID);
+        verify(assignmentSubmissionRepository).getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID);
+        verify(notificationService).createAssignmentSubmissionSubmittedEventNotifications(submission, List.of(leader));
+    }
+
+    @Test
+    @DisplayName("이미 제출한 과제를 다시 제출하면 제출 알림을 생성하지 않는다")
+    void resubmitAssignmentDoesNotCreateNotificationTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
+        AssignmentSubmission submission = submissionWithId(300L, member, assignment);
+        submission.submit("기존 내용", "https://old.example.com", NOW);
+        AssignmentSubmitRequest request = new AssignmentSubmitRequest("수정 내용", "https://new.example.com");
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID))
+                .thenReturn(submission);
+
+        assignmentSubmissionService.submit(USER_ID, STUDY_ID, ASSIGNMENT_ID, request);
+
+        assertThat(submission.getContent()).isEqualTo("수정 내용");
+        assertThat(submission.getLink()).isEqualTo("https://new.example.com");
+        assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
+        verify(notificationService, never()).createAssignmentSubmissionSubmittedEventNotifications(
+                any(), anyList());
+        verify(studyMemberRepository, never()).findAllByStudyIdAndRole(STUDY_ID, StudyMemberRole.LEADER);
+    }
+
+    @Test
+    @DisplayName("제출 검증에 실패하면 제출 알림을 생성하지 않는다")
+    void invalidSubmitDoesNotCreateNotificationTest() {
+        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
+        StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
+        AssignmentSubmission submission = submissionWithId(300L, member, assignment);
+        AssignmentSubmitRequest request = new AssignmentSubmitRequest("a".repeat(10_001), null);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID))
+                .thenReturn(submission);
+
+        assertThatThrownBy(() -> assignmentSubmissionService.submit(USER_ID, STUDY_ID, ASSIGNMENT_ID, request))
+                .isInstanceOf(AssignmentException.class)
+                .extracting(exception -> ((AssignmentException) exception).getErrorCode())
+                .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
+
+        assertThat(submission.isSubmitted()).isFalse();
+        verifyNoInteractions(notificationService);
     }
 
     @Test
