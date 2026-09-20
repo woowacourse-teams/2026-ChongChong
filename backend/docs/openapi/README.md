@@ -13,7 +13,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 소셜 로그인 | `POST /api/auth/login` | [paths/auth/login.yaml](paths/auth/login.yaml) |
 | 액세스 토큰 갱신 | `POST /api/auth/refresh` | [paths/auth/refresh.yaml](paths/auth/refresh.yaml) |
 | 로그아웃 | `POST /api/auth/logout` | [paths/auth/logout.yaml](paths/auth/logout.yaml) |
-| 사용자 탈퇴 | `DELETE /api/user/me` | [paths/user/me.yaml](paths/user/me.yaml) |
+| 사용자 탈퇴 | `DELETE /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
 | 스터디 생성 | `POST /api/studies` | [paths/studies/collection.yaml](paths/studies/collection.yaml) |
 | 스터디 상세 조회 | `GET /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
 | 스터디 수정 | `PATCH /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |

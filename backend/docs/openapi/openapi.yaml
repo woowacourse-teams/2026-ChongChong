@@ -28,8 +28,8 @@ paths:
     $ref: './paths/auth/refresh.yaml'
   /api/auth/logout:
     $ref: './paths/auth/logout.yaml'
-  /api/user/me:
-    $ref: './paths/user/me.yaml'
+  /api/users/me:
+    $ref: './paths/users/me.yaml'
   /api/studies:
     $ref: './paths/studies/collection.yaml'
   /api/studies/{studyId}:

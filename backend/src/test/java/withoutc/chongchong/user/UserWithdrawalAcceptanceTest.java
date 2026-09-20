@@ -50,7 +50,7 @@ public class UserWithdrawalAcceptanceTest {
         Response response = testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
                 .when()
-                .delete("/user/me");
+                .delete("/users/me");
 
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(response.asString()).isEmpty();

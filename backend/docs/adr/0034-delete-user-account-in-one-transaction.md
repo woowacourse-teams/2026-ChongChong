@@ -24,7 +24,7 @@ Flyway V2와 ADR 0024는 `users → study_members → notice_recipients`,
 
 ### 탈퇴 조건과 트랜잭션
 
-- `DELETE /api/user/me`는 Bearer Access Token의 사용자 ID를 사용하며 요청 본문을 받지 않는다.
+- `DELETE /api/users/me`는 Bearer Access Token의 사용자 ID를 사용하며 요청 본문을 받지 않는다.
 - 서비스의 쓰기 트랜잭션에서 사용자 행을 `PESSIMISTIC_WRITE`로 잠금 조회한다. 사용자가 없으면
   `404 USER_NOT_FOUND`를 반환한다. 인증 정보가 없거나 유효하지 않으면 기존 인증 경계가
   `401 AUTHENTICATION_REQUIRED`를 반환한다.
