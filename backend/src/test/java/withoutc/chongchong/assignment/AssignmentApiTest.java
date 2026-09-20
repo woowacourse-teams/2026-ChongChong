@@ -17,10 +17,13 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -29,6 +32,7 @@ import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -130,6 +134,7 @@ class AssignmentApiTest {
                           "title": "%s",
                           "content": "새 과제 내용",
                           "submissionMethod": "텍스트 제출",
+                          "submissionTarget": "MEMBERS_ONLY",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
@@ -255,6 +260,7 @@ class AssignmentApiTest {
                           "title": "수정 과제",
                           "content": "수정 과제 내용",
                           "submissionMethod": "텍스트 제출",
+                          "submissionTarget": "MEMBERS_ONLY",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
@@ -348,6 +354,7 @@ class AssignmentApiTest {
                         "다른 과제",
                         "다른 과제 내용",
                         "링크 제출",
+                        SubmissionTarget.MEMBERS_ONLY,
                         closeAt,
                         LocalDateTime.now(CLOCK)
                 )
@@ -387,6 +394,7 @@ class AssignmentApiTest {
                           "title": " ",
                           "content": "과제 내용",
                           "submissionMethod": "링크 제출",
+                          "submissionTarget": "MEMBERS_ONLY",
                           "closeAt": "%s",
                           "remindAts": []
                         }
@@ -502,6 +510,7 @@ class AssignmentApiTest {
                 "다른 과제",
                 "다른 과제 내용",
                 "링크 제출",
+                SubmissionTarget.MEMBERS_ONLY,
                 closeAt,
                 LocalDateTime.now(CLOCK)
         );
@@ -689,6 +698,73 @@ class AssignmentApiTest {
                 .body("incompleteMembers[0].lastRemindAt", nullValue());
     }
 
+    @ParameterizedTest
+    @EnumSource(SubmissionTarget.class)
+    @DisplayName("과제 생성 시 선택한 제출 대상과 리더 포함 여부를 저장하고 상세 조회로 반환한다")
+    void createWithSubmissionTargetTest(SubmissionTarget target) {
+        Long assignmentId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "대상 선택 과제", "content", "내용", "submissionMethod", "링크 제출",
+                        "submissionTarget", target.name(),
+                        "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when()
+                .post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201)
+                .extract().jsonPath().getLong("assignmentId");
+
+        int expectedLeaderCount = target == SubmissionTarget.MEMBERS_AND_LEADER ? 1 : 0;
+        assertThat(countRows("assignment_submissions", assignmentId)).isEqualTo(2 + expectedLeaderCount);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM assignment_submissions WHERE assignment_id = ? AND member_id = ?",
+                Integer.class, assignmentId, leader.getId())).isEqualTo(expectedLeaderCount);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignmentId)
+                .then().statusCode(200).body("submissionTarget", equalTo(target.name()));
+    }
+
+    @Test
+    @DisplayName("리더 포함을 반복해도 제출물을 유지하고 제외하면 삭제하며 다시 포함하면 빈 제출물을 만든다")
+    void changeLeaderParticipationTest() {
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
+        Long submissionId = submitAssignment(leaderUser, assignment, "리더의 제출 내용", "https://example.com");
+
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(submission -> {
+            assertThat(submission.getContent()).isEqualTo("리더의 제출 내용");
+            assertThat(submission.isSubmitted()).isTrue();
+        });
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("title", "제목만 변경"))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertThat(assignmentSubmissionRepository.existsById(submissionId)).isTrue();
+        assertThat(assignmentRepository.findById(assignment.getId())).hasValueSatisfying(saved ->
+                assertThat(saved.getSubmissionTarget()).isEqualTo(SubmissionTarget.MEMBERS_AND_LEADER));
+
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_ONLY);
+        assertThat(assignmentSubmissionRepository.existsById(submissionId)).isFalse();
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(2);
+
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*) FROM assignment_submissions
+                WHERE assignment_id = ? AND member_id = ? AND id <> ?
+                  AND content IS NULL AND link IS NULL AND submitted_at IS NULL
+                """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
+    }
+
+    private void updateSubmissionTarget(SubmissionTarget target) {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submissionTarget", target.name()))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+    }
+
     private Long submitAssignment(User submitter, Assignment targetAssignment, String content, String link) {
         return testAuthRequest.givenAuthenticatedUser(submitter.getId())
                 .port(port)
@@ -713,6 +789,7 @@ class AssignmentApiTest {
                 title,
                 content,
                 submissionMethod,
+                SubmissionTarget.MEMBERS_ONLY,
                 assignmentCloseAt,
                 now
         );

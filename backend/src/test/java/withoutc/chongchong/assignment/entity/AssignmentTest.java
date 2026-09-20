@@ -97,7 +97,7 @@ class AssignmentTest {
         LocalDateTime updatedCloseAt = NOW.plusDays(2);
         Assignment assignment = createAssignment("기존 제목", "기존 내용", "기존 방법", originalCloseAt);
 
-        assignment.update("수정 제목", null, "수정 방법", updatedCloseAt, null, NOW);
+        assignment.update(null, "수정 제목", null, "수정 방법", null, updatedCloseAt, null, NOW);
 
         assertThat(assignment.getTitle()).isEqualTo("수정 제목");
         assertThat(assignment.getContent()).isEqualTo("기존 내용");
@@ -110,15 +110,15 @@ class AssignmentTest {
     void updateWithInvalidValuesTest() {
         Assignment assignment = createAssignment("기존 제목", "기존 내용", "기존 방법", NOW.plusDays(1));
 
-        assertThatThrownBy(() -> assignment.update(" ", null, null, null, null, NOW))
+        assertThatThrownBy(() -> assignment.update(null, " ", null, null, null, null, null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_TITLE);
-        assertThatThrownBy(() -> assignment.update(null, " ", null, null, null, NOW))
+        assertThatThrownBy(() -> assignment.update(null, null, " ", null, null, null, null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
-        assertThatThrownBy(() -> assignment.update(null, null, null, NOW.minusNanos(1), null, NOW))
+        assertThatThrownBy(() -> assignment.update(null, null, null, null, null, NOW.minusNanos(1), null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
@@ -165,7 +165,7 @@ class AssignmentTest {
         assignment.addReminders(List.of(sentRemindAt, pendingRemindAt), NOW);
         assignment.getReminders().getFirst().markAsSent();
 
-        assignment.update(null, null, null, null, List.of(newRemindAt, newRemindAt), NOW);
+        assignment.update(null, null, null, null, null, null, List.of(newRemindAt, newRemindAt), NOW);
 
         assertThat(assignment.getReminders())
                 .extracting(AssignmentReminder::getRemindAt)
@@ -180,7 +180,7 @@ class AssignmentTest {
         LocalDateTime existingRemindAt = NOW.plusHours(1);
         assignment.addReminders(List.of(existingRemindAt), NOW);
 
-        assertThatThrownBy(() -> assignment.update(null, null, null, null, List.of(NOW.plusHours(2), NOW), NOW))
+        assertThatThrownBy(() -> assignment.update(null, null, null, null, null, null, List.of(NOW.plusHours(2), NOW), NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
@@ -229,7 +229,7 @@ class AssignmentTest {
     }
 
     private Assignment createAssignment(String title, String content, String submissionMethod, LocalDateTime closeAt) {
-        return Assignment.create(study, title, content, submissionMethod, closeAt, NOW);
+        return Assignment.create(study, title, content, submissionMethod, SubmissionTarget.MEMBERS_ONLY, closeAt, NOW);
     }
 
     private StudyMember memberWithId(Long id) {

@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -115,6 +116,7 @@ class StudyMemberAcceptanceTest {
                         "기존 과제",
                         "과제 내용",
                         "링크 제출",
+                        SubmissionTarget.MEMBERS_ONLY,
                         now.plusDays(1),
                         now
                 )

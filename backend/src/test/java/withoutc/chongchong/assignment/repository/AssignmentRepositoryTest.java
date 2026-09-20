@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
@@ -59,6 +60,7 @@ class AssignmentRepositoryTest {
                             "과제 " + index,
                             "과제 내용 " + index,
                             "GitHub PR",
+                            SubmissionTarget.MEMBERS_ONLY,
                             LocalDateTime.of(2026, 8, 30, 23, 59),
                             NOW
                     )
@@ -69,6 +71,7 @@ class AssignmentRepositoryTest {
                 "다른 과제",
                 "다른 과제 내용",
                 "GitHub PR",
+                SubmissionTarget.MEMBERS_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));
@@ -251,6 +254,7 @@ class AssignmentRepositoryTest {
                 title,
                 "과제 내용",
                 "GitHub PR",
+                SubmissionTarget.MEMBERS_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));
