@@ -25,7 +25,14 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.datasource.url=jdbc:h2:mem:user-withdrawal-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "spring.jpa.hibernate.ddl-auto=validate",
+                "spring.flyway.enabled=true"
+        }
+)
 @ActiveProfiles("test")
 public class UserWithdrawalAcceptanceTest {
 
