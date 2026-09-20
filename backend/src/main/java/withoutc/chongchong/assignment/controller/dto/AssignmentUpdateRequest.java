@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 
 public record AssignmentUpdateRequest(
         @Size(max = 20, message = "제목은 20자 이내로 입력 가능합니다.")
@@ -13,6 +14,7 @@ public record AssignmentUpdateRequest(
         String content,
         @Size(max = 10000, message = "제출 방법은 10,000자 이내로 입력 가능합니다.")
         String submissionMethod,
+        SubmissionTarget submissionTarget,
         @Future(message = "마감 시각은 현재보다 미래여야 합니다.")
         LocalDateTime closeAt,
         List<

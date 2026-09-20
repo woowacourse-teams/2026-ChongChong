@@ -18,6 +18,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
@@ -50,18 +51,16 @@ public class AssignmentService {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanCreateAssignment(actor);
 
-        // TODO V2에서 리더에게도 과제를 생성하도록 수정 필요
-        List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
-                .filter(studyMember -> !studyMember.isLeader()).toList();
+        List<StudyMember> submitters = getSubmitters(studyId, request.submissionTarget());
 
         Study study = studyRepository.getByIdOrThrow(studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
         Assignment assignment = Assignment.create(study, request.title(), request.content(),
-                request.submissionMethod(), request.closeAt(), now);
+                request.submissionMethod(), request.submissionTarget(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
-        // TODO 과제 제출물이 현재는 생성 시점 이전에 가입한 멤버에게만 생성(신규 가입자에게는 보이지 않음) 논의 필요
-        assignment.initializeSubmissions(members);
+
+        assignment.initializeSubmissions(submitters);
 
         assignmentRepository.save(assignment);
 
@@ -76,7 +75,8 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
-        assignment.update(request.title(), request.content(), request.submissionMethod(), request.closeAt(),
+        assignment.update(actor, request.title(), request.content(), request.submissionMethod(),
+                request.submissionTarget(), request.closeAt(),
                 request.remindAts(), now);
 
         assignmentRepository.save(assignment);
@@ -155,6 +155,17 @@ public class AssignmentService {
         List<AssignmentSummaryResponse> assignmentSummaries = createAssignmentSummaries(member,
                 assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), assignmentSummaries);
+    }
+
+    private List<StudyMember> getSubmitters(Long studyId, SubmissionTarget submissionTarget) {
+        List<StudyMember> submitters;
+        if (submissionTarget.requiresLeaderSubmission()) {
+            submitters = studyMemberRepository.findAllByStudyId(studyId);
+        } else {
+            submitters = studyMemberRepository.findAllByStudyId(studyId).stream()
+                    .filter(studyMember -> !studyMember.isLeader()).toList();
+        }
+        return submitters;
     }
 
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
