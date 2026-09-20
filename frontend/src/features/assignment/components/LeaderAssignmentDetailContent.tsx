@@ -1,4 +1,10 @@
-import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQueries,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { Suspense } from 'react';
 import { useNavigate } from 'react-router';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
@@ -11,6 +17,7 @@ import DetailActions from '../../../shared/widgets/DetailActions';
 import assignmentQueries from '../queries';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import MyAssignmentSubmission from './MyAssignmentSubmission';
 
 interface Props {
   studyId: number;
@@ -59,6 +66,11 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
       <SubmissionList submissions={submissions.submissions} />
 
       <DetailActions onEdit={handleEditAssignment} onDelete={openDialog} />
+      {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && (
+        <Suspense fallback={null}>
+          <LeaderMyAssignmentSubmission studyId={studyId} assignmentId={assignmentId} />
+        </Suspense>
+      )}
       {isOpen && (
         <ConfirmDialog
           title="과제를 삭제할까요?"
@@ -75,5 +87,21 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
         />
       )}
     </>
+  );
+}
+
+function LeaderMyAssignmentSubmission({
+  studyId,
+  assignmentId,
+}: {
+  studyId: number;
+  assignmentId: number;
+}) {
+  const { data: submission } = useSuspenseQuery(
+    assignmentQueries.mySubmission(studyId, assignmentId),
+  );
+
+  return (
+    <MyAssignmentSubmission studyId={studyId} assignmentId={assignmentId} submission={submission} />
   );
 }

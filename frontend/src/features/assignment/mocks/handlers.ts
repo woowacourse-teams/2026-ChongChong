@@ -281,6 +281,9 @@ export const handlers = [
 
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
+      if (member.role === 'LEADER' && assignment.submissionTarget === 'MEMBERS_ONLY') {
+        return new HttpResponse(null, { status: 404 });
+      }
 
       const submission = submissionTable.findFirst((q) =>
         q.where({ assignmentId, userId: user.id }),
@@ -313,10 +316,10 @@ export const handlers = [
         });
       }
 
-      await assignmentTable.update(assignment, {
-        data(assignment) {
-          assignment.completeUserIds = [...assignment.completeUserIds, user.id];
-        },
+      assignmentTable.delete((q) => q.where({ id: assignmentId, studyId }));
+      await assignmentTable.create({
+        ...assignment,
+        completeUserIds: [...assignment.completeUserIds, user.id],
       });
 
       return HttpResponse.json({ submissionId }, { status: 201 });
