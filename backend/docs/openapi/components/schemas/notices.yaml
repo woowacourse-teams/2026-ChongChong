@@ -3,7 +3,7 @@ NoticeCreateRequest:
   additionalProperties: false
   required: [title, content]
   properties:
-    title: { type: string, minLength: 1, maxLength: 20, example: 이번 주 공지 }
+    title: { type: string, minLength: 1, maxLength: 100, example: 이번 주 공지 }
     content: { type: string, minLength: 1, maxLength: 10000, example: 이번 주 스터디 일정을 확인해주세요. }
     remindAts:
       type: [array, 'null']
@@ -12,7 +12,7 @@ NoticeUpdateRequest:
   type: object
   additionalProperties: false
   properties:
-    title: { type: [string, 'null'], maxLength: 20, example: 수정된 공지 }
+    title: { type: [string, 'null'], maxLength: 100, example: 수정된 공지 }
     content: { type: [string, 'null'], maxLength: 10000, example: 수정된 공지 내용입니다. }
     remindAts:
       type: [array, 'null']
