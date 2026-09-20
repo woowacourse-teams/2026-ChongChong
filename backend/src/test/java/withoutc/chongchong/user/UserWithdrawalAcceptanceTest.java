@@ -9,9 +9,28 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.entity.AuthSession;
+import withoutc.chongchong.auth.entity.SocialAccount;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
+import withoutc.chongchong.auth.repository.SocialAccountRepository;
+import withoutc.chongchong.auth.social.SocialProvider;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.auth.token.HashedRefreshToken;
+import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
+import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notification.entity.DevicePlatform;
+import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationDelivery;
+import withoutc.chongchong.notification.entity.NotificationResourceType;
+import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.PushToken;
+import withoutc.chongchong.notification.entity.TokenProvider;
+import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
+import withoutc.chongchong.notification.repository.NotificationRepository;
+import withoutc.chongchong.notification.repository.PushTokenRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -22,8 +41,11 @@ import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static io.restassured.RestAssured.given;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -41,6 +63,30 @@ public class UserWithdrawalAcceptanceTest {
 
     @Autowired
     private AuthSessionRepository authSessionRepository;
+
+    @Autowired
+    private SocialAccountRepository socialAccountRepository;
+
+    @Autowired
+    private PushTokenRepository pushTokenRepository;
+
+    @Autowired
+    private NoticeRepository noticeRepository;
+
+    @Autowired
+    private NoticeRecipientRepository noticeRecipientRepository;
+
+    @Autowired
+    private AssignmentRepository assignmentRepository;
+
+    @Autowired
+    private AssignmentSubmissionRepository assignmentSubmissionRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private NotificationDeliveryRepository notificationDeliveryRepository;
 
     @Autowired
     private TestAuthRequest testAuthRequest;
@@ -98,6 +144,136 @@ public class UserWithdrawalAcceptanceTest {
         assertThat(response.asString()).isEmpty();
         assertThat(userRepository.existsById(user.getId())).isFalse();
         assertThat(authSessionRepository.existsById(session.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("탈퇴한 사용자의 소셜 계정과 푸시 토큰만 삭제한다")
+    void withdrawUserDeletesDirectDependenciesOnly() {
+        User withdrawingUser = userRepository.saveAndFlush(User.create("탈퇴할 사용자", null));
+        User remainingUser = userRepository.saveAndFlush(User.create("남는 사용자", null));
+        SocialAccount withdrawingAccount = socialAccountRepository.saveAndFlush(
+                SocialAccount.create(withdrawingUser, SocialProvider.GOOGLE, "withdraw-google")
+        );
+        SocialAccount remainingAccount = socialAccountRepository.saveAndFlush(
+                SocialAccount.create(remainingUser, SocialProvider.KAKAO, "remain-kakao")
+        );
+        PushToken withdrawingToken = pushTokenRepository.saveAndFlush(PushToken.create(
+                withdrawingUser, "withdraw-installation", TokenProvider.EXPO, "withdraw-token", DevicePlatform.ANDROID
+        ));
+        PushToken remainingToken = pushTokenRepository.saveAndFlush(PushToken.create(
+                remainingUser, "remain-installation", TokenProvider.EXPO, "remain-token", DevicePlatform.ANDROID
+        ));
+
+        Response response = testAuthRequest.givenAuthenticatedUser(withdrawingUser.getId())
+                .port(port)
+                .when()
+                .delete("/users/me");
+
+        assertThat(response.statusCode()).isEqualTo(204);
+        assertThat(userRepository.existsById(withdrawingUser.getId())).isFalse();
+        assertThat(socialAccountRepository.existsById(withdrawingAccount.getId())).isFalse();
+        assertThat(pushTokenRepository.existsById(withdrawingToken.getId())).isFalse();
+        assertThat(userRepository.existsById(remainingUser.getId())).isTrue();
+        assertThat(socialAccountRepository.existsById(remainingAccount.getId())).isTrue();
+        assertThat(pushTokenRepository.existsById(remainingToken.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("일반 멤버 탈퇴 시 활동 데이터만 삭제하고 스터디와 다른 멤버의 데이터는 보존한다")
+    void withdrawMemberDeletesActivityOnly() {
+        User leaderUser = userRepository.saveAndFlush(User.create("리더", null));
+        User withdrawingUser = userRepository.saveAndFlush(User.create("탈퇴할 멤버", null));
+        User remainingUser = userRepository.saveAndFlush(User.create("남는 멤버", null));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = studyMemberRepository.saveAndFlush(StudyMember.create(
+                study, leaderUser, leaderUser.getName(), null, StudyMemberRole.LEADER
+        ));
+        StudyMember withdrawingMember = studyMemberRepository.saveAndFlush(StudyMember.create(
+                study, withdrawingUser, withdrawingUser.getName(), null, StudyMemberRole.MEMBER
+        ));
+        StudyMember remainingMember = studyMemberRepository.saveAndFlush(StudyMember.create(
+                study, remainingUser, remainingUser.getName(), null, StudyMemberRole.MEMBER
+        ));
+
+        Notice notice = Notice.create(study, "공지", "내용");
+        notice.addRecipients(List.of(withdrawingMember, remainingMember));
+        noticeRepository.saveAndFlush(notice);
+
+        LocalDateTime now = LocalDateTime.of(2026, 9, 20, 12, 0);
+        Assignment assignment = Assignment.create(study, "과제", "내용", "링크", now.plusDays(1), now);
+        assignment.initializeSubmissions(List.of(withdrawingMember, remainingMember));
+        assignmentRepository.saveAndFlush(assignment);
+
+        Notification withdrawingNotification = notificationRepository.saveAndFlush(Notification.create(
+                study, withdrawingMember, NotificationType.REMIND, notice.getId(), NotificationResourceType.NOTICE
+        ));
+        Notification remainingNotification = notificationRepository.saveAndFlush(Notification.create(
+                study, remainingMember, NotificationType.REMIND, notice.getId(), NotificationResourceType.NOTICE
+        ));
+        PushToken withdrawingToken = pushTokenRepository.saveAndFlush(PushToken.create(
+                withdrawingUser, "withdraw-member-installation", TokenProvider.EXPO, "withdraw-token", DevicePlatform.ANDROID
+        ));
+        PushToken remainingToken = pushTokenRepository.saveAndFlush(PushToken.create(
+                remainingUser, "remain-member-installation", TokenProvider.EXPO, "remain-token", DevicePlatform.ANDROID
+        ));
+        NotificationDelivery withdrawingDelivery = notificationDeliveryRepository.saveAndFlush(
+                NotificationDelivery.create(withdrawingNotification, withdrawingToken)
+        );
+        NotificationDelivery remainingDelivery = notificationDeliveryRepository.saveAndFlush(
+                NotificationDelivery.create(remainingNotification, remainingToken)
+        );
+
+        Response response = testAuthRequest.givenAuthenticatedUser(withdrawingUser.getId())
+                .port(port)
+                .when()
+                .delete("/users/me");
+
+        assertThat(response.statusCode()).isEqualTo(204);
+        assertThat(userRepository.existsById(withdrawingUser.getId())).isFalse();
+        assertThat(studyMemberRepository.existsById(withdrawingMember.getId())).isFalse();
+        assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(notice.getId(), withdrawingMember.getId()))
+                .isEmpty();
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(
+                assignment.getId(), withdrawingMember.getId())).isEmpty();
+        assertThat(notificationRepository.existsById(withdrawingNotification.getId())).isFalse();
+        assertThat(notificationDeliveryRepository.existsById(withdrawingDelivery.getId())).isFalse();
+        assertThat(pushTokenRepository.existsById(withdrawingToken.getId())).isFalse();
+
+        assertThat(studyRepository.existsById(study.getId())).isTrue();
+        assertThat(studyMemberRepository.existsById(leader.getId())).isTrue();
+        assertThat(studyMemberRepository.existsById(remainingMember.getId())).isTrue();
+        assertThat(noticeRepository.existsById(notice.getId())).isTrue();
+        assertThat(assignmentRepository.existsById(assignment.getId())).isTrue();
+        assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(notice.getId(), remainingMember.getId()))
+                .isPresent();
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(
+                assignment.getId(), remainingMember.getId())).isPresent();
+        assertThat(notificationRepository.existsById(remainingNotification.getId())).isTrue();
+        assertThat(notificationDeliveryRepository.existsById(remainingDelivery.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("인증 없이 탈퇴를 요청하면 401을 반환한다")
+    void cannotWithdrawWithoutAuthentication() {
+        Response response = given()
+                .port(port)
+                .when()
+                .delete("/api/users/me");
+
+        assertThat(response.statusCode()).isEqualTo(401);
+        assertThat(response.jsonPath().getString("code")).isEqualTo("AUTHENTICATION_REQUIRED");
+    }
+
+    @Test
+    @DisplayName("인증된 사용자가 존재하지 않으면 404를 반환한다")
+    void cannotWithdrawMissingUser() {
+        Response response = testAuthRequest.givenAuthenticatedUser(999L)
+                .port(port)
+                .when()
+                .delete("/users/me");
+
+        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.jsonPath().getString("code")).isEqualTo("USER_NOT_FOUND");
     }
 
     @Test
