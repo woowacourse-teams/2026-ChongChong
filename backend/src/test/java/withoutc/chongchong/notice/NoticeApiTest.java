@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -106,9 +107,56 @@ class NoticeApiTest {
     }
 
     @Test
+    @DisplayName("생성 시 101자 제목은 거부하고 저장하지 않는다")
+    void createWithOverLengthTitleTest() {
+        long originalCount = noticeRepository.count();
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101), "content", "공지 내용"))
+                .when()
+                .post("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("수정 시 100자 제목은 저장하고 101자 제목은 거부하여 기존 제목을 유지한다")
+    void updateWithTitleLengthBoundaryTest() {
+        String title = "가".repeat(100);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", title))
+                .when()
+                .patch("/studies/{studyId}/notices/{id}", study.getId(), notice.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101)))
+                .when()
+                .patch("/studies/{studyId}/notices/{id}", study.getId(), notice.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+    }
+
+    @Test
     @DisplayName("공지 생성 요청을 보내면 201과 공지 id를 반환하고 리더를 제외한 수신자를 저장한다")
     void createNoticeTest() {
-        String maxLengthTitle = "가".repeat(20);
+        String maxLengthTitle = "가".repeat(100);
         LocalDateTime newRemindAt = remindAt.plusDays(1);
 
         Long createdNoticeId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId())

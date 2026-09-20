@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -116,9 +117,56 @@ class AssignmentApiTest {
     }
 
     @Test
+    @DisplayName("생성 시 101자 제목은 거부하고 저장하지 않는다")
+    void createWithOverLengthTitleTest() {
+        long originalCount = assignmentRepository.count();
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101), "content", "과제 내용", "submissionMethod", "링크 제출", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when()
+                .post("/studies/{studyId}/assignments", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(assignmentRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("수정 시 100자 제목은 저장하고 101자 제목은 거부하여 기존 제목을 유지한다")
+    void updateWithTitleLengthBoundaryTest() {
+        String title = "가".repeat(100);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", title))
+                .when()
+                .patch("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(assignmentRepository.findById(assignment.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101)))
+                .when()
+                .patch("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(assignmentRepository.findById(assignment.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+    }
+
+    @Test
     @DisplayName("과제 생성 요청은 201과 assignmentId를 반환하고 스터디원별 제출 정보와 리마인더를 저장한다")
     void createAssignmentTest() {
-        String maxLengthTitle = "가".repeat(20);
+        String maxLengthTitle = "가".repeat(100);
         LocalDateTime newCloseAt = closeAt.plusDays(10);
         LocalDateTime newRemindAt = newCloseAt.minusDays(1);
 
