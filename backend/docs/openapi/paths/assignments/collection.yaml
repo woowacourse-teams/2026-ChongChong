@@ -7,8 +7,8 @@ post:
     status: done
     owner: frombunny
     description: |
-      과제를 생성하고 일반 멤버의 제출 행과 리마인더를 초기화한다.
-      후속 예정: 이미지·제출 형식(#275), 리드 제출 대상 포함(#276), 제출물 공개 설정(#278).
+      과제를 생성하고 submissionTarget에 따라 리더를 포함하거나 제외하여 제출 행과 리마인더를 초기화한다.
+      후속 예정: 이미지·제출 형식(#275), 제출물 공개 설정(#278).
   summary: 과제 생성
   description: 스터디 리더가 과제를 생성한다. 입력·형식 및 제목·내용·제출 방법·마감·리마인드 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -17,7 +17,7 @@ post:
     content:
       application/json:
         schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentCreateRequest' }
-        example: { title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
+        example: { title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
   responses:
     '201':
       description: 과제 생성 성공

@@ -22,6 +22,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -516,6 +517,7 @@ class StudyAcceptanceTest {
                         "과제",
                         "내용",
                         "링크",
+                        SubmissionTarget.MEMBERS_ONLY,
                         LocalDateTime.of(2026, 8, 20, 0, 0),
                         ASSIGNMENT_NOW
                 )
@@ -565,6 +567,7 @@ class StudyAcceptanceTest {
                         "과제",
                         "내용",
                         "링크",
+                        SubmissionTarget.MEMBERS_ONLY,
                         LocalDateTime.of(2026, 8, 20, 0, 0),
                         ASSIGNMENT_NOW
                 )
@@ -659,6 +662,7 @@ class StudyAcceptanceTest {
                 "과제",
                 "내용",
                 "링크",
+                SubmissionTarget.MEMBERS_ONLY,
                 LocalDateTime.of(2026, 8, 20, 0, 0),
                 ASSIGNMENT_NOW
         );

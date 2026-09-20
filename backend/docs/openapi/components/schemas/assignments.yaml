@@ -1,11 +1,12 @@
 AssignmentCreateRequest:
   type: object
   additionalProperties: false
-  required: [title, content, submissionMethod, closeAt]
+  required: [title, content, submissionMethod, submissionTarget, closeAt]
   properties:
     title: { type: string, minLength: 1, maxLength: 20, example: 1주 차 과제 }
     content: { type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
     submissionMethod: { type: string, minLength: 1, maxLength: 10000, example: 링크 제출 }
+    submissionTarget: { type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
     remindAts: { type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
 AssignmentUpdateRequest:
@@ -15,6 +16,7 @@ AssignmentUpdateRequest:
     title: { type: [string, 'null'], maxLength: 20, example: 수정된 과제 }
     content: { type: [string, 'null'], maxLength: 10000, example: 수정된 과제 내용입니다. }
     submissionMethod: { type: [string, 'null'], maxLength: 10000, example: 텍스트 제출 }
+    submissionTarget: { type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
     closeAt:
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     remindAts: { type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
@@ -27,12 +29,13 @@ AssignmentCreateResponse:
 AssignmentDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, closeAt]
+  required: [id, title, content, submissionMethod, submissionTarget, closeAt]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 1주 차 과제 }
     content: { type: string, example: 이번 주 과제를 제출해주세요. }
     submissionMethod: { type: string, example: 링크 제출 }
+    submissionTarget: { type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
 AssignmentSummaryResponse:
   type: object
