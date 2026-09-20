@@ -103,15 +103,16 @@ describe('과제 상세 페이지 테스트', () => {
 
     describe('내 과제 제출', () => {
       test('리더도 제출 대상이면 상세 하단에 제출 폼을 표시한다', async () => {
-        setupAssignmentDetailPage();
+        const { user } = setupAssignmentDetailPage();
 
         const { submissionForm } = await findSubmissionForm();
-        const deleteButton = screen.getByRole('button', { name: '삭제' });
+        const moreButton = screen.getByRole('button', { name: '과제 더보기' });
         expect(submissionForm.getByRole('button', { name: '제출하기' })).toBeVisible();
-        expect(
-          deleteButton.compareDocumentPosition(screen.getByRole('region', { name: '내 제출' })) &
-            Node.DOCUMENT_POSITION_FOLLOWING,
-        ).toBeTruthy();
+        expect(moreButton.closest('header')).toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: '과제 삭제' })).not.toBeInTheDocument();
+        await user.click(moreButton);
+        expect(screen.getByRole('menuitem', { name: '과제 수정' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: '과제 삭제' })).toBeVisible();
       });
 
       test('리더가 제출 대상이 아니면 내 제출 정보를 조회하지 않고 폼도 표시하지 않는다', async () => {
@@ -287,7 +288,8 @@ describe('과제 상세 페이지 테스트', () => {
         server.use(handler);
         const { user } = setupAssignmentDetailPage();
 
-        await user.click(await screen.findByRole('button', { name: '삭제' }));
+        await user.click(await screen.findByRole('button', { name: '과제 더보기' }));
+        await user.click(screen.getByRole('menuitem', { name: '과제 삭제' }));
         const dialog = screen.getByRole('alertdialog', { name: '과제를 삭제할까요?' });
         expect(dialog).toBeVisible();
         await user.click(within(dialog).getByRole('button', { name: '삭제' }));
@@ -306,6 +308,13 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('과제 상세 조회', () => {
+      test('스터디원에게는 과제 관리 메뉴를 표시하지 않는다', async () => {
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
+        expect(screen.queryByRole('button', { name: '과제 더보기' })).not.toBeInTheDocument();
+      });
+
       test.each([
         {
           title: '스터디에 대한 접근 권한이 없으면',
