@@ -6,7 +6,7 @@ const memberSchema = z.object({
   studyId: z.number(),
   userId: z.number(),
   name: z.string(),
-  profileImage: z.string(),
+  profileImage: z.string().nullable(),
   role: z.enum(['LEADER', 'MEMBER']),
 });
 
