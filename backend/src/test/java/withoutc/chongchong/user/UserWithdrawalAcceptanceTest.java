@@ -9,6 +9,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
+import withoutc.chongchong.study.entity.Study;
+import withoutc.chongchong.study.entity.StudyMember;
+import withoutc.chongchong.study.entity.StudyMemberRole;
+import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
@@ -24,6 +29,12 @@ public class UserWithdrawalAcceptanceTest {
 
     @Autowired
     private TestAuthRequest testAuthRequest;
+
+    @Autowired
+    private StudyRepository studyRepository;
+
+    @Autowired
+    private StudyMemberRepository studyMemberRepository;
 
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
@@ -51,5 +62,29 @@ public class UserWithdrawalAcceptanceTest {
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(response.asString()).isEmpty();
         assertThat(userRepository.existsById(user.getId())).isFalse();
+    }
+
+    @Test
+    void cannotWithdrawWhileLeadingStudy() {
+        User user = userRepository.saveAndFlush(User.create("스터디 리더", null));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        StudyMember leader = studyMemberRepository.saveAndFlush(
+                StudyMember.create(
+                        study, user, user.getName(), user.getProfileImageUrl(),
+                        StudyMemberRole.LEADER
+                )
+        );
+
+        Response response = testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/users/me");
+
+        assertThat(response.statusCode()).isEqualTo(409);
+        assertThat(response.jsonPath().getString("code"))
+                .isEqualTo("STUDY_LEADER_WITHDRAWAL_BLOCKED");
+        assertThat(userRepository.existsById(user.getId())).isTrue();
+        assertThat(studyRepository.existsById(study.getId())).isTrue();
+        assertThat(studyMemberRepository.existsById(leader.getId())).isTrue();
     }
 }
