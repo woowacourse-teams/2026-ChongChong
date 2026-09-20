@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import CreateAssignmentPage from '../CreateAssignmentPage';
@@ -60,6 +60,32 @@ describe('과제 생성 페이지 테스트', () => {
   });
 
   describe('과제 입력 검증', () => {
+    test.each([
+      { leaderSubmits: true, submissionTarget: 'MEMBERS_AND_LEADER' },
+      { leaderSubmits: false, submissionTarget: 'MEMBERS_ONLY' },
+    ])(
+      '리드 제출 $leaderSubmits 선택을 생성 요청에 반영한다',
+      async ({ leaderSubmits, submissionTarget }) => {
+        const requestBody = jest.fn();
+        server.use(
+          http.post(ASSIGNMENT_CREATE_URL, async ({ request }) => {
+            requestBody(await request.json());
+            return HttpResponse.json({ assignmentId: 999 }, { status: 201 });
+          }),
+        );
+        const { user } = setupCreateAssignmentPage();
+        const checkbox = screen.getByRole('checkbox');
+
+        expect(checkbox).toHaveProperty('checked', true);
+        if (!leaderSubmits) await user.click(checkbox);
+        await user.click(getSubmitButton());
+
+        await waitFor(() =>
+          expect(requestBody).toHaveBeenCalledWith(expect.objectContaining({ submissionTarget })),
+        );
+      },
+    );
+
     test('제목 입력은 20자로 제한된다', async () => {
       const { user } = setupCreateAssignmentPage();
 

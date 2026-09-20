@@ -86,6 +86,7 @@ describe('과제 상세 페이지 테스트', () => {
       content: '스프링에서 가장 중요한걸 정리해서 보내주세요',
       submissionMethod: '텍스트로 제출하세요',
       closeAt: '2999-12-31T23:59:59',
+      submissionTarget: 'MEMBERS_AND_LEADER',
       completeUserIds: [],
     });
     jest.spyOn(console, 'error').mockImplementation(() => {});
