@@ -1,5 +1,4 @@
-import { useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query';
-import { Suspense } from 'react';
+import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import SubmitStatusSection from './SubmitStatusSection';
 import AssignmentArticle from './AssignmentArticle';
@@ -22,6 +21,11 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
         assignmentQueries.submissions(studyId, assignmentId),
       ],
     });
+  const { data: mySubmission } = useQuery({
+    ...assignmentQueries.mySubmission(studyId, assignmentId),
+    enabled: assignment.submissionTarget === 'MEMBERS_AND_LEADER',
+    throwOnError: true,
+  });
 
   return (
     <>
@@ -29,27 +33,13 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
       <AssignmentArticle assignment={assignment} />
       <SubmissionList submissions={submissions.submissions} />
 
-      {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && (
-        <Suspense fallback={null}>
-          <LeaderMyAssignmentSubmission studyId={studyId} assignmentId={assignmentId} />
-        </Suspense>
+      {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && mySubmission && (
+        <MyAssignmentSubmission
+          studyId={studyId}
+          assignmentId={assignmentId}
+          submission={mySubmission}
+        />
       )}
     </>
-  );
-}
-
-function LeaderMyAssignmentSubmission({
-  studyId,
-  assignmentId,
-}: {
-  studyId: number;
-  assignmentId: number;
-}) {
-  const { data: submission } = useSuspenseQuery(
-    assignmentQueries.mySubmission(studyId, assignmentId),
-  );
-
-  return (
-    <MyAssignmentSubmission studyId={studyId} assignmentId={assignmentId} submission={submission} />
   );
 }
