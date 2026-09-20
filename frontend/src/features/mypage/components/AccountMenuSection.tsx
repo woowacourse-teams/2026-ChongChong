@@ -3,13 +3,13 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { logout } from '../../login/api';
 import { clearAccessToken } from '../../login/accessToken';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import { tokens, typography } from '../../../styles/global';
 import List from '../../../shared/ui/List';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import useWithdrawAccount from '../hooks/useWithdrawAccount';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
 
 const menuItems = [
   {
@@ -21,7 +21,7 @@ const menuItems = [
 ] as const;
 
 const sectionStyle = {
-  marginTop: '200px',
+  marginTop: '60px',
 } satisfies CSSProperties;
 
 const menuButtonStyle = {
@@ -37,13 +37,17 @@ const menuButtonStyle = {
 export default function AccountMenuSection() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { dialogRef, open, close } = useDialogControl();
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
+
   const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({ mutationFn: logout });
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawAccount();
 
   function handleLogout() {
     requestLogout(undefined, {
-      onSettled: () => navigate('/login', { replace: true }),
+      onSuccess: () => navigate('/login', { replace: true }),
+      onError: (error) => {
+        toast.open(<StatusToast message={error.message} status="Error" />);
+      },
     });
   }
 
@@ -83,24 +87,28 @@ export default function AccountMenuSection() {
             <button
               type="button"
               css={{ ...menuButtonStyle, color: tokens.text.muted }}
-              onClick={open}
+              onClick={openDialog}
             >
               회원 탈퇴
             </button>
           </List.Item>
         </List>
       </section>
-      <ConfirmDialog
-        ref={dialogRef}
-        title="회원 탈퇴하시겠습니까?"
-        description="탈퇴하면 계정 정보가 삭제되며 다시 복구할 수 없어요."
-        closeButton={<ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>}
-        confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={handleWithdraw} disabled={isWithdrawing}>
-            탈퇴
-          </ConfirmDialog.ConfirmButton>
-        }
-      />
+      {isOpen && (
+        <ConfirmDialog
+          title="회원 탈퇴하시겠습니까?"
+          description="탈퇴하면 계정 정보가 삭제되며 다시 복구할 수 없어요."
+          onClose={closeDialog}
+          closeButton={
+            <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+          }
+          confirmButton={
+            <ConfirmDialog.ConfirmButton onClick={handleWithdraw} disabled={isWithdrawing}>
+              {isWithdrawing ? '탈퇴 중...' : '탈퇴'}
+            </ConfirmDialog.ConfirmButton>
+          }
+        />
+      )}
     </>
   );
 }
