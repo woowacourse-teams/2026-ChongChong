@@ -26,7 +26,6 @@ const sectionStyle = {
 
 const menuButtonStyle = {
   ...typography.subtitle,
-  width: '100%',
   padding: 0,
   border: 0,
   background: 'transparent',
