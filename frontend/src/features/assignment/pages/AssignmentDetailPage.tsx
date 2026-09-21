@@ -13,7 +13,6 @@ import BottomTab from '../../../shared/widgets/BottomTab';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
 import AssignmentHeaderActions from '../components/AssignmentHeaderActions';
-import assignmentQueries from '../queries';
 
 export default function AssignmentDetailPage() {
   return (
@@ -61,7 +60,6 @@ AssignmentDetailPage.HeaderActions = function HeaderActions() {
   const {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));
-  useSuspenseQuery(assignmentQueries.detail(studyId, assignmentId));
 
   return role === 'LEADER' ? (
     <AssignmentHeaderActions studyId={studyId} assignmentId={assignmentId} />
