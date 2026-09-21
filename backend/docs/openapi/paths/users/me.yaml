@@ -2,7 +2,7 @@ delete:
   tags: [User]
   operationId: withdrawUser
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       #340 사용자 탈퇴 API. 사용자 행 잠금과 리더 멤버십 검사를 거쳐 계정 및 종속 데이터를 삭제한다.
