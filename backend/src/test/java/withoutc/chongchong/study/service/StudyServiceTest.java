@@ -276,8 +276,6 @@ class StudyServiceTest {
 
         verify(entityManager).clear();
         verify(studyRepository).delete(study);
-        verify(assignmentRepository, never()).deleteAllByStudyId(studyId);
-        verify(studyMemberRepository, never()).deleteAllByStudyId(studyId);
     }
 
     @Test
@@ -335,7 +333,6 @@ class StudyServiceTest {
                 .isEqualTo(StudyMemberErrorCode.NOT_STUDY_LEADER);
 
         verifyNoInteractions(assignmentRepository, noticeRepository);
-        verify(studyMemberRepository, never()).deleteAllByStudyId(studyId);
         verify(studyRepository, never()).delete(any(Study.class));
     }
 

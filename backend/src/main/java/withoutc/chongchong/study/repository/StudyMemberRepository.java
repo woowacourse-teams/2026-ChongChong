@@ -37,8 +37,6 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
 
     int countByStudyId(Long studyId);
 
-    void deleteAllByStudyId(Long studyId);
-
     @Query("""
             SELECT new withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection(
                 member.id,

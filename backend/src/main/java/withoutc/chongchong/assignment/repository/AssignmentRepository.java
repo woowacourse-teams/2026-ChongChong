@@ -96,8 +96,6 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             @Param("memberId") Long memberId
     );
 
-    void deleteAllByStudyId(Long studyId);
-
     default Assignment getByIdAndStudyIdOrThrow(Long id, Long studyId) {
         return findByIdAndStudyId(id, studyId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
