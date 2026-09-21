@@ -35,7 +35,10 @@ NoticeDetailResponse:
 NoticeSummaryResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, createdAt, isComplete]
+  required: [id, title, content, createdAt]
+  oneOf:
+    - required: [isComplete]
+    - required: [readStatus]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 이번 주 공지 }
@@ -45,7 +48,8 @@ NoticeSummaryResponse:
     readRecipientCount: { type: [integer, 'null'], example: 3 }
     remindAt:
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    isComplete: { type: boolean, example: false }
+    isComplete: { type: boolean, description: 리더에게 반환하는 전체 읽음 완료 여부, example: false }
+    readStatus: { $ref: '#/NoticeReadStatus' }
 NoticeListResponse:
   type: object
   additionalProperties: false
@@ -94,8 +98,13 @@ NoticeReadResponse:
 NoticeReadStatusResponse:
   type: object
   additionalProperties: false
-  required: [isRead, readAt]
+  required: [readStatus]
   properties:
-    isRead: { type: boolean, example: true }
+    readStatus: { $ref: '#/NoticeReadStatus' }
     readAt:
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
+
+NoticeReadStatus:
+  type: string
+  enum: [NOT_ASSIGNED, UNREAD, READ]
+  description: 확인 대상 아님, 읽지 않음, 읽음을 구분하는 본인의 상태
