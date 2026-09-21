@@ -13,7 +13,7 @@ public record MySubmissionDetailResponse(
         String content,
         String link
 ) {
-    public static MySubmissionDetailResponse notAssign() {
+    public static MySubmissionDetailResponse notAssigned() {
         return new MySubmissionDetailResponse(
                 null,
                 SubmissionStatus.NOT_ASSIGNED,

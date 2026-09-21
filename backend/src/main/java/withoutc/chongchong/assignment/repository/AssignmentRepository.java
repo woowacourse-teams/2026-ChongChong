@@ -28,22 +28,6 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             Pageable pageable
     );
 
-    @Query("""
-            SELECT a
-            FROM Assignment a
-            JOIN AssignmentSubmission s ON s.assignment = a
-            WHERE a.study.id = :studyId
-              AND s.member.id = :memberId
-              AND (:cursor IS NULL OR a.id < :cursor)
-            ORDER BY a.id DESC
-            """)
-    List<Assignment> findByCursorAndMemberId(
-            @Param("studyId") Long studyId,
-            @Param("memberId") Long memberId,
-            @Param("cursor") Long cursor,
-            Pageable pageable
-    );
-
     // 리더용
     @Query("""
             SELECT new withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection(
