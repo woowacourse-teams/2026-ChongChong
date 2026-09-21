@@ -71,7 +71,7 @@ export const handlers = [
     const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
 
-    const { title, content, submissionMethod, closeAt } = body;
+    const { title, content, submissionMethod, closeAt, submissionTarget } = body;
     const assignmentId = Date.now();
     await assignmentTable.create({
       id: assignmentId,
@@ -80,6 +80,7 @@ export const handlers = [
       content,
       submissionMethod,
       closeAt,
+      submissionTarget,
       completeUserIds: [],
     });
 
@@ -170,6 +171,7 @@ export const handlers = [
       closeAt: assignment.closeAt,
       content: assignment.content,
       submissionMethod: assignment.submissionMethod,
+      submissionTarget: assignment.submissionTarget,
     });
   }),
 
@@ -279,6 +281,9 @@ export const handlers = [
 
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
+      if (member.role === 'LEADER' && assignment.submissionTarget === 'MEMBERS_ONLY') {
+        return new HttpResponse(null, { status: 404 });
+      }
 
       const submission = submissionTable.findFirst((q) =>
         q.where({ assignmentId, userId: user.id }),
@@ -311,10 +316,10 @@ export const handlers = [
         });
       }
 
-      await assignmentTable.update(assignment, {
-        data(assignment) {
-          assignment.completeUserIds = [...assignment.completeUserIds, user.id];
-        },
+      assignmentTable.delete((q) => q.where({ id: assignmentId, studyId }));
+      await assignmentTable.create({
+        ...assignment,
+        completeUserIds: [...assignment.completeUserIds, user.id],
       });
 
       return HttpResponse.json({ submissionId }, { status: 201 });

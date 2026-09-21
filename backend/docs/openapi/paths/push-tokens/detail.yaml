@@ -1,6 +1,10 @@
 delete:
   tags: [Push Token]
   operationId: deactivatePushToken
+  x-frontend:
+    description: |
+      신규 앱 연동: 로그아웃 등 현재 설치의 알림 수신을 중단할 때 installationId로 비활성화한다. 인증이 필요한 요청이므로 인증 정보를 제거하기 전에 호출한다.
+      성공은 본문 없는 204이므로 JSON을 파싱하지 않는다.
   x-backend:
     status: done
     owner: wontop02

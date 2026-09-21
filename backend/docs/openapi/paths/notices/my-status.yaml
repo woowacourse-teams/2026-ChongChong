@@ -6,9 +6,15 @@ get:
     owner: frombunny
     description: |
       현재 사용자의 읽음 여부와 최초 읽은 시각을 조회한다.
-      후속 예정: 신규 스터디원 수신자 정책(#277), 권한 책임 분리(#256).
+      후속 예정: 권한 책임 분리(#256).
+  x-frontend:
+    issue: 277
+    description: |
+      isRead(boolean)를 readStatus(NOT_ASSIGNED / UNREAD / READ)로 교체한다.
+      미해당도 200 JSON 응답이다. readAt은 READ일 때만 있으며 나머지 상태에서는 생략된다.
+      NOT_ASSIGNED이면 본문은 열람하되 읽음 버튼과 자동 읽음 요청을 비활성화한다.
   summary: 내 공지 읽음 상태 조회
-  description: 현재 사용자의 공지 읽음 여부와 읽은 시각을 조회한다. 읽지 않았다면 readAt은 null이다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 또는 수신자 정보 없음(404)을 반환할 수 있다.
+  description: 본인의 읽음 상태를 NOT_ASSIGNED, UNREAD, READ로 구분한다. 확인 대상이 아니어도 200 응답을 반환하며 읽음 시각이 없으면 readAt을 생략한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   parameters:
     - { $ref: '../../components/parameters.yaml#/StudyId' }
@@ -19,8 +25,11 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/notices.yaml#/NoticeReadStatusResponse' }
-          example: { isRead: true, readAt: '2026-08-27T10:30:00' }
+          examples:
+            read: { value: { readStatus: READ, readAt: '2026-08-27T10:30:00' } }
+            unread: { value: { readStatus: UNREAD } }
+            notAssigned: { value: { readStatus: NOT_ASSIGNED } }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
-    '404': { $ref: '../../components/responses.yaml#/NoticeOrRecipientNotFound' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeNotFound' }

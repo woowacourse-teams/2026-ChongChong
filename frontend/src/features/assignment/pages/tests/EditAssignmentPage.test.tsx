@@ -70,8 +70,16 @@ describe('과제 수정 페이지 테스트', () => {
         content: '큐 궁 쓰세요',
         submissionMethod: '링크로 제출하세요',
         closeAt: '2999-12-31T23:59:59',
+        submissionTarget: 'MEMBERS_ONLY',
         completeUserIds: [],
       });
+    });
+
+    test('저장된 리드 제출 여부를 체크박스에 반영한다', async () => {
+      setupEditAssignmentPage();
+
+      await findTitleInput();
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
     test('필드를 비우고 수정하면 에러메시지가 표시 된다', async () => {

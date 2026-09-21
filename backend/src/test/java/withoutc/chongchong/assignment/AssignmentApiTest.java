@@ -1,7 +1,6 @@
 package withoutc.chongchong.assignment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
@@ -17,10 +16,13 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -29,6 +31,8 @@ import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -116,9 +120,56 @@ class AssignmentApiTest {
     }
 
     @Test
+    @DisplayName("생성 시 101자 제목은 거부하고 저장하지 않는다")
+    void createWithOverLengthTitleTest() {
+        long originalCount = assignmentRepository.count();
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101), "content", "과제 내용", "submissionMethod", "링크 제출", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when()
+                .post("/studies/{studyId}/assignments", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(assignmentRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("수정 시 100자 제목은 저장하고 101자 제목은 거부하여 기존 제목을 유지한다")
+    void updateWithTitleLengthBoundaryTest() {
+        String title = "가".repeat(100);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", title))
+                .when()
+                .patch("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(assignmentRepository.findById(assignment.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101)))
+                .when()
+                .patch("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(assignmentRepository.findById(assignment.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+    }
+
+    @Test
     @DisplayName("과제 생성 요청은 201과 assignmentId를 반환하고 스터디원별 제출 정보와 리마인더를 저장한다")
     void createAssignmentTest() {
-        String maxLengthTitle = "가".repeat(20);
+        String maxLengthTitle = "가".repeat(100);
         LocalDateTime newCloseAt = closeAt.plusDays(10);
         LocalDateTime newRemindAt = newCloseAt.minusDays(1);
 
@@ -130,6 +181,7 @@ class AssignmentApiTest {
                           "title": "%s",
                           "content": "새 과제 내용",
                           "submissionMethod": "텍스트 제출",
+                          "submissionTarget": "MEMBERS_ONLY",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
@@ -198,10 +250,46 @@ class AssignmentApiTest {
                 .statusCode(200)
                 .body("assignments[0].id", equalTo(assignment.getId().intValue()))
                 .body("assignments[0].submissionMethod", equalTo("링크 제출"))
-                .body("assignments[0].isComplete", equalTo(false))
+                .body("assignments[0].submissionStatus", equalTo("NOT_SUBMITTED"))
+                .body("assignments[0]", not(hasKey("isComplete")))
                 .body("assignments[0]", not(hasKey("memberCount")))
                 .body("assignments[0]", not(hasKey("completeCount")))
                 .body("assignments[0]", not(hasKey("remindAt")));
+    }
+
+    @Test
+    @DisplayName("신규 가입자는 이전 과제를 미해당 상태로 조회하며 제출 대상으로 추가되지 않는다")
+    void getPreviousAssignmentsByNewMemberTest() {
+        User newUser = userRepository.save(User.create("신규 회원", null));
+        StudyMember newMember = studyMemberRepository.save(
+                StudyMember.create(study, newUser, "신규 회원", null, StudyMemberRole.MEMBER)
+        );
+        long submissionCount = assignmentSubmissionRepository.count();
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments", study.getId())
+                .then()
+                .statusCode(200)
+                .body("assignments", hasSize(1))
+                .body("assignments[0].id", equalTo(assignment.getId().intValue()))
+                .body("assignments[0].submissionStatus", equalTo("NOT_ASSIGNED"))
+                .body("assignments[0]", not(hasKey("isComplete")));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/assignments/{assignmentId}/submissions/my",
+                        study.getId(), assignment.getId())
+                .then()
+                .statusCode(200)
+                .body("submissionStatus", equalTo("NOT_ASSIGNED"))
+                .body("$", not(hasKey("submissionId")));
+
+        assertThat(assignmentSubmissionRepository.count()).isEqualTo(submissionCount);
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(
+                assignment.getId(), newMember.getId())).isEmpty();
     }
 
     @Test
@@ -255,6 +343,7 @@ class AssignmentApiTest {
                           "title": "수정 과제",
                           "content": "수정 과제 내용",
                           "submissionMethod": "텍스트 제출",
+                          "submissionTarget": "MEMBERS_ONLY",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
@@ -348,6 +437,7 @@ class AssignmentApiTest {
                         "다른 과제",
                         "다른 과제 내용",
                         "링크 제출",
+                        SubmissionTarget.MEMBERS_ONLY,
                         closeAt,
                         LocalDateTime.now(CLOCK)
                 )
@@ -387,6 +477,7 @@ class AssignmentApiTest {
                           "title": " ",
                           "content": "과제 내용",
                           "submissionMethod": "링크 제출",
+                          "submissionTarget": "MEMBERS_ONLY",
                           "closeAt": "%s",
                           "remindAts": []
                         }
@@ -400,7 +491,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("스터디원의 제출 정보가 없는 과제는 목록에서 제외한다")
+    @DisplayName("스터디원의 제출 정보가 없는 과제도 미해당 상태로 목록에 포함한다")
     void getAssignmentsWithoutSubmissionTest() {
         jdbcTemplate.update(
                 "DELETE FROM assignment_submissions WHERE assignment_id = ? AND member_id = ?",
@@ -414,7 +505,9 @@ class AssignmentApiTest {
                 .get("/studies/{studyId}/assignments", study.getId())
                 .then()
                 .statusCode(200)
-                .body("assignments", hasSize(0));
+                .body("assignments", hasSize(1))
+                .body("assignments[0].id", equalTo(assignment.getId().intValue()))
+                .body("assignments[0].submissionStatus", equalTo("NOT_ASSIGNED"));
     }
 
     @Test
@@ -425,7 +518,7 @@ class AssignmentApiTest {
         );
 
         AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
-        assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://submission.example.com");
     }
@@ -446,7 +539,7 @@ class AssignmentApiTest {
                 .then()
                 .statusCode(200)
                 .body("submissionId", equalTo(submissionId.intValue()))
-                .body("submitted", equalTo(true))
+                .body("submissionStatus", equalTo("SUBMITTED"))
                 .body("createdAt", equalTo(submission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("content", equalTo("제출 내용"))
                 .body("link", equalTo("https://submission.example.com"));
@@ -468,14 +561,14 @@ class AssignmentApiTest {
                 .then()
                 .statusCode(200)
                 .body("submissionId", equalTo(submissionId.intValue()))
-                .body("submitted", equalTo(false))
+                .body("submissionStatus", equalTo("NOT_SUBMITTED"))
                 .body("createdAt", nullValue())
                 .body("content", nullValue())
                 .body("link", nullValue());
     }
 
     @Test
-    @DisplayName("리더에게 제출 행이 없다면 내 제출 정보는 null이다")
+    @DisplayName("리더에게 제출 행이 없다면 미해당 상태를 반환한다")
     void getMySubmissionDetailByLeaderTest() {
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -484,7 +577,8 @@ class AssignmentApiTest {
                         study.getId(), assignment.getId())
                 .then()
                 .statusCode(200)
-                .body(emptyOrNullString());
+                .body("submissionStatus", equalTo("NOT_ASSIGNED"))
+                .body("$", not(hasKey("submissionId")));
     }
 
     @Test
@@ -502,6 +596,7 @@ class AssignmentApiTest {
                 "다른 과제",
                 "다른 과제 내용",
                 "링크 제출",
+                SubmissionTarget.MEMBERS_ONLY,
                 closeAt,
                 LocalDateTime.now(CLOCK)
         );
@@ -522,7 +617,7 @@ class AssignmentApiTest {
         AssignmentSubmission otherSubmission = assignmentSubmissionRepository
                 .findByAssignmentIdAndMemberId(otherAssignment.getId(), otherMember.getId())
                 .orElseThrow();
-        assertThat(otherSubmission.isSubmitted()).isFalse();
+        assertThat(otherSubmission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(otherSubmission.getContent()).isNull();
     }
 
@@ -689,6 +784,73 @@ class AssignmentApiTest {
                 .body("incompleteMembers[0].lastRemindAt", nullValue());
     }
 
+    @ParameterizedTest
+    @EnumSource(SubmissionTarget.class)
+    @DisplayName("과제 생성 시 선택한 제출 대상과 리더 포함 여부를 저장하고 상세 조회로 반환한다")
+    void createWithSubmissionTargetTest(SubmissionTarget target) {
+        Long assignmentId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "대상 선택 과제", "content", "내용", "submissionMethod", "링크 제출",
+                        "submissionTarget", target.name(),
+                        "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when()
+                .post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201)
+                .extract().jsonPath().getLong("assignmentId");
+
+        int expectedLeaderCount = target == SubmissionTarget.MEMBERS_AND_LEADER ? 1 : 0;
+        assertThat(countRows("assignment_submissions", assignmentId)).isEqualTo(2 + expectedLeaderCount);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM assignment_submissions WHERE assignment_id = ? AND member_id = ?",
+                Integer.class, assignmentId, leader.getId())).isEqualTo(expectedLeaderCount);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignmentId)
+                .then().statusCode(200).body("submissionTarget", equalTo(target.name()));
+    }
+
+    @Test
+    @DisplayName("리더 포함을 반복해도 제출물을 유지하고 제외하면 삭제하며 다시 포함하면 빈 제출물을 만든다")
+    void changeLeaderParticipationTest() {
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
+        Long submissionId = submitAssignment(leaderUser, assignment, "리더의 제출 내용", "https://example.com");
+
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(submission -> {
+            assertThat(submission.getContent()).isEqualTo("리더의 제출 내용");
+            assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        });
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("title", "제목만 변경"))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertThat(assignmentSubmissionRepository.existsById(submissionId)).isTrue();
+        assertThat(assignmentRepository.findById(assignment.getId())).hasValueSatisfying(saved ->
+                assertThat(saved.getSubmissionTarget()).isEqualTo(SubmissionTarget.MEMBERS_AND_LEADER));
+
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_ONLY);
+        assertThat(assignmentSubmissionRepository.existsById(submissionId)).isFalse();
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(2);
+
+        updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*) FROM assignment_submissions
+                WHERE assignment_id = ? AND member_id = ? AND id <> ?
+                  AND content IS NULL AND link IS NULL AND submitted_at IS NULL
+                """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
+    }
+
+    private void updateSubmissionTarget(SubmissionTarget target) {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submissionTarget", target.name()))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+    }
+
     private Long submitAssignment(User submitter, Assignment targetAssignment, String content, String link) {
         return testAuthRequest.givenAuthenticatedUser(submitter.getId())
                 .port(port)
@@ -713,6 +875,7 @@ class AssignmentApiTest {
                 title,
                 content,
                 submissionMethod,
+                SubmissionTarget.MEMBERS_ONLY,
                 assignmentCloseAt,
                 now
         );

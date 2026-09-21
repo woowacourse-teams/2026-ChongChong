@@ -3,8 +3,8 @@ SocialLoginRequest:
   additionalProperties: false
   required: [provider, authorizationCode]
   properties:
-    provider: { type: string, enum: [GOOGLE, KAKAO, APPLE], example: KAKAO }
-    authorizationCode: { type: string, minLength: 1, example: authorization-code-from-provider }
+    provider: { description: "로그인에 사용할 소셜 인증 제공자.", type: string, enum: [GOOGLE, KAKAO, APPLE], example: KAKAO }
+    authorizationCode: { description: "소셜 로그인 성공 후 제공자로부터 받은 일회용 인가 코드. 액세스 토큰이 아니다.", type: string, minLength: 1, example: authorization-code-from-provider }
 SocialLoginResponse:
   type: object
   additionalProperties: false

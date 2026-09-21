@@ -18,6 +18,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.study.entity.Study;
@@ -78,10 +80,10 @@ class AssignmentSubmissionRepositoryTest {
                 member.getId()
         ))
                 .extracting(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::isSubmitted)
+                        AssignmentSubmissionStatusProjection::submissionStatus)
                 .containsExactlyInAnyOrder(
-                        tuple(submittedAssignment.getId(), true),
-                        tuple(unsubmittedAssignment.getId(), false)
+                        tuple(submittedAssignment.getId(), SubmissionStatus.SUBMITTED),
+                        tuple(unsubmittedAssignment.getId(), SubmissionStatus.NOT_SUBMITTED)
                 );
     }
 
@@ -162,6 +164,7 @@ class AssignmentSubmissionRepositoryTest {
                 title,
                 "과제 내용",
                 "GitHub PR",
+                SubmissionTarget.MEMBERS_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));

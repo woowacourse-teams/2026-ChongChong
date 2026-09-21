@@ -33,6 +33,8 @@ import withoutc.chongchong.study.entity.StudyMember;
 @Table(name = "notices")
 public class Notice extends BaseEntity {
 
+    private static final int MAX_TITLE_LENGTH = 100;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -106,7 +108,8 @@ public class Notice extends BaseEntity {
     }
 
     public int getReadRecipientCount() {
-        return Math.toIntExact(this.recipients.stream().filter(NoticeRecipient::isRead).count());
+        return Math.toIntExact(this.recipients.stream().filter(
+                noticeRecipient -> NoticeReadStatus.READ.equals(noticeRecipient.readStatus())).count());
     }
 
     public LocalDateTime getNextRemindAt() {
@@ -124,7 +127,7 @@ public class Notice extends BaseEntity {
     }
 
     private static void validateTitle(String title) {
-        if (title == null || title.isBlank() || title.length() > 20) {
+        if (title == null || title.isBlank() || title.length() > MAX_TITLE_LENGTH) {
             throw new NoticeException(NoticeErrorCode.INVALID_TITLE);
         }
     }

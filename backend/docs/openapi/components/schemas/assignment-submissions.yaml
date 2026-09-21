@@ -8,6 +8,7 @@ AssignmentSubmissionStatusResponse:
     completeCount: { type: integer, example: 3 }
     incompleteCount: { type: integer, example: 2 }
     remindAt:
+      description: 대기 중인 리마인더의 가장 이른 예약 시각. 예약이 없으면 목록에서는 생략하고 현황 응답에서는 null을 반환한다.
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     completeMembers: { type: array, items: { $ref: './notices.yaml#/MemberBase' } }
     incompleteMembers: { type: array, items: { $ref: './notices.yaml#/UnreadMember' } }
@@ -15,8 +16,8 @@ AssignmentSubmitRequest:
   type: object
   additionalProperties: false
   properties:
-    content: { type: [string, 'null'], maxLength: 10000, example: 이번 주 과제를 완료했습니다. }
-    link: { type: [string, 'null'], maxLength: 10000, example: 'https://github.com/example/project' }
+    content: { description: "과제 답안 또는 제출 내용을 설명하는 텍스트. 수정 요청에서는 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 이번 주 과제를 완료했습니다. }
+    link: { description: "과제 결과물을 확인할 수 있는 링크. 수정 요청에서는 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 'https://github.com/example/project' }
 AssignmentSubmitResponse:
   type: object
   additionalProperties: false
@@ -26,14 +27,14 @@ AssignmentSubmitResponse:
 MySubmissionDetailResponse:
   type: object
   additionalProperties: false
-  required: [submissionId, submitted]
+  required: [submissionStatus]
   properties:
     submissionId: { type: integer, format: int64, example: 1 }
-    submitted: { type: boolean, example: true }
+    submissionStatus: { $ref: '#/SubmissionStatus' }
     createdAt:
-      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    content: { type: [string, 'null'], example: 이번 주 과제를 완료했습니다. }
-    link: { type: [string, 'null'], example: 'https://github.com/example/project' }
+      $ref: './common.yaml#/LocalDateTime'
+    content: { type: string, example: 이번 주 과제를 완료했습니다. }
+    link: { type: string, example: 'https://github.com/example/project' }
 SubmissionDetailResponse:
   type: object
   additionalProperties: false
@@ -42,7 +43,9 @@ SubmissionDetailResponse:
     id: { type: integer, format: int64, example: 1 }
     name: { type: string, example: 홍길동 }
     profileImage: { type: [string, 'null'], example: 'https://example.com/profile.png' }
-    createdAt: { $ref: './common.yaml#/LocalDateTime' }
+    createdAt:
+      description: 최초 제출 시각. 미제출 상태이면 null이다.
+      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     content: { type: [string, 'null'], example: 이번 주 과제를 완료했습니다. }
     link: { type: [string, 'null'], example: 'https://github.com/example/project' }
 SubmissionSummary:
@@ -60,3 +63,8 @@ SubmissionListResponse:
   required: [submissions]
   properties:
     submissions: { type: array, items: { $ref: '#/SubmissionSummary' } }
+
+SubmissionStatus:
+  type: string
+  enum: [NOT_ASSIGNED, NOT_SUBMITTED, SUBMITTED]
+  description: 제출 대상 아님, 미제출, 제출 완료를 구분하는 본인의 상태

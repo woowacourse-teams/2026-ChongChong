@@ -27,6 +27,7 @@ export default function MyStudiesPage() {
             <img css={{ width: '40px', height: '40px' }} src={logo} alt="" />
           </div>
         }
+        right={<Link to={'/studies/mypage'}>My</Link>}
       />
 
       <Main>

@@ -3,18 +3,20 @@ NoticeCreateRequest:
   additionalProperties: false
   required: [title, content]
   properties:
-    title: { type: string, minLength: 1, maxLength: 20, example: 이번 주 공지 }
-    content: { type: string, minLength: 1, maxLength: 10000, example: 이번 주 스터디 일정을 확인해주세요. }
+    title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 공지 제목.", type: string, minLength: 1, maxLength: 100, example: 이번 주 공지 }
+    content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 공지 본문. 스터디원에게 전달할 안내를 작성한다.", type: string, minLength: 1, maxLength: 10000, example: 이번 주 스터디 일정을 확인해주세요. }
     remindAts:
+      description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다."
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
 NoticeUpdateRequest:
   type: object
   additionalProperties: false
   properties:
-    title: { type: [string, 'null'], maxLength: 20, example: 수정된 공지 }
-    content: { type: [string, 'null'], maxLength: 10000, example: 수정된 공지 내용입니다. }
+    title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 공지 제목. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 100, example: 수정된 공지 }
+    content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 공지 본문. 스터디원에게 전달할 안내를 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 수정된 공지 내용입니다. }
     remindAts:
+      description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 시각은 서버의 현재 시각보다 미래여야 한다."
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
 NoticeCreateResponse:
@@ -35,17 +37,22 @@ NoticeDetailResponse:
 NoticeSummaryResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, createdAt, isComplete]
+  required: [id, title, content, createdAt]
+  oneOf:
+    - required: [isComplete]
+    - required: [readStatus]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 이번 주 공지 }
     content: { type: string, example: 이번 주 스터디 일정을 확인해주세요. }
     createdAt: { $ref: './common.yaml#/LocalDateTime' }
-    recipientCount: { type: [integer, 'null'], example: 5 }
-    readRecipientCount: { type: [integer, 'null'], example: 3 }
+    recipientCount: { type: integer, example: 5 }
+    readRecipientCount: { type: integer, example: 3 }
     remindAt:
-      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    isComplete: { type: boolean, example: false }
+      description: 대기 중인 리마인더의 가장 이른 예약 시각. 예약이 없으면 목록에서는 생략하고 현황 응답에서는 null을 반환한다.
+      $ref: './common.yaml#/LocalDateTime'
+    isComplete: { type: boolean, description: 리더에게 반환하는 전체 읽음 완료 여부, example: false }
+    readStatus: { $ref: '#/NoticeReadStatus' }
 NoticeListResponse:
   type: object
   additionalProperties: false
@@ -82,6 +89,7 @@ NoticeStatusesResponse:
     readCount: { type: integer, example: 3 }
     unreadCount: { type: integer, example: 2 }
     remindAt:
+      description: 대기 중인 리마인더의 가장 이른 예약 시각. 예약이 없으면 목록에서는 생략하고 현황 응답에서는 null을 반환한다.
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     readMembers: { type: array, items: { $ref: '#/MemberBase' } }
     unreadMembers: { type: array, items: { $ref: '#/UnreadMember' } }
@@ -94,8 +102,13 @@ NoticeReadResponse:
 NoticeReadStatusResponse:
   type: object
   additionalProperties: false
-  required: [isRead, readAt]
+  required: [readStatus]
   properties:
-    isRead: { type: boolean, example: true }
+    readStatus: { $ref: '#/NoticeReadStatus' }
     readAt:
-      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
+      $ref: './common.yaml#/LocalDateTime'
+
+NoticeReadStatus:
+  type: string
+  enum: [NOT_ASSIGNED, UNREAD, READ]
+  description: 확인 대상 아님, 읽지 않음, 읽음을 구분하는 본인의 상태

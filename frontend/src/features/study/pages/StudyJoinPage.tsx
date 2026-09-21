@@ -1,20 +1,15 @@
-import { useNavigate, useSearchParams, useLocation } from 'react-router';
-import { useMemo } from 'react';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Field from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
-import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
-import { ValidationError } from '../../../shared/api/error';
 import isBlank from '../../../shared/utils/isBlank';
 import useStudyJoin from '../hooks/useStudyJoin';
+import useInviteLinkState from '../hooks/useInviteLinkState';
 import { usePostHog } from '@posthog/react';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 function extractInviteToken(inviteLink: string) {
   try {
@@ -27,24 +22,11 @@ function extractInviteToken(inviteLink: string) {
 }
 
 export default function StudyJoinPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const toast = useToast();
-
-  const [inviteLink, handleInviteLink] = useInputState(() => {
-    if (!searchParams.has('token')) return '';
-
-    const currentUrl = new URL(
-      `${location.pathname}${location.search}${location.hash}`,
-      window.location.origin,
-    ).href;
-    return currentUrl;
-  });
+  const [inviteLink, handleInviteLink] = useInviteLinkState();
 
   const posthog = usePostHog();
 
-  const { mutate: joinStudy, error, isPending } = useStudyJoin();
+  const { mutate: joinStudy, isPending, fieldErrors } = useStudyJoin();
 
   function handleJoinStudy(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,22 +41,8 @@ export default function StudyJoinPage() {
       return;
     }
 
-    joinStudy(
-      { token },
-      {
-        onSuccess: (data) => navigate(`/studies/${data.studyId}`),
-        onError: (error) => {
-          if (error instanceof ValidationError) return;
-          toast.open(<StatusToast message={error.message} status={'Error'} />);
-        },
-      },
-    );
+    joinStudy({ token });
   }
-
-  const fieldErrors = useMemo(
-    () => (error instanceof ValidationError ? error.fieldErrors : {}),
-    [error],
-  );
 
   return (
     <Page>

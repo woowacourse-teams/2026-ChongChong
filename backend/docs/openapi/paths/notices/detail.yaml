@@ -9,7 +9,8 @@ get:
     owner: frombunny
     description: |
       공지 상세를 조회하며 스터디 소속을 검증한다.
-      후속 예정: 이미지 첨부 정보(#275), 신규 스터디원 노출 정책(#277), 권한 책임 분리(#256).
+      현재 스터디 구성원은 가입 전 공지도 열람할 수 있다. 조회로 확인 대상에 추가되지 않는다.
+      후속 예정: 이미지 첨부 정보(#275), 권한 책임 분리(#256).
   summary: 공지 상세 조회
   description: 스터디 공지의 상세 내용을 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -32,6 +33,11 @@ get:
 patch:
   tags: [Notice]
   operationId: updateNotice
+  x-frontend:
+    description: |
+      기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다.
+      기능 연동 추가: 공지 수정 폼에서 remindAts로 알림 예약을 변경할 수 있도록 한다.
+      생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 이미 발송된 기록은 유지한다.
   x-backend:
     status: done
     owner: frombunny

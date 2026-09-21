@@ -145,3 +145,9 @@ Conflict:
     application/json:
       schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
       example: { code: ALREADY_JOINED_STUDY, message: 해당 스터디에 이미 가입되어 있습니다. }
+
+StudyUpdateBadRequest:
+  description: 경로·입력 검증 또는 요청 형식 오류, 빈 문자열·공백으로 된 스터디 이름
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/StudyInvalidNameError' }] }

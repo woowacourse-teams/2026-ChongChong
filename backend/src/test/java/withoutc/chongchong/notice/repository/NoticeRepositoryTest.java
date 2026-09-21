@@ -80,8 +80,8 @@ class NoticeRepositoryTest {
     }
 
     @Test
-    @DisplayName("멤버별 공지 cursor 조회는 수신 정보가 존재하는 공지만 반환한다")
-    void findByCursorAndMemberIdTest() {
+    @DisplayName("공지 cursor 조회는 수신 대상과 관계없이 스터디의 공지를 반환한다")
+    void findByCursorRegardlessOfRecipientTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Notice firstMemberNotice = Notice.create(fixture.study(), "첫 번째 멤버 공지", "내용");
         firstMemberNotice.addRecipients(List.of(fixture.firstMember()));
@@ -89,16 +89,15 @@ class NoticeRepositoryTest {
         secondMemberNotice.addRecipients(List.of(fixture.secondMember()));
         noticeRepository.saveAllAndFlush(List.of(firstMemberNotice, secondMemberNotice));
 
-        List<Notice> notices = noticeRepository.findByCursorAndMemberId(
+        List<Notice> notices = noticeRepository.findByCursor(
                 fixture.study().getId(),
-                fixture.firstMember().getId(),
                 null,
                 PageRequest.of(0, 11)
         );
 
         assertThat(notices)
                 .extracting(Notice::getId)
-                .containsExactly(firstMemberNotice.getId());
+                .containsExactly(secondMemberNotice.getId(), firstMemberNotice.getId());
     }
 
     @Test
