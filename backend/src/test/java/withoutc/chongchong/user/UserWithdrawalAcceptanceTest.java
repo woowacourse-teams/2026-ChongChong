@@ -252,6 +252,7 @@ public class UserWithdrawalAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.jsonPath().getString("code")).isEqualTo("AUTHENTICATION_REQUIRED");
+        assertThat(response.header(HttpHeaders.SET_COOKIE)).isNull();
     }
 
     @Test
@@ -261,6 +262,7 @@ public class UserWithdrawalAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.jsonPath().getString("code")).isEqualTo("USER_NOT_FOUND");
+        assertThat(response.header(HttpHeaders.SET_COOKIE)).isNull();
     }
 
     @Test
@@ -279,6 +281,7 @@ public class UserWithdrawalAcceptanceTest {
         assertThat(response.statusCode()).isEqualTo(409);
         assertThat(response.jsonPath().getString("code"))
                 .isEqualTo("STUDY_LEADER_WITHDRAWAL_BLOCKED");
+        assertThat(response.header(HttpHeaders.SET_COOKIE)).isNull();
         assertThat(userRepository.existsById(user.getId())).isTrue();
         assertThat(studyRepository.existsById(study.getId())).isTrue();
         assertThat(studyMemberRepository.existsById(leader.getId())).isTrue();
