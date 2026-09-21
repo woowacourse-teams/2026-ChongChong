@@ -4,6 +4,11 @@ parameters:
 get:
   tags: [Assignment]
   operationId: getAssignmentDetail
+  x-frontend:
+    issue: 276
+    description: |
+      기존 연동 수정: 응답의 submissionTarget을 상세 타입에 추가하고 수정 폼의 제출 대상 초기값으로 사용한다.
+      리더 본인의 제출 가능 여부는 내 제출 상태 API의 submissionStatus로 판단한다.
   x-backend:
     status: done
     owner: frombunny
@@ -27,6 +32,11 @@ get:
 patch:
   tags: [Assignment]
   operationId: updateAssignment
+  x-frontend:
+    issue: 276
+    description: |
+      기능 연동 추가: 제출 대상 선택값을 submissionTarget으로 전송한다. 생략하거나 null이면 기존 값을 유지한다.
+      기능 연동 추가: remindAts를 전달해 예약을 변경한다. 생략하거나 null이면 유지하고 빈 배열이면 대기 중인 예약을 제거한다.
   x-backend:
     status: done
     owner: frombunny

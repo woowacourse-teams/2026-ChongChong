@@ -32,6 +32,10 @@ get:
 patch:
   tags: [Notice]
   operationId: updateNotice
+  x-frontend:
+    description: |
+      기능 연동 추가: 공지 수정 폼에서 remindAts로 알림 예약을 변경할 수 있도록 한다.
+      생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 이미 발송된 기록은 유지한다.
   x-backend:
     status: done
     owner: frombunny

@@ -3,6 +3,10 @@ parameters:
 post:
   tags: [Notice]
   operationId: createNotice
+  x-frontend:
+    description: |
+      기능 연동 추가: 공지 작성 폼에 리마인드 시각 입력을 연결하고 remindAts 배열로 전송한다. 현재 타입에는 있지만 폼에서 설정하지 않는다.
+      각 시각은 미래여야 하며 생략하거나 null이면 예약하지 않는다.
   x-backend:
     status: done
     owner: frombunny

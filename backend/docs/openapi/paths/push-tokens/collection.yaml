@@ -1,6 +1,10 @@
 post:
   tags: [Push Token]
   operationId: registerPushToken
+  x-frontend:
+    description: |
+      신규 앱 연동: 알림 권한과 Expo 푸시 토큰을 확보한 뒤 installationId, token, platform(ANDROID 또는 IOS)을 등록한다.
+      동일 설치에서는 installationId를 유지하며 토큰 갱신 시 다시 등록한다. 성공은 본문 없는 204이다.
   x-backend:
     status: done
     owner: wontop02

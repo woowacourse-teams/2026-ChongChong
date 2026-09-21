@@ -31,6 +31,10 @@ get:
 patch:
   tags: [Study]
   operationId: updateStudy
+  x-frontend:
+    description: |
+      신규 연동: 리더용 스터디 이름·설명 수정 화면에서 PATCH 요청을 연결한다.
+      이름은 최대 15자, 설명은 최대 30자이며 생략하거나 null이면 기존 값을 유지한다. 성공은 본문 없는 204이므로 JSON을 파싱하지 않는다.
   x-backend:
     status: done
     owner: wontop02

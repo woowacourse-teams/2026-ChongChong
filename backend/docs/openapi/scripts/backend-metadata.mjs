@@ -43,9 +43,9 @@ export function collectOperations(spec) {
       const frontend = operation['x-frontend'];
       if (frontend !== undefined && (
         !frontend || typeof frontend !== 'object' || Array.isArray(frontend)
-        || !Number.isInteger(frontend.issue) || frontend.issue <= 0
+        || (frontend.issue !== undefined && (!Number.isInteger(frontend.issue) || frontend.issue <= 0))
         || typeof frontend.description !== 'string' || !frontend.description.trim()
-      )) fail('x-frontend에는 양의 정수 issue와 반영 사항 description이 필요합니다.');
+      )) fail('x-frontend에는 반영 사항 description이 필요하며 issue는 생략하거나 양의 정수여야 합니다.');
       operations.push({
         id, method: method.toUpperCase(), path,
         summary: operation.summary ?? id,

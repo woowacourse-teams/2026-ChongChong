@@ -15,7 +15,7 @@ export function renderBoard(spec) {
     const { id, method, path, summary, status, owner, description, frontend } = operation;
     const href = `index.html#operation/${encodeURIComponent(id)}`;
     const frontendBadge = frontend
-      ? `<details class="frontend-change"><summary class="frontend-badge">프론트 반영 필요 · #${frontend.issue}</summary><ul class="frontend-items">${frontend.description.trim().split('\n').map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul></details>`
+      ? `<details class="frontend-change"><summary class="frontend-badge">프론트 반영 필요${frontend.issue === undefined ? '' : ` · #${frontend.issue}`}</summary><ul class="frontend-items">${frontend.description.trim().split('\n').map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul></details>`
       : '';
     const notes = description.trim() ? description.split(/\n(?=후속 예정:)/).map((line) =>
       `<p class="note${line.startsWith('후속 예정:') ? ' followup' : ''}">${escapeHtml(line)}</p>`
