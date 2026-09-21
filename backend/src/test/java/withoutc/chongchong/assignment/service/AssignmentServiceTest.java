@@ -35,6 +35,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
@@ -304,7 +305,8 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().completeCount()).isEqualTo(2);
         assertThat(response.assignments().getFirst().isComplete()).isFalse();
         assertThat(response.assignments().getLast().isComplete()).isTrue();
-        verifyNoInteractions(assignmentSubmissionRepository);
+        verify(assignmentSubmissionRepository).findMySubmissionStatusesByAssignmentIdsAndMemberId(
+                List.of(300L, 200L), leader.getId());
     }
 
     @Test
@@ -364,8 +366,8 @@ class AssignmentServiceTest {
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(assignmentRepository.findByCursorAndMemberId(
-                STUDY_ID, MEMBER_ID, null, PageRequest.of(0, 11)
+        when(assignmentRepository.findByCursor(
+                STUDY_ID, null, PageRequest.of(0, 11)
         ))
                 .thenReturn(List.of(firstAssignment, secondAssignment));
         when(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
@@ -380,21 +382,20 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().memberCount()).isNull();
         assertThat(response.assignments().getFirst().completeCount()).isNull();
         assertThat(response.assignments().getFirst().remindAt()).isNull();
-        assertThat(response.assignments().getFirst().isComplete()).isTrue();
-        assertThat(response.assignments().getLast().isComplete()).isFalse();
+        assertThat(response.assignments().getFirst().submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertThat(response.assignments().getLast().submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         verify(assignmentSubmissionRepository).findMySubmissionStatusesByAssignmentIdsAndMemberId(
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
         );
     }
 
     @Test
-    @DisplayName("스터디원의 제출 정보가 없는 과제는 목록에서 제외한다")
-    void getListWithoutSubmissionTest() {
+    @DisplayName("과제가 없으면 빈 목록을 반환한다")
+    void getEmptyListTest() {
         StudyMember member = mock(StudyMember.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(member.getId()).thenReturn(MEMBER_ID);
-        when(assignmentRepository.findByCursorAndMemberId(
-                STUDY_ID, MEMBER_ID, null, PageRequest.of(0, 11)
+        when(assignmentRepository.findByCursor(
+                STUDY_ID, null, PageRequest.of(0, 11)
         )).thenReturn(List.of());
 
         AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10);

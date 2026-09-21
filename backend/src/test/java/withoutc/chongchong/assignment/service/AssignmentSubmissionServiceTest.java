@@ -29,6 +29,7 @@ import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
@@ -94,7 +95,7 @@ class AssignmentSubmissionServiceTest {
                 request);
 
         assertThat(response.submissionId()).isEqualTo(300L);
-        assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://example.com");
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
@@ -181,7 +182,7 @@ class AssignmentSubmissionServiceTest {
         );
 
         assertThat(response.submissionId()).isEqualTo(300L);
-        assertThat(response.submitted()).isTrue();
+        assertThat(response.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(response.createdAt()).isEqualTo(NOW);
         assertThat(response.content()).isEqualTo("제출 내용");
         assertThat(response.link()).isEqualTo("https://example.com");
@@ -203,14 +204,14 @@ class AssignmentSubmissionServiceTest {
         );
 
         assertThat(response.submissionId()).isEqualTo(300L);
-        assertThat(response.submitted()).isFalse();
+        assertThat(response.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(response.createdAt()).isNull();
         assertThat(response.content()).isNull();
         assertThat(response.link()).isNull();
     }
 
     @Test
-    @DisplayName("현재 사용자에게 제출 행이 없다면 내 제출 정보는 null이다")
+    @DisplayName("현재 사용자에게 제출 행이 없다면 미해당 상태를 반환한다")
     void getMySubmissionDetailWithoutSubmissionTest() {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         StudyMember leader = studyMember(assignment, MEMBER_ID, StudyMemberRole.LEADER, "리더");
@@ -223,7 +224,8 @@ class AssignmentSubmissionServiceTest {
                 USER_ID, STUDY_ID, ASSIGNMENT_ID
         );
 
-        assertThat(response).isNull();
+        assertThat(response.submissionStatus()).isEqualTo(SubmissionStatus.NOT_ASSIGNED);
+        assertThat(response.submissionId()).isNull();
     }
 
     @Test
