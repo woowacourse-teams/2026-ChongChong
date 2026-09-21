@@ -1,9 +1,11 @@
 package withoutc.chongchong.assignment.repository;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,7 @@ import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
+import withoutc.chongchong.study.entity.StudyMember;
 
 public interface AssignmentSubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
 
@@ -60,10 +63,30 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
 
     Optional<AssignmentSubmission> findByIdAndAssignmentId(Long id, Long assignmentId);
 
-    Optional<AssignmentSubmission> findByIdAndAssignmentIdAndMemberId(Long id, Long assignmentId, Long memberId);
+    default AssignmentSubmission getByIdOrThrow(Long id) {
+        return findById(id).orElseThrow(() -> new AssignmentException(
+                AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    }
 
     default AssignmentSubmission getByIdAndAssignmentIdOrThrow(Long id, Long assignmentId) {
         return findByIdAndAssignmentId(id, assignmentId).orElseThrow(() -> new AssignmentException(
+                AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT submission
+            FROM AssignmentSubmission submission
+            WHERE submission.assignment.id = :assignmentId AND submission.member.id = :memberId
+            """
+    )
+    Optional<AssignmentSubmission> findByAssignmentIdAndMemberIdForUpdate(
+            @Param("assignmentId") Long assignmentId,
+            @Param("memberId") Long memberId
+    );
+
+    default AssignmentSubmission getByAssignmentIdAndMemberIdForUpdateOrThrow(Long assignmentId, Long memberId) {
+        return findByAssignmentIdAndMemberIdForUpdate(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
@@ -72,8 +95,13 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 
-    @EntityGraph(attributePaths = "member")
-    List<AssignmentSubmission> findAllByAssignmentIdAndSubmittedAtIsNull(Long assignmentId);
+    @Query("""
+            SELECT DISTINCT submission.member
+            FROM AssignmentSubmission submission
+            WHERE submission.assignment.id = :assignmentId
+              AND submission.submittedAt IS NULL
+            """)
+    List<StudyMember> findUnsubmittedMembersByAssignmentId(@Param("assignmentId") Long assignmentId);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM AssignmentSubmission submission WHERE submission.member.id = :memberId")

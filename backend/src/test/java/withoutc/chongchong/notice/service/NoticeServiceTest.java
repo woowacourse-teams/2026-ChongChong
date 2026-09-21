@@ -46,6 +46,7 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
@@ -74,6 +75,9 @@ class NoticeServiceTest {
     @Mock
     private StudyRepository studyRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private NoticeService noticeService;
 
     @BeforeEach
@@ -85,6 +89,7 @@ class NoticeServiceTest {
                 noticeRepository,
                 noticeRecipientRepository,
                 studyRepository,
+                notificationService,
                 clock
         );
     }
@@ -119,6 +124,7 @@ class NoticeServiceTest {
         assertThat(notice.getRecipientCount()).isEqualTo(1);
         assertThat(notice.getRecipients().getFirst().getMember()).isSameAs(member);
         assertThat(notice.getNextRemindAt()).isEqualTo(remindAt);
+        verify(notificationService).createNoticeCreatedEventNotifications(notice, List.of(member));
     }
 
     @Test

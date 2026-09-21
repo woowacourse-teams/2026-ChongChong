@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +58,9 @@ class AssignmentSubmissionRepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Test
     @DisplayName("여러 과제의 제출 상태를 StudyMember id로 한 번에 조회한다")
     void findMySubmissionStatusesByAssignmentIdsAndMemberIdTest() {
@@ -99,6 +105,44 @@ class AssignmentSubmissionRepositoryTest {
         assertThatThrownBy(() -> assignmentSubmissionRepository.saveAndFlush(
                 AssignmentSubmission.create(member, assignment)
         )).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("미제출 상태인 스터디원만 과제별로 조회한다")
+    void findUnsubmittedMembersByAssignmentIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
+        StudyMember unsubmittedMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(study, "과제");
+
+        AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
+        submitted.submit("제출 내용", null, NOW);
+        assignmentSubmissionRepository.saveAllAndFlush(List.of(
+                submitted,
+                AssignmentSubmission.create(unsubmittedMember, assignment)
+        ));
+
+        assertThat(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(assignment.getId()))
+                .extracting(StudyMember::getId)
+                .containsExactly(unsubmittedMember.getId());
+    }
+
+    @Test
+    @DisplayName("과제 제출 정보를 비관적 쓰기 잠금으로 조회한다")
+    void findAssignmentSubmissionForUpdateTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(study, "과제");
+        AssignmentSubmission submission = assignmentSubmissionRepository.saveAndFlush(
+                AssignmentSubmission.create(member, assignment)
+        );
+        entityManager.clear();
+
+        AssignmentSubmission locked = assignmentSubmissionRepository.findByAssignmentIdAndMemberIdForUpdate(
+                assignment.getId(), member.getId()
+        ).orElseThrow();
+
+        assertThat(entityManager.getLockMode(locked)).isEqualTo(LockModeType.PESSIMISTIC_WRITE);
     }
 
     @Test

@@ -47,6 +47,7 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterS
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
@@ -76,6 +77,9 @@ class AssignmentServiceTest {
     private StudyRepository studyRepository;
 
     @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private AssignmentAccessPolicy assignmentAccessPolicy;
 
     private AssignmentService assignmentService;
@@ -89,6 +93,7 @@ class AssignmentServiceTest {
                 assignmentSubmissionRepository,
                 studyMemberRepository,
                 studyRepository,
+                notificationService,
                 clock,
                 assignmentAccessPolicy
         );
@@ -128,6 +133,7 @@ class AssignmentServiceTest {
         assertThat(assignment.getSubmissions()).singleElement()
                 .satisfies(submission -> assertThat(submission.getMember()).isSameAs(member));
         assertThat(assignment.getNextRemindAt()).isEqualTo(remindAt);
+        verify(notificationService).createAssignmentCreatedEventNotifications(assignment, List.of(member));
     }
 
     @Test
