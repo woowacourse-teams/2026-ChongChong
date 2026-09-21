@@ -154,7 +154,7 @@ class AssignmentSubmissionServiceTest {
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
 
-        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.getSubmittedAt()).isNull();
         verifyNoInteractions(notificationService);
     }
 

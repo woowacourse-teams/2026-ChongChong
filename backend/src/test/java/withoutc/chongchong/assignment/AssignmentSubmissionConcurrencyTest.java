@@ -104,7 +104,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
 
         assertThat(assignmentSubmissionRepository.findById(fixture.submissionId()))
                 .get()
-                .extracting(AssignmentSubmission::isSubmitted)
+                .extracting(submission -> submission.getSubmittedAt() != null)
                 .isEqualTo(true);
         assertThat(jdbcTemplate.queryForObject("""
                 SELECT COUNT(*)

@@ -43,7 +43,7 @@ public class AssignmentSubmissionService {
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(
                 assignmentId, actor.getId());
-        boolean isFirstSubmit = !submission.isSubmitted();
+        boolean isFirstSubmit = submission.getSubmittedAt() == null;
         submission.submit(request.content(), request.link(), LocalDateTime.now(clock));
 
         // TODO: 리더가 과제를 제출할 경우 나머지 리더들에게 알림을 보낼지, 아예 안 보낼지 결정 필요
