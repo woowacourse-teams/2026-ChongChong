@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.entity.AuthSession;
 import withoutc.chongchong.auth.entity.SocialAccount;
@@ -46,6 +47,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -115,10 +117,7 @@ public class UserWithdrawalAcceptanceTest {
                 User.create("탈퇴할 사용자", null)
         );
 
-        Response response = testAuthRequest.givenAuthenticatedUser(user.getId())
-                .port(port)
-                .when()
-                .delete("/users/me");
+        Response response = requestWithdrawal(user.getId());
 
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(response.asString()).isEmpty();
@@ -135,10 +134,7 @@ public class UserWithdrawalAcceptanceTest {
                 Instant.parse("2030-01-01T00:00:00Z")
         ));
 
-        Response response = testAuthRequest.givenAuthenticatedUser(user.getId())
-                .port(port)
-                .when()
-                .delete("/users/me");
+        Response response = requestWithdrawal(user.getId());
 
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(response.asString()).isEmpty();
@@ -164,10 +160,7 @@ public class UserWithdrawalAcceptanceTest {
                 remainingUser, "remain-installation", TokenProvider.EXPO, "remain-token", DevicePlatform.ANDROID
         ));
 
-        Response response = testAuthRequest.givenAuthenticatedUser(withdrawingUser.getId())
-                .port(port)
-                .when()
-                .delete("/users/me");
+        Response response = requestWithdrawal(withdrawingUser.getId());
 
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(userRepository.existsById(withdrawingUser.getId())).isFalse();
@@ -223,10 +216,7 @@ public class UserWithdrawalAcceptanceTest {
                 NotificationDelivery.create(remainingNotification, remainingToken)
         );
 
-        Response response = testAuthRequest.givenAuthenticatedUser(withdrawingUser.getId())
-                .port(port)
-                .when()
-                .delete("/users/me");
+        Response response = requestWithdrawal(withdrawingUser.getId());
 
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(userRepository.existsById(withdrawingUser.getId())).isFalse();
@@ -267,10 +257,7 @@ public class UserWithdrawalAcceptanceTest {
     @Test
     @DisplayName("인증된 사용자가 존재하지 않으면 404를 반환한다")
     void cannotWithdrawMissingUser() {
-        Response response = testAuthRequest.givenAuthenticatedUser(999L)
-                .port(port)
-                .when()
-                .delete("/users/me");
+        Response response = requestWithdrawal(999L);
 
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.jsonPath().getString("code")).isEqualTo("USER_NOT_FOUND");
@@ -287,10 +274,7 @@ public class UserWithdrawalAcceptanceTest {
                 )
         );
 
-        Response response = testAuthRequest.givenAuthenticatedUser(user.getId())
-                .port(port)
-                .when()
-                .delete("/users/me");
+        Response response = requestWithdrawal(user.getId());
 
         assertThat(response.statusCode()).isEqualTo(409);
         assertThat(response.jsonPath().getString("code"))
@@ -298,5 +282,38 @@ public class UserWithdrawalAcceptanceTest {
         assertThat(userRepository.existsById(user.getId())).isTrue();
         assertThat(studyRepository.existsById(study.getId())).isTrue();
         assertThat(studyMemberRepository.existsById(leader.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("사용자가 탈퇴하면 계정과 Refresh Cookie를 정리한다")
+    void withdrawUserAndDeleteRefreshCookie() {
+        User user = userRepository.saveAndFlush(
+                User.create("탈퇴할 사용자", null)
+        );
+
+        Response response = requestWithdrawal(user.getId());
+
+        assertExpiredRefreshCookie(response);
+
+        assertThat(response.asString()).isEmpty();
+        assertThat(userRepository.existsById(user.getId())).isFalse();
+    }
+
+    private Response requestWithdrawal(Long userId) {
+        return testAuthRequest.givenAuthenticatedUser(userId)
+                .port(port)
+                .when()
+                .delete("/users/me");
+    }
+
+    private void assertExpiredRefreshCookie(Response response) {
+        response.then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("refresh_token="))
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Secure"))
+                .header(HttpHeaders.SET_COOKIE, containsString("HttpOnly"))
+                .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
     }
 }
