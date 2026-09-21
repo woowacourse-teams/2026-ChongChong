@@ -68,6 +68,7 @@ describe('과제 제출물 상세 페이지 테스트', () => {
         content: '슈팅 연습 내용을 작성해주세요.',
         submissionMethod: '텍스트로 제출하세요',
         closeAt: '2026-09-30T23:59:59',
+        submissionTarget: 'MEMBERS_AND_LEADER',
         completeUserIds: [1],
       });
       await submissionTable.create({

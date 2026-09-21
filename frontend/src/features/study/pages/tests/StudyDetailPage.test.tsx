@@ -166,6 +166,7 @@ describe('스터디 상세 페이지', () => {
         content: '나만의 코덱스 펫을 만들어주세요.',
         submissionMethod: '링크로 제출하세요',
         closeAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        submissionTarget: 'MEMBERS_AND_LEADER',
         completeUserIds: [],
       });
       setupStudyDetailPage(studyId);

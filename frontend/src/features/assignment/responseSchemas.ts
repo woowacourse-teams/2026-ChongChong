@@ -56,6 +56,7 @@ const assignmentDetailSchema = z.object({
   content: z.string(),
   submissionMethod: z.string(),
   closeAt: z.string(),
+  submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
   submissionId: z.number().optional(),
 }) satisfies z.ZodType<AssignmentDetail>;
 
