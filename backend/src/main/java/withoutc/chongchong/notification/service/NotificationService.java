@@ -18,7 +18,6 @@ import withoutc.chongchong.notice.entity.NoticeReminder;
 import withoutc.chongchong.notice.entity.NoticeReminderStatus;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
-import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
@@ -88,10 +87,9 @@ public class NotificationService {
                 NoticeReminderStatus.PENDING, now);
         for (NoticeReminder noticeReminder : noticeReminders) {
             Notice notice = noticeReminder.getNotice();
-            Study study = notice.getStudy();
             List<StudyMember> recipients = noticeRecipientRepository.findUnreadMembersByNoticeId(
                     notice.getId());
-            saveNotifications(study, recipients, NotificationType.REMIND, notice.getId(),
+            saveNotifications(notice.getStudy(), recipients, NotificationType.REMIND, notice.getId(),
                     NotificationResourceType.NOTICE);
             noticeReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, notice.getId(),
@@ -106,10 +104,9 @@ public class NotificationService {
                 AssignmentReminderStatus.PENDING, now);
         for (AssignmentReminder assignmentReminder : assignmentReminders) {
             Assignment assignment = assignmentReminder.getAssignment();
-            Study study = assignment.getStudy();
             List<StudyMember> recipients = assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(
                     assignment.getId());
-            saveNotifications(study, recipients, NotificationType.REMIND, assignment.getId(),
+            saveNotifications(assignment.getStudy(), recipients, NotificationType.REMIND, assignment.getId(),
                     NotificationResourceType.ASSIGNMENT);
             assignmentReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, assignment.getId(),
@@ -119,11 +116,12 @@ public class NotificationService {
         }
     }
 
+    // TODO: 자동 알림 구현 후 주석 처리 해제
     private void saveNotifications(Study study, List<StudyMember> recipients, NotificationType type, Long resourceId,
                                    NotificationResourceType resourceType) {
-        for (StudyMember recipient : recipients) {
-            Notification notification = Notification.create(study, recipient, type, resourceId, resourceType);
-            notificationRepository.save(notification);
-        }
+//        for (StudyMember recipient : recipients) {
+//            Notification notification = Notification.create(study, recipient, type, resourceId, resourceType);
+//            notificationRepository.save(notification);
+//        }
     }
 }
