@@ -15,9 +15,14 @@ delete:
     탈퇴가 허용되면 하나의 트랜잭션에서 사용자 행을 삭제한다. 데이터베이스 외래 키의
     연쇄 삭제로 인증 세션, 소셜 계정, 푸시 토큰, 스터디 멤버십과 멤버십에 종속된
     제출물, 공지 수신 상태 및 알림도 함께 삭제된다.
+    성공 응답에서는 브라우저의 Refresh Token 쿠키를 즉시 만료시킨다. 인증 실패, 사용자 부재,
+    리더 스터디 존재로 탈퇴가 완료되지 않은 경우에는 Refresh Token 쿠키를 변경하지 않는다.
   security: [{ bearerAuth: [] }]
   responses:
-    '204': { description: 사용자 탈퇴 성공. 응답 본문 없음. }
+    '204':
+      description: 사용자 탈퇴 성공. 응답 본문 없음.
+      headers:
+        Set-Cookie: { description: 즉시 만료된 Refresh Token 쿠키, schema: { type: string } }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
     '409': { $ref: '../../components/responses.yaml#/StudyLeaderWithdrawalBlocked' }
