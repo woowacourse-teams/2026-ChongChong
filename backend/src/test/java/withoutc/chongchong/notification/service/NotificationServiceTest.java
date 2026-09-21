@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentReminder;
 import withoutc.chongchong.assignment.entity.AssignmentReminderStatus;
@@ -35,6 +36,7 @@ import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
+import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
@@ -62,6 +64,9 @@ class NotificationServiceTest {
     @Mock
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private NotificationService notificationService;
 
     @BeforeEach
@@ -72,6 +77,7 @@ class NotificationServiceTest {
                 noticeReminderRepository,
                 assignmentSubmissionRepository,
                 assignmentReminderRepository,
+                eventPublisher,
                 CLOCK
         );
     }
@@ -151,6 +157,7 @@ class NotificationServiceTest {
         Study study = mock(Study.class);
         StudyMember recipient = mock(StudyMember.class);
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+        ArgumentCaptor<NotificationEvent> eventCaptor = ArgumentCaptor.forClass(NotificationEvent.class);
 
         when(submission.getAssignment()).thenReturn(assignment);
         when(submission.getId()).thenReturn(300L);
@@ -166,6 +173,12 @@ class NotificationServiceTest {
         assertThat(notification.getResourceId()).isEqualTo(300L);
         assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
         assertThat(notification.isRead()).isFalse();
+
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        NotificationEvent event = eventCaptor.getValue();
+        assertThat(event.type()).isEqualTo(NotificationType.SUBMITTED);
+        assertThat(event.resourceId()).isEqualTo(300L);
+        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
     }
 
     @Test

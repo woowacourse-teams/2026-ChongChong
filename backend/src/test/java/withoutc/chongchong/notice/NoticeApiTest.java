@@ -23,12 +23,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
+import withoutc.chongchong.notification.entity.NotificationResourceType;
+import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.sender.NotificationEvent;
+import withoutc.chongchong.notification.support.TestNotificationSender;
+import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -40,6 +46,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(TestNotificationSenderConfiguration.class)
 class NoticeApiTest {
 
     private static final DateTimeFormatter REQUEST_DATE_TIME_FORMATTER =
@@ -69,6 +76,9 @@ class NoticeApiTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private TestNotificationSender notificationSender;
+
     @LocalServerPort
     private int port;
 
@@ -84,6 +94,7 @@ class NoticeApiTest {
     @BeforeEach
     void setUp() {
         databaseCleaner.clean();
+        notificationSender.clear();
 
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
@@ -194,6 +205,16 @@ class NoticeApiTest {
         );
         assertThat(recipientCount).isEqualTo(2);
         assertThat(reminderCount).isEqualTo(1);
+
+        assertThat(notificationSender.events()).hasSize(1);
+        NotificationEvent event = notificationSender.events().getFirst();
+        assertThat(event.type()).isEqualTo(NotificationType.CREATED);
+        assertThat(event.resourceId()).isEqualTo(createdNoticeId);
+        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.NOTICE);
+        assertThat(event.studyId()).isEqualTo(study.getId());
+        assertThat(event.content()).isEqualTo(maxLengthTitle);
+        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
+                .containsExactlyInAnyOrder("스터디원", "두 번째 스터디원");
     }
 
     @Test

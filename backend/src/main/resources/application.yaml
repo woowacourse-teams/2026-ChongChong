@@ -51,3 +51,7 @@ auth:
       http-only: true
       same-site: Lax
       path: /api/auth
+
+discord:
+  webhook-url: ${DISCORD_WEBHOOK_URL}
+  user-ids: ${DISCORD_USER_IDS}

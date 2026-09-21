@@ -1,7 +1,12 @@
 package withoutc.chongchong.notification.entity;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public enum NotificationResourceType {
-    NOTICE,
-    ASSIGNMENT,
-    ASSIGNMENT_SUBMISSION
+    NOTICE("공지"),
+    ASSIGNMENT("과제"),
+    ASSIGNMENT_SUBMISSION("제출물");
+
+    public final String name;
 }
