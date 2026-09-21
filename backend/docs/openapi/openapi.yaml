@@ -11,6 +11,7 @@ servers:
   - url: /
 tags:
   - { name: Auth, description: 인증 API }
+  - { name: User, description: 사용자 API }
   - { name: Study, description: 스터디 API }
   - { name: Study Member, description: 스터디 멤버 API }
   - { name: Notice, description: 공지 API }
@@ -27,6 +28,8 @@ paths:
     $ref: './paths/auth/refresh.yaml'
   /api/auth/logout:
     $ref: './paths/auth/logout.yaml'
+  /api/users/me:
+    $ref: './paths/users/me.yaml'
   /api/studies:
     $ref: './paths/studies/collection.yaml'
   /api/studies/{studyId}:

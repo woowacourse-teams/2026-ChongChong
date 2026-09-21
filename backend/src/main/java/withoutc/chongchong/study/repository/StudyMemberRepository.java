@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import withoutc.chongchong.study.entity.StudyMember;
+import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
@@ -32,6 +33,8 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
 
     @EntityGraph(attributePaths = "study")
     List<StudyMember> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+    boolean existsByUserIdAndRole(Long userId, StudyMemberRole role);
 
     int countByUserId(Long userId);
 
