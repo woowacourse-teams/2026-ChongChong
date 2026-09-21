@@ -40,7 +40,7 @@ AssignmentDetailResponse:
 AssignmentSummaryResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, closeAt, isComplete]
+  required: [id, title, content, submissionMethod, closeAt, submissionStatus]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 1주 차 과제 }
@@ -51,7 +51,8 @@ AssignmentSummaryResponse:
     completeCount: { type: [integer, 'null'], example: 3 }
     remindAt:
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    isComplete: { type: boolean, example: false }
+    isComplete: { type: boolean, description: 리더에게만 반환하는 전체 제출 완료 여부, example: false }
+    submissionStatus: { $ref: './assignment-submissions.yaml#/SubmissionStatus' }
 AssignmentListResponse:
   type: object
   additionalProperties: false

@@ -26,10 +26,10 @@ AssignmentSubmitResponse:
 MySubmissionDetailResponse:
   type: object
   additionalProperties: false
-  required: [submissionId, submitted]
+  required: [submissionStatus]
   properties:
     submissionId: { type: integer, format: int64, example: 1 }
-    submitted: { type: boolean, example: true }
+    submissionStatus: { $ref: '#/SubmissionStatus' }
     createdAt:
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     content: { type: [string, 'null'], example: 이번 주 과제를 완료했습니다. }
@@ -60,3 +60,8 @@ SubmissionListResponse:
   required: [submissions]
   properties:
     submissions: { type: array, items: { $ref: '#/SubmissionSummary' } }
+
+SubmissionStatus:
+  type: string
+  enum: [NOT_ASSIGNED, NOT_SUBMITTED, SUBMITTED]
+  description: 제출 대상 아님, 미제출, 제출 완료를 구분하는 본인의 상태
