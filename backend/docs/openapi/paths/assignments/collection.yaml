@@ -6,6 +6,7 @@ post:
   x-frontend:
     issue: 276
     description: |
+      기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다.
       기존 연동 수정: 생성 요청에 필수 submissionTarget을 추가한다. 누락하면 400 응답이다.
       MEMBERS_ONLY(스터디원만)와 MEMBERS_AND_LEADER(리더 포함)를 선택할 수 있도록 폼과 요청 타입을 변경한다.
       기능 연동 추가: remindAts 배열로 미래 리마인드 시각을 전달한다. 생략하면 예약하지 않는다.
@@ -14,7 +15,7 @@ post:
     owner: frombunny
     description: |
       과제를 생성하고 submissionTarget에 따라 리더를 포함하거나 제외하여 제출 행과 리마인더를 초기화한다.
-      후속 예정: 이미지·제출 형식(#275), 제출물 공개 설정(#278).
+      후속 예정: 이미지·제출 형식(#296), 제출물 공개 설정(#278).
   summary: 과제 생성
   description: 스터디 리더가 과제를 생성한다. 입력·형식 및 제목·내용·제출 방법·마감·리마인드 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

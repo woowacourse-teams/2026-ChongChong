@@ -3,13 +3,13 @@ StudyCreateRequest:
   additionalProperties: false
   required: [name]
   properties:
-    name: { description: "생성할 스터디 이름.", type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
+    name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 생성할 스터디 이름.", type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
     description: { description: "스터디의 목적이나 진행 방식을 소개하는 짧은 설명.", type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
 StudyUpdateRequest:
   type: object
   additionalProperties: false
   properties:
-    name: { description: "변경할 스터디 이름. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 15, example: 수정된 스터디 }
+    name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 변경할 스터디 이름. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 15, example: 수정된 스터디 }
     description: { description: "변경할 스터디 소개. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 30, example: 매주 화요일에 진행한다. }
 StudyCreateResponse:
   type: object
@@ -69,9 +69,9 @@ MyStudyResponse:
     role: { type: string, enum: [LEADER, MEMBER], example: MEMBER }
     name: { type: string, example: 자바 스터디 }
     description: { type: [string, 'null'], example: 매주 월요일에 진행한다. }
-    memberCount: { type: integer, example: 5 }
-    noticeCount: { type: integer, example: 3 }
-    assignmentCount: { type: integer, example: 4 }
+    memberCount: { description: 현재 리더를 포함한 전체 스터디 인원 수, type: integer, example: 5 }
+    noticeCount: { description: 리더는 전체 확인이 끝나지 않은 공지 수이고 멤버는 본인이 확인 대상인 미확인 공지 수, type: integer, example: 3 }
+    assignmentCount: { description: 리더는 전체 제출이 끝나지 않은 과제 수이고 멤버는 본인이 제출 대상인 미제출 과제 수, type: integer, example: 4 }
 MyStudyListResponse:
   type: object
   additionalProperties: false
