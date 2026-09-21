@@ -15,8 +15,8 @@ AssignmentSubmitRequest:
   type: object
   additionalProperties: false
   properties:
-    content: { type: [string, 'null'], maxLength: 10000, example: 이번 주 과제를 완료했습니다. }
-    link: { type: [string, 'null'], maxLength: 10000, example: 'https://github.com/example/project' }
+    content: { description: "과제 답안 또는 제출 내용을 설명하는 텍스트. 수정 요청에서는 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 이번 주 과제를 완료했습니다. }
+    link: { description: "과제 결과물을 확인할 수 있는 링크. 수정 요청에서는 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 'https://github.com/example/project' }
 AssignmentSubmitResponse:
   type: object
   additionalProperties: false

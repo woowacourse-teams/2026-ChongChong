@@ -39,6 +39,8 @@ th:nth-child(3) { width: auto; }
 th:nth-child(4) { width: 34%; }
 th:nth-child(5) { width: 96px; }
 th:nth-child(6) { width: 150px; }
+tbody tr { cursor: pointer; }
+.frontend-items { cursor: text; }
 tbody tr:hover { background: var(--soft); }
 .api-title { display: block; font-weight: 500; overflow-wrap: anywhere; }
 code { font: inherit; overflow-wrap: anywhere; }
@@ -75,3 +77,10 @@ code { font: inherit; overflow-wrap: anywhere; }
   .mobile-label { display: block; color: var(--muted); font-size: var(--xs); margin-bottom: var(--s1); }
   .notes { grid-column: 1 / -1; grid-row: 3; }
 }
+
+.frontend-badge { display: list-item; width: fit-content; cursor: pointer; padding: var(--s1) var(--s2); border-radius: var(--tag-radius); background: var(--blue); color: var(--blue-text); font-size: var(--sm); font-weight: 700; line-height: 1.5; }
+
+.frontend-items { margin: var(--s2) 0 0; padding-left: var(--s4); font-size: var(--sm); line-height: 1.6; overflow-wrap: anywhere; }
+.frontend-items li + li { margin-top: var(--s2); }
+
+.frontend-change { margin-bottom: var(--s2); }

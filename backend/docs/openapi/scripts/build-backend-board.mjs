@@ -12,14 +12,17 @@ export function escapeHtml(value) {
 export function renderBoard(spec) {
   const operations = collectOperations(spec);
   const rows = operations.map((operation) => {
-    const { id, method, path, summary, status, owner, description } = operation;
+    const { id, method, path, summary, status, owner, description, frontend } = operation;
     const href = `index.html#operation/${encodeURIComponent(id)}`;
+    const frontendBadge = frontend
+      ? `<details class="frontend-change"><summary class="frontend-badge">프론트 반영 필요 · #${frontend.issue}</summary><ul class="frontend-items">${frontend.description.trim().split('\n').map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul></details>`
+      : '';
     const notes = description.trim() ? description.split(/\n(?=후속 예정:)/).map((line) =>
       `<p class="note${line.startsWith('후속 예정:') ? ' followup' : ''}">${escapeHtml(line)}</p>`
     ).join('\n') : '<p class="muted">등록된 설명 없음</p>';
     return `<tr role="row">
       <td role="cell" class="method-cell"><span class="method" data-method="${escapeHtml(method)}">${escapeHtml(method)}</span></td>
-      <td role="cell" class="name-cell"><a class="api-title" href="${escapeHtml(href)}">${escapeHtml(summary)}</a></td>
+      <td role="cell" class="name-cell">${frontendBadge}<a class="api-title" href="${escapeHtml(href)}">${escapeHtml(summary)}</a></td>
       <td role="cell" class="notes"><span class="mobile-label" aria-hidden="true">개발 설명</span><div class="note-body">${notes}</div></td>
       <td role="cell" class="uri-cell"><code>${escapeHtml(path)}</code></td>
       <td role="cell"><span class="mobile-label" aria-hidden="true">상태</span><span class="badge" data-state="${escapeHtml(status ?? 'unconfirmed')}">${status === null ? '미확인' : statuses[status]}</span></td>
@@ -37,7 +40,22 @@ export function renderBoard(spec) {
 <div class="table-scroll" role="region" aria-label="API 목록. 좌우로 스크롤할 수 있습니다." tabindex="0">
 <table role="table"><caption>백엔드 API별 작업 현황</caption>
 <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">메서드</th><th role="columnheader" scope="col">이름</th><th role="columnheader" scope="col">개발 설명</th><th role="columnheader" scope="col">URI</th><th role="columnheader" scope="col">상태</th><th role="columnheader" scope="col">담당자</th></tr></thead><tbody role="rowgroup">${rows}</tbody></table></div>
-</main></body></html>\n`;
+</main>
+<script>
+document.querySelector('tbody').addEventListener('click', (event) => {
+  if (!(event.target instanceof Element) || event.defaultPrevented) return;
+  if (event.target.closest('a, button, input, select, textarea, details')) return;
+  if (window.getSelection()?.toString()) return;
+  const link = event.target.closest('tr')?.querySelector('.api-title');
+  if (!link) return;
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    window.open(link.href, '_blank', 'noopener');
+  } else {
+    window.location.assign(link.href);
+  }
+});
+</script>
+</body></html>\n`;
 }
 
 async function main(inputPath, outputPath) {

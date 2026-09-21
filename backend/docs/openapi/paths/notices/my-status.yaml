@@ -7,6 +7,12 @@ get:
     description: |
       현재 사용자의 읽음 여부와 최초 읽은 시각을 조회한다.
       후속 예정: 권한 책임 분리(#256).
+  x-frontend:
+    issue: 277
+    description: |
+      isRead(boolean)를 readStatus(NOT_ASSIGNED / UNREAD / READ)로 교체한다.
+      미해당도 200 JSON 응답이다. readAt은 READ일 때만 있으며 나머지 상태에서는 생략된다.
+      NOT_ASSIGNED이면 본문은 열람하되 읽음 버튼과 자동 읽음 요청을 비활성화한다.
   summary: 내 공지 읽음 상태 조회
   description: 본인의 읽음 상태를 NOT_ASSIGNED, UNREAD, READ로 구분한다. 확인 대상이 아니어도 200 응답을 반환하며 읽음 시각이 없으면 readAt을 생략한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

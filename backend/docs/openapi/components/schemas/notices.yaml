@@ -3,18 +3,20 @@ NoticeCreateRequest:
   additionalProperties: false
   required: [title, content]
   properties:
-    title: { type: string, minLength: 1, maxLength: 100, example: 이번 주 공지 }
-    content: { type: string, minLength: 1, maxLength: 10000, example: 이번 주 스터디 일정을 확인해주세요. }
+    title: { description: "공지 제목.", type: string, minLength: 1, maxLength: 100, example: 이번 주 공지 }
+    content: { description: "공지 본문. 스터디원에게 전달할 안내를 작성한다.", type: string, minLength: 1, maxLength: 10000, example: 이번 주 스터디 일정을 확인해주세요. }
     remindAts:
+      description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다."
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
 NoticeUpdateRequest:
   type: object
   additionalProperties: false
   properties:
-    title: { type: [string, 'null'], maxLength: 100, example: 수정된 공지 }
-    content: { type: [string, 'null'], maxLength: 10000, example: 수정된 공지 내용입니다. }
+    title: { description: "공지 제목. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 100, example: 수정된 공지 }
+    content: { description: "공지 본문. 스터디원에게 전달할 안내를 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 수정된 공지 내용입니다. }
     remindAts:
+      description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 시각은 서버의 현재 시각보다 미래여야 한다."
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
 NoticeCreateResponse:
