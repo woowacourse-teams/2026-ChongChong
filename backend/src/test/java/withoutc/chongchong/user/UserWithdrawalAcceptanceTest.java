@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.auth.entity.AuthSession;
 import withoutc.chongchong.auth.entity.SocialAccount;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
@@ -193,7 +194,8 @@ public class UserWithdrawalAcceptanceTest {
         noticeRepository.saveAndFlush(notice);
 
         LocalDateTime now = LocalDateTime.of(2026, 9, 20, 12, 0);
-        Assignment assignment = Assignment.create(study, "과제", "내용", "링크", now.plusDays(1), now);
+        Assignment assignment = Assignment.create(study, "과제", "내용", "링크",
+                SubmissionTarget.MEMBERS_ONLY,now.plusDays(1), now);
         assignment.initializeSubmissions(List.of(withdrawingMember, remainingMember));
         assignmentRepository.saveAndFlush(assignment);
 

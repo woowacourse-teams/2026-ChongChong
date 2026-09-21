@@ -15,7 +15,7 @@ Flyway V2와 ADR 0024는 `users → study_members → notice_recipients`,
 `assignment_submissions`, `notifications`의 DB CASCADE를 정의한다. 알림의 설치별 발송 기록인
 `notification_deliveries`도 알림이나 푸시 토큰 삭제 시 CASCADE로 삭제된다. 반면 `auth_sessions`,
 `social_accounts`, `push_tokens`가 `users`를 참조하는 외래 키에는 처음에 `ON DELETE CASCADE`가 없었다.
-사용자만 삭제하면 외래 키 제약으로 탈퇴가 실패하므로 Flyway V6에서 세 외래 키에 CASCADE를 추가한다.
+사용자만 삭제하면 외래 키 제약으로 탈퇴가 실패하므로 Flyway V7에서 세 외래 키에 CASCADE를 추가한다.
 
 스터디 생성과 초대 수락은 이미 사용자 행을 잠근 뒤 멤버십을 만든다. 탈퇴도 같은 사용자에 대한 멤버십 생성과
 충돌할 수 있으므로 리더 검사부터 삭제 완료까지 하나의 일관된 경계가 필요하다.
@@ -37,7 +37,7 @@ Flyway V2와 ADR 0024는 `users → study_members → notice_recipients`,
 
 ### 삭제 책임과 순서
 
-리더 검사를 통과하면 애플리케이션은 사용자 행만 삭제한다. Flyway V6의 사용자 외래 키 CASCADE가
+리더 검사를 통과하면 애플리케이션은 사용자 행만 삭제한다. Flyway V7의 사용자 외래 키 CASCADE가
 `auth_sessions`, `social_accounts`, `push_tokens`를 삭제하고, 기존 Flyway V2의 CASCADE가
 `study_members`를 삭제한다. 멤버십에 종속된 `notice_recipients`, `assignment_submissions`,
 `notifications`와 알림 또는 푸시 토큰에 연결된 `notification_deliveries`도 기존 외래 키를 따라 삭제된다.
