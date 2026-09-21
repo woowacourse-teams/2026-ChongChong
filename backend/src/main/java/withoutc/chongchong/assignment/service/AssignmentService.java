@@ -18,9 +18,8 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
-import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
-import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
@@ -137,63 +136,44 @@ public class AssignmentService {
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
 
         Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
-        List<Assignment> assignments;
-        if (member.isLeader()) {
-            assignments = assignmentRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
-        } else {
-            assignments = assignmentRepository.findByCursorAndMemberId(
-                    studyId,
-                    member.getId(),
-                    pageRequest.cursor(),
-                    pageable
-            );
-        }
+        List<Assignment> assignments = assignmentRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
 
         CursorPageResponse<Assignment> assignmentPage = CursorPageResponse.of(assignments, pageRequest,
                 Assignment::getId);
 
-        List<AssignmentSummaryResponse> assignmentSummaries = createAssignmentSummaries(member,
-                assignmentPage.content());
-        return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), assignmentSummaries);
+        List<AssignmentSummaryResponse> summaries = createAssignmentSummaries(member, assignmentPage.content());
+        return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
     }
 
     private List<StudyMember> getSubmitters(Long studyId, SubmissionTarget submissionTarget) {
-        List<StudyMember> submitters;
         if (submissionTarget.requiresLeaderSubmission()) {
-            submitters = studyMemberRepository.findAllByStudyId(studyId);
-        } else {
-            submitters = studyMemberRepository.findAllByStudyId(studyId).stream()
-                    .filter(studyMember -> !studyMember.isLeader()).toList();
+            return studyMemberRepository.findAllByStudyId(studyId);
         }
-        return submitters;
+        return studyMemberRepository.findAllByStudyId(studyId).stream()
+                .filter(studyMember -> !studyMember.isLeader()).toList();
     }
 
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
                                                                       List<Assignment> assignments) {
-        if (member.isLeader()) {
-            return assignments.stream().map(AssignmentSummaryResponse::forLeader).toList();
-        }
 
         if (assignments.isEmpty()) {
             return List.of();
         }
 
         List<Long> assignmentIds = assignments.stream().map(Assignment::getId).toList();
-
-        Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository
+        Map<Long, SubmissionStatus> submissionStatusByAssignmentId = assignmentSubmissionRepository
                 .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
                 .stream().collect(Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::isSubmitted));
+                        AssignmentSubmissionStatusProjection::submissionStatus));
+
+        if (member.isLeader()) {
+            return assignments.stream().map(assignment -> AssignmentSummaryResponse.forLeader(assignment,
+                            submissionStatusByAssignmentId.getOrDefault(assignment.getId(), SubmissionStatus.NOT_ASSIGNED)))
+                    .toList();
+        }
 
         return assignments.stream().map(assignment -> AssignmentSummaryResponse.forMember(assignment,
-                requireSubmissionStatus(submissionStatusByAssignmentId, assignment.getId()))).toList();
-    }
-
-    private boolean requireSubmissionStatus(Map<Long, Boolean> submissionStatusByAssignmentId, Long assignmentId) {
-        Boolean submitted = submissionStatusByAssignmentId.get(assignmentId);
-        if (submitted == null) {
-            throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND);
-        }
-        return submitted;
+                        submissionStatusByAssignmentId.getOrDefault(assignment.getId(), SubmissionStatus.NOT_ASSIGNED)))
+                .toList();
     }
 }

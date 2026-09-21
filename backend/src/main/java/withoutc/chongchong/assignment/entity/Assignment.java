@@ -131,7 +131,8 @@ public class Assignment extends BaseEntity {
     }
 
     public int getSubmittedCount() {
-        return Math.toIntExact(this.submissions.stream().filter(AssignmentSubmission::isSubmitted).count());
+        return Math.toIntExact(this.submissions.stream().filter(submission
+                -> SubmissionStatus.SUBMITTED.equals(submission.submissionStatus())).count());
     }
 
     public LocalDateTime getNextRemindAt() {
