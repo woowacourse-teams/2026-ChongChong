@@ -23,7 +23,7 @@ class AssignmentSubmissionTest {
 
         submission.submit(null, null, NOW);
 
-        assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isNull();
         assertThat(submission.getLink()).isNull();
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
@@ -38,7 +38,7 @@ class AssignmentSubmissionTest {
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
-        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(submission.getContent()).isNull();
     }
 
@@ -51,7 +51,7 @@ class AssignmentSubmissionTest {
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_LINK);
-        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(submission.getLink()).isNull();
     }
 
@@ -87,7 +87,7 @@ class AssignmentSubmissionTest {
     void isNotSubmittedWhenSubmittedAtIsNullTest() {
         AssignmentSubmission submission = createSubmission();
 
-        assertThat(submission.isSubmitted()).isFalse();
+        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(submission.getSubmittedAt()).isNull();
     }
 

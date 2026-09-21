@@ -3,23 +3,24 @@ AssignmentCreateRequest:
   additionalProperties: false
   required: [title, content, submissionMethod, submissionTarget, closeAt]
   properties:
-    title: { type: string, minLength: 1, maxLength: 100, example: 1주 차 과제 }
-    content: { type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
-    submissionMethod: { type: string, minLength: 1, maxLength: 10000, example: 링크 제출 }
-    submissionTarget: { type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
-    closeAt: { $ref: './common.yaml#/LocalDateTime' }
-    remindAts: { type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
+    title: { description: "과제 제목.", type: string, minLength: 1, maxLength: 100, example: 1주 차 과제 }
+    content: { description: "과제 본문. 과제 요구사항이나 학습 내용을 작성한다.", type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
+    submissionMethod: { description: "리더가 안내하는 과제 제출 방법. 링크 제출이나 텍스트 제출 등 자유 형식의 설명이다.", type: string, minLength: 1, maxLength: 10000, example: 링크 제출 }
+    submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다.", type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
+    closeAt: { description: "과제 제출 마감 시각.", $ref: './common.yaml#/LocalDateTime' }
+    remindAts: { description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다.", type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
 AssignmentUpdateRequest:
   type: object
   additionalProperties: false
   properties:
-    title: { type: [string, 'null'], maxLength: 100, example: 수정된 과제 }
-    content: { type: [string, 'null'], maxLength: 10000, example: 수정된 과제 내용입니다. }
-    submissionMethod: { type: [string, 'null'], maxLength: 10000, example: 텍스트 제출 }
-    submissionTarget: { type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
+    title: { description: "과제 제목. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 100, example: 수정된 과제 }
+    content: { description: "과제 본문. 과제 요구사항이나 학습 내용을 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 수정된 과제 내용입니다. }
+    submissionMethod: { description: "리더가 안내하는 과제 제출 방법. 링크 제출이나 텍스트 제출 등 자유 형식의 설명이다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 10000, example: 텍스트 제출 }
+    submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
     closeAt:
+      description: "과제 제출 마감 시각. 생략하거나 null이면 기존 값을 유지한다."
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    remindAts: { type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
+    remindAts: { description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 시각은 서버의 현재 시각보다 미래여야 한다.", type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
 AssignmentCreateResponse:
   type: object
   additionalProperties: false
@@ -40,7 +41,7 @@ AssignmentDetailResponse:
 AssignmentSummaryResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, closeAt, isComplete]
+  required: [id, title, content, submissionMethod, closeAt, submissionStatus]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 1주 차 과제 }
@@ -51,7 +52,8 @@ AssignmentSummaryResponse:
     completeCount: { type: [integer, 'null'], example: 3 }
     remindAt:
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    isComplete: { type: boolean, example: false }
+    isComplete: { type: boolean, description: 리더에게만 반환하는 전체 제출 완료 여부, example: false }
+    submissionStatus: { $ref: './assignment-submissions.yaml#/SubmissionStatus' }
 AssignmentListResponse:
   type: object
   additionalProperties: false

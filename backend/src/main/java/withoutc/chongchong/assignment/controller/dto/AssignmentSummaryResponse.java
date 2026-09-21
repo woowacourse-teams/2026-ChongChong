@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.controller.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AssignmentSummaryResponse(
@@ -13,10 +14,11 @@ public record AssignmentSummaryResponse(
         LocalDateTime closeAt,
         Integer memberCount,
         Integer completeCount,
+        Boolean isComplete,
         LocalDateTime remindAt,
-        boolean isComplete
+        SubmissionStatus submissionStatus
 ) {
-    public static AssignmentSummaryResponse forLeader(Assignment assignment) {
+    public static AssignmentSummaryResponse forLeader(Assignment assignment, SubmissionStatus submissionStatus) {
 
         int memberCount = assignment.getSubmissionCount();
         int completeCount = assignment.getSubmittedCount();
@@ -31,12 +33,13 @@ public record AssignmentSummaryResponse(
                 assignment.getCloseAt(),
                 memberCount,
                 completeCount,
+                isComplete,
                 assignment.getNextRemindAt(),
-                isComplete
+                submissionStatus
         );
     }
 
-    public static AssignmentSummaryResponse forMember(Assignment assignment, boolean isComplete) {
+    public static AssignmentSummaryResponse forMember(Assignment assignment, SubmissionStatus submissionStatus) {
         return new AssignmentSummaryResponse(
                 assignment.getId(),
                 assignment.getTitle(),
@@ -46,7 +49,8 @@ public record AssignmentSummaryResponse(
                 null,
                 null,
                 null,
-                isComplete
+                null,
+                submissionStatus
         );
     }
 }

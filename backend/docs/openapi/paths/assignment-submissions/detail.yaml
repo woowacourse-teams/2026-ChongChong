@@ -5,6 +5,9 @@ parameters:
 get:
   tags: [Assignment Submission]
   operationId: getSubmissionDetail
+  x-frontend:
+    description: |
+      기존 연동 수정: content는 null일 수 있으므로 응답 검증과 타입에서 허용한다. 본문 없이 링크만 제출한 경우에도 상세 화면을 표시한다.
   x-backend:
     status: done
     owner: frombunny

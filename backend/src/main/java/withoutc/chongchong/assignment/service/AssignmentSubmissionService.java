@@ -67,7 +67,7 @@ public class AssignmentSubmissionService {
 
         return assignmentSubmissionRepository.findByAssignmentIdAndMemberId(assignmentId, member.getId())
                 .map(MySubmissionDetailResponse::from)
-                .orElse(null);
+                .orElseGet(MySubmissionDetailResponse::notAssigned);
     }
 
     public SubmissionDetailResponse getSubmissionDetail(Long userId, Long studyId, Long assignmentId,

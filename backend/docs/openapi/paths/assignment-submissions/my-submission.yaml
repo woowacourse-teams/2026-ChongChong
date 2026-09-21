@@ -5,24 +5,30 @@ get:
     status: done
     owner: frombunny
     description: |
-      현재 사용자의 제출 정보를 조회한다. 미제출 행도 submissionId를 반환하며, 행이 없으면 200 빈 본문이다.
-      후속 예정: 리드 제출 지원(#276).
+      현재 사용자의 제출 정보를 조회한다. 제출 대상이면 submissionId를 반환하고, 대상이 아니면 NOT_ASSIGNED를 반환한다.
+  x-frontend:
+    issue: 277
+    description: |
+      submitted(boolean)를 submissionStatus(NOT_ASSIGNED / NOT_SUBMITTED / SUBMITTED)로 교체한다.
+      미해당도 빈 본문이 아닌 200 JSON 객체다. NOT_ASSIGNED에는 submissionId와 제출 상세 필드가 없다.
+      NOT_SUBMITTED에는 submissionId가 있다. SUBMITTED일 때 제출 내용과 시각을 표시한다.
+      NOT_ASSIGNED이면 과제는 열람하되 제출 폼과 제출 요청을 비활성화한다.
   summary: 내 과제 제출 조회
-  description: 현재 사용자의 제출 정보를 조회한다. 멤버가 아직 제출하지 않았다면 submitted=false인 객체를, 제출 행이 생성되지 않는 스터디 리더에게는 200과 빈 본문을 반환한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  description: 본인의 제출 상태를 SUBMITTED, NOT_SUBMITTED, NOT_ASSIGNED로 구분한다. 제출 대상이 아니면 submissionStatus만 반환한다. 회원 및 과제 소속을 검증하며 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   parameters:
     - { $ref: '../../components/parameters.yaml#/StudyId' }
     - { $ref: '../../components/parameters.yaml#/AssignmentId' }
   responses:
     '200':
-      description: 내 제출 조회 성공. 스터디 리더에게는 제출 행이 없어 본문 없음.
-      x-allow-empty-body: true
+      description: 내 제출 조회 성공. 제출 대상 여부와 관계없이 JSON 객체를 반환한다.
       content:
         application/json:
           schema: { $ref: '../../components/schemas/assignment-submissions.yaml#/MySubmissionDetailResponse' }
           examples:
-            submitted: { value: { submissionId: 1, submitted: true, createdAt: '2026-08-27T10:30:00', content: 이번 주 과제를 완료했습니다., link: 'https://github.com/example/project' } }
-            beforeSubmit: { value: { submissionId: 1, submitted: false } }
+            submitted: { value: { submissionId: 1, submissionStatus: SUBMITTED, createdAt: '2026-08-27T10:30:00', content: 이번 주 과제를 완료했습니다., link: 'https://github.com/example/project' } }
+            beforeSubmit: { value: { submissionId: 1, submissionStatus: NOT_SUBMITTED } }
+            notAssigned: { value: { submissionStatus: NOT_ASSIGNED } }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
