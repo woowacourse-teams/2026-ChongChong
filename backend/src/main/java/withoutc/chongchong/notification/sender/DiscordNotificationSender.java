@@ -1,10 +1,12 @@
 package withoutc.chongchong.notification.sender;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
@@ -35,7 +37,14 @@ public class DiscordNotificationSender implements NotificationSender {
     ) {
         this.studyRepository = studyRepository;
         this.submissionRepository = submissionRepository;
-        this.restClient = restClientBuilder.build();
+
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(3));
+        requestFactory.setReadTimeout(Duration.ofSeconds(5));
+        this.restClient = restClientBuilder
+                .requestFactory(requestFactory)
+                .build();
+
         this.webhookUrl = webhookUrl;
         this.frontendBaseUrl = frontendBaseUrl;
         this.discordUserIds = discordUserIds;

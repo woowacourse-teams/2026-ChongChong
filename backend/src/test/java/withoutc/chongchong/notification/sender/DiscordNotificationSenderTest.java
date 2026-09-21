@@ -2,6 +2,7 @@ package withoutc.chongchong.notification.sender;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.MockRestServiceServer.bindTo;
@@ -14,6 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -33,8 +35,9 @@ class DiscordNotificationSenderTest {
     @Test
     @DisplayName("공지 이벤트를 Discord 웹훅에 한 번 전송하고 대상자와 링크를 포함한다")
     void sendsNoticeEvent() {
-        RestClient.Builder restClientBuilder = RestClient.builder();
-        MockRestServiceServer server = bindTo(restClientBuilder).build();
+        RestClient.Builder mockServerBuilder = RestClient.builder();
+        MockRestServiceServer server = bindTo(mockServerBuilder).build();
+        RestClient.Builder restClientBuilder = createSenderBuilder(mockServerBuilder);
         StudyRepository studyRepository = mock(StudyRepository.class);
         AssignmentSubmissionRepository submissionRepository = mock(AssignmentSubmissionRepository.class);
         Study study = mock(Study.class);
@@ -77,8 +80,9 @@ class DiscordNotificationSenderTest {
     @Test
     @DisplayName("제출 이벤트를 Discord 웹훅에 한 번 전송하고 제출자와 제출 링크를 포함한다")
     void sendsAssignmentSubmissionEvent() {
-        RestClient.Builder restClientBuilder = RestClient.builder();
-        MockRestServiceServer server = bindTo(restClientBuilder).build();
+        RestClient.Builder mockServerBuilder = RestClient.builder();
+        MockRestServiceServer server = bindTo(mockServerBuilder).build();
+        RestClient.Builder restClientBuilder = createSenderBuilder(mockServerBuilder);
         StudyRepository studyRepository = mock(StudyRepository.class);
         AssignmentSubmissionRepository submissionRepository = mock(AssignmentSubmissionRepository.class);
         Study study = mock(Study.class);
@@ -124,5 +128,13 @@ class DiscordNotificationSenderTest {
         sender.sendNotifications(event);
 
         server.verify();
+    }
+
+    private RestClient.Builder createSenderBuilder(RestClient.Builder mockServerBuilder) {
+        RestClient mockServerRestClient = mockServerBuilder.build();
+        RestClient.Builder senderBuilder = mock(RestClient.Builder.class);
+        when(senderBuilder.requestFactory(any(ClientHttpRequestFactory.class))).thenReturn(senderBuilder);
+        when(senderBuilder.build()).thenReturn(mockServerRestClient);
+        return senderBuilder;
     }
 }
