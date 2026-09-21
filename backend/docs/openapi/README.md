@@ -168,10 +168,11 @@ post:
 
 후속 작업은 [공지 책임 분리 #256](https://github.com/woowacourse-teams/2026-ChongChong/issues/256),
 [전체 초대 링크 요청 #274](https://github.com/woowacourse-teams/2026-ChongChong/issues/274),
-[이미지·제출 형식 #275](https://github.com/woowacourse-teams/2026-ChongChong/issues/275),
-[리드 제출 #276](https://github.com/woowacourse-teams/2026-ChongChong/issues/276),
-[신규 멤버 노출 #277](https://github.com/woowacourse-teams/2026-ChongChong/issues/277),
+[공지 이미지 #275](https://github.com/woowacourse-teams/2026-ChongChong/issues/275),
+[과제 첨부·제출 형식 #296](https://github.com/woowacourse-teams/2026-ChongChong/issues/296),
 [제출물 공개 #278](https://github.com/woowacourse-teams/2026-ChongChong/issues/278)를 확인했다.
+
+리더 제출 지원(#276)과 신규 멤버의 이전 공지·과제 열람(#277)은 구현 완료되어 현재 동작 설명에 반영한다.
 
 ### API 설명과 개발 설명의 구분
 

@@ -7,10 +7,10 @@ get:
     status: done
     owner: wontop02
     description: |
-      역할에 맞는 스터디 상세 정보와 공지·과제 상태 집계를 반환한다. 대상자 수는 각 항목 생성 당시 기준이다.
-      후속 예정: 신규 스터디원의 기존 공지·과제 노출 정책(#277).
+      역할에 맞는 스터디 상세 정보와 공지·과제 상태 집계를 반환한다. 대상자 수는 현재 남아 있는 수신자·제출 행을 기준으로 집계한다. 신규 가입자는 기존 대상에 추가되지 않으며 탈퇴·방출된 대상자는 집계에서 제외된다.
+      멤버의 할 일은 본인이 확인·제출 대상인 미완료 항목만 반환한다. 가입 전 대상이 아닌 공지·과제는 할 일에 포함하지 않는다.
   summary: 스터디 상세 조회
-  description: 사용자의 역할에 맞는 스터디 상세를 조회한다. 리더는 전체 현황을, 멤버는 미확인·미제출 항목을 받는다. 경로 오류(400), 인증 실패(401), 접근 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
+  description: 사용자의 역할에 맞는 스터디 상세를 조회한다. 리더는 미완료 공지·과제의 대상자 진행 현황을, 멤버는 본인의 미확인·미제출 항목을 받는다. 경로 오류(400), 인증 실패(401), 접근 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   responses:
     '200':
@@ -51,7 +51,7 @@ patch:
         example: { name: 수정된 스터디, description: 매주 화요일에 진행한다. }
   responses:
     '204': { description: 스터디 수정 성공. 응답 본문 없음. }
-    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '400': { $ref: '../../components/responses.yaml#/StudyUpdateBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessOrLeaderDenied' }
     '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }
