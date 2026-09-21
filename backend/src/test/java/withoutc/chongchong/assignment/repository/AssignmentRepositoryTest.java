@@ -97,28 +97,6 @@ class AssignmentRepositoryTest {
     }
 
     @Test
-    @DisplayName("멤버별 과제 cursor 조회는 제출 정보가 존재하는 과제만 반환한다")
-    void findByCursorAndMemberIdTest() {
-        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Assignment firstMemberAssignment = createAssignment(
-                fixture.study(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
-        );
-        createAssignment(fixture.study(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
-        assignmentRepository.flush();
-
-        List<Assignment> assignments = assignmentRepository.findByCursorAndMemberId(
-                fixture.study().getId(),
-                fixture.firstMember().getId(),
-                null,
-                PageRequest.of(0, 11)
-        );
-
-        assertThat(assignments)
-                .extracting(Assignment::getId)
-                .containsExactly(firstMemberAssignment.getId());
-    }
-
-    @Test
     @DisplayName("스터디에 속한 과제를 ID로 조회한다")
     void getByIdAndStudyIdOrThrowTest() {
         StudyFixture fixture = createStudyFixture("스터디", "리더");

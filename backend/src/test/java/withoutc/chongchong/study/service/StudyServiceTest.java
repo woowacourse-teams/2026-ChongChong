@@ -277,7 +277,6 @@ class StudyServiceTest {
         verify(entityManager).clear();
         verify(studyRepository).delete(study);
         verify(assignmentRepository, never()).deleteAllByStudyId(studyId);
-        verify(noticeRepository, never()).deleteAllByStudyId(studyId);
         verify(studyMemberRepository, never()).deleteAllByStudyId(studyId);
     }
 

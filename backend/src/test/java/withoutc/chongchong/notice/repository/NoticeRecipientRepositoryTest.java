@@ -17,6 +17,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
@@ -77,10 +78,10 @@ class NoticeRecipientRepositoryTest {
                 List.of(readNotice.getId(), unreadNotice.getId(), otherNotice.getId()),
                 recipient.getId()
         ))
-                .extracting(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::isRead)
+                .extracting(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::readStatus)
                 .containsExactlyInAnyOrder(
-                        tuple(readNotice.getId(), true),
-                        tuple(unreadNotice.getId(), false)
+                        tuple(readNotice.getId(), NoticeReadStatus.READ),
+                        tuple(unreadNotice.getId(), NoticeReadStatus.UNREAD)
                 );
     }
 
