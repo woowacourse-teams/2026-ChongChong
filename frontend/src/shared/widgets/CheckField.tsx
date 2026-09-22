@@ -68,7 +68,7 @@ export default function CheckField({
         {label}
       </Field.Label>
       <label css={checkLabelStyle}>
-        <input {...checkProps} id={id} type="checkbox" required={isRequired} css={checkStyle} />
+        <input {...checkProps} id={id} type="checkbox" css={checkStyle} />
         {checkLabel}
       </label>
       {hasSubText && <Field.SubText errorText={errorText} helpText={helpText} />}
