@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import CreateAssignmentPage from '../CreateAssignmentPage';
@@ -27,6 +27,10 @@ function getTitleInput() {
 
 function getSubmitButton() {
   return screen.getByRole('button', { name: '과제 올리기' });
+}
+
+function submitForm() {
+  fireEvent.submit(getSubmitButton().closest('form')!);
 }
 
 describe('과제 생성 페이지 테스트', () => {
@@ -78,7 +82,7 @@ describe('과제 생성 페이지 테스트', () => {
 
         expect(checkbox).toHaveProperty('checked', true);
         if (!leaderSubmits) await user.click(checkbox);
-        await user.click(getSubmitButton());
+        submitForm();
 
         await waitFor(() =>
           expect(requestBody).toHaveBeenCalledWith(expect.objectContaining({ submissionTarget })),
@@ -116,9 +120,9 @@ describe('과제 생성 페이지 테스트', () => {
           ]),
         ),
       );
-      const { user } = setupCreateAssignmentPage();
+      setupCreateAssignmentPage();
 
-      await user.click(getSubmitButton());
+      submitForm();
 
       expect(await screen.findByText('제목이 이상해요')).toBeInTheDocument();
       expect(await screen.findByText('내용이 이상해요')).toBeInTheDocument();
@@ -149,7 +153,7 @@ describe('과제 생성 페이지 테스트', () => {
       const { user } = setupCreateAssignmentPage();
 
       await user.type(getTitleInput(), '객체지향 설계 과제');
-      await user.click(getSubmitButton());
+      submitForm();
 
       const toast = await screen.findByRole('status');
       expect(toast).toHaveTextContent(message);

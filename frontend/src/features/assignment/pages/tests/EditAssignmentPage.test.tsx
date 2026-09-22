@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import EditAssignmentPage from '../EditAssignmentPage';
@@ -29,6 +29,10 @@ async function findTitleInput() {
 
 function getSubmitButton() {
   return screen.getByRole('button', { name: '과제 수정하기' });
+}
+
+function submitForm() {
+  fireEvent.submit(getSubmitButton().closest('form')!);
 }
 
 describe('과제 수정 페이지 테스트', () => {
@@ -86,7 +90,7 @@ describe('과제 수정 페이지 테스트', () => {
       const { user } = setupEditAssignmentPage();
 
       await user.clear(await findTitleInput());
-      await user.click(getSubmitButton());
+      submitForm();
 
       expect(await screen.findByText('과제 제목은 필수입니다.')).toBeInTheDocument();
     });
@@ -95,13 +99,12 @@ describe('과제 수정 페이지 테스트', () => {
       const { user } = setupEditAssignmentPage();
 
       await user.clear(await findTitleInput());
-      const submitButton = getSubmitButton();
-      await user.click(submitButton);
+      submitForm();
       expect(await screen.findByText('과제 제목은 필수입니다.')).toBeInTheDocument();
 
       await user.type(await findTitleInput(), '치킨 먹고싶다');
       await user.clear(screen.getByRole('textbox', { name: '제출 방법' }));
-      await user.click(submitButton);
+      submitForm();
 
       expect(await screen.findByText('제출 방법은 필수입니다.')).toBeInTheDocument();
       expect(screen.queryByText('과제 제목은 필수입니다.')).not.toBeInTheDocument();
@@ -130,7 +133,7 @@ describe('과제 수정 페이지 테스트', () => {
       const titleInput = await findTitleInput();
       await user.clear(titleInput);
       await user.type(titleInput, '수정한 피즈 궁 연습');
-      await user.click(getSubmitButton());
+      submitForm();
 
       const toast = await screen.findByRole('status', {}, { timeout: 3000 });
       expect(toast).toHaveTextContent(message);

@@ -8,6 +8,7 @@ const initialValues = {
   content: '내용',
   submissionMethod: '링크 제출',
   closeAt: '2999-12-31T23:59:59',
+  submissionTarget: 'MEMBERS_AND_LEADER',
 } satisfies AssignmentValue;
 
 describe('AssignmentForm 테스트', () => {
