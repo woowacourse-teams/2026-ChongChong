@@ -1,9 +1,10 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import EditAssignmentPage from '../EditAssignmentPage';
 import { createWrapper, login, logout, setup } from '../../../../test/render';
 import { server } from '../../../../mocks/msw-node';
+import { invalidInputResponse } from '../../../../mocks/errors';
 import { assignmentTable } from '../../mocks/db';
 import { API_URL } from '../../../../../config';
 import { userTable } from '../../../user/mocks/db';
@@ -29,10 +30,6 @@ async function findTitleInput() {
 
 function getSubmitButton() {
   return screen.getByRole('button', { name: '과제 수정하기' });
-}
-
-function submitForm() {
-  fireEvent.submit(getSubmitButton().closest('form')!);
 }
 
 describe('과제 수정 페이지 테스트', () => {
@@ -86,28 +83,42 @@ describe('과제 수정 페이지 테스트', () => {
       expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
-    test('필드를 비우고 수정하면 에러메시지가 표시 된다', async () => {
+    test('필수 필드를 비우고 수정하면 브라우저 검증에 걸린다', async () => {
       const { user } = setupEditAssignmentPage();
 
-      await user.clear(await findTitleInput());
-      submitForm();
+      const titleInput = await findTitleInput();
+      await user.clear(titleInput);
+      await user.click(getSubmitButton());
 
-      expect(await screen.findByText('과제 제목은 필수입니다.')).toBeInTheDocument();
+      expect(titleInput).toBeInvalid();
     });
 
     test('성공한 필드의 에러메시지는 지워진다', async () => {
+      let requestCount = 0;
+      server.use(
+        http.patch(ASSIGNMENT_DETAIL_URL, () => {
+          requestCount += 1;
+          return invalidInputResponse([
+            requestCount === 1
+              ? { field: 'title', code: 'INVALID', reason: '과제 제목을 확인해주세요.' }
+              : {
+                  field: 'submissionMethod',
+                  code: 'INVALID',
+                  reason: '제출 방법을 확인해주세요.',
+                },
+          ]);
+        }),
+      );
       const { user } = setupEditAssignmentPage();
 
-      await user.clear(await findTitleInput());
-      submitForm();
-      expect(await screen.findByText('과제 제목은 필수입니다.')).toBeInTheDocument();
+      await findTitleInput();
+      await user.click(getSubmitButton());
+      expect(await screen.findByText('과제 제목을 확인해주세요.')).toBeInTheDocument();
 
-      await user.type(await findTitleInput(), '치킨 먹고싶다');
-      await user.clear(screen.getByRole('textbox', { name: '제출 방법' }));
-      submitForm();
+      await user.click(getSubmitButton());
 
-      expect(await screen.findByText('제출 방법은 필수입니다.')).toBeInTheDocument();
-      expect(screen.queryByText('과제 제목은 필수입니다.')).not.toBeInTheDocument();
+      expect(await screen.findByText('제출 방법을 확인해주세요.')).toBeInTheDocument();
+      expect(screen.queryByText('과제 제목을 확인해주세요.')).not.toBeInTheDocument();
     });
 
     test.each([
@@ -133,7 +144,7 @@ describe('과제 수정 페이지 테스트', () => {
       const titleInput = await findTitleInput();
       await user.clear(titleInput);
       await user.type(titleInput, '수정한 피즈 궁 연습');
-      submitForm();
+      await user.click(getSubmitButton());
 
       const toast = await screen.findByRole('status', {}, { timeout: 3000 });
       expect(toast).toHaveTextContent(message);
