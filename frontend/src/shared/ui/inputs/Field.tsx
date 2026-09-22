@@ -22,7 +22,7 @@ const inputSectionStyle = {
   gap: tokens.spacing[1],
 } satisfies CSSProperties;
 
-export function InputField({ children, ...props }: ComponentProps<'div'>) {
+export function Field({ children, ...props }: ComponentProps<'div'>) {
   return (
     <div css={inputSectionStyle} {...props}>
       {children}
@@ -30,7 +30,7 @@ export function InputField({ children, ...props }: ComponentProps<'div'>) {
   );
 }
 
-InputField.Label = function Label({ htmlFor, children, isRequired = false, ...props }: LabelProps) {
+Field.Label = function Label({ htmlFor, children, isRequired = false, ...props }: LabelProps) {
   return (
     <label
       htmlFor={htmlFor}
@@ -52,19 +52,19 @@ InputField.Label = function Label({ htmlFor, children, isRequired = false, ...pr
   );
 };
 
-InputField.SubText = function SubText({ errorText, helpText }: SubTextProps) {
+Field.SubText = function SubText({ errorText, helpText }: SubTextProps) {
   if (errorText) {
-    return <InputField.ErrorText role="alert">{errorText}</InputField.ErrorText>;
+    return <Field.ErrorText role="alert">{errorText}</Field.ErrorText>;
   }
 
   if (helpText) {
-    return <InputField.HelpText>{helpText}</InputField.HelpText>;
+    return <Field.HelpText>{helpText}</Field.HelpText>;
   }
 
   return null;
 };
 
-InputField.ErrorText = function ErrorText({ children, ...props }: ComponentProps<'p'>) {
+Field.ErrorText = function ErrorText({ children, ...props }: ComponentProps<'p'>) {
   return (
     <p css={{ ...typography.footnote, color: tokens.text.critical }} {...props}>
       {children}
@@ -72,7 +72,7 @@ InputField.ErrorText = function ErrorText({ children, ...props }: ComponentProps
   );
 };
 
-InputField.HelpText = function HelpText({ children, ...props }: ComponentProps<'p'>) {
+Field.HelpText = function HelpText({ children, ...props }: ComponentProps<'p'>) {
   return (
     <p css={{ ...typography.footnote, color: tokens.text.muted }} {...props}>
       {children}
@@ -80,7 +80,7 @@ InputField.HelpText = function HelpText({ children, ...props }: ComponentProps<'
   );
 };
 
-InputField.CurrentLength = function CurrentLegth({ currentLength, maxLength }: CurrentLengthProps) {
+Field.CurrentLength = function CurrentLegth({ currentLength, maxLength }: CurrentLengthProps) {
   return (
     <span
       css={{ ...typography.footnote, color: tokens.text.muted, marginRight: tokens.spacing[1] }}

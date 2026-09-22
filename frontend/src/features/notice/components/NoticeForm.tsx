@@ -4,7 +4,7 @@ import Button from '../../../shared/ui/Button';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens } from '../../../styles/global';
-import { InputField } from '../../../shared/ui/inputs/Field';
+import { Field } from '../../../shared/ui/inputs/Field';
 import { NOTICE_TITLE, NOTICE_CONTENT } from '../constants';
 import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
@@ -64,10 +64,10 @@ export default function NoticeForm({
 
   return (
     <form css={formStyle} onSubmit={submitNotice}>
-      <InputField data-testid="notice-title-field">
-        <InputField.Label htmlFor="notice-title" isRequired={true}>
+      <Field data-testid="notice-title-field">
+        <Field.Label htmlFor="notice-title" isRequired={true}>
           제목
-        </InputField.Label>
+        </Field.Label>
         <Input
           id="notice-title"
           value={title}
@@ -78,14 +78,14 @@ export default function NoticeForm({
           required={true}
         />
         <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <InputField.SubText errorText={fieldErrors.title} />
-          <InputField.CurrentLength currentLength={title.length} maxLength={NOTICE_TITLE.length} />
+          <Field.SubText errorText={fieldErrors.title} />
+          <Field.CurrentLength currentLength={title.length} maxLength={NOTICE_TITLE.length} />
         </div>
-      </InputField>
-      <InputField data-testid="notice-content-field">
-        <InputField.Label htmlFor="notice-content" isRequired={true}>
+      </Field>
+      <Field data-testid="notice-content-field">
+        <Field.Label htmlFor="notice-content" isRequired={true}>
           내용
-        </InputField.Label>
+        </Field.Label>
         <TextArea
           ref={contentRef}
           id="notice-content"
@@ -98,16 +98,16 @@ export default function NoticeForm({
           required={true}
         />
         <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <InputField.SubText
+          <Field.SubText
             errorText={fieldErrors.content}
             helpText={'스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요'}
           />
-          <InputField.CurrentLength
+          <Field.CurrentLength
             currentLength={content.length}
             maxLength={NOTICE_CONTENT.length}
           />
         </div>
-      </InputField>
+      </Field>
       <Button
         type="submit"
         variant="brandSolid"

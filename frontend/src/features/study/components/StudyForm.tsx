@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import Input from '../../../shared/ui/inputs/Input';
-import { InputField } from '../../../shared/ui/inputs/Field';
+import { Field } from '../../../shared/ui/inputs/Field';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import Button from '../../../shared/ui/Button';
 import { useInputState } from '../../../shared/hooks/useInputState';
@@ -37,10 +37,10 @@ export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props
 
   return (
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
-      <InputField data-testid="study-name-field">
-        <InputField.Label htmlFor="study-name" isRequired={true}>
+      <Field data-testid="study-name-field">
+        <Field.Label htmlFor="study-name" isRequired={true}>
           스터디 이름
-        </InputField.Label>
+        </Field.Label>
         <Input
           id="study-name"
           value={nameValue}
@@ -49,18 +49,18 @@ export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props
           required={true}
         />
         <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <InputField.SubText
+          <Field.SubText
             errorText={fieldErrors.name}
             helpText={'스터디원에게 그대로 보여요'}
           />
-          <InputField.CurrentLength
+          <Field.CurrentLength
             currentLength={nameValue.length}
             maxLength={STUDY_NAME.length}
           />
         </div>
-      </InputField>
-      <InputField data-testid="study-description-field">
-        <InputField.Label htmlFor="study-description">어떤 스터디인가요?</InputField.Label>
+      </Field>
+      <Field data-testid="study-description-field">
+        <Field.Label htmlFor="study-description">어떤 스터디인가요?</Field.Label>
         <TextArea
           id="study-description"
           value={descriptionValue}
@@ -68,16 +68,16 @@ export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props
           maxLength={STUDY_DESCRIPTION.length}
         />
         <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <InputField.SubText
+          <Field.SubText
             errorText={fieldErrors.description}
             helpText={'모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요'}
           />
-          <InputField.CurrentLength
+          <Field.CurrentLength
             currentLength={descriptionValue.length}
             maxLength={STUDY_DESCRIPTION.length}
           />
         </div>
-      </InputField>
+      </Field>
       <Button
         variant="brandSolid"
         size="large"

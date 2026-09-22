@@ -1,7 +1,7 @@
 import { CSSProperties, useState } from 'react';
 import type { CSSObject } from '@emotion/react';
 import Button from '../../../shared/ui/Button';
-import { InputField } from '../../../shared/ui/inputs/Field';
+import { Field } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
@@ -98,10 +98,10 @@ export default function AssignmentForm({
 
   return (
     <form css={formStyle} onSubmit={handleSubmit}>
-      <InputField data-testid="assignment-title-field">
-        <InputField.Label htmlFor={'assignment-title'} isRequired={true}>
+      <Field data-testid="assignment-title-field">
+        <Field.Label htmlFor={'assignment-title'} isRequired={true}>
           제목
-        </InputField.Label>
+        </Field.Label>
         <Input
           id="assignment-title"
           name="title"
@@ -112,17 +112,17 @@ export default function AssignmentForm({
           placeholder="제목을 입력해주세요"
         />
         <div css={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <InputField.SubText errorText={fieldErrors.title} />
-          <InputField.CurrentLength
+          <Field.SubText errorText={fieldErrors.title} />
+          <Field.CurrentLength
             currentLength={title.length}
             maxLength={ASSIGNMENT_TITLE.length}
           />
         </div>
-      </InputField>
-      <InputField data-testid="assignment-content-field">
-        <InputField.Label htmlFor={'assignment-content'} isRequired={true}>
+      </Field>
+      <Field data-testid="assignment-content-field">
+        <Field.Label htmlFor={'assignment-content'} isRequired={true}>
           내용
-        </InputField.Label>
+        </Field.Label>
         <TextArea
           id="assignment-content"
           name="content"
@@ -132,17 +132,17 @@ export default function AssignmentForm({
           onChange={(event) => setContent(event.target.value)}
         />
         <div css={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <InputField.SubText errorText={fieldErrors.content} />
-          <InputField.CurrentLength
+          <Field.SubText errorText={fieldErrors.content} />
+          <Field.CurrentLength
             currentLength={content.length}
             maxLength={ASSIGNMENT_CONTENT.length}
           />
         </div>
-      </InputField>
-      <InputField>
-        <InputField.Label htmlFor={'submit-method'} isRequired={true}>
+      </Field>
+      <Field>
+        <Field.Label htmlFor={'submit-method'} isRequired={true}>
           제출 방법
-        </InputField.Label>
+        </Field.Label>
         <Input
           id="submit-method"
           name="method"
@@ -152,12 +152,12 @@ export default function AssignmentForm({
           placeholder="제출 방법을 입력해주세요"
           required={true}
         />
-        <InputField.SubText errorText={fieldErrors.submissionMethod} />
-      </InputField>
-      <InputField>
-        <InputField.Label htmlFor={'assignment-close-at'} isRequired={true}>
+        <Field.SubText errorText={fieldErrors.submissionMethod} />
+      </Field>
+      <Field>
+        <Field.Label htmlFor={'assignment-close-at'} isRequired={true}>
           마감 시각
-        </InputField.Label>
+        </Field.Label>
         <DateTimePicker
           id="assignment-close-at"
           title="마감 시각 설정"
@@ -168,13 +168,13 @@ export default function AssignmentForm({
             setCloseAt(toLocalDateTime(value));
           }}
         />
-        <InputField.SubText errorText={fieldErrors.closeAt} />
-      </InputField>
+        <Field.SubText errorText={fieldErrors.closeAt} />
+      </Field>
 
-      <InputField>
-        <InputField.Label htmlFor={'leader-submission'} isRequired={true}>
+      <Field>
+        <Field.Label htmlFor={'leader-submission'} isRequired={true}>
           리드 제출 여부
-        </InputField.Label>
+        </Field.Label>
         <label css={checkboxLabelStyle}>
           <input
             id="leader-submission"
@@ -189,11 +189,11 @@ export default function AssignmentForm({
           />
           나도 과제를 제출할게요
         </label>
-        <InputField.SubText
+        <Field.SubText
           errorText={fieldErrors.submissionTarget}
           helpText={'체크하지 않으면 리드는 과제 제출 대상에서 제외돼요'}
         />
-      </InputField>
+      </Field>
 
       <Button
         type="submit"
