@@ -1,11 +1,10 @@
 import type { CSSProperties, SubmitEventHandler } from 'react';
 import { useState } from 'react';
 import Button from '../../../shared/ui/Button';
-import { ASSIGNMENT_SUBMISSION_CONTENT } from '../constants';
-import { Field } from '../../../shared/ui/inputs/Field';
-import Input from '../../../shared/ui/inputs/Input';
-import TextArea from '../../../shared/ui/inputs/TextArea';
+import InputField from '../../../shared/widgets/InputField';
+import TextAreaField from '../../../shared/widgets/TextAreaField';
 import { tokens, typography } from '../../../styles/global';
+import { ASSIGNMENT_SUBMISSION_CONTENT, ASSIGNMENT_SUBMISSION_LINK } from '../constants';
 import type { AssignmentSubmissionValue } from '../types';
 import { usePostHog } from '@posthog/react';
 
@@ -76,38 +75,29 @@ export default function AssignmentSubmissionForm({
       </h2>
 
       <form css={formStyle} onSubmit={submitAssignment}>
-        <Field data-testid="assignment-submission-content-field">
-          <Field.Label htmlFor={'assignment-submission-content'}>내용</Field.Label>
-          <TextArea
-            id="assignment-submission-content"
-            name="content"
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            maxLength={ASSIGNMENT_SUBMISSION_CONTENT.length}
-            placeholder="과제 내용을 입력해주세요"
-          />
-          <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Field.SubText errorText={fieldErrors.content} />
-            <Field.CurrentLength
-              currentLength={content.length}
-              maxLength={ASSIGNMENT_SUBMISSION_CONTENT.length}
-            />
-          </div>
-        </Field>
-        <Field>
-          <Field.Label htmlFor={'assignment-submission-link'} isRequired={true}>
-            링크
-          </Field.Label>
-          <Input
-            id="assignment-submission-link"
-            name="link"
-            type="url"
-            value={link}
-            onChange={(event) => setLink(event.target.value)}
-            placeholder="https://"
-          />
-          <Field.SubText errorText={fieldErrors.link} />
-        </Field>
+        <TextAreaField
+          id="assignment-submission-content"
+          name="content"
+          label="내용"
+          value={content}
+          onChange={(event) => setContent(event.target.value)}
+          maxLength={ASSIGNMENT_SUBMISSION_CONTENT.length}
+          placeholder="과제 내용을 입력해주세요"
+          errorText={fieldErrors.content}
+          testId="assignment-submission-content-field"
+          isRequired
+        />
+        <InputField
+          id="assignment-submission-link"
+          name="link"
+          label="링크"
+          type="url"
+          value={link}
+          onChange={(event) => setLink(event.target.value)}
+          maxLength={ASSIGNMENT_SUBMISSION_LINK.length}
+          placeholder="https://"
+          errorText={fieldErrors.link}
+        />
 
         <Button
           type="submit"
