@@ -36,7 +36,7 @@ export default function InputField({
       </Field.Label>
       <Input {...inputProps} id={id} value={value} maxLength={maxLength} required={isRequired} />
 
-      <div css={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div css={{ display: 'flex', justifyContent: hasSubText ? 'space-between' : 'flex-end' }}>
         {hasSubText && <Field.SubText errorText={errorText} helpText={helpText} />}
         <Field.CurrentLength currentLength={value.length} maxLength={maxLength} />
       </div>

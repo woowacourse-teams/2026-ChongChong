@@ -1,13 +1,12 @@
 import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
-import Input from '../../../shared/ui/inputs/Input';
-import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens } from '../../../styles/global';
-import { Field } from '../../../shared/ui/inputs/Field';
 import { NOTICE_TITLE, NOTICE_CONTENT } from '../constants';
 import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
+import InputField from '../../../shared/widgets/InputField';
+import TextAreaField from '../../../shared/widgets/TextAreaField';
 
 const formStyle = {
   display: 'flex',
@@ -64,50 +63,35 @@ export default function NoticeForm({
 
   return (
     <form css={formStyle} onSubmit={submitNotice}>
-      <Field data-testid="notice-title-field">
-        <Field.Label htmlFor="notice-title" isRequired={true}>
-          제목
-        </Field.Label>
-        <Input
-          id="notice-title"
-          value={title}
-          maxLength={NOTICE_TITLE.length}
-          autoFocus
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="제목을 입력해 주세요"
-          required={true}
-        />
-        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Field.SubText errorText={fieldErrors.title} />
-          <Field.CurrentLength currentLength={title.length} maxLength={NOTICE_TITLE.length} />
-        </div>
-      </Field>
-      <Field data-testid="notice-content-field">
-        <Field.Label htmlFor="notice-content" isRequired={true}>
-          내용
-        </Field.Label>
-        <TextArea
-          ref={contentRef}
-          id="notice-content"
-          name="content"
-          value={content}
-          maxLength={NOTICE_CONTENT.length}
-          placeholder="내용을 입력해주세요"
-          css={{ overflowY: 'hidden' }}
-          onChange={(event) => setContent(event.currentTarget.value)}
-          required={true}
-        />
-        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Field.SubText
-            errorText={fieldErrors.content}
-            helpText={'스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요'}
-          />
-          <Field.CurrentLength
-            currentLength={content.length}
-            maxLength={NOTICE_CONTENT.length}
-          />
-        </div>
-      </Field>
+      <InputField
+        id="notice-title"
+        label="제목"
+        value={title}
+        autoFocus
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder="제목을 입력해 주세요"
+        errorText={fieldErrors.title}
+        maxLength={NOTICE_TITLE.length}
+        isRequired
+        testId="notice-title-field"
+      />
+
+      <TextAreaField
+        ref={contentRef}
+        id="notice-content"
+        name="content"
+        label="내용"
+        value={content}
+        onChange={(event) => setContent(event.target.value)}
+        placeholder="내용을 입력해주세요"
+        errorText={fieldErrors.content}
+        helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
+        maxLength={NOTICE_CONTENT.length}
+        isRequired
+        testId="notice-content-field"
+        css={{ overflowY: 'hidden' }}
+      />
+
       <Button
         type="submit"
         variant="brandSolid"

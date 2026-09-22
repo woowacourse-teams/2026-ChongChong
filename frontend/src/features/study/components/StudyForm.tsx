@@ -1,8 +1,7 @@
 import { CSSProperties } from 'react';
-import Input from '../../../shared/ui/inputs/Input';
-import { Field } from '../../../shared/ui/inputs/Field';
-import TextArea from '../../../shared/ui/inputs/TextArea';
 import Button from '../../../shared/ui/Button';
+import InputField from '../../../shared/widgets/InputField';
+import TextAreaField from '../../../shared/widgets/TextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import { STUDY_NAME, STUDY_DESCRIPTION } from '../constants';
 import { tokens } from '../../../styles/global';
@@ -37,47 +36,27 @@ export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props
 
   return (
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
-      <Field data-testid="study-name-field">
-        <Field.Label htmlFor="study-name" isRequired={true}>
-          스터디 이름
-        </Field.Label>
-        <Input
-          id="study-name"
-          value={nameValue}
-          onChange={handleNameValue}
-          maxLength={STUDY_NAME.length}
-          required={true}
-        />
-        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Field.SubText
-            errorText={fieldErrors.name}
-            helpText={'스터디원에게 그대로 보여요'}
-          />
-          <Field.CurrentLength
-            currentLength={nameValue.length}
-            maxLength={STUDY_NAME.length}
-          />
-        </div>
-      </Field>
-      <Field data-testid="study-description-field">
-        <Field.Label htmlFor="study-description">어떤 스터디인가요?</Field.Label>
-        <TextArea
-          id="study-description"
-          value={descriptionValue}
-          onChange={handleDescriptionValue}
-          maxLength={STUDY_DESCRIPTION.length}
-        />
-        <div css={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Field.SubText
-            errorText={fieldErrors.description}
-            helpText={'모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요'}
-          />
-          <Field.CurrentLength
-            currentLength={descriptionValue.length}
-            maxLength={STUDY_DESCRIPTION.length}
-          />
-        </div>
-      </Field>
+      <InputField
+        id="study-name"
+        label="스터디 이름"
+        value={nameValue}
+        onChange={handleNameValue}
+        maxLength={STUDY_NAME.length}
+        helpText="스터디원에게 그대로 보여요"
+        errorText={fieldErrors.name}
+        isRequired
+        testId="study-name-field"
+      />
+      <TextAreaField
+        id="study-description"
+        label="어떤 스터디인가요?"
+        value={descriptionValue}
+        onChange={handleDescriptionValue}
+        maxLength={STUDY_DESCRIPTION.length}
+        helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요"
+        errorText={fieldErrors.description}
+        testId="study-description-field"
+      />
       <Button
         variant="brandSolid"
         size="large"

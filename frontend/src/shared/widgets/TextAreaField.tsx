@@ -1,9 +1,9 @@
-import type { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 import { Field } from '../ui/inputs/Field';
 import TextArea from '../ui/inputs/TextArea';
 
 interface TextAreaFieldProps extends Omit<
-  ComponentPropsWithoutRef<typeof TextArea>,
+  ComponentPropsWithRef<typeof TextArea>,
   'id' | 'required' | 'value' | 'maxLength'
 > {
   id: string;
@@ -42,7 +42,7 @@ export default function TextAreaField({
         required={isRequired}
       />
 
-      <div css={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div css={{ display: 'flex', justifyContent: hasSubText ? 'space-between' : 'flex-end' }}>
         {hasSubText && <Field.SubText errorText={errorText} helpText={helpText} />}
         <Field.CurrentLength currentLength={value.length} maxLength={maxLength} />
       </div>
