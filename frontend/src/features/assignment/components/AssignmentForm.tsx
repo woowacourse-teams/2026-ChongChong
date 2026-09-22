@@ -171,13 +171,10 @@ export default function AssignmentForm({
         <InputField.SubText errorText={fieldErrors.closeAt} />
       </InputField>
 
-      <Field
-        id="leader-submission"
-        label="리드 제출 여부"
-        isRequired
-        helpText="체크하지 않으면 리드는 과제 제출 대상에서 제외돼요"
-        isError={Boolean(fieldErrors.submissionTarget)}
-      >
+      <InputField>
+        <InputField.Label htmlFor={'leader-submission'} isRequired={true}>
+          리드 제출 여부
+        </InputField.Label>
         <label css={checkboxLabelStyle}>
           <input
             id="leader-submission"
@@ -188,10 +185,15 @@ export default function AssignmentForm({
             onChange={(event) =>
               setSubmissionTarget(event.target.checked ? 'MEMBERS_AND_LEADER' : 'MEMBERS_ONLY')
             }
+            required={true}
           />
           나도 과제를 제출할게요
         </label>
-      </Field>
+        <InputField.SubText
+          errorText={fieldErrors.submissionTarget}
+          helpText={'체크하지 않으면 리드는 과제 제출 대상에서 제외돼요'}
+        />
+      </InputField>
 
       <Button
         type="submit"
