@@ -10,6 +10,7 @@ import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import useWithdrawAccount from '../hooks/useWithdrawAccount';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
+import { usePostHog } from '@posthog/react';
 
 const menuItems = [
   {
@@ -38,12 +39,18 @@ export default function AccountMenuSection() {
   const toast = useToast();
   const [isOpen, openDialog, closeDialog] = useBooleanState();
 
-  const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({ mutationFn: logout });
+  const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({
+    mutationFn: logout,
+    onSuccess: () => posthog.reset(),
+  });
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawAccount();
+  const posthog = usePostHog();
 
   function handleLogout() {
     requestLogout(undefined, {
-      onSuccess: () => navigate('/login', { replace: true }),
+      onSuccess: () => {
+        navigate('/login', { replace: true });
+      },
       onError: (error) => {
         toast.open(<StatusToast message={error.message} status="Error" />);
       },
@@ -54,6 +61,7 @@ export default function AccountMenuSection() {
     withdraw(undefined, {
       onSuccess: () => {
         clearAccessToken();
+        posthog.reset();
         navigate('/login', { replace: true });
       },
       onError: (error) => {
