@@ -38,6 +38,7 @@ import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.auth.service.AuthTokenService;
 import withoutc.chongchong.auth.service.SocialLoginFacade;
+import withoutc.chongchong.auth.service.SocialLoginResult;
 import withoutc.chongchong.auth.social.SocialLoginCommand;
 import withoutc.chongchong.auth.social.SocialProvider;
 import withoutc.chongchong.auth.token.IssuedAccessToken;
@@ -78,7 +79,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Access Token 없이 로그인하고 Access Token JSON과 Refresh Token Cookie를 받는다")
     void loginWithoutAccessToken() throws Exception {
-        when(socialLoginFacade.login(any())).thenReturn(createIssuedTokenPair());
+        when(socialLoginFacade.login(any())).thenReturn(SocialLoginResult.of(USER_ID, createIssuedTokenPair()));
 
         mockMvc.perform(post("/api/auth/login")
                         .with(csrf())

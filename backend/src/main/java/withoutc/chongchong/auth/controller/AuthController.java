@@ -22,6 +22,7 @@ import withoutc.chongchong.auth.http.WebRefreshCookieReader;
 import withoutc.chongchong.auth.http.WebRefreshCookieWriter;
 import withoutc.chongchong.auth.service.AuthTokenService;
 import withoutc.chongchong.auth.service.SocialLoginFacade;
+import withoutc.chongchong.auth.service.SocialLoginResult;
 import withoutc.chongchong.auth.token.IssuedTokenPair;
 
 @RestController
@@ -45,8 +46,8 @@ public class AuthController {
     public ResponseEntity<SocialLoginResponse> login(
             @Valid @RequestBody SocialLoginRequest request
     ) {
-        IssuedTokenPair tokenPair = socialLoginFacade.login(request.toCommand());
-        return tokenResponse(tokenPair);
+        SocialLoginResult result = socialLoginFacade.login(request.toCommand());
+        return tokenResponse(result.tokenPair());
     }
 
     @PostMapping("/refresh")
