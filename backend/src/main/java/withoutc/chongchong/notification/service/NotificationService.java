@@ -18,9 +18,10 @@ import withoutc.chongchong.notice.entity.NoticeReminder;
 import withoutc.chongchong.notice.entity.NoticeReminderStatus;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
+import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
@@ -41,12 +42,18 @@ public class NotificationService {
 
     private final Clock clock;
 
+    public MyNotificationListResponse getMyNotifications(Long userId) {
+        List<Notification> notifications = notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(userId);
+
+        return MyNotificationListResponse.from(notifications);
+    }
+
     @Transactional
     public void createNoticeCreatedEventNotifications(Notice notice, List<StudyMember> recipients) {
         saveNoticeNotifications(notice, recipients, NotificationType.CREATED);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, notice.getId(),
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 notice.getStudy().getId(), notice.getTitle(), recipients);
         eventPublisher.publishEvent(notificationEvent);
     }
@@ -56,7 +63,7 @@ public class NotificationService {
         saveAssignmentNotifications(assignment, recipients, NotificationType.CREATED);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, assignment.getId(),
-                NotificationResourceType.ASSIGNMENT,
+                ResourceType.ASSIGNMENT,
                 assignment.getStudy().getId(), assignment.getTitle(), recipients);
         eventPublisher.publishEvent(notificationEvent);
     }
@@ -67,7 +74,7 @@ public class NotificationService {
         saveAssignmentSubmissionNotifications(submission, recipients);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.SUBMITTED, submission.getId(),
-                NotificationResourceType.ASSIGNMENT_SUBMISSION,
+                ResourceType.ASSIGNMENT_SUBMISSION,
                 submission.getAssignment().getStudy().getId(), submission.getContent(), recipients);
         eventPublisher.publishEvent(notificationEvent);
     }
@@ -90,7 +97,7 @@ public class NotificationService {
             saveNoticeNotifications(notice, recipients, NotificationType.REMIND);
             noticeReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, notice.getId(),
-                    NotificationResourceType.NOTICE,
+                    ResourceType.NOTICE,
                     notice.getStudy().getId(), notice.getTitle(), recipients);
             eventPublisher.publishEvent(notificationEvent);
         }
@@ -106,7 +113,7 @@ public class NotificationService {
             saveAssignmentNotifications(assignment, recipients, NotificationType.REMIND);
             assignmentReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, assignment.getId(),
-                    NotificationResourceType.ASSIGNMENT,
+                    ResourceType.ASSIGNMENT,
                     assignment.getStudy().getId(), assignment.getTitle(), recipients);
             eventPublisher.publishEvent(notificationEvent);
         }
@@ -118,8 +125,8 @@ public class NotificationService {
                 recipients,
                 type,
                 notice.getId(),
-                NotificationResourceType.NOTICE,
-                createTitle(study, NotificationResourceType.NOTICE),
+                ResourceType.NOTICE,
+                createTitle(study, ResourceType.NOTICE),
                 notice.getTitle(),
                 "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         );
@@ -132,8 +139,8 @@ public class NotificationService {
                 recipients,
                 type,
                 assignment.getId(),
-                NotificationResourceType.ASSIGNMENT,
-                createTitle(study, NotificationResourceType.ASSIGNMENT),
+                ResourceType.ASSIGNMENT,
+                createTitle(study, ResourceType.ASSIGNMENT),
                 assignment.getTitle(),
                 "/studies/%d/assignments/%d".formatted(study.getId(), assignment.getId())
         );
@@ -147,15 +154,15 @@ public class NotificationService {
                 recipients,
                 NotificationType.SUBMITTED,
                 submission.getId(),
-                NotificationResourceType.ASSIGNMENT_SUBMISSION,
-                createTitle(study, NotificationResourceType.ASSIGNMENT_SUBMISSION),
+                ResourceType.ASSIGNMENT_SUBMISSION,
+                createTitle(study, ResourceType.ASSIGNMENT_SUBMISSION),
                 "%s 스터디원이 과제를 제출했어요".formatted(submission.getMember().getName()),
                 "/studies/%d/assignments/%d/submissions/%d".formatted(
                         study.getId(), assignment.getId(), submission.getId())
         );
     }
 
-    private String createTitle(Study study, NotificationResourceType resourceType) {
+    private String createTitle(Study study, ResourceType resourceType) {
         return "[%s] 새 %s".formatted(study.getName(), resourceType.name);
     }
 
@@ -163,7 +170,7 @@ public class NotificationService {
             List<StudyMember> recipients,
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType,
+            ResourceType resourceType,
             String title,
             String body,
             String deepLink

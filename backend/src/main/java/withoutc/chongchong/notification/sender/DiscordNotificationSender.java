@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.sender.NotificationEvent.Recipient;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.repository.StudyRepository;
@@ -75,7 +75,7 @@ public class DiscordNotificationSender implements NotificationSender {
 
         String content = event.content();
 
-        if (event.resourceType() == NotificationResourceType.ASSIGNMENT_SUBMISSION) {
+        if (event.resourceType() == ResourceType.ASSIGNMENT_SUBMISSION) {
             AssignmentSubmission submission = submissionRepository.getByIdOrThrow(event.resourceId());
             content = String.format("%s 스터디원이 과제를 제출했어요", submission.getMember().getName());
         }
@@ -97,7 +97,7 @@ public class DiscordNotificationSender implements NotificationSender {
                 );
     }
 
-    private String generateLink(Long studyId, Long resourceId, NotificationResourceType resourceType) {
+    private String generateLink(Long studyId, Long resourceId, ResourceType resourceType) {
         return switch (resourceType) {
             case NOTICE -> frontendBaseUrl + "/studies/" + studyId + "/notices/" + resourceId;
             case ASSIGNMENT -> frontendBaseUrl + "/studies/" + studyId + "/assignments/" + resourceId;

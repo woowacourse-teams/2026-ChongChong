@@ -33,8 +33,8 @@ import withoutc.chongchong.notice.entity.NoticeReminderStatus;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
@@ -116,7 +116,7 @@ class NotificationServiceTest {
         assertThat(notification.getBody()).isEqualTo("과제 제목");
         assertThat(notification.getType()).isEqualTo(NotificationType.REMIND);
         assertThat(notification.getResourceId()).isEqualTo(ASSIGNMENT_ID);
-        assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT);
+        assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT);
         assertThat(notification.getDeepLink()).isEqualTo("/studies/1/assignments/200");
         assertThat(notification.isRead()).isFalse();
         verify(reminder).markAsSent();
@@ -157,7 +157,7 @@ class NotificationServiceTest {
         assertThat(notification.getBody()).isEqualTo("공지 제목");
         assertThat(notification.getType()).isEqualTo(NotificationType.REMIND);
         assertThat(notification.getResourceId()).isEqualTo(NOTICE_ID);
-        assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.NOTICE);
+        assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
         assertThat(notification.getDeepLink()).isEqualTo("/studies/1/notices/100");
         verify(reminder).markAsSent();
         verify(noticeRecipientRepository).findUnreadMembersByNoticeId(NOTICE_ID);
@@ -195,7 +195,7 @@ class NotificationServiceTest {
         assertThat(notification.getBody()).isEqualTo("제출자 스터디원이 과제를 제출했어요");
         assertThat(notification.getType()).isEqualTo(NotificationType.SUBMITTED);
         assertThat(notification.getResourceId()).isEqualTo(300L);
-        assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
         assertThat(notification.getDeepLink()).isEqualTo("/studies/1/assignments/200/submissions/300");
         assertThat(notification.isRead()).isFalse();
 
@@ -203,7 +203,7 @@ class NotificationServiceTest {
         NotificationEvent event = eventCaptor.getValue();
         assertThat(event.type()).isEqualTo(NotificationType.SUBMITTED);
         assertThat(event.resourceId()).isEqualTo(300L);
-        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
     }
 
     @Test

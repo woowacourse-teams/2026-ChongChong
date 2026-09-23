@@ -1,5 +1,6 @@
 package withoutc.chongchong.notification.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,4 +12,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Notification notification WHERE notification.recipient.id = :userId")
     int deleteAllByRecipientId(@Param("userId") Long userId);
+
+    List<Notification> findAllByRecipientIdOrderByCreatedAtDesc(Long userId);
 }

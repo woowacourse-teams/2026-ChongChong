@@ -18,6 +18,7 @@ tags:
   - { name: Assignment, description: 과제 API }
   - { name: Assignment Submission, description: 과제 제출물 API }
   - { name: Push Token, description: 푸시 토큰 API }
+  - { name: Notification, description: 알림 API }
 
 paths:
   /api/auth/csrf:
@@ -74,6 +75,8 @@ paths:
     $ref: './paths/push-tokens/collection.yaml'
   /api/push-tokens/{installationId}:
     $ref: './paths/push-tokens/detail.yaml'
+  /api/notifications:
+    $ref: './paths/notifications/collection.yaml'
 
 components:
   securitySchemes:

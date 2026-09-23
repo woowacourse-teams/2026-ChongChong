@@ -13,9 +13,9 @@ import withoutc.chongchong.notification.entity.DeliveryStatus;
 import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.PushToken;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.entity.TokenProvider;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -101,7 +101,7 @@ abstract class NotificationDeliveryRepositoryContractTest {
                 "공지 제목",
                 NotificationType.REMIND,
                 1L,
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 "/studies/%d/notices/1".formatted(study.getId())
         );
         return notificationRepository.saveAndFlush(notification);

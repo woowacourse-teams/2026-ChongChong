@@ -27,7 +27,7 @@ class NotificationTest {
                 BODY,
                 NotificationType.REMIND,
                 RESOURCE_ID,
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 DEEP_LINK
         );
 
@@ -36,7 +36,7 @@ class NotificationTest {
         assertThat(notification.getBody()).isEqualTo(BODY);
         assertThat(notification.getType()).isEqualTo(NotificationType.REMIND);
         assertThat(notification.getResourceId()).isEqualTo(RESOURCE_ID);
-        assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.NOTICE);
+        assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
         assertThat(notification.getDeepLink()).isEqualTo(DEEP_LINK);
         assertThat(notification.isRead()).isFalse();
     }
@@ -45,23 +45,23 @@ class NotificationTest {
     @DisplayName("알림의 필수 값이 없으면 생성할 수 없다")
     void rejectMissingRequiredValues() {
         assertInvalidNotification(null, TITLE, BODY, NotificationType.REMIND, RESOURCE_ID,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
         assertInvalidNotification(RECIPIENT, null, BODY, NotificationType.REMIND, RESOURCE_ID,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
         assertInvalidNotification(RECIPIENT, TITLE, null, NotificationType.REMIND, RESOURCE_ID,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
         assertInvalidNotification(RECIPIENT, TITLE, BODY, null, RESOURCE_ID,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
         assertInvalidNotification(RECIPIENT, TITLE, BODY, NotificationType.REMIND, null,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
         assertInvalidNotification(RECIPIENT, TITLE, BODY, NotificationType.REMIND, RESOURCE_ID, null,
                 DEEP_LINK);
         assertInvalidNotification(RECIPIENT, TITLE, BODY, NotificationType.REMIND, RESOURCE_ID,
-                NotificationResourceType.NOTICE, null);
+                ResourceType.NOTICE, null);
         assertInvalidNotification(RECIPIENT, " ", BODY, NotificationType.REMIND, RESOURCE_ID,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
         assertInvalidNotification(RECIPIENT, TITLE, " ", NotificationType.REMIND, RESOURCE_ID,
-                NotificationResourceType.NOTICE, DEEP_LINK);
+                ResourceType.NOTICE, DEEP_LINK);
     }
 
     private void assertInvalidNotification(
@@ -70,7 +70,7 @@ class NotificationTest {
             String body,
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType,
+            ResourceType resourceType,
             String deepLink
     ) {
         assertThatThrownBy(() -> Notification.create(

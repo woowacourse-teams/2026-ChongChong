@@ -11,7 +11,6 @@ import io.restassured.http.ContentType;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,17 +20,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import withoutc.chongchong.assignment.entity.SubmissionTarget;
-import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -667,8 +666,8 @@ class StudyAcceptanceTest {
         assignment.initializeSubmissions(List.of(memberStudyMember));
         assignmentRepository.saveAndFlush(assignment);
 
-        saveNotification(study, memberStudyMember, notice.getId(), NotificationResourceType.NOTICE);
-        saveNotification(study, memberStudyMember, assignment.getId(), NotificationResourceType.ASSIGNMENT);
+        saveNotification(study, memberStudyMember, notice.getId(), ResourceType.NOTICE);
+        saveNotification(study, memberStudyMember, assignment.getId(), ResourceType.ASSIGNMENT);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
                 .port(port)
@@ -785,9 +784,9 @@ class StudyAcceptanceTest {
             Study study,
             StudyMember recipient,
             Long resourceId,
-            NotificationResourceType resourceType
+            ResourceType resourceType
     ) {
-        String resourcePath = resourceType == NotificationResourceType.NOTICE ? "notices" : "assignments";
+        String resourcePath = resourceType == ResourceType.NOTICE ? "notices" : "assignments";
         Notification notification = Notification.create(
                 recipient.getUser(),
                 "[스터디] 새 " + resourceType.name,

@@ -47,7 +47,7 @@ public class Notification extends BaseEntity {
 
     @Column(name = "resource_type", nullable = false)
     @Enumerated(EnumType.STRING)
-    private NotificationResourceType resourceType;
+    private ResourceType resourceType;
 
     @Column(name = "deep_link", nullable = false)
     private String deepLink;
@@ -61,7 +61,7 @@ public class Notification extends BaseEntity {
             String body,
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType,
+            ResourceType resourceType,
             String deepLink
     ) {
         return new Notification(recipient, title, body, type, resourceId, resourceType, deepLink);
@@ -73,7 +73,7 @@ public class Notification extends BaseEntity {
             String body,
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType,
+            ResourceType resourceType,
             String deepLink
     ) {
         if (recipient == null || title == null || title.isBlank() || body == null || body.isBlank()
@@ -89,7 +89,7 @@ public class Notification extends BaseEntity {
             String body,
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType,
+            ResourceType resourceType,
             String deepLink
     ) {
         validateRequiredValues(recipient, title, body, type, resourceId, resourceType, deepLink);

@@ -9,8 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -67,7 +67,7 @@ class NotificationRepositoryTest {
                 "공지 제목",
                 NotificationType.REMIND,
                 resourceId,
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 "/studies/%d/notices/%d".formatted(study.getId(), resourceId)
         );
         notificationRepository.saveAndFlush(notification);

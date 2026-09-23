@@ -1,14 +1,14 @@
 package withoutc.chongchong.notification.sender;
 
 import java.util.List;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.study.entity.StudyMember;
 
 public record NotificationEvent(
         NotificationType type,
         Long resourceId,
-        NotificationResourceType resourceType,
+        ResourceType resourceType,
         Long studyId,
         String content,
         List<Recipient> recipients
@@ -17,7 +17,7 @@ public record NotificationEvent(
     public static NotificationEvent create(
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType,
+            ResourceType resourceType,
             Long studyId,
             String content,
             List<StudyMember> recipients

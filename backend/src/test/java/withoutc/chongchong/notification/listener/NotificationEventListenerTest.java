@@ -11,8 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.ResourceAccessException;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.notification.sender.NotificationSender;
 
@@ -49,7 +49,7 @@ class NotificationEventListenerTest {
         return new NotificationEvent(
                 NotificationType.CREATED,
                 1L,
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 1L,
                 "공지 제목",
                 List.of()
