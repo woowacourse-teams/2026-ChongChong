@@ -46,15 +46,18 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.myRead(studyId, noticeId)],
   });
-  const hasRequestedReadRef = useRef(readStatus.isRead);
-  const [readProgress, setReadProgress] = useState(() => (readStatus.isRead ? 100 : 0));
+  const canMarkAsRead = readStatus.readStatus === 'UNREAD';
+  const hasRequestedReadRef = useRef(!canMarkAsRead);
+  const [readProgress, setReadProgress] = useState(() =>
+    readStatus.readStatus === 'READ' ? 100 : 0,
+  );
 
   const updateReadMutation = useMutation({
     mutationFn: () => updateNoticeRead(studyId, noticeId),
     retry: 2,
     onSuccess: (updatedReadStatus) => {
       queryClient.setQueryData(noticeQueries.myRead(studyId, noticeId).queryKey, {
-        isRead: true,
+        readStatus: 'READ',
         readAt: updatedReadStatus.readAt,
       });
       queryClient.invalidateQueries({ queryKey: noticeQueries.lists(studyId) });
@@ -67,13 +70,15 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   const markAsRead = updateReadMutation.mutate;
 
   const requestMarkAsRead = () => {
-    if (hasRequestedReadRef.current) return;
+    if (!canMarkAsRead || hasRequestedReadRef.current) return;
 
     hasRequestedReadRef.current = true;
     markAsRead();
   };
 
   useEffect(() => {
+    if (!canMarkAsRead) return;
+
     const content = contentRef.current;
     const contentBody = contentBodyRef.current;
 
@@ -96,7 +101,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     resizeObserver.observe(contentBody);
 
     return () => resizeObserver.disconnect();
-  }, [markAsRead]);
+  }, [canMarkAsRead, markAsRead]);
 
   const updateReadProgress = (event: UIEvent<HTMLDivElement>) => {
     const nextProgress = calculateReadProgress(event.currentTarget);
@@ -108,25 +113,30 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     }
   };
 
-  const isRead = readStatus.isRead || updateReadMutation.isSuccess;
+  const isRead = readStatus.readStatus === 'READ' || updateReadMutation.isSuccess;
   const readAt = updateReadMutation.data?.readAt ?? readStatus.readAt;
 
   return (
     <>
-      <div ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
+      <div
+        ref={contentRef}
+        css={contentStyle}
+        onScroll={canMarkAsRead ? updateReadProgress : undefined}
+      >
         <div ref={contentBodyRef}>
           <NoticeArticle notice={notice} hasTopMargin={false} />
         </div>
       </div>
-
-      <div css={readStateStyle}>
-        <MemberNoticeReadState
-          progress={readProgress}
-          isRead={isRead}
-          readAt={readAt ? formatRelativeTime(readAt) : undefined}
-          showCompletionToast={updateReadMutation.isSuccess && !readStatus.isRead}
-        />
-      </div>
+      {readStatus.readStatus !== 'NOT_ASSIGNED' && (
+        <div css={readStateStyle}>
+          <MemberNoticeReadState
+            progress={readProgress}
+            isRead={isRead}
+            readAt={readAt ? formatRelativeTime(readAt) : undefined}
+            showCompletionToast={updateReadMutation.isSuccess && canMarkAsRead}
+          />
+        </div>
+      )}
     </>
   );
 }
