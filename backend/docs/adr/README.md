@@ -52,3 +52,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0033](0033-create-logical-reminder-notifications.md)                            | 리마인드 시각에 논리 알림을 생성하고 발송·동시성 전략은 후속으로 결정한다 |
 | [0034](0034-delete-user-account-in-one-transaction.md)                             | 사용자 탈퇴를 단일 트랜잭션에서 검증하고 삭제한다 |
 | [0035](0035-detect-notification-events-in-backend-and-separate-channel-delivery.md) | 수동 알림 검증 방식 검토 및 선택 |
+| [0036](0036-provide-user-id-in-login-response.md)                                    | 로그인 응답에 사용자 식별자를 제공한다 |
