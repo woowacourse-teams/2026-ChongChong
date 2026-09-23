@@ -2,17 +2,21 @@ import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
 import { Link } from 'react-router';
-import { Notice } from '../types';
-import { ReactNode } from 'react';
+import type { Notice } from '../types';
+import type { ReactNode } from 'react';
 import { formatRelativeTime } from '../../../shared/utils/formatDate';
 
-interface AssigmentListProps {
-  notices: Notice[];
+interface NoticeListProps<T extends Notice> {
+  notices: T[];
   studyId: number;
-  children: (assignment: Notice) => ReactNode;
+  children: (notice: T) => ReactNode;
 }
 
-export default function AssigmentList({ notices, studyId, children }: AssigmentListProps) {
+export default function NoticeList<T extends Notice>({
+  notices,
+  studyId,
+  children,
+}: NoticeListProps<T>) {
   return (
     <List>
       {notices.map((notice) => (
