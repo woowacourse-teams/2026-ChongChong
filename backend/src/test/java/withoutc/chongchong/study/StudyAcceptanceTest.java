@@ -15,24 +15,22 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
-import withoutc.chongchong.assignment.entity.SubmissionTarget;
-import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -103,9 +101,8 @@ class StudyAcceptanceTest {
         configureCascadeIfColumnExists(
                 "notice_recipients", "member_id", "study_members", "fkpm6u1t0n3px52tld2apx6oess");
         configureCascadeIfColumnExists("notice_reminders", "notice_id", "notices", "fko0h19ha7jyrdtym2iy97ip03n");
-        configureCascadeIfColumnExists("notifications", "study_id", "studies", "fko5m57o40ivnn0td7m511dx42k");
         configureCascadeIfColumnExists(
-                "notifications", "recipient_id", "study_members", "fk60prjsdd6ahrlv3ayvjjqdlqi");
+                "notifications", "recipient_id", "users", "fk60prjsdd6ahrlv3ayvjjqdlqi");
     }
 
     @AfterEach
@@ -669,8 +666,8 @@ class StudyAcceptanceTest {
         assignment.initializeSubmissions(List.of(memberStudyMember));
         assignmentRepository.saveAndFlush(assignment);
 
-        saveNotification(study, memberStudyMember, notice.getId(), NotificationResourceType.NOTICE);
-        saveNotification(study, memberStudyMember, assignment.getId(), NotificationResourceType.ASSIGNMENT);
+        saveNotification(study, memberStudyMember, notice.getId(), ResourceType.NOTICE);
+        saveNotification(study, memberStudyMember, assignment.getId(), ResourceType.ASSIGNMENT);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
                 .port(port)
@@ -685,7 +682,7 @@ class StudyAcceptanceTest {
         assertThat(noticeRecipientRepository.findAll()).isEmpty();
         assertThat(assignmentRepository.findAll()).isEmpty();
         assertThat(assignmentSubmissionRepository.findAll()).isEmpty();
-        assertThat(notificationRepository.findAll()).isEmpty();
+        assertThat(notificationRepository.findAll()).hasSize(2);
     }
 
     @Test
@@ -787,14 +784,18 @@ class StudyAcceptanceTest {
             Study study,
             StudyMember recipient,
             Long resourceId,
-            NotificationResourceType resourceType
+            ResourceType resourceType
     ) {
-        Notification notification = BeanUtils.instantiateClass(Notification.class);
-        ReflectionTestUtils.setField(notification, "study", study);
-        ReflectionTestUtils.setField(notification, "recipient", recipient);
-        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
-        ReflectionTestUtils.setField(notification, "resourceId", resourceId);
-        ReflectionTestUtils.setField(notification, "resourceType", resourceType);
+        String resourcePath = resourceType == ResourceType.NOTICE ? "notices" : "assignments";
+        Notification notification = Notification.create(
+                recipient.getUser(),
+                "[스터디] 새 " + resourceType.name,
+                "알림",
+                NotificationType.REMIND,
+                resourceId,
+                resourceType,
+                "/studies/%d/%s/%d".formatted(study.getId(), resourcePath, resourceId)
+        );
         notificationRepository.saveAndFlush(notification);
     }
 }

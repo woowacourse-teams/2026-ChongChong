@@ -2,8 +2,8 @@ package withoutc.chongchong.notice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -28,10 +28,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
+import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.notification.support.TestNotificationSender;
 import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
@@ -210,7 +210,7 @@ class NoticeApiTest {
         NotificationEvent event = notificationSender.events().getFirst();
         assertThat(event.type()).isEqualTo(NotificationType.CREATED);
         assertThat(event.resourceId()).isEqualTo(createdNoticeId);
-        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.NOTICE);
+        assertThat(event.resourceType()).isEqualTo(ResourceType.NOTICE);
         assertThat(event.studyId()).isEqualTo(study.getId());
         assertThat(event.content()).isEqualTo(maxLengthTitle);
         assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
@@ -777,7 +777,7 @@ class NoticeApiTest {
                 notice.getId(),
                 member.getId()
         );
-        insertNotification(secondMember.getId(), notice.getId(), "NOTICE", lastRemindAt);
+        insertNotification(secondMember.getUser().getId(), notice.getId(), "NOTICE", lastRemindAt);
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -829,14 +829,16 @@ class NoticeApiTest {
     }
 
     private void insertNotification(Long recipientId, Long resourceId, String resourceType, LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update(
                 """
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                study.getId(),
                 recipientId,
+                title,
                 resourceId,
                 resourceType,
                 createdAt,

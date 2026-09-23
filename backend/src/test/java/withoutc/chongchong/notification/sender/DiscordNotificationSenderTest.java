@@ -21,8 +21,8 @@ import org.springframework.web.client.RestClient;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyRepository;
@@ -55,7 +55,7 @@ class DiscordNotificationSenderTest {
         NotificationEvent event = new NotificationEvent(
                 NotificationType.CREATED,
                 10L,
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 3L,
                 "공지 제목",
                 List.of(new NotificationEvent.Recipient(20L, "멤버"))
@@ -108,7 +108,7 @@ class DiscordNotificationSenderTest {
         NotificationEvent event = new NotificationEvent(
                 NotificationType.SUBMITTED,
                 9L,
-                NotificationResourceType.ASSIGNMENT_SUBMISSION,
+                ResourceType.ASSIGNMENT_SUBMISSION,
                 3L,
                 "제출 내용",
                 List.of(new NotificationEvent.Recipient(30L, "리더"))

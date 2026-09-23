@@ -42,6 +42,7 @@ ErrorResponse:
         - USER_NOT_FOUND
         - NOTICE_NOT_FOUND
         - NOTICE_RECIPIENT_NOT_FOUND
+        - NOTIFICATION_NOT_FOUND
         - ASSIGNMENT_NOT_FOUND
         - ASSIGNMENT_SUBMISSION_NOT_FOUND
         - INVALID_TITLE
@@ -95,6 +96,7 @@ StudyNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { c
 StudyMemberNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_MEMBER_NOT_FOUND }, message: { const: 존재하지 않는 스터디 멤버입니다. } } }], examples: [{ code: STUDY_MEMBER_NOT_FOUND, message: 존재하지 않는 스터디 멤버입니다. }] }
 UserNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: USER_NOT_FOUND }, message: { const: 해당 사용자를 찾을 수 없습니다. } } }], examples: [{ code: USER_NOT_FOUND, message: 해당 사용자를 찾을 수 없습니다. }] }
 NoticeNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_NOT_FOUND }, message: { const: 존재하지 않는 공지입니다. } } }], examples: [{ code: NOTICE_NOT_FOUND, message: 존재하지 않는 공지입니다. }] }
+NotificationNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_NOT_FOUND }, message: { const: 존재하지 않는 알림입니다. } } }], examples: [{ code: NOTIFICATION_NOT_FOUND, message: 존재하지 않는 알림입니다. }] }
 NoticeRecipientNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_RECIPIENT_NOT_FOUND }, message: { const: 공지 수신자 정보를 찾을 수 없습니다. } } }], examples: [{ code: NOTICE_RECIPIENT_NOT_FOUND, message: 공지 수신자 정보를 찾을 수 없습니다. }] }
 AssignmentNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ASSIGNMENT_NOT_FOUND }, message: { const: 존재하지 않는 과제입니다. } } }], examples: [{ code: ASSIGNMENT_NOT_FOUND, message: 존재하지 않는 과제입니다. }] }
 AssignmentSubmissionNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ASSIGNMENT_SUBMISSION_NOT_FOUND }, message: { const: 존재하지 않는 제출물입니다. } } }], examples: [{ code: ASSIGNMENT_SUBMISSION_NOT_FOUND, message: 존재하지 않는 제출물입니다. }] }

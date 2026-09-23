@@ -6,18 +6,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.notification.entity.DeliveryStatus;
 import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.PushToken;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.entity.TokenProvider;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -97,12 +95,15 @@ abstract class NotificationDeliveryRepositoryContractTest {
     }
 
     private Notification saveNotification(Study study, StudyMember recipient) {
-        Notification notification = BeanUtils.instantiateClass(Notification.class);
-        ReflectionTestUtils.setField(notification, "study", study);
-        ReflectionTestUtils.setField(notification, "recipient", recipient);
-        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
-        ReflectionTestUtils.setField(notification, "resourceId", 1L);
-        ReflectionTestUtils.setField(notification, "resourceType", NotificationResourceType.NOTICE);
+        Notification notification = Notification.create(
+                recipient.getUser(),
+                "[스터디] 새 공지",
+                "공지 제목",
+                NotificationType.REMIND,
+                1L,
+                ResourceType.NOTICE,
+                "/studies/%d/notices/1".formatted(study.getId())
+        );
         return notificationRepository.saveAndFlush(notification);
     }
 

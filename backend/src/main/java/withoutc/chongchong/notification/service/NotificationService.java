@@ -18,8 +18,10 @@ import withoutc.chongchong.notice.entity.NoticeReminder;
 import withoutc.chongchong.notice.entity.NoticeReminderStatus;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
+import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
+import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
@@ -40,13 +42,26 @@ public class NotificationService {
 
     private final Clock clock;
 
+    public MyNotificationListResponse getMyNotifications(Long userId) {
+        List<Notification> notifications = notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(userId);
+
+        return MyNotificationListResponse.from(notifications);
+    }
+
+    @Transactional
+    public void readNotification(Long userId, Long notificationId) {
+        Notification notification = notificationRepository.getByIdAndRecipientIdOrElseThrow(notificationId, userId);
+
+        notification.read();
+    }
+
     @Transactional
     public void createNoticeCreatedEventNotifications(Notice notice, List<StudyMember> recipients) {
         saveNotifications(notice.getStudy(), recipients, NotificationType.CREATED, notice.getId(),
-                NotificationResourceType.NOTICE);
+                ResourceType.NOTICE);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, notice.getId(),
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 notice.getStudy().getId(), notice.getTitle(), recipients);
         eventPublisher.publishEvent(notificationEvent);
     }
@@ -54,10 +69,10 @@ public class NotificationService {
     @Transactional
     public void createAssignmentCreatedEventNotifications(Assignment assignment, List<StudyMember> recipients) {
         saveNotifications(assignment.getStudy(), recipients, NotificationType.CREATED, assignment.getId(),
-                NotificationResourceType.ASSIGNMENT);
+                ResourceType.ASSIGNMENT);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, assignment.getId(),
-                NotificationResourceType.ASSIGNMENT,
+                ResourceType.ASSIGNMENT,
                 assignment.getStudy().getId(), assignment.getTitle(), recipients);
         eventPublisher.publishEvent(notificationEvent);
     }
@@ -66,10 +81,10 @@ public class NotificationService {
     public void createAssignmentSubmissionSubmittedEventNotifications(AssignmentSubmission submission,
                                                                       List<StudyMember> recipients) {
         saveNotifications(submission.getAssignment().getStudy(), recipients, NotificationType.SUBMITTED,
-                submission.getId(), NotificationResourceType.ASSIGNMENT_SUBMISSION);
+                submission.getId(), ResourceType.ASSIGNMENT_SUBMISSION);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.SUBMITTED, submission.getId(),
-                NotificationResourceType.ASSIGNMENT_SUBMISSION,
+                ResourceType.ASSIGNMENT_SUBMISSION,
                 submission.getAssignment().getStudy().getId(), submission.getContent(), recipients);
         eventPublisher.publishEvent(notificationEvent);
     }
@@ -90,10 +105,10 @@ public class NotificationService {
             List<StudyMember> recipients = noticeRecipientRepository.findUnreadMembersByNoticeId(
                     notice.getId());
             saveNotifications(notice.getStudy(), recipients, NotificationType.REMIND, notice.getId(),
-                    NotificationResourceType.NOTICE);
+                    ResourceType.NOTICE);
             noticeReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, notice.getId(),
-                    NotificationResourceType.NOTICE,
+                    ResourceType.NOTICE,
                     notice.getStudy().getId(), notice.getTitle(), recipients);
             eventPublisher.publishEvent(notificationEvent);
         }
@@ -107,21 +122,17 @@ public class NotificationService {
             List<StudyMember> recipients = assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(
                     assignment.getId());
             saveNotifications(assignment.getStudy(), recipients, NotificationType.REMIND, assignment.getId(),
-                    NotificationResourceType.ASSIGNMENT);
+                    ResourceType.ASSIGNMENT);
             assignmentReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, assignment.getId(),
-                    NotificationResourceType.ASSIGNMENT,
+                    ResourceType.ASSIGNMENT,
                     assignment.getStudy().getId(), assignment.getTitle(), recipients);
             eventPublisher.publishEvent(notificationEvent);
         }
     }
 
-    // TODO: 자동 알림 구현 후 주석 처리 해제
+    // TODO: 자동 알림 구현 후 Notification 저장을 다시 활성화한다.
     private void saveNotifications(Study study, List<StudyMember> recipients, NotificationType type, Long resourceId,
-                                   NotificationResourceType resourceType) {
-//        for (StudyMember recipient : recipients) {
-//            Notification notification = Notification.create(study, recipient, type, resourceId, resourceType);
-//            notificationRepository.save(notification);
-//        }
+                                   ResourceType resourceType) {
     }
 }

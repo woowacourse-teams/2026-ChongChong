@@ -37,8 +37,8 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.notification.support.TestNotificationSender;
 import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
@@ -137,7 +137,8 @@ class AssignmentApiTest {
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .contentType(ContentType.JSON)
-                .body(Map.of("title", "가".repeat(101), "content", "과제 내용", "submissionMethod", "링크 제출", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .body(Map.of("title", "가".repeat(101), "content", "과제 내용", "submissionMethod", "링크 제출", "closeAt",
+                        closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()
@@ -197,10 +198,10 @@ class AssignmentApiTest {
                           "remindAts": ["%s"]
                         }
                         """.formatted(
-                                maxLengthTitle,
-                                newCloseAt.format(REQUEST_DATE_TIME_FORMATTER),
-                                newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)
-                        ))
+                        maxLengthTitle,
+                        newCloseAt.format(REQUEST_DATE_TIME_FORMATTER),
+                        newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)
+                ))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
                 .then()
@@ -217,7 +218,7 @@ class AssignmentApiTest {
         NotificationEvent event = notificationSender.events().getFirst();
         assertThat(event.type()).isEqualTo(NotificationType.CREATED);
         assertThat(event.resourceId()).isEqualTo(createdAssignmentId);
-        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT);
+        assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT);
         assertThat(event.studyId()).isEqualTo(study.getId());
         assertThat(event.content()).isEqualTo(maxLengthTitle);
         assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
@@ -369,9 +370,9 @@ class AssignmentApiTest {
                           "remindAts": ["%s"]
                         }
                         """.formatted(
-                                newCloseAt.format(REQUEST_DATE_TIME_FORMATTER),
-                                newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)
-                        ))
+                        newCloseAt.format(REQUEST_DATE_TIME_FORMATTER),
+                        newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)
+                ))
                 .when()
                 .patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
                 .then()
@@ -547,7 +548,7 @@ class AssignmentApiTest {
         NotificationEvent event = notificationSender.events().getFirst();
         assertThat(event.type()).isEqualTo(NotificationType.SUBMITTED);
         assertThat(event.resourceId()).isEqualTo(submissionId);
-        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
         assertThat(event.studyId()).isEqualTo(study.getId());
         assertThat(event.content()).isEqualTo("제출 내용");
         assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
@@ -888,10 +889,10 @@ class AssignmentApiTest {
         assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
         assertThat(jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*) FROM assignment_submissions
-                WHERE assignment_id = ? AND member_id = ? AND id <> ?
-                  AND content IS NULL AND link IS NULL AND submitted_at IS NULL
-                """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
+                        SELECT COUNT(*) FROM assignment_submissions
+                        WHERE assignment_id = ? AND member_id = ? AND id <> ?
+                          AND content IS NULL AND link IS NULL AND submitted_at IS NULL
+                        """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
     }
 
     private void updateSubmissionTarget(SubmissionTarget target) {
@@ -918,7 +919,7 @@ class AssignmentApiTest {
     }
 
     private Assignment createAssignment(String title, String content, String submissionMethod,
-                                          LocalDateTime assignmentCloseAt, LocalDateTime assignmentRemindAt) {
+                                        LocalDateTime assignmentCloseAt, LocalDateTime assignmentRemindAt) {
         LocalDateTime now = LocalDateTime.now(CLOCK);
         Assignment newAssignment = Assignment.create(
                 study,

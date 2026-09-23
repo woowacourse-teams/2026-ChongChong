@@ -1,6 +1,13 @@
 package withoutc.chongchong.user;
 
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+
 import io.restassured.response.Response;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,7 +16,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
+import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.entity.AuthSession;
 import withoutc.chongchong.auth.entity.SocialAccount;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
@@ -17,18 +27,15 @@ import withoutc.chongchong.auth.repository.SocialAccountRepository;
 import withoutc.chongchong.auth.social.SocialProvider;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.auth.token.HashedRefreshToken;
-import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.assignment.repository.AssignmentRepository;
-import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.PushToken;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.entity.TokenProvider;
 import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 import withoutc.chongchong.notification.repository.NotificationRepository;
@@ -41,14 +48,6 @@ import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -195,18 +194,31 @@ public class UserWithdrawalAcceptanceTest {
 
         LocalDateTime now = LocalDateTime.of(2026, 9, 20, 12, 0);
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크",
-                SubmissionTarget.MEMBERS_ONLY,now.plusDays(1), now);
+                SubmissionTarget.MEMBERS_ONLY, now.plusDays(1), now);
         assignment.initializeSubmissions(List.of(withdrawingMember, remainingMember));
         assignmentRepository.saveAndFlush(assignment);
 
         Notification withdrawingNotification = notificationRepository.saveAndFlush(Notification.create(
-                study, withdrawingMember, NotificationType.REMIND, notice.getId(), NotificationResourceType.NOTICE
+                withdrawingUser,
+                "[자바 스터디] 새 공지",
+                "내용",
+                NotificationType.REMIND,
+                notice.getId(),
+                ResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         ));
         Notification remainingNotification = notificationRepository.saveAndFlush(Notification.create(
-                study, remainingMember, NotificationType.REMIND, notice.getId(), NotificationResourceType.NOTICE
+                remainingUser,
+                "[자바 스터디] 새 공지",
+                "내용",
+                NotificationType.REMIND,
+                notice.getId(),
+                ResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         ));
         PushToken withdrawingToken = pushTokenRepository.saveAndFlush(PushToken.create(
-                withdrawingUser, "withdraw-member-installation", TokenProvider.EXPO, "withdraw-token", DevicePlatform.ANDROID
+                withdrawingUser, "withdraw-member-installation", TokenProvider.EXPO, "withdraw-token",
+                DevicePlatform.ANDROID
         ));
         PushToken remainingToken = pushTokenRepository.saveAndFlush(PushToken.create(
                 remainingUser, "remain-member-installation", TokenProvider.EXPO, "remain-token", DevicePlatform.ANDROID

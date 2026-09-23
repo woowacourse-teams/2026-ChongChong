@@ -88,6 +88,9 @@ StudyMemberNotFound:
 NoticeNotFound:
   description: 공지가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeNotFoundError' } } }
+NotificationNotFound:
+  description: 알림이 존재하지 않거나 현재 사용자의 알림이 아님
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NotificationNotFoundError' } } }
 NoticeRecipientNotFound:
   description: 현재 사용자의 공지 수신자 정보가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeRecipientNotFoundError' } } }
