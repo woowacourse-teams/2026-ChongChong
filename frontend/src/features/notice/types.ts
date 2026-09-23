@@ -1,23 +1,34 @@
 export interface NoticeFormValues {
   title: string;
   content: string;
-  remindAts?: string[];
+  remindAts?: string[] | null;
 }
 
 export interface CreateNoticeResponse {
   noticeId: number;
 }
 
-export interface Notice {
+export type NoticeReadState = 'NOT_ASSIGNED' | 'UNREAD' | 'READ';
+
+interface NoticeSummaryBase {
   id: number;
   title: string;
   content: string;
   createdAt: string;
-  recipientCount?: number;
-  readRecipientCount?: number;
-  remindAt?: string | null;
+}
+
+export interface LeaderNoticeSummary extends NoticeSummaryBase {
+  recipientCount: number;
+  readRecipientCount: number;
+  remindAt?: string;
   isComplete: boolean;
 }
+
+export interface MemberNoticeSummary extends NoticeSummaryBase {
+  readStatus: NoticeReadState;
+}
+
+export type Notice = LeaderNoticeSummary | MemberNoticeSummary;
 
 export interface NoticeListResponse {
   nextCursor: number | null;
@@ -29,7 +40,10 @@ export interface Member {
   id: number;
   name: string;
   profileImage: string | null;
-  lastRemindAt?: string | null;
+}
+
+export interface UnreadNoticeMember extends Member {
+  lastRemindAt: string | null;
 }
 
 export interface NoticeReadStatus {
@@ -37,9 +51,9 @@ export interface NoticeReadStatus {
   memberCount: number;
   readCount: number;
   unreadCount: number;
-  remindAt?: string | null;
+  remindAt: string | null;
   readMembers: Member[];
-  unreadMembers: Member[];
+  unreadMembers: UnreadNoticeMember[];
 }
 
 export interface NoticeDetail {
@@ -49,10 +63,15 @@ export interface NoticeDetail {
   createdAt: string;
 }
 
-export interface MemberReadStatus {
-  isRead: boolean;
-  readAt: string | null;
-}
+export type MemberReadStatus =
+  | {
+      readStatus: 'READ';
+      readAt: string;
+    }
+  | {
+      readStatus: 'UNREAD' | 'NOT_ASSIGNED';
+      readAt?: never;
+    };
 
 export type UpdateNoticeValue = Partial<NoticeFormValues>;
 

@@ -4,22 +4,37 @@ import {
   Notice,
   NoticeListResponse,
   Member,
+  UnreadNoticeMember,
   NoticeReadStatus,
   NoticeDetail,
   MemberReadStatus,
   UpdateNoticeReadResponse,
+  LeaderNoticeSummary,
+  MemberNoticeSummary,
 } from './types';
 
-const noticeSchema = z.object({
+const noticeSummaryBaseSchema = z.object({
   id: z.number(),
   title: z.string(),
   content: z.string(),
   createdAt: z.string(),
-  recipientCount: z.number().optional(),
-  readRecipientCount: z.number().optional(),
-  remindAt: z.string().nullish(),
+});
+
+const leaderNoticeSummarySchema = noticeSummaryBaseSchema.extend({
+  recipientCount: z.number(),
+  readRecipientCount: z.number(),
+  remindAt: z.string().optional(),
   isComplete: z.boolean(),
-}) satisfies z.ZodType<Notice>;
+}) satisfies z.ZodType<LeaderNoticeSummary>;
+
+const memberNoticeSummarySchema = noticeSummaryBaseSchema.extend({
+  readStatus: z.enum(['NOT_ASSIGNED', 'UNREAD', 'READ']),
+}) satisfies z.ZodType<MemberNoticeSummary>;
+
+const noticeSchema = z.union([
+  leaderNoticeSummarySchema,
+  memberNoticeSummarySchema,
+]) satisfies z.ZodType<Notice>;
 
 const noticeListSchema = z.object({
   nextCursor: z.number().nullable(),
@@ -42,23 +57,34 @@ const memberSchema = z.object({
   id: z.number(),
   name: z.string(),
   profileImage: z.string().nullable(),
-  lastRemindAt: z.string().nullish(),
 }) satisfies z.ZodType<Member>;
+
+const unreadNoticeMemberSchema = memberSchema.extend({
+  lastRemindAt: z.string().nullable(),
+}) satisfies z.ZodType<UnreadNoticeMember>;
 
 const noticeReadStatusSchema = z.object({
   id: z.number(),
   memberCount: z.number(),
   readCount: z.number(),
   unreadCount: z.number(),
-  remindAt: z.string().nullish(),
+  remindAt: z.string().nullable(),
   readMembers: z.array(memberSchema),
-  unreadMembers: z.array(memberSchema),
+  unreadMembers: z.array(unreadNoticeMemberSchema),
 }) satisfies z.ZodType<NoticeReadStatus>;
 
-const myReadStatusSchema = z.object({
-  isRead: z.boolean(),
-  readAt: z.string().nullable(),
-}) satisfies z.ZodType<MemberReadStatus>;
+const myReadStatusSchema = z.discriminatedUnion('readStatus', [
+  z.object({
+    readStatus: z.literal('READ'),
+    readAt: z.string(),
+  }),
+  z.object({
+    readStatus: z.literal('UNREAD'),
+  }),
+  z.object({
+    readStatus: z.literal('NOT_ASSIGNED'),
+  }),
+]) satisfies z.ZodType<MemberReadStatus>;
 
 const updateReadStatusSchema = z.object({
   readAt: z.string(),
