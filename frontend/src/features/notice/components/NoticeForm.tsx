@@ -1,12 +1,12 @@
 import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
-import Input from '../../../shared/ui/inputs/Input';
-import TextArea from '../../../shared/ui/inputs/TextArea';
 import { tokens } from '../../../styles/global';
+import { NOTICE_TITLE, NOTICE_CONTENT } from '../constants';
 import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
+import InputField from '../../../shared/widgets/InputField';
+import TextAreaField from '../../../shared/widgets/TextAreaField';
 
 const formStyle = {
   display: 'flex',
@@ -63,43 +63,34 @@ export default function NoticeForm({
 
   return (
     <form css={formStyle} onSubmit={submitNotice}>
-      <Field
+      <InputField
         id="notice-title"
         label="제목"
-        isRequired
-        isError={Boolean(fieldErrors.title)}
+        value={title}
+        autoFocus
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder="제목을 입력해 주세요"
         errorText={fieldErrors.title}
-      >
-        <Input
-          id="notice-title"
-          name="title"
-          value={title}
-          maxLength={20}
-          autoFocus
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="제목을 입력해주세요"
-        />
-      </Field>
-
-      <Field
-        id="notice-content"
-        label="내용"
+        maxLength={NOTICE_TITLE.length}
         isRequired
-        helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
-        isError={Boolean(fieldErrors.content)}
+        testId="notice-title-field"
+      />
+
+      <TextAreaField
+        ref={contentRef}
+        id="notice-content"
+        name="content"
+        label="내용"
+        value={content}
+        onChange={(event) => setContent(event.target.value)}
+        placeholder="내용을 입력해주세요"
         errorText={fieldErrors.content}
-      >
-        <TextArea
-          ref={contentRef}
-          id="notice-content"
-          name="content"
-          value={content}
-          maxLength={10000}
-          placeholder="내용을 입력해주세요"
-          css={{ overflowY: 'hidden' }}
-          onChange={(event) => setContent(event.currentTarget.value)}
-        />
-      </Field>
+        helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
+        maxLength={NOTICE_CONTENT.length}
+        isRequired
+        testId="notice-content-field"
+        css={{ overflowY: 'hidden' }}
+      />
 
       <Button
         type="submit"

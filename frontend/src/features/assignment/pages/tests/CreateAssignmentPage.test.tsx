@@ -76,6 +76,9 @@ describe('과제 생성 페이지 테스트', () => {
         const { user } = setupCreateAssignmentPage();
         const checkbox = screen.getByRole('checkbox');
 
+        await user.type(getTitleInput(), '객체지향 설계 과제');
+        await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+        await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
         expect(checkbox).toHaveProperty('checked', true);
         if (!leaderSubmits) await user.click(checkbox);
         await user.click(getSubmitButton());
@@ -118,6 +121,9 @@ describe('과제 생성 페이지 테스트', () => {
       );
       const { user } = setupCreateAssignmentPage();
 
+      await user.type(getTitleInput(), '객체지향 설계 과제');
+      await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+      await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
       await user.click(getSubmitButton());
 
       expect(await screen.findByText('제목이 이상해요')).toBeInTheDocument();
@@ -149,6 +155,8 @@ describe('과제 생성 페이지 테스트', () => {
       const { user } = setupCreateAssignmentPage();
 
       await user.type(getTitleInput(), '객체지향 설계 과제');
+      await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+      await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
       await user.click(getSubmitButton());
 
       const toast = await screen.findByRole('status');
