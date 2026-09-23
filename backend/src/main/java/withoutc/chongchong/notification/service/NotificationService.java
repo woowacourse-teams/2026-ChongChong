@@ -57,7 +57,8 @@ public class NotificationService {
 
     @Transactional
     public void createNoticeCreatedEventNotifications(Notice notice, List<StudyMember> recipients) {
-        saveNoticeNotifications(notice, recipients, NotificationType.CREATED);
+        saveNotifications(notice.getStudy(), recipients, NotificationType.CREATED, notice.getId(),
+                ResourceType.NOTICE);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, notice.getId(),
                 ResourceType.NOTICE,
@@ -67,7 +68,8 @@ public class NotificationService {
 
     @Transactional
     public void createAssignmentCreatedEventNotifications(Assignment assignment, List<StudyMember> recipients) {
-        saveAssignmentNotifications(assignment, recipients, NotificationType.CREATED);
+        saveNotifications(assignment.getStudy(), recipients, NotificationType.CREATED, assignment.getId(),
+                ResourceType.ASSIGNMENT);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, assignment.getId(),
                 ResourceType.ASSIGNMENT,
@@ -78,7 +80,8 @@ public class NotificationService {
     @Transactional
     public void createAssignmentSubmissionSubmittedEventNotifications(AssignmentSubmission submission,
                                                                       List<StudyMember> recipients) {
-        saveAssignmentSubmissionNotifications(submission, recipients);
+        saveNotifications(submission.getAssignment().getStudy(), recipients, NotificationType.SUBMITTED,
+                submission.getId(), ResourceType.ASSIGNMENT_SUBMISSION);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.SUBMITTED, submission.getId(),
                 ResourceType.ASSIGNMENT_SUBMISSION,
@@ -101,7 +104,8 @@ public class NotificationService {
             Notice notice = noticeReminder.getNotice();
             List<StudyMember> recipients = noticeRecipientRepository.findUnreadMembersByNoticeId(
                     notice.getId());
-            saveNoticeNotifications(notice, recipients, NotificationType.REMIND);
+            saveNotifications(notice.getStudy(), recipients, NotificationType.REMIND, notice.getId(),
+                    ResourceType.NOTICE);
             noticeReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, notice.getId(),
                     ResourceType.NOTICE,
@@ -117,7 +121,8 @@ public class NotificationService {
             Assignment assignment = assignmentReminder.getAssignment();
             List<StudyMember> recipients = assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(
                     assignment.getId());
-            saveAssignmentNotifications(assignment, recipients, NotificationType.REMIND);
+            saveNotifications(assignment.getStudy(), recipients, NotificationType.REMIND, assignment.getId(),
+                    ResourceType.ASSIGNMENT);
             assignmentReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, assignment.getId(),
                     ResourceType.ASSIGNMENT,
@@ -126,66 +131,8 @@ public class NotificationService {
         }
     }
 
-    private void saveNoticeNotifications(Notice notice, List<StudyMember> recipients, NotificationType type) {
-        Study study = notice.getStudy();
-        saveNotifications(
-                recipients,
-                type,
-                notice.getId(),
-                ResourceType.NOTICE,
-                createTitle(study, ResourceType.NOTICE),
-                notice.getTitle(),
-                "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
-        );
-    }
-
-    private void saveAssignmentNotifications(Assignment assignment, List<StudyMember> recipients,
-                                             NotificationType type) {
-        Study study = assignment.getStudy();
-        saveNotifications(
-                recipients,
-                type,
-                assignment.getId(),
-                ResourceType.ASSIGNMENT,
-                createTitle(study, ResourceType.ASSIGNMENT),
-                assignment.getTitle(),
-                "/studies/%d/assignments/%d".formatted(study.getId(), assignment.getId())
-        );
-    }
-
-    private void saveAssignmentSubmissionNotifications(AssignmentSubmission submission,
-                                                       List<StudyMember> recipients) {
-        Assignment assignment = submission.getAssignment();
-        Study study = assignment.getStudy();
-        saveNotifications(
-                recipients,
-                NotificationType.SUBMITTED,
-                submission.getId(),
-                ResourceType.ASSIGNMENT_SUBMISSION,
-                createTitle(study, ResourceType.ASSIGNMENT_SUBMISSION),
-                "%s 스터디원이 과제를 제출했어요".formatted(submission.getMember().getName()),
-                "/studies/%d/assignments/%d/submissions/%d".formatted(
-                        study.getId(), assignment.getId(), submission.getId())
-        );
-    }
-
-    private String createTitle(Study study, ResourceType resourceType) {
-        return "[%s] 새 %s".formatted(study.getName(), resourceType.name);
-    }
-
-    private void saveNotifications(
-            List<StudyMember> recipients,
-            NotificationType type,
-            Long resourceId,
-            ResourceType resourceType,
-            String title,
-            String body,
-            String deepLink
-    ) {
-        for (StudyMember recipient : recipients) {
-            Notification notification = Notification.create(
-                    recipient.getUser(), title, body, type, resourceId, resourceType, deepLink);
-            notificationRepository.save(notification);
-        }
+    // TODO: 자동 알림 구현 후 Notification 저장을 다시 활성화한다.
+    private void saveNotifications(Study study, List<StudyMember> recipients, NotificationType type, Long resourceId,
+                                   ResourceType resourceType) {
     }
 }

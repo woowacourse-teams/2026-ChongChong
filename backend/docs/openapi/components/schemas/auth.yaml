@@ -8,6 +8,15 @@ SocialLoginRequest:
 SocialLoginResponse:
   type: object
   additionalProperties: false
+  required: [userId, tokenType, accessToken, accessTokenExpiresAt]
+  properties:
+    userId: { description: "로그인한 사용자의 기본키. 프론트는 문자열로 변환해 PostHog distinct_id로 사용한다.", type: integer, format: int64, minimum: 1, example: 1 }
+    tokenType: { type: string, const: Bearer }
+    accessToken: { type: string, minLength: 1, example: eyJhbGciOiJIUzI1NiJ9... }
+    accessTokenExpiresAt: { type: string, format: date-time, example: '2026-08-27T12:00:00Z' }
+AccessTokenRefreshResponse:
+  type: object
+  additionalProperties: false
   required: [tokenType, accessToken, accessTokenExpiresAt]
   properties:
     tokenType: { type: string, const: Bearer }

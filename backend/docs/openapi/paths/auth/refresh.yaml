@@ -20,7 +20,7 @@ post:
         Set-Cookie: { description: 회전된 HttpOnly Refresh Token 쿠키, schema: { type: string } }
       content:
         application/json:
-          schema: { $ref: '../../components/schemas/auth.yaml#/SocialLoginResponse' }
+          schema: { $ref: '../../components/schemas/auth.yaml#/AccessTokenRefreshResponse' }
           example: { tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9..., accessTokenExpiresAt: '2026-08-27T12:00:00Z' }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/InvalidRefreshToken' }

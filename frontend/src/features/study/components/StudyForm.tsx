@@ -1,9 +1,9 @@
 import { CSSProperties } from 'react';
-import Field from '../../../shared/ui/inputs/Field';
-import Input from '../../../shared/ui/inputs/Input';
-import TextArea from '../../../shared/ui/inputs/TextArea';
 import Button from '../../../shared/ui/Button';
+import InputField from '../../../shared/widgets/InputField';
+import TextAreaField from '../../../shared/widgets/TextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
+import { STUDY_NAME, STUDY_DESCRIPTION } from '../constants';
 import { tokens } from '../../../styles/global';
 import isBlank from '../../../shared/utils/isBlank';
 import { usePostHog } from '@posthog/react';
@@ -36,30 +36,27 @@ export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props
 
   return (
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
-      <Field
+      <InputField
         id="study-name"
-        isRequired={true}
         label="스터디 이름"
+        value={nameValue}
+        onChange={handleNameValue}
+        maxLength={STUDY_NAME.length}
         helpText="스터디원에게 그대로 보여요"
         errorText={fieldErrors.name}
-        isError={Boolean(fieldErrors.name)}
-      >
-        <Input id="study-name" value={nameValue} onChange={handleNameValue} maxLength={15} />
-      </Field>
-      <Field
+        isRequired
+        testId="study-name-field"
+      />
+      <TextAreaField
         id="study-description"
         label="어떤 스터디인가요?"
+        value={descriptionValue}
+        onChange={handleDescriptionValue}
+        maxLength={STUDY_DESCRIPTION.length}
         helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요"
         errorText={fieldErrors.description}
-        isError={Boolean(fieldErrors.description)}
-      >
-        <TextArea
-          id="study-description"
-          value={descriptionValue}
-          onChange={handleDescriptionValue}
-          maxLength={30}
-        />
-      </Field>
+        testId="study-description-field"
+      />
       <Button
         variant="brandSolid"
         size="large"
