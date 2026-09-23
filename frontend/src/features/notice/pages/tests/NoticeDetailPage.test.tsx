@@ -37,8 +37,11 @@ describe('리드 공지 상세 조회 실패', () => {
           memberCount: 1,
           readCount: 0,
           unreadCount: 1,
+          remindAt: null,
           readMembers: [],
-          unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null }],
+          unreadMembers: [
+            { id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null },
+          ],
         }),
       ),
     );
@@ -110,8 +113,11 @@ describe('리드 공지 삭제 실패', () => {
           memberCount: 1,
           readCount: 0,
           unreadCount: 1,
+          remindAt: null,
           readMembers: [],
-          unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null }],
+          unreadMembers: [
+            { id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null },
+          ],
         }),
       ),
     );

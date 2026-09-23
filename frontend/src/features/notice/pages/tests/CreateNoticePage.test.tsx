@@ -24,13 +24,14 @@ describe('공지 생성 폼', () => {
     );
   }
 
-  test('제목 입력은 20자로 제한된다', async () => {
+  test('제목 입력은 100자로 제한된다', async () => {
     renderCreatePage();
 
     const titleInput = screen.getByRole('textbox', { name: '제목' });
-    await user.type(titleInput, '안톨리니'.repeat(20));
+    await user.click(titleInput);
+    await user.paste('안'.repeat(200));
 
-    expect(titleInput).toHaveValue('안톨리니'.repeat(5));
+    expect(titleInput).toHaveValue('안'.repeat(100));
   });
 
   test('내용 입력은 10000자로 제한된다', async () => {
