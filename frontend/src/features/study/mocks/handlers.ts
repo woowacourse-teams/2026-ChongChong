@@ -7,6 +7,40 @@ import { memberTable } from '../../member/mocks/db';
 import { validateStudy, validateStudyJoin } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
 import { assignmentTable } from '../../assignment/mocks/db';
+import { noticeRecipientTable, noticeTable } from '../../notice/mocks/db';
+
+function getIncompleteLeaderNotices(studyId: number) {
+  return noticeTable
+    .findMany((query) => query.where({ studyId }))
+    .flatMap((notice) => {
+      const recipients = noticeRecipientTable.findMany((query) =>
+        query.where({ noticeId: notice.id }),
+      );
+      const completeCount = recipients.filter(({ readAt }) => readAt !== null).length;
+
+      return completeCount < recipients.length
+        ? [
+            {
+              id: notice.id,
+              title: notice.title,
+              memberCount: recipients.length,
+              completeCount,
+            },
+          ]
+        : [];
+    });
+}
+
+function getUnreadMemberNotices(studyId: number, memberId: number) {
+  return noticeTable
+    .findMany((query) => query.where({ studyId }))
+    .filter((notice) => {
+      const recipient = noticeRecipientTable.findFirst((query) =>
+        query.where({ noticeId: notice.id, memberId }),
+      );
+      return recipient?.readAt === null;
+    });
+}
 
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
@@ -20,14 +54,17 @@ export const handlers = [
         const members = await memberTable.findMany((q) =>
           q.where({ studyId: study.id, userId: user.id }),
         );
+        const noticeCount =
+          membership.role === 'LEADER'
+            ? getIncompleteLeaderNotices(study.id).length
+            : getUnreadMemberNotices(study.id, membership.id).length;
         return {
           id: study.id,
           role: membership.role,
           name: study.name,
           description: study.description,
           memberCount: members.length,
-          // 공지/과제는 아직 mock table 이 없어 고정값을 사용합니다.
-          noticeCount: 2,
+          noticeCount,
           assignmentCount: 2,
         };
       }),
@@ -49,15 +86,15 @@ export const handlers = [
       .findMany((q) => q.where({ studyId }))
       .filter((assignment) => new Date(assignment.closeAt) > now);
 
-    // 공지 MSW가 존재하지 않아 빈데이터로 표현합니다.
     if (isLead) {
+      const notices = getIncompleteLeaderNotices(studyId);
       const assignments = openAssignments.filter(
         (assignment) => assignment.completeUserIds.length < memberCount,
       );
       return HttpResponse.json({
         notices: {
-          count: 0,
-          items: [],
+          count: notices.length,
+          items: notices,
         },
         assignments: {
           count: assignments.length,
@@ -73,7 +110,10 @@ export const handlers = [
       const assignments = openAssignments.filter(
         (assignment) => !assignment.completeUserIds.includes(user.id),
       );
-      const notices: { id: number; title: string }[] = [];
+      const notices = getUnreadMemberNotices(studyId, member.id).map(({ id, title }) => ({
+        id,
+        title,
+      }));
       return HttpResponse.json({
         totalCount: notices.length + assignments.length,
         notices: { items: notices },
