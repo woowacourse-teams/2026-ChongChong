@@ -83,10 +83,15 @@ public class DiscordNotificationSender implements NotificationSender {
         Study study = studyRepository.getByIdOrThrow(event.studyId());
 
         return """
+                📢 총총에서 알림이 왔습니다!
+                
                 [%s] 새 %s
                 - %s
-                [총총 바로가기](%s)
-                대상자(복사할 때 제외): %s
+                
+                🐰 총총 바로가기
+                %s
+                
+                대상자: %s
                 """
                 .formatted(
                         study.getName(),
