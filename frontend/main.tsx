@@ -11,6 +11,7 @@ import { routes as AssignmentRoutes } from './src/features/assignment/routes/rou
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
 import { routes as mypageRoutes } from './src/features/mypage/routes';
+import { routes as notificationRoutes } from './src/features/notification/routes';
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
@@ -26,6 +27,7 @@ const appRoutes = [
   ...memberRoutes,
   ...loginRoutes,
   ...mypageRoutes,
+  ...notificationRoutes,
 ];
 
 const root = document.getElementById('root')!;
@@ -35,7 +37,6 @@ async function enableMocking() {
   if (process.env.USE_MSW !== 'true') {
     return;
   }
-
   const { worker } = await import('./src/mocks/msw-browser');
 
   return worker.start();

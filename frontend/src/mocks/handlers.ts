@@ -4,6 +4,7 @@ import { handlers as memberHandlers } from '../features/member/mocks/handlers';
 import { handlers as loginHandlers } from '../features/login/mocks/handlers';
 import { handlers as mypageHandlers } from '../features/mypage/mocks/handlers';
 import { handlers as noticeHandlers } from '../features/notice/mocks/handlers';
+import { handlers as notificationHandlers } from '../features/notification/mocks/handlers';
 
 export const handlers = [
   ...studiesHandlers,
@@ -12,4 +13,5 @@ export const handlers = [
   ...memberHandlers,
   ...loginHandlers,
   ...mypageHandlers,
+  ...notificationHandlers,
 ];
