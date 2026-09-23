@@ -113,7 +113,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                   AND resource_id = ?
                   AND resource_type = 'ASSIGNMENT_SUBMISSION'
                   AND type = 'SUBMITTED'
-                """, Integer.class, fixture.leaderId(), fixture.submissionId()))
+                """, Integer.class, fixture.leaderUserId(), fixture.submissionId()))
                 .isOne();
     }
 
@@ -220,7 +220,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                 assignment.getId(),
                 submission.getId(),
                 submitterUser.getId(),
-                leader.getId(),
+                leaderUser.getId(),
                 submitter.getId()
         );
     }
@@ -230,7 +230,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
             Long assignmentId,
             Long submissionId,
             Long submitterUserId,
-            Long leaderId,
+            Long leaderUserId,
             Long submitterMemberId
     ) {
     }

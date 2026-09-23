@@ -43,7 +43,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
             FROM AssignmentSubmission submission
             JOIN submission.member member
             LEFT JOIN Notification notification
-              ON notification.recipient = member
+              ON notification.recipient = member.user
              AND notification.resourceType = withoutc.chongchong.notification.entity.NotificationResourceType.ASSIGNMENT
              AND notification.resourceId = submission.assignment.id
              AND notification.type = withoutc.chongchong.notification.entity.NotificationType.REMIND

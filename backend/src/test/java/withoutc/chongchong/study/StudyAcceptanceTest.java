@@ -11,17 +11,16 @@ import io.restassured.http.ContentType;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -103,9 +102,8 @@ class StudyAcceptanceTest {
         configureCascadeIfColumnExists(
                 "notice_recipients", "member_id", "study_members", "fkpm6u1t0n3px52tld2apx6oess");
         configureCascadeIfColumnExists("notice_reminders", "notice_id", "notices", "fko0h19ha7jyrdtym2iy97ip03n");
-        configureCascadeIfColumnExists("notifications", "study_id", "studies", "fko5m57o40ivnn0td7m511dx42k");
         configureCascadeIfColumnExists(
-                "notifications", "recipient_id", "study_members", "fk60prjsdd6ahrlv3ayvjjqdlqi");
+                "notifications", "recipient_id", "users", "fk60prjsdd6ahrlv3ayvjjqdlqi");
     }
 
     @AfterEach
@@ -685,7 +683,7 @@ class StudyAcceptanceTest {
         assertThat(noticeRecipientRepository.findAll()).isEmpty();
         assertThat(assignmentRepository.findAll()).isEmpty();
         assertThat(assignmentSubmissionRepository.findAll()).isEmpty();
-        assertThat(notificationRepository.findAll()).isEmpty();
+        assertThat(notificationRepository.findAll()).hasSize(2);
     }
 
     @Test
@@ -789,12 +787,16 @@ class StudyAcceptanceTest {
             Long resourceId,
             NotificationResourceType resourceType
     ) {
-        Notification notification = BeanUtils.instantiateClass(Notification.class);
-        ReflectionTestUtils.setField(notification, "study", study);
-        ReflectionTestUtils.setField(notification, "recipient", recipient);
-        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
-        ReflectionTestUtils.setField(notification, "resourceId", resourceId);
-        ReflectionTestUtils.setField(notification, "resourceType", resourceType);
+        String resourcePath = resourceType == NotificationResourceType.NOTICE ? "notices" : "assignments";
+        Notification notification = Notification.create(
+                recipient.getUser(),
+                "[스터디] 새 " + resourceType.name,
+                "알림",
+                NotificationType.REMIND,
+                resourceId,
+                resourceType,
+                "/studies/%d/%s/%d".formatted(study.getId(), resourcePath, resourceId)
+        );
         notificationRepository.saveAndFlush(notification);
     }
 }

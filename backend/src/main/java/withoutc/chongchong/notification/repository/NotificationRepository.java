@@ -9,6 +9,6 @@ import withoutc.chongchong.notification.entity.Notification;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("DELETE FROM Notification notification WHERE notification.recipient.id = :memberId")
-    int deleteAllByRecipientId(@Param("memberId") Long memberId);
+    @Query("DELETE FROM Notification notification WHERE notification.recipient.id = :userId")
+    int deleteAllByRecipientId(@Param("userId") Long userId);
 }

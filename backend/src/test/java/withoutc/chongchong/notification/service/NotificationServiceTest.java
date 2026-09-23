@@ -39,6 +39,7 @@ import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
+import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
@@ -89,6 +90,7 @@ class NotificationServiceTest {
         Assignment assignment = mock(Assignment.class);
         Study study = mock(Study.class);
         StudyMember recipient = mock(StudyMember.class);
+        User recipientUser = mock(User.class);
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
         when(assignmentReminderRepository.findAllByStatusAndRemindAtLessThanEqual(
@@ -98,6 +100,10 @@ class NotificationServiceTest {
         when(reminder.getAssignment()).thenReturn(assignment);
         when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
         when(assignment.getStudy()).thenReturn(study);
+        when(assignment.getTitle()).thenReturn("과제 제목");
+        when(study.getId()).thenReturn(1L);
+        when(study.getName()).thenReturn("스터디");
+        when(recipient.getUser()).thenReturn(recipientUser);
         when(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID))
                 .thenReturn(List.of(recipient));
 
@@ -105,11 +111,13 @@ class NotificationServiceTest {
 
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification notification = notificationCaptor.getValue();
-        assertThat(notification.getStudy()).isSameAs(study);
-        assertThat(notification.getRecipient()).isSameAs(recipient);
+        assertThat(notification.getRecipient()).isSameAs(recipientUser);
+        assertThat(notification.getTitle()).isEqualTo("[스터디] 새 과제");
+        assertThat(notification.getBody()).isEqualTo("과제 제목");
         assertThat(notification.getType()).isEqualTo(NotificationType.REMIND);
         assertThat(notification.getResourceId()).isEqualTo(ASSIGNMENT_ID);
         assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT);
+        assertThat(notification.getDeepLink()).isEqualTo("/studies/1/assignments/200");
         assertThat(notification.isRead()).isFalse();
         verify(reminder).markAsSent();
         verify(assignmentSubmissionRepository).findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID);
@@ -123,6 +131,7 @@ class NotificationServiceTest {
         Notice notice = mock(Notice.class);
         Study study = mock(Study.class);
         StudyMember recipient = mock(StudyMember.class);
+        User recipientUser = mock(User.class);
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
 
         when(assignmentReminderRepository.findAllByStatusAndRemindAtLessThanEqual(
@@ -132,6 +141,10 @@ class NotificationServiceTest {
         when(reminder.getNotice()).thenReturn(notice);
         when(notice.getId()).thenReturn(NOTICE_ID);
         when(notice.getStudy()).thenReturn(study);
+        when(notice.getTitle()).thenReturn("공지 제목");
+        when(study.getId()).thenReturn(1L);
+        when(study.getName()).thenReturn("스터디");
+        when(recipient.getUser()).thenReturn(recipientUser);
         when(noticeRecipientRepository.findUnreadMembersByNoticeId(NOTICE_ID))
                 .thenReturn(List.of(recipient));
 
@@ -139,11 +152,13 @@ class NotificationServiceTest {
 
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification notification = notificationCaptor.getValue();
-        assertThat(notification.getStudy()).isSameAs(study);
-        assertThat(notification.getRecipient()).isSameAs(recipient);
+        assertThat(notification.getRecipient()).isSameAs(recipientUser);
+        assertThat(notification.getTitle()).isEqualTo("[스터디] 새 공지");
+        assertThat(notification.getBody()).isEqualTo("공지 제목");
         assertThat(notification.getType()).isEqualTo(NotificationType.REMIND);
         assertThat(notification.getResourceId()).isEqualTo(NOTICE_ID);
         assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.NOTICE);
+        assertThat(notification.getDeepLink()).isEqualTo("/studies/1/notices/100");
         verify(reminder).markAsSent();
         verify(noticeRecipientRepository).findUnreadMembersByNoticeId(NOTICE_ID);
         verifyNoInteractions(assignmentSubmissionRepository);
@@ -156,22 +171,32 @@ class NotificationServiceTest {
         Assignment assignment = mock(Assignment.class);
         Study study = mock(Study.class);
         StudyMember recipient = mock(StudyMember.class);
+        User recipientUser = mock(User.class);
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
         ArgumentCaptor<NotificationEvent> eventCaptor = ArgumentCaptor.forClass(NotificationEvent.class);
 
         when(submission.getAssignment()).thenReturn(assignment);
         when(submission.getId()).thenReturn(300L);
         when(assignment.getStudy()).thenReturn(study);
+        when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
+        when(study.getId()).thenReturn(1L);
+        when(study.getName()).thenReturn("스터디");
+        StudyMember submitter = mock(StudyMember.class);
+        when(submission.getMember()).thenReturn(submitter);
+        when(submitter.getName()).thenReturn("제출자");
+        when(recipient.getUser()).thenReturn(recipientUser);
 
         notificationService.createAssignmentSubmissionSubmittedEventNotifications(submission, List.of(recipient));
 
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification notification = notificationCaptor.getValue();
-        assertThat(notification.getStudy()).isSameAs(study);
-        assertThat(notification.getRecipient()).isSameAs(recipient);
+        assertThat(notification.getRecipient()).isSameAs(recipientUser);
+        assertThat(notification.getTitle()).isEqualTo("[스터디] 새 제출물");
+        assertThat(notification.getBody()).isEqualTo("제출자 스터디원이 과제를 제출했어요");
         assertThat(notification.getType()).isEqualTo(NotificationType.SUBMITTED);
         assertThat(notification.getResourceId()).isEqualTo(300L);
         assertThat(notification.getResourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(notification.getDeepLink()).isEqualTo("/studies/1/assignments/200/submissions/300");
         assertThat(notification.isRead()).isFalse();
 
         verify(eventPublisher).publishEvent(eventCaptor.capture());

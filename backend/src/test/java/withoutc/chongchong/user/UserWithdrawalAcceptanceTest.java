@@ -45,6 +45,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.restassured.RestAssured.given;
@@ -200,10 +201,22 @@ public class UserWithdrawalAcceptanceTest {
         assignmentRepository.saveAndFlush(assignment);
 
         Notification withdrawingNotification = notificationRepository.saveAndFlush(Notification.create(
-                study, withdrawingMember, NotificationType.REMIND, notice.getId(), NotificationResourceType.NOTICE
+                withdrawingUser,
+                "[자바 스터디] 새 공지",
+                "내용",
+                NotificationType.REMIND,
+                notice.getId(),
+                NotificationResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         ));
         Notification remainingNotification = notificationRepository.saveAndFlush(Notification.create(
-                study, remainingMember, NotificationType.REMIND, notice.getId(), NotificationResourceType.NOTICE
+                remainingUser,
+                "[자바 스터디] 새 공지",
+                "내용",
+                NotificationType.REMIND,
+                notice.getId(),
+                NotificationResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         ));
         PushToken withdrawingToken = pushTokenRepository.saveAndFlush(PushToken.create(
                 withdrawingUser, "withdraw-member-installation", TokenProvider.EXPO, "withdraw-token", DevicePlatform.ANDROID

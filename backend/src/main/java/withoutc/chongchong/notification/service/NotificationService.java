@@ -43,8 +43,7 @@ public class NotificationService {
 
     @Transactional
     public void createNoticeCreatedEventNotifications(Notice notice, List<StudyMember> recipients) {
-        saveNotifications(notice.getStudy(), recipients, NotificationType.CREATED, notice.getId(),
-                NotificationResourceType.NOTICE);
+        saveNoticeNotifications(notice, recipients, NotificationType.CREATED);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, notice.getId(),
                 NotificationResourceType.NOTICE,
@@ -54,8 +53,7 @@ public class NotificationService {
 
     @Transactional
     public void createAssignmentCreatedEventNotifications(Assignment assignment, List<StudyMember> recipients) {
-        saveNotifications(assignment.getStudy(), recipients, NotificationType.CREATED, assignment.getId(),
-                NotificationResourceType.ASSIGNMENT);
+        saveAssignmentNotifications(assignment, recipients, NotificationType.CREATED);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.CREATED, assignment.getId(),
                 NotificationResourceType.ASSIGNMENT,
@@ -66,8 +64,7 @@ public class NotificationService {
     @Transactional
     public void createAssignmentSubmissionSubmittedEventNotifications(AssignmentSubmission submission,
                                                                       List<StudyMember> recipients) {
-        saveNotifications(submission.getAssignment().getStudy(), recipients, NotificationType.SUBMITTED,
-                submission.getId(), NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        saveAssignmentSubmissionNotifications(submission, recipients);
 
         NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.SUBMITTED, submission.getId(),
                 NotificationResourceType.ASSIGNMENT_SUBMISSION,
@@ -88,11 +85,9 @@ public class NotificationService {
                 NoticeReminderStatus.PENDING, now);
         for (NoticeReminder noticeReminder : noticeReminders) {
             Notice notice = noticeReminder.getNotice();
-            Study study = notice.getStudy();
             List<StudyMember> recipients = noticeRecipientRepository.findUnreadMembersByNoticeId(
                     notice.getId());
-            saveNotifications(study, recipients, NotificationType.REMIND, notice.getId(),
-                    NotificationResourceType.NOTICE);
+            saveNoticeNotifications(notice, recipients, NotificationType.REMIND);
             noticeReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, notice.getId(),
                     NotificationResourceType.NOTICE,
@@ -106,11 +101,9 @@ public class NotificationService {
                 AssignmentReminderStatus.PENDING, now);
         for (AssignmentReminder assignmentReminder : assignmentReminders) {
             Assignment assignment = assignmentReminder.getAssignment();
-            Study study = assignment.getStudy();
             List<StudyMember> recipients = assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(
                     assignment.getId());
-            saveNotifications(study, recipients, NotificationType.REMIND, assignment.getId(),
-                    NotificationResourceType.ASSIGNMENT);
+            saveAssignmentNotifications(assignment, recipients, NotificationType.REMIND);
             assignmentReminder.markAsSent();
             NotificationEvent notificationEvent = NotificationEvent.create(NotificationType.REMIND, assignment.getId(),
                     NotificationResourceType.ASSIGNMENT,
@@ -119,10 +112,65 @@ public class NotificationService {
         }
     }
 
-    private void saveNotifications(Study study, List<StudyMember> recipients, NotificationType type, Long resourceId,
-                                   NotificationResourceType resourceType) {
+    private void saveNoticeNotifications(Notice notice, List<StudyMember> recipients, NotificationType type) {
+        Study study = notice.getStudy();
+        saveNotifications(
+                recipients,
+                type,
+                notice.getId(),
+                NotificationResourceType.NOTICE,
+                createTitle(study, NotificationResourceType.NOTICE),
+                notice.getTitle(),
+                "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
+        );
+    }
+
+    private void saveAssignmentNotifications(Assignment assignment, List<StudyMember> recipients,
+                                             NotificationType type) {
+        Study study = assignment.getStudy();
+        saveNotifications(
+                recipients,
+                type,
+                assignment.getId(),
+                NotificationResourceType.ASSIGNMENT,
+                createTitle(study, NotificationResourceType.ASSIGNMENT),
+                assignment.getTitle(),
+                "/studies/%d/assignments/%d".formatted(study.getId(), assignment.getId())
+        );
+    }
+
+    private void saveAssignmentSubmissionNotifications(AssignmentSubmission submission,
+                                                       List<StudyMember> recipients) {
+        Assignment assignment = submission.getAssignment();
+        Study study = assignment.getStudy();
+        saveNotifications(
+                recipients,
+                NotificationType.SUBMITTED,
+                submission.getId(),
+                NotificationResourceType.ASSIGNMENT_SUBMISSION,
+                createTitle(study, NotificationResourceType.ASSIGNMENT_SUBMISSION),
+                "%s 스터디원이 과제를 제출했어요".formatted(submission.getMember().getName()),
+                "/studies/%d/assignments/%d/submissions/%d".formatted(
+                        study.getId(), assignment.getId(), submission.getId())
+        );
+    }
+
+    private String createTitle(Study study, NotificationResourceType resourceType) {
+        return "[%s] 새 %s".formatted(study.getName(), resourceType.name);
+    }
+
+    private void saveNotifications(
+            List<StudyMember> recipients,
+            NotificationType type,
+            Long resourceId,
+            NotificationResourceType resourceType,
+            String title,
+            String body,
+            String deepLink
+    ) {
         for (StudyMember recipient : recipients) {
-            Notification notification = Notification.create(study, recipient, type, resourceId, resourceType);
+            Notification notification = Notification.create(
+                    recipient.getUser(), title, body, type, resourceId, resourceType, deepLink);
             notificationRepository.save(notification);
         }
     }

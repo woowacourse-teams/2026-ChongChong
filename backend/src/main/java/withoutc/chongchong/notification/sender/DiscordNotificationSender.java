@@ -98,12 +98,14 @@ public class DiscordNotificationSender implements NotificationSender {
     }
 
     private String generateLink(Long studyId, Long resourceId, NotificationResourceType resourceType) {
-        if (resourceType == NotificationResourceType.NOTICE) {
-            return frontendBaseUrl + "/studies/" + studyId + "/notices/" + resourceId;
-        }
-        if (resourceType == NotificationResourceType.ASSIGNMENT) {
-            return frontendBaseUrl + "/studies/" + studyId + "/assignments/" + resourceId;
-        }
+        return switch (resourceType) {
+            case NOTICE -> frontendBaseUrl + "/studies/" + studyId + "/notices/" + resourceId;
+            case ASSIGNMENT -> frontendBaseUrl + "/studies/" + studyId + "/assignments/" + resourceId;
+            case ASSIGNMENT_SUBMISSION -> assignmentSubmissionLink(studyId, resourceId);
+        };
+    }
+
+    private String assignmentSubmissionLink(Long studyId, Long resourceId) {
         AssignmentSubmission submission = submissionRepository.getByIdOrThrow(resourceId);
         return frontendBaseUrl + "/studies/" + studyId + "/assignments/" + submission.getAssignment().getId()
                 + "/submissions/" + resourceId;

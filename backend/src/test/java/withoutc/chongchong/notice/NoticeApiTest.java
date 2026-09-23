@@ -777,7 +777,7 @@ class NoticeApiTest {
                 notice.getId(),
                 member.getId()
         );
-        insertNotification(secondMember.getId(), notice.getId(), "NOTICE", lastRemindAt);
+        insertNotification(secondMember.getUser().getId(), notice.getId(), "NOTICE", lastRemindAt);
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -829,14 +829,16 @@ class NoticeApiTest {
     }
 
     private void insertNotification(Long recipientId, Long resourceId, String resourceType, LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update(
                 """
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                study.getId(),
                 recipientId,
+                title,
                 resourceId,
                 resourceType,
                 createdAt,
