@@ -2,7 +2,7 @@ post:
   tags: [Auth]
   operationId: login
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       이슈 #360에서 로그인 응답에 PostHog 식별용 userId를 추가한다.
