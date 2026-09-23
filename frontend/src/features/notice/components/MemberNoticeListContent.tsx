@@ -5,7 +5,8 @@ import Badge from '../../../shared/ui/Badge';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
 import noticeQueries from '../queries';
 import NoticeList from './NoticeList';
-import type { MemberNoticeSummary, NoticeReadState } from '../types';
+import type { MemberNoticeSummary } from '../types';
+import { readStatusBadge } from '../constants';
 
 interface Props {
   studyId: number;
@@ -16,12 +17,6 @@ const sectionStyle = {
   flex: 1,
   flexDirection: 'column',
 } satisfies CSSProperties;
-
-const readStatusBadge = {
-  READ: { variant: 'brandSolid', label: '읽음' },
-  UNREAD: { variant: 'brandOutline', label: '읽지 않음' },
-  NOT_ASSIGNED: { variant: 'neutralSolid', label: '확인 대상 아님' },
-} satisfies Record<NoticeReadState, { variant: React.ComponentProps<typeof Badge>['variant']; label: string }>;
 
 export default function MemberNoticeListContent({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
