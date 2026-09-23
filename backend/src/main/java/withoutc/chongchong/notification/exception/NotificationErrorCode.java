@@ -13,7 +13,9 @@ public enum NotificationErrorCode implements ErrorCode {
             "알림의 필수 정보가 올바르지 않습니다."),
 
     INVALID_NOTIFICATION_DELIVERY(HttpStatus.BAD_REQUEST, "INVALID_NOTIFICATION_DELIVERY",
-            "알림 발송 내역의 필수 정보가 올바르지 않습니다.");
+            "알림 발송 내역의 필수 정보가 올바르지 않습니다."),
+
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND", "존재하지 않는 알림입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

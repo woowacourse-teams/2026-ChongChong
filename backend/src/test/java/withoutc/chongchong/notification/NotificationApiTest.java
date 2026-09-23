@@ -1,7 +1,9 @@
 package withoutc.chongchong.notification;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
@@ -115,6 +117,110 @@ class NotificationApiTest extends PostgresContainerTest {
                 .body("notifications[1].resourceType", equalTo("NOTICE"))
                 .body("notifications[1].isRead", equalTo(false))
                 .body("notifications[1].createdAt", equalTo(EARLIER.format(RESPONSE_DATE_TIME_FORMATTER)));
+    }
+
+    @Test
+    @DisplayName("사용자는 자신의 알림을 읽음 처리하고 다시 요청해도 읽음 상태를 유지한다")
+    void readNotificationTest() {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+        Notification notification = saveNotification(
+                user,
+                "[스터디] 새 공지",
+                "공지 내용",
+                NotificationType.CREATED,
+                ResourceType.NOTICE,
+                10L,
+                "/studies/2/notices/10",
+                EARLIER
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .patch("/notifications/{notificationId}", notification.getId())
+                .then()
+                .statusCode(204);
+
+        Boolean isRead = jdbcTemplate.queryForObject(
+                "SELECT is_read FROM notifications WHERE id = ?",
+                Boolean.class,
+                notification.getId()
+        );
+        assertThat(isRead).isTrue();
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .patch("/notifications/{notificationId}", notification.getId())
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 알림을 읽음 처리하면 알림 없음 오류를 반환한다")
+    void readOtherUserNotificationTest() {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+        User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", null));
+        Notification notification = saveNotification(
+                otherUser,
+                "[스터디] 새 공지",
+                "공지 내용",
+                NotificationType.CREATED,
+                ResourceType.NOTICE,
+                10L,
+                "/studies/2/notices/10",
+                EARLIER
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .patch("/notifications/{notificationId}", notification.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("NOTIFICATION_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 알림을 읽음 처리하면 알림 없음 오류를 반환한다")
+    void readMissingNotificationTest() {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .patch("/notifications/{notificationId}", 999999L)
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("NOTIFICATION_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 알림을 읽음 처리하면 인증 필요 오류를 반환한다")
+    void readNotificationWithoutAuthenticationTest() {
+        RestAssured.given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .when()
+                .patch("/notifications/{notificationId}", 1L)
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    @DisplayName("양수가 아닌 알림 ID로 읽음 처리하면 파라미터 오류를 반환한다")
+    void readNotificationWithInvalidIdTest() {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .patch("/notifications/{notificationId}", 0L)
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.field", hasItem("notificationId"));
     }
 
     @Test

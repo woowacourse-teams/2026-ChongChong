@@ -49,6 +49,13 @@ public class NotificationService {
     }
 
     @Transactional
+    public void readNotification(Long userId, Long notificationId) {
+        Notification notification = notificationRepository.getByIdAndRecipientIdOrElseThrow(notificationId, userId);
+
+        notification.read();
+    }
+
+    @Transactional
     public void createNoticeCreatedEventNotifications(Notice notice, List<StudyMember> recipients) {
         saveNoticeNotifications(notice, recipients, NotificationType.CREATED);
 

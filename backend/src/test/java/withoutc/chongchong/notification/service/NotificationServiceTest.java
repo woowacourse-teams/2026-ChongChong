@@ -46,6 +46,8 @@ class NotificationServiceTest {
 
     private static final Long NOTICE_ID = 100L;
     private static final Long ASSIGNMENT_ID = 200L;
+    private static final Long USER_ID = 1L;
+    private static final Long NOTIFICATION_ID = 300L;
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-20T01:00:00Z"),
             ZoneId.of("Asia/Seoul"));
@@ -81,6 +83,28 @@ class NotificationServiceTest {
                 eventPublisher,
                 CLOCK
         );
+    }
+
+    @Test
+    @DisplayName("현재 사용자의 알림을 읽음 처리한다")
+    void readNotification() {
+        User recipient = mock(User.class);
+        Notification notification = Notification.create(
+                recipient,
+                "[스터디] 새 공지",
+                "공지 내용",
+                NotificationType.CREATED,
+                NOTICE_ID,
+                ResourceType.NOTICE,
+                "/studies/1/notices/100"
+        );
+        when(notificationRepository.getByIdAndRecipientIdOrElseThrow(NOTIFICATION_ID, USER_ID))
+                .thenReturn(notification);
+
+        notificationService.readNotification(USER_ID, NOTIFICATION_ID);
+
+        assertThat(notification.isRead()).isTrue();
+        verify(notificationRepository).getByIdAndRecipientIdOrElseThrow(NOTIFICATION_ID, USER_ID);
     }
 
     @Test

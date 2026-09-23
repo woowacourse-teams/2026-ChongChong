@@ -77,6 +77,8 @@ paths:
     $ref: './paths/push-tokens/detail.yaml'
   /api/notifications:
     $ref: './paths/notifications/collection.yaml'
+  /api/notifications/{notificationId}:
+    $ref: './paths/notifications/detail.yaml'
 
 components:
   securitySchemes:

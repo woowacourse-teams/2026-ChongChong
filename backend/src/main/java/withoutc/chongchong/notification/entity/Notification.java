@@ -55,6 +55,10 @@ public class Notification extends BaseEntity {
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
 
+    public void read() {
+        isRead = true;
+    }
+
     public static Notification create(
             User recipient,
             String title,
