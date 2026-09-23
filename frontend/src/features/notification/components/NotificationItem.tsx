@@ -50,6 +50,7 @@ const UnreadStyle = {
   background: tokens.bg.brand,
 } satisfies CSSProperties;
 
+// TODO: 변화에 대응할 수 있는 컴포넌트 설계하기
 export default function NotificationItem({ notification }: { notification: Notification }) {
   const isReminder = notification.type === 'REMIND';
   return (

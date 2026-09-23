@@ -13,6 +13,7 @@ import List from '../../../shared/ui/List';
 import { tokens } from '../../../styles/global';
 import notificationQueries from '../queries';
 import NotificationItem from '../components/NotificationItem';
+import useMarkNotificationAsRead from '../hooks/useMarkNotificationAsRead';
 
 export default function NotificationListPage() {
   return (
@@ -40,6 +41,7 @@ export default function NotificationListPage() {
 
 NotificationListPage.Content = function Content() {
   const { data: notifications } = useSuspenseQuery(notificationQueries.list());
+  const { markAsRead } = useMarkNotificationAsRead();
 
   return notifications.length === 0 ? (
     <EmptyContent message="아직 알림이 없어요" />
@@ -47,7 +49,7 @@ NotificationListPage.Content = function Content() {
     <List aria-label="알림 목록" css={{ gap: tokens.spacing[2] }}>
       {notifications.map((notification) => (
         <List.Item key={notification.id}>
-          <Link to={notification.deepLink}>
+          <Link to={notification.deepLink} onClick={() => markAsRead(notification)}>
             <NotificationItem key={notification.id} notification={notification} />
           </Link>
         </List.Item>
