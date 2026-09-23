@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import withoutc.chongchong.auth.dto.AccessTokenRefreshResponse;
 import withoutc.chongchong.auth.dto.SocialLoginRequest;
 import withoutc.chongchong.auth.dto.SocialLoginResponse;
 import withoutc.chongchong.auth.dto.WebCsrfTokenResponse;
@@ -47,16 +48,16 @@ public class AuthController {
             @Valid @RequestBody SocialLoginRequest request
     ) {
         SocialLoginResult result = socialLoginFacade.login(request.toCommand());
-        return tokenResponse(result.tokenPair());
+        return loginResponse(result);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<SocialLoginResponse> refresh(HttpServletRequest request) {
+    public ResponseEntity<AccessTokenRefreshResponse> refresh(HttpServletRequest request) {
         IssuedTokenPair tokenPair = webRefreshCookieReader.read(request)
                 .map(authTokenService::rotate)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
 
-        return tokenResponse(tokenPair);
+        return refreshResponse(tokenPair);
     }
 
     @PostMapping("/logout")
@@ -70,15 +71,28 @@ public class AuthController {
                 .build();
     }
 
-    private ResponseEntity<SocialLoginResponse> tokenResponse(IssuedTokenPair tokenPair) {
-        WebRefreshCookie refreshCookie = webRefreshCookieWriter.issue(
-                tokenPair.refreshToken(),
-                tokenPair.refreshTokenExpiresAt()
-        );
+    private ResponseEntity<SocialLoginResponse> loginResponse(SocialLoginResult result) {
+        IssuedTokenPair tokenPair = result.tokenPair();
+        WebRefreshCookie refreshCookie = issueRefreshCookie(tokenPair);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.headerValue())
+                .body(SocialLoginResponse.from(result));
+    }
+
+    private ResponseEntity<AccessTokenRefreshResponse> refreshResponse(IssuedTokenPair tokenPair) {
+        WebRefreshCookie refreshCookie = issueRefreshCookie(tokenPair);
 
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.headerValue())
-                .body(SocialLoginResponse.from(tokenPair));
+                .body(AccessTokenRefreshResponse.from(tokenPair));
+    }
+
+    private WebRefreshCookie issueRefreshCookie(IssuedTokenPair tokenPair) {
+        return webRefreshCookieWriter.issue(
+                tokenPair.refreshToken(),
+                tokenPair.refreshTokenExpiresAt()
+        );
     }
 }
