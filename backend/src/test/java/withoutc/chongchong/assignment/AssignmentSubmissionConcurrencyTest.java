@@ -30,6 +30,9 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.service.AssignmentSubmissionService;
+import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.sender.NotificationEvent;
+import withoutc.chongchong.notification.support.TestNotificationSender;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -69,16 +72,20 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
     private PlatformTransactionManager transactionManager;
 
     @Autowired
+    private TestNotificationSender notificationSender;
+
+    @Autowired
     private TestDatabaseCleaner databaseCleaner;
 
     @BeforeEach
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
+        notificationSender.clear();
     }
 
     @Test
-    @DisplayName("같은 제출을 동시에 두 번 해도 최초 제출 알림은 한 번만 생성한다")
+    @DisplayName("같은 제출을 동시에 두 번 해도 최초 제출 이벤트는 한 번만 발행한다")
     void createsOnlyOneNotificationWhenSubmittingConcurrently() throws Exception {
         SubmissionFixture fixture = createFixture();
         CyclicBarrier barrier = new CyclicBarrier(2);
@@ -106,15 +113,10 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                 .get()
                 .extracting(submission -> submission.getSubmittedAt() != null)
                 .isEqualTo(true);
-        assertThat(jdbcTemplate.queryForObject("""
-                SELECT COUNT(*)
-                FROM notifications
-                WHERE recipient_id = ?
-                  AND resource_id = ?
-                  AND resource_type = 'ASSIGNMENT_SUBMISSION'
-                  AND type = 'SUBMITTED'
-                """, Integer.class, fixture.leaderId(), fixture.submissionId()))
-                .isOne();
+        assertThat(notificationSender.events())
+                .filteredOn(event -> event.type() == NotificationType.SUBMITTED)
+                .extracting(NotificationEvent::resourceId)
+                .containsExactly(fixture.submissionId());
     }
 
     @Test
@@ -220,7 +222,6 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                 assignment.getId(),
                 submission.getId(),
                 submitterUser.getId(),
-                leader.getId(),
                 submitter.getId()
         );
     }
@@ -230,7 +231,6 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
             Long assignmentId,
             Long submissionId,
             Long submitterUserId,
-            Long leaderId,
             Long submitterMemberId
     ) {
     }
