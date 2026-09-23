@@ -50,7 +50,7 @@ describe('공지 읽음 처리 실패', () => {
         }),
       ),
       http.get(`${NOTICE_DETAIL_URL}/status/me`, () =>
-        HttpResponse.json({ isRead: false, readAt: null }),
+        HttpResponse.json({ readStatus: 'UNREAD' }),
       ),
     );
   });

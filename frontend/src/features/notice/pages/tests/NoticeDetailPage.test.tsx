@@ -169,7 +169,7 @@ describe('스터디원 공지 상세 조회 실패', () => {
         }),
       ),
       http.get(`${NOTICE_DETAIL_URL}/status/me`, () =>
-        HttpResponse.json({ isRead: false, readAt: null }),
+        HttpResponse.json({ readStatus: 'UNREAD' }),
       ),
     );
   });
