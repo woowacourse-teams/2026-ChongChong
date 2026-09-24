@@ -57,12 +57,13 @@ const submissionStatus = {
   memberCount: 4,
   completeCount: 3,
   incompleteCount: 1,
+  remindAt: null,
   completeMembers: ['서연', '민준', '하은'].map((name, index) => ({
     id: index + 1,
     name,
     profileImage: null,
   })),
-  incompleteMembers: [{ id: 4, name: '지우', profileImage: null }],
+  incompleteMembers: [{ id: 4, name: '지우', profileImage: null, lastRemindAt: null }],
 };
 
 function ScreenHeader({
