@@ -110,6 +110,4 @@ export interface NotAssignedAssignment {
 }
 
 export type UserAssignmentSubmitDetail =
-  | SubmittedAssignment
-  | UnsubmittedAssignment
-  | NotAssignedAssignment;
+  SubmittedAssignment | UnsubmittedAssignment | NotAssignedAssignment;

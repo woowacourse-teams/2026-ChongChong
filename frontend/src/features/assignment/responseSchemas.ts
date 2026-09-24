@@ -34,7 +34,8 @@ const leaderAssignmentSummarySchema = assignmentSummaryBaseSchema.extend({
   isComplete: z.boolean(),
 }) satisfies z.ZodType<LeaderAssignmentSummary>;
 
-const memberAssignmentSummarySchema = assignmentSummaryBaseSchema satisfies z.ZodType<MemberAssignmentSummary>;
+const memberAssignmentSummarySchema =
+  assignmentSummaryBaseSchema satisfies z.ZodType<MemberAssignmentSummary>;
 
 const assignmentSchema = z.union([
   leaderAssignmentSummarySchema,

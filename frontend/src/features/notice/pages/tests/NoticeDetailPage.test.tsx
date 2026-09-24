@@ -39,9 +39,7 @@ describe('리드 공지 상세 조회 실패', () => {
           unreadCount: 1,
           remindAt: null,
           readMembers: [],
-          unreadMembers: [
-            { id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null },
-          ],
+          unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null }],
         }),
       ),
     );
@@ -115,9 +113,7 @@ describe('리드 공지 삭제 실패', () => {
           unreadCount: 1,
           remindAt: null,
           readMembers: [],
-          unreadMembers: [
-            { id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null },
-          ],
+          unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null }],
         }),
       ),
     );
@@ -174,9 +170,7 @@ describe('스터디원 공지 상세 조회 실패', () => {
           userName: '안톨리니',
         }),
       ),
-      http.get(`${NOTICE_DETAIL_URL}/status/me`, () =>
-        HttpResponse.json({ readStatus: 'UNREAD' }),
-      ),
+      http.get(`${NOTICE_DETAIL_URL}/status/me`, () => HttpResponse.json({ readStatus: 'UNREAD' })),
     );
   });
 

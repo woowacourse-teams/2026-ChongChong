@@ -43,11 +43,7 @@ export const handlers = [
     const searchParams = new URL(request.url).searchParams;
     const requestedSize = Number(searchParams.get('size'));
     const pageSize = requestedSize > 0 ? requestedSize : undefined;
-    const { page, nextCursor, hasNext } = paginateByCursor(
-      studyNotices,
-      searchParams,
-      pageSize,
-    );
+    const { page, nextCursor, hasNext } = paginateByCursor(studyNotices, searchParams, pageSize);
 
     const notices = page.map((notice) => {
       const common = {
@@ -171,61 +167,52 @@ export const handlers = [
     });
   }),
 
-  http.get(
-    `${API_URL}/studies/:studyId/notices/:noticeId/status/me`,
-    ({ request, params }) => {
-      const user = findUserFromHeader(request.headers);
-      if (!user) return new HttpResponse(null, { status: 401 });
+  http.get(`${API_URL}/studies/:studyId/notices/:noticeId/status/me`, ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
 
-      const [studyId, noticeId] = [params.studyId, params.noticeId].map(Number);
-      const member = findStudyMember(studyId, user.id);
-      if (!member) return new HttpResponse(null, { status: 403 });
+    const [studyId, noticeId] = [params.studyId, params.noticeId].map(Number);
+    const member = findStudyMember(studyId, user.id);
+    if (!member) return new HttpResponse(null, { status: 403 });
 
-      const notice = findNotice(studyId, noticeId);
-      if (!notice) return notFound('NOTICE_NOT_FOUND', '존재하지 않는 공지입니다.');
+    const notice = findNotice(studyId, noticeId);
+    if (!notice) return notFound('NOTICE_NOT_FOUND', '존재하지 않는 공지입니다.');
 
-      const recipient = findRecipient(noticeId, member.id);
-      if (!recipient) return HttpResponse.json({ readStatus: 'NOT_ASSIGNED' as const });
-      if (!recipient.readAt) return HttpResponse.json({ readStatus: 'UNREAD' as const });
+    const recipient = findRecipient(noticeId, member.id);
+    if (!recipient) return HttpResponse.json({ readStatus: 'NOT_ASSIGNED' as const });
+    if (!recipient.readAt) return HttpResponse.json({ readStatus: 'UNREAD' as const });
 
-      return HttpResponse.json({ readStatus: 'READ' as const, readAt: recipient.readAt });
-    },
-  ),
+    return HttpResponse.json({ readStatus: 'READ' as const, readAt: recipient.readAt });
+  }),
 
-  http.patch(
-    `${API_URL}/studies/:studyId/notices/:noticeId/read`,
-    async ({ request, params }) => {
-      const user = findUserFromHeader(request.headers);
-      if (!user) return new HttpResponse(null, { status: 401 });
+  http.patch(`${API_URL}/studies/:studyId/notices/:noticeId/read`, async ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
 
-      const [studyId, noticeId] = [params.studyId, params.noticeId].map(Number);
-      const member = findStudyMember(studyId, user.id);
-      if (!member) return new HttpResponse(null, { status: 403 });
+    const [studyId, noticeId] = [params.studyId, params.noticeId].map(Number);
+    const member = findStudyMember(studyId, user.id);
+    if (!member) return new HttpResponse(null, { status: 403 });
 
-      const notice = findNotice(studyId, noticeId);
-      if (!notice) return notFound('NOTICE_NOT_FOUND', '존재하지 않는 공지입니다.');
+    const notice = findNotice(studyId, noticeId);
+    if (!notice) return notFound('NOTICE_NOT_FOUND', '존재하지 않는 공지입니다.');
 
-      const recipient = findRecipient(noticeId, member.id);
-      if (!recipient) {
-        return notFound(
-          'NOTICE_RECIPIENT_NOT_FOUND',
-          '공지 수신자 정보를 찾을 수 없습니다.',
-        );
-      }
+    const recipient = findRecipient(noticeId, member.id);
+    if (!recipient) {
+      return notFound('NOTICE_RECIPIENT_NOT_FOUND', '공지 수신자 정보를 찾을 수 없습니다.');
+    }
 
-      const readAt = recipient.readAt ?? localDateTimeNow();
-      noticeRecipientTable.delete((query) => query.where({ id: recipient.id }));
-      await noticeRecipientTable.create({
-        id: recipient.id,
-        noticeId: recipient.noticeId,
-        memberId: recipient.memberId,
-        readAt,
-        lastRemindAt: recipient.lastRemindAt,
-      });
+    const readAt = recipient.readAt ?? localDateTimeNow();
+    noticeRecipientTable.delete((query) => query.where({ id: recipient.id }));
+    await noticeRecipientTable.create({
+      id: recipient.id,
+      noticeId: recipient.noticeId,
+      memberId: recipient.memberId,
+      readAt,
+      lastRemindAt: recipient.lastRemindAt,
+    });
 
-      return HttpResponse.json({ readAt });
-    },
-  ),
+    return HttpResponse.json({ readAt });
+  }),
 
   http.get(`${API_URL}/studies/:studyId/notices/:noticeId`, ({ request, params }) => {
     const user = findUserFromHeader(request.headers);
