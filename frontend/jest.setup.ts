@@ -5,6 +5,7 @@ import { studyTable } from './src/features/study/mocks/db';
 import { memberTable } from './src/features/member/mocks/db';
 import { assignmentTable } from './src/features/assignment/mocks/db';
 import { submissionTable } from './src/features/assignment/mocks/db';
+import { noticeRecipientTable, noticeTable } from './src/features/notice/mocks/db';
 
 beforeAll(() => server.listen());
 beforeEach(() => {
@@ -18,6 +19,8 @@ afterEach(() => {
   memberTable.clear();
   assignmentTable.clear();
   submissionTable.clear();
+  noticeTable.clear();
+  noticeRecipientTable.clear();
 });
 afterAll(() => server.close());
 

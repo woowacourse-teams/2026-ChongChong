@@ -90,19 +90,19 @@ describe('과제 생성 페이지 테스트', () => {
       },
     );
 
-    test('빈 제목에 20자를 초과한 값이 전달되면 입력을 거절한다', () => {
+    test('빈 제목에 100자를 초과한 값이 전달되면 입력을 거절한다', () => {
       setupCreateAssignmentPage();
       const titleInput = getTitleInput();
 
-      fireEvent.change(titleInput, { target: { value: createTextWithLength(21) } });
+      fireEvent.change(titleInput, { target: { value: createTextWithLength(101) } });
 
       expect(titleInput).toHaveValue('');
     });
 
-    test('제목이 20자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+    test('제목이 100자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
       setupCreateAssignmentPage();
       const titleInput = getTitleInput();
-      const originalValue = createTextWithLength(20);
+      const originalValue = createTextWithLength(100);
 
       fireEvent.change(titleInput, { target: { value: originalValue } });
       expect(titleInput).toHaveValue(originalValue);
@@ -112,10 +112,10 @@ describe('과제 생성 페이지 테스트', () => {
       expect(titleInput).toHaveValue(originalValue);
     });
 
-    test('제목의 중간 삽입 결과가 20자 이하면 입력을 반영한다', () => {
+    test('제목의 중간 삽입 결과가 100자 이하면 입력을 반영한다', () => {
       setupCreateAssignmentPage();
       const titleInput = getTitleInput();
-      const originalValue = createTextWithLength(19);
+      const originalValue = createTextWithLength(99);
 
       fireEvent.change(titleInput, { target: { value: originalValue } });
       expect(titleInput).toHaveValue(originalValue);

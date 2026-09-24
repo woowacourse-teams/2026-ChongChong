@@ -9,7 +9,7 @@ import { STUDY_URLS } from '../../urls';
 import { userTable } from '../../../user/mocks/db';
 import { studyTable } from '../../mocks/db';
 import { memberTable } from '../../../member/mocks/db';
-import { assignmentTable } from '../../../assignment/mocks/db';
+import { assignmentTable, submissionTable } from '../../../assignment/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
 import type { Role } from '../../types';
 
@@ -168,6 +168,12 @@ describe('스터디 상세 페이지', () => {
         closeAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         submissionTarget: 'MEMBERS_AND_LEADER',
         completeUserIds: [],
+      });
+      await submissionTable.create({
+        id: 1,
+        assignmentId: 1,
+        userId,
+        submitted: false,
       });
       setupStudyDetailPage(studyId);
 

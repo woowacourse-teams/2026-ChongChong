@@ -6,7 +6,72 @@ import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
 import { validateStudy, validateStudyJoin } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
-import { assignmentTable } from '../../assignment/mocks/db';
+import { assignmentTable, submissionTable } from '../../assignment/mocks/db';
+import { noticeRecipientTable, noticeTable } from '../../notice/mocks/db';
+
+function getIncompleteLeaderNotices(studyId: number) {
+  return noticeTable
+    .findMany((query) => query.where({ studyId }))
+    .flatMap((notice) => {
+      const recipients = noticeRecipientTable.findMany((query) =>
+        query.where({ noticeId: notice.id }),
+      );
+      const completeCount = recipients.filter(({ readAt }) => readAt !== null).length;
+
+      return completeCount < recipients.length
+        ? [
+            {
+              id: notice.id,
+              title: notice.title,
+              memberCount: recipients.length,
+              completeCount,
+            },
+          ]
+        : [];
+    });
+}
+
+function getUnreadMemberNotices(studyId: number, memberId: number) {
+  return noticeTable
+    .findMany((query) => query.where({ studyId }))
+    .filter((notice) => {
+      const recipient = noticeRecipientTable.findFirst((query) =>
+        query.where({ noticeId: notice.id, memberId }),
+      );
+      return recipient?.readAt === null;
+    });
+}
+
+function getOpenAssignments(studyId: number) {
+  const now = new Date();
+
+  return assignmentTable
+    .findMany((query) => query.where({ studyId }))
+    .filter((assignment) => new Date(assignment.closeAt) > now);
+}
+
+function getIncompleteLeaderAssignments(studyId: number) {
+  return getOpenAssignments(studyId).flatMap((assignment) => {
+    const submissions = submissionTable.findMany((query) =>
+      query.where({ assignmentId: assignment.id }),
+    );
+    const completeCount = submissions.filter(({ submitted }) => submitted).length;
+
+    return completeCount < submissions.length
+      ? [{ assignment, memberCount: submissions.length, completeCount }]
+      : [];
+  });
+}
+
+function getIncompleteMemberAssignments(studyId: number, userId: number) {
+  return getOpenAssignments(studyId).filter((assignment) => {
+    const submission = submissionTable.findFirst((query) =>
+      query.where({ assignmentId: assignment.id, userId }),
+    );
+
+    return submission?.submitted === false;
+  });
+}
 
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
@@ -20,15 +85,22 @@ export const handlers = [
         const members = await memberTable.findMany((q) =>
           q.where({ studyId: study.id, userId: user.id }),
         );
+        const noticeCount =
+          membership.role === 'LEADER'
+            ? getIncompleteLeaderNotices(study.id).length
+            : getUnreadMemberNotices(study.id, membership.id).length;
+        const assignmentCount =
+          membership.role === 'LEADER'
+            ? getIncompleteLeaderAssignments(study.id).length
+            : getIncompleteMemberAssignments(study.id, user.id).length;
         return {
           id: study.id,
           role: membership.role,
           name: study.name,
           description: study.description,
           memberCount: members.length,
-          // 공지/과제는 아직 mock table 이 없어 고정값을 사용합니다.
-          noticeCount: 2,
-          assignmentCount: 2,
+          noticeCount,
+          assignmentCount,
         };
       }),
     );
@@ -42,38 +114,31 @@ export const handlers = [
     const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (!member) return new HttpResponse(null, { status: 403 });
     const isLead = member.role === 'LEADER';
-    const now = new Date();
-    const members = memberTable.findMany((q) => q.where({ studyId }));
-    const memberCount = members.length;
-    const openAssignments = assignmentTable
-      .findMany((q) => q.where({ studyId }))
-      .filter((assignment) => new Date(assignment.closeAt) > now);
 
-    // 공지 MSW가 존재하지 않아 빈데이터로 표현합니다.
     if (isLead) {
-      const assignments = openAssignments.filter(
-        (assignment) => assignment.completeUserIds.length < memberCount,
-      );
+      const notices = getIncompleteLeaderNotices(studyId);
+      const assignments = getIncompleteLeaderAssignments(studyId);
       return HttpResponse.json({
         notices: {
-          count: 0,
-          items: [],
+          count: notices.length,
+          items: notices,
         },
         assignments: {
           count: assignments.length,
-          items: assignments.map((assignment) => ({
+          items: assignments.map(({ assignment, memberCount, completeCount }) => ({
             id: assignment.id,
             title: assignment.title,
             memberCount,
-            completeCount: assignment.completeUserIds.length,
+            completeCount,
           })),
         },
       });
     } else {
-      const assignments = openAssignments.filter(
-        (assignment) => !assignment.completeUserIds.includes(user.id),
-      );
-      const notices: { id: number; title: string }[] = [];
+      const assignments = getIncompleteMemberAssignments(studyId, user.id);
+      const notices = getUnreadMemberNotices(studyId, member.id).map(({ id, title }) => ({
+        id,
+        title,
+      }));
       return HttpResponse.json({
         totalCount: notices.length + assignments.length,
         notices: { items: notices },

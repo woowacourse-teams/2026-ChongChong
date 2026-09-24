@@ -9,6 +9,10 @@ import NoticeDetailPage from '../NoticeDetailPage';
 
 const NOTICE_DETAIL_URL = `${API_URL}/studies/:studyId/notices/:noticeId`;
 const resizeObserverDescriptor = Object.getOwnPropertyDescriptor(window, 'ResizeObserver');
+const intersectionObserverDescriptor = Object.getOwnPropertyDescriptor(
+  window,
+  'IntersectionObserver',
+);
 
 function renderNoticeDetailPage() {
   render(
@@ -19,13 +23,21 @@ function renderNoticeDetailPage() {
   );
 }
 
-describe('공지 읽음 처리 실패', () => {
+describe('공지 읽음 처리', () => {
   beforeEach(() => {
     // 한 화면에 들어오는 공지는 본문 표시 후 자동으로 읽음 처리를 요청한다.
     jest.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(200);
     jest.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
     // jsdom에 없는 ResizeObserver만 대체하고 읽음 처리 로직은 그대로 실행한다.
     Object.defineProperty(window, 'ResizeObserver', {
+      configurable: true,
+      value: jest.fn(() => ({
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+      })),
+    });
+    Object.defineProperty(window, 'IntersectionObserver', {
       configurable: true,
       value: jest.fn(() => ({
         observe: jest.fn(),
@@ -49,9 +61,7 @@ describe('공지 읽음 처리 실패', () => {
           createdAt: '2026-09-01T09:00:00',
         }),
       ),
-      http.get(`${NOTICE_DETAIL_URL}/status/me`, () =>
-        HttpResponse.json({ isRead: false, readAt: null }),
-      ),
+      http.get(`${NOTICE_DETAIL_URL}/status/me`, () => HttpResponse.json({ readStatus: 'UNREAD' })),
     );
   });
 
@@ -61,32 +71,76 @@ describe('공지 읽음 처리 실패', () => {
     } else {
       Reflect.deleteProperty(window, 'ResizeObserver');
     }
+    if (intersectionObserverDescriptor) {
+      Object.defineProperty(window, 'IntersectionObserver', intersectionObserverDescriptor);
+    } else {
+      Reflect.deleteProperty(window, 'IntersectionObserver');
+    }
   });
 
-  test('스터디에 대한 접근 권한이 없으면 접근 권한 안내를 토스트로 표시한다', async () => {
-    server.use(
-      http.patch(`${NOTICE_DETAIL_URL}/read`, () =>
-        HttpResponse.json(
-          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
-          { status: 403 },
+  describe('성공', () => {
+    test('읽음 처리 완료 안내를 토스트로 표시한다', async () => {
+      server.use(
+        http.patch(`${NOTICE_DETAIL_URL}/read`, () =>
+          HttpResponse.json({ readAt: '2026-09-01T10:00:00' }),
         ),
-      ),
-    );
-    renderNoticeDetailPage();
+      );
+      renderNoticeDetailPage();
 
-    const toast = await screen.findByRole('status', {}, { timeout: 4000 });
-    expect(toast).toHaveTextContent('해당 스터디에 대한 접근 권한이 없습니다.');
-    expect(toast).toBeVisible();
+      const toast = await screen.findByRole('status');
+      expect(toast).toHaveTextContent('읽음으로 표시했어요');
+      expect(toast).toBeVisible();
+    });
   });
 
-  test('네트워크 에러가 발생하면 읽음 처리 실패 안내를 토스트로 표시한다', async () => {
-    server.use(http.patch(`${NOTICE_DETAIL_URL}/read`, () => HttpResponse.error()));
-    renderNoticeDetailPage();
+  describe('실패', () => {
+    test('스터디에 대한 접근 권한이 없으면 접근 권한 안내를 토스트로 표시한다', async () => {
+      server.use(
+        http.patch(`${NOTICE_DETAIL_URL}/read`, () =>
+          HttpResponse.json(
+            { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+            { status: 403 },
+          ),
+        ),
+      );
+      renderNoticeDetailPage();
 
-    const toast = await screen.findByRole('status', {}, { timeout: 4000 });
-    expect(toast).toHaveTextContent('공지 읽음 처리에 실패했습니다.');
-    expect(toast).toBeVisible();
-    expect(screen.getByRole('heading', { name: '스터디 일정 안내' })).toBeVisible();
-    expect(screen.queryByRole('img', { name: '읽음 완료' })).not.toBeInTheDocument();
+      const toast = await screen.findByRole('status', {}, { timeout: 4000 });
+      expect(toast).toHaveTextContent('해당 스터디에 대한 접근 권한이 없습니다.');
+      expect(toast).toBeVisible();
+    });
+
+    test('네트워크 에러가 발생하면 읽음 처리 실패 안내를 토스트로 표시한다', async () => {
+      server.use(http.patch(`${NOTICE_DETAIL_URL}/read`, () => HttpResponse.error()));
+      renderNoticeDetailPage();
+
+      const toast = await screen.findByRole('status', {}, { timeout: 4000 });
+      expect(toast).toHaveTextContent('공지 읽음 처리에 실패했습니다.');
+      expect(toast).toBeVisible();
+      expect(screen.getByRole('heading', { name: '스터디 일정 안내' })).toBeVisible();
+      expect(screen.queryByRole('img', { name: '읽음 완료' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('확인 대상이 아닌 경우', () => {
+    test('읽음 상태 영역을 표시하지 않고 읽음 처리 요청을 보내지 않는다', async () => {
+      const readRequest = jest.fn();
+      server.use(
+        http.get(`${NOTICE_DETAIL_URL}/status/me`, () =>
+          HttpResponse.json({ readStatus: 'NOT_ASSIGNED' }),
+        ),
+        http.patch(`${NOTICE_DETAIL_URL}/read`, () => {
+          readRequest();
+
+          return HttpResponse.json({ readAt: '2026-09-01T10:00:00' });
+        }),
+      );
+      renderNoticeDetailPage();
+
+      expect(await screen.findByRole('heading', { name: '스터디 일정 안내' })).toBeVisible();
+      expect(screen.queryByText('끝까지 읽으면 읽음으로 표시돼요')).not.toBeInTheDocument();
+      expect(screen.queryByText(/지금 \d+% 읽었어요/)).not.toBeInTheDocument();
+      expect(readRequest).not.toHaveBeenCalled();
+    });
   });
 });

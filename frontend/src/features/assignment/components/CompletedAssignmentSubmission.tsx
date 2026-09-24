@@ -15,7 +15,7 @@ import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
-type SubmittedAssignment = Extract<UserAssignmentSubmitDetail, { submitted: true }>;
+type SubmittedAssignment = Extract<UserAssignmentSubmitDetail, { submissionStatus: 'SUBMITTED' }>;
 
 interface Props {
   assignmentId: number;
@@ -93,7 +93,7 @@ export default function CompletedAssignmentSubmission({
   return isEditing ? (
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
-      initialValues={{ content: submission.content, link: submission.link ?? '' }}
+      initialValues={{ content: submission.content ?? '', link: submission.link ?? '' }}
       isSubmitting={isPending}
       submitLabel="수정하기"
       onSubmit={mutate}
@@ -110,7 +110,7 @@ export default function CompletedAssignmentSubmission({
 
       <div css={cardListStyle}>
         <InfoCard icon={assignmentIcon} title="내용">
-          {submission.content}
+          {submission.content ?? ''}
         </InfoCard>
 
         {submission.link && (

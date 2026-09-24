@@ -34,6 +34,23 @@ function setupAssignmentDetailPage() {
   });
 }
 
+async function markSubmissionAsSubmitted(
+  userId: number,
+  values: { content: string; link: string | null },
+) {
+  const submission = submissionTable.findFirst((q) => q.where({ assignmentId: 1, userId }));
+  if (!submission) throw new Error('과제 제출 대상을 찾을 수 없습니다.');
+
+  submissionTable.delete((q) => q.where({ id: submission.id }));
+  await submissionTable.create({
+    ...submission,
+    submitted: true,
+    createdAt: '2026-09-01T09:00:00',
+    content: values.content,
+    link: values.link,
+  });
+}
+
 async function findSubmissionForm() {
   const submissionForm = within(await screen.findByRole('region', { name: '내 제출' }));
   const contentInput = await submissionForm.findByRole('textbox', { name: '내용' });
@@ -89,6 +106,18 @@ describe('과제 상세 페이지 테스트', () => {
       submissionTarget: 'MEMBERS_AND_LEADER',
       completeUserIds: [],
     });
+    await submissionTable.create({
+      id: 100,
+      assignmentId: 1,
+      userId: 1,
+      submitted: false,
+    });
+    await submissionTable.create({
+      id: 101,
+      assignmentId: 1,
+      userId: 2,
+      submitted: false,
+    });
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -128,7 +157,9 @@ describe('과제 상세 페이지 테스트', () => {
             }),
           ),
         );
-        const getMySubmission = jest.fn(() => HttpResponse.json({ submitted: false }));
+        const getMySubmission = jest.fn(() =>
+          HttpResponse.json({ submissionStatus: 'NOT_ASSIGNED' }),
+        );
         server.use(http.get(MY_SUBMISSION_URL, getMySubmission));
 
         setupAssignmentDetailPage();
@@ -139,11 +170,7 @@ describe('과제 상세 페이지 테스트', () => {
       });
 
       test('이미 제출했다면 제출 폼 대신 내 제출 내용을 표시한다', async () => {
-        await submissionTable.create({
-          id: 10,
-          assignmentId: 1,
-          userId: 1,
-          createdAt: '2026-09-01T09:00:00',
+        await markSubmissionAsSubmitted(1, {
           content: '리더가 제출한 과제',
           link: null,
         });
@@ -342,6 +369,20 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('본인 제출 정보 조회', () => {
+      test('제출 대상이 아니면 제출 폼을 표시하지 않고 제출 요청을 보내지 않는다', async () => {
+        submissionTable.delete((q) => q.where({ assignmentId: 1, userId: 2 }));
+        const submitRequest = jest.fn(() =>
+          HttpResponse.json({ submissionId: 101 }, { status: 201 }),
+        );
+        server.use(http.post(SUBMISSIONS_URL, submitRequest));
+
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
+        expect(screen.queryByRole('region', { name: '내 제출' })).not.toBeInTheDocument();
+        expect(submitRequest).not.toHaveBeenCalled();
+      });
+
       test.each([
         {
           title: '스터디에 대한 접근 권한이 없으면',
@@ -372,11 +413,7 @@ describe('과제 상세 페이지 테스트', () => {
       );
 
       test('링크가 null인 제출 정보를 정상적으로 표시하고 편집 폼에는 빈 링크를 보여준다', async () => {
-        await submissionTable.create({
-          id: 1,
-          assignmentId: 1,
-          userId: 2,
-          createdAt: '2026-09-01T09:00:00',
+        await markSubmissionAsSubmitted(2, {
           content: '링크 없이 제출한 내용',
           link: null,
         });
@@ -460,11 +497,7 @@ describe('과제 상세 페이지 테스트', () => {
 
     describe('과제 제출물 수정', () => {
       beforeEach(async () => {
-        await submissionTable.create({
-          id: 1,
-          assignmentId: 1,
-          userId: 2,
-          createdAt: '2026-09-01T09:00:00',
+        await markSubmissionAsSubmitted(2, {
           content: '기존 제출 내용',
           link: 'https://example.com/submission',
         });

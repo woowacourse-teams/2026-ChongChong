@@ -7,13 +7,17 @@ import { ReactNode } from 'react';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import LinkIcon from '../../../shared/assets/link.svg';
 
-interface AssigmentListProps {
-  assignments: Assignment[];
+interface AssigmentListProps<T extends Assignment> {
+  assignments: T[];
   studyId: number;
-  children: (assignment: Assignment) => ReactNode;
+  children: (assignment: T) => ReactNode;
 }
 
-export default function AssigmentList({ assignments, studyId, children }: AssigmentListProps) {
+export default function AssigmentList<T extends Assignment>({
+  assignments,
+  studyId,
+  children,
+}: AssigmentListProps<T>) {
   return (
     <List>
       {assignments.map((assignment) => (

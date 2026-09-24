@@ -11,19 +11,36 @@ import type {
   AssignmentSubmitStatus,
   CreateSubmissionResponse,
   UserAssignmentSubmitDetail,
+  LeaderAssignmentSummary,
+  MemberAssignmentSummary,
+  IncompleteMember,
 } from './types';
 
-const assignmentSchema = z.object({
+const submissionStatusSchema = z.enum(['NOT_ASSIGNED', 'NOT_SUBMITTED', 'SUBMITTED']);
+
+const assignmentSummaryBaseSchema = z.object({
   id: z.number(),
   title: z.string(),
   content: z.string(),
   submissionMethod: z.string(),
   closeAt: z.string(),
-  memberCount: z.number().optional(),
-  completeCount: z.number().optional(),
-  remindAt: z.string().nullish(),
+  submissionStatus: submissionStatusSchema,
+});
+
+const leaderAssignmentSummarySchema = assignmentSummaryBaseSchema.extend({
+  memberCount: z.number(),
+  completeCount: z.number(),
+  remindAt: z.string().optional(),
   isComplete: z.boolean(),
-}) satisfies z.ZodType<Assignment>;
+}) satisfies z.ZodType<LeaderAssignmentSummary>;
+
+const memberAssignmentSummarySchema =
+  assignmentSummaryBaseSchema satisfies z.ZodType<MemberAssignmentSummary>;
+
+const assignmentSchema = z.union([
+  leaderAssignmentSummarySchema,
+  memberAssignmentSummarySchema,
+]) satisfies z.ZodType<Assignment>;
 
 const assignmentListResponseSchema = z.object({
   nextCursor: z.number().nullable(),
@@ -57,7 +74,6 @@ const assignmentDetailSchema = z.object({
   submissionMethod: z.string(),
   closeAt: z.string(),
   submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
-  submissionId: z.number().optional(),
 }) satisfies z.ZodType<AssignmentDetail>;
 
 const submissionDetailSchema = z.object({
@@ -73,29 +89,36 @@ const memberSchema = z.object({
   id: z.number(),
   name: z.string(),
   profileImage: z.string().nullable(),
-  lastRemindAt: z.string().nullish(),
 }) satisfies z.ZodType<Member>;
+
+const incompleteMemberSchema = memberSchema.extend({
+  lastRemindAt: z.string().nullable(),
+}) satisfies z.ZodType<IncompleteMember>;
 
 const assignmentSubmitStatusSchema = z.object({
   id: z.number(),
   memberCount: z.number(),
   completeCount: z.number(),
   incompleteCount: z.number(),
-  remindAt: z.string().nullish(),
+  remindAt: z.string().nullable(),
   completeMembers: z.array(memberSchema),
-  incompleteMembers: z.array(memberSchema),
+  incompleteMembers: z.array(incompleteMemberSchema),
 }) satisfies z.ZodType<AssignmentSubmitStatus>;
 
-const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submitted', [
+const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submissionStatus', [
   z.object({
-    submitted: z.literal(true),
+    submissionStatus: z.literal('SUBMITTED'),
     submissionId: z.number(),
     createdAt: z.string(),
-    content: z.string(),
-    link: z.union([z.url(), z.literal('')]).nullish(),
+    content: z.string().optional(),
+    link: z.string().optional(),
   }),
   z.object({
-    submitted: z.literal(false),
+    submissionStatus: z.literal('NOT_SUBMITTED'),
+    submissionId: z.number(),
+  }),
+  z.object({
+    submissionStatus: z.literal('NOT_ASSIGNED'),
   }),
 ]) satisfies z.ZodType<UserAssignmentSubmitDetail>;
 
