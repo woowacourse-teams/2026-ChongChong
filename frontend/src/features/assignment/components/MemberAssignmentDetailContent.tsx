@@ -1,5 +1,7 @@
 import { useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
+import { formatDateToString } from '../../../shared/utils/formatDate';
 import assignmentQueries from '../queries';
 import AssignmentArticle from './AssignmentArticle';
 import MyAssignmentSubmission from './MyAssignmentSubmission';
@@ -19,6 +21,11 @@ export default function MemberAssignmentDetailContent({ studyId }: Props) {
 
   return (
     <>
+      <ContentDetailHeader
+        title={assignment.title}
+        dateTime={assignment.closeAt}
+        meta={`${formatDateToString(assignment.closeAt)} 마감`}
+      />
       <AssignmentArticle assignment={assignment} />
       <MyAssignmentSubmission
         studyId={studyId}
