@@ -89,13 +89,14 @@ describe('과제 생성 페이지 테스트', () => {
       },
     );
 
-    test('제목 입력은 20자로 제한된다', async () => {
+    test('제목 입력은 100자로 제한된다', async () => {
       const { user } = setupCreateAssignmentPage();
 
       const titleInput = getTitleInput();
-      await user.type(titleInput, '안톨리니'.repeat(20));
+      await user.click(titleInput);
+      await user.paste('안'.repeat(200));
 
-      expect(titleInput).toHaveValue('안톨리니'.repeat(5));
+      expect(titleInput).toHaveValue('안'.repeat(100));
     });
 
     test('내용 입력은 10000자로 제한된다', async () => {
