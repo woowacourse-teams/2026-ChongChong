@@ -7,6 +7,7 @@ public record NoticeRecipientStatusProjection(
         String name,
         String profileImageUrl,
         boolean isRead,
+        LocalDateTime readAt,
         LocalDateTime lastRemindAt
 ) {
 }

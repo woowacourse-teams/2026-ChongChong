@@ -391,10 +391,10 @@ class NoticeServiceTest {
         LocalDateTime lastRemindAt = NOW.minusHours(1);
         notice.addReminders(List.of(remindAt), NOW);
         List<NoticeRecipientStatusProjection> statuses = List.of(
-                new NoticeRecipientStatusProjection(21L, "읽은 멤버", "https://example.com/read.png", true, null),
-                new NoticeRecipientStatusProjection(22L, "리마인드 받은 멤버", "https://example.com/unread.png", false,
+                new NoticeRecipientStatusProjection(21L, "읽은 멤버", "https://example.com/read.png", true, NOW, null),
+                new NoticeRecipientStatusProjection(22L, "리마인드 받은 멤버", "https://example.com/unread.png", false, null,
                         lastRemindAt),
-                new NoticeRecipientStatusProjection(23L, "리마인드 없는 멤버", null, false, null)
+                new NoticeRecipientStatusProjection(23L, "리마인드 없는 멤버", null, false, null, null)
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
@@ -408,7 +408,7 @@ class NoticeServiceTest {
         assertThat(response.readCount()).isEqualTo(1);
         assertThat(response.remindAt()).isEqualTo(remindAt);
         assertThat(response.readMembers()).containsExactly(
-                new NoticeStatusesResponse.ReadMember(21L, "읽은 멤버", "https://example.com/read.png")
+                new NoticeStatusesResponse.ReadMember(21L, "읽은 멤버", "https://example.com/read.png", NOW)
         );
         assertThat(response.unreadMembers()).containsExactly(
                 new NoticeStatusesResponse.UnreadMember(22L, "리마인드 받은 멤버", "https://example.com/unread.png",

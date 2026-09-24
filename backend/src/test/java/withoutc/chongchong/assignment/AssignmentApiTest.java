@@ -815,7 +815,8 @@ class AssignmentApiTest {
     @Test
     @DisplayName("리더가 제출 현황을 조회하면 완료 및 미완료 인원과 개수를 반환한다")
     void getAssignmentSubmissionStatusTest() {
-        submitAssignment(memberUser, assignment, "제출 내용", null);
+        Long submissionId = submitAssignment(memberUser, assignment, "제출 내용", null);
+        AssignmentSubmission savedSubmission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -829,6 +830,8 @@ class AssignmentApiTest {
                 .body("incompleteCount", equalTo(1))
                 .body("completeMembers", hasSize(1))
                 .body("completeMembers[0].id", equalTo(member.getId().intValue()))
+                .body("completeMembers[0].submittedAt",
+                        equalTo(savedSubmission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("incompleteMembers", hasSize(1))
                 .body("incompleteMembers[0].id", equalTo(secondMember.getId().intValue()))
                 .body("incompleteMembers[0].lastRemindAt", nullValue());

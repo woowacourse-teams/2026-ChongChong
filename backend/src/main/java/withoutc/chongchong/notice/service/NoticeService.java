@@ -131,7 +131,8 @@ public class NoticeService {
                 .map(status -> NoticeStatusesResponse.ReadMember.of(
                         status.memberId(),
                         status.name(),
-                        status.profileImageUrl()
+                        status.profileImageUrl(),
+                        status.readAt()
                 ))
                 .toList();
 

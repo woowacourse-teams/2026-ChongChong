@@ -793,6 +793,8 @@ class NoticeApiTest {
                 .body("readMembers", hasSize(1))
                 .body("readMembers[0].id", equalTo(member.getId().intValue()))
                 .body("readMembers[0].name", equalTo("스터디원"))
+                .body("readMembers[0].readAt",
+                        equalTo(readAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("readMembers[0]", hasKey("profileImage"))
                 .body("readMembers[0]", not(hasKey("profileImageUrl")))
                 .body("unreadMembers", hasSize(1))
