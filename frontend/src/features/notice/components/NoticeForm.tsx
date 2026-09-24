@@ -1,4 +1,4 @@
-import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
+import { CSSProperties, useLayoutEffect, useRef } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
@@ -7,6 +7,7 @@ import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
+import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
   display: 'flex',
@@ -43,8 +44,17 @@ export default function NoticeForm({
   fieldErrors = {},
 }: NoticeFormProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const [title, setTitle] = useState(initialValues.title);
-  const [content, setContent] = useState(initialValues.content);
+  const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
+    if (value.length > NOTICE_TITLE.length) return prevValue;
+    return value;
+  });
+  const [content, handleContentChange] = useInputState(
+    initialValues.content,
+    (value, prevValue) => {
+      if (value.length > NOTICE_CONTENT.length) return prevValue;
+      return value;
+    },
+  );
   const posthog = usePostHog();
 
   useLayoutEffect(() => {
@@ -68,7 +78,7 @@ export default function NoticeForm({
         label="제목"
         value={title}
         autoFocus
-        onChange={(event) => setTitle(event.target.value)}
+        onChange={handleTitleChange}
         placeholder="제목을 입력해 주세요"
         errorText={fieldErrors.title}
         maxLength={NOTICE_TITLE.length}
@@ -82,7 +92,7 @@ export default function NoticeForm({
         name="content"
         label="내용"
         value={content}
-        onChange={(event) => setContent(event.target.value)}
+        onChange={handleContentChange}
         placeholder="내용을 입력해주세요"
         errorText={fieldErrors.content}
         helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
