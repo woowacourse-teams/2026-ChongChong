@@ -17,7 +17,7 @@ export const handlers = [
   }),
 
   http.post(`${API_URL}${AUTH_URLS.login}`, async () => {
-    return HttpResponse.json(mockLoginResponse);
+    return HttpResponse.json({ ...mockLoginResponse, userId: 1 });
   }),
 
   http.post(`${API_URL}${AUTH_URLS.refresh}`, async () => {

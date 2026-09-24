@@ -66,7 +66,8 @@ class SocialLoginServiceTest {
                 "https://example.com/profile.png"
         );
 
-        IssuedTokenPair tokenPair = socialLoginService.login(socialUserInfo);
+        SocialLoginResult result = socialLoginService.login(socialUserInfo);
+        IssuedTokenPair tokenPair = result.tokenPair();
 
         User user = userRepository.findAll().getFirst();
         SocialAccount socialAccount = socialAccountRepository.findByProviderAndProviderUserId(
@@ -77,6 +78,7 @@ class SocialLoginServiceTest {
         Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
         HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
 
+        assertThat(result.userId()).isEqualTo(user.getId());
         assertThat(userRepository.count()).isOne();
         assertThat(user.getName()).isEqualTo("총총이");
         assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
@@ -106,10 +108,12 @@ class SocialLoginServiceTest {
                 "https://example.com/new-profile.png"
         );
 
-        IssuedTokenPair tokenPair = socialLoginService.login(changedSocialUserInfo);
+        SocialLoginResult result = socialLoginService.login(changedSocialUserInfo);
+        IssuedTokenPair tokenPair = result.tokenPair();
 
         User found = userRepository.findById(existingUser.getId()).orElseThrow();
         Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
+        assertThat(result.userId()).isEqualTo(existingUser.getId());
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
         assertThat(authSessionRepository.count()).isOne();
@@ -127,13 +131,15 @@ class SocialLoginServiceTest {
                 "총총이",
                 null
         );
-        IssuedTokenPair firstTokenPair = socialLoginService.login(socialUserInfo);
+        SocialLoginResult firstResult = socialLoginService.login(socialUserInfo);
+        IssuedTokenPair firstTokenPair = firstResult.tokenPair();
         User user = userRepository.findAll().getFirst();
         AuthSession firstSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
         Long firstSessionId = firstSession.getId();
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
 
-        IssuedTokenPair secondTokenPair = socialLoginService.login(socialUserInfo);
+        SocialLoginResult secondResult = socialLoginService.login(socialUserInfo);
+        IssuedTokenPair secondTokenPair = secondResult.tokenPair();
 
         AuthSession replacedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
         assertThat(userRepository.count()).isOne();
@@ -142,30 +148,35 @@ class SocialLoginServiceTest {
         assertThat(replacedSession.getId()).isEqualTo(firstSessionId);
         assertThat(replacedSession.getRefreshTokenHash()).isNotEqualTo(firstRefreshTokenHash);
         assertThat(secondTokenPair.refreshToken()).isNotEqualTo(firstTokenPair.refreshToken());
+        assertThat(secondResult.userId()).isEqualTo(firstResult.userId());
     }
 
     @Test
     @DisplayName("제공자가 다르면 같은 제공자 사용자 ID를 서로 다른 총총 사용자로 가입시킨다")
     void distinguishSameProviderUserIdFromDifferentProviders() {
-        IssuedTokenPair googleTokenPair = socialLoginService.login(createSocialUserInfo(
+        SocialLoginResult googleResult = socialLoginService.login(createSocialUserInfo(
                 SocialProvider.GOOGLE,
                 "same-provider-user-id",
                 "Google 사용자",
                 null
         ));
-        IssuedTokenPair kakaoTokenPair = socialLoginService.login(createSocialUserInfo(
+        IssuedTokenPair googleTokenPair = googleResult.tokenPair();
+        SocialLoginResult kakaoResult = socialLoginService.login(createSocialUserInfo(
                 SocialProvider.KAKAO,
                 "same-provider-user-id",
                 "Kakao 사용자",
                 null
         ));
+        IssuedTokenPair kakaoTokenPair = kakaoResult.tokenPair();
 
-        String googleUserId = jwtDecoder.decode(googleTokenPair.accessToken().value()).getSubject();
-        String kakaoUserId = jwtDecoder.decode(kakaoTokenPair.accessToken().value()).getSubject();
+        String googleTokenSubject = jwtDecoder.decode(googleTokenPair.accessToken().value()).getSubject();
+        String kakaoTokenSubject = jwtDecoder.decode(kakaoTokenPair.accessToken().value()).getSubject();
         assertThat(userRepository.count()).isEqualTo(2);
         assertThat(socialAccountRepository.count()).isEqualTo(2);
         assertThat(authSessionRepository.count()).isEqualTo(2);
-        assertThat(googleUserId).isNotEqualTo(kakaoUserId);
+        assertThat(googleTokenSubject).isEqualTo(googleResult.userId().toString());
+        assertThat(kakaoTokenSubject).isEqualTo(kakaoResult.userId().toString());
+        assertThat(googleResult.userId()).isNotEqualTo(kakaoResult.userId());
     }
 
     @Test

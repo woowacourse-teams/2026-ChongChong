@@ -1,0 +1,28 @@
+get:
+  tags: [Notification]
+  operationId: getMyNotifications
+  x-backend:
+    status: review
+    owner: wontop02
+    description: 현재 인증된 사용자가 받은 알림을 최신순으로 조회한다.
+  summary: 내 알림 목록 조회
+  description: 인증된 사용자의 모든 알림을 생성 시각 내림차순으로 조회한다. 알림이 없으면 notifications가 빈 배열인 응답을 반환한다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 내 알림 목록 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/notifications.yaml#/MyNotificationListResponse' }
+          example:
+            notifications:
+              - id: 1
+                title: '[알고리즘 스터디] 새 공지'
+                body: 4주차부터 선택 미션이 추가됩니다
+                type: CREATED
+                resourceType: NOTICE
+                resourceId: 10
+                deepLink: /studies/2/notices/10
+                isRead: false
+                createdAt: '2026-09-21T12:00:00'
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

@@ -21,8 +21,14 @@ interface Props {
 }
 
 export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props) {
-  const [nameValue, handleNameValue] = useInputState('');
-  const [descriptionValue, handleDescriptionValue] = useInputState('');
+  const [nameValue, handleNameValue] = useInputState('', (value, prevValue) => {
+    if (value.length > STUDY_NAME.length) return prevValue;
+    return value;
+  });
+  const [descriptionValue, handleDescriptionValue] = useInputState('', (value, prevValue) => {
+    if (value.length > STUDY_DESCRIPTION.length) return prevValue;
+    return value;
+  });
   const posthog = usePostHog();
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {

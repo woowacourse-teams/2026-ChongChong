@@ -10,12 +10,10 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -25,8 +23,8 @@ import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -93,7 +91,7 @@ class StudyMemberRemovalAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 멤버를 직접 삭제하면 대상의 연관 데이터만 cascade 삭제한다")
+    @DisplayName("스터디 멤버를 직접 삭제하면 대상의 멤버 연관 데이터만 cascade 삭제한다")
     void deleteMemberCascadesActivityDataTest() {
         RemovalFixture fixture = createRemovalFixture();
 
@@ -104,7 +102,7 @@ class StudyMemberRemovalAcceptanceTest {
     }
 
     @Test
-    @DisplayName("활동 내역이 있는 멤버를 방출하면 대상의 연관 데이터만 삭제한다")
+    @DisplayName("활동 내역이 있는 멤버를 방출하면 대상의 멤버 연관 데이터만 삭제한다")
     void expelMemberWithActivityDataTest() {
         RemovalFixture fixture = createRemovalFixture();
 
@@ -123,7 +121,7 @@ class StudyMemberRemovalAcceptanceTest {
     }
 
     @Test
-    @DisplayName("활동 내역이 있는 멤버가 탈퇴하면 자신의 연관 데이터만 삭제한다")
+    @DisplayName("활동 내역이 있는 멤버가 탈퇴하면 자신의 멤버 연관 데이터만 삭제한다")
     void leaveMemberWithActivityDataTest() {
         RemovalFixture fixture = createRemovalFixture();
 
@@ -205,10 +203,10 @@ class StudyMemberRemovalAcceptanceTest {
                 .submit("제출 내용", null, NOW);
         assignmentRepository.saveAndFlush(assignment);
 
-        saveNotification(study, target, notice.getId(), NotificationResourceType.NOTICE);
-        saveNotification(study, target, assignment.getId(), NotificationResourceType.ASSIGNMENT);
-        saveNotification(study, otherMember, notice.getId(), NotificationResourceType.NOTICE);
-        saveNotification(study, otherMember, assignment.getId(), NotificationResourceType.ASSIGNMENT);
+        saveNotification(study, target, notice.getId(), ResourceType.NOTICE);
+        saveNotification(study, target, assignment.getId(), ResourceType.ASSIGNMENT);
+        saveNotification(study, otherMember, notice.getId(), ResourceType.NOTICE);
+        saveNotification(study, otherMember, assignment.getId(), ResourceType.ASSIGNMENT);
 
         return new RemovalFixture(study, leader, target, otherMember, notice, assignment);
     }
@@ -216,15 +214,17 @@ class StudyMemberRemovalAcceptanceTest {
     private void assertOnlyTargetRemoved(RemovalFixture fixture) {
         Long targetId = fixture.target().getId();
         Long otherMemberId = fixture.otherMember().getId();
+        Long targetUserId = fixture.target().getUser().getId();
+        Long otherUserId = fixture.otherMember().getUser().getId();
 
         assertThat(studyMemberRepository.findById(targetId)).isEmpty();
         assertThat(studyMemberRepository.findById(fixture.leader().getId())).isPresent();
         assertThat(studyMemberRepository.findById(otherMemberId)).isPresent();
 
         assertThat(notificationRepository.findAll())
-                .hasSize(2)
-                .allSatisfy(notification ->
-                        assertThat(notification.getRecipient().getId()).isEqualTo(otherMemberId));
+                .hasSize(4)
+                .extracting(notification -> notification.getRecipient().getId())
+                .containsExactlyInAnyOrder(targetUserId, targetUserId, otherUserId, otherUserId);
         assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(fixture.notice().getId(), targetId))
                 .isEmpty();
         assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(fixture.notice().getId(), otherMemberId))
@@ -238,7 +238,6 @@ class StudyMemberRemovalAcceptanceTest {
         assertThat(assignmentRepository.findById(fixture.assignment().getId())).isPresent();
         assertThat(studyRepository.findById(fixture.study().getId())).isPresent();
 
-        Long targetUserId = fixture.target().getUser().getId();
         testAuthRequest.givenAuthenticatedUser(targetUserId)
                 .port(port)
                 .when()
@@ -265,14 +264,18 @@ class StudyMemberRemovalAcceptanceTest {
             Study study,
             StudyMember recipient,
             Long resourceId,
-            NotificationResourceType resourceType
+            ResourceType resourceType
     ) {
-        Notification notification = BeanUtils.instantiateClass(Notification.class);
-        ReflectionTestUtils.setField(notification, "study", study);
-        ReflectionTestUtils.setField(notification, "recipient", recipient);
-        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
-        ReflectionTestUtils.setField(notification, "resourceId", resourceId);
-        ReflectionTestUtils.setField(notification, "resourceType", resourceType);
+        String resourcePath = resourceType == ResourceType.NOTICE ? "notices" : "assignments";
+        Notification notification = Notification.create(
+                recipient.getUser(),
+                "[스터디] 새 " + resourceType.name,
+                "알림",
+                NotificationType.REMIND,
+                resourceId,
+                resourceType,
+                "/studies/%d/%s/%d".formatted(study.getId(), resourcePath, resourceId)
+        );
         notificationRepository.saveAndFlush(notification);
     }
 

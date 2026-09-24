@@ -15,8 +15,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.ResourceAccessException;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.notification.support.TestNotificationSender;
 import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
@@ -80,7 +80,7 @@ class NotificationEventTransactionTest {
         return new NotificationEvent(
                 NotificationType.CREATED,
                 1L,
-                NotificationResourceType.NOTICE,
+                ResourceType.NOTICE,
                 1L,
                 "공지 제목",
                 List.of(new NotificationEvent.Recipient(2L, "스터디원"))

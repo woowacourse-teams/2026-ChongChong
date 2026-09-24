@@ -26,8 +26,8 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
             FROM NoticeRecipient recipient
             JOIN recipient.member member
             LEFT JOIN Notification notification
-              ON notification.recipient = member
-             AND notification.resourceType = withoutc.chongchong.notification.entity.NotificationResourceType.NOTICE
+              ON notification.recipient = member.user
+             AND notification.resourceType = withoutc.chongchong.notification.entity.ResourceType.NOTICE
              AND notification.resourceId = recipient.notice.id
              AND notification.type = withoutc.chongchong.notification.entity.NotificationType.REMIND
             WHERE recipient.notice.id = :noticeId

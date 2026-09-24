@@ -4,15 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -39,7 +37,7 @@ class NotificationRepositoryTest {
     private UserRepository userRepository;
 
     @Test
-    @DisplayName("멤버가 받은 알림만 모두 삭제한다")
+    @DisplayName("사용자가 받은 알림만 모두 삭제한다")
     void deleteAllByRecipientIdTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember target = createMember(study, "삭제 대상");
@@ -47,12 +45,12 @@ class NotificationRepositoryTest {
         saveNotification(study, target, 1L);
         saveNotification(study, otherMember, 1L);
 
-        int deletedCount = notificationRepository.deleteAllByRecipientId(target.getId());
+        int deletedCount = notificationRepository.deleteAllByRecipientId(target.getUser().getId());
 
         assertThat(deletedCount).isOne();
         assertThat(notificationRepository.findAll())
                 .extracting(notification -> notification.getRecipient().getId())
-                .containsExactly(otherMember.getId());
+                .containsExactly(otherMember.getUser().getId());
     }
 
     private StudyMember createMember(Study study, String name) {
@@ -63,12 +61,15 @@ class NotificationRepositoryTest {
     }
 
     private void saveNotification(Study study, StudyMember recipient, Long resourceId) {
-        Notification notification = BeanUtils.instantiateClass(Notification.class);
-        ReflectionTestUtils.setField(notification, "study", study);
-        ReflectionTestUtils.setField(notification, "recipient", recipient);
-        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
-        ReflectionTestUtils.setField(notification, "resourceId", resourceId);
-        ReflectionTestUtils.setField(notification, "resourceType", NotificationResourceType.NOTICE);
+        Notification notification = Notification.create(
+                recipient.getUser(),
+                "[스터디] 새 공지",
+                "공지 제목",
+                NotificationType.REMIND,
+                resourceId,
+                ResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), resourceId)
+        );
         notificationRepository.saveAndFlush(notification);
     }
 }

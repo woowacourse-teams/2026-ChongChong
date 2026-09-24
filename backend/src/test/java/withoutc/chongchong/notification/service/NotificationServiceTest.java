@@ -33,18 +33,21 @@ import withoutc.chongchong.notice.entity.NoticeReminderStatus;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
+import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
     private static final Long NOTICE_ID = 100L;
     private static final Long ASSIGNMENT_ID = 200L;
+    private static final Long USER_ID = 1L;
+    private static final Long NOTIFICATION_ID = 300L;
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-20T01:00:00Z"),
             ZoneId.of("Asia/Seoul"));
@@ -83,6 +86,28 @@ class NotificationServiceTest {
     }
 
     @Test
+    @DisplayName("현재 사용자의 알림을 읽음 처리한다")
+    void readNotification() {
+        User recipient = mock(User.class);
+        Notification notification = Notification.create(
+                recipient,
+                "[스터디] 새 공지",
+                "공지 내용",
+                NotificationType.CREATED,
+                NOTICE_ID,
+                ResourceType.NOTICE,
+                "/studies/1/notices/100"
+        );
+        when(notificationRepository.getByIdAndRecipientIdOrElseThrow(NOTIFICATION_ID, USER_ID))
+                .thenReturn(notification);
+
+        notificationService.readNotification(USER_ID, NOTIFICATION_ID);
+
+        assertThat(notification.isRead()).isTrue();
+        verify(notificationRepository).getByIdAndRecipientIdOrElseThrow(NOTIFICATION_ID, USER_ID);
+    }
+
+    @Test
     @DisplayName("기한이 지난 과제 리마인더는 미제출자를 조회하고 발송 완료 처리한다")
     void createAssignmentReminderNotifications() {
         AssignmentReminder reminder = mock(AssignmentReminder.class);
@@ -96,6 +121,7 @@ class NotificationServiceTest {
         when(reminder.getAssignment()).thenReturn(assignment);
         when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
         when(assignment.getStudy()).thenReturn(study);
+        when(assignment.getTitle()).thenReturn("과제 제목");
         when(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID))
                 .thenReturn(List.of(recipient));
 
@@ -121,6 +147,7 @@ class NotificationServiceTest {
         when(reminder.getNotice()).thenReturn(notice);
         when(notice.getId()).thenReturn(NOTICE_ID);
         when(notice.getStudy()).thenReturn(study);
+        when(notice.getTitle()).thenReturn("공지 제목");
         when(noticeRecipientRepository.findUnreadMembersByNoticeId(NOTICE_ID))
                 .thenReturn(List.of(recipient));
 
@@ -152,7 +179,7 @@ class NotificationServiceTest {
         NotificationEvent event = eventCaptor.getValue();
         assertThat(event.type()).isEqualTo(NotificationType.SUBMITTED);
         assertThat(event.resourceId()).isEqualTo(300L);
-        assertThat(event.resourceType()).isEqualTo(NotificationResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
     }
 
     @Test

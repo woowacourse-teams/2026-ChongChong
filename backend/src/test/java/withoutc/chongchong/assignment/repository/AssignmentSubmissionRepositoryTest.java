@@ -162,11 +162,14 @@ class AssignmentSubmissionRepositoryTest {
         ));
         LocalDateTime firstRemindAt = NOW.plusHours(1);
         LocalDateTime lastRemindAt = NOW.plusHours(2);
-        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", firstRemindAt);
-        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", lastRemindAt);
-        insertNotification(study.getId(), incompleteMember.getId(), otherAssignment.getId(), "ASSIGNMENT",
+        insertNotification(incompleteMember.getUser().getId(), assignment.getId(), "ASSIGNMENT",
+                firstRemindAt);
+        insertNotification(incompleteMember.getUser().getId(), assignment.getId(), "ASSIGNMENT",
+                lastRemindAt);
+        insertNotification(incompleteMember.getUser().getId(), otherAssignment.getId(), "ASSIGNMENT",
                 NOW.plusHours(3));
-        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "NOTICE", NOW.plusHours(4));
+        insertNotification(incompleteMember.getUser().getId(), assignment.getId(), "NOTICE",
+                NOW.plusHours(4));
 
         Map<Long, AssignmentSubmitterStatusProjection> statusesByMemberId = assignmentSubmissionRepository
                 .findAllSubmitterStatusesByAssignmentId(assignment.getId())
@@ -229,13 +232,15 @@ class AssignmentSubmissionRepositoryTest {
         return studyMemberRepository.save(StudyMember.create(study, user, name, null, role));
     }
 
-    private void insertNotification(Long studyId, Long recipientId, Long resourceId, String resourceType,
+    private void insertNotification(Long recipientId, Long resourceId, String resourceType,
                                     LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update("""
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                studyId, recipientId, resourceId, resourceType, createdAt, createdAt);
+                recipientId, title, resourceId, resourceType, createdAt, createdAt);
     }
 }

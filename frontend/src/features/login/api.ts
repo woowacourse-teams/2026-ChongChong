@@ -2,9 +2,9 @@ import type { Options } from 'ky';
 import authApi from './authClient';
 import { clearAccessToken, setAccessToken } from './accessToken';
 import { AUTH_URLS } from './urls';
-import type { CsrfResponse, LoginResponse } from './types';
+import type { CsrfResponse, LoginResponse, RotateAccessTokenResponse } from './types';
 
-let refreshRequest: Promise<LoginResponse> | null = null;
+let refreshRequest: Promise<RotateAccessTokenResponse> | null = null;
 
 async function getCsrfToken(): Promise<CsrfResponse> {
   const response = await authApi.get<CsrfResponse>(AUTH_URLS.csrf, {
@@ -24,7 +24,7 @@ async function postWithCsrf(path: string, options?: Options) {
     const headers = new Headers(options?.headers as HeadersInit);
     headers.set(csrf.headerName, csrf.token);
 
-    const response = await authApi.post<LoginResponse>(path, {
+    const response = await authApi.post(path, {
       ...options,
       headers,
     });
@@ -49,7 +49,7 @@ export async function loginWithKakaoCode(authorizationCode: string) {
     throw new Error('카카오 로그인에 실패했습니다. 다시 로그인해 주세요.');
   }
 
-  const tokenResponse = await response.json();
+  const tokenResponse = await response.json<LoginResponse>();
   setAccessToken(tokenResponse.accessToken);
   return tokenResponse;
 }
@@ -62,7 +62,7 @@ async function rotateAccessToken() {
     throw new Error('로그인 세션이 만료되었습니다.');
   }
 
-  const tokenResponse = await response.json();
+  const tokenResponse = await response.json<RotateAccessTokenResponse>();
   setAccessToken(tokenResponse.accessToken);
   return tokenResponse;
 }
@@ -78,9 +78,11 @@ export function refreshAccessToken() {
 }
 
 export async function logout() {
-  try {
-    await postWithCsrf(AUTH_URLS.logout);
-  } finally {
-    clearAccessToken();
+  const response = await postWithCsrf(AUTH_URLS.logout);
+
+  if (!response.ok) {
+    throw new Error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
   }
+
+  clearAccessToken();
 }
