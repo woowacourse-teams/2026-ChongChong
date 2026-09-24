@@ -41,6 +41,10 @@ NoticeDetailPage.Content = function Content() {
   return role === 'LEADER' ? (
     <LeaderNoticeDetailContent studyId={studyId} noticeId={noticeId} />
   ) : (
-    <MemberNoticeDetailContent studyId={studyId} noticeId={noticeId} />
+    <MemberNoticeDetailContent
+      key={`${studyId}-${noticeId}`}
+      studyId={studyId}
+      noticeId={noticeId}
+    />
   );
 };
