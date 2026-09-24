@@ -42,6 +42,10 @@ export interface Member {
   profileImage: string | null;
 }
 
+export interface ReadNoticeMember extends Member {
+  readAt?: string;
+}
+
 export interface UnreadNoticeMember extends Member {
   lastRemindAt: string | null;
 }
@@ -52,7 +56,7 @@ export interface NoticeReadStatus {
   readCount: number;
   unreadCount: number;
   remindAt: string | null;
-  readMembers: Member[];
+  readMembers: ReadNoticeMember[];
   unreadMembers: UnreadNoticeMember[];
 }
 

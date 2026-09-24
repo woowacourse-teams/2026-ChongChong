@@ -6,7 +6,8 @@ import {
 } from '@tanstack/react-query';
 import type { CSSProperties, UIEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { formatRelativeTime } from '../../../shared/utils/formatDate';
+import { formatDateToString, formatRelativeTime } from '../../../shared/utils/formatDate';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import { tokens } from '../../../styles/global';
@@ -137,7 +138,12 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
         onScroll={canMarkAsRead ? updateReadProgress : undefined}
       >
         <div ref={contentBodyRef}>
-          <NoticeArticle notice={notice} hasTopMargin={false} />
+          <ContentDetailHeader
+            title={notice.title}
+            dateTime={notice.createdAt}
+            meta={`${formatDateToString(notice.createdAt)} 작성`}
+          />
+          <NoticeArticle notice={notice} />
         </div>
       </div>
       {readStatus.readStatus !== 'NOT_ASSIGNED' && (

@@ -4,6 +4,7 @@ import {
   Notice,
   NoticeListResponse,
   Member,
+  ReadNoticeMember,
   UnreadNoticeMember,
   NoticeReadStatus,
   NoticeDetail,
@@ -59,6 +60,10 @@ const memberSchema = z.object({
   profileImage: z.string().nullable(),
 }) satisfies z.ZodType<Member>;
 
+const readNoticeMemberSchema = memberSchema.extend({
+  readAt: z.string().optional(),
+}) satisfies z.ZodType<ReadNoticeMember>;
+
 const unreadNoticeMemberSchema = memberSchema.extend({
   lastRemindAt: z.string().nullable(),
 }) satisfies z.ZodType<UnreadNoticeMember>;
@@ -69,7 +74,7 @@ const noticeReadStatusSchema = z.object({
   readCount: z.number(),
   unreadCount: z.number(),
   remindAt: z.string().nullable(),
-  readMembers: z.array(memberSchema),
+  readMembers: z.array(readNoticeMemberSchema),
   unreadMembers: z.array(unreadNoticeMemberSchema),
 }) satisfies z.ZodType<NoticeReadStatus>;
 

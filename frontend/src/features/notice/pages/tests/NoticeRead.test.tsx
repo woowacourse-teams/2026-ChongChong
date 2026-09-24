@@ -90,6 +90,7 @@ describe('공지 읽음 처리', () => {
       const toast = await screen.findByRole('status');
       expect(toast).toHaveTextContent('읽음으로 표시했어요');
       expect(toast).toBeVisible();
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     });
   });
 
