@@ -9,7 +9,7 @@ import { noticeRecipientTable, noticeTable, type NoticeSchemaType } from './db';
 import { validateNotice } from './validators';
 
 function localDateTimeNow() {
-  return new Date().toISOString().replace(/Z$/, '');
+  return new Date().toISOString();
 }
 
 function notFound(code: string, message: string) {
