@@ -114,7 +114,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                 .extracting(submission -> submission.getSubmittedAt() != null)
                 .isEqualTo(true);
         assertThat(notificationSender.events())
-                .filteredOn(event -> event.type() == NotificationType.SUBMITTED)
+                .filteredOn(event -> event.type() == NotificationType.NEW)
                 .extracting(NotificationEvent::resourceId)
                 .containsExactly(fixture.submissionId());
     }

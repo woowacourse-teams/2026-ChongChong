@@ -100,4 +100,9 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
         return findByIdAndStudyId(id, studyId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
     }
+
+    default Assignment getByIdOrThrow(Long id) {
+        return findById(id).orElseThrow(
+                () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+    }
 }

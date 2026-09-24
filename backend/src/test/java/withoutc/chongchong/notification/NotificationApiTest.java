@@ -69,7 +69,7 @@ class NotificationApiTest extends PostgresContainerTest {
                 user,
                 "[스터디] 새 공지",
                 "공지 내용",
-                NotificationType.CREATED,
+                NotificationType.NEW,
                 ResourceType.NOTICE,
                 10L,
                 "/studies/2/notices/10",
@@ -79,7 +79,7 @@ class NotificationApiTest extends PostgresContainerTest {
                 user,
                 "[스터디] 새 제출물",
                 "홍길동 스터디원이 과제를 제출했어요",
-                NotificationType.SUBMITTED,
+                NotificationType.NEW,
                 ResourceType.ASSIGNMENT_SUBMISSION,
                 20L,
                 "/studies/2/assignments/3/submissions/20",
@@ -107,7 +107,7 @@ class NotificationApiTest extends PostgresContainerTest {
                 .body("notifications[0].id", equalTo(later.getId().intValue()))
                 .body("notifications[0].title", equalTo("[스터디] 새 제출물"))
                 .body("notifications[0].body", equalTo("홍길동 스터디원이 과제를 제출했어요"))
-                .body("notifications[0].type", equalTo("SUBMITTED"))
+                .body("notifications[0].type", equalTo("NEW"))
                 .body("notifications[0].resourceType", equalTo("ASSIGNMENT_SUBMISSION"))
                 .body("notifications[0].resourceId", equalTo(20))
                 .body("notifications[0].deepLink", equalTo("/studies/2/assignments/3/submissions/20"))
@@ -127,7 +127,7 @@ class NotificationApiTest extends PostgresContainerTest {
                 user,
                 "[스터디] 새 공지",
                 "공지 내용",
-                NotificationType.CREATED,
+                NotificationType.NEW,
                 ResourceType.NOTICE,
                 10L,
                 "/studies/2/notices/10",
@@ -165,7 +165,7 @@ class NotificationApiTest extends PostgresContainerTest {
                 otherUser,
                 "[스터디] 새 공지",
                 "공지 내용",
-                NotificationType.CREATED,
+                NotificationType.NEW,
                 ResourceType.NOTICE,
                 10L,
                 "/studies/2/notices/10",

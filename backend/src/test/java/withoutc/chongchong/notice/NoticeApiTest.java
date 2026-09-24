@@ -208,12 +208,13 @@ class NoticeApiTest {
 
         assertThat(notificationSender.events()).hasSize(1);
         NotificationEvent event = notificationSender.events().getFirst();
-        assertThat(event.type()).isEqualTo(NotificationType.CREATED);
+        assertThat(event.type()).isEqualTo(NotificationType.NEW);
         assertThat(event.resourceId()).isEqualTo(createdNoticeId);
         assertThat(event.resourceType()).isEqualTo(ResourceType.NOTICE);
-        assertThat(event.studyId()).isEqualTo(study.getId());
-        assertThat(event.content()).isEqualTo(maxLengthTitle);
-        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
+        assertThat(event.title()).isEqualTo("[자바 스터디] 새 공지");
+        assertThat(event.body()).isEqualTo(maxLengthTitle);
+        assertThat(event.deepLink()).isEqualTo("/studies/%d/notices/%d".formatted(study.getId(), createdNoticeId));
+        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::memberName)
                 .containsExactlyInAnyOrder("스터디원", "두 번째 스터디원");
     }
 

@@ -18,14 +18,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
-import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.assignment.entity.AssignmentSubmission;
-import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.ResourceType;
-import withoutc.chongchong.study.entity.Study;
-import withoutc.chongchong.study.entity.StudyMember;
-import withoutc.chongchong.study.repository.StudyRepository;
 
 class DiscordNotificationSenderTest {
 
@@ -38,26 +32,20 @@ class DiscordNotificationSenderTest {
         RestClient.Builder mockServerBuilder = RestClient.builder();
         MockRestServiceServer server = bindTo(mockServerBuilder).build();
         RestClient.Builder restClientBuilder = createSenderBuilder(mockServerBuilder);
-        StudyRepository studyRepository = mock(StudyRepository.class);
-        AssignmentSubmissionRepository submissionRepository = mock(AssignmentSubmissionRepository.class);
-        Study study = mock(Study.class);
-        when(studyRepository.getByIdOrThrow(3L)).thenReturn(study);
-        when(study.getName()).thenReturn("자바 스터디");
 
         DiscordNotificationSender sender = new DiscordNotificationSender(
-                studyRepository,
-                submissionRepository,
                 restClientBuilder,
                 WEBHOOK_URL,
                 FRONTEND_BASE_URL,
                 List.of("123")
         );
         NotificationEvent event = new NotificationEvent(
-                NotificationType.CREATED,
+                "[자바 스터디] 새 공지",
+                "공지 제목",
+                NotificationType.NEW,
                 10L,
                 ResourceType.NOTICE,
-                3L,
-                "공지 제목",
+                "/studies/3/notices/10",
                 List.of(new NotificationEvent.Recipient(20L, "멤버"))
         );
 
@@ -83,34 +71,20 @@ class DiscordNotificationSenderTest {
         RestClient.Builder mockServerBuilder = RestClient.builder();
         MockRestServiceServer server = bindTo(mockServerBuilder).build();
         RestClient.Builder restClientBuilder = createSenderBuilder(mockServerBuilder);
-        StudyRepository studyRepository = mock(StudyRepository.class);
-        AssignmentSubmissionRepository submissionRepository = mock(AssignmentSubmissionRepository.class);
-        Study study = mock(Study.class);
-        Assignment assignment = mock(Assignment.class);
-        AssignmentSubmission submission = mock(AssignmentSubmission.class);
-        StudyMember submitter = mock(StudyMember.class);
-        when(studyRepository.getByIdOrThrow(3L)).thenReturn(study);
-        when(study.getName()).thenReturn("자바 스터디");
-        when(submissionRepository.getByIdOrThrow(9L)).thenReturn(submission);
-        when(submission.getAssignment()).thenReturn(assignment);
-        when(submission.getMember()).thenReturn(submitter);
-        when(submitter.getName()).thenReturn("제출자");
-        when(assignment.getId()).thenReturn(4L);
 
         DiscordNotificationSender sender = new DiscordNotificationSender(
-                studyRepository,
-                submissionRepository,
                 restClientBuilder,
                 WEBHOOK_URL,
                 FRONTEND_BASE_URL,
                 List.of("123")
         );
         NotificationEvent event = new NotificationEvent(
-                NotificationType.SUBMITTED,
+                "[자바 스터디] 새 제출물",
+                "제출자 스터디원이 과제를 제출했어요",
+                NotificationType.NEW,
                 9L,
                 ResourceType.ASSIGNMENT_SUBMISSION,
-                3L,
-                "제출 내용",
+                "/studies/3/assignments/4/submissions/9",
                 List.of(new NotificationEvent.Recipient(30L, "리더"))
         );
 
@@ -118,7 +92,7 @@ class DiscordNotificationSenderTest {
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(jsonPath("$.content", containsString("<@123>")))
                 .andExpect(jsonPath("$.content", containsString("자바 스터디")))
-                .andExpect(jsonPath("$.content", containsString("제출자")))
+                .andExpect(jsonPath("$.content", containsString("제출자 스터디원이 과제를 제출했어요")))
                 .andExpect(jsonPath("$.content", containsString("리더")))
                 .andExpect(jsonPath("$.content", containsString(
                         FRONTEND_BASE_URL + "/studies/3/assignments/4/submissions/9")))

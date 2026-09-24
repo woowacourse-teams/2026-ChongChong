@@ -15,7 +15,7 @@ MyNotificationResponse:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: '[알고리즘 스터디] 새 공지' }
     body: { type: string, example: 4주차부터 선택 미션이 추가됩니다 }
-    type: { type: string, enum: [REMIND, CREATED, SUBMITTED], example: CREATED }
+    type: { type: string, enum: [REMIND, NEW], example: NEW }
     resourceType: { type: string, enum: [NOTICE, ASSIGNMENT, ASSIGNMENT_SUBMISSION], example: NOTICE }
     resourceId: { type: integer, format: int64, example: 10 }
     deepLink: { type: string, example: /studies/2/notices/10 }

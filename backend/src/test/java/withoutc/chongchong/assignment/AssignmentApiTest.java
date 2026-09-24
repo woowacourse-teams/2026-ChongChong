@@ -216,12 +216,13 @@ class AssignmentApiTest {
 
         assertThat(notificationSender.events()).hasSize(1);
         NotificationEvent event = notificationSender.events().getFirst();
-        assertThat(event.type()).isEqualTo(NotificationType.CREATED);
+        assertThat(event.type()).isEqualTo(NotificationType.NEW);
         assertThat(event.resourceId()).isEqualTo(createdAssignmentId);
         assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT);
-        assertThat(event.studyId()).isEqualTo(study.getId());
-        assertThat(event.content()).isEqualTo(maxLengthTitle);
-        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
+        assertThat(event.title()).isEqualTo("[자바 스터디] 새 과제");
+        assertThat(event.body()).isEqualTo(maxLengthTitle);
+        assertThat(event.deepLink()).isEqualTo("/studies/%d/assignments/%d".formatted(study.getId(), createdAssignmentId));
+        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::memberName)
                 .containsExactlyInAnyOrder("스터디원", "두 번째 스터디원");
     }
 
@@ -546,12 +547,15 @@ class AssignmentApiTest {
 
         assertThat(notificationSender.events()).hasSize(1);
         NotificationEvent event = notificationSender.events().getFirst();
-        assertThat(event.type()).isEqualTo(NotificationType.SUBMITTED);
+        assertThat(event.type()).isEqualTo(NotificationType.NEW);
         assertThat(event.resourceId()).isEqualTo(submissionId);
         assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
-        assertThat(event.studyId()).isEqualTo(study.getId());
-        assertThat(event.content()).isEqualTo("제출 내용");
-        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
+        assertThat(event.title()).isEqualTo("[자바 스터디] 새 제출물");
+        assertThat(event.body()).isEqualTo("스터디원 스터디원이 과제를 제출했어요");
+        assertThat(event.deepLink()).isEqualTo(
+                "/studies/%d/assignments/%d/submissions/%d".formatted(study.getId(), assignment.getId(), submissionId)
+        );
+        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::memberName)
                 .containsExactly("리더");
     }
 

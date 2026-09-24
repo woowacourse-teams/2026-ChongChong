@@ -19,7 +19,7 @@ get:
               - id: 1
                 title: '[알고리즘 스터디] 새 공지'
                 body: 4주차부터 선택 미션이 추가됩니다
-                type: CREATED
+                type: NEW
                 resourceType: NOTICE
                 resourceId: 10
                 deepLink: /studies/2/notices/10

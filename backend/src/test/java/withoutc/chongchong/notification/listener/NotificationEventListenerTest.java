@@ -47,11 +47,12 @@ class NotificationEventListenerTest {
 
     private NotificationEvent createEvent() {
         return new NotificationEvent(
-                NotificationType.CREATED,
+                "[스터디] 새 공지",
+                "공지 제목",
+                NotificationType.NEW,
                 1L,
                 ResourceType.NOTICE,
-                1L,
-                "공지 제목",
+                "/studies/1/notices/1",
                 List.of()
         );
     }

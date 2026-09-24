@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP(6),
     updated_at TIMESTAMP(6),
     CONSTRAINT fk_notification_recipient FOREIGN KEY (recipient_id) REFERENCES users (id),
-    CONSTRAINT ck_notification_type CHECK (type IN ('REMIND', 'CREATED', 'SUBMITTED')),
+    CONSTRAINT ck_notification_type CHECK (type IN ('REMIND', 'NEW')),
     CONSTRAINT ck_notification_resource_type CHECK (
         resource_type IN ('NOTICE', 'ASSIGNMENT', 'ASSIGNMENT_SUBMISSION')
     )

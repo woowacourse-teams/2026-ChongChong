@@ -6,33 +6,35 @@ import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.study.entity.StudyMember;
 
 public record NotificationEvent(
+        String title,
+        String body,
         NotificationType type,
         Long resourceId,
         ResourceType resourceType,
-        Long studyId,
-        String content,
+        String deepLink,
         List<Recipient> recipients
 ) {
 
     public static NotificationEvent create(
+            String title,
+            String body,
             NotificationType type,
             Long resourceId,
             ResourceType resourceType,
-            Long studyId,
-            String content,
+            String deepLink,
             List<StudyMember> recipients
     ) {
-        return new NotificationEvent(type, resourceId, resourceType, studyId, content,
+        return new NotificationEvent(title, body, type, resourceId, resourceType, deepLink,
                 recipients.stream().map(Recipient::create).toList());
     }
 
     public record Recipient(
-            Long id,
-            String name
+            Long userId,
+            String memberName
     ) {
 
         static Recipient create(StudyMember member) {
-            return new Recipient(member.getId(), member.getName());
+            return new Recipient(member.getUser().getId(), member.getName());
         }
     }
 }
