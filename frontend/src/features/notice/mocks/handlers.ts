@@ -137,7 +137,14 @@ export const handlers = [
       .flatMap(({ memberId, readAt }) => {
         const recipient = memberTable.findFirst((query) => query.where({ id: memberId, studyId }));
         return recipient
-          ? [{ id: recipient.id, name: recipient.name, profileImage: recipient.profileImage, readAt }]
+          ? [
+              {
+                id: recipient.id,
+                name: recipient.name,
+                profileImage: recipient.profileImage,
+                readAt,
+              },
+            ]
           : [];
       });
     const unreadMembers = recipients
