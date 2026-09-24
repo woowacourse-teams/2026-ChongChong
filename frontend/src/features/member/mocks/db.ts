@@ -22,7 +22,7 @@ export const mockMembers = [
     studyId: 2,
     userId: 1,
     name: '이든',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'LEADER',
   },
   {
@@ -30,7 +30,7 @@ export const mockMembers = [
     studyId: 1,
     userId: 2,
     name: '안톨리니',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -38,7 +38,7 @@ export const mockMembers = [
     studyId: 1,
     userId: 3,
     name: '피즈',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -46,7 +46,7 @@ export const mockMembers = [
     studyId: 1,
     userId: 4,
     name: '디움',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -54,7 +54,7 @@ export const mockMembers = [
     studyId: 1,
     userId: 5,
     name: '바니',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'LEADER',
   },
   {
@@ -62,7 +62,7 @@ export const mockMembers = [
     studyId: 2,
     userId: 5,
     name: '바니',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -70,7 +70,7 @@ export const mockMembers = [
     studyId: 1,
     userId: 1,
     name: '이든',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -78,7 +78,7 @@ export const mockMembers = [
     studyId: 3,
     userId: 4,
     name: '디움',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'LEADER',
   },
   {
@@ -86,7 +86,7 @@ export const mockMembers = [
     studyId: 3,
     userId: 5,
     name: '바니',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -94,7 +94,7 @@ export const mockMembers = [
     studyId: 5,
     userId: 1,
     name: '이든',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'LEADER',
   },
   {
@@ -102,7 +102,7 @@ export const mockMembers = [
     studyId: 6,
     userId: 1,
     name: '이든',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -110,7 +110,7 @@ export const mockMembers = [
     studyId: 7,
     userId: 1,
     name: '이든',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
   {
@@ -118,7 +118,7 @@ export const mockMembers = [
     studyId: 8,
     userId: 1,
     name: '이든',
-    profileImage: 'http://localhost:8000',
+    profileImage: null,
     role: 'MEMBER',
   },
 ] satisfies MemberSchemaType[];
