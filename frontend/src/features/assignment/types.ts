@@ -1,14 +1,24 @@
-export interface Assignment {
+export type SubmissionStatus = 'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED';
+
+interface AssignmentSummaryBase {
   id: number;
   title: string;
   content: string;
   submissionMethod: string;
   closeAt: string;
-  memberCount?: number;
-  completeCount?: number;
-  remindAt?: string | null;
+  submissionStatus: SubmissionStatus;
+}
+
+export interface LeaderAssignmentSummary extends AssignmentSummaryBase {
+  memberCount: number;
+  completeCount: number;
+  remindAt?: string;
   isComplete: boolean;
 }
+
+export type MemberAssignmentSummary = AssignmentSummaryBase;
+
+export type Assignment = LeaderAssignmentSummary | MemberAssignmentSummary;
 
 export interface AssignmentListResponse {
   nextCursor: number | null;
@@ -20,7 +30,10 @@ export interface Member {
   id: number;
   name: string;
   profileImage: string | null;
-  lastRemindAt?: string | null;
+}
+
+export interface IncompleteMember extends Member {
+  lastRemindAt: string | null;
 }
 
 export interface AssignmentSubmitStatus {
@@ -28,9 +41,9 @@ export interface AssignmentSubmitStatus {
   memberCount: number;
   completeCount: number;
   incompleteCount: number;
-  remindAt?: string | null;
+  remindAt: string | null;
   completeMembers: Member[];
-  incompleteMembers: Member[];
+  incompleteMembers: IncompleteMember[];
 }
 
 export interface AssignmentDetail {
@@ -44,7 +57,9 @@ export interface AssignmentDetail {
 
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
 
-export type AssignmentValue = Omit<AssignmentDetail, 'id'>;
+export type AssignmentValue = Omit<AssignmentDetail, 'id'> & {
+  remindAts?: string[] | null;
+};
 
 export type UpdateAssignmentValue = Partial<AssignmentValue>;
 
@@ -78,15 +93,23 @@ export interface CreateSubmissionResponse {
 }
 
 export interface SubmittedAssignment {
-  submitted: true;
+  submissionStatus: 'SUBMITTED';
   submissionId: number;
   createdAt: string;
-  content: string;
-  link?: string | null;
+  content?: string;
+  link?: string;
 }
 
 export interface UnsubmittedAssignment {
-  submitted: false;
+  submissionStatus: 'NOT_SUBMITTED';
+  submissionId: number;
 }
 
-export type UserAssignmentSubmitDetail = SubmittedAssignment | UnsubmittedAssignment;
+export interface NotAssignedAssignment {
+  submissionStatus: 'NOT_ASSIGNED';
+}
+
+export type UserAssignmentSubmitDetail =
+  | SubmittedAssignment
+  | UnsubmittedAssignment
+  | NotAssignedAssignment;
