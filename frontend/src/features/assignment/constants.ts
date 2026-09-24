@@ -1,5 +1,5 @@
 export const ASSIGNMENT_TITLE = {
-  length: 20,
+  length: 100,
 };
 
 export const ASSIGNMENT_CONTENT = {
