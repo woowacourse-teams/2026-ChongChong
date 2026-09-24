@@ -46,18 +46,20 @@ const queryClient = new QueryClient();
 const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
 
 async function restoreSession() {
-  if (publicPaths.has(window.location.pathname)) return;
+  if (publicPaths.has(window.location.pathname)) return false;
 
   try {
     await refreshAccessToken();
+    return false;
   } catch {
     window.history.replaceState({}, document.title, '/login');
+    return true;
   }
 }
 
 async function bootstrap() {
   await enableMocking();
-  await restoreSession();
+  const shouldResetIdentity = await restoreSession();
 
   const router = createBrowserRouter(appRoutes);
 
@@ -69,6 +71,11 @@ async function bootstrap() {
           api_host: process.env.POSTHOG_HOST,
           defaults: '2026-05-30',
           autocapture: false,
+          loaded: (posthog) => {
+            if (shouldResetIdentity) {
+              posthog.reset();
+            }
+          },
         }}
       >
         <QueryClientProvider client={queryClient}>
