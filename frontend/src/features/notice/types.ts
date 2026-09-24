@@ -69,7 +69,10 @@ export type MemberReadStatus =
       readAt: string;
     }
   | {
-      readStatus: 'UNREAD' | 'NOT_ASSIGNED';
+      readStatus: 'UNREAD';
+    }
+  | {
+      readStatus: 'NOT_ASSIGNED';
     };
 
 export type UpdateNoticeValue = Partial<NoticeFormValues>;
