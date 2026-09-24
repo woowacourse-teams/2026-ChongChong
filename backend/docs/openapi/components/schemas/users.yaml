@@ -1,0 +1,16 @@
+UserProfileResponse:
+  type: object
+  additionalProperties: false
+  required: [name, profileImageUrl]
+  properties:
+    name:
+      description: 홈 마이페이지에 표시할 사용자 이름.
+      type: string
+      minLength: 1
+      maxLength: 255
+      example: 바니
+    profileImageUrl:
+      description: 홈 프로필 이미지 URL. 등록된 이미지가 없으면 null이다.
+      type: [string, 'null']
+      maxLength: 2048
+      example: 'https://cdn.example.com/profiles/uuid.webp'

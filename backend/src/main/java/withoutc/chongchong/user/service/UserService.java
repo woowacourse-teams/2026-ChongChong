@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.user.controller.dto.UserProfileResponse;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.exception.UserErrorCode;
 import withoutc.chongchong.user.exception.UserException;
@@ -26,5 +27,10 @@ public class UserService {
         }
 
         userRepository.delete(user);
+    }
+
+    public UserProfileResponse getMyProfile(Long userId) {
+        User user = userRepository.getByIdOrThrow(userId);
+        return UserProfileResponse.from(user);
     }
 }

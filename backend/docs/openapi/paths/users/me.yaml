@@ -1,3 +1,27 @@
+get:
+  tags: [User]
+  operationId: getMyProfile
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      #363 홈 마이페이지에서 사용할 현재 사용자의 기본 프로필을 조회한다.
+  summary: 내 프로필 조회
+  description: |
+    인증된 사용자의 홈 프로필 이름과 프로필 이미지 URL을 조회한다.
+    프로필 이미지를 등록하지 않은 경우 profileImageUrl은 null이다.
+    홈 프로필은 소셜 최초 로그인 시 공급자 프로필로 생성하며, 재로그인 시 기존 값을 덮어쓰지 않는다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 내 프로필 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/users.yaml#/UserProfileResponse' }
+          example: { name: 바니, profileImageUrl: 'https://cdn.example.com/profiles/uuid.webp' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+
 delete:
   tags: [User]
   operationId: withdrawUser
