@@ -131,7 +131,8 @@ describe('리드 공지 삭제 실패', () => {
     );
     renderNoticeDetailPage();
 
-    await user.click(await screen.findByRole('button', { name: '삭제' }));
+    await user.click(await screen.findByRole('button', { name: '공지 더보기' }));
+    await user.click(screen.getByRole('menuitem', { name: '공지 삭제' }));
     const dialog = screen.getByRole('alertdialog', { name: '공지를 삭제할까요?' });
     expect(dialog).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: '삭제' }));
@@ -147,7 +148,8 @@ describe('리드 공지 삭제 실패', () => {
     server.use(http.delete(NOTICE_DETAIL_URL, () => HttpResponse.error()));
     renderNoticeDetailPage();
 
-    await user.click(await screen.findByRole('button', { name: '삭제' }));
+    await user.click(await screen.findByRole('button', { name: '공지 더보기' }));
+    await user.click(screen.getByRole('menuitem', { name: '공지 삭제' }));
     const dialog = screen.getByRole('alertdialog', { name: '공지를 삭제할까요?' });
     expect(dialog).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: '삭제' }));
