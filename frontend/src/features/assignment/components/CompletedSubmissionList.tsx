@@ -63,7 +63,7 @@ const detailLinkStyle = {
   ...typography.body,
   flex: '0 0 auto',
   marginLeft: 'auto',
-  color: tokens.text.brand,
+  color: tokens.text.muted,
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 

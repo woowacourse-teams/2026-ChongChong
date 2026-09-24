@@ -9,6 +9,7 @@ import AssignmentArticle from './AssignmentArticle';
 import CompletedSubmissionList from './CompletedSubmissionList';
 import assignmentQueries from '../queries';
 import MyAssignmentSubmission from './MyAssignmentSubmission';
+import MySubmissionStatus from './MySubmissionStatus';
 
 interface Props {
   studyId: number;
@@ -30,6 +31,10 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
     enabled: assignment.submissionTarget === 'MEMBERS_AND_LEADER',
     throwOnError: true,
   });
+  const myCompletedSubmission =
+    mySubmission?.submissionStatus === 'SUBMITTED'
+      ? submissions.submissions.find(({ id }) => id === mySubmission.submissionId)
+      : undefined;
 
   return (
     <>
@@ -42,6 +47,14 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
         summary={
           <>
             <SubmitStatus status={submitStatusResponse} />
+            {mySubmission ? (
+              <MySubmissionStatus
+                studyId={studyId}
+                assignmentId={assignmentId}
+                submission={mySubmission}
+                member={myCompletedSubmission}
+              />
+            ) : null}
             <CompletedSubmissionList submissions={submissions.submissions} />
             <MemberStatusList
               title={`미제출 ${submitStatusResponse.incompleteCount}명`}
