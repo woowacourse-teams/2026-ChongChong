@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import CreateAssignmentPage from '../CreateAssignmentPage';
@@ -89,23 +89,37 @@ describe('과제 생성 페이지 테스트', () => {
       },
     );
 
-    test('제목 입력은 20자로 제한된다', async () => {
-      const { user } = setupCreateAssignmentPage();
+    test('제목에 제한을 초과한 값이 전달되면 입력 수를 20자로 제한한다', () => {
+      setupCreateAssignmentPage();
 
       const titleInput = getTitleInput();
-      await user.type(titleInput, '안톨리니'.repeat(20));
+      fireEvent.change(titleInput, {
+        target: { value: '가'.repeat(21) },
+      });
 
-      expect(titleInput).toHaveValue('안톨리니'.repeat(5));
+      expect(titleInput).toHaveValue('가'.repeat(20));
     });
 
-    test('내용 입력은 10000자로 제한된다', async () => {
-      const { user } = setupCreateAssignmentPage();
+    test('내용에 제한을 초과한 값이 전달되면 입력 수를 10000자로 제한한다', () => {
+      setupCreateAssignmentPage();
 
       const contentInput = screen.getByRole('textbox', { name: '내용' });
-      await user.click(contentInput);
-      await user.paste('안'.repeat(20000));
+      fireEvent.change(contentInput, {
+        target: { value: '가'.repeat(10001) },
+      });
 
-      expect(contentInput).toHaveValue('안'.repeat(10000));
+      expect(contentInput).toHaveValue('가'.repeat(10000));
+    });
+
+    test('제출 방법에 제한을 초과한 값이 전달되면 입력 수를 10000자로 제한한다', () => {
+      setupCreateAssignmentPage();
+
+      const submissionMethodInput = screen.getByRole('textbox', { name: '제출 방법' });
+      fireEvent.change(submissionMethodInput, {
+        target: { value: '가'.repeat(10001) },
+      });
+
+      expect(submissionMethodInput).toHaveValue('가'.repeat(10000));
     });
 
     test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AssignmentSubmissionForm from '../AssignmentSubmissionForm';
 
@@ -25,5 +25,26 @@ describe('AssignmentSubmissionForm 글자 수 표시', () => {
 
     await user.type(textbox, '치킨 먹을게요');
     expect(field.getByText(7, countOptions)).toBeVisible();
+  });
+
+  test('내용 입력은 10000자로 제한된다', () => {
+    render(<AssignmentSubmissionForm onSubmit={jest.fn()} />);
+
+    const contentInput = screen.getByRole('textbox', { name: '내용' });
+    fireEvent.change(contentInput, { target: { value: '안'.repeat(10001) } });
+
+    expect(contentInput).toHaveValue('안'.repeat(10000));
+  });
+
+  test('링크 입력은 10000자로 제한된다', () => {
+    render(<AssignmentSubmissionForm onSubmit={jest.fn()} />);
+
+    const linkInput = screen.getByRole('textbox', { name: '링크' });
+    const urlPrefix = 'https://example.com/';
+    fireEvent.change(linkInput, {
+      target: { value: urlPrefix + 'a'.repeat(10001 - urlPrefix.length) },
+    });
+
+    expect(linkInput).toHaveValue(urlPrefix + 'a'.repeat(10000 - urlPrefix.length));
   });
 });

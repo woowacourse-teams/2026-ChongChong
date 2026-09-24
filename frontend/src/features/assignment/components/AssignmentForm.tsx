@@ -10,6 +10,7 @@ import { AssignmentValue } from '../types';
 import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../constants';
 import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
+import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
   display: 'flex',
@@ -43,9 +44,16 @@ export default function AssignmentForm({
   submitLabel,
   onSubmit,
 }: AssignmentFormProps) {
-  const [title, setTitle] = useState(initialValues.title);
-  const [content, setContent] = useState(initialValues.content);
-  const [submissionMethod, setsubmissionMethod] = useState(initialValues.submissionMethod);
+  const [title, handleTitleChange] = useInputState(initialValues.title, (value) =>
+    value.slice(0, ASSIGNMENT_TITLE.length),
+  );
+  const [content, handleContentChange] = useInputState(initialValues.content, (value) =>
+    value.slice(0, ASSIGNMENT_CONTENT.length),
+  );
+  const [submissionMethod, handleSubmissionMethodChange] = useInputState(
+    initialValues.submissionMethod,
+    (value) => value.slice(0, ASSIGNMENT_CONTENT.length),
+  );
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
   const [submissionTarget, setSubmissionTarget] = useState(initialValues.submissionTarget);
   const posthog = usePostHog();
@@ -70,7 +78,7 @@ export default function AssignmentForm({
         label="제목"
         value={title}
         autoFocus
-        onChange={(event) => setTitle(event.target.value)}
+        onChange={handleTitleChange}
         maxLength={ASSIGNMENT_TITLE.length}
         placeholder="제목을 입력해주세요"
         errorText={fieldErrors.title}
@@ -84,7 +92,7 @@ export default function AssignmentForm({
         value={content}
         placeholder="내용을 입력해주세요"
         maxLength={ASSIGNMENT_CONTENT.length}
-        onChange={(event) => setContent(event.target.value)}
+        onChange={handleContentChange}
         errorText={fieldErrors.content}
         isRequired
         testId="assignment-content-field"
@@ -95,7 +103,7 @@ export default function AssignmentForm({
         label="제출 방법"
         value={submissionMethod}
         maxLength={ASSIGNMENT_CONTENT.length}
-        onChange={(event) => setsubmissionMethod(event.target.value)}
+        onChange={handleSubmissionMethodChange}
         placeholder="제출 방법을 입력해주세요"
         errorText={fieldErrors.submissionMethod}
         isRequired

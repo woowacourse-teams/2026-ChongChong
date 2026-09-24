@@ -1,5 +1,5 @@
 import type { CSSProperties, SubmitEventHandler } from 'react';
-import { useState } from 'react';
+import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
@@ -50,8 +50,12 @@ export default function AssignmentSubmissionForm({
   fieldErrors = {},
   onSubmit,
 }: Props) {
-  const [content, setContent] = useState(initialValues.content);
-  const [link, setLink] = useState(initialValues.link ?? '');
+  const [content, handleContentChange] = useInputState(initialValues.content, (value) =>
+    value.slice(0, ASSIGNMENT_SUBMISSION_CONTENT.length),
+  );
+  const [link, handleLinkChange] = useInputState(initialValues.link ?? '', (value) =>
+    value.slice(0, ASSIGNMENT_SUBMISSION_LINK.length),
+  );
   const posthog = usePostHog();
 
   const submitAssignment: SubmitEventHandler<HTMLFormElement> = (event) => {
@@ -80,7 +84,7 @@ export default function AssignmentSubmissionForm({
           name="content"
           label="내용"
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={handleContentChange}
           maxLength={ASSIGNMENT_SUBMISSION_CONTENT.length}
           placeholder="과제 내용을 입력해주세요"
           errorText={fieldErrors.content}
@@ -93,7 +97,7 @@ export default function AssignmentSubmissionForm({
           label="링크"
           type="url"
           value={link}
-          onChange={(event) => setLink(event.target.value)}
+          onChange={handleLinkChange}
           maxLength={ASSIGNMENT_SUBMISSION_LINK.length}
           placeholder="https://"
           errorText={fieldErrors.link}

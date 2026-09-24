@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { createWrapper, setup, login } from '../../../../test/render';
@@ -53,20 +53,22 @@ describe('스터디 생성 페이지', () => {
       expect(studyCreateButton()).toBeEnabled();
     });
 
-    test('제목 입력은 15자로 제한된다', async () => {
-      const { user } = setupStudyCreatePage();
+    test('이름에 제한을 초과한 값이 전달되면 입력 수를 15자로 제한한다', async () => {
+      setupStudyCreatePage();
+      fireEvent.change(studyNameInput(), {
+        target: { value: '가'.repeat(16) },
+      });
 
-      await user.type(studyNameInput(), '안톨리니'.repeat(20));
-
-      expect(studyNameInput()).toHaveValue('안톨리니안톨리니안톨리니안톨리');
+      expect(studyNameInput()).toHaveValue('가'.repeat(15));
     });
 
-    test('설명 입력은 30자로 제한된다', async () => {
-      const { user } = setupStudyCreatePage();
+    test('설명에 제한을 초과한 값이 전달되면 입력 수를 30자로 제한한다', () => {
+      setupStudyCreatePage();
+      fireEvent.change(studyDescriptionInput(), {
+        target: { value: '가'.repeat(31) },
+      });
 
-      await user.type(studyDescriptionInput(), '디움'.repeat(50));
-
-      expect(studyDescriptionInput()).toHaveValue('디움'.repeat(15));
+      expect(studyDescriptionInput()).toHaveValue('가'.repeat(30));
     });
   });
 

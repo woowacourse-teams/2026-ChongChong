@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
@@ -24,23 +24,26 @@ describe('공지 생성 폼', () => {
     );
   }
 
-  test('제목 입력은 20자로 제한된다', async () => {
+  test('제목에 제한을 초과한 값이 전달되면 입력 수를 20자로 제한한다', () => {
     renderCreatePage();
 
     const titleInput = screen.getByRole('textbox', { name: '제목' });
-    await user.type(titleInput, '안톨리니'.repeat(20));
+    fireEvent.change(titleInput, {
+      target: { value: '가'.repeat(21) },
+    });
 
-    expect(titleInput).toHaveValue('안톨리니'.repeat(5));
+    expect(titleInput).toHaveValue('가'.repeat(20));
   });
 
-  test('내용 입력은 10000자로 제한된다', async () => {
+  test('내용에 제한을 초과한 값이 전달되면 입력 수를 10000자로 제한한다', () => {
     renderCreatePage();
 
     const contentInput = screen.getByRole('textbox', { name: '내용' });
-    await user.click(contentInput);
-    await user.paste('안'.repeat(20000));
+    fireEvent.change(contentInput, {
+      target: { value: '가'.repeat(10001) },
+    });
 
-    expect(contentInput).toHaveValue('안'.repeat(10000));
+    expect(contentInput).toHaveValue('가'.repeat(10000));
   });
 
   test('필드 에러가 발생하면 각 필드의 에러 메시지를 표시한다', async () => {
