@@ -9,6 +9,10 @@ import NoticeDetailPage from '../NoticeDetailPage';
 
 const NOTICE_DETAIL_URL = `${API_URL}/studies/:studyId/notices/:noticeId`;
 const resizeObserverDescriptor = Object.getOwnPropertyDescriptor(window, 'ResizeObserver');
+const intersectionObserverDescriptor = Object.getOwnPropertyDescriptor(
+  window,
+  'IntersectionObserver',
+);
 
 function renderNoticeDetailPage() {
   render(
@@ -26,6 +30,14 @@ describe('공지 읽음 처리', () => {
     jest.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
     // jsdom에 없는 ResizeObserver만 대체하고 읽음 처리 로직은 그대로 실행한다.
     Object.defineProperty(window, 'ResizeObserver', {
+      configurable: true,
+      value: jest.fn(() => ({
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+      })),
+    });
+    Object.defineProperty(window, 'IntersectionObserver', {
       configurable: true,
       value: jest.fn(() => ({
         observe: jest.fn(),
@@ -59,6 +71,26 @@ describe('공지 읽음 처리', () => {
     } else {
       Reflect.deleteProperty(window, 'ResizeObserver');
     }
+    if (intersectionObserverDescriptor) {
+      Object.defineProperty(window, 'IntersectionObserver', intersectionObserverDescriptor);
+    } else {
+      Reflect.deleteProperty(window, 'IntersectionObserver');
+    }
+  });
+
+  describe('성공', () => {
+    test('읽음 처리 완료 안내를 토스트로 표시한다', async () => {
+      server.use(
+        http.patch(`${NOTICE_DETAIL_URL}/read`, () =>
+          HttpResponse.json({ readAt: '2026-09-01T10:00:00' }),
+        ),
+      );
+      renderNoticeDetailPage();
+
+      const toast = await screen.findByRole('status');
+      expect(toast).toHaveTextContent('읽음으로 표시했어요');
+      expect(toast).toBeVisible();
+    });
   });
 
   describe('실패', () => {

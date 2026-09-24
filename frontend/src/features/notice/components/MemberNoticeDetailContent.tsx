@@ -57,6 +57,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   const [readProgress, setReadProgress] = useState(() =>
     readStatus.readStatus === 'READ' ? 100 : 0,
   );
+  const [showCompletionToast, setShowCompletionToast] = useState(false);
 
   const updateReadMutation = useMutation({
     mutationFn: () => updateNoticeRead(studyId, noticeId),
@@ -70,6 +71,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
 
       queryClient.setQueryData<MemberReadStatus>(myReadQueryKey, nextReadStatus);
       queryClient.invalidateQueries({ queryKey: noticeQueries.lists(studyId) });
+      setShowCompletionToast(true);
     },
     onError: (error) => {
       hasRequestedReadRef.current = false;
@@ -144,7 +146,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
             progress={readProgress}
             isRead={isRead}
             readAt={readAt ? formatRelativeTime(readAt) : undefined}
-            showCompletionToast={updateReadMutation.isSuccess}
+            showCompletionToast={showCompletionToast}
           />
         </div>
       )}
