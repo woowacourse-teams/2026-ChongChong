@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { paginateByCursor } from '../../../mocks/pagination';
-import { memberTable, MemberSchemaType } from '../../member/mocks/db';
+import { memberTable } from '../../member/mocks/db';
 import { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
 import { assignmentTable, AssignmentSchemaType, submissionTable } from './db';
 import { validateAssignment } from './validators';
@@ -26,32 +26,38 @@ export const handlers = [
       new URL(request.url).searchParams,
     );
 
-    const memberCount = studyMembers.length;
     const isLeader = member.role === 'LEADER';
 
     const assignments = page.map((assignment) => {
-      const completeCount = assignment.completeUserIds.length;
+      const submissions = submissionTable.findMany((q) => q.where({ assignmentId: assignment.id }));
+      const mySubmission = submissions.find(({ userId }) => userId === user.id);
+      const submissionStatus = !mySubmission
+        ? 'NOT_ASSIGNED'
+        : mySubmission.submitted
+          ? 'SUBMITTED'
+          : 'NOT_SUBMITTED';
       const common = {
         id: assignment.id,
         title: assignment.title,
         content: assignment.content,
         submissionMethod: assignment.submissionMethod,
         closeAt: assignment.closeAt,
+        submissionStatus,
       };
 
       if (isLeader) {
+        const memberCount = submissions.length;
+        const completeCount = submissions.filter(({ submitted }) => submitted).length;
+
         return {
           ...common,
           memberCount,
           completeCount,
-          isComplete: memberCount > 0 && completeCount === memberCount,
+          isComplete: completeCount === memberCount,
         };
       }
 
-      return {
-        ...common,
-        isComplete: assignment.completeUserIds.includes(user.id),
-      };
+      return common;
     });
 
     return HttpResponse.json({ nextCursor, hasNext, assignments });
@@ -83,6 +89,20 @@ export const handlers = [
       submissionTarget,
       completeUserIds: [],
     });
+    const submitters = memberTable
+      .findMany((q) => q.where({ studyId }))
+      .filter(({ role }) => submissionTarget === 'MEMBERS_AND_LEADER' || role !== 'LEADER');
+
+    await Promise.all(
+      submitters.map((submitter, index) =>
+        submissionTable.create({
+          id: assignmentId + index + 1,
+          assignmentId,
+          userId: submitter.userId,
+          submitted: false,
+        }),
+      ),
+    );
 
     return HttpResponse.json({ assignmentId }, { status: 201 });
   }),
@@ -139,19 +159,39 @@ export const handlers = [
       const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
-      const studyMembers = memberTable.findMany((q) => q.where({ studyId }));
-      const isComplete = ({ userId }: MemberSchemaType) =>
-        assignment.completeUserIds.includes(userId);
-
-      const completeMembers = studyMembers.filter(isComplete);
-      const incompleteMembers = studyMembers.filter((member) => !isComplete(member));
+      const submissions = submissionTable.findMany((q) => q.where({ assignmentId }));
+      const toMember = ({ userId }: (typeof submissions)[number]) =>
+        memberTable.findFirst((q) => q.where({ studyId, userId }));
+      const completeMembers = submissions
+        .filter(({ submitted }) => submitted)
+        .flatMap((submission) => {
+          const member = toMember(submission);
+          return member
+            ? [{ id: member.id, name: member.name, profileImage: member.profileImage }]
+            : [];
+        });
+      const incompleteMembers = submissions
+        .filter(({ submitted }) => !submitted)
+        .flatMap((submission) => {
+          const member = toMember(submission);
+          return member
+            ? [
+                {
+                  id: member.id,
+                  name: member.name,
+                  profileImage: member.profileImage,
+                  lastRemindAt: null,
+                },
+              ]
+            : [];
+        });
 
       return HttpResponse.json({
         id: assignment.id,
-        memberCount: studyMembers.length,
+        memberCount: submissions.length,
         completeCount: completeMembers.length,
         incompleteCount: incompleteMembers.length,
-        remindAt: '2025-04-16T16:44:10',
+        remindAt: null,
         completeMembers,
         incompleteMembers,
       });
@@ -220,16 +260,23 @@ export const handlers = [
         query.where({ assignmentId, userId: user.id }),
       );
 
-      if (!submission?.submitted) {
-        return HttpResponse.json({ submitted: false });
+      if (!submission) {
+        return HttpResponse.json({ submissionStatus: 'NOT_ASSIGNED' as const });
+      }
+
+      if (!submission.submitted) {
+        return HttpResponse.json({
+          submissionId: submission.id,
+          submissionStatus: 'NOT_SUBMITTED' as const,
+        });
       }
 
       return HttpResponse.json({
-        submitted: true,
         submissionId: submission.id,
+        submissionStatus: 'SUBMITTED' as const,
         createdAt: submission.createdAt,
-        content: submission.content,
-        link: submission.link,
+        ...(submission.content === null ? {} : { content: submission.content }),
+        ...(submission.link === null ? {} : { link: submission.link }),
       });
     },
   ),
@@ -288,33 +335,22 @@ export const handlers = [
       const submission = submissionTable.findFirst((q) =>
         q.where({ assignmentId, userId: user.id }),
       );
-      if (submission?.submitted) return new HttpResponse(null, { status: 409 });
+      if (!submission) return new HttpResponse(null, { status: 404 });
+      if (submission.submitted) return new HttpResponse(null, { status: 409 });
 
       const { content, link } = (await request.json()) as AssignmentSubmissionValue;
 
       const createdAt = new Date().toISOString();
-      const submissionId = submission?.id ?? Date.now();
+      const submissionId = submission.id;
 
-      if (submission) {
-        await submissionTable.update(submission, {
-          data(current) {
-            current.submitted = true;
-            current.content = content;
-            current.link = link ?? null;
-            current.createdAt = createdAt;
-          },
-        });
-      } else {
-        await submissionTable.create({
-          id: submissionId,
-          assignmentId,
-          userId: user.id,
-          submitted: true,
-          content,
-          link: link ?? null,
-          createdAt,
-        });
-      }
+      submissionTable.delete((q) => q.where({ id: submission.id }));
+      await submissionTable.create({
+        ...submission,
+        submitted: true,
+        content,
+        link: link ?? null,
+        createdAt,
+      });
 
       assignmentTable.delete((q) => q.where({ id: assignmentId, studyId }));
       await assignmentTable.create({
@@ -340,10 +376,10 @@ export const handlers = [
       if (submission.userId !== user.id) return new HttpResponse(null, { status: 403 });
 
       const values = (await request.json()) as AssignmentSubmissionValue;
-      await submissionTable.update(submission, {
-        data(submission) {
-          Object.assign(submission, values);
-        },
+      submissionTable.delete((q) => q.where({ id: submission.id }));
+      await submissionTable.create({
+        ...submission,
+        ...values,
       });
 
       return new HttpResponse(null, { status: 204 });

@@ -1,5 +1,6 @@
 import { Collection } from '@msw/data';
 import { z } from 'zod';
+import { memberTable } from '../../member/mocks/db';
 
 const assignmentSchema = z.object({
   id: z.number(),
@@ -387,5 +388,30 @@ export const mockSubmissions = [
 export function createSeedSubmissions() {
   for (const mockSubmission of mockSubmissions) {
     submissionTable.create(mockSubmission);
+  }
+
+  let submissionId = Math.max(...mockSubmissions.map(({ id }) => id)) + 1;
+
+  for (const assignment of mockAssigments) {
+    const submitters = memberTable
+      .findMany((q) => q.where({ studyId: assignment.studyId }))
+      .filter(
+        ({ role }) => assignment.submissionTarget === 'MEMBERS_AND_LEADER' || role !== 'LEADER',
+      );
+
+    for (const submitter of submitters) {
+      const exists = submissionTable.findFirst((q) =>
+        q.where({ assignmentId: assignment.id, userId: submitter.userId }),
+      );
+
+      if (exists) continue;
+
+      submissionTable.create({
+        id: submissionId++,
+        assignmentId: assignment.id,
+        userId: submitter.userId,
+        submitted: false,
+      });
+    }
   }
 }

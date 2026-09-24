@@ -6,7 +6,7 @@ import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
 import { validateStudy, validateStudyJoin } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
-import { assignmentTable } from '../../assignment/mocks/db';
+import { assignmentTable, submissionTable } from '../../assignment/mocks/db';
 import { noticeRecipientTable, noticeTable } from '../../notice/mocks/db';
 
 function getIncompleteLeaderNotices(studyId: number) {
@@ -80,17 +80,22 @@ export const handlers = [
     if (!member) return new HttpResponse(null, { status: 403 });
     const isLead = member.role === 'LEADER';
     const now = new Date();
-    const members = memberTable.findMany((q) => q.where({ studyId }));
-    const memberCount = members.length;
     const openAssignments = assignmentTable
       .findMany((q) => q.where({ studyId }))
       .filter((assignment) => new Date(assignment.closeAt) > now);
 
     if (isLead) {
       const notices = getIncompleteLeaderNotices(studyId);
-      const assignments = openAssignments.filter(
-        (assignment) => assignment.completeUserIds.length < memberCount,
-      );
+      const assignments = openAssignments.flatMap((assignment) => {
+        const submissions = submissionTable.findMany((query) =>
+          query.where({ assignmentId: assignment.id }),
+        );
+        const completeCount = submissions.filter(({ submitted }) => submitted).length;
+
+        return completeCount < submissions.length
+          ? [{ assignment, memberCount: submissions.length, completeCount }]
+          : [];
+      });
       return HttpResponse.json({
         notices: {
           count: notices.length,
@@ -98,18 +103,21 @@ export const handlers = [
         },
         assignments: {
           count: assignments.length,
-          items: assignments.map((assignment) => ({
+          items: assignments.map(({ assignment, memberCount, completeCount }) => ({
             id: assignment.id,
             title: assignment.title,
             memberCount,
-            completeCount: assignment.completeUserIds.length,
+            completeCount,
           })),
         },
       });
     } else {
-      const assignments = openAssignments.filter(
-        (assignment) => !assignment.completeUserIds.includes(user.id),
-      );
+      const assignments = openAssignments.filter((assignment) => {
+        const submission = submissionTable.findFirst((query) =>
+          query.where({ assignmentId: assignment.id, userId: user.id }),
+        );
+        return submission?.submitted === false;
+      });
       const notices = getUnreadMemberNotices(studyId, member.id).map(({ id, title }) => ({
         id,
         title,
