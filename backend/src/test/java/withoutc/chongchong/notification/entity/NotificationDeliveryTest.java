@@ -9,15 +9,15 @@ import org.junit.jupiter.api.Test;
 class NotificationDeliveryTest {
 
     @Test
-    @DisplayName("알림과 푸시 토큰으로 발송 기록을 생성하면 발송 대기 상태로 생성된다")
+    @DisplayName("알림과 Web Push 구독으로 발송 기록을 생성하면 발송 대기 상태로 생성된다")
     void createPendingDelivery() {
         Notification notification = mock(Notification.class);
-        PushToken pushToken = mock(PushToken.class);
+        WebPushSubscription webPushSubscription = mock(WebPushSubscription.class);
 
-        NotificationDelivery delivery = NotificationDelivery.create(notification, pushToken);
+        NotificationDelivery delivery = NotificationDelivery.create(notification, webPushSubscription);
 
         assertThat(delivery.getNotification()).isSameAs(notification);
-        assertThat(delivery.getPushToken()).isSameAs(pushToken);
+        assertThat(delivery.getWebPushSubscription()).isSameAs(webPushSubscription);
         assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.PENDING);
         assertThat(delivery.getAttemptCount()).isZero();
         assertThat(delivery.getNextRetryAt()).isNull();

@@ -25,8 +25,8 @@ import withoutc.chongchong.notification.exception.NotificationException;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "notification_deliveries",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_notification_delivery_notification_push_token",
-                columnNames = {"notification_id", "push_token_id"}
+                name = "uk_notification_delivery_notification_web_push_subscription",
+                columnNames = {"notification_id", "web_push_subscription_id"}
         )
 )
 public class NotificationDelivery extends BaseEntity {
@@ -40,8 +40,8 @@ public class NotificationDelivery extends BaseEntity {
     private Notification notification;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "push_token_id", nullable = false)
-    private PushToken pushToken;
+    @JoinColumn(name = "web_push_subscription_id", nullable = false)
+    private WebPushSubscription webPushSubscription;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -56,26 +56,26 @@ public class NotificationDelivery extends BaseEntity {
 
     public static NotificationDelivery create(
             Notification notification,
-            PushToken pushToken
+            WebPushSubscription webPushSubscription
     ) {
-        return new NotificationDelivery(notification, pushToken);
+        return new NotificationDelivery(notification, webPushSubscription);
     }
 
     private NotificationDelivery(
             Notification notification,
-            PushToken pushToken
+            WebPushSubscription webPushSubscription
     ) {
-        validateRequiredValues(notification, pushToken);
+        validateRequiredValues(notification, webPushSubscription);
         this.notification = notification;
-        this.pushToken = pushToken;
+        this.webPushSubscription = webPushSubscription;
         this.status = DeliveryStatus.PENDING;
         this.attemptCount = 0;
         this.nextRetryAt = null;
         this.lastError = null;
     }
 
-    private void validateRequiredValues(Notification notification, PushToken pushToken) {
-        if (notification == null || pushToken == null) {
+    private void validateRequiredValues(Notification notification, WebPushSubscription webPushSubscription) {
+        if (notification == null || webPushSubscription == null) {
             throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY);
         }
     }

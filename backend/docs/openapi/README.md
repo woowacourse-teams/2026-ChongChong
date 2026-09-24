@@ -44,8 +44,8 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 내 과제 제출 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my` | [paths/assignment-submissions/my-submission.yaml](paths/assignment-submissions/my-submission.yaml) |
 | 과제 제출 상세 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
 | 과제 제출 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
-| 푸시 토큰 등록 | `POST /api/push-tokens` | [paths/push-tokens/collection.yaml](paths/push-tokens/collection.yaml) |
-| 푸시 토큰 비활성화 | `DELETE /api/push-tokens/{installationId}` | [paths/push-tokens/detail.yaml](paths/push-tokens/detail.yaml) |
+| Web Push 구독 등록 | `POST /api/web-push-subscriptions` | [paths/web-push-subscriptions/collection.yaml](paths/web-push-subscriptions/collection.yaml) |
+| Web Push 구독 비활성화 | `DELETE /api/web-push-subscriptions/{subscriptionId}` | [paths/web-push-subscriptions/detail.yaml](paths/web-push-subscriptions/detail.yaml) |
 | 내 알림 목록 조회 | `GET /api/notifications` | [paths/notifications/collection.yaml](paths/notifications/collection.yaml) |
 | 알림 읽음 처리 | `PATCH /api/notifications/{notificationId}` | [paths/notifications/detail.yaml](paths/notifications/detail.yaml) |
 
@@ -56,7 +56,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 - [공통 오류 응답](components/responses.yaml): 상태별 오류 조합과 예시
 - [오류 스키마](components/schemas/errors.yaml): 오류 코드·메시지·필드 오류 구조
 - [공통 타입](components/schemas/common.yaml): 서버 날짜·시간
-- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [푸시 토큰](components/schemas/push-tokens.yaml), [알림](components/schemas/notifications.yaml)
+- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [Web Push](components/schemas/web-push-subscriptions.yaml), [알림](components/schemas/notifications.yaml)
 
 공통 정의를 바꾸면 이를 참조하는 여러 API에 적용된다. 특정 API만 달라져야 한다면 해당 API에 맞는 정의를 분리한다.
 `$ref` 경로는 작성 중인 파일 기준 상대경로이며, 아래 검증 명령으로 참조가 정상인지 확인한다.

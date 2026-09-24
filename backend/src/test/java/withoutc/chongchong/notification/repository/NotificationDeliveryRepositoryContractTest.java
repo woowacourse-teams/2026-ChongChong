@@ -10,13 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import withoutc.chongchong.notification.entity.DeliveryStatus;
-import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
-import withoutc.chongchong.notification.entity.PushToken;
 import withoutc.chongchong.notification.entity.ResourceType;
-import withoutc.chongchong.notification.entity.TokenProvider;
+import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -34,7 +32,7 @@ abstract class NotificationDeliveryRepositoryContractTest {
     private NotificationRepository notificationRepository;
 
     @Autowired
-    private PushTokenRepository pushTokenRepository;
+    private WebPushSubscriptionRepository webPushSubscriptionRepository;
 
     @Autowired
     private StudyRepository studyRepository;
@@ -54,7 +52,7 @@ abstract class NotificationDeliveryRepositoryContractTest {
         DeliveryFixture fixture = saveFixture();
 
         NotificationDelivery saved = notificationDeliveryRepository.saveAndFlush(
-                NotificationDelivery.create(fixture.notification(), fixture.pushToken())
+                NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
         );
 
         assertThat(notificationDeliveryRepository.count()).isOne();
@@ -68,30 +66,30 @@ abstract class NotificationDeliveryRepositoryContractTest {
     }
 
     @Test
-    @DisplayName("같은 알림과 푸시 토큰으로 발송 기록을 중복 저장할 수 없다")
+    @DisplayName("같은 알림과 Web Push 구독으로 발송 기록을 중복 저장할 수 없다")
     void rejectDuplicateDelivery() {
         DeliveryFixture fixture = saveFixture();
         notificationDeliveryRepository.saveAndFlush(
-                NotificationDelivery.create(fixture.notification(), fixture.pushToken())
+                NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
         );
 
         assertThatThrownBy(() -> notificationDeliveryRepository.saveAndFlush(
-                NotificationDelivery.create(fixture.notification(), fixture.pushToken())
+                NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private DeliveryFixture saveFixture() {
-        String installationId = "notification-delivery-installation-" + UUID.randomUUID();
+        String endpoint = "https://push.example.com/notification-delivery-" + UUID.randomUUID();
         User user = userRepository.saveAndFlush(User.create("알림 수신자", null));
         Study study = studyRepository.saveAndFlush(Study.create("알림 테스트 스터디", "설명"));
         StudyMember recipient = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, user, user.getName(), null, StudyMemberRole.MEMBER)
         );
-        PushToken pushToken = pushTokenRepository.saveAndFlush(
-                PushToken.create(user, installationId, TokenProvider.EXPO, "push-token", DevicePlatform.ANDROID)
+        WebPushSubscription webPushSubscription = webPushSubscriptionRepository.saveAndFlush(
+                WebPushSubscription.create(user, endpoint, "p256dh-key", "auth-secret")
         );
         Notification notification = saveNotification(study, recipient);
-        return new DeliveryFixture(notification, pushToken);
+        return new DeliveryFixture(notification, webPushSubscription);
     }
 
     private Notification saveNotification(Study study, StudyMember recipient) {
@@ -107,6 +105,6 @@ abstract class NotificationDeliveryRepositoryContractTest {
         return notificationRepository.saveAndFlush(notification);
     }
 
-    private record DeliveryFixture(Notification notification, PushToken pushToken) {
+    private record DeliveryFixture(Notification notification, WebPushSubscription webPushSubscription) {
     }
 }

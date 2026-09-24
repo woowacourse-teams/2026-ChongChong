@@ -2,9 +2,9 @@ package withoutc.chongchong.notification.exception;
 
 import withoutc.chongchong.global.exception.BusinessException;
 
-public class PushTokenException extends BusinessException {
+public class WebPushSubscriptionException extends BusinessException {
 
-    public PushTokenException(PushTokenErrorCode errorCode) {
+    public WebPushSubscriptionException(WebPushSubscriptionErrorCode errorCode) {
         super(errorCode);
     }
 }

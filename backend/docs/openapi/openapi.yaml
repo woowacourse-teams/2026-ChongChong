@@ -17,7 +17,7 @@ tags:
   - { name: Notice, description: 공지 API }
   - { name: Assignment, description: 과제 API }
   - { name: Assignment Submission, description: 과제 제출물 API }
-  - { name: Push Token, description: 푸시 토큰 API }
+  - { name: Web Push, description: Web Push 구독 API }
   - { name: Notification, description: 알림 API }
 
 paths:
@@ -71,10 +71,10 @@ paths:
     $ref: './paths/assignment-submissions/my-submission.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}:
     $ref: './paths/assignment-submissions/detail.yaml'
-  /api/push-tokens:
-    $ref: './paths/push-tokens/collection.yaml'
-  /api/push-tokens/{installationId}:
-    $ref: './paths/push-tokens/detail.yaml'
+  /api/web-push-subscriptions:
+    $ref: './paths/web-push-subscriptions/collection.yaml'
+  /api/web-push-subscriptions/{subscriptionId}:
+    $ref: './paths/web-push-subscriptions/detail.yaml'
   /api/notifications:
     $ref: './paths/notifications/collection.yaml'
   /api/notifications/{notificationId}:

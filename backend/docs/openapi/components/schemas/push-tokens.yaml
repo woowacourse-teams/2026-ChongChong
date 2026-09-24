@@ -1,8 +1,0 @@
-PushTokenRegisterRequest:
-  type: object
-  additionalProperties: false
-  required: [installationId, token, platform]
-  properties:
-    installationId: { description: "앱 설치 단위를 식별하는 ID. 동일 설치의 토큰 갱신 시 같은 값을 사용한다.", type: string, minLength: 1, maxLength: 255, example: installation-1 }
-    token: { description: "이 기기로 알림을 보내기 위한 Expo 푸시 토큰.", type: string, minLength: 1, maxLength: 255, example: 'ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]' }
-    platform: { description: "앱이 설치된 기기의 운영체제.", type: string, enum: [ANDROID, IOS], example: ANDROID }
