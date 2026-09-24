@@ -1,11 +1,11 @@
+import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import List from '../../../shared/ui/List';
+import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import type { Submission } from '../types';
-import { formatSubmittedAt } from '../../../shared/utils/formatDate';
-import { usePostHog } from '@posthog/react';
 
 interface Props {
   submissions: Submission[];
@@ -63,11 +63,11 @@ const detailLinkStyle = {
   ...typography.body,
   flex: '0 0 auto',
   marginLeft: 'auto',
-  color: tokens.text.brand,
+  color: tokens.text.muted,
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-export default function SubmissionList({ submissions }: Props) {
+export default function CompletedSubmissionList({ submissions }: Props) {
   const { studyId, assignmentId } = useParams();
   const posthog = usePostHog();
 
@@ -78,15 +78,20 @@ export default function SubmissionList({ submissions }: Props) {
   };
 
   return (
-    <section css={sectionStyle} aria-labelledby="submission-list-title">
-      <h2 id="submission-list-title" css={titleStyle}>
-        제출 내역
+    <section css={sectionStyle} aria-labelledby="completed-submission-list-title">
+      <h2 id="completed-submission-list-title" css={titleStyle}>
+        제출 완료 {submissions.length}명
       </h2>
 
       <List>
         {submissions.map((submission) => (
           <List.Item key={submission.id} css={itemStyle}>
-            <img src={profileIcon} alt="" aria-hidden="true" css={profileStyle} />
+            <img
+              src={submission.profileImage ?? profileIcon}
+              alt=""
+              aria-hidden="true"
+              css={profileStyle}
+            />
 
             <div css={memberStyle}>
               <span css={nameStyle}>{submission.name}</span>

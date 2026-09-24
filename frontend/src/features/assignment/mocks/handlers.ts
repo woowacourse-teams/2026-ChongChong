@@ -237,7 +237,7 @@ export const handlers = [
           return {
             id,
             name: submitter?.name ?? '',
-            profileImage: submitter?.profileImage ?? '',
+            profileImage: submitter?.profileImage ?? null,
             createdAt,
           };
         });

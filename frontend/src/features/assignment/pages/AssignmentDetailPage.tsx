@@ -12,7 +12,7 @@ import Loading from '../../../shared/ui/Loading';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
-import AssignmentHeaderActions from '../components/AssignmentHeaderActions';
+import ContentActionMenu from '../../../shared/widgets/ContentActionMenu';
 
 export default function AssignmentDetailPage() {
   return (
@@ -62,6 +62,6 @@ AssignmentDetailPage.HeaderActions = function HeaderActions() {
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return role === 'LEADER' ? (
-    <AssignmentHeaderActions studyId={studyId} assignmentId={assignmentId} />
+    <ContentActionMenu studyId={studyId} id={assignmentId} content="assignment" />
   ) : null;
 };

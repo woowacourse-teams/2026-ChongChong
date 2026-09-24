@@ -1,13 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router';
-import { tokens, typography } from '../../../styles/global';
-import useBooleanState from '../../../shared/hooks/useBooleanState';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
-import { deleteAssignment } from '../api';
-import assignmentQueries from '../queries';
+import { tokens, typography } from '../../styles/global';
+import useBooleanState from '../hooks/useBooleanState';
+import { useToast } from '../providers/ToastProvider';
+import ConfirmDialog from '../ui/dialogs/ConfirmDialog';
+import StatusToast from '../ui/toasts/StatusToast';
+import { deleteNotice } from '../../features/notice/api';
+import { deleteAssignment } from '../../features/assignment/api';
+import noticeQueries from '../../features/notice/queries';
+import assignmentQueries from '../../features/assignment/queries';
 
 const containerStyle = { position: 'relative' } satisfies CSSProperties;
 
@@ -51,16 +53,21 @@ const menuButtonStyle = {
 
 interface Props {
   studyId: number;
-  assignmentId: number;
+  id: number;
+  content: 'notice' | 'assignment';
 }
 
-export default function AssignmentHeaderActions({ studyId, assignmentId }: Props) {
+export default function ContentActionMenu({ studyId, id, content }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, openDialog, closeDialog] = useBooleanState();
+
+  const deleteMutation = content === 'notice' ? deleteNotice : deleteAssignment;
+  const queries = content === 'notice' ? noticeQueries : assignmentQueries;
+  const domain = content === 'notice' ? '공지' : '과제';
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -81,13 +88,18 @@ export default function AssignmentHeaderActions({ studyId, assignmentId }: Props
   }, [menuOpen]);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: () => deleteAssignment(studyId, assignmentId),
+    mutationFn: () => deleteMutation(studyId, id),
     onSuccess: () => {
       queryClient.removeQueries({
-        queryKey: assignmentQueries.detail(studyId, assignmentId).queryKey,
+        queryKey: queries.detail(studyId, id).queryKey,
       });
-      queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) });
-      navigate(`/studies/${studyId}/assignments`);
+      if (content === 'notice') {
+        queryClient.removeQueries({
+          queryKey: noticeQueries.readStatus(studyId, id).queryKey,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: queries.lists(studyId) });
+      navigate(`/studies/${studyId}/${content}s`);
     },
     onError: (error) => {
       closeDialog();
@@ -100,7 +112,7 @@ export default function AssignmentHeaderActions({ studyId, assignmentId }: Props
       <button
         type="button"
         css={moreButtonStyle}
-        aria-label="과제 더보기"
+        aria-label={`${domain} 더보기`}
         aria-haspopup="menu"
         aria-expanded={menuOpen}
         onClick={() => setMenuOpen((open) => !open)}
@@ -112,17 +124,17 @@ export default function AssignmentHeaderActions({ studyId, assignmentId }: Props
         </svg>
       </button>
       {menuOpen && (
-        <div role="menu" aria-label="과제 관리" css={menuStyle}>
+        <div role="menu" aria-label={`${domain} 관리`} css={menuStyle}>
           <button
             type="button"
             role="menuitem"
             css={menuButtonStyle}
             onClick={() => {
               setMenuOpen(false);
-              navigate(`/studies/${studyId}/assignments/${assignmentId}/edit`);
+              navigate(`/studies/${studyId}/${content}s/${id}/edit`);
             }}
           >
-            과제 수정
+            {domain} 수정
           </button>
           <button
             type="button"
@@ -137,14 +149,14 @@ export default function AssignmentHeaderActions({ studyId, assignmentId }: Props
               openDialog();
             }}
           >
-            과제 삭제
+            {domain} 삭제
           </button>
         </div>
       )}
       {confirmOpen && (
         <ConfirmDialog
-          title="과제를 삭제할까요?"
-          description={'삭제한 과제는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
+          title={`${domain}를 삭제할까요?`}
+          description={`삭제한 ${domain}는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?`}
           onClose={closeDialog}
           closeButton={
             <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>

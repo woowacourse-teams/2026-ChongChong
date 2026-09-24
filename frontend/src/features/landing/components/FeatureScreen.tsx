@@ -20,6 +20,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
 import { InviteLinkBox } from '../../member/components/InviteStudyLinkBox';
 import MemberRow from '../../member/components/MemberRow';
@@ -347,6 +348,11 @@ function SubmissionScreen() {
     <>
       <ScreenHeader title="과제" />
       <Main>
+        <ContentDetailHeader
+          title={assignment.title}
+          dateTime={assignment.closeAt}
+          meta={`${formatDateToString(assignment.closeAt)} 마감`}
+        />
         <PreviewSubmitStatusCard status={submissionStatus} />
         <AssignmentArticle assignment={assignment} />
       </Main>

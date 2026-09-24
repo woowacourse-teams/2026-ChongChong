@@ -41,6 +41,19 @@ export function formatSubmittedAt(value: string) {
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes} 제출`;
 }
 
+export function formatReadAt(value: string) {
+  const date = new Date(value.replace(' ', 'T'));
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}:${minutes} 확인`;
+}
+
 export function formatRelativeTime(value: string, now = new Date()) {
   const date = new Date(value.replace(' ', 'T'));
 

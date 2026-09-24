@@ -34,11 +34,18 @@ describe('리드 공지 상세 조회 실패', () => {
       http.get(`${NOTICE_DETAIL_URL}/status`, () =>
         HttpResponse.json({
           id: 1,
-          memberCount: 1,
-          readCount: 0,
+          memberCount: 2,
+          readCount: 1,
           unreadCount: 1,
           remindAt: null,
-          readMembers: [],
+          readMembers: [
+            {
+              id: 2,
+              name: '피즈',
+              profileImage: null,
+              readAt: '2026-09-01T10:30:00',
+            },
+          ],
           unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null }],
         }),
       ),
@@ -87,7 +94,7 @@ describe('리드 공지 상세 조회 실패', () => {
   });
 });
 
-describe('리드 공지 삭제 실패', () => {
+describe('리드 공지 상세', () => {
   beforeEach(() => {
     server.use(
       http.get(STUDY_INFO_URL, () =>
@@ -108,15 +115,45 @@ describe('리드 공지 삭제 실패', () => {
       http.get(`${NOTICE_DETAIL_URL}/status`, () =>
         HttpResponse.json({
           id: 1,
-          memberCount: 1,
-          readCount: 0,
+          memberCount: 2,
+          readCount: 1,
           unreadCount: 1,
           remindAt: null,
-          readMembers: [],
+          readMembers: [
+            {
+              id: 2,
+              name: '피즈',
+              profileImage: null,
+              readAt: '2026-09-01T10:30:00',
+            },
+          ],
           unreadMembers: [{ id: 1, name: '안톨리니', profileImage: null, lastRemindAt: null }],
         }),
       ),
     );
+  });
+
+  test('요약에는 확인 현황을, 상세에는 공지 본문을 표시한다', async () => {
+    const user = userEvent.setup();
+    renderNoticeDetailPage();
+
+    const summaryTab = await screen.findByRole('tab', { name: '요약' });
+    const detailTab = screen.getByRole('tab', { name: '상세' });
+
+    expect(summaryTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { name: '스터디 일정 안내' })).toBeVisible();
+    expect(screen.getByText('2026년 9월 1일 09:00 작성')).toBeVisible();
+    expect(screen.getByRole('progressbar', { name: '공지 읽음률' })).toBeVisible();
+    expect(screen.getByText('9월 1일 10:30 확인')).toBeVisible();
+    expect(screen.queryByText('이번 주 스터디는 토요일에 진행합니다.')).not.toBeInTheDocument();
+    expect(screen.queryByText('모두에게 알리기')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /알리기/ })).not.toBeInTheDocument();
+
+    await user.click(detailTab);
+
+    expect(detailTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('이번 주 스터디는 토요일에 진행합니다.')).toBeVisible();
+    expect(screen.queryByRole('progressbar', { name: '공지 읽음률' })).not.toBeInTheDocument();
   });
 
   test('공지 삭제 권한이 없으면 권한 안내를 토스트로 표시하고 확인창을 닫는다', async () => {
@@ -131,7 +168,8 @@ describe('리드 공지 삭제 실패', () => {
     );
     renderNoticeDetailPage();
 
-    await user.click(await screen.findByRole('button', { name: '삭제' }));
+    await user.click(await screen.findByRole('button', { name: '공지 더보기' }));
+    await user.click(screen.getByRole('menuitem', { name: '공지 삭제' }));
     const dialog = screen.getByRole('alertdialog', { name: '공지를 삭제할까요?' });
     expect(dialog).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: '삭제' }));
@@ -147,7 +185,8 @@ describe('리드 공지 삭제 실패', () => {
     server.use(http.delete(NOTICE_DETAIL_URL, () => HttpResponse.error()));
     renderNoticeDetailPage();
 
-    await user.click(await screen.findByRole('button', { name: '삭제' }));
+    await user.click(await screen.findByRole('button', { name: '공지 더보기' }));
+    await user.click(screen.getByRole('menuitem', { name: '공지 삭제' }));
     const dialog = screen.getByRole('alertdialog', { name: '공지를 삭제할까요?' });
     expect(dialog).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: '삭제' }));

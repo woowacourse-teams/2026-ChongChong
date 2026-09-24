@@ -133,6 +133,7 @@ describe('과제 상세 페이지 테스트', () => {
     describe('내 과제 제출', () => {
       test('리더도 제출 대상이면 상세 하단에 제출 폼을 표시한다', async () => {
         const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
 
         const { submissionForm } = await findSubmissionForm();
         const moreButton = screen.getByRole('button', { name: '과제 더보기' });
@@ -162,7 +163,8 @@ describe('과제 상세 페이지 테스트', () => {
         );
         server.use(http.get(MY_SUBMISSION_URL, getMySubmission));
 
-        setupAssignmentDetailPage();
+        const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
 
         expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
         expect(screen.queryByRole('region', { name: '내 제출' })).not.toBeInTheDocument();
@@ -174,7 +176,8 @@ describe('과제 상세 페이지 테스트', () => {
           content: '리더가 제출한 과제',
           link: null,
         });
-        setupAssignmentDetailPage();
+        const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
 
         const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
         expect(mySubmission.getByText('리더가 제출한 과제')).toBeVisible();
@@ -184,6 +187,7 @@ describe('과제 상세 페이지 테스트', () => {
 
       test('제출 후 내 제출 내용과 현황을 갱신한다', async () => {
         const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
         const { submissionForm, contentInput } = await findSubmissionForm();
 
         await user.type(contentInput, '리더의 스프링 설계 과제');
@@ -192,6 +196,7 @@ describe('과제 상세 페이지 테스트', () => {
         const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
         expect(await mySubmission.findByRole('button', { name: '편집하기' })).toBeVisible();
         expect(mySubmission.getByText('리더의 스프링 설계 과제')).toBeVisible();
+        await user.click(screen.getByRole('tab', { name: '요약' }));
         await waitFor(() =>
           expect(screen.getByRole('progressbar', { name: '과제 제출률' })).toHaveAttribute(
             'aria-valuenow',
@@ -202,6 +207,26 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('과제 상세 조회', () => {
+      test('리더에게만 요약과 상세 탭을 표시하고 탭별 콘텐츠를 구분한다', async () => {
+        const { user } = setupAssignmentDetailPage();
+
+        const summaryTab = await screen.findByRole('tab', { name: '요약' });
+        const detailTab = screen.getByRole('tab', { name: '상세' });
+
+        expect(summaryTab).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('progressbar', { name: '과제 제출률' })).toBeVisible();
+        expect(screen.queryByText('과제 내용')).not.toBeInTheDocument();
+        expect(screen.queryByText('모두에게 알리기')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /알리기/ })).not.toBeInTheDocument();
+
+        await user.click(detailTab);
+
+        expect(detailTab).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+        expect(screen.queryByRole('progressbar', { name: '과제 제출률' })).not.toBeInTheDocument();
+      });
+
       test.each([
         {
           title: '스터디에 대한 접근 권한이 없으면',
@@ -340,6 +365,7 @@ describe('과제 상세 페이지 테스트', () => {
 
         expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
         expect(screen.queryByRole('button', { name: '과제 더보기' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('tab')).not.toBeInTheDocument();
       });
 
       test.each([

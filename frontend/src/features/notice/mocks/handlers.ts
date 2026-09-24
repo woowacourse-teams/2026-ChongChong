@@ -134,10 +134,17 @@ export const handlers = [
     const recipients = noticeRecipientTable.findMany((query) => query.where({ noticeId }));
     const readMembers = recipients
       .filter(({ readAt }) => readAt !== null)
-      .flatMap(({ memberId }) => {
+      .flatMap(({ memberId, readAt }) => {
         const recipient = memberTable.findFirst((query) => query.where({ id: memberId, studyId }));
         return recipient
-          ? [{ id: recipient.id, name: recipient.name, profileImage: recipient.profileImage }]
+          ? [
+              {
+                id: recipient.id,
+                name: recipient.name,
+                profileImage: recipient.profileImage,
+                readAt,
+              },
+            ]
           : [];
       });
     const unreadMembers = recipients
