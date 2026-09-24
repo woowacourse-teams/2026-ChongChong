@@ -2,6 +2,7 @@ import { screen, fireEvent } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { createWrapper, setup, login } from '../../../../test/render';
+import { createTextWithLength, insertTextInMiddle } from '../../../../test/input';
 import { server } from '../../../../mocks/msw-node';
 import { API_URL } from '../../../../../config';
 import { STUDY_URLS } from '../../urls';
@@ -29,10 +30,6 @@ function studyNameInput() {
   return screen.getByRole('textbox', { name: '스터디 이름' });
 }
 
-function studyDescriptionInput() {
-  return screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
-}
-
 function studyCreateButton() {
   return screen.getByRole('button', { name: '스터디 만들기' });
 }
@@ -53,22 +50,65 @@ describe('스터디 생성 페이지', () => {
       expect(studyCreateButton()).toBeEnabled();
     });
 
-    test('이름에 제한을 초과한 값이 전달되면 입력 수를 15자로 제한한다', async () => {
+    test('이름이 15자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
       setupStudyCreatePage();
-      fireEvent.change(studyNameInput(), {
-        target: { value: '가'.repeat(16) },
-      });
+      const nameInput = studyNameInput();
+      const originalValue = createTextWithLength(15);
 
-      expect(studyNameInput()).toHaveValue('가'.repeat(15));
+      fireEvent.change(nameInput, { target: { value: originalValue } });
+      expect(nameInput).toHaveValue(originalValue);
+
+      insertTextInMiddle(nameInput, originalValue);
+
+      expect(nameInput).toHaveValue(originalValue);
     });
 
-    test('설명에 제한을 초과한 값이 전달되면 입력 수를 30자로 제한한다', () => {
+    test('이름의 중간 삽입 결과가 15자 이하면 입력을 반영한다', () => {
       setupStudyCreatePage();
-      fireEvent.change(studyDescriptionInput(), {
-        target: { value: '가'.repeat(31) },
-      });
+      const nameInput = studyNameInput();
+      const originalValue = createTextWithLength(14);
 
-      expect(studyDescriptionInput()).toHaveValue('가'.repeat(30));
+      fireEvent.change(nameInput, { target: { value: originalValue } });
+      expect(nameInput).toHaveValue(originalValue);
+
+      const insertedValue = insertTextInMiddle(nameInput, originalValue);
+
+      expect(nameInput).toHaveValue(insertedValue);
+    });
+
+    test('빈 설명에 30자를 초과한 값이 전달되면 입력을 막는다', () => {
+      setupStudyCreatePage();
+      const descriptionInput = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+
+      fireEvent.change(descriptionInput, { target: { value: createTextWithLength(31) } });
+
+      expect(descriptionInput).toHaveValue('');
+    });
+
+    test('설명이 30자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+      setupStudyCreatePage();
+      const descriptionInput = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+      const originalValue = createTextWithLength(30);
+
+      fireEvent.change(descriptionInput, { target: { value: originalValue } });
+      expect(descriptionInput).toHaveValue(originalValue);
+
+      insertTextInMiddle(descriptionInput, originalValue);
+
+      expect(descriptionInput).toHaveValue(originalValue);
+    });
+
+    test('설명의 중간 삽입 결과가 30자 이하면 입력을 반영한다', () => {
+      setupStudyCreatePage();
+      const descriptionInput = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+      const originalValue = createTextWithLength(29);
+
+      fireEvent.change(descriptionInput, { target: { value: originalValue } });
+      expect(descriptionInput).toHaveValue(originalValue);
+
+      const insertedValue = insertTextInMiddle(descriptionInput, originalValue);
+
+      expect(descriptionInput).toHaveValue(insertedValue);
     });
   });
 

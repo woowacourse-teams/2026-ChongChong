@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router';
 import { API_URL } from '../../../../../config';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { server } from '../../../../mocks/msw-node';
+import { createTextWithLength, insertTextInMiddle } from '../../../../test/input';
 import { createWrapper } from '../../../../test/render';
 import CreateNoticePage from '../CreateNoticePage';
 
@@ -24,26 +25,78 @@ describe('공지 생성 폼', () => {
     );
   }
 
-  test('제목에 제한을 초과한 값이 전달되면 입력 수를 20자로 제한한다', () => {
+  test('제목 빈 값에서 20자 제한을 초과한 값이 전달되면 빈 값을 유지한다', () => {
     renderCreatePage();
 
     const titleInput = screen.getByRole('textbox', { name: '제목' });
     fireEvent.change(titleInput, {
-      target: { value: '가'.repeat(21) },
+      target: { value: createTextWithLength(21) },
     });
 
-    expect(titleInput).toHaveValue('가'.repeat(20));
+    expect(titleInput).toHaveValue('');
   });
 
-  test('내용에 제한을 초과한 값이 전달되면 입력 수를 10000자로 제한한다', () => {
+  test('제목이 20자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+    renderCreatePage();
+
+    const titleInput = screen.getByRole('textbox', { name: '제목' });
+    const originalValue = createTextWithLength(20);
+    fireEvent.change(titleInput, { target: { value: originalValue } });
+    expect(titleInput).toHaveValue(originalValue);
+
+    insertTextInMiddle(titleInput, originalValue);
+
+    expect(titleInput).toHaveValue(originalValue);
+  });
+
+  test('제목의 중간 삽입 결과가 20자 이하면 입력을 반영한다', () => {
+    renderCreatePage();
+
+    const titleInput = screen.getByRole('textbox', { name: '제목' });
+    const originalValue = createTextWithLength(19);
+    fireEvent.change(titleInput, { target: { value: originalValue } });
+    expect(titleInput).toHaveValue(originalValue);
+
+    const insertedValue = insertTextInMiddle(titleInput, originalValue);
+
+    expect(titleInput).toHaveValue(insertedValue);
+  });
+
+  test('내용 빈 값에서 10000자 제한을 초과한 값이 전달되면 빈 값을 유지한다', () => {
     renderCreatePage();
 
     const contentInput = screen.getByRole('textbox', { name: '내용' });
     fireEvent.change(contentInput, {
-      target: { value: '가'.repeat(10001) },
+      target: { value: createTextWithLength(10001) },
     });
 
-    expect(contentInput).toHaveValue('가'.repeat(10000));
+    expect(contentInput).toHaveValue('');
+  });
+
+  test('내용이 10000자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+    renderCreatePage();
+
+    const contentInput = screen.getByRole('textbox', { name: '내용' });
+    const originalValue = createTextWithLength(10000);
+    fireEvent.change(contentInput, { target: { value: originalValue } });
+    expect(contentInput).toHaveValue(originalValue);
+
+    insertTextInMiddle(contentInput, originalValue);
+
+    expect(contentInput).toHaveValue(originalValue);
+  });
+
+  test('내용의 중간 삽입 결과가 10000자 이하면 입력을 반영한다', () => {
+    renderCreatePage();
+
+    const contentInput = screen.getByRole('textbox', { name: '내용' });
+    const originalValue = createTextWithLength(9999);
+    fireEvent.change(contentInput, { target: { value: originalValue } });
+    expect(contentInput).toHaveValue(originalValue);
+
+    const insertedValue = insertTextInMiddle(contentInput, originalValue);
+
+    expect(contentInput).toHaveValue(insertedValue);
   });
 
   test('필드 에러가 발생하면 각 필드의 에러 메시지를 표시한다', async () => {

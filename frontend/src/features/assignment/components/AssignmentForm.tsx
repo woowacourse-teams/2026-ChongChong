@@ -44,15 +44,23 @@ export default function AssignmentForm({
   submitLabel,
   onSubmit,
 }: AssignmentFormProps) {
-  const [title, handleTitleChange] = useInputState(initialValues.title, (value) =>
-    value.slice(0, ASSIGNMENT_TITLE.length),
-  );
-  const [content, handleContentChange] = useInputState(initialValues.content, (value) =>
-    value.slice(0, ASSIGNMENT_CONTENT.length),
+  const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
+    if (value.length > ASSIGNMENT_TITLE.length) return prevValue;
+    return value;
+  });
+  const [content, handleContentChange] = useInputState(
+    initialValues.content,
+    (value, prevValue) => {
+      if (value.length > ASSIGNMENT_CONTENT.length) return prevValue;
+      return value;
+    },
   );
   const [submissionMethod, handleSubmissionMethodChange] = useInputState(
     initialValues.submissionMethod,
-    (value) => value.slice(0, ASSIGNMENT_CONTENT.length),
+    (value, prevValue) => {
+      if (value.length > ASSIGNMENT_CONTENT.length) return prevValue;
+      return value;
+    },
   );
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
   const [submissionTarget, setSubmissionTarget] = useState(initialValues.submissionTarget);

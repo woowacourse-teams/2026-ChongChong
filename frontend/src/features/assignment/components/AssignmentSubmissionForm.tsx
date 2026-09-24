@@ -50,12 +50,17 @@ export default function AssignmentSubmissionForm({
   fieldErrors = {},
   onSubmit,
 }: Props) {
-  const [content, handleContentChange] = useInputState(initialValues.content, (value) =>
-    value.slice(0, ASSIGNMENT_SUBMISSION_CONTENT.length),
+  const [content, handleContentChange] = useInputState(
+    initialValues.content,
+    (value, prevValue) => {
+      if (value.length > ASSIGNMENT_SUBMISSION_CONTENT.length) return prevValue;
+      return value;
+    },
   );
-  const [link, handleLinkChange] = useInputState(initialValues.link ?? '', (value) =>
-    value.slice(0, ASSIGNMENT_SUBMISSION_LINK.length),
-  );
+  const [link, handleLinkChange] = useInputState(initialValues.link ?? '', (value, prevValue) => {
+    if (value.length > ASSIGNMENT_SUBMISSION_LINK.length) return prevValue;
+    return value;
+  });
   const posthog = usePostHog();
 
   const submitAssignment: SubmitEventHandler<HTMLFormElement> = (event) => {

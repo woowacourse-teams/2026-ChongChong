@@ -44,11 +44,16 @@ export default function NoticeForm({
   fieldErrors = {},
 }: NoticeFormProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const [title, handleTitleChange] = useInputState(initialValues.title, (value) =>
-    value.slice(0, NOTICE_TITLE.length),
-  );
-  const [content, handleContentChange] = useInputState(initialValues.content, (value) =>
-    value.slice(0, NOTICE_CONTENT.length),
+  const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
+    if (value.length > NOTICE_TITLE.length) return prevValue;
+    return value;
+  });
+  const [content, handleContentChange] = useInputState(
+    initialValues.content,
+    (value, prevValue) => {
+      if (value.length > NOTICE_CONTENT.length) return prevValue;
+      return value;
+    },
   );
   const posthog = usePostHog();
 
