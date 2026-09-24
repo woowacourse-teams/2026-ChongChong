@@ -2,7 +2,7 @@ get:
   tags: [User]
   operationId: getMyProfile
   x-backend:
-    status: todo
+    status: review
     owner: JYL35
     description: |
       #363 홈 마이페이지에서 사용할 현재 사용자의 기본 프로필을 조회한다.
