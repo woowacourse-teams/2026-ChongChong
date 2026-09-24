@@ -144,7 +144,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
             progress={readProgress}
             isRead={isRead}
             readAt={readAt ? formatRelativeTime(readAt) : undefined}
-            showCompletionToast={updateReadMutation.isSuccess && canMarkAsRead}
+            showCompletionToast={updateReadMutation.isSuccess}
           />
         </div>
       )}
