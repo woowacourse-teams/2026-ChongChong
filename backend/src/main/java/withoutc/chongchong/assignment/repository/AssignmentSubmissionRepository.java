@@ -38,6 +38,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
                        member.name,
                        member.profileImageUrl,
                        CASE WHEN submission.submittedAt IS NULL THEN false ELSE true END,
+                       submission.submittedAt,
                        MAX(notification.createdAt)
                    )
             FROM AssignmentSubmission submission

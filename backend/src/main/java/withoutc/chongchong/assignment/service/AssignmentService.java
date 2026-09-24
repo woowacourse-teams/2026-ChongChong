@@ -109,7 +109,8 @@ public class AssignmentService {
                 .map(status -> AssignmentSubmissionStatusResponse.CompleteMember.of(
                         status.memberId(),
                         status.name(),
-                        status.profileImageUrl()
+                        status.profileImageUrl(),
+                        status.submittedAt()
                 )).toList();
 
         List<AssignmentSubmissionStatusResponse.IncompleteMember> incompleteMembers = statuses.stream()

@@ -21,6 +21,7 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
                        member.name,
                        member.profileImageUrl,
                        CASE WHEN recipient.readAt IS NULL THEN false ELSE true END,
+                       recipient.readAt,
                        MAX(notification.createdAt)
                    )
             FROM NoticeRecipient recipient

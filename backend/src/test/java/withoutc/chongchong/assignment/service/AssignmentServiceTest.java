@@ -322,8 +322,8 @@ class AssignmentServiceTest {
         assignment.addReminders(List.of(NOW.plusDays(1)), NOW);
         StudyMember leader = mock(StudyMember.class);
         List<AssignmentSubmitterStatusProjection> statuses = List.of(
-                new AssignmentSubmitterStatusProjection(MEMBER_ID, "완료자", "complete.png", true, null),
-                new AssignmentSubmitterStatusProjection(22L, "미완료자", "incomplete.png", false,
+                new AssignmentSubmitterStatusProjection(MEMBER_ID, "완료자", "complete.png", true, NOW, null),
+                new AssignmentSubmitterStatusProjection(22L, "미완료자", "incomplete.png", false, null,
                         NOW.minusHours(1))
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
@@ -339,6 +339,8 @@ class AssignmentServiceTest {
         assertThat(response.incompleteCount()).isEqualTo(1);
         assertThat(response.completeMembers()).extracting(AssignmentSubmissionStatusResponse.CompleteMember::id)
                 .containsExactly(MEMBER_ID);
+        assertThat(response.completeMembers()).singleElement()
+                .satisfies(member -> assertThat(member.submittedAt()).isEqualTo(NOW));
         assertThat(response.incompleteMembers()).singleElement()
                 .satisfies(member -> assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1)));
         verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(leader);

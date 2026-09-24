@@ -33,10 +33,12 @@ public record NoticeStatusesResponse(
     public record ReadMember(
             Long id,
             String name,
-            String profileImage
+            String profileImage,
+            LocalDateTime readAt
     ) {
-        public static ReadMember of(Long studyMemberId, String name, String profileImageUrl) {
-            return new ReadMember(studyMemberId, name, profileImageUrl);
+        public static ReadMember of(Long studyMemberId, String name, String profileImageUrl,
+                                    LocalDateTime readAt) {
+            return new ReadMember(studyMemberId, name, profileImageUrl, readAt);
         }
 
     }

@@ -10,7 +10,7 @@ AssignmentSubmissionStatusResponse:
     remindAt:
       description: 대기 중인 리마인더의 가장 이른 예약 시각. 예약이 없으면 목록에서는 생략하고 현황 응답에서는 null을 반환한다.
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
-    completeMembers: { type: array, items: { $ref: './notices.yaml#/MemberBase' } }
+    completeMembers: { type: array, items: { $ref: '#/CompleteMember' } }
     incompleteMembers: { type: array, items: { $ref: './notices.yaml#/UnreadMember' } }
 AssignmentSubmitRequest:
   type: object
@@ -68,3 +68,15 @@ SubmissionStatus:
   type: string
   enum: [NOT_ASSIGNED, NOT_SUBMITTED, SUBMITTED]
   description: 제출 대상 아님, 미제출, 제출 완료를 구분하는 본인의 상태
+
+CompleteMember:
+  type: object
+  additionalProperties: false
+  required: [id, name, profileImage, submittedAt]
+  properties:
+    id: { type: integer, format: int64, example: 1 }
+    name: { type: string, example: 홍길동 }
+    profileImage: { type: [string, 'null'], example: 'https://example.com/profile.png' }
+    submittedAt:
+      description: 최초 과제 제출 시각. 제출 내용을 수정해도 유지된다.
+      $ref: './common.yaml#/LocalDateTime'
