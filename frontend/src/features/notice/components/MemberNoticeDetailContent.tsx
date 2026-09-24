@@ -1,4 +1,9 @@
-import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQueries,
+  type QueryKey,
+} from '@tanstack/react-query';
 import type { CSSProperties, UIEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { formatRelativeTime } from '../../../shared/utils/formatDate';
@@ -9,6 +14,7 @@ import { updateNoticeRead } from '../api';
 import noticeQueries from '../queries';
 import MemberNoticeReadState from './MemberNoticeReadState';
 import NoticeArticle from './NoticeArticle';
+import type { MemberReadStatus } from '../types';
 
 interface Props {
   studyId: number;
@@ -56,10 +62,13 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     mutationFn: () => updateNoticeRead(studyId, noticeId),
     retry: 2,
     onSuccess: (updatedReadStatus) => {
-      queryClient.setQueryData(noticeQueries.myRead(studyId, noticeId).queryKey, {
+      const myReadQueryKey: QueryKey = noticeQueries.myRead(studyId, noticeId).queryKey;
+      const nextReadStatus: MemberReadStatus = {
         readStatus: 'READ',
         readAt: updatedReadStatus.readAt,
-      });
+      };
+
+      queryClient.setQueryData<MemberReadStatus>(myReadQueryKey, nextReadStatus);
       queryClient.invalidateQueries({ queryKey: noticeQueries.lists(studyId) });
     },
     onError: (error) => {
@@ -114,7 +123,9 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   };
 
   const isRead = readStatus.readStatus === 'READ' || updateReadMutation.isSuccess;
-  const readAt = updateReadMutation.data?.readAt ?? readStatus.readAt;
+  const readAt =
+    updateReadMutation.data?.readAt ??
+    (readStatus.readStatus === 'READ' ? readStatus.readAt : undefined);
 
   return (
     <>
