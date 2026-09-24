@@ -42,6 +42,37 @@ function getUnreadMemberNotices(studyId: number, memberId: number) {
     });
 }
 
+function getOpenAssignments(studyId: number) {
+  const now = new Date();
+
+  return assignmentTable
+    .findMany((query) => query.where({ studyId }))
+    .filter((assignment) => new Date(assignment.closeAt) > now);
+}
+
+function getIncompleteLeaderAssignments(studyId: number) {
+  return getOpenAssignments(studyId).flatMap((assignment) => {
+    const submissions = submissionTable.findMany((query) =>
+      query.where({ assignmentId: assignment.id }),
+    );
+    const completeCount = submissions.filter(({ submitted }) => submitted).length;
+
+    return completeCount < submissions.length
+      ? [{ assignment, memberCount: submissions.length, completeCount }]
+      : [];
+  });
+}
+
+function getIncompleteMemberAssignments(studyId: number, userId: number) {
+  return getOpenAssignments(studyId).filter((assignment) => {
+    const submission = submissionTable.findFirst((query) =>
+      query.where({ assignmentId: assignment.id, userId }),
+    );
+
+    return submission?.submitted === false;
+  });
+}
+
 export const handlers = [
   http.get(`${API_URL}${STUDY_URLS.list}`, async ({ request }) => {
     const user = findUserFromHeader(request.headers);
@@ -58,6 +89,10 @@ export const handlers = [
           membership.role === 'LEADER'
             ? getIncompleteLeaderNotices(study.id).length
             : getUnreadMemberNotices(study.id, membership.id).length;
+        const assignmentCount =
+          membership.role === 'LEADER'
+            ? getIncompleteLeaderAssignments(study.id).length
+            : getIncompleteMemberAssignments(study.id, user.id).length;
         return {
           id: study.id,
           role: membership.role,
@@ -65,7 +100,7 @@ export const handlers = [
           description: study.description,
           memberCount: members.length,
           noticeCount,
-          assignmentCount: 2,
+          assignmentCount,
         };
       }),
     );
@@ -79,23 +114,10 @@ export const handlers = [
     const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
     if (!member) return new HttpResponse(null, { status: 403 });
     const isLead = member.role === 'LEADER';
-    const now = new Date();
-    const openAssignments = assignmentTable
-      .findMany((q) => q.where({ studyId }))
-      .filter((assignment) => new Date(assignment.closeAt) > now);
 
     if (isLead) {
       const notices = getIncompleteLeaderNotices(studyId);
-      const assignments = openAssignments.flatMap((assignment) => {
-        const submissions = submissionTable.findMany((query) =>
-          query.where({ assignmentId: assignment.id }),
-        );
-        const completeCount = submissions.filter(({ submitted }) => submitted).length;
-
-        return completeCount < submissions.length
-          ? [{ assignment, memberCount: submissions.length, completeCount }]
-          : [];
-      });
+      const assignments = getIncompleteLeaderAssignments(studyId);
       return HttpResponse.json({
         notices: {
           count: notices.length,
@@ -112,12 +134,7 @@ export const handlers = [
         },
       });
     } else {
-      const assignments = openAssignments.filter((assignment) => {
-        const submission = submissionTable.findFirst((query) =>
-          query.where({ assignmentId: assignment.id, userId: user.id }),
-        );
-        return submission?.submitted === false;
-      });
+      const assignments = getIncompleteMemberAssignments(studyId, user.id);
       const notices = getUnreadMemberNotices(studyId, member.id).map(({ id, title }) => ({
         id,
         title,
