@@ -8,6 +8,7 @@ import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
 import Badge from '../../../shared/ui/Badge';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
+import type { LeaderAssignmentSummary } from '../types';
 // import clock from '../../../shared/assets/clock.svg';
 // import { formatReminder } from '../../../shared/utils/formatDate';
 
@@ -34,7 +35,9 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     assignmentQueries.list(studyId),
   );
-  const assignments = data.pages.flatMap((page) => page.assignments);
+  const assignments = data.pages
+    .flatMap((page) => page.assignments)
+    .filter((assignment): assignment is LeaderAssignmentSummary => 'isComplete' in assignment);
   const loadMoreRef = useInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -56,7 +59,7 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
                   </Badge>
                 ) : (
                   <Badge variant="brandOutline" size="small">
-                    {assignment.completeCount ?? 0}/{assignment.memberCount ?? 0} 제출
+                    {assignment.completeCount}/{assignment.memberCount} 제출
                   </Badge>
                 )}
                 {/* 당장 필요하지 않은 리마인드 정보 주석 처리 */}

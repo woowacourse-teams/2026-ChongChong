@@ -21,8 +21,13 @@ export default function MyAssignmentSubmission({ studyId, assignmentId, submissi
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       createAssignmentSubmission(studyId, assignmentId, values),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) }),
+        queryClient.invalidateQueries({
+          queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
+        }),
+      ]);
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;
@@ -32,7 +37,9 @@ export default function MyAssignmentSubmission({ studyId, assignmentId, submissi
 
   const fieldErrors = error instanceof ValidationError ? error.fieldErrors : {};
 
-  return submission.submitted ? (
+  if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
+
+  return submission.submissionStatus === 'SUBMITTED' ? (
     <CompletedAssignmentSubmission
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
       assignmentId={assignmentId}
