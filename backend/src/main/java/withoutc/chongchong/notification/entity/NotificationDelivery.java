@@ -60,6 +60,12 @@ public class NotificationDelivery extends BaseEntity {
 
     private String lastError;
 
+    public void claim(LocalDateTime time) {
+        validateTime(time);
+        this.status = DeliveryStatus.PROCESSING;
+        this.claimedAt = time;
+    }
+
     public static NotificationDelivery create(
             Notification notification,
             WebPushSubscription webPushSubscription
@@ -85,6 +91,12 @@ public class NotificationDelivery extends BaseEntity {
     private void validateRequiredValues(Notification notification, WebPushSubscription webPushSubscription) {
         if (notification == null || webPushSubscription == null) {
             throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY);
+        }
+    }
+
+    private void validateTime(LocalDateTime time) {
+        if (LocalDateTime.now().isAfter(time) || time == null) {
+            throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY_TIME);
         }
     }
 }

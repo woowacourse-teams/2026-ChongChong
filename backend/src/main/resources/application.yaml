@@ -52,10 +52,6 @@ auth:
       same-site: Lax
       path: /api/auth
 
-discord:
-  webhook-url: ${DISCORD_WEBHOOK_URL}
-  user-ids: ${DISCORD_USER_IDS}
-
 web-push:
   vapid:
     public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY}

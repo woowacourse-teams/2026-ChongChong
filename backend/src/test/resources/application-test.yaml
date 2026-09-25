@@ -17,10 +17,6 @@ frontend:
   base-url: https://test.chongchong.app
   allowed-origins: https://test.chongchong.app,http://localhost:3005
 
-discord:
-  webhook-url: http://127.0.0.1:9/test-webhook
-  user-ids: test-user-id
-
 web-push:
   vapid:
     public-key: test-public-key
