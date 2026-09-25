@@ -22,9 +22,13 @@ import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
 import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.ResourceType;
+import withoutc.chongchong.notification.entity.WebPushSubscription;
+import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 import withoutc.chongchong.notification.repository.NotificationRepository;
+import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -35,16 +39,20 @@ import withoutc.chongchong.study.entity.StudyMember;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationDeliveryRepository notificationDeliveryRepository;
+    private final WebPushSubscriptionRepository webPushSubscriptionRepository;
+
     private final NoticeRecipientRepository noticeRecipientRepository;
     private final NoticeReminderRepository noticeReminderRepository;
+    private final NoticeRepository noticeRepository;
+
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final AssignmentReminderRepository assignmentReminderRepository;
+    private final AssignmentRepository assignmentRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
     private final Clock clock;
-    private final NoticeRepository noticeRepository;
-    private final AssignmentRepository assignmentRepository;
 
     public MyNotificationListResponse getMyNotifications(Long userId) {
         List<Notification> notifications = notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(userId);
@@ -123,10 +131,20 @@ public class NotificationService {
             Notification notification = Notification.create(recipient.getUser(), title, body, type, resourceId,
                     resourceType, deepLink);
             notificationRepository.save(notification);
+            saveNotificationDelivery(notification);
         }
         NotificationEvent notificationEvent = NotificationEvent.create(title, body, type, resourceId, resourceType,
                 deepLink, recipients);
         eventPublisher.publishEvent(notificationEvent);
+    }
+
+    private void saveNotificationDelivery(Notification notification) {
+        List<WebPushSubscription> subscriptions = webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(
+                notification.getRecipient().getId());
+        for (WebPushSubscription subscription : subscriptions) {
+            NotificationDelivery delivery = NotificationDelivery.create(notification, subscription);
+            notificationDeliveryRepository.save(delivery);
+        }
     }
 
     private String createTitle(String studyName, NotificationType type, ResourceType resourceType) {

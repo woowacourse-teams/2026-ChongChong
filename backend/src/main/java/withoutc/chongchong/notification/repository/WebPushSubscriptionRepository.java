@@ -1,5 +1,6 @@
 package withoutc.chongchong.notification.repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -60,4 +61,6 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
             @Param("subscriptionId") Long subscriptionId,
             @Param("userId") Long userId
     );
+
+    List<WebPushSubscription> findByUserIdAndIsActiveTrue(Long userId);
 }

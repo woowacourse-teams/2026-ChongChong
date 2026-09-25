@@ -47,6 +47,12 @@ public class NotificationDelivery extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private DeliveryStatus status;
 
+    @Column(name = "claimed_at")
+    private LocalDateTime claimedAt;
+
+    @Column(name = "sent_at")
+    private LocalDateTime sentAt;
+
     @Column(nullable = false)
     private int attemptCount;
 
@@ -69,6 +75,8 @@ public class NotificationDelivery extends BaseEntity {
         this.notification = notification;
         this.webPushSubscription = webPushSubscription;
         this.status = DeliveryStatus.PENDING;
+        this.claimedAt = null;
+        this.sentAt = null;
         this.attemptCount = 0;
         this.nextRetryAt = null;
         this.lastError = null;

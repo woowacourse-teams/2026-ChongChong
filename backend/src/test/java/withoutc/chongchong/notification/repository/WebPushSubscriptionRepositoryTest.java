@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -133,6 +134,32 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
 
         webPushSubscriptionRepository.deactivateByIdAndUserId(subscription.getId(), user.getId());
         assertThat(webPushSubscriptionRepository.findById(subscription.getId()).orElseThrow().isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("사용자의 활성 Web Push 구독만 조회한다")
+    void findActiveSubscriptionsByUserId() {
+        User user = saveUser("사용자");
+        User anotherUser = saveUser("다른 사용자");
+        WebPushSubscription activeSubscription = webPushSubscriptionRepository.saveAndFlush(
+                WebPushSubscription.create(user, ENDPOINT + "-active", P256DH, AUTH)
+        );
+        WebPushSubscription inactiveSubscription = webPushSubscriptionRepository.saveAndFlush(
+                WebPushSubscription.create(user, ENDPOINT + "-inactive", P256DH, AUTH)
+        );
+        webPushSubscriptionRepository.saveAndFlush(
+                WebPushSubscription.create(anotherUser, ENDPOINT + "-another-user", P256DH, AUTH)
+        );
+        inactiveSubscription.deactivate();
+        entityManager.flush();
+        entityManager.clear();
+
+        List<WebPushSubscription> activeSubscriptions = webPushSubscriptionRepository
+                .findByUserIdAndIsActiveTrue(user.getId());
+
+        assertThat(activeSubscriptions)
+                .extracting(WebPushSubscription::getEndpoint)
+                .containsExactly(activeSubscription.getEndpoint());
     }
 
     private User saveUser(String name) {

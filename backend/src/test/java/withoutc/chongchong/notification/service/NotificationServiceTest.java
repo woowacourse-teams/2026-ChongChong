@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,9 +38,13 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.ResourceType;
+import withoutc.chongchong.notification.entity.WebPushSubscription;
+import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 import withoutc.chongchong.notification.repository.NotificationRepository;
+import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.notification.sender.NotificationEvent;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -56,6 +63,12 @@ class NotificationServiceTest {
 
     @Mock
     private NotificationRepository notificationRepository;
+
+    @Mock
+    private NotificationDeliveryRepository notificationDeliveryRepository;
+
+    @Mock
+    private WebPushSubscriptionRepository webPushSubscriptionRepository;
 
     @Mock
     private NoticeRecipientRepository noticeRecipientRepository;
@@ -84,14 +97,16 @@ class NotificationServiceTest {
     void setUp() {
         notificationService = new NotificationService(
                 notificationRepository,
+                notificationDeliveryRepository,
+                webPushSubscriptionRepository,
                 noticeRecipientRepository,
                 noticeReminderRepository,
+                noticeRepository,
                 assignmentSubmissionRepository,
                 assignmentReminderRepository,
+                assignmentRepository,
                 eventPublisher,
-                CLOCK,
-                noticeRepository,
-                assignmentRepository
+                CLOCK
         );
     }
 
@@ -125,6 +140,7 @@ class NotificationServiceTest {
         Study study = mock(Study.class);
         StudyMember recipient = mock(StudyMember.class);
         User recipientUser = mock(User.class);
+        WebPushSubscription subscription = mock(WebPushSubscription.class);
         when(assignmentReminderRepository.findAllByStatusAndRemindAtLessThanEqual(
                 AssignmentReminderStatus.PENDING, NOW)).thenReturn(List.of(reminder));
         when(noticeReminderRepository.findAllByStatusAndRemindAtLessThanEqual(
@@ -136,6 +152,8 @@ class NotificationServiceTest {
         when(study.getId()).thenReturn(1L);
         when(study.getName()).thenReturn("스터디");
         when(recipient.getUser()).thenReturn(recipientUser);
+        when(recipientUser.getId()).thenReturn(USER_ID);
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(USER_ID)).thenReturn(List.of(subscription));
         when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID))
                 .thenReturn(List.of(recipient));
@@ -143,6 +161,7 @@ class NotificationServiceTest {
         notificationService.createScheduledRemindNotifications();
 
         verify(notificationRepository).save(any(Notification.class));
+        verify(notificationDeliveryRepository).save(any(NotificationDelivery.class));
         verify(reminder).markAsSent();
         verify(assignmentSubmissionRepository).findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID);
         verifyNoInteractions(noticeRecipientRepository);
@@ -167,6 +186,8 @@ class NotificationServiceTest {
         when(study.getId()).thenReturn(1L);
         when(study.getName()).thenReturn("스터디");
         when(recipient.getUser()).thenReturn(recipientUser);
+        when(recipientUser.getId()).thenReturn(USER_ID);
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(USER_ID)).thenReturn(List.of());
         when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
         when(noticeRecipientRepository.findUnreadMembersByNoticeId(NOTICE_ID))
                 .thenReturn(List.of(recipient));
@@ -174,6 +195,7 @@ class NotificationServiceTest {
         notificationService.createScheduledRemindNotifications();
 
         verify(notificationRepository).save(any(Notification.class));
+        verify(notificationDeliveryRepository, never()).save(any(NotificationDelivery.class));
         verify(reminder).markAsSent();
         verify(noticeRecipientRepository).findUnreadMembersByNoticeId(NOTICE_ID);
         verifyNoInteractions(assignmentSubmissionRepository);
@@ -214,6 +236,81 @@ class NotificationServiceTest {
         assertThat(event.type()).isEqualTo(NotificationType.NEW);
         assertThat(event.resourceId()).isEqualTo(300L);
         assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
+    }
+
+    @Test
+    @DisplayName("사용자의 활성 Web Push 구독마다 Delivery를 생성하고 이벤트보다 먼저 저장한다")
+    void createDeliveryForEachActiveWebPushSubscription() {
+        AssignmentSubmission submission = mock(AssignmentSubmission.class);
+        Assignment assignment = mock(Assignment.class);
+        Study study = mock(Study.class);
+        StudyMember recipient = mock(StudyMember.class);
+        StudyMember submitter = mock(StudyMember.class);
+        User recipientUser = mock(User.class);
+        WebPushSubscription desktopSubscription = mock(WebPushSubscription.class);
+        WebPushSubscription mobileSubscription = mock(WebPushSubscription.class);
+        when(submission.getAssignment()).thenReturn(assignment);
+        when(submission.getId()).thenReturn(300L);
+        when(assignment.getStudy()).thenReturn(study);
+        when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
+        when(study.getId()).thenReturn(1L);
+        when(study.getName()).thenReturn("스터디");
+        when(submission.getMember()).thenReturn(submitter);
+        when(submitter.getName()).thenReturn("제출자");
+        when(recipient.getUser()).thenReturn(recipientUser);
+        when(recipientUser.getId()).thenReturn(USER_ID);
+        when(assignmentSubmissionRepository.getByIdOrThrow(300L)).thenReturn(submission);
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(USER_ID))
+                .thenReturn(List.of(desktopSubscription, mobileSubscription));
+
+        notificationService.createAssignmentSubmissionSubmittedEventNotifications(submission, List.of(recipient));
+
+        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository).save(notificationCaptor.capture());
+        ArgumentCaptor<NotificationDelivery> deliveryCaptor = ArgumentCaptor.forClass(NotificationDelivery.class);
+        verify(notificationDeliveryRepository, times(2)).save(deliveryCaptor.capture());
+
+        assertThat(deliveryCaptor.getAllValues())
+                .extracting(NotificationDelivery::getNotification)
+                .containsOnly(notificationCaptor.getValue());
+        assertThat(deliveryCaptor.getAllValues())
+                .extracting(NotificationDelivery::getWebPushSubscription)
+                .containsExactlyInAnyOrder(desktopSubscription, mobileSubscription);
+        verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(USER_ID);
+
+        InOrder inOrder = inOrder(
+                notificationRepository,
+                notificationDeliveryRepository,
+                eventPublisher
+        );
+        inOrder.verify(notificationRepository).save(any(Notification.class));
+        inOrder.verify(notificationDeliveryRepository, times(2))
+                .save(any(NotificationDelivery.class));
+        inOrder.verify(eventPublisher).publishEvent(any(NotificationEvent.class));
+    }
+
+    @Test
+    @DisplayName("활성 Web Push 구독이 없으면 Notification만 저장한다")
+    void saveNotificationWithoutDeliveryWhenNoActiveSubscription() {
+        Notice notice = mock(Notice.class);
+        Study study = mock(Study.class);
+        StudyMember recipient = mock(StudyMember.class);
+        User recipientUser = mock(User.class);
+        when(notice.getStudy()).thenReturn(study);
+        when(notice.getId()).thenReturn(NOTICE_ID);
+        when(notice.getTitle()).thenReturn("공지 제목");
+        when(study.getId()).thenReturn(1L);
+        when(study.getName()).thenReturn("스터디");
+        when(recipient.getUser()).thenReturn(recipientUser);
+        when(recipientUser.getId()).thenReturn(USER_ID);
+        when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(USER_ID)).thenReturn(List.of());
+
+        notificationService.createNoticeCreatedEventNotifications(notice, List.of(recipient));
+
+        verify(notificationRepository).save(any(Notification.class));
+        verify(notificationDeliveryRepository, never()).save(any(NotificationDelivery.class));
+        verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(USER_ID);
     }
 
     @Test
