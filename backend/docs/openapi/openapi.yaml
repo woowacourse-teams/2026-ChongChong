@@ -75,6 +75,8 @@ paths:
     $ref: './paths/web-push-subscriptions/collection.yaml'
   /api/web-push-subscriptions/{subscriptionId}:
     $ref: './paths/web-push-subscriptions/detail.yaml'
+  /api/web-push/config:
+    $ref: './paths/web-push/config.yaml'
   /api/notifications:
     $ref: './paths/notifications/collection.yaml'
   /api/notifications/{notificationId}:

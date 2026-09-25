@@ -21,6 +21,12 @@ discord:
   webhook-url: http://127.0.0.1:9/test-webhook
   user-ids: test-user-id
 
+web-push:
+  vapid:
+    public-key: test-public-key
+    private-key: test-private-key
+    subject: mailto:test@example.com
+
 auth:
   jwt:
     issuer: chongchong-test

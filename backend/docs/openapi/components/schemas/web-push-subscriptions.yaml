@@ -21,3 +21,14 @@ WebPushSubscriptionRegisterResponse:
   required: [id]
   properties:
     id: { description: "등록된 Web Push 구독 식별자.", type: integer, format: int64, example: 1 }
+
+WebPushConfigResponse:
+  type: object
+  additionalProperties: false
+  required: [publicKey]
+  properties:
+    publicKey:
+      description: "브라우저 PushSubscription 생성에 사용하는 VAPID 공개 키."
+      type: string
+      minLength: 1
+      example: BEl62iUYgUivxIkv69yViEuiBIa40HI2z6pJm8m0Qm3...

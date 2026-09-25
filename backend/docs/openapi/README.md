@@ -44,6 +44,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 내 과제 제출 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my` | [paths/assignment-submissions/my-submission.yaml](paths/assignment-submissions/my-submission.yaml) |
 | 과제 제출 상세 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
 | 과제 제출 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
+| Web Push VAPID 공개키 조회 | `GET /api/web-push/config` | [paths/web-push/config.yaml](paths/web-push/config.yaml) |
 | Web Push 구독 등록 | `POST /api/web-push-subscriptions` | [paths/web-push-subscriptions/collection.yaml](paths/web-push-subscriptions/collection.yaml) |
 | Web Push 구독 비활성화 | `DELETE /api/web-push-subscriptions/{subscriptionId}` | [paths/web-push-subscriptions/detail.yaml](paths/web-push-subscriptions/detail.yaml) |
 | 내 알림 목록 조회 | `GET /api/notifications` | [paths/notifications/collection.yaml](paths/notifications/collection.yaml) |

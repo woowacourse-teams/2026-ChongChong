@@ -142,6 +142,19 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
+    @DisplayName("인증 없이 VAPID public key를 조회할 수 있다")
+    void getWebPushConfigTest() {
+        given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .when()
+                .get("/web-push/config")
+                .then()
+                .statusCode(200)
+                .body("publicKey", equalTo("test-public-key"));
+    }
+
+    @Test
     @DisplayName("존재하지 않는 사용자로 Web Push 구독을 등록하면 사용자 없음 오류를 반환한다")
     void rejectMissingUserTest() {
         testAuthRequest.givenAuthenticatedUser(999L)
