@@ -2,6 +2,7 @@
 
 - 날짜: 2026-09-21
 - 관련 이슈: [#345](https://github.com/woowacourse-teams/2026-ChongChong/issues/345)
+- 후속 ADR: [0038. 논리 알림과 Web Push 전달을 NotificationDelivery 파이프라인으로 분리한다](0038-separate-logical-notifications-and-web-push-delivery.md)에서 운영자 Discord 수동 전달 대신 사용자별 Web Push 전달로 전환하는 현재 구조를 결정한다. 백엔드에서 생성 이벤트를 감지한다는 경계는 유지한다.
 
 ## 1. 목적
 

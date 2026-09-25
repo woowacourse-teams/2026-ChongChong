@@ -1,0 +1,32 @@
+post:
+  tags: [Web Push]
+  operationId: registerWebPushSubscription
+  x-frontend:
+    description: |
+      Service Worker의 PushSubscription JSON(endpoint, keys.p256dh, keys.auth)을 로그인한 사용자의 구독으로 등록한다.
+      같은 endpoint를 다시 등록하면 키를 갱신하고 기존 구독을 활성화한다.
+  x-backend:
+    status: done
+    owner: wontop02
+    description: endpoint를 전역 유일 키로 사용해 원자적으로 upsert하고, 등록된 subscriptionId를 반환한다.
+  summary: Web Push 구독 등록
+  description: 현재 사용자의 브라우저 Web Push 구독을 등록하거나 갱신한다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/web-push-subscriptions.yaml#/WebPushSubscriptionRegisterRequest' }
+        example:
+          endpoint: 'https://push.example.com/subscription'
+          keys: { p256dh: p256dh-key, auth: auth-secret }
+  responses:
+    '200':
+      description: Web Push 구독 등록 성공.
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/web-push-subscriptions.yaml#/WebPushSubscriptionRegisterResponse' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidInputAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+    '409': { $ref: '../../components/responses.yaml#/WebPushSubscriptionAlreadyRegistered' }

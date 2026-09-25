@@ -26,7 +26,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
@@ -37,11 +36,10 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
+import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.ResourceType;
-import withoutc.chongchong.notification.sender.NotificationEvent;
-import withoutc.chongchong.notification.support.TestNotificationSender;
-import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
+import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -53,7 +51,6 @@ import withoutc.chongchong.user.repository.UserRepository;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestNotificationSenderConfiguration.class)
 class AssignmentApiTest {
 
     private static final Clock CLOCK = Clock.system(ZoneId.of("Asia/Seoul"));
@@ -76,6 +73,9 @@ class AssignmentApiTest {
     private AssignmentSubmissionRepository assignmentSubmissionRepository;
 
     @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
     private TestDatabaseCleaner databaseCleaner;
 
     @Autowired
@@ -83,9 +83,6 @@ class AssignmentApiTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private TestNotificationSender notificationSender;
 
     @LocalServerPort
     private int port;
@@ -104,7 +101,6 @@ class AssignmentApiTest {
     @BeforeEach
     void setUp() {
         databaseCleaner.clean();
-        notificationSender.clear();
 
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
@@ -214,15 +210,21 @@ class AssignmentApiTest {
         assertThat(countRows("assignment_submissions", createdAssignmentId)).isEqualTo(2);
         assertThat(countRows("assignment_reminders", createdAssignmentId)).isEqualTo(1);
 
-        assertThat(notificationSender.events()).hasSize(1);
-        NotificationEvent event = notificationSender.events().getFirst();
-        assertThat(event.type()).isEqualTo(NotificationType.CREATED);
-        assertThat(event.resourceId()).isEqualTo(createdAssignmentId);
-        assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT);
-        assertThat(event.studyId()).isEqualTo(study.getId());
-        assertThat(event.content()).isEqualTo(maxLengthTitle);
-        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
-                .containsExactlyInAnyOrder("스터디원", "두 번째 스터디원");
+        List<Notification> memberNotifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(memberUser.getId());
+        List<Notification> secondMemberNotifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(secondMemberUser.getId());
+        assertThat(memberNotifications).hasSize(1);
+        assertThat(secondMemberNotifications).hasSize(1);
+        assertThat(memberNotifications).allSatisfy(notification -> {
+            assertThat(notification.getType()).isEqualTo(NotificationType.NEW);
+            assertThat(notification.getResourceId()).isEqualTo(createdAssignmentId);
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT);
+            assertThat(notification.getTitle()).isEqualTo("[자바 스터디] 새 과제");
+            assertThat(notification.getBody()).isEqualTo(maxLengthTitle);
+            assertThat(notification.getDeepLink())
+                    .isEqualTo("/studies/%d/assignments/%d".formatted(study.getId(), createdAssignmentId));
+        });
     }
 
     @Test
@@ -544,22 +546,25 @@ class AssignmentApiTest {
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://submission.example.com");
 
-        assertThat(notificationSender.events()).hasSize(1);
-        NotificationEvent event = notificationSender.events().getFirst();
-        assertThat(event.type()).isEqualTo(NotificationType.SUBMITTED);
-        assertThat(event.resourceId()).isEqualTo(submissionId);
-        assertThat(event.resourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
-        assertThat(event.studyId()).isEqualTo(study.getId());
-        assertThat(event.content()).isEqualTo("제출 내용");
-        assertThat(event.recipients()).extracting(NotificationEvent.Recipient::name)
-                .containsExactly("리더");
+        List<Notification> notifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(leader.getUser().getId());
+        assertThat(notifications).hasSize(1);
+        Notification notification = notifications.getFirst();
+        assertThat(notification.getType()).isEqualTo(NotificationType.NEW);
+        assertThat(notification.getResourceId()).isEqualTo(submissionId);
+        assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
+        assertThat(notification.getTitle()).isEqualTo("[자바 스터디] 새 제출물");
+        assertThat(notification.getBody()).isEqualTo("스터디원 스터디원이 과제를 제출했어요");
+        assertThat(notification.getDeepLink()).isEqualTo(
+                "/studies/%d/assignments/%d/submissions/%d".formatted(study.getId(), assignment.getId(), submissionId)
+        );
     }
 
     @Test
     @DisplayName("이미 제출한 과제를 다시 제출해도 추가 제출 알림을 전송하지 않는다")
     void resubmitAssignmentDoesNotSendNotificationTest() {
         submitAssignment(memberUser, assignment, "첫 번째 제출", "https://first.example.com");
-        notificationSender.clear();
+        long notificationCount = notificationRepository.count();
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
@@ -571,7 +576,7 @@ class AssignmentApiTest {
                 .then()
                 .statusCode(201);
 
-        assertThat(notificationSender.events()).isEmpty();
+        assertThat(notificationRepository.count()).isEqualTo(notificationCount);
     }
 
     @Test

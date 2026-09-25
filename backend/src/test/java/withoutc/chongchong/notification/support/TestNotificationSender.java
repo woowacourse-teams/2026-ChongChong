@@ -2,24 +2,26 @@ package withoutc.chongchong.notification.support;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import withoutc.chongchong.notification.sender.NotificationEvent;
+import withoutc.chongchong.notification.exception.WebPushSendResult;
 import withoutc.chongchong.notification.sender.NotificationSender;
+import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 public class TestNotificationSender implements NotificationSender {
 
-    private final List<NotificationEvent> events = new CopyOnWriteArrayList<>();
+    private final List<ClaimedDelivery> deliveries = new CopyOnWriteArrayList<>();
     private volatile RuntimeException failure;
 
     @Override
-    public void sendNotifications(NotificationEvent event) {
+    public WebPushSendResult send(ClaimedDelivery delivery) {
         if (failure != null) {
             throw failure;
         }
-        events.add(event);
+        deliveries.add(delivery);
+        return WebPushSendResult.SENT;
     }
 
-    public List<NotificationEvent> events() {
-        return List.copyOf(events);
+    public List<ClaimedDelivery> deliveries() {
+        return List.copyOf(deliveries);
     }
 
     public void failWith(RuntimeException failure) {
@@ -27,7 +29,7 @@ public class TestNotificationSender implements NotificationSender {
     }
 
     public void clear() {
-        events.clear();
+        deliveries.clear();
         failure = null;
     }
 }

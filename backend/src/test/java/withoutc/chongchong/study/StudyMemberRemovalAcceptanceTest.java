@@ -269,7 +269,7 @@ class StudyMemberRemovalAcceptanceTest {
         String resourcePath = resourceType == ResourceType.NOTICE ? "notices" : "assignments";
         Notification notification = Notification.create(
                 recipient.getUser(),
-                "[스터디] 새 " + resourceType.name,
+                "[스터디] 새 " + resourceType.getName(),
                 "알림",
                 NotificationType.REMIND,
                 resourceId,

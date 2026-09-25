@@ -46,6 +46,10 @@ public class AssignmentReminder extends BaseEntity {
         return new AssignmentReminder(assignment, remindAt, AssignmentReminderStatus.PENDING);
     }
 
+    public void markAsProcessing() {
+        this.status = AssignmentReminderStatus.PROCESSING;
+    }
+
     public void markAsSent() {
         this.status = AssignmentReminderStatus.SENT;
     }

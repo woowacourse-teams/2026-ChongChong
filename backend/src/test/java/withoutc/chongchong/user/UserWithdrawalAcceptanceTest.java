@@ -30,16 +30,14 @@ import withoutc.chongchong.auth.token.HashedRefreshToken;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
-import withoutc.chongchong.notification.entity.DevicePlatform;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
-import withoutc.chongchong.notification.entity.PushToken;
 import withoutc.chongchong.notification.entity.ResourceType;
-import withoutc.chongchong.notification.entity.TokenProvider;
+import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 import withoutc.chongchong.notification.repository.NotificationRepository;
-import withoutc.chongchong.notification.repository.PushTokenRepository;
+import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -70,7 +68,7 @@ public class UserWithdrawalAcceptanceTest {
     private SocialAccountRepository socialAccountRepository;
 
     @Autowired
-    private PushTokenRepository pushTokenRepository;
+    private WebPushSubscriptionRepository webPushSubscriptionRepository;
 
     @Autowired
     private NoticeRepository noticeRepository;
@@ -143,7 +141,7 @@ public class UserWithdrawalAcceptanceTest {
     }
 
     @Test
-    @DisplayName("탈퇴한 사용자의 소셜 계정과 푸시 토큰만 삭제한다")
+    @DisplayName("탈퇴한 사용자의 소셜 계정과 Web Push 구독만 삭제한다")
     void withdrawUserDeletesDirectDependenciesOnly() {
         User withdrawingUser = userRepository.saveAndFlush(User.create("탈퇴할 사용자", null));
         User remainingUser = userRepository.saveAndFlush(User.create("남는 사용자", null));
@@ -153,11 +151,11 @@ public class UserWithdrawalAcceptanceTest {
         SocialAccount remainingAccount = socialAccountRepository.saveAndFlush(
                 SocialAccount.create(remainingUser, SocialProvider.KAKAO, "remain-kakao")
         );
-        PushToken withdrawingToken = pushTokenRepository.saveAndFlush(PushToken.create(
-                withdrawingUser, "withdraw-installation", TokenProvider.EXPO, "withdraw-token", DevicePlatform.ANDROID
+        WebPushSubscription withdrawingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
+                withdrawingUser, "https://push.example.com/withdraw-subscription", "withdraw-p256dh", "withdraw-auth"
         ));
-        PushToken remainingToken = pushTokenRepository.saveAndFlush(PushToken.create(
-                remainingUser, "remain-installation", TokenProvider.EXPO, "remain-token", DevicePlatform.ANDROID
+        WebPushSubscription remainingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
+                remainingUser, "https://push.example.com/remain-subscription", "remain-p256dh", "remain-auth"
         ));
 
         Response response = requestWithdrawal(withdrawingUser.getId());
@@ -165,10 +163,10 @@ public class UserWithdrawalAcceptanceTest {
         assertThat(response.statusCode()).isEqualTo(204);
         assertThat(userRepository.existsById(withdrawingUser.getId())).isFalse();
         assertThat(socialAccountRepository.existsById(withdrawingAccount.getId())).isFalse();
-        assertThat(pushTokenRepository.existsById(withdrawingToken.getId())).isFalse();
+        assertThat(webPushSubscriptionRepository.existsById(withdrawingSubscription.getId())).isFalse();
         assertThat(userRepository.existsById(remainingUser.getId())).isTrue();
         assertThat(socialAccountRepository.existsById(remainingAccount.getId())).isTrue();
-        assertThat(pushTokenRepository.existsById(remainingToken.getId())).isTrue();
+        assertThat(webPushSubscriptionRepository.existsById(remainingSubscription.getId())).isTrue();
     }
 
     @Test
@@ -216,18 +214,18 @@ public class UserWithdrawalAcceptanceTest {
                 ResourceType.NOTICE,
                 "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         ));
-        PushToken withdrawingToken = pushTokenRepository.saveAndFlush(PushToken.create(
-                withdrawingUser, "withdraw-member-installation", TokenProvider.EXPO, "withdraw-token",
-                DevicePlatform.ANDROID
+        WebPushSubscription withdrawingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
+                withdrawingUser, "https://push.example.com/withdraw-member-subscription", "withdraw-p256dh",
+                "withdraw-auth"
         ));
-        PushToken remainingToken = pushTokenRepository.saveAndFlush(PushToken.create(
-                remainingUser, "remain-member-installation", TokenProvider.EXPO, "remain-token", DevicePlatform.ANDROID
+        WebPushSubscription remainingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
+                remainingUser, "https://push.example.com/remain-member-subscription", "remain-p256dh", "remain-auth"
         ));
         NotificationDelivery withdrawingDelivery = notificationDeliveryRepository.saveAndFlush(
-                NotificationDelivery.create(withdrawingNotification, withdrawingToken)
+                NotificationDelivery.create(withdrawingNotification, withdrawingSubscription)
         );
         NotificationDelivery remainingDelivery = notificationDeliveryRepository.saveAndFlush(
-                NotificationDelivery.create(remainingNotification, remainingToken)
+                NotificationDelivery.create(remainingNotification, remainingSubscription)
         );
 
         Response response = requestWithdrawal(withdrawingUser.getId());
@@ -241,7 +239,7 @@ public class UserWithdrawalAcceptanceTest {
                 assignment.getId(), withdrawingMember.getId())).isEmpty();
         assertThat(notificationRepository.existsById(withdrawingNotification.getId())).isFalse();
         assertThat(notificationDeliveryRepository.existsById(withdrawingDelivery.getId())).isFalse();
-        assertThat(pushTokenRepository.existsById(withdrawingToken.getId())).isFalse();
+        assertThat(webPushSubscriptionRepository.existsById(withdrawingSubscription.getId())).isFalse();
 
         assertThat(studyRepository.existsById(study.getId())).isTrue();
         assertThat(studyMemberRepository.existsById(leader.getId())).isTrue();

@@ -54,6 +54,7 @@ ErrorResponse:
         - JOINED_STUDY_LIMIT_EXCEEDED
         - ALREADY_JOINED_STUDY
         - STUDY_MEMBER_LIMIT_EXCEEDED
+        - WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED
     message: { type: string }
 InvalidInputValueError:
   type: object
@@ -111,5 +112,6 @@ InvalidRemindAtError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: {
 JoinedStudyLimitExceededError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: JOINED_STUDY_LIMIT_EXCEEDED }, message: { const: 가입할 수 있는 스터디는 최대 50개입니다. } } }], examples: [{ code: JOINED_STUDY_LIMIT_EXCEEDED, message: 가입할 수 있는 스터디는 최대 50개입니다. }] }
 AlreadyJoinedStudyError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ALREADY_JOINED_STUDY }, message: { const: 해당 스터디에 이미 가입되어 있습니다. } } }], examples: [{ code: ALREADY_JOINED_STUDY, message: 해당 스터디에 이미 가입되어 있습니다. }] }
 StudyMemberLimitExceededError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_MEMBER_LIMIT_EXCEEDED }, message: { const: 스터디 정원이 가득 찼습니다. } } }], examples: [{ code: STUDY_MEMBER_LIMIT_EXCEEDED, message: 스터디 정원이 가득 찼습니다. }] }
+WebPushSubscriptionAlreadyRegisteredError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED }, message: { const: 다른 사용자에게 등록된 웹 푸시 구독입니다. } } }], examples: [{ code: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED, message: 다른 사용자에게 등록된 웹 푸시 구독입니다. }] }
 
 StudyInvalidNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_NAME }, message: { const: 스터디 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_NAME, message: 스터디 이름이 올바르지 않습니다. }] }

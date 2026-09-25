@@ -30,9 +30,9 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.service.AssignmentSubmissionService;
+import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationType;
-import withoutc.chongchong.notification.sender.NotificationEvent;
-import withoutc.chongchong.notification.support.TestNotificationSender;
+import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -72,7 +72,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
     private PlatformTransactionManager transactionManager;
 
     @Autowired
-    private TestNotificationSender notificationSender;
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
@@ -81,7 +81,6 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
-        notificationSender.clear();
     }
 
     @Test
@@ -113,9 +112,9 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                 .get()
                 .extracting(submission -> submission.getSubmittedAt() != null)
                 .isEqualTo(true);
-        assertThat(notificationSender.events())
-                .filteredOn(event -> event.type() == NotificationType.SUBMITTED)
-                .extracting(NotificationEvent::resourceId)
+        assertThat(notificationRepository.findAll())
+                .filteredOn(notification -> notification.getType() == NotificationType.NEW)
+                .extracting(Notification::getResourceId)
                 .containsExactly(fixture.submissionId());
     }
 

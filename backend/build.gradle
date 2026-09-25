@@ -38,6 +38,11 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
+    implementation 'nl.martijndwars:web-push:5.1.2'
+    implementation 'org.apache.httpcomponents:httpasyncclient:4.1.5'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.86'
+    implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
