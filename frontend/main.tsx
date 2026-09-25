@@ -15,6 +15,7 @@ import { routes as notificationRoutes } from './src/features/notification/routes
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
+import './settingFCM';
 
 const appRoutes = [
   {
