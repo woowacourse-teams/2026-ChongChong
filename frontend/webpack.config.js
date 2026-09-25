@@ -81,6 +81,7 @@ export default (_, argv) => {
           process.env.FIREBASE_MESSAGING_SENDER_ID,
         ),
         'process.env.FIREBASE_APP_ID': JSON.stringify(process.env.FIREBASE_APP_ID),
+        'process.env.FIREBASE_VAPID_KEY': JSON.stringify(process.env.FIREBASE_VAPID_KEY),
       }),
     ],
 

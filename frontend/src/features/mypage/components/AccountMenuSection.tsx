@@ -10,6 +10,7 @@ import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import useWithdrawAccount from '../hooks/useWithdrawAccount';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
+import { enablePush } from '../../../firebase/enablePush';
 import { usePostHog } from '@posthog/react';
 
 const menuItems = [
@@ -75,6 +76,19 @@ export default function AccountMenuSection() {
     <>
       <section css={sectionStyle} aria-label="계정 메뉴">
         <List>
+          <List.Item>
+            <button
+              type="button"
+              css={menuButtonStyle}
+              onClick={() => {
+                enablePush().catch((error) => {
+                  toast.open(<StatusToast message={error.message} status="Error" />);
+                });
+              }}
+            >
+              푸시 알림
+            </button>
+          </List.Item>
           <List.Item>
             <button
               type="button"
