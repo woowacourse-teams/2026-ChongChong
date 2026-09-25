@@ -1,4 +1,6 @@
 allowBuilds:
+  '@firebase/util': set this to true or false
   core-js: false
   msw: true
+  protobufjs: set this to true or false
   unrs-resolver: true
