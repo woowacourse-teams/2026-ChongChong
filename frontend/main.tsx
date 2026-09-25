@@ -15,7 +15,7 @@ import { routes as notificationRoutes } from './src/features/notification/routes
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
-import './settingFCM';
+import './src/firebase/settingFCM';
 
 const appRoutes = [
   {
@@ -64,6 +64,14 @@ async function bootstrap() {
   const shouldResetIdentity = await restoreSession();
 
   const router = createBrowserRouter(appRoutes);
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register(new URL('./src/firebase/messaging-sw.ts', import.meta.url), {
+        scope: '/firebase-cloud-messaging-push-scope',
+      })
+      .catch(console.error);
+  }
 
   ReactDOM.createRoot(root).render(
     <StrictMode>
