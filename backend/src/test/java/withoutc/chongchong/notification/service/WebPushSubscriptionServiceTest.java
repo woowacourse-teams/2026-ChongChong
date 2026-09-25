@@ -58,7 +58,7 @@ class WebPushSubscriptionServiceTest {
         verify(userRepository).getByIdForUpdateOrThrow(USER_ID);
         verify(webPushSubscriptionRepository).upsert(USER_ID, ENDPOINT, P256DH, AUTH);
         verify(webPushSubscriptionRepository).findByEndpoint(ENDPOINT);
-        org.assertj.core.api.Assertions.assertThat(response.id()).isEqualTo(10L);
+        org.assertj.core.api.Assertions.assertThat(response.subscriptionId()).isEqualTo(10L);
     }
 
     @Test

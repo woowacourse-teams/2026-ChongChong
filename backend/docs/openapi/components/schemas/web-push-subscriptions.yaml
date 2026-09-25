@@ -18,9 +18,9 @@ WebPushSubscriptionKeys:
 WebPushSubscriptionRegisterResponse:
   type: object
   additionalProperties: false
-  required: [id]
+  required: [subscriptionId]
   properties:
-    id: { description: "등록된 Web Push 구독 식별자.", type: integer, format: int64, example: 1 }
+    subscriptionId: { description: "등록된 Web Push 구독 식별자.", type: integer, format: int64, example: 1 }
 
 WebPushConfigResponse:
   type: object

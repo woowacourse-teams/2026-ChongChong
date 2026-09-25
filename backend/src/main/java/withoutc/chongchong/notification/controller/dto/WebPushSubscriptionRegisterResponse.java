@@ -1,4 +1,4 @@
 package withoutc.chongchong.notification.controller.dto;
 
-public record WebPushSubscriptionRegisterResponse(Long id) {
+public record WebPushSubscriptionRegisterResponse(Long subscriptionId) {
 }

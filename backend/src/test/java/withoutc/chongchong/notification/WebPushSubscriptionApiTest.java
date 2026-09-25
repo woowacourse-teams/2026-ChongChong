@@ -64,7 +64,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
 
         Response response = register(user.getId(), ENDPOINT, P256DH, AUTH);
 
-        response.then().statusCode(200).body("id", equalTo(1));
+        response.then().statusCode(200).body("subscriptionId", equalTo(1));
         assertThat(webPushSubscriptionRepository.count()).isOne();
         WebPushSubscriptionRow saved = findSubscription();
         assertThat(saved.userId()).isEqualTo(user.getId());
@@ -178,7 +178,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
                 .then()
                 .statusCode(200)
                 .extract()
-                .path("id")).longValue();
+                .path("subscriptionId")).longValue();
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
@@ -199,7 +199,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
                 .then()
                 .statusCode(200)
                 .extract()
-                .path("id")).longValue();
+                .path("subscriptionId")).longValue();
 
         testAuthRequest.givenAuthenticatedUser(otherUser.getId())
                 .port(port)
