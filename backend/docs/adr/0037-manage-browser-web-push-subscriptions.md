@@ -3,6 +3,7 @@
 - 날짜: 2026-09-25
 - 관련 이슈: [#329](https://github.com/woowacourse-teams/2026-ChongChong/issues/329)
 - 관련 ADR: [0030. 설치 단위 upsert와 활성 상태로 푸시 토큰을 관리한다](0030-manage-push-tokens-by-installation.md)의 Web Push 전환
+- 후속 ADR: [0038. 논리 알림과 Web Push 전달을 NotificationDelivery 파이프라인으로 분리한다](0038-separate-logical-notifications-and-web-push-delivery.md)에서 당시 미확정으로 남긴 VAPID sender, Delivery worker, 재시도와 endpoint 만료 처리 전략을 결정한다.
 
 ## 배경
 

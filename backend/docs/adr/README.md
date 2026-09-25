@@ -54,3 +54,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0035](0035-detect-notification-events-in-backend-and-separate-channel-delivery.md) | 수동 알림 검증 방식 검토 및 선택 |
 | [0036](0036-provide-user-id-in-login-response.md)                                    | 로그인 응답에 사용자 식별자를 제공한다 |
 | [0037](0037-manage-browser-web-push-subscriptions.md)                                 | 브라우저 Web Push 구독을 endpoint 단위로 관리한다 |
+| [0038](0038-separate-logical-notifications-and-web-push-delivery.md)                   | 논리 알림과 Web Push 전달을 NotificationDelivery 파이프라인으로 분리한다 |

@@ -6,6 +6,8 @@
   [0025. 모든 생성 경로에서 성립할 불변식은 도메인 모델이 보호한다](0025-own-stable-invariants-in-domain-model.md),
   [0030. 설치 단위 upsert와 활성 상태로 푸시 토큰을 관리한다](0030-manage-push-tokens-by-installation.md),
   [0031. Testcontainers PostgreSQL로 데이터베이스 특화 테스트를 실행하고 CI에서 Docker를 확인한다](0031-run-postgresql-specific-tests-with-testcontainers.md)
+- 후속 ADR: [0038. 논리 알림과 Web Push 전달을 NotificationDelivery 파이프라인으로 분리한다](0038-separate-logical-notifications-and-web-push-delivery.md)에서 당시 미확정으로 남긴
+  Delivery 생성, 선점, 재시도와 Web Push 전달 전략을 결정한다.
 
 ## 배경
 
