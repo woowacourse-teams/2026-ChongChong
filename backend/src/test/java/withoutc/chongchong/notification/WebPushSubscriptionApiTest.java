@@ -151,7 +151,9 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
                 .get("/web-push/config")
                 .then()
                 .statusCode(200)
-                .body("publicKey", equalTo("test-public-key"));
+                .body("publicKey", equalTo(
+                        "BDcLQBzrmGYpdNmsaQrk9_uU9Q_wQb2ziEN5AIcoUq4bi2uKlC2UKcmfBuUdJj_NzcDu-ldeUpif_na9i-u3HKw"
+                ));
     }
 
     @Test

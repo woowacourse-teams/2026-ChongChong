@@ -1,32 +1,61 @@
 package withoutc.chongchong.notification.sender;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import withoutc.chongchong.notification.entity.NotificationDelivery;
-import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import withoutc.chongchong.notification.exception.WebPushErrorCode;
+import withoutc.chongchong.notification.exception.WebPushException;
+import withoutc.chongchong.notification.exception.WebPushSendResult;
+import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @Component
 @RequiredArgsConstructor
 public class WebPushNotificationSender implements NotificationSender {
 
-    // TODO: 적절한 배치 사이즈 결정
-    private static final int BATCH_SIZE = 100;
-
-    private final NotificationDeliveryRepository notificationDeliveryRepository;
-
-    private final Clock clock;
+    private final ObjectMapper objectMapper;
+    private final WebPushClient webPushClient;
 
     @Override
-    @Transactional
-    public void sendNotifications(NotificationEvent event) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        List<NotificationDelivery> deliveries = notificationDeliveryRepository.findClaimableForUpdate(now, BATCH_SIZE);
-        for (NotificationDelivery delivery : deliveries) {
-            delivery.claim(LocalDateTime.now(clock));
+    public WebPushSendResult send(ClaimedDelivery delivery) {
+        String payload = createPayload(delivery);
+
+        int status = webPushClient.send(delivery.endpoint(), delivery.p256dh(), delivery.auth(), payload);
+        return result(status);
+    }
+
+    private String createPayload(ClaimedDelivery delivery) {
+        WebPushPayload payload = new WebPushPayload(
+                delivery.notificationId(),
+                delivery.title(),
+                delivery.body(),
+                delivery.deepLink()
+        );
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JacksonException exception) {
+            throw new WebPushException(WebPushErrorCode.WEB_PUSH_PAYLOAD_SERIALIZATION_FAILED);
         }
+    }
+
+    private WebPushSendResult result(int status) {
+        if (status >= 200 && status < 300) {
+            return WebPushSendResult.SENT;
+        }
+        if (status == 404 || status == 410) {
+            return WebPushSendResult.SUBSCRIPTION_EXPIRED;
+        }
+        if (status == 429 || status >= 500) {
+            return WebPushSendResult.RETRYABLE_FAILURE;
+        }
+        return WebPushSendResult.PERMANENT_FAILURE;
+    }
+
+    private record WebPushPayload(
+            Long notificationId,
+            String title,
+            String body,
+            String deepLink
+    ) {
     }
 }

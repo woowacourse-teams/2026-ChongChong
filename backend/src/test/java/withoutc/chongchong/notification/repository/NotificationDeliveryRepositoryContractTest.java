@@ -3,6 +3,7 @@ package withoutc.chongchong.notification.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,7 +76,34 @@ abstract class NotificationDeliveryRepositoryContractTest {
 
         assertThatThrownBy(() -> notificationDeliveryRepository.saveAndFlush(
                 NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
-        )).isInstanceOf(DataIntegrityViolationException.class);
+                )).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("만료된 PROCESSING 발송 기록만 조회한다")
+    void findStuckProcessingDeliveries() {
+        LocalDateTime now = LocalDateTime.of(2026, 9, 26, 10, 0);
+        DeliveryFixture staleFixture = saveFixture();
+        DeliveryFixture freshFixture = saveFixture();
+
+        NotificationDelivery staleDelivery = saveDelivery(staleFixture);
+        staleDelivery.claim(now.minusMinutes(6));
+        notificationDeliveryRepository.saveAndFlush(staleDelivery);
+
+        NotificationDelivery freshDelivery = saveDelivery(freshFixture);
+        freshDelivery.claim(now.minusMinutes(4));
+        notificationDeliveryRepository.saveAndFlush(freshDelivery);
+
+        assertThat(notificationDeliveryRepository.findStuckProcessingForUpdate(
+                now.minusMinutes(5), 100
+        )).extracting(NotificationDelivery::getId)
+                .containsExactly(staleDelivery.getId());
+    }
+
+    private NotificationDelivery saveDelivery(DeliveryFixture fixture) {
+        return notificationDeliveryRepository.saveAndFlush(
+                NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
+        );
     }
 
     private DeliveryFixture saveFixture() {

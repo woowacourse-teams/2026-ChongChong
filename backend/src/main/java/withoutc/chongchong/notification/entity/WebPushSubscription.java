@@ -10,13 +10,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
-import withoutc.chongchong.notification.exception.WebPushSubscriptionErrorCode;
-import withoutc.chongchong.notification.exception.WebPushSubscriptionException;
+import withoutc.chongchong.notification.exception.WebPushErrorCode;
+import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.user.entity.User;
 
 @Entity
@@ -51,15 +50,6 @@ public class WebPushSubscription extends BaseEntity {
     @Column(nullable = false)
     private boolean isActive;
 
-    @Column(name = "last_success_at")
-    private LocalDateTime lastSuccessAt;
-
-    @Column(name = "last_failure_at")
-    private LocalDateTime lastFailureAt;
-
-    @Column(name = "last_error", columnDefinition = "TEXT")
-    private String lastError;
-
     public static WebPushSubscription create(
             User user,
             String endpoint,
@@ -89,7 +79,7 @@ public class WebPushSubscription extends BaseEntity {
 
     private void validateRequiredValues(User user, String endpoint, String p256dh, String auth) {
         if (user == null || isBlank(endpoint) || isBlank(p256dh) || isBlank(auth)) {
-            throw new WebPushSubscriptionException(WebPushSubscriptionErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION);
+            throw new WebPushException(WebPushErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION);
         }
     }
 

@@ -60,10 +60,40 @@ public class NotificationDelivery extends BaseEntity {
 
     private String lastError;
 
-    public void claim(LocalDateTime time) {
-        validateTime(time);
+    public void claim(LocalDateTime now) {
+        validateStatus(DeliveryStatus.PENDING, DeliveryStatus.RETRY_WAIT);
+        validateTime(now);
+
         this.status = DeliveryStatus.PROCESSING;
-        this.claimedAt = time;
+        this.claimedAt = now;
+        this.attemptCount++;
+    }
+
+    public void markSent(LocalDateTime now) {
+        validateStatus(DeliveryStatus.PROCESSING);
+        validateTime(now);
+
+        this.status = DeliveryStatus.SENT;
+        this.sentAt = now;
+        this.nextRetryAt = null;
+        this.lastError = null;
+    }
+
+    public void markRetry(LocalDateTime nextRetryAt, String error) {
+        validateStatus(DeliveryStatus.PROCESSING);
+        validateTime(nextRetryAt);
+
+        this.status = DeliveryStatus.RETRY_WAIT;
+        this.nextRetryAt = nextRetryAt;
+        this.lastError = error;
+    }
+
+    public void markFailed(String error) {
+        validateStatus(DeliveryStatus.PROCESSING);
+
+        this.status = DeliveryStatus.FAILED;
+        this.nextRetryAt = null;
+        this.lastError = error;
     }
 
     public static NotificationDelivery create(
@@ -95,8 +125,22 @@ public class NotificationDelivery extends BaseEntity {
     }
 
     private void validateTime(LocalDateTime time) {
-        if (LocalDateTime.now().isAfter(time) || time == null) {
+        if (time == null) {
             throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY_TIME);
         }
+    }
+
+    private void validateStatus(DeliveryStatus allowedStatus) {
+        if (this.status.equals(allowedStatus)) {
+            return;
+        }
+        throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY_UPDATE_STATUS);
+    }
+
+    private void validateStatus(DeliveryStatus allowedStatus1, DeliveryStatus allowedStatus2) {
+        if (this.status.equals(allowedStatus1) || this.status.equals(allowedStatus2)) {
+            return;
+        }
+        throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION_DELIVERY_UPDATE_STATUS);
     }
 }

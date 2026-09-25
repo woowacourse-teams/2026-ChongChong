@@ -53,6 +53,8 @@ auth:
       path: /api/auth
 
 web-push:
+  delivery:
+    processing-timeout-ms: ${WEB_PUSH_DELIVERY_PROCESSING_TIMEOUT_MS:300000}
   vapid:
     public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY}
     private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY}

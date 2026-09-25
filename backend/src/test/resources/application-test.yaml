@@ -19,8 +19,8 @@ frontend:
 
 web-push:
   vapid:
-    public-key: test-public-key
-    private-key: test-private-key
+    public-key: BDcLQBzrmGYpdNmsaQrk9_uU9Q_wQb2ziEN5AIcoUq4bi2uKlC2UKcmfBuUdJj_NzcDu-ldeUpif_na9i-u3HKw
+    private-key: 67yyNB109eqWbw7r3HcJCuwmLDaDROaI6DJH4nCWUYU
     subject: mailto:test@example.com
 
 auth:

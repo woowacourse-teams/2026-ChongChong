@@ -1,6 +1,9 @@
 package withoutc.chongchong.notification.sender;
 
+import withoutc.chongchong.notification.exception.WebPushSendResult;
+import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
+
 public interface NotificationSender {
 
-    void sendNotifications(NotificationEvent event);
+    WebPushSendResult send(ClaimedDelivery delivery);
 }

@@ -6,8 +6,8 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import withoutc.chongchong.notification.exception.WebPushSubscriptionErrorCode;
-import withoutc.chongchong.notification.exception.WebPushSubscriptionException;
+import withoutc.chongchong.notification.exception.WebPushErrorCode;
+import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.user.entity.User;
 
 class WebPushSubscriptionTest {
@@ -44,8 +44,8 @@ class WebPushSubscriptionTest {
 
     private void assertInvalidSubscription(User user, String endpoint, String p256dh, String auth) {
         assertThatThrownBy(() -> WebPushSubscription.create(user, endpoint, p256dh, auth))
-                .isInstanceOf(WebPushSubscriptionException.class)
-                .extracting(exception -> ((WebPushSubscriptionException) exception).getErrorCode())
-                .isEqualTo(WebPushSubscriptionErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION);
+                .isInstanceOf(WebPushException.class)
+                .extracting(exception -> ((WebPushException) exception).getErrorCode())
+                .isEqualTo(WebPushErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION);
     }
 }

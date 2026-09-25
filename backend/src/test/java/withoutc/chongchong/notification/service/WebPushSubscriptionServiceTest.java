@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionKeysRequest;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionRegisterRequest;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
-import withoutc.chongchong.notification.exception.WebPushSubscriptionErrorCode;
-import withoutc.chongchong.notification.exception.WebPushSubscriptionException;
+import withoutc.chongchong.notification.exception.WebPushErrorCode;
+import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.exception.UserErrorCode;
@@ -74,9 +74,9 @@ class WebPushSubscriptionServiceTest {
         );
 
         assertThatThrownBy(() -> service.register(USER_ID, request()))
-                .isInstanceOfSatisfying(WebPushSubscriptionException.class, exception ->
+                .isInstanceOfSatisfying(WebPushException.class, exception ->
                         org.assertj.core.api.Assertions.assertThat(exception.getErrorCode())
-                                .isEqualTo(WebPushSubscriptionErrorCode.WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED)
+                                .isEqualTo(WebPushErrorCode.WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED)
                 );
         verify(webPushSubscriptionRepository).upsert(USER_ID, ENDPOINT, P256DH, AUTH);
         verifyNoMoreInteractions(webPushSubscriptionRepository);
