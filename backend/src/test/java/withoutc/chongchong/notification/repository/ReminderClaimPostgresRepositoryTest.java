@@ -36,6 +36,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
     private static final LocalDateTime CREATION_TIME = NOW.minusDays(1);
     private static final Duration TEST_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration SLOW_SECOND_WORKER_DELAY = Duration.ofSeconds(6);
 
     @Autowired
     private NoticeReminderRepository noticeReminderRepository;
@@ -126,6 +127,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
             );
 
             assertThat(secondWorker).isEmpty();
+            waitForSlowSecondWorker();
             releaseFirst.countDown();
             assertThat(firstWorker.get(TEST_TIMEOUT.toSeconds(), TimeUnit.SECONDS)).isEqualTo(reminder.getId());
             assertThat(noticeReminderRepository.findById(reminder.getId()).orElseThrow().getStatus())
@@ -166,12 +168,21 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
 
     private static void await(CountDownLatch latch) {
         try {
-            if (!latch.await(5, TimeUnit.SECONDS)) {
+            if (!latch.await(TEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
                 throw new IllegalStateException("첫 번째 워커 해제를 기다리는 중 시간 초과");
             }
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("첫 번째 워커 대기 중 인터럽트 발생", exception);
+        }
+    }
+
+    private static void waitForSlowSecondWorker() {
+        try {
+            Thread.sleep(SLOW_SECOND_WORKER_DELAY.toMillis());
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("두 번째 워커 검증 중 인터럽트 발생", exception);
         }
     }
 }
