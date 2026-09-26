@@ -1,6 +1,7 @@
 import type { Options } from 'ky';
 import authApi from './authClient';
 import { clearAccessToken, setAccessToken } from './accessToken';
+import { clearLocalPushSubscription } from '../notification/localPush';
 import { AUTH_URLS } from './urls';
 import type { CsrfResponse, LoginResponse, RotateAccessTokenResponse } from './types';
 
@@ -69,9 +70,15 @@ async function rotateAccessToken() {
 
 export function refreshAccessToken() {
   if (!refreshRequest) {
-    refreshRequest = rotateAccessToken().finally(() => {
-      refreshRequest = null;
-    });
+    refreshRequest = rotateAccessToken()
+      .catch(async (error) => {
+        clearAccessToken();
+        await clearLocalPushSubscription().catch(console.error);
+        throw error;
+      })
+      .finally(() => {
+        refreshRequest = null;
+      });
   }
 
   return refreshRequest;

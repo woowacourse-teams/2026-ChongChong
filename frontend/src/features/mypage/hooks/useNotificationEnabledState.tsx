@@ -1,9 +1,8 @@
 import useBooleanState from '../../../shared/hooks/useBooleanState';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
-import { enablePush, disablePush, PUSH_SUBSCRIPTION_ID_KEY } from '../../notification/push';
-
-const PUSH_ENABLED_KEY = 'chongchong:push-enabled';
+import { enablePush, disablePush } from '../../notification/push';
+import { PUSH_ENABLED_KEY, PUSH_SUBSCRIPTION_ID_KEY } from '../../notification/localPush';
 
 // TODO: Storage 저장공간을 훅이 모르게 분리
 export default function useNotificationEnabledState() {

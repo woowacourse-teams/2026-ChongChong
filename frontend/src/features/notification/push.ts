@@ -3,8 +3,7 @@ import {
   registerWebPushSubscription,
   deactivateWebPushSubscription,
 } from './api';
-
-export const PUSH_SUBSCRIPTION_ID_KEY = 'chongchong:push-subscription-id';
+import { clearLocalPushSubscription, PUSH_SUBSCRIPTION_ID_KEY } from './localPush';
 
 export async function enablePush() {
   if (
@@ -71,15 +70,5 @@ export async function disablePush() {
     await deactivateWebPushSubscription(Number(subscriptionId));
   }
 
-  if ('serviceWorker' in navigator) {
-    const scope = new URL('/push/', window.location.origin).href;
-    const sw = await navigator.serviceWorker.getRegistration(scope);
-
-    if (sw?.scope === scope) {
-      const subscription = await sw.pushManager.getSubscription();
-      await subscription?.unsubscribe();
-    }
-  }
-
-  localStorage.removeItem(PUSH_SUBSCRIPTION_ID_KEY);
+  await clearLocalPushSubscription();
 }
