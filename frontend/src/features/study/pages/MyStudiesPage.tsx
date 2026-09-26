@@ -10,6 +10,7 @@ import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
 import Loading from '../../../shared/ui/Loading';
+import NotificationLink from '../../notification/components/NotificationLink';
 
 const actionsStyle = {
   display: 'flex',
@@ -27,7 +28,12 @@ export default function MyStudiesPage() {
             <img css={{ width: '40px', height: '40px' }} src={logo} alt="" />
           </div>
         }
-        right={<Link to={'/studies/mypage'}>My</Link>}
+        right={
+          <div css={{ display: 'flex', gap: tokens.spacing[3], alignItems: 'center' }}>
+            <NotificationLink />
+            <Link to={'/studies/mypage'}>My</Link>
+          </div>
+        }
       />
 
       <Main>
