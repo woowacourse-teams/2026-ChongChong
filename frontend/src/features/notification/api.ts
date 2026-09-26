@@ -1,6 +1,8 @@
+import { API_URL } from '../../../config';
 import api from '../../client';
 import { handleError, ValidationError } from '../../shared/api/error';
 import { isNotificationResponse } from './responseSchemas';
+import ky from 'ky';
 
 interface WebPushSubscriptionRequest {
   endpoint: string;
@@ -40,7 +42,7 @@ export async function markNotificationAsRead(notificationId: number) {
 }
 
 export async function getWebPushPublicKey() {
-  const { publicKey } = await api.get('/web-push/config').json<{ publicKey: string }>();
+  const { publicKey } = await ky.get(`${API_URL}/web-push/config`).json<{ publicKey: string }>();
 
   return publicKey;
 }

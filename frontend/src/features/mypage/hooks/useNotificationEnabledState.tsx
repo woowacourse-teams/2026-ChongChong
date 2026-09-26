@@ -1,8 +1,7 @@
-import { enablePush } from '../../../firebase/enablePush';
-import { disablePush } from '../../../firebase/disablePush';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import { enablePush, disablePush } from '../../notification/push';
 
 const PUSH_ENABLED_KEY = 'chongchong:push-enabled';
 

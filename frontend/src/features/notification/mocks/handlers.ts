@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, passthrough } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { notificationTable } from './db';
@@ -32,4 +32,5 @@ export const handlers = [
     });
     return new HttpResponse(null, { status: 204 });
   }),
+  http.get(`${API_URL}/web-push/config`, () => passthrough()),
 ];

@@ -15,9 +15,6 @@ import { routes as notificationRoutes } from './src/features/notification/routes
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
-import { getMessaging, isSupported, onMessage } from 'firebase/messaging';
-import { app } from './src/firebase/settingFCM';
-// import './src/firebase/settingFCM';
 
 const appRoutes = [
   {
@@ -69,23 +66,8 @@ async function bootstrap() {
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
-      .register(new URL('./src/firebase/messaging-sw.ts', import.meta.url), {
-        scope: '/firebase-cloud-messaging-push-scope',
-      })
-      .then(async (registration) => {
-        if (!(await isSupported())) return;
-
-        onMessage(getMessaging(app), ({ notification, messageId }) => {
-          if (!notification) return;
-
-          registration
-            .showNotification(notification.title || '총총', {
-              body: notification.body,
-              icon: notification.icon,
-              tag: messageId,
-            })
-            .catch(console.error);
-        });
+      .register(new URL('./src/features/notification/push-sw.ts', import.meta.url), {
+        scope: '/push/',
       })
       .catch(console.error);
   }
