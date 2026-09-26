@@ -5,7 +5,7 @@ const notificationSchema = z.object({
   id: z.number(),
   title: z.string(),
   body: z.string(),
-  type: z.enum(['REMIND', 'CREATED', 'SUBMITTED']),
+  type: z.enum(['NEW', 'REMIND']),
   resourceType: z.enum(['NOTICE', 'ASSIGNMENT', 'ASSIGNMENT_SUBMISSION']),
   resourceId: z.number(),
   deepLink: z.string(),
@@ -13,8 +13,10 @@ const notificationSchema = z.object({
   createdAt: z.string(),
 });
 
-const notificationListSchema = z.array(notificationSchema);
+const notificationListSchema = z.object({
+  notifications: z.array(notificationSchema),
+});
 
-export function isNotificationResponse(data: unknown): data is Notification[] {
+export function isNotificationResponse(data: unknown): data is { notifications: Notification[] } {
   return notificationListSchema.safeParse(data).success;
 }

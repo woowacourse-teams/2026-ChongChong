@@ -12,7 +12,9 @@ export const handlers = [
     );
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const notificationsResponse = notifications.map(({ userId, ...rest }) => rest);
-    return HttpResponse.json(notificationsResponse);
+    return HttpResponse.json({
+      notifications: notificationsResponse,
+    });
   }),
 
   http.patch(`${API_URL}/notifications/:notificationId`, async ({ request, params }) => {

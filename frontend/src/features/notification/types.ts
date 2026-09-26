@@ -1,4 +1,4 @@
-type NotificationType = 'REMIND' | 'CREATED' | 'SUBMITTED';
+type NotificationType = 'NEW' | 'REMIND';
 
 type NotificationResourceType = 'NOTICE' | 'ASSIGNMENT' | 'ASSIGNMENT_SUBMISSION';
 

@@ -51,7 +51,7 @@ describe('알림 목록 페이지 테스트', () => {
         userId: testerId,
         title: '[치와와 스터디] 새 과제',
         body: '삼겹살 얻어먹기',
-        type: 'CREATED',
+        type: 'NEW',
         resourceType: 'ASSIGNMENT',
         resourceId: 1,
         deepLink: '/studies/1/assignments/1',
@@ -63,7 +63,7 @@ describe('알림 목록 페이지 테스트', () => {
         userId: testerId,
         title: '[치와와 스터디] 새 공지',
         body: '소금빵 얻어먹기',
-        type: 'CREATED',
+        type: 'NEW',
         resourceType: 'NOTICE',
         resourceId: 2,
         deepLink: '/studies/1/notices/2',
@@ -83,6 +83,7 @@ describe('알림 목록 페이지 테스트', () => {
         createdAt: '2025-09-21T12:00:00',
       });
     });
+
     test('각 알림의 제목과 해당 알림의 상세 링크를 표시한다', async () => {
       setup(<NotificationListPage />, { wrapper: createWrapper() });
 
