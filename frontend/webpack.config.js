@@ -93,6 +93,10 @@ export default (_, argv) => {
         {
           directory: path.join(__dirname, 'public'),
         },
+        {
+          directory: path.join(__dirname, 'src/pwa'),
+          publicPath: '/pwa',
+        },
       ],
       port: 3005,
       open: true,

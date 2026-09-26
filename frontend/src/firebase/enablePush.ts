@@ -12,10 +12,14 @@ export async function enablePush() {
     throw new Error('VAPID 공개 키가 없습니다.');
   }
 
-  // 알림 요청 권한 받는다.
-  const permission = await Notification.requestPermission();
-  // 알림 안받음
-  if (permission !== 'granted') return;
+  if (Notification.permission === 'denied') {
+    throw new Error('기기 또는 브라우저 설정에서 알림을 허용해 주세요.');
+  }
+
+  const permission =
+    Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+
+  if (permission !== 'granted') return false;
 
   if (!(await isSupported())) {
     throw new Error('FCM을 지원하지 않는 환경입니다.');
@@ -41,4 +45,6 @@ export async function enablePush() {
     vapidKey,
     serviceWorkerRegistration: sw,
   });
+
+  return true;
 }
