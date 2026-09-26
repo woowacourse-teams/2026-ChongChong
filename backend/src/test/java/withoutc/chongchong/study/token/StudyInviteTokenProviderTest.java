@@ -3,6 +3,8 @@ package withoutc.chongchong.study.token;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,18 @@ class StudyInviteTokenProviderTest {
         String secondToken = provider.generate(2L);
 
         assertThat(firstToken).isNotEqualTo(secondToken);
+    }
+
+    @Test
+    @DisplayName("생성된 토큰에는 원본 studyId가 그대로 노출되지 않는다")
+    void generateObfuscatedTokenTest() {
+        String token = provider.generate(1L);
+        byte[] tokenBytes = Base64.getUrlDecoder().decode(token);
+        byte[] studyIdBytes = ByteBuffer.allocate(Long.BYTES)
+                .putLong(1L)
+                .array();
+
+        assertThat(tokenBytes).isNotEqualTo(studyIdBytes);
     }
 
     @Test
