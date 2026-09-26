@@ -40,10 +40,7 @@ export default function NotificationListPage() {
 }
 
 NotificationListPage.Content = function Content() {
-  const { data: notifications } = useSuspenseQuery({
-    ...notificationQueries.list(),
-    select: (data) => data.notifications,
-  });
+  const { data: notifications } = useSuspenseQuery(notificationQueries.list());
   const { markAsRead } = useMarkNotificationAsRead();
 
   return notifications.length === 0 ? (

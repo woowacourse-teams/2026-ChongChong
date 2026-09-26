@@ -14,7 +14,7 @@ export async function fetchNotifications() {
     if (!isNotificationResponse(data)) {
       throw new Error('알림 목록 응답 형식이 올바르지 않습니다.');
     }
-    return data;
+    return data.notifications;
   } catch (error) {
     throw new Error('알림 목록을 불러오는데 실패했습니다.', { cause: error });
   }

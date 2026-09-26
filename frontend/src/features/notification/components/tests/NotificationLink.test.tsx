@@ -12,7 +12,7 @@ const notification = {
   userId: 1,
   title: '알림',
   body: '...',
-  type: 'CREATED',
+  type: 'NEW',
   resourceType: 'ASSIGNMENT',
   resourceId: 1,
   deepLink: '/studies/1/assignments/1',
