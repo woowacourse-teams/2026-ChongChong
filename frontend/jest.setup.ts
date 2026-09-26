@@ -7,6 +7,7 @@ import { assignmentTable } from './src/features/assignment/mocks/db';
 import { submissionTable } from './src/features/assignment/mocks/db';
 import { noticeRecipientTable, noticeTable } from './src/features/notice/mocks/db';
 
+// TODO: 이해하기 어려운 코드에는 주석을 추가합니다
 const nodeStructuredClone = globalThis.structuredClone;
 globalThis.structuredClone = (value, options) => {
   const clone = nodeStructuredClone(value, options);
