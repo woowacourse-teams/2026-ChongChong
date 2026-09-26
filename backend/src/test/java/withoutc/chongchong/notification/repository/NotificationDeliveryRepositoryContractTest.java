@@ -3,7 +3,6 @@ package withoutc.chongchong.notification.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,25 +26,25 @@ import withoutc.chongchong.user.repository.UserRepository;
 abstract class NotificationDeliveryRepositoryContractTest {
 
     @Autowired
-    private NotificationDeliveryRepository notificationDeliveryRepository;
+    protected NotificationDeliveryRepository notificationDeliveryRepository;
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    protected NotificationRepository notificationRepository;
 
     @Autowired
-    private WebPushSubscriptionRepository webPushSubscriptionRepository;
+    protected WebPushSubscriptionRepository webPushSubscriptionRepository;
 
     @Autowired
-    private StudyRepository studyRepository;
+    protected StudyRepository studyRepository;
 
     @Autowired
-    private StudyMemberRepository studyMemberRepository;
+    protected StudyMemberRepository studyMemberRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    protected UserRepository userRepository;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    protected JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("정상적인 알림 발송 기록을 저장하고 허용되지 않은 상태는 거부한다")
@@ -79,34 +78,13 @@ abstract class NotificationDeliveryRepositoryContractTest {
                 )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
-    @Test
-    @DisplayName("만료된 PROCESSING 발송 기록만 조회한다")
-    void findStuckProcessingDeliveries() {
-        LocalDateTime now = LocalDateTime.of(2026, 9, 26, 10, 0);
-        DeliveryFixture staleFixture = saveFixture();
-        DeliveryFixture freshFixture = saveFixture();
-
-        NotificationDelivery staleDelivery = saveDelivery(staleFixture);
-        staleDelivery.claim(now.minusMinutes(6));
-        notificationDeliveryRepository.saveAndFlush(staleDelivery);
-
-        NotificationDelivery freshDelivery = saveDelivery(freshFixture);
-        freshDelivery.claim(now.minusMinutes(4));
-        notificationDeliveryRepository.saveAndFlush(freshDelivery);
-
-        assertThat(notificationDeliveryRepository.findStuckProcessingForUpdate(
-                now.minusMinutes(5), 100
-        )).extracting(NotificationDelivery::getId)
-                .containsExactly(staleDelivery.getId());
-    }
-
-    private NotificationDelivery saveDelivery(DeliveryFixture fixture) {
+    protected NotificationDelivery saveDelivery(DeliveryFixture fixture) {
         return notificationDeliveryRepository.saveAndFlush(
                 NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
         );
     }
 
-    private DeliveryFixture saveFixture() {
+    protected DeliveryFixture saveFixture() {
         String endpoint = "https://push.example.com/notification-delivery-" + UUID.randomUUID();
         User user = userRepository.saveAndFlush(User.create("알림 수신자", null));
         Study study = studyRepository.saveAndFlush(Study.create("알림 테스트 스터디", "설명"));
@@ -120,7 +98,7 @@ abstract class NotificationDeliveryRepositoryContractTest {
         return new DeliveryFixture(notification, webPushSubscription);
     }
 
-    private Notification saveNotification(Study study, StudyMember recipient) {
+    protected Notification saveNotification(Study study, StudyMember recipient) {
         Notification notification = Notification.create(
                 recipient.getUser(),
                 "[스터디] 새 공지",
@@ -133,6 +111,6 @@ abstract class NotificationDeliveryRepositoryContractTest {
         return notificationRepository.saveAndFlush(notification);
     }
 
-    private record DeliveryFixture(Notification notification, WebPushSubscription webPushSubscription) {
+    protected record DeliveryFixture(Notification notification, WebPushSubscription webPushSubscription) {
     }
 }

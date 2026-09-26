@@ -2,13 +2,16 @@ package withoutc.chongchong.notification.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
     private static final LocalDateTime CREATION_TIME = NOW.minusDays(1);
+    private static final Duration TEST_TIMEOUT = Duration.ofSeconds(30);
 
     @Autowired
     private NoticeReminderRepository noticeReminderRepository;
@@ -50,6 +54,15 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @BeforeEach
+    void clearReminderFixtures() {
+        noticeReminderRepository.deleteAllInBatch();
+        assignmentReminderRepository.deleteAllInBatch();
+        noticeRepository.deleteAllInBatch();
+        assignmentRepository.deleteAllInBatch();
+        studyRepository.deleteAllInBatch();
+    }
 
     @Test
     @DisplayName("공지 리마인더는 도래한 PENDING 상태만 batch size만큼 조회한다")
@@ -84,22 +97,29 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
     @DisplayName("동시에 조회한 두 워커 중 하나만 같은 공지 리마인더를 claim한다")
     void skipLockedNoticeReminderClaim() throws Exception {
         NoticeReminder reminder = saveNoticeReminder(NOW.minusMinutes(1));
-        CountDownLatch firstClaimed = new CountDownLatch(1);
         CountDownLatch releaseFirst = new CountDownLatch(1);
         ExecutorService executor = Executors.newSingleThreadExecutor();
+        CompletableFuture<Void> firstWorkerReady = new CompletableFuture<>();
 
         try {
-            Future<Long> firstWorker = executor.submit(() -> newTransactionTemplate().execute(status -> {
-                List<NoticeReminder> reminders = noticeReminderRepository.findClaimableForUpdate(NOW, 1);
-                NoticeReminder claimedReminder = reminders.getFirst();
-                firstClaimed.countDown();
-                await(releaseFirst);
-                claimedReminder.markAsProcessing();
-                noticeReminderRepository.flush();
-                return claimedReminder.getId();
-            }));
+            Future<Long> firstWorker = executor.submit(() -> {
+                try {
+                    return newTransactionTemplate().execute(status -> {
+                        List<NoticeReminder> reminders = noticeReminderRepository.findClaimableForUpdate(NOW, 1);
+                        NoticeReminder claimedReminder = reminders.getFirst();
+                        firstWorkerReady.complete(null);
+                        await(releaseFirst);
+                        claimedReminder.markAsProcessing();
+                        noticeReminderRepository.flush();
+                        return claimedReminder.getId();
+                    });
+                } catch (RuntimeException | Error exception) {
+                    firstWorkerReady.completeExceptionally(exception);
+                    throw exception;
+                }
+            });
 
-            assertThat(firstClaimed.await(5, TimeUnit.SECONDS)).isTrue();
+            firstWorkerReady.get(TEST_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
 
             List<NoticeReminder> secondWorker = newTransactionTemplate().execute(status ->
                     noticeReminderRepository.findClaimableForUpdate(NOW, 1)
@@ -107,7 +127,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
 
             assertThat(secondWorker).isEmpty();
             releaseFirst.countDown();
-            assertThat(firstWorker.get(5, TimeUnit.SECONDS)).isEqualTo(reminder.getId());
+            assertThat(firstWorker.get(TEST_TIMEOUT.toSeconds(), TimeUnit.SECONDS)).isEqualTo(reminder.getId());
             assertThat(noticeReminderRepository.findById(reminder.getId()).orElseThrow().getStatus())
                     .isEqualTo(NoticeReminderStatus.PROCESSING);
         } finally {
