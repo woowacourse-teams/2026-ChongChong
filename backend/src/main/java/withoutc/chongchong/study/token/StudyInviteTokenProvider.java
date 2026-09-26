@@ -59,6 +59,12 @@ public class StudyInviteTokenProvider {
 
         try {
             byte[] tokenBytes = Base64.getUrlDecoder().decode(token);
+            String reEncodedToken = Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(tokenBytes);
+            if (!reEncodedToken.equals(token)) {
+                throw invalidInviteToken();
+            }
 
             byte[] studyIdBytes = Arrays.copyOf(tokenBytes, Long.BYTES);
             byte[] actualSignature = Arrays.copyOfRange(tokenBytes, Long.BYTES, TOKEN_BYTE_LENGTH);

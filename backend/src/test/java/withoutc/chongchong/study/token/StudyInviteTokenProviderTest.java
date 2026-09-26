@@ -12,6 +12,8 @@ import withoutc.chongchong.study.exception.StudyException;
 class StudyInviteTokenProviderTest {
 
     private static final String SECRET = "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=";
+    private static final String BASE64_URL_ALPHABET =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
     private StudyInviteTokenProvider provider;
 
@@ -86,6 +88,17 @@ class StudyInviteTokenProviderTest {
         assertInvalidInviteToken("");
         assertInvalidInviteToken("   ");
         assertInvalidInviteToken("A".repeat(22));
+    }
+
+    @Test
+    @DisplayName("비정규 Base64URL 토큰은 검증에 실패한다")
+    void verifyNonCanonicalBase64UrlTokenTest() {
+        String token = provider.generate(123L);
+        int lastCharacterIndex = BASE64_URL_ALPHABET.indexOf(token.charAt(token.length() - 1));
+        String nonCanonicalToken = token.substring(0, token.length() - 1)
+                + BASE64_URL_ALPHABET.charAt(lastCharacterIndex + 1);
+
+        assertInvalidInviteToken(nonCanonicalToken);
     }
 
     @Test
