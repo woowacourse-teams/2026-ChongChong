@@ -1,4 +1,10 @@
-import { getWebPushPublicKey } from './api';
+import {
+  getWebPushPublicKey,
+  registerWebPushSubscription,
+  deactivateWebPushSubscription,
+} from './api';
+
+export const PUSH_SUBSCRIPTION_ID_KEY = 'chongchong:push-subscription-id';
 
 export async function enablePush() {
   if (
@@ -29,22 +35,51 @@ export async function enablePush() {
 
   const publicKey = await getWebPushPublicKey();
 
-  await sw.pushManager.subscribe({
+  const subscription = await sw.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: publicKey,
   });
+
+  try {
+    const { endpoint, keys } = subscription.toJSON();
+
+    if (!endpoint || !keys?.p256dh || !keys.auth) {
+      throw new Error('푸시 구독 정보를 확인하지 못했어요.');
+    }
+
+    const subscriptionId = await registerWebPushSubscription({
+      endpoint,
+      keys: {
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+      },
+    });
+
+    localStorage.setItem(PUSH_SUBSCRIPTION_ID_KEY, String(subscriptionId));
+  } catch (error) {
+    await subscription.unsubscribe().catch(console.error);
+    throw error;
+  }
 
   return true;
 }
 
 export async function disablePush() {
-  if (!('serviceWorker' in navigator)) return;
+  const subscriptionId = localStorage.getItem(PUSH_SUBSCRIPTION_ID_KEY);
 
-  const scope = new URL('/push/', window.location.origin).href;
-  const sw = await navigator.serviceWorker.getRegistration(scope);
+  if (subscriptionId) {
+    await deactivateWebPushSubscription(Number(subscriptionId));
+  }
 
-  if (sw?.scope !== scope) return;
+  if ('serviceWorker' in navigator) {
+    const scope = new URL('/push/', window.location.origin).href;
+    const sw = await navigator.serviceWorker.getRegistration(scope);
 
-  const subscription = await sw.pushManager.getSubscription();
-  await subscription?.unsubscribe();
+    if (sw?.scope === scope) {
+      const subscription = await sw.pushManager.getSubscription();
+      await subscription?.unsubscribe();
+    }
+  }
+
+  localStorage.removeItem(PUSH_SUBSCRIPTION_ID_KEY);
 }

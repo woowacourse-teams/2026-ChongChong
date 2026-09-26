@@ -42,17 +42,25 @@ export default function AccountMenuSection() {
   const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({
-    mutationFn: logout,
+    mutationFn: async () => {
+      await disableNotifications();
+      await logout();
+    },
     onSuccess: () => posthog.reset(),
   });
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawAccount();
 
-  const [isNotificationEnabled, notificationEnabledChanging, handleToggleNotificationEnabled] =
-    useNotificationEnabledState();
+  const [
+    isNotificationEnabled,
+    notificationEnabledChanging,
+    handleToggleNotificationEnabled,
+    disableNotifications,
+  ] = useNotificationEnabledState();
 
   const posthog = usePostHog();
 
   function handleLogout() {
+    if (notificationEnabledChanging || isLoggingOut) return;
     requestLogout(undefined, {
       onSuccess: () => {
         navigate('/login', { replace: true });
@@ -86,7 +94,7 @@ export default function AccountMenuSection() {
               <label htmlFor="notification-enabled-state">푸시 알림</label>
               <Switch
                 checked={isNotificationEnabled}
-                disabled={notificationEnabledChanging}
+                disabled={notificationEnabledChanging || isLoggingOut}
                 onChange={handleToggleNotificationEnabled}
                 id="notification-enabled-state"
               />

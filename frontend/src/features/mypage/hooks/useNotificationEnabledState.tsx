@@ -1,7 +1,7 @@
 import useBooleanState from '../../../shared/hooks/useBooleanState';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
-import { enablePush, disablePush } from '../../notification/push';
+import { enablePush, disablePush, PUSH_SUBSCRIPTION_ID_KEY } from '../../notification/push';
 
 const PUSH_ENABLED_KEY = 'chongchong:push-enabled';
 
@@ -12,10 +12,17 @@ export default function useNotificationEnabledState() {
     () =>
       'Notification' in window &&
       Notification.permission === 'granted' &&
-      localStorage.getItem(PUSH_ENABLED_KEY) === 'true',
+      localStorage.getItem(PUSH_ENABLED_KEY) === 'true' &&
+      localStorage.getItem(PUSH_SUBSCRIPTION_ID_KEY) !== null,
   );
 
   const [changing, startChanging, endChanging] = useBooleanState();
+
+  async function disableNotifications() {
+    await disablePush();
+    localStorage.setItem(PUSH_ENABLED_KEY, 'false');
+    disabled();
+  }
 
   async function handleToggleNotificationEnabled() {
     if (changing) return;
@@ -27,10 +34,10 @@ export default function useNotificationEnabledState() {
 
       if (nextEnabledState) {
         if (!(await enablePush())) return;
+        localStorage.setItem(PUSH_ENABLED_KEY, 'true');
         enabled();
       } else {
-        await disablePush();
-        disabled();
+        await disableNotifications();
       }
 
       localStorage.setItem(PUSH_ENABLED_KEY, String(nextEnabledState));
@@ -50,5 +57,5 @@ export default function useNotificationEnabledState() {
     }
   }
 
-  return [isEnabled, changing, handleToggleNotificationEnabled] as const;
+  return [isEnabled, changing, handleToggleNotificationEnabled, disableNotifications] as const;
 }
