@@ -1,5 +1,4 @@
 allowBuilds:
-  '@firebase/util': true
   core-js: false
   msw: true
   protobufjs: true

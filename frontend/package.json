@@ -86,7 +86,6 @@
     "@emotion/react": "^11.14.0",
     "@posthog/react": "^1.10.5",
     "@tanstack/react-query": "^5.101.4",
-    "firebase": "^12.19.0",
     "ky": "^2.0.2",
     "posthog-js": "^1.422.5",
     "react": "^19.2.8",

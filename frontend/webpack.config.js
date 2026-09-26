@@ -75,13 +75,6 @@ export default (_, argv) => {
           process.env.POSTHOG_PROJECT_TOKEN ?? '',
         ),
         'process.env.USE_MSW': JSON.stringify(process.env.USE_MSW ?? 'false'),
-        'process.env.FIREBASE_API_KEY': JSON.stringify(process.env.FIREBASE_API_KEY),
-        'process.env.FIREBASE_PROJECT_ID': JSON.stringify(process.env.FIREBASE_PROJECT_ID),
-        'process.env.FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(
-          process.env.FIREBASE_MESSAGING_SENDER_ID,
-        ),
-        'process.env.FIREBASE_APP_ID': JSON.stringify(process.env.FIREBASE_APP_ID),
-        'process.env.FIREBASE_VAPID_KEY': JSON.stringify(process.env.FIREBASE_VAPID_KEY),
       }),
     ],
 
