@@ -1,6 +1,16 @@
+import { API_URL } from '../../../config';
 import api from '../../client';
 import { handleError, ValidationError } from '../../shared/api/error';
 import { isNotificationResponse } from './responseSchemas';
+import ky from 'ky';
+
+interface WebPushSubscriptionRequest {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
 
 export const NOTIFICATION_API_URLS = {
   list: '/notifications',
@@ -29,4 +39,24 @@ export async function markNotificationAsRead(notificationId: number) {
       fallback: new Error('알림을 읽음으로 처리하지 못했습니다.', { cause: error }),
     });
   }
+}
+
+export async function getWebPushPublicKey() {
+  const { publicKey } = await ky.get(`${API_URL}/web-push/config`).json<{ publicKey: string }>();
+
+  return publicKey;
+}
+
+export async function registerWebPushSubscription(subscription: WebPushSubscriptionRequest) {
+  const { subscriptionId } = await api
+    .post('/web-push-subscriptions', {
+      json: subscription,
+    })
+    .json<{ subscriptionId: number }>();
+
+  return subscriptionId;
+}
+
+export async function deactivateWebPushSubscription(subscriptionId: number) {
+  await api.delete(`/web-push-subscriptions/${subscriptionId}`);
 }

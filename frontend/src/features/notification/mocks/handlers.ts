@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, passthrough } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { notificationTable } from './db';
@@ -30,6 +30,22 @@ export const handlers = [
         currentNotification.isRead = true;
       },
     });
+    return new HttpResponse(null, { status: 204 });
+  }),
+  http.get(`${API_URL}/web-push/config`, () => passthrough()),
+  http.post(`${API_URL}/web-push-subscriptions`, ({ request }) => {
+    if (!findUserFromHeader(request.headers)) {
+      return new HttpResponse(null, { status: 401 });
+    }
+
+    return HttpResponse.json({ subscriptionId: 1 });
+  }),
+
+  http.delete(`${API_URL}/web-push-subscriptions/:subscriptionId`, ({ request }) => {
+    if (!findUserFromHeader(request.headers)) {
+      return new HttpResponse(null, { status: 401 });
+    }
+
     return new HttpResponse(null, { status: 204 });
   }),
 ];

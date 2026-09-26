@@ -64,6 +64,14 @@ async function bootstrap() {
 
   const router = createBrowserRouter(appRoutes);
 
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register(new URL('./src/features/notification/push-sw.ts', import.meta.url), {
+        scope: '/push/',
+      })
+      .catch(console.error);
+  }
+
   ReactDOM.createRoot(root).render(
     <StrictMode>
       <PostHogProvider

@@ -1,8 +1,7 @@
-import type { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { logout } from '../../login/api';
-import { clearAccessToken } from '../../login/accessToken';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import { tokens, typography } from '../../../styles/global';
 import List from '../../../shared/ui/List';
@@ -10,7 +9,9 @@ import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import useWithdrawAccount from '../hooks/useWithdrawAccount';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
+import Switch from '../../../shared/ui/Switch';
 import { usePostHog } from '@posthog/react';
+import useNotificationEnabledState from '../hooks/useNotificationEnabledState';
 
 const menuItems = [
   {
@@ -40,13 +41,27 @@ export default function AccountMenuSection() {
   const [isOpen, openDialog, closeDialog] = useBooleanState();
 
   const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({
-    mutationFn: logout,
+    mutationFn: async () => {
+      await disableNotifications();
+      await logout();
+    },
     onSuccess: () => posthog.reset(),
   });
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawAccount();
+
+  const [
+    isNotificationEnabled,
+    notificationEnabledChanging,
+    handleToggleNotificationEnabled,
+    disableNotifications,
+  ] = useNotificationEnabledState();
+
   const posthog = usePostHog();
 
+  const isAccountActionPending = notificationEnabledChanging || isLoggingOut || isWithdrawing;
+
   function handleLogout() {
+    if (isAccountActionPending) return;
     requestLogout(undefined, {
       onSuccess: () => {
         navigate('/login', { replace: true });
@@ -58,9 +73,9 @@ export default function AccountMenuSection() {
   }
 
   function handleWithdraw() {
+    if (isAccountActionPending) return;
     withdraw(undefined, {
       onSuccess: () => {
-        clearAccessToken();
         posthog.reset();
         navigate('/login', { replace: true });
       },
@@ -76,11 +91,22 @@ export default function AccountMenuSection() {
       <section css={sectionStyle} aria-label="계정 메뉴">
         <List>
           <List.Item>
+            <div css={{ display: 'flex', justifyContent: 'space-between' }}>
+              <label htmlFor="notification-enabled-state">푸시 알림</label>
+              <Switch
+                checked={isNotificationEnabled}
+                disabled={isAccountActionPending}
+                onChange={handleToggleNotificationEnabled}
+                id="notification-enabled-state"
+              />
+            </div>
+          </List.Item>
+          <List.Item>
             <button
               type="button"
               css={{ ...menuButtonStyle, color: tokens.text.critical }}
               onClick={handleLogout}
-              disabled={isLoggingOut}
+              disabled={isAccountActionPending}
             >
               로그아웃
             </button>
@@ -110,7 +136,7 @@ export default function AccountMenuSection() {
             <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
           }
           confirmButton={
-            <ConfirmDialog.ConfirmButton onClick={handleWithdraw} disabled={isWithdrawing}>
+            <ConfirmDialog.ConfirmButton onClick={handleWithdraw} disabled={isAccountActionPending}>
               {isWithdrawing ? '탈퇴 중...' : '탈퇴'}
             </ConfirmDialog.ConfirmButton>
           }
