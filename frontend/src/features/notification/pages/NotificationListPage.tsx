@@ -14,6 +14,8 @@ import { tokens } from '../../../styles/global';
 import notificationQueries from '../queries';
 import NotificationItem from '../components/NotificationItem';
 import useMarkNotificationAsRead from '../hooks/useMarkNotificationAsRead';
+import { usePostHog } from '@posthog/react';
+import { Notification } from '../types';
 
 export default function NotificationListPage() {
   return (
@@ -42,6 +44,16 @@ export default function NotificationListPage() {
 NotificationListPage.Content = function Content() {
   const { data: notifications } = useSuspenseQuery(notificationQueries.list());
   const { markAsRead } = useMarkNotificationAsRead();
+  const posthog = usePostHog();
+
+  function handleNotificationClick(notification: Notification) {
+    if (!notification.isRead) {
+      posthog.capture('unread_notification_clicked', {
+        location: 'notification_page',
+      });
+    }
+    markAsRead(notification);
+  }
 
   return notifications.length === 0 ? (
     <EmptyContent message="아직 알림이 없어요" />
@@ -49,7 +61,7 @@ NotificationListPage.Content = function Content() {
     <List aria-label="알림 목록" css={{ gap: tokens.spacing[2] }}>
       {notifications.map((notification) => (
         <List.Item key={notification.id}>
-          <Link to={notification.deepLink} onClick={() => markAsRead(notification)}>
+          <Link to={notification.deepLink} onClick={() => handleNotificationClick(notification)}>
             <NotificationItem key={notification.id} notification={notification} />
           </Link>
         </List.Item>
