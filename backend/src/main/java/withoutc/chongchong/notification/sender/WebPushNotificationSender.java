@@ -1,6 +1,7 @@
 package withoutc.chongchong.notification.sender;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -11,6 +12,7 @@ import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class WebPushNotificationSender implements NotificationSender {
 
     private final ObjectMapper objectMapper;
@@ -20,8 +22,16 @@ public class WebPushNotificationSender implements NotificationSender {
     public WebPushSendResult send(ClaimedDelivery delivery) {
         String payload = createPayload(delivery);
 
-        int status = webPushClient.send(delivery.endpoint(), delivery.p256dh(), delivery.auth(), payload);
-        return result(status);
+        WebPushClient.WebPushResponse response = webPushClient.send(
+                delivery.endpoint(), delivery.p256dh(), delivery.auth(), payload);
+        WebPushSendResult sendResult = result(response.status());
+        if (sendResult != WebPushSendResult.SENT) {
+            log.warn("Web Push 발송 응답 실패. deliveryId={}, subscriptionId={}, status={}, responseBody={}, "
+                            + "result={}, errorCode={}",
+                    delivery.id(), delivery.subscriptionId(), response.status(), response.responseBody(), sendResult,
+                    sendResult.getErrorCode().getCode());
+        }
+        return sendResult;
     }
 
     private String createPayload(ClaimedDelivery delivery) {

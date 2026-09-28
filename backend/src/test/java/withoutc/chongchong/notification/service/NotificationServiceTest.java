@@ -132,6 +132,7 @@ class NotificationServiceTest {
         StudyMember recipient = mock(StudyMember.class);
         User creatorUser = mock(User.class);
         User recipientUser = mock(User.class);
+        WebPushSubscription recipientSubscription = mock(WebPushSubscription.class);
         when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
         when(assignment.getStudy()).thenReturn(study);
         when(assignment.getTitle()).thenReturn("과제 제목");
@@ -142,7 +143,8 @@ class NotificationServiceTest {
         when(creatorUser.getId()).thenReturn(USER_ID);
         when(recipient.getUser()).thenReturn(recipientUser);
         when(recipientUser.getId()).thenReturn(OTHER_USER_ID);
-        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(OTHER_USER_ID)).thenReturn(List.of());
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(OTHER_USER_ID))
+                .thenReturn(List.of(recipientSubscription));
 
         notificationService.createAssignmentCreatedEventNotifications(
                 assignment, List.of(creator, recipient), USER_ID
@@ -151,6 +153,10 @@ class NotificationServiceTest {
         ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
         verify(notificationRepository).save(notificationCaptor.capture());
         assertThat(notificationCaptor.getValue().getRecipient()).isSameAs(recipientUser);
+        ArgumentCaptor<NotificationDelivery> deliveryCaptor = ArgumentCaptor.forClass(NotificationDelivery.class);
+        verify(notificationDeliveryRepository).save(deliveryCaptor.capture());
+        assertThat(deliveryCaptor.getValue().getNotification()).isSameAs(notificationCaptor.getValue());
+        assertThat(deliveryCaptor.getValue().getWebPushSubscription()).isSameAs(recipientSubscription);
         verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(OTHER_USER_ID);
         verify(webPushSubscriptionRepository, never()).findByUserIdAndIsActiveTrue(USER_ID);
     }
@@ -181,7 +187,9 @@ class NotificationServiceTest {
 
         notificationService.createScheduledRemindNotifications();
 
-        verify(notificationRepository).save(any(Notification.class));
+        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository).save(notificationCaptor.capture());
+        assertThat(notificationCaptor.getValue().getType()).isEqualTo(NotificationType.REMIND);
         verify(notificationDeliveryRepository).save(any(NotificationDelivery.class));
         verify(reminder).markAsProcessing();
         verify(reminder).markAsSent();

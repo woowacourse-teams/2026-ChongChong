@@ -47,7 +47,8 @@ class WebPushNotificationSenderTest {
                 "본문\n다음 줄",
                 "/studies/1/notices/3?tab=detail"
         );
-        when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString())).thenReturn(201);
+        when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
+                .thenReturn(new WebPushClient.WebPushResponse(201, ""));
 
         WebPushSendResult result = sender.send(delivery);
 
@@ -72,7 +73,8 @@ class WebPushNotificationSenderTest {
     })
     void classifyProviderResponse(int status, String expectedResult) {
         WebPushNotificationSender sender = new WebPushNotificationSender(objectMapper, webPushClient);
-        when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString())).thenReturn(status);
+        when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
+                .thenReturn(new WebPushClient.WebPushResponse(status, ""));
 
         WebPushSendResult result = sender.send(createDelivery());
 
