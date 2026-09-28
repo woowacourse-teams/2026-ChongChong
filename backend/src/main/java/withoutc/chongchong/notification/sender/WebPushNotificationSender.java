@@ -45,8 +45,11 @@ public class WebPushNotificationSender implements NotificationSender {
         if (status == 404 || status == 410) {
             return WebPushSendResult.SUBSCRIPTION_EXPIRED;
         }
-        if (status == 429 || status >= 500) {
-            return WebPushSendResult.RETRYABLE_FAILURE;
+        if (status == 429) {
+            return WebPushSendResult.RATE_LIMITED;
+        }
+        if (status >= 500) {
+            return WebPushSendResult.PROVIDER_UNAVAILABLE;
         }
         return WebPushSendResult.PERMANENT_FAILURE;
     }

@@ -133,7 +133,7 @@ class AssignmentServiceTest {
         assertThat(assignment.getSubmissions()).singleElement()
                 .satisfies(submission -> assertThat(submission.getMember()).isSameAs(member));
         assertThat(assignment.getNextRemindAt()).isEqualTo(remindAt);
-        verify(notificationService).createAssignmentCreatedEventNotifications(assignment, List.of(member));
+        verify(notificationService).createAssignmentCreatedEventNotifications(assignment, List.of(member), USER_ID);
     }
 
     @Test

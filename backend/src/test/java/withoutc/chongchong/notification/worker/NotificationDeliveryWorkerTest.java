@@ -77,13 +77,13 @@ class NotificationDeliveryWorkerTest {
     @Test
     @DisplayName("재시도 가능한 전송 실패 시 RETRY_WAIT으로 처리한다")
     void markRetryWhenSendingFailsRetryably() {
-        when(sender.send(delivery)).thenReturn(WebPushSendResult.RETRYABLE_FAILURE);
+        when(sender.send(delivery)).thenReturn(WebPushSendResult.RATE_LIMITED);
 
         worker.processOne(delivery);
 
         verify(deliveryResultService).markRetry(
                 DELIVERY_ID,
-                WebPushSendResult.RETRYABLE_FAILURE.getMessage()
+                WebPushSendResult.RATE_LIMITED.getErrorCode().getMessage()
         );
         verifyNoMoreInteractions(deliveryResultService);
     }
@@ -98,7 +98,7 @@ class NotificationDeliveryWorkerTest {
         verify(deliveryResultService).markExpired(
                 DELIVERY_ID,
                 SUBSCRIPTION_ID,
-                WebPushSendResult.SUBSCRIPTION_EXPIRED.getMessage()
+                WebPushSendResult.SUBSCRIPTION_EXPIRED.getErrorCode().getMessage()
         );
         verifyNoMoreInteractions(deliveryResultService);
     }
@@ -112,7 +112,21 @@ class NotificationDeliveryWorkerTest {
 
         verify(deliveryResultService).markFailed(
                 DELIVERY_ID,
-                WebPushSendResult.PERMANENT_FAILURE.getMessage()
+                WebPushSendResult.PERMANENT_FAILURE.getErrorCode().getMessage()
+        );
+        verifyNoMoreInteractions(deliveryResultService);
+    }
+
+    @Test
+    @DisplayName("예상하지 못한 예외는 일반 오류 메시지로 실패 처리한다")
+    void markFailedWhenUnexpectedExceptionOccurs() {
+        when(sender.send(delivery)).thenThrow(new IllegalStateException("unexpected"));
+
+        worker.processOne(delivery);
+
+        verify(deliveryResultService).markFailed(
+                DELIVERY_ID,
+                WebPushErrorCode.UNEXPECTED_WEB_PUSH_ERROR.getMessage()
         );
         verifyNoMoreInteractions(deliveryResultService);
     }

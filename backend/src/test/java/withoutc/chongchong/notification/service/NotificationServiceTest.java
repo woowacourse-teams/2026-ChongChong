@@ -50,6 +50,7 @@ class NotificationServiceTest {
     private static final Long NOTICE_ID = 100L;
     private static final Long ASSIGNMENT_ID = 200L;
     private static final Long USER_ID = 1L;
+    private static final Long OTHER_USER_ID = 2L;
     private static final Long NOTIFICATION_ID = 300L;
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-20T01:00:00Z"),
@@ -120,6 +121,38 @@ class NotificationServiceTest {
 
         assertThat(notification.isRead()).isTrue();
         verify(notificationRepository).getByIdAndRecipientIdOrElseThrow(NOTIFICATION_ID, USER_ID);
+    }
+
+    @Test
+    @DisplayName("과제 생성자는 과제 생성 알림과 Web Push 발송 대상에서 제외한다")
+    void excludeAssignmentCreatorFromCreatedEventNotifications() {
+        Assignment assignment = mock(Assignment.class);
+        Study study = mock(Study.class);
+        StudyMember creator = mock(StudyMember.class);
+        StudyMember recipient = mock(StudyMember.class);
+        User creatorUser = mock(User.class);
+        User recipientUser = mock(User.class);
+        when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
+        when(assignment.getStudy()).thenReturn(study);
+        when(assignment.getTitle()).thenReturn("과제 제목");
+        when(study.getId()).thenReturn(1L);
+        when(study.getName()).thenReturn("스터디");
+        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
+        when(creator.getUser()).thenReturn(creatorUser);
+        when(creatorUser.getId()).thenReturn(USER_ID);
+        when(recipient.getUser()).thenReturn(recipientUser);
+        when(recipientUser.getId()).thenReturn(OTHER_USER_ID);
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(OTHER_USER_ID)).thenReturn(List.of());
+
+        notificationService.createAssignmentCreatedEventNotifications(
+                assignment, List.of(creator, recipient), USER_ID
+        );
+
+        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository).save(notificationCaptor.capture());
+        assertThat(notificationCaptor.getValue().getRecipient()).isSameAs(recipientUser);
+        verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(OTHER_USER_ID);
+        verify(webPushSubscriptionRepository, never()).findByUserIdAndIsActiveTrue(USER_ID);
     }
 
     @Test

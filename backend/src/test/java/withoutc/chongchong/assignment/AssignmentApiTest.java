@@ -863,6 +863,11 @@ class AssignmentApiTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM assignment_submissions WHERE assignment_id = ? AND member_id = ?",
                 Integer.class, assignmentId, leader.getId())).isEqualTo(expectedLeaderCount);
+        if (target == SubmissionTarget.MEMBERS_AND_LEADER) {
+            assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(leaderUser.getId()))
+                    .noneMatch(notification -> notification.getResourceId().equals(assignmentId)
+                            && notification.getResourceType() == ResourceType.ASSIGNMENT);
+        }
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
                 .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignmentId)
                 .then().statusCode(200).body("submissionTarget", equalTo(target.name()));

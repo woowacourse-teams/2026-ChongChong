@@ -71,7 +71,12 @@ public class NotificationService {
     }
 
     @Transactional
-    public void createAssignmentCreatedEventNotifications(Assignment assignment, List<StudyMember> recipients) {
+    public void createAssignmentCreatedEventNotifications(Assignment assignment, List<StudyMember> recipients,
+                                                          Long userId) {
+
+        recipients = recipients.stream()
+                .filter(recipient -> !recipient.getUser().getId().equals(userId))
+                .toList();
         saveNotifications(assignment.getStudy(), recipients, NotificationType.NEW, assignment.getId(),
                 ResourceType.ASSIGNMENT);
     }
