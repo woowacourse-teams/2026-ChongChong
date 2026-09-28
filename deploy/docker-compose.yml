@@ -21,7 +21,7 @@ services:
       WEB_PUSH_VAPID_PUBLIC_KEY: "${WEB_PUSH_VAPID_PUBLIC_KEY}"
       WEB_PUSH_VAPID_PRIVATE_KEY: "${WEB_PUSH_VAPID_PRIVATE_KEY}"
       WEB_PUSH_VAPID_SUBJECT: "${WEB_PUSH_VAPID_SUBJECT}"
-      APP_ENV: "${APP_ENV}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV}"
     expose:
       - "8080"
     networks:
@@ -30,7 +30,7 @@ services:
       driver: awslogs
       options:
         awslogs-region: "${CLOUD_WATCH_AWS_REGION}"
-        awslogs-group: "/chongchong/${APP_ENV}/backend"
+        awslogs-group: "/chongchong/${CLOUD_WATCH_APP_ENV}/backend"
         awslogs-stream: "backend"
         awslogs-create-group: "false"
 

@@ -21,7 +21,7 @@ spring:
     clean-disabled: true
 
 app:
-  environment: ${APP_ENV:local}
+  environment: ${CLOUD_WATCH_APP_ENV:local}
 
 logging:
   structured:
