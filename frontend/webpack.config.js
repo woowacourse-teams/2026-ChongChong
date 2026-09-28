@@ -76,6 +76,7 @@ export default (_, argv) => {
         ),
         'process.env.USE_MSW': JSON.stringify(process.env.USE_MSW ?? 'false'),
         'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
+        'process.env.SENTRY_ENVIRONMENT': JSON.stringify(process.env.DEPLOY_ENV ?? mode),
       }),
     ],
 

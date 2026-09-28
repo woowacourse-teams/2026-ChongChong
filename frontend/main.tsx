@@ -34,7 +34,7 @@ const appRoutes = [
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   enabled: Boolean(process.env.SENTRY_DSN),
-  environment: process.env.NODE_ENV,
+  environment: process.env.SENTRY_ENVIRONMENT,
 });
 
 const root = document.getElementById('root')!;
