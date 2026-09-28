@@ -5,6 +5,7 @@ import { isNotificationResponse } from './responseSchemas';
 import ky from 'ky';
 
 interface WebPushSubscriptionRequest {
+  installationId: string;
   endpoint: string;
   keys: {
     p256dh: string;
