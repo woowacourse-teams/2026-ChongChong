@@ -21,6 +21,7 @@ services:
       WEB_PUSH_VAPID_PUBLIC_KEY: "${WEB_PUSH_VAPID_PUBLIC_KEY}"
       WEB_PUSH_VAPID_PRIVATE_KEY: "${WEB_PUSH_VAPID_PRIVATE_KEY}"
       WEB_PUSH_VAPID_SUBJECT: "${WEB_PUSH_VAPID_SUBJECT}"
+      APP_ENV: "${APP_ENV}"
     expose:
       - "8080"
     networks:
