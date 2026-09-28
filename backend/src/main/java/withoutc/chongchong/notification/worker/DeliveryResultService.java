@@ -37,16 +37,17 @@ public class DeliveryResultService {
     }
 
     @Transactional
-    public void markRetry(Long deliveryId, String error) {
+    public boolean markRetry(Long deliveryId, String error) {
         NotificationDelivery delivery = notificationDeliveryRepository.getByIdOrThrow(deliveryId);
         int attemptCount = delivery.getAttemptCount();
 
         if (attemptCount >= MAX_ATTEMPTS || attemptCount < 1) {
             delivery.markFailed(error);
-            return;
+            return false;
         }
         LocalDateTime nextRetryAt = nextRetryAt(attemptCount, LocalDateTime.now(clock));
         delivery.markRetry(nextRetryAt, error);
+        return true;
     }
 
     @Transactional

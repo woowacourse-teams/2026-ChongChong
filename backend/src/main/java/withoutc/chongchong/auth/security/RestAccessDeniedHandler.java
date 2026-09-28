@@ -12,6 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.global.exception.code.ErrorCode;
 import withoutc.chongchong.global.exception.response.ErrorResponse;
+import withoutc.chongchong.global.logging.RequestLoggingContext;
 
 public final class RestAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -30,6 +31,7 @@ public final class RestAccessDeniedHandler implements AccessDeniedHandler {
         ErrorCode errorCode = accessDeniedException instanceof CsrfException
                 ? AuthErrorCode.INVALID_CSRF_TOKEN
                 : AuthErrorCode.ACCESS_DENIED;
+        RequestLoggingContext.recordErrorCode(request, errorCode);
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

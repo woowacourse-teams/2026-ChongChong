@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.exception.WebPushSendResult;
+import withoutc.chongchong.notification.logging.NotificationDeliveryLogger;
 import withoutc.chongchong.notification.sender.NotificationSender;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
@@ -39,6 +40,9 @@ class NotificationDeliveryWorkerTest {
     @Mock
     private DeliveryResultService deliveryResultService;
 
+    @Mock
+    private NotificationDeliveryLogger notificationDeliveryLogger;
+
     private NotificationDeliveryWorker worker;
     private ClaimedDelivery delivery;
 
@@ -48,7 +52,8 @@ class NotificationDeliveryWorkerTest {
                 deliveryClaimService,
                 deliveryRecoveryService,
                 sender,
-                deliveryResultService
+                deliveryResultService,
+                notificationDeliveryLogger
         );
         delivery = new ClaimedDelivery(
                 DELIVERY_ID,
@@ -78,6 +83,10 @@ class NotificationDeliveryWorkerTest {
     @DisplayName("재시도 가능한 전송 실패 시 RETRY_WAIT으로 처리한다")
     void markRetryWhenSendingFailsRetryably() {
         when(sender.send(delivery)).thenReturn(WebPushSendResult.RATE_LIMITED);
+        when(deliveryResultService.markRetry(
+                DELIVERY_ID,
+                WebPushSendResult.RATE_LIMITED.getErrorCode().getMessage()
+        )).thenReturn(true);
 
         worker.processOne(delivery);
 
@@ -136,6 +145,10 @@ class NotificationDeliveryWorkerTest {
     void markRetryWhenTransportFails() {
         WebPushException exception = new WebPushException(WebPushErrorCode.WEB_PUSH_TRANSPORT_FAILED);
         when(sender.send(delivery)).thenThrow(exception);
+        when(deliveryResultService.markRetry(
+                DELIVERY_ID,
+                WebPushErrorCode.WEB_PUSH_TRANSPORT_FAILED.getMessage()
+        )).thenReturn(true);
 
         worker.processOne(delivery);
 
@@ -151,6 +164,10 @@ class NotificationDeliveryWorkerTest {
     void rethrowWhenSendingIsInterrupted() {
         WebPushException exception = new WebPushException(WebPushErrorCode.WEB_PUSH_INTERRUPTED);
         when(sender.send(delivery)).thenThrow(exception);
+        when(deliveryResultService.markRetry(
+                DELIVERY_ID,
+                WebPushErrorCode.WEB_PUSH_INTERRUPTED.getMessage()
+        )).thenReturn(true);
 
         assertThatThrownBy(() -> worker.processOne(delivery))
                 .isSameAs(exception);
