@@ -4,13 +4,13 @@ type InputLikeElement = HTMLInputElement | HTMLTextAreaElement;
 
 export function useInputState(
   initialValue: string | (() => string) = '',
-  transformValue: (value: string) => string = echo,
+  transformValue: (value: string, prevValue: string) => string = echo,
 ) {
   const [value, setValue] = useState(initialValue);
 
   const handleValueChange: ChangeEventHandler<InputLikeElement> = useCallback(
     ({ target: { value } }) => {
-      setValue(transformValue(value));
+      setValue((prevValue) => transformValue(value, prevValue));
     },
     [transformValue],
   );

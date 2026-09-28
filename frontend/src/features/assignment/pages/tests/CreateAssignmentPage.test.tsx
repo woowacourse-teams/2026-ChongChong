@@ -1,99 +1,255 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { Route, Routes } from 'react-router';
+import { Route } from 'react-router';
 import CreateAssignmentPage from '../CreateAssignmentPage';
-import { createWrapper } from '../../../../test/render';
+import { createWrapper, login, logout, setup } from '../../../../test/render';
+import { createTextWithLength, insertTextInMiddle } from '../../../../test/input';
 import { server } from '../../../../mocks/msw-node';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { API_URL } from '../../../../../config';
+import { userTable } from '../../../user/mocks/db';
+import { studyTable } from '../../../study/mocks/db';
+import { memberTable } from '../../../member/mocks/db';
 
-describe('과제생성폼 테스트', () => {
-  let user: ReturnType<typeof userEvent.setup>;
+const ASSIGNMENT_CREATE_URL = `${API_URL}/studies/:studyId/assignments`;
 
-  beforeEach(() => {
-    user = userEvent.setup();
+function setupCreateAssignmentPage() {
+  return setup(<CreateAssignmentPage />, {
+    wrapper: createWrapper({
+      initialEntries: ['/studies/1/assignments/create'],
+      routes: (element) => <Route path="/studies/:studyId/assignments/create" element={element} />,
+    }),
+  });
+}
+
+function getTitleInput() {
+  return screen.getByRole('textbox', { name: '제목' });
+}
+
+function getSubmitButton() {
+  return screen.getByRole('button', { name: '과제 올리기' });
+}
+
+describe('과제 생성 페이지 테스트', () => {
+  const leaderUserName = '안톨리니';
+
+  beforeEach(async () => {
+    await userTable.create({
+      id: 1,
+      name: leaderUserName,
+      profileImage: 'http://localhost:8000',
+    });
+    await studyTable.create({
+      id: 1,
+      name: '객체지향 스터디',
+      description: '객체지향 설계를 함께 연습하는 스터디',
+      inviteLink: 'object-oriented-study',
+    });
+    await memberTable.create({
+      id: 1,
+      studyId: 1,
+      userId: 1,
+      name: leaderUserName,
+      profileImage: 'http://localhost:8000',
+      role: 'LEADER',
+    });
+    login(leaderUserName);
   });
 
-  function renderCreatePage() {
-    render(
-      <Routes>
-        <Route path={'studies/:studyId/assignments/create'} element={<CreateAssignmentPage />} />
-      </Routes>,
-      { wrapper: createWrapper({ initialEntries: ['/studies/1/assignments/create'] }) },
+  afterEach(() => {
+    logout();
+  });
+
+  describe('과제 입력 검증', () => {
+    test.each([
+      { leaderSubmits: true, submissionTarget: 'MEMBERS_AND_LEADER' },
+      { leaderSubmits: false, submissionTarget: 'MEMBERS_ONLY' },
+    ])(
+      '리드 제출 $leaderSubmits 선택을 생성 요청에 반영한다',
+      async ({ leaderSubmits, submissionTarget }) => {
+        const requestBody = jest.fn();
+        server.use(
+          http.post(ASSIGNMENT_CREATE_URL, async ({ request }) => {
+            requestBody(await request.json());
+            return HttpResponse.json({ assignmentId: 999 }, { status: 201 });
+          }),
+        );
+        const { user } = setupCreateAssignmentPage();
+        const checkbox = screen.getByRole('checkbox');
+
+        await user.type(getTitleInput(), '객체지향 설계 과제');
+        await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+        await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+        expect(checkbox).toHaveProperty('checked', true);
+        if (!leaderSubmits) await user.click(checkbox);
+        await user.click(getSubmitButton());
+
+        await waitFor(() =>
+          expect(requestBody).toHaveBeenCalledWith(expect.objectContaining({ submissionTarget })),
+        );
+      },
     );
-  }
 
-  test('제목 입력은 20자로 제한된다', async () => {
-    renderCreatePage();
+    test('빈 제목에 100자를 초과한 값이 전달되면 입력을 거절한다', () => {
+      setupCreateAssignmentPage();
+      const titleInput = getTitleInput();
 
-    const titleInput = screen.getByRole('textbox', { name: '제목' });
-    await user.type(titleInput, '안톨리니'.repeat(20));
+      fireEvent.change(titleInput, { target: { value: createTextWithLength(101) } });
 
-    expect(titleInput).toHaveValue('안톨리니'.repeat(5));
-  });
+      expect(titleInput).toHaveValue('');
+    });
 
-  test('내용 입력은 10000자로 제한된다', async () => {
-    renderCreatePage();
+    test('제목이 100자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+      setupCreateAssignmentPage();
+      const titleInput = getTitleInput();
+      const originalValue = createTextWithLength(100);
 
-    const contentInput = screen.getByRole('textbox', { name: '내용' });
-    await user.click(contentInput);
-    await user.paste('안'.repeat(20000));
+      fireEvent.change(titleInput, { target: { value: originalValue } });
+      expect(titleInput).toHaveValue(originalValue);
 
-    expect(contentInput).toHaveValue('안'.repeat(10000));
-  });
+      insertTextInMiddle(titleInput, originalValue);
 
-  test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {
-    server.use(
-      http.post(`${API_URL}/studies/:studyId/assignments`, () =>
-        invalidInputResponse([
-          { field: 'title', code: 'INVALID', reason: '제목이 이상해요' },
-          { field: 'content', code: 'INVALID', reason: '내용이 이상해요' },
-          { field: 'submissionMethod', code: 'INVALID', reason: '제출방식이 이상해요' },
-          { field: 'closeAt', code: 'INVALID', reason: '마감 시각이 이상해요' },
-        ]),
-      ),
-    );
-    renderCreatePage();
-    const submitButton = screen.getByRole('button', { name: '과제 올리기' });
-    await user.click(submitButton);
+      expect(titleInput).toHaveValue(originalValue);
+    });
 
-    expect(await screen.findByText('제목이 이상해요')).toBeInTheDocument();
-    expect(await screen.findByText('내용이 이상해요')).toBeInTheDocument();
-    expect(await screen.findByText('제출방식이 이상해요')).toBeInTheDocument();
-    expect(await screen.findByText('마감 시각이 이상해요')).toBeInTheDocument();
-  });
+    test('제목의 중간 삽입 결과가 100자 이하면 입력을 반영한다', () => {
+      setupCreateAssignmentPage();
+      const titleInput = getTitleInput();
+      const originalValue = createTextWithLength(99);
 
-  test('스터디 리더가 아니면 과제 생성 권한 안내를 토스트로 표시한다', async () => {
-    server.use(
-      http.post(`${API_URL}/studies/:studyId/assignments`, () =>
-        HttpResponse.json(
-          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
-          { status: 403 },
+      fireEvent.change(titleInput, { target: { value: originalValue } });
+      expect(titleInput).toHaveValue(originalValue);
+
+      const insertedValue = insertTextInMiddle(titleInput, originalValue);
+
+      expect(titleInput).toHaveValue(insertedValue);
+    });
+
+    test('빈 내용에 10000자를 초과한 값이 전달되면 입력을 거절한다', () => {
+      setupCreateAssignmentPage();
+      const contentInput = screen.getByRole('textbox', { name: '내용' });
+
+      fireEvent.change(contentInput, { target: { value: createTextWithLength(10001) } });
+
+      expect(contentInput).toHaveValue('');
+    });
+
+    test('내용이 10000자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+      setupCreateAssignmentPage();
+      const contentInput = screen.getByRole('textbox', { name: '내용' });
+      const originalValue = createTextWithLength(10000);
+
+      fireEvent.change(contentInput, { target: { value: originalValue } });
+      expect(contentInput).toHaveValue(originalValue);
+
+      insertTextInMiddle(contentInput, originalValue);
+
+      expect(contentInput).toHaveValue(originalValue);
+    });
+
+    test('내용의 중간 삽입 결과가 10000자 이하면 입력을 반영한다', () => {
+      setupCreateAssignmentPage();
+      const contentInput = screen.getByRole('textbox', { name: '내용' });
+      const originalValue = createTextWithLength(9999);
+
+      fireEvent.change(contentInput, { target: { value: originalValue } });
+      expect(contentInput).toHaveValue(originalValue);
+
+      const insertedValue = insertTextInMiddle(contentInput, originalValue);
+
+      expect(contentInput).toHaveValue(insertedValue);
+    });
+
+    test('빈 제출 방법에 10000자를 초과한 값이 전달되면 입력을 거절한다', () => {
+      setupCreateAssignmentPage();
+      const submissionMethodInput = screen.getByRole('textbox', { name: '제출 방법' });
+
+      fireEvent.change(submissionMethodInput, { target: { value: createTextWithLength(10001) } });
+
+      expect(submissionMethodInput).toHaveValue('');
+    });
+
+    test('제출 방법이 10000자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+      setupCreateAssignmentPage();
+      const submissionMethodInput = screen.getByRole('textbox', { name: '제출 방법' });
+      const originalValue = createTextWithLength(10000);
+
+      fireEvent.change(submissionMethodInput, { target: { value: originalValue } });
+      expect(submissionMethodInput).toHaveValue(originalValue);
+
+      insertTextInMiddle(submissionMethodInput, originalValue);
+
+      expect(submissionMethodInput).toHaveValue(originalValue);
+    });
+
+    test('제출 방법의 중간 삽입 결과가 10000자 이하면 입력을 반영한다', () => {
+      setupCreateAssignmentPage();
+      const submissionMethodInput = screen.getByRole('textbox', { name: '제출 방법' });
+      const originalValue = createTextWithLength(9999);
+
+      fireEvent.change(submissionMethodInput, { target: { value: originalValue } });
+      expect(submissionMethodInput).toHaveValue(originalValue);
+
+      const insertedValue = insertTextInMiddle(submissionMethodInput, originalValue);
+
+      expect(submissionMethodInput).toHaveValue(insertedValue);
+    });
+
+    test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {
+      server.use(
+        http.post(ASSIGNMENT_CREATE_URL, () =>
+          invalidInputResponse([
+            { field: 'title', code: 'INVALID', reason: '제목이 이상해요' },
+            { field: 'content', code: 'INVALID', reason: '내용이 이상해요' },
+            { field: 'submissionMethod', code: 'INVALID', reason: '제출방식이 이상해요' },
+            { field: 'closeAt', code: 'INVALID', reason: '마감 시각이 이상해요' },
+          ]),
         ),
-      ),
-    );
-    renderCreatePage();
+      );
+      const { user } = setupCreateAssignmentPage();
 
-    await user.type(screen.getByRole('textbox', { name: '제목' }), '객체지향 설계 과제');
-    await user.click(screen.getByRole('button', { name: '과제 올리기' }));
+      await user.type(getTitleInput(), '객체지향 설계 과제');
+      await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+      await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+      await user.click(getSubmitButton());
 
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
-    expect(toast).toBeVisible();
+      expect(await screen.findByText('제목이 이상해요')).toBeInTheDocument();
+      expect(await screen.findByText('내용이 이상해요')).toBeInTheDocument();
+      expect(await screen.findByText('제출방식이 이상해요')).toBeInTheDocument();
+      expect(await screen.findByText('마감 시각이 이상해요')).toBeInTheDocument();
+    });
   });
 
-  test('네트워크 에러가 발생하면 과제 생성 실패 안내를 토스트로 표시한다', async () => {
-    server.use(http.post(`${API_URL}/studies/:studyId/assignments`, () => HttpResponse.error()));
-    renderCreatePage();
+  describe('과제 생성 실패', () => {
+    test.each([
+      {
+        title: '스터디 리더가 아니면',
+        handler: http.post(ASSIGNMENT_CREATE_URL, () =>
+          HttpResponse.json(
+            { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+            { status: 403 },
+          ),
+        ),
+        message: '요청한 작업을 수행할 권한이 없습니다.',
+      },
+      {
+        title: '네트워크 에러가 발생하면',
+        handler: http.post(ASSIGNMENT_CREATE_URL, () => HttpResponse.error()),
+        message: '과제를 생성하는데 실패했습니다.',
+      },
+    ])('$title 에러 메시지를 토스트로 표시하고 입력값을 유지한다', async ({ handler, message }) => {
+      server.use(handler);
+      const { user } = setupCreateAssignmentPage();
 
-    const titleInput = screen.getByRole('textbox', { name: '제목' });
-    await user.type(titleInput, '객체지향 설계 과제');
-    await user.click(screen.getByRole('button', { name: '과제 올리기' }));
+      await user.type(getTitleInput(), '객체지향 설계 과제');
+      await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+      await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+      await user.click(getSubmitButton());
 
-    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
-    expect(toast).toHaveTextContent('과제를 생성하는데 실패했습니다.');
-    expect(toast).toBeVisible();
-    expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('객체지향 설계 과제');
+      const toast = await screen.findByRole('status');
+      expect(toast).toHaveTextContent(message);
+      expect(toast).toBeVisible();
+      expect(getTitleInput()).toHaveValue('객체지향 설계 과제');
+    });
   });
 });

@@ -2,7 +2,6 @@ package withoutc.chongchong.notice.repository;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +11,7 @@ import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
+import withoutc.chongchong.study.entity.StudyMember;
 
 public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient, Long> {
 
@@ -21,13 +21,14 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
                        member.name,
                        member.profileImageUrl,
                        CASE WHEN recipient.readAt IS NULL THEN false ELSE true END,
+                       recipient.readAt,
                        MAX(notification.createdAt)
                    )
             FROM NoticeRecipient recipient
             JOIN recipient.member member
             LEFT JOIN Notification notification
-              ON notification.recipient = member
-             AND notification.resourceType = withoutc.chongchong.notification.entity.NotificationResourceType.NOTICE
+              ON notification.recipient = member.user
+             AND notification.resourceType = withoutc.chongchong.notification.entity.ResourceType.NOTICE
              AND notification.resourceId = recipient.notice.id
              AND notification.type = withoutc.chongchong.notification.entity.NotificationType.REMIND
             WHERE recipient.notice.id = :noticeId
@@ -57,8 +58,13 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
         );
     }
 
-    @EntityGraph(attributePaths = "member")
-    List<NoticeRecipient> findAllByNoticeIdAndReadAtIsNull(Long noticeId);
+    @Query("""
+            SELECT recipient.member
+            FROM NoticeRecipient recipient
+            WHERE recipient.notice.id = :noticeId
+              AND recipient.readAt IS NULL
+            """)
+    List<StudyMember> findUnreadMembersByNoticeId(@Param("noticeId") Long noticeId);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM NoticeRecipient recipient WHERE recipient.member.id = :memberId")

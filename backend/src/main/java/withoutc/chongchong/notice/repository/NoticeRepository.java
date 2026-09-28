@@ -24,22 +24,6 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             Pageable pageable
     );
 
-    @Query("""
-            SELECT n
-            FROM Notice n
-            JOIN NoticeRecipient nr ON nr.notice = n
-            WHERE n.study.id = :studyId
-              AND nr.member.id = :memberId
-              AND (:cursor IS NULL OR n.id < :cursor)
-            ORDER BY n.id DESC
-            """)
-    List<Notice> findByCursorAndMemberId(
-            @Param("studyId") Long studyId,
-            @Param("memberId") Long memberId,
-            @Param("cursor") Long cursor,
-            Pageable pageable
-    );
-
     default Notice getByIdOrThrow(Long noticeId) {
         return findById(noticeId).orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
@@ -112,6 +96,4 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             @Param("studyId") Long studyId,
             @Param("memberId") Long memberId
     );
-
-    void deleteAllByStudyId(Long studyId);
 }

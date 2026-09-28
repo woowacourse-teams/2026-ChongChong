@@ -46,6 +46,10 @@ public class NoticeReminder extends BaseEntity {
         return new NoticeReminder(notice, remindAt, NoticeReminderStatus.PENDING);
     }
 
+    public void markAsProcessing() {
+        this.status = NoticeReminderStatus.PROCESSING;
+    }
+
     public void markAsSent() {
         this.status = NoticeReminderStatus.SENT;
     }

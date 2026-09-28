@@ -1,0 +1,22 @@
+get:
+  tags: [Web Push]
+  operationId: getWebPushConfig
+  x-frontend:
+    description: |
+      브라우저에서 PushSubscription을 생성하기 전에 VAPID 공개 키를 조회한다.
+      공개 정보이므로 로그인 없이 호출할 수 있다.
+  x-backend:
+    status: done
+    owner: wontop02
+    description: VAPID 공개 키만 반환하며 private key와 subject는 응답에 포함하지 않는다.
+  summary: Web Push VAPID 공개키 조회
+  description: Web Push 구독 생성에 필요한 VAPID 공개 키를 조회한다.
+  security: []
+  responses:
+    '200':
+      description: Web Push VAPID 공개키 조회 성공.
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/web-push-subscriptions.yaml#/WebPushConfigResponse' }
+          example:
+            publicKey: BEl62iUYgUivxIkv69yViEuiBIa40HI2z6pJm8m0Qm3...

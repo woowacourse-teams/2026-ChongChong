@@ -1,7 +1,13 @@
-import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQueries,
+  type QueryKey,
+} from '@tanstack/react-query';
 import type { CSSProperties, UIEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { formatRelativeTime } from '../../../shared/utils/formatDate';
+import { formatDateToString, formatRelativeTime } from '../../../shared/utils/formatDate';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import { tokens } from '../../../styles/global';
@@ -9,6 +15,7 @@ import { updateNoticeRead } from '../api';
 import noticeQueries from '../queries';
 import MemberNoticeReadState from './MemberNoticeReadState';
 import NoticeArticle from './NoticeArticle';
+import type { MemberReadStatus } from '../types';
 
 interface Props {
   studyId: number;
@@ -46,18 +53,26 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.myRead(studyId, noticeId)],
   });
-  const hasRequestedReadRef = useRef(readStatus.isRead);
-  const [readProgress, setReadProgress] = useState(() => (readStatus.isRead ? 100 : 0));
+  const canMarkAsRead = readStatus.readStatus === 'UNREAD';
+  const hasRequestedReadRef = useRef(!canMarkAsRead);
+  const [readProgress, setReadProgress] = useState(() =>
+    readStatus.readStatus === 'READ' ? 100 : 0,
+  );
+  const [showCompletionToast, setShowCompletionToast] = useState(false);
 
   const updateReadMutation = useMutation({
     mutationFn: () => updateNoticeRead(studyId, noticeId),
     retry: 2,
     onSuccess: (updatedReadStatus) => {
-      queryClient.setQueryData(noticeQueries.myRead(studyId, noticeId).queryKey, {
-        isRead: true,
+      const myReadQueryKey: QueryKey = noticeQueries.myRead(studyId, noticeId).queryKey;
+      const nextReadStatus: MemberReadStatus = {
+        readStatus: 'READ',
         readAt: updatedReadStatus.readAt,
-      });
+      };
+
+      queryClient.setQueryData<MemberReadStatus>(myReadQueryKey, nextReadStatus);
       queryClient.invalidateQueries({ queryKey: noticeQueries.lists(studyId) });
+      setShowCompletionToast(true);
     },
     onError: (error) => {
       hasRequestedReadRef.current = false;
@@ -67,13 +82,15 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   const markAsRead = updateReadMutation.mutate;
 
   const requestMarkAsRead = () => {
-    if (hasRequestedReadRef.current) return;
+    if (!canMarkAsRead || hasRequestedReadRef.current) return;
 
     hasRequestedReadRef.current = true;
     markAsRead();
   };
 
   useEffect(() => {
+    if (!canMarkAsRead) return;
+
     const content = contentRef.current;
     const contentBody = contentBodyRef.current;
 
@@ -96,7 +113,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     resizeObserver.observe(contentBody);
 
     return () => resizeObserver.disconnect();
-  }, [markAsRead]);
+  }, [canMarkAsRead, markAsRead]);
 
   const updateReadProgress = (event: UIEvent<HTMLDivElement>) => {
     const nextProgress = calculateReadProgress(event.currentTarget);
@@ -108,25 +125,37 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     }
   };
 
-  const isRead = readStatus.isRead || updateReadMutation.isSuccess;
-  const readAt = updateReadMutation.data?.readAt ?? readStatus.readAt;
+  const isRead = readStatus.readStatus === 'READ' || updateReadMutation.isSuccess;
+  const readAt =
+    updateReadMutation.data?.readAt ??
+    (readStatus.readStatus === 'READ' ? readStatus.readAt : undefined);
 
   return (
     <>
-      <div ref={contentRef} css={contentStyle} onScroll={updateReadProgress}>
+      <div
+        ref={contentRef}
+        css={contentStyle}
+        onScroll={canMarkAsRead ? updateReadProgress : undefined}
+      >
         <div ref={contentBodyRef}>
-          <NoticeArticle notice={notice} hasTopMargin={false} />
+          <ContentDetailHeader
+            title={notice.title}
+            dateTime={notice.createdAt}
+            meta={`${formatDateToString(notice.createdAt)} 작성`}
+          />
+          <NoticeArticle notice={notice} />
         </div>
       </div>
-
-      <div css={readStateStyle}>
-        <MemberNoticeReadState
-          progress={readProgress}
-          isRead={isRead}
-          readAt={readAt ? formatRelativeTime(readAt) : undefined}
-          showCompletionToast={updateReadMutation.isSuccess && !readStatus.isRead}
-        />
-      </div>
+      {readStatus.readStatus !== 'NOT_ASSIGNED' && (
+        <div css={readStateStyle}>
+          <MemberNoticeReadState
+            progress={readProgress}
+            isRead={isRead}
+            readAt={readAt ? formatRelativeTime(readAt) : undefined}
+            showCompletionToast={showCompletionToast}
+          />
+        </div>
+      )}
     </>
   );
 }

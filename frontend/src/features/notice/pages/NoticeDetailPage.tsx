@@ -12,11 +12,22 @@ import BottomTab from '../../../shared/widgets/BottomTab';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
 import { useSuspenseQuery } from '@tanstack/react-query';
+import ContentActionMenu from '../../../shared/widgets/ContentActionMenu';
 
 export default function NoticeDetailPage() {
   return (
     <Page>
-      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>공지</TopHeader.Title>} />
+      <TopHeader
+        left={<PrevButton />}
+        middle={<TopHeader.Title>공지</TopHeader.Title>}
+        right={
+          <ErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <NoticeDetailPage.HeaderActions />
+            </Suspense>
+          </ErrorBoundary>
+        }
+      />
       <Main>
         <ErrorBoundary
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
@@ -41,6 +52,21 @@ NoticeDetailPage.Content = function Content() {
   return role === 'LEADER' ? (
     <LeaderNoticeDetailContent studyId={studyId} noticeId={noticeId} />
   ) : (
-    <MemberNoticeDetailContent studyId={studyId} noticeId={noticeId} />
+    <MemberNoticeDetailContent
+      key={`${studyId}-${noticeId}`}
+      studyId={studyId}
+      noticeId={noticeId}
+    />
   );
+};
+
+NoticeDetailPage.HeaderActions = function HeaderActions() {
+  const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
+  const {
+    data: { role },
+  } = useSuspenseQuery(studyQueries.info(studyId));
+
+  return role === 'LEADER' ? (
+    <ContentActionMenu studyId={studyId} id={noticeId} content="notice" />
+  ) : null;
 };

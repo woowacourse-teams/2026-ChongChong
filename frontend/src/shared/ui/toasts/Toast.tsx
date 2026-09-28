@@ -12,14 +12,13 @@ const toastStyle = {
   gap: tokens.spacing[3],
   boxSizing: 'border-box',
   width: '100%',
-  maxWidth: '300px',
   minHeight: '52px',
-  fontSize: tokens.fontSize[18],
+  fontSize: tokens.fontSize[14],
   padding: `${tokens.spacing[3]} ${tokens.spacing[6]}`,
-  borderRadius: tokens.radius.full,
+  borderRadius: tokens.radius.xl,
   background: tokens.bg.default,
   color: tokens.text.primary,
-  boxShadow: tokens.shadow[3],
+  boxShadow: tokens.shadow[2],
 } satisfies CSSProperties;
 
 export function ToastRoot({ content }: ToastProps) {

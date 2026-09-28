@@ -22,8 +22,8 @@ import withoutc.chongchong.auth.social.SocialLoginCommand;
 import withoutc.chongchong.auth.social.SocialProvider;
 import withoutc.chongchong.auth.social.SocialUserInfo;
 import withoutc.chongchong.auth.support.FakeSocialLoginClient;
-import withoutc.chongchong.auth.token.IssuedTokenPair;
 import withoutc.chongchong.support.TestDatabaseCleaner;
+import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @SpringBootTest
@@ -66,13 +66,15 @@ class SocialLoginFacadeTest {
                 new TransactionRecordingSocialLoginClient(fakeClient);
         SocialLoginFacade facade = createFacade(recordingClient);
 
-        IssuedTokenPair tokenPair = facade.login(new SocialLoginCommand(
+        SocialLoginResult result = facade.login(new SocialLoginCommand(
                 SocialProvider.GOOGLE,
                 credential
         ));
+        User user = userRepository.findAll().getFirst();
 
+        assertThat(result.userId()).isEqualTo(user.getId());
+        assertThat(result.tokenPair()).isNotNull();
         assertThat(recordingClient.wasTransactionActiveDuringAuthentication()).isFalse();
-        assertThat(tokenPair).isNotNull();
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
         assertThat(authSessionRepository.count()).isOne();

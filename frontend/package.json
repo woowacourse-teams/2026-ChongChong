@@ -4,7 +4,7 @@
   "description": "chongchong frontend",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --mode production",
+    "build": "webpack --mode production && cp -R src/pwa dist/pwa",
     "start": "webpack serve --mode development",
     "type-check": "tsc --noemit",
     "lint": "eslint .",

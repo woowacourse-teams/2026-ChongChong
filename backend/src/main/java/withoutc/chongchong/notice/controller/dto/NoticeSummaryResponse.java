@@ -3,6 +3,7 @@ package withoutc.chongchong.notice.controller.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeReadStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record NoticeSummaryResponse(
@@ -13,7 +14,8 @@ public record NoticeSummaryResponse(
         Integer recipientCount,
         Integer readRecipientCount,
         LocalDateTime remindAt,
-        boolean isComplete
+        NoticeReadStatus readStatus,
+        Boolean isComplete
 ) {
     public static NoticeSummaryResponse forLeader(Notice notice) {
 
@@ -30,11 +32,12 @@ public record NoticeSummaryResponse(
                 recipientCount,
                 readRecipientCount,
                 notice.getNextRemindAt(),
+                null,
                 isComplete
         );
     }
 
-    public static NoticeSummaryResponse forMember(Notice notice, boolean isComplete) {
+    public static NoticeSummaryResponse forMember(Notice notice, NoticeReadStatus readStatus) {
         return new NoticeSummaryResponse(
                 notice.getId(),
                 notice.getTitle(),
@@ -43,7 +46,8 @@ public record NoticeSummaryResponse(
                 null,
                 null,
                 null,
-                isComplete
+                readStatus,
+                null
         );
     }
 }

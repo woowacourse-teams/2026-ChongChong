@@ -10,6 +10,8 @@ import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
+import { routes as mypageRoutes } from './src/features/mypage/routes';
+import { routes as notificationRoutes } from './src/features/notification/routes';
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
@@ -24,6 +26,8 @@ const appRoutes = [
   ...AssignmentRoutes,
   ...memberRoutes,
   ...loginRoutes,
+  ...mypageRoutes,
+  ...notificationRoutes,
 ];
 
 const root = document.getElementById('root')!;
@@ -33,7 +37,6 @@ async function enableMocking() {
   if (process.env.USE_MSW !== 'true') {
     return;
   }
-
   const { worker } = await import('./src/mocks/msw-browser');
 
   return worker.start();
@@ -44,20 +47,30 @@ const queryClient = new QueryClient();
 const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
 
 async function restoreSession() {
-  if (publicPaths.has(window.location.pathname)) return;
+  if (publicPaths.has(window.location.pathname)) return false;
 
   try {
     await refreshAccessToken();
+    return false;
   } catch {
     window.history.replaceState({}, document.title, '/login');
+    return true;
   }
 }
 
 async function bootstrap() {
   await enableMocking();
-  await restoreSession();
+  const shouldResetIdentity = await restoreSession();
 
   const router = createBrowserRouter(appRoutes);
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register(new URL('./src/features/notification/push-sw.ts', import.meta.url), {
+        scope: '/push/',
+      })
+      .catch(console.error);
+  }
 
   ReactDOM.createRoot(root).render(
     <StrictMode>
@@ -67,6 +80,11 @@ async function bootstrap() {
           api_host: process.env.POSTHOG_HOST,
           defaults: '2026-05-30',
           autocapture: false,
+          loaded: (posthog) => {
+            if (shouldResetIdentity) {
+              posthog.reset();
+            }
+          },
         }}
       >
         <QueryClientProvider client={queryClient}>

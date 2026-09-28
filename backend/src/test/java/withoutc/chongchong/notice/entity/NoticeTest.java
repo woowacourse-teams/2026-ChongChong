@@ -36,10 +36,10 @@ class NoticeTest {
     }
 
     @Test
-    @DisplayName("공지 제목은 20자까지 허용하고 20자를 초과하면 거부한다")
+    @DisplayName("공지 제목은 100자까지 허용하고 100자를 초과하면 거부한다")
     void validateTitleLengthTest() {
-        String maxLengthTitle = "가".repeat(20);
-        String overLengthTitle = "가".repeat(21);
+        String maxLengthTitle = "가".repeat(100);
+        String overLengthTitle = "가".repeat(101);
 
         assertThatCode(() -> Notice.create(study, maxLengthTitle, "공지 내용"))
                 .doesNotThrowAnyException();
@@ -152,8 +152,8 @@ class NoticeTest {
     @DisplayName("공지 수정 시 제목과 내용의 최대 길이 경계를 검증한다")
     void updateWithLengthBoundaryTest() {
         LocalDateTime now = LocalDateTime.of(2026, 8, 20, 10, 0);
-        String maxLengthTitle = "가".repeat(20);
-        String overLengthTitle = "가".repeat(21);
+        String maxLengthTitle = "가".repeat(100);
+        String overLengthTitle = "가".repeat(101);
         String maxLengthContent = "가".repeat(10000);
         String overLengthContent = "가".repeat(10001);
         Notice notice = Notice.create(study, "기존 제목", "기존 내용");

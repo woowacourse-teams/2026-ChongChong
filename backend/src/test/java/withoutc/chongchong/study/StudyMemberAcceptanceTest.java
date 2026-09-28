@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -99,7 +100,7 @@ class StudyMemberAcceptanceTest {
     }
 
     @Test
-    @DisplayName("기존 과제가 있는 스터디에 가입해도 제출 정보를 생성하지 않는다")
+    @DisplayName("신규 가입자는 기존 과제를 미해당 상태로 조회하며 제출 정보는 생성되지 않는다")
     void joinStudyWithExistingAssignmentTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User user = userRepository.saveAndFlush(User.create("참여자", "user-profile-image-url"));
@@ -115,6 +116,7 @@ class StudyMemberAcceptanceTest {
                         "기존 과제",
                         "과제 내용",
                         "링크 제출",
+                        SubmissionTarget.MEMBERS_ONLY,
                         now.plusDays(1),
                         now
                 )
@@ -137,7 +139,9 @@ class StudyMemberAcceptanceTest {
                 .get("/studies/{studyId}/assignments", study.getId())
                 .then()
                 .statusCode(200)
-                .body("assignments", hasSize(0));
+                .body("assignments", hasSize(1))
+                .body("assignments[0].id", equalTo(assignment.getId().intValue()))
+                .body("assignments[0].submissionStatus", equalTo("NOT_ASSIGNED"));
 
         StudyMember joinedMember = studyMemberRepository
                 .getByStudyIdAndUserIdOrThrow(study.getId(), user.getId());

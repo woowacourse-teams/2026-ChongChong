@@ -1,0 +1,35 @@
+WebPushSubscriptionRegisterRequest:
+  type: object
+  additionalProperties: false
+  required: [installationId, endpoint, keys]
+  properties:
+    installationId: { description: "브라우저 프로필을 식별하는 클라이언트 생성 설치 식별자.", type: string, minLength: 1, maxLength: 255, example: 4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1 }
+    endpoint: { description: "브라우저가 발급한 Web Push endpoint.", type: string, format: uri, minLength: 1, example: 'https://push.example.com/subscription' }
+    keys:
+      $ref: '#/WebPushSubscriptionKeys'
+
+WebPushSubscriptionKeys:
+  type: object
+  additionalProperties: false
+  required: [p256dh, auth]
+  properties:
+    p256dh: { description: "Web Push 메시지 암호화에 사용하는 브라우저 공개 키.", type: string, minLength: 1, example: p256dh-key }
+    auth: { description: "Web Push 구독 인증 secret.", type: string, minLength: 1, example: auth-secret }
+
+WebPushSubscriptionRegisterResponse:
+  type: object
+  additionalProperties: false
+  required: [subscriptionId]
+  properties:
+    subscriptionId: { description: "등록된 Web Push 구독 식별자.", type: integer, format: int64, example: 1 }
+
+WebPushConfigResponse:
+  type: object
+  additionalProperties: false
+  required: [publicKey]
+  properties:
+    publicKey:
+      description: "브라우저 PushSubscription 생성에 사용하는 VAPID 공개 키."
+      type: string
+      minLength: 1
+      example: BEl62iUYgUivxIkv69yViEuiBIa40HI2z6pJm8m0Qm3...

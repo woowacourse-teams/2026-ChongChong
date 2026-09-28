@@ -35,6 +35,8 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
@@ -45,6 +47,7 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterS
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
@@ -74,6 +77,9 @@ class AssignmentServiceTest {
     private StudyRepository studyRepository;
 
     @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private AssignmentAccessPolicy assignmentAccessPolicy;
 
     private AssignmentService assignmentService;
@@ -87,6 +93,7 @@ class AssignmentServiceTest {
                 assignmentSubmissionRepository,
                 studyMemberRepository,
                 studyRepository,
+                notificationService,
                 clock,
                 assignmentAccessPolicy
         );
@@ -101,7 +108,7 @@ class AssignmentServiceTest {
         LocalDateTime closeAt = NOW.plusDays(7);
         LocalDateTime remindAt = NOW.plusDays(1);
         AssignmentCreateRequest request = new AssignmentCreateRequest(
-                "과제 제목", "과제 내용", "링크 제출", closeAt, List.of(remindAt)
+                "과제 제목", "과제 내용", "링크 제출", SubmissionTarget.MEMBERS_ONLY, closeAt, List.of(remindAt)
         );
         ArgumentCaptor<Assignment> assignmentCaptor = ArgumentCaptor.forClass(Assignment.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
@@ -126,6 +133,7 @@ class AssignmentServiceTest {
         assertThat(assignment.getSubmissions()).singleElement()
                 .satisfies(submission -> assertThat(submission.getMember()).isSameAs(member));
         assertThat(assignment.getNextRemindAt()).isEqualTo(remindAt);
+        verify(notificationService).createAssignmentCreatedEventNotifications(assignment, List.of(member), USER_ID);
     }
 
     @Test
@@ -133,7 +141,7 @@ class AssignmentServiceTest {
     void rejectCreateWhenPolicyDeniesTest() {
         StudyMember member = mock(StudyMember.class);
         AssignmentCreateRequest request = new AssignmentCreateRequest(
-                "과제 제목", "과제 내용", "링크 제출", NOW.plusDays(1), List.of()
+                "과제 제목", "과제 내용", "링크 제출", SubmissionTarget.MEMBERS_ONLY, NOW.plusDays(1), List.of()
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
@@ -149,7 +157,7 @@ class AssignmentServiceTest {
     @DisplayName("과제 수정 정책이 거부하면 과제를 조회하거나 수정하지 않는다")
     void rejectUpdateWhenPolicyDeniesTest() {
         StudyMember member = mock(StudyMember.class);
-        AssignmentUpdateRequest request = new AssignmentUpdateRequest("수정 제목", null, null, null, null);
+        AssignmentUpdateRequest request = new AssignmentUpdateRequest("수정 제목", null, null, null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
                 .when(assignmentAccessPolicy).requireCanUpdateAssignment(member);
@@ -181,7 +189,7 @@ class AssignmentServiceTest {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         LocalDateTime closeAt = NOW.plusDays(10);
         AssignmentUpdateRequest request = new AssignmentUpdateRequest(
-                "수정 제목", "수정 내용", "파일 제출", closeAt, List.of(NOW.plusDays(2))
+                "수정 제목", "수정 내용", "파일 제출", null, closeAt, List.of(NOW.plusDays(2))
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
@@ -201,7 +209,7 @@ class AssignmentServiceTest {
     @DisplayName("요청한 스터디에서 과제를 찾지 못하면 수정할 수 없다")
     void updateWhenAssignmentNotFoundInStudyTest() {
         StudyMember leader = mock(StudyMember.class);
-        AssignmentUpdateRequest request = new AssignmentUpdateRequest("수정 제목", null, null, null, null);
+        AssignmentUpdateRequest request = new AssignmentUpdateRequest("수정 제목", null, null, null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID))
                 .thenThrow(new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
@@ -303,7 +311,8 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().completeCount()).isEqualTo(2);
         assertThat(response.assignments().getFirst().isComplete()).isFalse();
         assertThat(response.assignments().getLast().isComplete()).isTrue();
-        verifyNoInteractions(assignmentSubmissionRepository);
+        verify(assignmentSubmissionRepository).findMySubmissionStatusesByAssignmentIdsAndMemberId(
+                List.of(300L, 200L), leader.getId());
     }
 
     @Test
@@ -313,8 +322,8 @@ class AssignmentServiceTest {
         assignment.addReminders(List.of(NOW.plusDays(1)), NOW);
         StudyMember leader = mock(StudyMember.class);
         List<AssignmentSubmitterStatusProjection> statuses = List.of(
-                new AssignmentSubmitterStatusProjection(MEMBER_ID, "완료자", "complete.png", true, null),
-                new AssignmentSubmitterStatusProjection(22L, "미완료자", "incomplete.png", false,
+                new AssignmentSubmitterStatusProjection(MEMBER_ID, "완료자", "complete.png", true, NOW, null),
+                new AssignmentSubmitterStatusProjection(22L, "미완료자", "incomplete.png", false, null,
                         NOW.minusHours(1))
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
@@ -330,6 +339,8 @@ class AssignmentServiceTest {
         assertThat(response.incompleteCount()).isEqualTo(1);
         assertThat(response.completeMembers()).extracting(AssignmentSubmissionStatusResponse.CompleteMember::id)
                 .containsExactly(MEMBER_ID);
+        assertThat(response.completeMembers()).singleElement()
+                .satisfies(member -> assertThat(member.submittedAt()).isEqualTo(NOW));
         assertThat(response.incompleteMembers()).singleElement()
                 .satisfies(member -> assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1)));
         verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(leader);
@@ -363,8 +374,8 @@ class AssignmentServiceTest {
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(assignmentRepository.findByCursorAndMemberId(
-                STUDY_ID, MEMBER_ID, null, PageRequest.of(0, 11)
+        when(assignmentRepository.findByCursor(
+                STUDY_ID, null, PageRequest.of(0, 11)
         ))
                 .thenReturn(List.of(firstAssignment, secondAssignment));
         when(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
@@ -379,21 +390,20 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().memberCount()).isNull();
         assertThat(response.assignments().getFirst().completeCount()).isNull();
         assertThat(response.assignments().getFirst().remindAt()).isNull();
-        assertThat(response.assignments().getFirst().isComplete()).isTrue();
-        assertThat(response.assignments().getLast().isComplete()).isFalse();
+        assertThat(response.assignments().getFirst().submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertThat(response.assignments().getLast().submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         verify(assignmentSubmissionRepository).findMySubmissionStatusesByAssignmentIdsAndMemberId(
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
         );
     }
 
     @Test
-    @DisplayName("스터디원의 제출 정보가 없는 과제는 목록에서 제외한다")
-    void getListWithoutSubmissionTest() {
+    @DisplayName("과제가 없으면 빈 목록을 반환한다")
+    void getEmptyListTest() {
         StudyMember member = mock(StudyMember.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(member.getId()).thenReturn(MEMBER_ID);
-        when(assignmentRepository.findByCursorAndMemberId(
-                STUDY_ID, MEMBER_ID, null, PageRequest.of(0, 11)
+        when(assignmentRepository.findByCursor(
+                STUDY_ID, null, PageRequest.of(0, 11)
         )).thenReturn(List.of());
 
         AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10);

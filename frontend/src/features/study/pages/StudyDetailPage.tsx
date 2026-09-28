@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import studyQueries from '../queries';
 import Main from '../../../shared/ui/Main';
 import BottomTab from '../../../shared/widgets/BottomTab';
@@ -12,6 +13,7 @@ import {
   MemberStudyDetailContent,
 } from '../components/StudyDetailContent';
 import ErrorContent from '../../../shared/ui/ErrorContent';
+import { usePostHog } from '@posthog/react';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
 
@@ -39,9 +41,17 @@ export default function StudyDetailPage() {
 
 StudyDetailPage.Content = function Content() {
   const { studyId } = useIntegerParam(['studyId']);
+  const posthog = usePostHog();
   const {
     data: { studyName, role, userName },
   } = useSuspenseQuery(studyQueries.info(studyId));
+
+  useEffect(() => {
+    posthog.capture('study_detail_viewed', {
+      study_id: studyId,
+      study_role: role,
+    });
+  }, [posthog, studyId, role]);
 
   return (
     <>

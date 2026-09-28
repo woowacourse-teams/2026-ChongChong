@@ -13,6 +13,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 소셜 로그인 | `POST /api/auth/login` | [paths/auth/login.yaml](paths/auth/login.yaml) |
 | 액세스 토큰 갱신 | `POST /api/auth/refresh` | [paths/auth/refresh.yaml](paths/auth/refresh.yaml) |
 | 로그아웃 | `POST /api/auth/logout` | [paths/auth/logout.yaml](paths/auth/logout.yaml) |
+| 사용자 탈퇴 | `DELETE /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
 | 스터디 생성 | `POST /api/studies` | [paths/studies/collection.yaml](paths/studies/collection.yaml) |
 | 스터디 상세 조회 | `GET /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
 | 스터디 수정 | `PATCH /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
@@ -43,8 +44,11 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 내 과제 제출 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my` | [paths/assignment-submissions/my-submission.yaml](paths/assignment-submissions/my-submission.yaml) |
 | 과제 제출 상세 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
 | 과제 제출 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
-| 푸시 토큰 등록 | `POST /api/push-tokens` | [paths/push-tokens/collection.yaml](paths/push-tokens/collection.yaml) |
-| 푸시 토큰 비활성화 | `DELETE /api/push-tokens/{installationId}` | [paths/push-tokens/detail.yaml](paths/push-tokens/detail.yaml) |
+| Web Push VAPID 공개키 조회 | `GET /api/web-push/config` | [paths/web-push/config.yaml](paths/web-push/config.yaml) |
+| Web Push 구독 등록 | `POST /api/web-push-subscriptions` | [paths/web-push-subscriptions/collection.yaml](paths/web-push-subscriptions/collection.yaml) |
+| Web Push 구독 비활성화 | `DELETE /api/web-push-subscriptions/{subscriptionId}` | [paths/web-push-subscriptions/detail.yaml](paths/web-push-subscriptions/detail.yaml) |
+| 내 알림 목록 조회 | `GET /api/notifications` | [paths/notifications/collection.yaml](paths/notifications/collection.yaml) |
+| 알림 읽음 처리 | `PATCH /api/notifications/{notificationId}` | [paths/notifications/detail.yaml](paths/notifications/detail.yaml) |
 
 ## 공통 정의 수정 위치
 
@@ -53,7 +57,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 - [공통 오류 응답](components/responses.yaml): 상태별 오류 조합과 예시
 - [오류 스키마](components/schemas/errors.yaml): 오류 코드·메시지·필드 오류 구조
 - [공통 타입](components/schemas/common.yaml): 서버 날짜·시간
-- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [푸시 토큰](components/schemas/push-tokens.yaml)
+- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [Web Push](components/schemas/web-push-subscriptions.yaml), [알림](components/schemas/notifications.yaml)
 
 공통 정의를 바꾸면 이를 참조하는 여러 API에 적용된다. 특정 API만 달라져야 한다면 해당 API에 맞는 정의를 분리한다.
 `$ref` 경로는 작성 중인 파일 기준 상대경로이며, 아래 검증 명령으로 참조가 정상인지 확인한다.
@@ -97,9 +101,7 @@ required status check로 추가해야 한다. 이 설정은 워크플로 YAML만
 
 CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 endpoint와 명세 operation 집합, 기존 인수 테스트가
 호출한 정상 요청과 성공 응답의 스키마 일치를 검사한다. 잘못된 요청을 의도하는 실패 시나리오에서는 요청 스키마 검증을 생략하고 실제 오류 응답을 검증한다.
-OpenAPI의 표준 nullable JSON과 달리 실제 빈 본문을 반환하는 경우는 `getMySubmissionDetail`의 200 응답만 예외로 둔다.
-해당 response 객체의 `x-allow-empty-body: true`는 리더 응답의 본문 없음을 명시하며, 멤버가 미제출이면 `submitted=false` DTO를
-반환한다. 계약 검증은 이 응답의 본문 누락만 허용하고 요청 및 나머지 응답 검증은 그대로 수행한다.
+내 제출 조회는 제출 대상이 아니어도 `submissionStatus: NOT_ASSIGNED`를 포함한 JSON 객체를 반환하며 빈 본문을 허용하지 않는다.
 개별 `./gradlew test --tests ...` 실행은 빠른 개발 확인용이며 전체 operation coverage 게이트를 생략한다. PR과 배포 전에는
 반드시 전체 `./gradlew test`를 실행한다.
 따라서 명세의 설명 문장만으로 서버 시간 기록, 권한 판단, 저장 동작 같은 업무 의미가 자동으로 증명되지는 않는다.
@@ -141,8 +143,11 @@ post:
 
 상태는 자동 동기화되지 않는다. 작업 변경 시 명세도 갱신하고, 완료 표시는 병합·검증 결과를 확인한 뒤 반영한다.
 작업이 막혀도 현재 상태를 유지하고 `description`에 원인과 필요한 조치를 적는다.
-기존 전체 operation 매핑·HTTP 호출 검증은 상태와 관계없이 유지한다. 미구현 API를 명세에 추가하면 현재 계약 검증은
-실패하므로, 기획 단계의 API는 이슈에서 관리하고 구현과 함께 명세에 추가한다.
+미구현 API도 `status: todo` 또는 `status: in-progress`로 명세에 먼저 추가할 수 있다. 두 상태는 Controller 매핑과 성공 HTTP 호출을
+필수로 요구하지 않는다. 문서 형식·메타데이터 검증은 그대로 수행하며, 실제 호출된 요청·응답은 상태와 관계없이
+명세와 비교한다. 명세에 없는 Controller는 계속 검증 실패로 처리한다.
+`review`, `done`, `null` 및 상태 미지정 API는 기존처럼 구현과 성공 HTTP 호출이 필요하다.
+착수 전에는 `todo`, 구현 중에는 `in-progress`를 사용하고, 구현·테스트가 준비되면 `review`로 변경한다.
 
 ### 2026-09-09 초기 현황 입력 근거
 
@@ -167,10 +172,11 @@ post:
 
 후속 작업은 [공지 책임 분리 #256](https://github.com/woowacourse-teams/2026-ChongChong/issues/256),
 [전체 초대 링크 요청 #274](https://github.com/woowacourse-teams/2026-ChongChong/issues/274),
-[이미지·제출 형식 #275](https://github.com/woowacourse-teams/2026-ChongChong/issues/275),
-[리드 제출 #276](https://github.com/woowacourse-teams/2026-ChongChong/issues/276),
-[신규 멤버 노출 #277](https://github.com/woowacourse-teams/2026-ChongChong/issues/277),
+[공지 이미지 #275](https://github.com/woowacourse-teams/2026-ChongChong/issues/275),
+[과제 첨부·제출 형식 #296](https://github.com/woowacourse-teams/2026-ChongChong/issues/296),
 [제출물 공개 #278](https://github.com/woowacourse-teams/2026-ChongChong/issues/278)를 확인했다.
+
+리더 제출 지원(#276)과 신규 멤버의 이전 공지·과제 열람(#277)은 구현 완료되어 현재 동작 설명에 반영한다.
 
 ### API 설명과 개발 설명의 구분
 
@@ -206,3 +212,5 @@ API 이름을 선택하면 `operationId`에 해당하는 상세 문서로 이동
 JavaScript를 사용할 수 없어도 전체 API 표와 상세 링크는 제공된다.
 
 보드는 생성 시점의 명세 정보를 보여준다. 기존 배포 설정에서는 API 문서와 보드가 함께 공개될 수 있다.
+
+프론트 반영 안내는 각 operation의 `x-frontend.description`에 작성한다. 기존 연동 수정, 기능 연동 추가, 신규 앱 연동을 구분하며 관련 이슈가 확인된 경우에만 선택 필드 `issue`를 지정한다. 태그는 자동 동기화되지 않으므로 연동 완료 시 안내를 갱신한다.

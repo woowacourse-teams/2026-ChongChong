@@ -1,17 +1,17 @@
 import { useId } from 'react';
 import type { CSSProperties } from 'react';
-import assignmentIcon from '../../../shared/assets/assign.svg';
-import assignmentGreenIcon from '../../../shared/assets/assign-green.svg';
-import homeIcon from '../../../shared/assets/home.svg';
-import homeGreenIcon from '../../../shared/assets/home-green.svg';
+import assignmentIcon from '../../../shared/assets/assign.webp';
+import assignmentGreenIcon from '../../../shared/assets/assign-green.webp';
+import homeIcon from '../../../shared/assets/home.webp';
+import homeGreenIcon from '../../../shared/assets/home-green.webp';
 import leftArrowIcon from '../../../shared/assets/left-arrow.svg';
-import noticeIcon from '../../../shared/assets/notice.svg';
-import noticeGreenIcon from '../../../shared/assets/notice-green.svg';
-import userIcon from '../../../shared/assets/user.svg';
-import userGreenIcon from '../../../shared/assets/user-green.svg';
+import noticeIcon from '../../../shared/assets/notice.webp';
+import noticeGreenIcon from '../../../shared/assets/notice-green.webp';
+import userIcon from '../../../shared/assets/user.webp';
+import userGreenIcon from '../../../shared/assets/user-green.webp';
 import studyArt from '../../../shared/assets/icons/header-icon.svg';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
+import { Field } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import TextArea from '../../../shared/ui/inputs/TextArea';
 import List from '../../../shared/ui/List';
@@ -20,6 +20,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
 import { InviteLinkBox } from '../../member/components/InviteStudyLinkBox';
 import MemberRow from '../../member/components/MemberRow';
@@ -38,6 +39,7 @@ const assignment = {
   content: '인상 깊었던 문장과 나의 생각을 정리해주세요.',
   submissionMethod: '독서 노트 링크를 제출해주세요',
   closeAt: '2026-09-09T20:00:00',
+  submissionTarget: 'MEMBERS_AND_LEADER' as const,
 };
 const noticeTitle = '이번 주 모임 장소 안내';
 const formStyle = {
@@ -56,12 +58,13 @@ const submissionStatus = {
   memberCount: 4,
   completeCount: 3,
   incompleteCount: 1,
+  remindAt: null,
   completeMembers: ['서연', '민준', '하은'].map((name, index) => ({
     id: index + 1,
     name,
     profileImage: null,
   })),
-  incompleteMembers: [{ id: 4, name: '지우', profileImage: null }],
+  incompleteMembers: [{ id: 4, name: '지우', profileImage: null, lastRemindAt: null }],
 };
 
 function ScreenHeader({
@@ -134,25 +137,22 @@ function StudyScreen() {
           <img src={studyArt} alt="" width={70} height={70} />
         </div>
         <div css={{ ...formStyle, flex: 'initial' }}>
-          <Field
-            id={id + '-name'}
-            isRequired
-            label="스터디 이름"
-            helpText="스터디원에게 그대로 보여요"
-          >
+          <Field>
+            <Field.Label htmlFor={id + '-name'} isRequired>
+              스터디 이름
+            </Field.Label>
             <Input id={id + '-name'} value={studyName} readOnly maxLength={15} />
+            <Field.SubText helpText="스터디원에게 그대로 보여요" />
           </Field>
-          <Field
-            id={id + '-description'}
-            label="어떤 스터디인가요?"
-            helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요"
-          >
+          <Field>
+            <Field.Label htmlFor={id + '-description'}>어떤 스터디인가요?</Field.Label>
             <TextArea
               id={id + '-description'}
               value="매주 수요일 저녁 8시, 함께 읽고 생각을 나눠요."
               readOnly
               maxLength={30}
             />
+            <Field.SubText helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요" />
           </Field>
           <Button variant="brandSolid" size="large" css={{ marginTop: tokens.spacing[1] }}>
             스터디 만들기
@@ -206,16 +206,28 @@ function AssignmentScreen() {
       <ScreenHeader title="과제" />
       <Main>
         <div css={formStyle}>
-          <Field id={id + '-title'} label="제목" isRequired>
+          <Field>
+            <Field.Label htmlFor={id + '-title'} isRequired>
+              제목
+            </Field.Label>
             <Input id={id + '-title'} value={assignment.title} readOnly maxLength={20} />
           </Field>
-          <Field id={id + '-content'} label="내용" isRequired>
+          <Field>
+            <Field.Label htmlFor={id + '-content'} isRequired>
+              내용
+            </Field.Label>
             <TextArea id={id + '-content'} value={assignment.content} readOnly maxLength={10000} />
           </Field>
-          <Field id={id + '-method'} label="제출 방법" isRequired>
+          <Field>
+            <Field.Label htmlFor={id + '-method'} isRequired>
+              제출 방법
+            </Field.Label>
             <Input id={id + '-method'} value={assignment.submissionMethod} readOnly />
           </Field>
-          <Field id={id + '-close'} label="마감 시각" isRequired>
+          <Field>
+            <Field.Label htmlFor={id + '-close'} isRequired>
+              마감 시각
+            </Field.Label>
             <Button id={id + '-close'} variant="neutralOutline" size="large">
               {formatDateToString(assignment.closeAt)}
             </Button>
@@ -238,15 +250,16 @@ function NoticeScreen() {
       <ScreenHeader title="공지" />
       <Main>
         <div css={formStyle}>
-          <Field id={id + '-title'} label="제목" isRequired>
+          <Field>
+            <Field.Label htmlFor={id + '-title'} isRequired>
+              제목
+            </Field.Label>
             <Input id={id + '-title'} value={noticeTitle} readOnly maxLength={20} />
           </Field>
-          <Field
-            id={id + '-content'}
-            label="내용"
-            isRequired
-            helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
-          >
+          <Field>
+            <Field.Label htmlFor={id + '-content'} isRequired>
+              내용
+            </Field.Label>
             <TextArea
               id={id + '-content'}
               value={
@@ -256,6 +269,7 @@ function NoticeScreen() {
               rows={5}
               maxLength={10000}
             />
+            <Field.SubText helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요" />
           </Field>
           <Button variant="brandSolid" size="large" css={{ marginTop: tokens.spacing[8] }}>
             공지 올리기
@@ -334,6 +348,11 @@ function SubmissionScreen() {
     <>
       <ScreenHeader title="과제" />
       <Main>
+        <ContentDetailHeader
+          title={assignment.title}
+          dateTime={assignment.closeAt}
+          meta={`${formatDateToString(assignment.closeAt)} 마감`}
+        />
         <PreviewSubmitStatusCard status={submissionStatus} />
         <AssignmentArticle assignment={assignment} />
       </Main>

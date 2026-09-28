@@ -1,0 +1,52 @@
+get:
+  tags: [User]
+  operationId: getMyProfile
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      #363 홈 마이페이지에서 사용할 현재 사용자의 기본 프로필을 조회한다.
+  summary: 내 프로필 조회
+  description: |
+    인증된 사용자의 홈 프로필 이름과 프로필 이미지 URL을 조회한다.
+    프로필 이미지를 등록하지 않은 경우 profileImageUrl은 null이다.
+    홈 프로필은 소셜 최초 로그인 시 공급자 프로필로 생성하며, 재로그인 시 기존 값을 덮어쓰지 않는다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 내 프로필 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/users.yaml#/UserProfileResponse' }
+          example: { name: 바니, profileImageUrl: 'https://cdn.example.com/profiles/uuid.webp' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+
+delete:
+  tags: [User]
+  operationId: withdrawUser
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      #340 사용자 탈퇴 API. 사용자 행 잠금과 리더 멤버십 검사를 거쳐 계정 및 종속 데이터를 삭제한다.
+  summary: 사용자 탈퇴
+  description: |
+    홈 마이페이지에서 현재 로그인한 사용자의 계정을 탈퇴 처리한다. 요청 본문은 없다.
+    사용자 행을 잠금 조회한 뒤 리더인 현재 스터디가 있는지 확인한다. 하나라도 있으면
+    아무 데이터도 삭제하지 않고 409를 반환한다. 현재 리더 위임 API가 없으므로
+    리더는 해당 스터디를 먼저 삭제한 뒤 탈퇴해야 한다.
+    탈퇴가 허용되면 하나의 트랜잭션에서 사용자 행을 삭제한다. 데이터베이스 외래 키의
+    연쇄 삭제로 인증 세션, 소셜 계정, 푸시 토큰, 스터디 멤버십과 멤버십에 종속된
+    제출물, 공지 수신 상태 및 알림도 함께 삭제된다.
+    성공 응답에서는 브라우저의 Refresh Token 쿠키를 즉시 만료시킨다. 인증 실패, 사용자 부재,
+    리더 스터디 존재로 탈퇴가 완료되지 않은 경우에는 Refresh Token 쿠키를 변경하지 않는다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '204':
+      description: 사용자 탈퇴 성공. 응답 본문 없음.
+      headers:
+        Set-Cookie: { description: 즉시 만료된 Refresh Token 쿠키, schema: { type: string } }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+    '409': { $ref: '../../components/responses.yaml#/StudyLeaderWithdrawalBlocked' }
