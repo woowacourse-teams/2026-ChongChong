@@ -30,7 +30,7 @@ CloudWatch Logs로 수집한다. CloudWatch Logs Insights를 로그 검색과 �
 - Web Push 전달 로그는 `NotificationDeliveryLogger`로 모은다. 구독 만료(404·410)는 `INFO`, 재시도가 예약된
   429·5xx는 `WARN`, 재시도 소진과 영구 실패는 `ERROR`로 기록한다.
 - Web Push provider의 응답 본문과 민감할 수 있는 응답 값은 기록하지 않는다.
-- `APP_ENV`로 `dev`와 `prod`를 구분하고, CloudWatch 로그 그룹은 `/chongchong/{environment}/backend` 형식으로
+- `CLOUD_WATCH_APP_ENV`로 `dev`와 `prod`를 구분하고, CloudWatch 로그 그룹은 `/chongchong/{environment}/backend` 형식으로
   분리한다.
 - CloudWatch Logs 리전은 EC2·CodeDeploy 리전과 다를 수 있으므로 `AWS_REGION`과
   `CLOUD_WATCH_AWS_REGION`을 별도 설정값으로 관리한다.
