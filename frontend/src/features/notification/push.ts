@@ -5,6 +5,18 @@ import {
 } from './api';
 import { clearLocalPushSubscription, PUSH_SUBSCRIPTION_ID_KEY } from './localPush';
 
+function getOrCreateInstallationId() {
+  const key = 'installationId';
+  let id = localStorage.getItem(key);
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+
+  return id;
+}
+
 export async function enablePush() {
   if (
     !('Notification' in window) ||
@@ -47,7 +59,8 @@ export async function enablePush() {
     }
 
     const subscriptionId = await registerWebPushSubscription({
-      endpoint,
+      installationId: getOrCreateInstallationId(),
+      endpoint: endpoint,
       keys: {
         p256dh: keys.p256dh,
         auth: keys.auth,
