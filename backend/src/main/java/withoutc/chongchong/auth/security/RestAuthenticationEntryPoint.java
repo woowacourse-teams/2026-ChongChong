@@ -11,6 +11,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.global.exception.response.ErrorResponse;
+import withoutc.chongchong.global.logging.RequestLoggingContext;
 
 public final class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
@@ -27,6 +28,7 @@ public final class RestAuthenticationEntryPoint implements AuthenticationEntryPo
             AuthenticationException authenticationException
     ) throws IOException {
         AuthErrorCode errorCode = AuthErrorCode.AUTHENTICATION_REQUIRED;
+        RequestLoggingContext.recordErrorCode(request, errorCode);
 
         response.setStatus(errorCode.getHttpStatus().value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

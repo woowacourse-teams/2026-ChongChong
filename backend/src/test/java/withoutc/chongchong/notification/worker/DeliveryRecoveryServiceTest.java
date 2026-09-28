@@ -20,6 +20,7 @@ import withoutc.chongchong.notification.entity.DeliveryStatus;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
+import withoutc.chongchong.notification.logging.NotificationDeliveryLogger;
 import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +35,9 @@ class DeliveryRecoveryServiceTest {
     @Mock
     private NotificationDeliveryRepository notificationDeliveryRepository;
 
+    @Mock
+    private NotificationDeliveryLogger notificationDeliveryLogger;
+
     private DeliveryRecoveryService deliveryRecoveryService;
 
     @BeforeEach
@@ -41,7 +45,8 @@ class DeliveryRecoveryServiceTest {
         deliveryRecoveryService = new DeliveryRecoveryService(
                 notificationDeliveryRepository,
                 CLOCK,
-                5 * 60 * 1000L
+                5 * 60 * 1000L,
+                notificationDeliveryLogger
         );
     }
 

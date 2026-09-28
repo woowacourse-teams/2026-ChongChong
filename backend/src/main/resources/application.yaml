@@ -20,6 +20,22 @@ spring:
     baseline-version: '1'
     clean-disabled: true
 
+app:
+  environment: ${APP_ENV:local}
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      rename:
+        "[@timestamp]": timestamp
+      exclude:
+        - "@version"
+        - logger_name
+        - thread_name
+        - level_value
+
 jwt:
   study-invite-secret: ${STUDY_INVITE_JWT_SECRET}
 
