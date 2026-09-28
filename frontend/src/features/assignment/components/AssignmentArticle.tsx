@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import assignmentIcon from '../../../shared/assets/assign-green.svg';
+import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import { tokens } from '../../../styles/global';
 import type { AssignmentDetail } from '../types';
 import InfoCard from './InfoCard';

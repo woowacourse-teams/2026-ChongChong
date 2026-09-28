@@ -1,7 +1,7 @@
 import { CSSProperties } from 'react';
 import { CSSObject } from '@emotion/react';
 import reminderIcon from '../../../shared/assets/remind.svg';
-import notificationIcon from '../../../shared/assets/notice-green.svg';
+import notificationIcon from '../../../shared/assets/notice-green.webp';
 import { Notification } from '../types';
 import { typography, tokens } from '../../../styles/global';
 import { formatRelativeTime } from '../../../shared/utils/formatDate';
