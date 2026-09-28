@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import appleMark from './assets/apple-mark.svg';
+import { useEffect, useState } from 'react';
 import chongchongLogo from './assets/chongchong-logo.png';
-import googlePlayMark from './assets/google-play-mark.svg';
 import FeatureCarousel from './components/FeatureCarousel';
+import InstallAppButton from './components/InstallAppButton';
 import { TRANSITION_DURATION, useFeaturePreview } from './useFeaturePreview';
 import { previewFeatures } from './previewFeatures';
 import { usePostHog } from '@posthog/react';
@@ -10,14 +9,11 @@ import { Link } from 'react-router';
 
 const pretendardFont = new URL('./assets/PretendardVariable.woff2', import.meta.url).href;
 const doHyeonFont = new URL('./assets/DoHyeon-Regular.ttf', import.meta.url).href;
-type StoreName = 'App Store' | 'Google Play';
 
 // BrowserRouter / RouterProvider는 기존 프로젝트의 설정을 그대로 사용합니다.
 export default function App() {
-  const [activeStore, setActiveStore] = useState<StoreName | null>(null);
-  const preview = useFeaturePreview({ suspended: activeStore !== null });
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [installationActive, setInstallationActive] = useState(false);
+  const preview = useFeaturePreview({ suspended: installationActive });
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -27,42 +23,12 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (activeStore && !dialog.open) dialog.showModal();
-    else if (!activeStore && dialog.open) dialog.close();
-  }, [activeStore]);
-
-  const closeDialog = () => dialogRef.current?.close();
-
   const posthog = usePostHog();
 
   const handleClickWeb = () => {
     posthog?.capture('web_button_clicked', {
       location: 'landing_page',
     });
-  };
-
-  const openStoreDialog = (event: MouseEvent<HTMLButtonElement>, store: StoreName) => {
-    triggerRef.current = event.currentTarget;
-    setActiveStore(store);
-  };
-
-  const handleClickAndroid = (event: MouseEvent<HTMLButtonElement>) => {
-    posthog?.capture('android_button_clicked', {
-      location: 'landing_page',
-    });
-
-    openStoreDialog(event, 'Google Play');
-  };
-
-  const handleClickIos = (event: MouseEvent<HTMLButtonElement>) => {
-    posthog?.capture('ios_button_clicked', {
-      location: 'landing_page',
-    });
-
-    openStoreDialog(event, 'App Store');
   };
 
   return (
@@ -122,89 +88,13 @@ export default function App() {
                 </span>
               </Link>
 
-              <button
-                className="cc-destination cc-store-button"
-                data-store="App Store"
-                type="button"
-                aria-haspopup="dialog"
-                aria-controls="cc-release-dialog"
-                onClick={handleClickIos}
-              >
-                <span className="cc-store-mark" aria-hidden="true">
-                  <img src={appleMark} alt="" width={24} height={24} />
-                </span>
-                <span className="cc-destination-copy">
-                  <span className="cc-destination-name">App Store</span>
-                </span>
-              </button>
-
-              <button
-                className="cc-destination cc-store-button"
-                data-store="Google Play"
-                type="button"
-                aria-haspopup="dialog"
-                aria-controls="cc-release-dialog"
-                onClick={handleClickAndroid}
-              >
-                <span className="cc-store-mark" aria-hidden="true">
-                  <img src={googlePlayMark} alt="" width={24} height={24} />
-                </span>
-                <span className="cc-destination-copy">
-                  <span className="cc-destination-name">Google Play</span>
-                </span>
-              </button>
+              <InstallAppButton onActiveChange={setInstallationActive} />
             </div>
           </section>
 
           <FeatureCarousel preview={preview} />
         </main>
       </div>
-
-      <dialog
-        ref={dialogRef}
-        className="cc-release-dialog"
-        id="cc-release-dialog"
-        aria-labelledby="cc-release-dialog-title"
-        aria-describedby="cc-release-dialog-description"
-        onClose={() => {
-          setActiveStore(null);
-          if (triggerRef.current?.isConnected) triggerRef.current.focus();
-        }}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) closeDialog();
-        }}
-      >
-        <div className="cc-release-dialog-panel">
-          <button
-            className="cc-release-dialog-close"
-            type="button"
-            aria-label="준비 중 안내 닫기"
-            onClick={closeDialog}
-          >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="m7 7 10 10M17 7 7 17"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-          <span className="cc-release-dialog-bunny" aria-hidden="true">
-            <img src={chongchongLogo} alt="" width={232} height={256} />
-          </span>
-          <p className="cc-release-dialog-store">{activeStore ?? 'App Store'}</p>
-          <h2 id="cc-release-dialog-title">열심히 준비하고 있어요</h2>
-          <p className="cc-release-dialog-description" id="cc-release-dialog-description">
-            총총이가 마지막 점검 중이에요.
-            <br />
-            조금만 기다려 주세요.
-          </p>
-          <button className="cc-release-dialog-confirm" type="button" onClick={closeDialog}>
-            알겠어요
-          </button>
-        </div>
-      </dialog>
     </div>
   );
 }
@@ -366,8 +256,8 @@ const LANDING_STYLES = `
       text-align: start;
       -webkit-font-smoothing: antialiased;
     }
-    .cc-landing :where(.cc-brand, .cc-destination, .cc-feature-dot, .cc-release-dialog button) { font: inherit; }
-    .cc-landing :where(button.cc-destination, .cc-feature-dot, .cc-release-dialog button) { border: 0; padding: 0; background: none; }
+    .cc-landing :where(.cc-brand, .cc-destination, .cc-feature-dot, .cc-install-dialog button) { font: inherit; }
+    .cc-landing :where(button.cc-destination, .cc-feature-dot, .cc-install-dialog button) { border: 0; padding: 0; background: none; }
     .cc-landing :where(a.cc-brand, a.cc-destination) { color: inherit; text-decoration: none; }
     .cc-landing :where(a.cc-brand, a.cc-destination):hover { color: var(--ink); text-decoration: none; }
     .cc-sr-only {
@@ -478,7 +368,7 @@ const LANDING_STYLES = `
       display: grid;
       max-width: var(--actions-max-width);
       margin-top: var(--space-8);
-      grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, 1.18fr);
+      grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
       gap: var(--action-bar-gap);
     }
     .cc-destination {
@@ -516,27 +406,7 @@ const LANDING_STYLES = `
       background: var(--surface-control);
     }
     .cc-destination--web:hover { background: var(--surface-control-hover); }
-    .cc-store-button {
-      color: var(--ink);
-      border-color: var(--line);
-      background: var(--surface-control);
-    }
-    .cc-store-button:hover { background: var(--surface-control-hover); }
-    .cc-store-button[data-store="App Store"] .cc-store-mark img { filter: none; }
-    .cc-store-button[data-store="Google Play"] {
-      color: var(--ink);
-      border-color: var(--line);
-      background: var(--surface-control);
-    }
-    .cc-store-button[data-store="Google Play"]:hover { background: var(--surface-control-hover); }
-    .cc-store-mark {
-      display: grid;
-      width: var(--control-icon-size);
-      height: var(--control-icon-size);
-      flex: 0 0 var(--control-icon-size);
-      place-items: center;
-    }
-    .cc-store-mark img { display: block; width: var(--control-icon-size); height: var(--control-icon-size); object-fit: contain; }
+    .cc-app-button:disabled { cursor: wait; opacity: .65; transform: none; }
     .cc-destination-icon { width: var(--control-icon-size); height: var(--control-icon-size); flex: 0 0 var(--control-icon-size); }
     .cc-destination-copy { display: grid; min-width: 0; }
     .cc-destination-name {
@@ -547,7 +417,7 @@ const LANDING_STYLES = `
       overflow-wrap: anywhere;
     }
 
-    .cc-release-dialog {
+    .cc-install-dialog {
       width: min(calc(100% - var(--space-8) * 2), var(--dialog-width));
       max-width: none;
       max-height: calc(100vh - 32px);
@@ -559,16 +429,16 @@ const LANDING_STYLES = `
       color: var(--ink);
       background: transparent;
     }
-    .cc-release-dialog::backdrop {
+    .cc-install-dialog::backdrop {
       background: var(--dialog-overlay);
       backdrop-filter: blur(var(--dialog-backdrop-blur));
       -webkit-backdrop-filter: blur(var(--dialog-backdrop-blur));
       animation: cc-dialog-backdrop-in 180ms ease-out both;
     }
-    .cc-release-dialog[open] .cc-release-dialog-panel {
+    .cc-install-dialog[open] .cc-install-dialog-panel {
       animation: cc-dialog-unfold var(--motion-dialog) both;
     }
-    .cc-release-dialog-panel {
+    .cc-install-dialog-panel {
       position: relative;
       overflow: hidden;
       padding: var(--dialog-padding-top) var(--space-8) var(--space-8);
@@ -578,7 +448,7 @@ const LANDING_STYLES = `
       box-shadow: var(--shadow-dialog);
       text-align: center;
     }
-    .cc-release-dialog-bunny {
+    .cc-install-dialog-bunny {
       display: grid;
       width: var(--dialog-bunny-box);
       height: var(--dialog-bunny-box);
@@ -587,32 +457,42 @@ const LANDING_STYLES = `
       border-radius: var(--dialog-bunny-radius);
       background: var(--surface-soft);
     }
-    .cc-release-dialog-bunny img {
+    .cc-install-dialog-bunny img {
       width: var(--dialog-bunny-width);
       height: var(--dialog-bunny-height);
       object-fit: contain;
       animation: cc-dialog-bunny-hop 700ms cubic-bezier(.16, 1, .3, 1) 120ms both;
     }
-    .cc-release-dialog-store {
+    .cc-install-dialog-label {
       margin: 0 0 var(--space-2);
       color: var(--brand-deep);
       font-size: var(--font-label);
       font-weight: 800;
     }
-    .cc-release-dialog h2 {
+    .cc-install-dialog h2 {
       margin: 0;
       font-size: var(--dialog-title-size);
       line-height: 1.15;
       text-wrap: balance;
     }
-    .cc-release-dialog-description {
+    .cc-install-dialog-description {
       margin: var(--space-3) 0 0;
       color: var(--muted);
       font-size: var(--dialog-body-size);
       line-height: 1.55;
       word-break: keep-all;
     }
-    .cc-release-dialog-confirm {
+    .cc-install-steps {
+      margin: var(--space-5) 0 0;
+      padding-left: var(--space-6);
+      color: var(--ink);
+      font-size: var(--dialog-body-size);
+      line-height: 1.65;
+      text-align: left;
+      word-break: keep-all;
+    }
+    .cc-install-steps li + li { margin-top: var(--space-3); }
+    .cc-install-dialog-confirm {
       width: 100%;
       min-height: var(--dialog-confirm-height);
       margin-top: var(--space-6);
@@ -623,9 +503,9 @@ const LANDING_STYLES = `
       cursor: pointer;
       transition: transform var(--motion-micro), background-color var(--motion-micro);
     }
-    .cc-release-dialog-confirm:hover { background: var(--brand-dark); }
-    .cc-release-dialog-confirm:active { transform: scale(.97); }
-    .cc-release-dialog-close {
+    .cc-install-dialog-confirm:hover { background: var(--brand-dark); }
+    .cc-install-dialog-confirm:active { transform: scale(.97); }
+    .cc-install-dialog-close {
       position: absolute;
       top: var(--space-4);
       right: var(--space-4);
@@ -638,8 +518,8 @@ const LANDING_STYLES = `
       background: var(--surface-soft);
       cursor: pointer;
     }
-    .cc-release-dialog-close svg { width: var(--dialog-close-icon-size); height: var(--dialog-close-icon-size); }
-    .cc-release-dialog button:focus-visible { outline: var(--focus-ring-width) solid var(--brand-deep); outline-offset: var(--focus-ring-offset); }
+    .cc-install-dialog-close svg { width: var(--dialog-close-icon-size); height: var(--dialog-close-icon-size); }
+    .cc-install-dialog button:focus-visible { outline: var(--focus-ring-width) solid var(--brand-deep); outline-offset: var(--focus-ring-offset); }
 
     @keyframes cc-enter-left {
       from { opacity: 0; transform: translateX(calc(var(--entry-distance) * -1)); }
@@ -670,7 +550,7 @@ const LANDING_STYLES = `
     @media (max-width: 900px) {
       .cc-site-header, .cc-hero { width: min(calc(100% - var(--space-6) * 2), var(--content)); }
       .cc-hero { grid-template-columns: minmax(0, 1fr) var(--hero-narrow-column); gap: var(--space-6); }
-      .cc-actions { grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, 1.18fr); }
+      .cc-actions { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
     }
 
     @media (max-width: 720px) {
@@ -705,13 +585,13 @@ const LANDING_STYLES = `
       .cc-eyebrow { margin-bottom: var(--space-4); }
       .cc-feature-copy h1 { font-size: var(--font-display); }
       .cc-lead { margin: var(--space-4) auto 0; font-size: var(--font-lead); line-height: 1.55; }
-      .cc-actions { margin-top: var(--space-5); max-width: none; grid-template-columns: minmax(0, .85fr) minmax(0, 1fr) minmax(0, 1.18fr); }
+      .cc-actions { margin-top: var(--space-5); max-width: none; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
       .cc-destination { padding: var(--space-2); gap: var(--space-1); }
       .cc-destination-name { font-size: var(--control-name-size); }
-      .cc-release-dialog { width: min(calc(100% - var(--space-6) * 2), var(--dialog-width)); }
-      .cc-release-dialog-panel { padding: var(--dialog-padding-top) var(--space-6) var(--space-6); border-radius: var(--dialog-radius); }
-      .cc-release-dialog-bunny { width: var(--dialog-bunny-box); height: var(--dialog-bunny-box); }
-      .cc-release-dialog-bunny img { width: var(--dialog-bunny-width); height: var(--dialog-bunny-height); }
+      .cc-install-dialog { width: min(calc(100% - var(--space-6) * 2), var(--dialog-width)); }
+      .cc-install-dialog-panel { padding: var(--dialog-padding-top) var(--space-6) var(--space-6); border-radius: var(--dialog-radius); }
+      .cc-install-dialog-bunny { width: var(--dialog-bunny-box); height: var(--dialog-bunny-box); }
+      .cc-install-dialog-bunny img { width: var(--dialog-bunny-width); height: var(--dialog-bunny-height); }
     }
 
     @media (max-height: 700px) and (max-width: 720px) {
@@ -738,6 +618,6 @@ const LANDING_STYLES = `
       .cc-copy, .cc-feature-copy-content { animation: none; }
       .cc-destination { transition: none; }
       .cc-destination:hover, .cc-destination:active { transform: none; }
-      .cc-release-dialog-bunny img, .cc-release-dialog[open] .cc-release-dialog-panel, .cc-release-dialog::backdrop { animation: none; }
+      .cc-install-dialog-bunny img, .cc-install-dialog[open] .cc-install-dialog-panel, .cc-install-dialog::backdrop { animation: none; }
     }
 `;
