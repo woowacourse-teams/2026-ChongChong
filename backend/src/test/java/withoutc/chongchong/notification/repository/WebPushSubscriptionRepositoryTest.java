@@ -119,6 +119,33 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     }
 
     @Test
+    @DisplayName("다른 사용자의 같은 installationId 또는 endpoint 활성 구독을 비활성화한다")
+    void deactivateConflictingActiveSubscriptions() {
+        User installationOwner = saveUser("installation 소유자");
+        User endpointOwner = saveUser("endpoint 소유자");
+        User currentUser = saveUser("현재 사용자");
+        String otherInstallationId = "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2af";
+
+        WebPushSubscription sameInstallation = webPushSubscriptionRepository.saveAndFlush(
+                WebPushSubscription.create(installationOwner, INSTALLATION_ID, ENDPOINT + "-installation",
+                        P256DH, AUTH)
+        );
+        WebPushSubscription sameEndpoint = webPushSubscriptionRepository.saveAndFlush(
+                WebPushSubscription.create(endpointOwner, otherInstallationId, ENDPOINT, P256DH, AUTH)
+        );
+
+        int deactivatedCount = webPushSubscriptionRepository.deactivateConflictingActiveSubscriptions(
+                currentUser.getId(), INSTALLATION_ID, ENDPOINT
+        );
+
+        assertThat(deactivatedCount).isEqualTo(2);
+        assertThat(webPushSubscriptionRepository.findById(sameInstallation.getId()).orElseThrow().isActive())
+                .isFalse();
+        assertThat(webPushSubscriptionRepository.findById(sameEndpoint.getId()).orElseThrow().isActive())
+                .isFalse();
+    }
+
+    @Test
     @DisplayName("upsert하면 비활성화된 endpoint를 다시 활성화한다")
     void upsertReactivatesSubscription() {
         User user = saveUser("사용자");

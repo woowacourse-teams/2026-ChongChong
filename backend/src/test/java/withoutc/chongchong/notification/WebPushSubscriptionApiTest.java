@@ -134,7 +134,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("같은 브라우저 프로필을 다른 사용자도 각각 등록할 수 있다")
+    @DisplayName("같은 브라우저 프로필을 다른 사용자가 등록하면 기존 구독을 비활성화한다")
     void registerSameInstallationForDifferentUsersTest() {
         User owner = userRepository.saveAndFlush(User.create("소유자", null));
         User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", null));
@@ -149,9 +149,11 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
         WebPushSubscriptionRow ownerSubscription = findSubscription(owner.getId());
         assertThat(ownerSubscription.p256dh()).isEqualTo(P256DH);
         assertThat(ownerSubscription.auth()).isEqualTo(AUTH);
+        assertThat(ownerSubscription.active()).isFalse();
         WebPushSubscriptionRow otherSubscription = findSubscription(otherUser.getId());
         assertThat(otherSubscription.p256dh()).isEqualTo("other-p256dh");
         assertThat(otherSubscription.auth()).isEqualTo("other-auth");
+        assertThat(otherSubscription.active()).isTrue();
     }
 
     @Test

@@ -89,8 +89,8 @@ class WebPushSubscriptionConcurrencyTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("다른 사용자가 같은 installationId를 동시에 등록하면 사용자별 구독을 만든다")
-    void concurrentRegistrationsFromDifferentUsersCreateSeparateSubscriptions() throws Exception {
+    @DisplayName("다른 사용자가 같은 installationId를 동시에 등록하면 하나의 활성 구독만 남긴다")
+    void concurrentRegistrationsFromDifferentUsersLeaveOneActiveSubscription() throws Exception {
         User firstUser = userRepository.saveAndFlush(User.create("첫 번째 사용자", null));
         User secondUser = userRepository.saveAndFlush(User.create("두 번째 사용자", null));
         CyclicBarrier barrier = new CyclicBarrier(2);
@@ -121,6 +121,11 @@ class WebPushSubscriptionConcurrencyTest extends PostgresContainerTest {
                 Integer.class,
                 CROSS_USER_INSTALLATION_ID
         )).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM web_push_subscriptions WHERE installation_id = ? AND is_active = true",
+                Integer.class,
+                CROSS_USER_INSTALLATION_ID
+        )).isOne();
         assertThat(findSubscription(CROSS_USER_ENDPOINT, firstUser.getId()).p256dh()).isEqualTo("first-p256dh");
         assertThat(findSubscription(CROSS_USER_ENDPOINT, secondUser.getId()).p256dh()).isEqualTo("second-p256dh");
     }

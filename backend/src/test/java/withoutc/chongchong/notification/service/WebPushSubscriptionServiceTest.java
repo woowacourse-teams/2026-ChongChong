@@ -1,6 +1,7 @@
 package withoutc.chongchong.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionKeysRequest;
@@ -53,8 +55,14 @@ class WebPushSubscriptionServiceTest {
 
         var response = service.register(USER_ID, request());
 
-        verify(userRepository).getByIdForUpdateOrThrow(USER_ID);
-        verify(webPushSubscriptionRepository).upsert(USER_ID, INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
+        InOrder inOrder = inOrder(userRepository, webPushSubscriptionRepository);
+        inOrder.verify(userRepository).getByIdForUpdateOrThrow(USER_ID);
+        inOrder.verify(webPushSubscriptionRepository).lockInstallationRegistration(INSTALLATION_ID);
+        inOrder.verify(webPushSubscriptionRepository).lockEndpointRegistration(ENDPOINT);
+        inOrder.verify(webPushSubscriptionRepository).deactivateConflictingActiveSubscriptions(
+                USER_ID, INSTALLATION_ID, ENDPOINT
+        );
+        inOrder.verify(webPushSubscriptionRepository).upsert(USER_ID, INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
         org.assertj.core.api.Assertions.assertThat(response.subscriptionId()).isEqualTo(10L);
     }
 

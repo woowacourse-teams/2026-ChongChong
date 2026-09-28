@@ -32,6 +32,14 @@ public class WebPushSubscriptionService {
                 request.keys().auth()
         );
 
+        // 모든 등록 요청은 installationId -> endpoint 순서로 같은 키를 잠가 교차 충돌을 직렬화한다.
+        webPushSubscriptionRepository.lockInstallationRegistration(request.installationId());
+        webPushSubscriptionRepository.lockEndpointRegistration(request.endpoint());
+        webPushSubscriptionRepository.deactivateConflictingActiveSubscriptions(
+                userId,
+                request.installationId(),
+                request.endpoint()
+        );
         webPushSubscriptionRepository.upsert(
                 userId,
                 request.installationId(),

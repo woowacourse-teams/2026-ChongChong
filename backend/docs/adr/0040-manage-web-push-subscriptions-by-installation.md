@@ -35,7 +35,9 @@
 - 같은 사용자와 같은 `installationId`를 다시 등록하면 endpoint와 암호화 키를 갱신하고 활성화한다.
 - endpoint는 식별자나 전역 유일 키로 사용하지 않는다. 같은 브라우저 프로필을 여러 사용자가 사용할 수 있고, endpoint는
   브라우저가 갱신할 수 있는 값이기 때문이다.
-- 다른 사용자가 같은 `installationId`를 등록하면 별도의 사용자 구독 row를 만든다. 기존 구독의 `user_id`를 변경하지 않는다.
+- 다른 사용자가 같은 `installationId` 또는 endpoint를 등록하면 기존 구독의 `user_id`는 변경하지 않고 비활성화하며, 별도의 사용자 구독 row를 만든다.
+- 등록 트랜잭션은 `installationId`와 endpoint를 정해진 순서로 advisory lock한 뒤 충돌 구독 비활성화와 upsert를 수행한다.
+  따라서 같은 `installationId` 또는 endpoint의 동시 등록도 하나의 활성 구독으로 직렬화한다.
 
 ### 기존 Web Push 데이터는 V15에서 정리한다
 
@@ -52,7 +54,9 @@
 ## 영향
 
 - 같은 사용자와 브라우저 프로필의 재등록은 하나의 row로 수렴한다.
-- 다른 사용자 등록이 기존 row를 덮어쓰지 않으므로 기존 알림의 수신자와 구독 소유자가 섞이지 않는다.
+- 다른 사용자 등록이 기존 row를 덮어쓰지 않으면서 기존 활성 row를 비활성화하므로, 이후 생성되는 delivery는 현재 사용자의 활성 구독을 대상으로 한다.
+- 동시 등록에서도 같은 `installationId` 또는 endpoint를 가진 활성 구독이 여러 개 남지 않는다.
+- 이미 생성된 `PENDING` 또는 `RETRY_WAIT` delivery의 취소는 별도 후속 작업으로 남긴다.
 - 기존 Web Push 구독과 연결된 delivery는 V15 마이그레이션에서 함께 정리된다.
 - installationId를 추가하지 않은 기존 프론트 요청은 400을 반환하므로 프론트 배포가 API 변경보다 먼저 또는 함께 이뤄져야 한다.
 - 브라우저 저장소를 초기화해 installationId를 잃으면 새 installationId로 별도 row가 생길 수 있으므로, 프론트엔드는
