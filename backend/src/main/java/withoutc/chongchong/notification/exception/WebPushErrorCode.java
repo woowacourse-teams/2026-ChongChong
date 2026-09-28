@@ -26,7 +26,18 @@ public enum WebPushErrorCode implements ErrorCode {
 
     WEB_PUSH_TRANSPORT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WEB_PUSH_TRANSPORT_FAILED", "웹 푸시 서버와 통신에 실패했습니다."),
 
-    WEB_PUSH_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "WEB_PUSH_INTERRUPTED", "웹 푸시 발송이 중단되었습니다.");
+    WEB_PUSH_SUBSCRIPTION_EXPIRED(HttpStatus.GONE, "WEB_PUSH_SUBSCRIPTION_EXPIRED", "웹 푸시 구독이 만료되었습니다."),
+
+    WEB_PUSH_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "WEB_PUSH_RATE_LIMITED", "웹 푸시 서버 요청이 제한되었습니다."),
+
+    WEB_PUSH_PROVIDER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "WEB_PUSH_PROVIDER_UNAVAILABLE",
+            "웹 푸시 서버를 일시적으로 사용할 수 없습니다."),
+
+    WEB_PUSH_PROVIDER_REJECTED(HttpStatus.INTERNAL_SERVER_ERROR, "WEB_PUSH_PROVIDER_REJECTED", "웹 푸시 서버가 요청을 거부했습니다."),
+
+    WEB_PUSH_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "WEB_PUSH_INTERRUPTED", "웹 푸시 발송이 중단되었습니다."),
+
+    UNEXPECTED_WEB_PUSH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "UNEXPECTED_WEB_PUSH_ERROR", "예상치 못한 예외가 발생했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
