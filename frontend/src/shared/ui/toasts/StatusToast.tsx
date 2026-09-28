@@ -19,8 +19,8 @@ export default function StatusToast({ status, message }: Props) {
   return (
     <ToastRoot
       content={
-        <div css={{ display: 'flex', alignItems: 'center', gap: tokens.spacing[1] }}>
-          <img src={decideStatusIcon(status)} width={32} height={32}></img>
+        <div css={{ display: 'flex', alignItems: 'center', gap: tokens.spacing[3] }}>
+          <img src={decideStatusIcon(status)} width={24} height={24}></img>
           {message}
         </div>
       }
