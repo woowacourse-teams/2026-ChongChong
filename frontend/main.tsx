@@ -79,7 +79,11 @@ async function bootstrap() {
       .catch(console.error);
   }
 
-  ReactDOM.createRoot(root).render(
+  ReactDOM.createRoot(root, {
+    onUncaughtError: Sentry.reactErrorHandler(),
+    onCaughtError: Sentry.reactErrorHandler(),
+    onRecoverableError: Sentry.reactErrorHandler(),
+  }).render(
     <StrictMode>
       <PostHogProvider
         apiKey={process.env.POSTHOG_PROJECT_TOKEN!}
