@@ -6,8 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionRegisterRequest;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionRegisterResponse;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
-import withoutc.chongchong.notification.exception.WebPushErrorCode;
-import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
@@ -28,27 +26,22 @@ public class WebPushSubscriptionService {
         User user = userRepository.getByIdForUpdateOrThrow(userId);
         WebPushSubscription.create(
                 user,
+                request.installationId(),
                 request.endpoint(),
                 request.keys().p256dh(),
                 request.keys().auth()
         );
 
-        int affectedRows = webPushSubscriptionRepository.upsert(
+        webPushSubscriptionRepository.upsert(
                 userId,
+                request.installationId(),
                 request.endpoint(),
                 request.keys().p256dh(),
                 request.keys().auth()
         );
-        if (affectedRows == 0) {
-            throw new WebPushException(
-                    WebPushErrorCode.WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED
-            );
-        }
 
-        WebPushSubscription subscription = webPushSubscriptionRepository.findByEndpoint(request.endpoint())
-                .orElseThrow(() -> new WebPushException(
-                        WebPushErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION
-                ));
+        WebPushSubscription subscription = webPushSubscriptionRepository.getByUserIdAndInstallationIdOrThrow(userId,
+                request.installationId());
         return new WebPushSubscriptionRegisterResponse(subscription.getId());
     }
 

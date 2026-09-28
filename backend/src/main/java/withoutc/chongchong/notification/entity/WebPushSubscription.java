@@ -24,8 +24,8 @@ import withoutc.chongchong.user.entity.User;
 @Table(
         name = "web_push_subscriptions",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_web_push_subscriptions_endpoint",
-                columnNames = "endpoint"
+                name = "uk_web_push_subscriptions_user_installation_id",
+                columnNames = {"user_id", "installation_id"}
         )
 )
 public class WebPushSubscription extends BaseEntity {
@@ -37,6 +37,9 @@ public class WebPushSubscription extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(name = "installation_id", nullable = false, length = 255)
+    private String installationId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String endpoint;
@@ -52,11 +55,12 @@ public class WebPushSubscription extends BaseEntity {
 
     public static WebPushSubscription create(
             User user,
+            String installationId,
             String endpoint,
             String p256dh,
             String auth
     ) {
-        return new WebPushSubscription(user, endpoint, p256dh, auth);
+        return new WebPushSubscription(user, installationId, endpoint, p256dh, auth);
     }
 
     public void deactivate() {
@@ -65,20 +69,28 @@ public class WebPushSubscription extends BaseEntity {
 
     private WebPushSubscription(
             User user,
+            String installationId,
             String endpoint,
             String p256dh,
             String auth
     ) {
-        validateRequiredValues(user, endpoint, p256dh, auth);
+        validateRequiredValues(user, installationId, endpoint, p256dh, auth);
         this.user = user;
+        this.installationId = installationId;
         this.endpoint = endpoint;
         this.p256dh = p256dh;
         this.auth = auth;
         this.isActive = true;
     }
 
-    private void validateRequiredValues(User user, String endpoint, String p256dh, String auth) {
-        if (user == null || isBlank(endpoint) || isBlank(p256dh) || isBlank(auth)) {
+    private void validateRequiredValues(
+            User user,
+            String installationId,
+            String endpoint,
+            String p256dh,
+            String auth
+    ) {
+        if (user == null || isBlank(installationId) || isBlank(endpoint) || isBlank(p256dh) || isBlank(auth)) {
             throw new WebPushException(WebPushErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION);
         }
     }

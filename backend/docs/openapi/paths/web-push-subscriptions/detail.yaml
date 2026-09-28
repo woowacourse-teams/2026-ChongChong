@@ -10,7 +10,7 @@ delete:
     owner: wontop02
     description: 현재 사용자의 subscriptionId에 해당하는 Web Push 구독만 비활성화한다.
   summary: Web Push 구독 비활성화
-  description: 현재 사용자의 Web Push 구독을 비활성화한다. 등록 정보가 없거나 다른 사용자의 구독이면 변경 없이 204를 반환한다.
+  description: 현재 사용자의 subscriptionId에 해당하는 Web Push 구독을 비활성화한다. 등록 정보가 없거나 다른 사용자의 구독이면 변경 없이 204를 반환한다.
   security: [{ bearerAuth: [] }]
   parameters:
     - { $ref: '../../components/parameters.yaml#/SubscriptionId' }

@@ -92,7 +92,10 @@ abstract class NotificationDeliveryRepositoryContractTest {
                 StudyMember.create(study, user, user.getName(), null, StudyMemberRole.MEMBER)
         );
         WebPushSubscription webPushSubscription = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, endpoint, "p256dh-key", "auth-secret")
+                WebPushSubscription.create(
+                        user, UUID.randomUUID().toString(), endpoint,
+                        "p256dh-key", "auth-secret"
+                )
         );
         Notification notification = saveNotification(study, recipient);
         return new DeliveryFixture(notification, webPushSubscription);

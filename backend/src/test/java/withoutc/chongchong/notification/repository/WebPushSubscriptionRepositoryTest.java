@@ -21,6 +21,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
 
     private static final String ENDPOINT = "https://push.example.com/subscription";
+    private static final String INSTALLATION_ID = "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a5";
     private static final String P256DH = "p256dh-key";
     private static final String AUTH = "auth-secret";
 
@@ -42,13 +43,14 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
         User user = saveUser("총총이");
 
         WebPushSubscription saved = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT, P256DH, AUTH)
+                WebPushSubscription.create(user, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)
         );
         entityManager.clear();
 
         WebPushSubscription found = webPushSubscriptionRepository.findById(saved.getId()).orElseThrow();
 
         assertThat(found.getUser().getId()).isEqualTo(user.getId());
+        assertThat(found.getInstallationId()).isEqualTo(INSTALLATION_ID);
         assertThat(found.getEndpoint()).isEqualTo(ENDPOINT);
         assertThat(found.getP256dh()).isEqualTo(P256DH);
         assertThat(found.getAuth()).isEqualTo(AUTH);
@@ -58,27 +60,32 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("같은 endpoint를 중복 저장할 수 없다")
-    void rejectDuplicateEndpoint() {
+    @DisplayName("같은 사용자와 installationId를 중복 저장할 수 없다")
+    void rejectDuplicateUserInstallation() {
         User user = saveUser("사용자");
         webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT, P256DH, AUTH)
+                WebPushSubscription.create(user, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)
         );
 
         assertThatThrownBy(() -> webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT, "another-p256dh", "another-auth")
+                WebPushSubscription.create(
+                        user, INSTALLATION_ID, ENDPOINT + "-another-installation",
+                        "another-p256dh", "another-auth"
+                )
         )).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
-    @DisplayName("upsert하면 같은 사용자 endpoint의 암호화 키를 갱신한다")
+    @DisplayName("upsert하면 같은 사용자 installationId의 endpoint와 암호화 키를 갱신한다")
     void upsertUpdatesRegistration() {
         User user = saveUser("사용자");
 
-        webPushSubscriptionRepository.upsert(user.getId(), ENDPOINT, P256DH, AUTH);
-        webPushSubscriptionRepository.upsert(user.getId(), ENDPOINT, "new-p256dh", "new-auth");
+        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
+        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, "new-p256dh", "new-auth");
 
-        WebPushSubscription saved = webPushSubscriptionRepository.findByEndpoint(ENDPOINT).orElseThrow();
+        WebPushSubscription saved = webPushSubscriptionRepository
+                .findByUserIdAndInstallationId(user.getId(), INSTALLATION_ID)
+                .orElseThrow();
         assertThat(webPushSubscriptionRepository.count()).isOne();
         assertThat(saved.getUser().getId()).isEqualTo(user.getId());
         assertThat(saved.getP256dh()).isEqualTo("new-p256dh");
@@ -87,22 +94,28 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("다른 사용자가 이미 등록한 endpoint는 upsert하지 않는다")
-    void rejectUpsertForAnotherUser() {
+    @DisplayName("같은 installationId를 다른 사용자가 upsert하면 별도 구독을 저장한다")
+    void upsertSameInstallationForAnotherUser() {
         User owner = saveUser("소유자");
         User otherUser = saveUser("다른 사용자");
 
-        webPushSubscriptionRepository.upsert(owner.getId(), ENDPOINT, P256DH, AUTH);
+        webPushSubscriptionRepository.upsert(owner.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
 
         int affectedRows = webPushSubscriptionRepository.upsert(
-                otherUser.getId(), ENDPOINT, "new-p256dh", "new-auth"
+                otherUser.getId(), INSTALLATION_ID, ENDPOINT, "new-p256dh", "new-auth"
         );
 
-        WebPushSubscription saved = webPushSubscriptionRepository.findByEndpoint(ENDPOINT).orElseThrow();
-        assertThat(affectedRows).isZero();
-        assertThat(saved.getUser().getId()).isEqualTo(owner.getId());
-        assertThat(saved.getP256dh()).isEqualTo(P256DH);
-        assertThat(saved.getAuth()).isEqualTo(AUTH);
+        WebPushSubscription ownerSubscription = webPushSubscriptionRepository
+                .findByUserIdAndInstallationId(owner.getId(), INSTALLATION_ID)
+                .orElseThrow();
+        WebPushSubscription otherSubscription = webPushSubscriptionRepository
+                .findByUserIdAndInstallationId(otherUser.getId(), INSTALLATION_ID)
+                .orElseThrow();
+        assertThat(affectedRows).isOne();
+        assertThat(ownerSubscription.getP256dh()).isEqualTo(P256DH);
+        assertThat(ownerSubscription.getAuth()).isEqualTo(AUTH);
+        assertThat(otherSubscription.getP256dh()).isEqualTo("new-p256dh");
+        assertThat(otherSubscription.getAuth()).isEqualTo("new-auth");
     }
 
     @Test
@@ -110,15 +123,18 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     void upsertReactivatesSubscription() {
         User user = saveUser("사용자");
         WebPushSubscription subscription = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT, P256DH, AUTH)
+                WebPushSubscription.create(user, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)
         );
         subscription.deactivate();
         entityManager.flush();
         entityManager.clear();
 
-        webPushSubscriptionRepository.upsert(user.getId(), ENDPOINT, P256DH, AUTH);
+        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
 
-        assertThat(webPushSubscriptionRepository.findByEndpoint(ENDPOINT).orElseThrow().isActive()).isTrue();
+        assertThat(webPushSubscriptionRepository
+                .findByUserIdAndInstallationId(user.getId(), INSTALLATION_ID)
+                .orElseThrow()
+                .isActive()).isTrue();
     }
 
     @Test
@@ -126,7 +142,7 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     void deactivateByUserAndId() {
         User user = saveUser("사용자");
         WebPushSubscription subscription = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT, P256DH, AUTH)
+                WebPushSubscription.create(user, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)
         );
 
         webPushSubscriptionRepository.deactivateByIdAndUserId(subscription.getId() + 1, user.getId());
@@ -142,13 +158,20 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
         User user = saveUser("사용자");
         User anotherUser = saveUser("다른 사용자");
         WebPushSubscription activeSubscription = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT + "-active", P256DH, AUTH)
+                WebPushSubscription.create(
+                        user, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a7", ENDPOINT + "-active", P256DH, AUTH
+                )
         );
         WebPushSubscription inactiveSubscription = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(user, ENDPOINT + "-inactive", P256DH, AUTH)
+                WebPushSubscription.create(
+                        user, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a8", ENDPOINT + "-inactive", P256DH, AUTH
+                )
         );
         webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(anotherUser, ENDPOINT + "-another-user", P256DH, AUTH)
+                WebPushSubscription.create(
+                        anotherUser, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a9", ENDPOINT + "-another-user",
+                        P256DH, AUTH
+                )
         );
         inactiveSubscription.deactivate();
         entityManager.flush();

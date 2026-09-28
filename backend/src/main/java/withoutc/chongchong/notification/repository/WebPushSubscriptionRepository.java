@@ -12,12 +12,18 @@ import withoutc.chongchong.notification.exception.WebPushException;
 
 public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubscription, Long> {
 
-    Optional<WebPushSubscription> findByEndpoint(String endpoint);
+    Optional<WebPushSubscription> findByUserIdAndInstallationId(Long userId, String installationId);
+
+    default WebPushSubscription getByUserIdAndInstallationIdOrThrow(Long userId, String installationId) {
+        return findByUserIdAndInstallationId(userId, installationId)
+                .orElseThrow(() -> new WebPushException(WebPushErrorCode.INVALID_WEB_PUSH_SUBSCRIPTION));
+    }
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             INSERT INTO web_push_subscriptions (
                 user_id,
+                installation_id,
                 endpoint,
                 p256dh,
                 auth,
@@ -27,6 +33,7 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
             )
             VALUES (
                 :userId,
+                :installationId,
                 :endpoint,
                 :p256dh,
                 :auth,
@@ -34,16 +41,17 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
             )
-            ON CONFLICT (endpoint)
+            ON CONFLICT (user_id, installation_id)
             DO UPDATE SET
+                endpoint = EXCLUDED.endpoint,
                 p256dh = EXCLUDED.p256dh,
                 auth = EXCLUDED.auth,
                 is_active = true,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE web_push_subscriptions.user_id = EXCLUDED.user_id
             """, nativeQuery = true)
     int upsert(
             @Param("userId") Long userId,
+            @Param("installationId") String installationId,
             @Param("endpoint") String endpoint,
             @Param("p256dh") String p256dh,
             @Param("auth") String auth
