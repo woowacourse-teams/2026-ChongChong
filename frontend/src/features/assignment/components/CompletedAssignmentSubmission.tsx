@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import assignmentIcon from '../../../shared/assets/assign-green.svg';
+import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import linkIcon from '../../../shared/assets/link-green.svg';
 import Button from '../../../shared/ui/Button';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';

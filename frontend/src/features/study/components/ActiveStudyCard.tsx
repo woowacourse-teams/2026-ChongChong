@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
-import assignmentLogo from '../../../shared/assets/assign-green.svg';
-import noticeLogo from '../../../shared/assets/notice-green.svg';
+import assignmentLogo from '../../../shared/assets/assign-green.webp';
+import noticeLogo from '../../../shared/assets/notice-green.webp';
 import { tokens, typography } from '../../../styles/global';
 
 interface ActiveStudyCardProps {
