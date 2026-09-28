@@ -22,6 +22,8 @@ import org.springframework.web.servlet.HandlerMapping;
 @Slf4j
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
+    private static final String UNMATCHED_ROUTE = "UNMATCHED_ROUTE";
+
     @Value("${spring.application.name:unknown}")
     private String service;
 
@@ -65,10 +67,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
         int status = response.getStatus();
 
-        String route = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        if (route == null) {
-            route = request.getRequestURI();
-        }
+        String route = resolveRoute(request);
 
         String errorCode = (String) request.getAttribute(RequestLoggingContext.ERROR_CODE_ATTRIBUTE);
 
@@ -87,6 +86,16 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             return;
         }
         eventBuilder.log("request completed");
+    }
+
+    String resolveRoute(HttpServletRequest request) {
+        String matchedRoute = (String) request.getAttribute(
+                HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE
+        );
+        if (matchedRoute != null) {
+            return matchedRoute;
+        }
+        return UNMATCHED_ROUTE;
     }
 
     private LoggingEventBuilder getEventBuilder(int status, String errorCode) {
