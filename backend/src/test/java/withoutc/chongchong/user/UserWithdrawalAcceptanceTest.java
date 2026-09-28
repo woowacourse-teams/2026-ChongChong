@@ -152,10 +152,12 @@ public class UserWithdrawalAcceptanceTest {
                 SocialAccount.create(remainingUser, SocialProvider.KAKAO, "remain-kakao")
         );
         WebPushSubscription withdrawingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
-                withdrawingUser, "https://push.example.com/withdraw-subscription", "withdraw-p256dh", "withdraw-auth"
+                withdrawingUser, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2aa", "https://push.example.com/withdraw-subscription",
+                "withdraw-p256dh", "withdraw-auth"
         ));
         WebPushSubscription remainingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
-                remainingUser, "https://push.example.com/remain-subscription", "remain-p256dh", "remain-auth"
+                remainingUser, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2ab", "https://push.example.com/remain-subscription",
+                "remain-p256dh", "remain-auth"
         ));
 
         Response response = requestWithdrawal(withdrawingUser.getId());
@@ -215,11 +217,12 @@ public class UserWithdrawalAcceptanceTest {
                 "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())
         ));
         WebPushSubscription withdrawingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
-                withdrawingUser, "https://push.example.com/withdraw-member-subscription", "withdraw-p256dh",
-                "withdraw-auth"
+                withdrawingUser, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2ac", "https://push.example.com/withdraw-member-subscription",
+                "withdraw-p256dh", "withdraw-auth"
         ));
         WebPushSubscription remainingSubscription = webPushSubscriptionRepository.saveAndFlush(WebPushSubscription.create(
-                remainingUser, "https://push.example.com/remain-member-subscription", "remain-p256dh", "remain-auth"
+                remainingUser, "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2ad", "https://push.example.com/remain-member-subscription",
+                "remain-p256dh", "remain-auth"
         ));
         NotificationDelivery withdrawingDelivery = notificationDeliveryRepository.saveAndFlush(
                 NotificationDelivery.create(withdrawingNotification, withdrawingSubscription)

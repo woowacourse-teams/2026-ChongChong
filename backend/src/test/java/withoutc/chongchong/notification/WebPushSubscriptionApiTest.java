@@ -7,6 +7,7 @@ import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.support.PostgresContainerTest;
@@ -25,6 +27,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class WebPushSubscriptionApiTest extends PostgresContainerTest {
 
+    private static final String INSTALLATION_ID = "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1";
     private static final String ENDPOINT = "https://push.example.com/subscription";
     private static final String P256DH = "p256dh-key";
     private static final String AUTH = "auth-secret";
@@ -68,6 +71,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
         assertThat(webPushSubscriptionRepository.count()).isOne();
         WebPushSubscriptionRow saved = findSubscription();
         assertThat(saved.userId()).isEqualTo(user.getId());
+        assertThat(saved.installationId()).isEqualTo(INSTALLATION_ID);
         assertThat(saved.endpoint()).isEqualTo(ENDPOINT);
         assertThat(saved.p256dh()).isEqualTo(P256DH);
         assertThat(saved.auth()).isEqualTo(AUTH);
@@ -75,7 +79,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("같은 endpoint로 다시 등록하면 기존 구독 정보를 갱신하고 중복 저장하지 않는다")
+    @DisplayName("같은 installationId로 다시 등록하면 기존 구독 정보를 갱신하고 중복 저장하지 않는다")
     void updateSameWebPushSubscriptionTest() {
         User user = userRepository.saveAndFlush(User.create("총총이", null));
 
@@ -90,8 +94,48 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("다른 사용자가 이미 등록한 endpoint는 등록할 수 없다")
-    void rejectEndpointOwnedByAnotherUserTest() {
+    @DisplayName("같은 installationId로 endpoint가 바뀌어 재등록해도 기존 구독 row를 갱신한다")
+    void updateSubscriptionWhenEndpointChangesTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+        String changedEndpoint = ENDPOINT + "-changed";
+
+        long firstSubscriptionId = ((Number) register(user.getId(), ENDPOINT, P256DH, AUTH)
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("subscriptionId")).longValue();
+        long changedSubscriptionId = ((Number) register(user.getId(), changedEndpoint, "new-p256dh", "new-auth")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("subscriptionId")).longValue();
+
+        assertThat(changedSubscriptionId).isEqualTo(firstSubscriptionId);
+        assertThat(webPushSubscriptionRepository.count()).isOne();
+        WebPushSubscriptionRow updated = findSubscription();
+        assertThat(updated.endpoint()).isEqualTo(changedEndpoint);
+        assertThat(updated.p256dh()).isEqualTo("new-p256dh");
+        assertThat(updated.auth()).isEqualTo("new-auth");
+    }
+
+    @Test
+    @DisplayName("installationId가 다르면 endpoint가 같아도 별도 구독을 저장한다")
+    void keepDifferentInstallationIdsSeparateTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+
+        register(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH).then().statusCode(200);
+        register(user.getId(), INSTALLATION_ID.toUpperCase(Locale.ROOT), ENDPOINT, "new-p256dh", "new-auth")
+                .then()
+                .statusCode(200);
+
+        assertThat(webPushSubscriptionRepository.count()).isEqualTo(2);
+        assertThat(findSubscription(INSTALLATION_ID).p256dh()).isEqualTo(P256DH);
+        assertThat(findSubscription(INSTALLATION_ID.toUpperCase(Locale.ROOT)).p256dh()).isEqualTo("new-p256dh");
+    }
+
+    @Test
+    @DisplayName("같은 브라우저 프로필을 다른 사용자가 등록하면 기존 구독을 비활성화한다")
+    void registerSameInstallationForDifferentUsersTest() {
         User owner = userRepository.saveAndFlush(User.create("소유자", null));
         User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", null));
 
@@ -99,13 +143,17 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
 
         register(otherUser.getId(), ENDPOINT, "other-p256dh", "other-auth")
                 .then()
-                .statusCode(409)
-                .body("code", equalTo("WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED"));
+                .statusCode(200);
 
-        WebPushSubscriptionRow saved = findSubscription();
-        assertThat(saved.userId()).isEqualTo(owner.getId());
-        assertThat(saved.p256dh()).isEqualTo(P256DH);
-        assertThat(saved.auth()).isEqualTo(AUTH);
+        assertThat(webPushSubscriptionRepository.count()).isEqualTo(2);
+        WebPushSubscriptionRow ownerSubscription = findSubscription(owner.getId());
+        assertThat(ownerSubscription.p256dh()).isEqualTo(P256DH);
+        assertThat(ownerSubscription.auth()).isEqualTo(AUTH);
+        assertThat(ownerSubscription.active()).isFalse();
+        WebPushSubscriptionRow otherSubscription = findSubscription(otherUser.getId());
+        assertThat(otherSubscription.p256dh()).isEqualTo("other-p256dh");
+        assertThat(otherSubscription.auth()).isEqualTo("other-auth");
+        assertThat(otherSubscription.active()).isTrue();
     }
 
     @Test
@@ -117,6 +165,24 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
                 .port(port)
                 .contentType(ContentType.JSON)
                 .body("{}")
+                .when()
+                .post("/web-push-subscriptions")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(webPushSubscriptionRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("installationId가 255자를 초과하면 입력값 오류를 반환한다")
+    void rejectTooLongInstallationIdTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(requestBody("x".repeat(256), ENDPOINT, P256DH, AUTH))
                 .when()
                 .post("/web-push-subscriptions")
                 .then()
@@ -171,7 +237,7 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("Web Push 구독을 삭제하면 해당 사용자의 구독을 비활성화한다")
+    @DisplayName("subscriptionId로 Web Push 구독을 비활성화한다")
     void deactivateWebPushSubscriptionTest() {
         User user = userRepository.saveAndFlush(User.create("총총이", null));
         long subscriptionId = ((Number) register(user.getId(), ENDPOINT, P256DH, AUTH)
@@ -228,45 +294,90 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     private Response register(Long userId, String endpoint, String p256dh, String auth) {
+        return register(userId, INSTALLATION_ID, endpoint, p256dh, auth);
+    }
+
+    private Response register(
+            Long userId,
+            String installationId,
+            String endpoint,
+            String p256dh,
+            String auth
+    ) {
         return testAuthRequest.givenAuthenticatedUser(userId)
                 .port(port)
                 .contentType(ContentType.JSON)
-                .body(requestBody(endpoint, p256dh, auth))
+                .body(requestBody(installationId, endpoint, p256dh, auth))
                 .when()
                 .post("/web-push-subscriptions")
                 .andReturn();
     }
 
     private String requestBody(String endpoint, String p256dh, String auth) {
+        return requestBody(INSTALLATION_ID, endpoint, p256dh, auth);
+    }
+
+    private String requestBody(String installationId, String endpoint, String p256dh, String auth) {
         return """
                 {
+                  "installationId": "%s",
                   "endpoint": "%s",
                   "keys": {
                     "p256dh": "%s",
                     "auth": "%s"
                   }
                 }
-                """.formatted(endpoint, p256dh, auth);
+                """.formatted(installationId, endpoint, p256dh, auth);
     }
 
     private WebPushSubscriptionRow findSubscription() {
         return jdbcTemplate.queryForObject(
                 """
-                        SELECT user_id, endpoint, p256dh, auth, is_active
+                        SELECT user_id, installation_id, endpoint, p256dh, auth, is_active
                         FROM web_push_subscriptions
                         """,
-                (resultSet, rowNumber) -> new WebPushSubscriptionRow(
-                        resultSet.getLong("user_id"),
-                        resultSet.getString("endpoint"),
-                        resultSet.getString("p256dh"),
-                        resultSet.getString("auth"),
-                        resultSet.getBoolean("is_active")
-                )
+                subscriptionRowMapper()
+        );
+    }
+
+    private WebPushSubscriptionRow findSubscription(Long userId) {
+        return jdbcTemplate.queryForObject(
+                """
+                        SELECT user_id, installation_id, endpoint, p256dh, auth, is_active
+                        FROM web_push_subscriptions
+                        WHERE user_id = ?
+                        """,
+                subscriptionRowMapper(),
+                userId
+        );
+    }
+
+    private WebPushSubscriptionRow findSubscription(String installationId) {
+        return jdbcTemplate.queryForObject(
+                """
+                        SELECT user_id, installation_id, endpoint, p256dh, auth, is_active
+                        FROM web_push_subscriptions
+                        WHERE installation_id = ?
+                        """,
+                subscriptionRowMapper(),
+                installationId
+        );
+    }
+
+    private RowMapper<WebPushSubscriptionRow> subscriptionRowMapper() {
+        return (resultSet, rowNumber) -> new WebPushSubscriptionRow(
+                resultSet.getLong("user_id"),
+                resultSet.getString("installation_id"),
+                resultSet.getString("endpoint"),
+                resultSet.getString("p256dh"),
+                resultSet.getString("auth"),
+                resultSet.getBoolean("is_active")
         );
     }
 
     private record WebPushSubscriptionRow(
             Long userId,
+            String installationId,
             String endpoint,
             String p256dh,
             String auth,

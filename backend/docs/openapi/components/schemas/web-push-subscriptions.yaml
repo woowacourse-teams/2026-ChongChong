@@ -1,8 +1,9 @@
 WebPushSubscriptionRegisterRequest:
   type: object
   additionalProperties: false
-  required: [endpoint, keys]
+  required: [installationId, endpoint, keys]
   properties:
+    installationId: { description: "브라우저 프로필을 식별하는 클라이언트 생성 설치 식별자.", type: string, minLength: 1, maxLength: 255, example: 4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1 }
     endpoint: { description: "브라우저가 발급한 Web Push endpoint.", type: string, format: uri, minLength: 1, example: 'https://push.example.com/subscription' }
     keys:
       $ref: '#/WebPushSubscriptionKeys'

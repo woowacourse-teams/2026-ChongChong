@@ -5,6 +5,7 @@
 - 관련 ADR: [0033. 리마인드 시각에 논리 알림을 생성하고 발송·동시성 전략은 후속으로 결정한다](0033-create-logical-reminder-notifications.md),
   [0035. 수동 알림 검증 방식을 검토 및 선택한다](0035-detect-notification-events-in-backend-and-separate-channel-delivery.md),
   [0037. 브라우저 Web Push 구독을 endpoint 단위로 관리한다](0037-manage-browser-web-push-subscriptions.md)
+- 구독 식별자, 유일성, 비활성화 정책은 [0040. 브라우저 Web Push 구독에 설치 식별자를 사용한다](0040-manage-web-push-subscriptions-by-installation.md)로 대체한다.
 
 ## 배경
 
