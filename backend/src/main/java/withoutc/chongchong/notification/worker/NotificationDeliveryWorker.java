@@ -39,11 +39,6 @@ public class NotificationDeliveryWorker {
         try {
             WebPushSendResult result = sender.send(delivery);
 
-            if (result != WebPushSendResult.SENT) {
-                log.warn("Web Push 발송 응답 실패. deliveryId={}, subscriptionId={}, result={}, errorCode={}",
-                        delivery.id(), delivery.subscriptionId(), result, result.getErrorCode().getCode());
-            }
-
             switch (result) {
                 case WebPushSendResult.SENT -> deliveryResultService.markSent(delivery.id());
                 case WebPushSendResult.RATE_LIMITED, WebPushSendResult.PROVIDER_UNAVAILABLE ->
