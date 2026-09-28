@@ -64,7 +64,7 @@ public class AssignmentService {
         assignment.initializeSubmissions(submitters);
 
         assignmentRepository.save(assignment);
-        notificationService.createAssignmentCreatedEventNotifications(assignment, submitters);
+        notificationService.createAssignmentCreatedEventNotifications(assignment, submitters, userId);
 
         return AssignmentCreateResponse.from(assignment);
     }
