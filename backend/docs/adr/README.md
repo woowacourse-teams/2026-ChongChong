@@ -59,3 +59,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0040](0040-manage-web-push-subscriptions-by-installation.md)                           | 브라우저 Web Push 구독에 설치 식별자를 사용한다 |
 | [0041](0041-collect-structured-backend-logs-with-cloudwatch.md)                         | 백엔드 구조화 로그를 CloudWatch Logs로 수집한다 |
 | [0042](0042-expose-backend-http-metrics-for-prometheus.md)                              | 백엔드 HTTP 메트릭을 Prometheus 형식으로 노출한다 |
+| [0043](0043-collect-http-metrics-with-adot-and-amp.md)                                  | ADOT으로 HTTP 메트릭을 수집해 AMP에 저장한다 |

@@ -52,6 +52,31 @@ services:
     networks:
       - application
 
+  metrics-collector:
+    profiles:
+      - metrics
+    image: public.ecr.aws/aws-observability/aws-otel-collector:v0.49.0
+    container_name: chongchong-metrics-collector
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command:
+      - --config=/etc/otelcol/config.yaml
+    environment:
+      AMP_AWS_REGION: "${AMP_AWS_REGION:-}"
+      AMP_REMOTE_WRITE_URL: "${AMP_REMOTE_WRITE_URL:-}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV:-}"
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    networks:
+      - application
+    mem_limit: 192m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
 networks:
   application:
     name: chongchong-application
