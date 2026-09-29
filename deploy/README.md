@@ -213,7 +213,9 @@ sudo docker stats --no-stream
 sudo docker inspect --format '{{.State.OOMKilled}}' chongchong-metrics-collector
 ```
 
-수집기 로그에서 자격 증명, 네트워크, OTLP 전송 오류가 없는지 확인한다. CloudWatch Query Studio에서 실제
+Prometheus 출력의 누적 히스토그램에는 OTLP 시작 시각이 없어 수집기가 `cumulativetodelta`로 수집 간 증가분을
+만든다. 첫 관측값은 기준값으로만 사용하므로 최소 두 번의 60초 수집 이후 전송 결과를 확인한다. 수집기 로그에서
+`Partial success response`와 자격 증명·네트워크·OTLP 전송 오류가 없는지 확인한다. CloudWatch Query Studio에서 실제
 HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후 요청 수가 증가하는지 조회한다. 통제된 dev
 환경에서만 5xx 요청과 p95 계산을 검증한다. Prometheus 출력이 OTLP로 변환되므로 실제 이름과 쿼리를 확인한
 뒤 바니에게 전달한다. Query Studio 읽기 권한은 EC2의 쓰기 권한과 별개다. 공개 HTTPS에서
