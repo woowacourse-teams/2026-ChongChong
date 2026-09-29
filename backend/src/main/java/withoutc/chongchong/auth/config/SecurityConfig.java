@@ -56,6 +56,7 @@ public class SecurityConfig {
                                 AUTH_PATH + "/logout",
                                 AUTH_PATH + "/csrf",
                                 "/actuator/health",
+                                "/actuator/prometheus",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/api/v3/api-docs",
