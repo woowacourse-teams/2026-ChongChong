@@ -52,7 +52,7 @@ load_deployment_environment() {
     done
 
     if [[ ",${COMPOSE_PROFILES:-}," == *,metrics,* ]]; then
-        local metrics_variables=(AMP_AWS_REGION AMP_REMOTE_WRITE_URL CLOUD_WATCH_APP_ENV)
+        local metrics_variables=(CLOUD_WATCH_AWS_REGION CLOUD_WATCH_APP_ENV)
         for variable in "${metrics_variables[@]}"; do
             if [[ -z "${!variable:-}" ]]; then
                 echo "Missing required metrics variable: ${variable}" >&2
@@ -63,12 +63,8 @@ load_deployment_environment() {
             echo "CLOUD_WATCH_APP_ENV must be dev or prod when metrics are enabled" >&2
             return 1
         fi
-        if [[ ! "${AMP_REMOTE_WRITE_URL}" =~ ^https://aps-workspaces\.[a-z0-9-]+\.amazonaws\.com/workspaces/ws-[A-Za-z0-9-]+/api/v1/remote_write$ ]]; then
-            echo "AMP_REMOTE_WRITE_URL must be an AMP remote_write HTTPS endpoint" >&2
-            return 1
-        fi
-        if [[ "${AMP_REMOTE_WRITE_URL}" != "https://aps-workspaces.${AMP_AWS_REGION}.amazonaws.com/"* ]]; then
-            echo "AMP_AWS_REGION must match AMP_REMOTE_WRITE_URL" >&2
+        if [[ ! "${CLOUD_WATCH_AWS_REGION}" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]]; then
+            echo "CLOUD_WATCH_AWS_REGION must be an AWS region when metrics are enabled" >&2
             return 1
         fi
     fi

@@ -3,6 +3,7 @@
 - 날짜: 2026-09-29
 - 관련 이슈: [#408](https://github.com/woowacourse-teams/2026-ChongChong/issues/408)
 - 관련 ADR: [0042. 백엔드 HTTP 메트릭을 Prometheus 형식으로 노출한다](0042-expose-backend-http-metrics-for-prometheus.md)
+- 대체됨: [0044. ADOT으로 HTTP 메트릭을 수집해 CloudWatch에 저장한다](0044-collect-http-metrics-with-adot-and-cloudwatch.md)
 
 ## 배경
 

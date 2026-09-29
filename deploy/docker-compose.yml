@@ -63,8 +63,7 @@ services:
     command:
       - --config=/etc/otelcol/config.yaml
     environment:
-      AMP_AWS_REGION: "${AMP_AWS_REGION:-}"
-      AMP_REMOTE_WRITE_URL: "${AMP_REMOTE_WRITE_URL:-}"
+      CLOUD_WATCH_AWS_REGION: "${CLOUD_WATCH_AWS_REGION:-}"
       CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV:-}"
     volumes:
       - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
