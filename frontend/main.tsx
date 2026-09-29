@@ -40,8 +40,6 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 });
 
-const root = document.getElementById('root')!;
-
 async function enableMocking() {
   // .env의 USE_MSW가 true일 때 MSW를 사용합니다.
   if (process.env.USE_MSW !== 'true') {
@@ -71,6 +69,11 @@ async function restoreSession() {
 async function bootstrap() {
   await enableMocking();
   const shouldResetIdentity = await restoreSession();
+  const rootElement = document.getElementById('root');
+
+  if (!rootElement) {
+    throw new Error('Root element "#root" was not found.');
+  }
 
   const router = createBrowserRouter(appRoutes);
 
@@ -82,7 +85,7 @@ async function bootstrap() {
       .catch(console.error);
   }
 
-  ReactDOM.createRoot(root, {
+  ReactDOM.createRoot(rootElement, {
     onUncaughtError: Sentry.reactErrorHandler(),
     onCaughtError: Sentry.reactErrorHandler(),
     onRecoverableError: Sentry.reactErrorHandler(),
