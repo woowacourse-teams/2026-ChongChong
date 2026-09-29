@@ -15,6 +15,7 @@ import { routes as notificationRoutes } from './src/features/notification/routes
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
+import * as Sentry from '@sentry/react';
 
 const appRoutes = [
   {
@@ -30,7 +31,14 @@ const appRoutes = [
   ...notificationRoutes,
 ];
 
-const root = document.getElementById('root')!;
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  enabled: Boolean(process.env.SENTRY_DSN),
+  environment: process.env.SENTRY_ENVIRONMENT,
+  integrations: [Sentry.replayIntegration()],
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 1.0,
+});
 
 async function enableMocking() {
   // .env의 USE_MSW가 true일 때 MSW를 사용합니다.
@@ -61,6 +69,11 @@ async function restoreSession() {
 async function bootstrap() {
   await enableMocking();
   const shouldResetIdentity = await restoreSession();
+  const rootElement = document.getElementById('root');
+
+  if (!rootElement) {
+    throw new Error('Root element "#root" was not found.');
+  }
 
   const router = createBrowserRouter(appRoutes);
 
@@ -72,7 +85,11 @@ async function bootstrap() {
       .catch(console.error);
   }
 
-  ReactDOM.createRoot(root).render(
+  ReactDOM.createRoot(rootElement, {
+    onUncaughtError: Sentry.reactErrorHandler(),
+    onCaughtError: Sentry.reactErrorHandler(),
+    onRecoverableError: Sentry.reactErrorHandler(),
+  }).render(
     <StrictMode>
       <PostHogProvider
         apiKey={process.env.POSTHOG_PROJECT_TOKEN!}
