@@ -1,6 +1,7 @@
 package withoutc.chongchong.assignment.policy;
 
 import org.springframework.stereotype.Component;
+import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
@@ -25,7 +26,10 @@ public class AssignmentAccessPolicy {
         requireLeader(actor);
     }
 
-    public void requireCanReadSubmissionList(StudyMember actor) {
+    public void requireCanReadSubmissionList(Assignment assignment, StudyMember actor) {
+        if (assignment.visibleToAllStudyMembers()) {
+            return;
+        }
         requireLeader(actor);
     }
 
@@ -35,7 +39,10 @@ public class AssignmentAccessPolicy {
         }
     }
 
-    public void requireCanReadSubmission(StudyMember actor, AssignmentSubmission submission) {
+    public void requireCanReadSubmission(StudyMember actor, Assignment assignment, AssignmentSubmission submission) {
+        if (assignment.visibleToAllStudyMembers() && submission.isSubmitted()) {
+            return;
+        }
         if (!actor.isLeader() && !submission.isOwnedBy(actor)) {
             throw new AuthException(AuthErrorCode.ACCESS_DENIED);
         }

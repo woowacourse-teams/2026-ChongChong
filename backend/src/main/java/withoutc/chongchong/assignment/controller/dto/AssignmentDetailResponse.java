@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.controller.dto;
 import java.time.LocalDateTime;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 
 public record AssignmentDetailResponse(
         Long id,
@@ -10,6 +11,7 @@ public record AssignmentDetailResponse(
         String content,
         String submissionMethod,
         SubmissionTarget submissionTarget,
+        SubmissionVisibility submissionVisibility,
         LocalDateTime closeAt
 ) {
     public static AssignmentDetailResponse from(Assignment assignment) {
@@ -19,6 +21,7 @@ public record AssignmentDetailResponse(
                 assignment.getContent(),
                 assignment.getSubmissionMethod(),
                 assignment.getSubmissionTarget(),
+                assignment.getSubmissionVisibility(),
                 assignment.getCloseAt()
         );
     }

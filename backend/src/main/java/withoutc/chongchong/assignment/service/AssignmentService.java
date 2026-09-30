@@ -56,8 +56,8 @@ public class AssignmentService {
         Study study = studyRepository.getByIdOrThrow(studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
-        Assignment assignment = Assignment.create(study, request.title(), request.content(),
-                request.submissionMethod(), request.submissionTarget(), request.closeAt(), now);
+        Assignment assignment = Assignment.create(study, request.title(), request.content(), request.submissionMethod(),
+                request.submissionTarget(), request.submissionVisibility(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
 
         assignment.initializeSubmissions(submitters);
@@ -76,8 +76,8 @@ public class AssignmentService {
 
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(actor, request.title(), request.content(), request.submissionMethod(),
-                request.submissionTarget(), request.closeAt(),
-                request.remindAts(), now);
+                request.submissionTarget(), request.submissionVisibility(), request.closeAt(), request.remindAts(),
+                now);
 
         assignmentRepository.save(assignment);
     }
@@ -99,25 +99,18 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
-        List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository
-                .findAllSubmitterStatusesByAssignmentId(assignmentId);
+        List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(
+                assignmentId);
 
         List<AssignmentSubmissionStatusResponse.CompleteMember> completeMembers = statuses.stream()
                 .filter(AssignmentSubmitterStatusProjection::isSubmitted)
-                .map(status -> AssignmentSubmissionStatusResponse.CompleteMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl()
-                )).toList();
+                .map(status -> AssignmentSubmissionStatusResponse.CompleteMember.of(status.memberId(), status.name(),
+                        status.profileImageUrl())).toList();
 
         List<AssignmentSubmissionStatusResponse.IncompleteMember> incompleteMembers = statuses.stream()
                 .filter(status -> !status.isSubmitted())
-                .map(status -> AssignmentSubmissionStatusResponse.IncompleteMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.lastRemindAt()
-                )).toList();
+                .map(status -> AssignmentSubmissionStatusResponse.IncompleteMember.of(status.memberId(), status.name(),
+                        status.profileImageUrl(), status.lastRemindAt())).toList();
 
         return AssignmentSubmissionStatusResponse.of(assignmentId, assignment.getNextRemindAt(), completeMembers,
                 incompleteMembers);
@@ -141,12 +134,8 @@ public class AssignmentService {
         if (member.isLeader()) {
             assignments = assignmentRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
         } else {
-            assignments = assignmentRepository.findByCursorAndMemberId(
-                    studyId,
-                    member.getId(),
-                    pageRequest.cursor(),
-                    pageable
-            );
+            assignments = assignmentRepository.findByCursorAndMemberId(studyId, member.getId(), pageRequest.cursor(),
+                    pageable);
         }
 
         CursorPageResponse<Assignment> assignmentPage = CursorPageResponse.of(assignments, pageRequest,
@@ -180,9 +169,9 @@ public class AssignmentService {
 
         List<Long> assignmentIds = assignments.stream().map(Assignment::getId).toList();
 
-        Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository
-                .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
-                .stream().collect(Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
+        Map<Long, Boolean> submissionStatusByAssignmentId = assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
+                assignmentIds, member.getId()).stream().collect(
+                Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
                         AssignmentSubmissionStatusProjection::isSubmitted));
 
         return assignments.stream().map(assignment -> AssignmentSummaryResponse.forMember(assignment,
