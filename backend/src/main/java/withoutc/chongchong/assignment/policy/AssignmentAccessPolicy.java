@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.policy;
 import org.springframework.stereotype.Component;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -40,7 +41,7 @@ public class AssignmentAccessPolicy {
     }
 
     public void requireCanReadSubmission(StudyMember actor, Assignment assignment, AssignmentSubmission submission) {
-        if (assignment.visibleToAllStudyMembers() && submission.isSubmitted()) {
+        if (assignment.visibleToAllStudyMembers() && submission.submissionStatus() == SubmissionStatus.SUBMITTED) {
             return;
         }
         if (!actor.isLeader() && !submission.isOwnedBy(actor)) {

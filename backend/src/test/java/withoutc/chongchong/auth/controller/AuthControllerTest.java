@@ -33,6 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import withoutc.chongchong.auth.service.SocialLoginFacade;
+import withoutc.chongchong.auth.service.SocialLoginResult;
 import withoutc.chongchong.auth.social.SocialLoginCommand;
 import withoutc.chongchong.auth.social.SocialProvider;
 import withoutc.chongchong.auth.token.IssuedAccessToken;
@@ -46,6 +47,7 @@ import withoutc.chongchong.auth.token.RawRefreshToken;
 class AuthControllerTest {
 
     private static final Instant NOW = Instant.parse("2026-08-21T00:00:00Z");
+    private static final Long USER_ID = 1L;
     private static final String KAKAO_AUTHORIZATION_CODE = "test-kakao-authorization-code";
     private static final String ACCESS_TOKEN = "test-access-token";
     private static final String REFRESH_TOKEN = "test-refresh-token";
@@ -61,7 +63,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Access Token 없이 로그인하고 Access Token JSON과 Refresh Token Cookie를 받는다")
     void loginWithoutAccessToken() throws Exception {
-        when(socialLoginFacade.login(any())).thenReturn(createIssuedTokenPair());
+        when(socialLoginFacade.login(any())).thenReturn(SocialLoginResult.of(USER_ID, createIssuedTokenPair()));
 
         mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
@@ -80,7 +82,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.accessTokenExpiresAt").value("2026-08-21T01:00:00Z"))
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(jsonPath("$.refreshTokenExpiresAt").doesNotExist())
-                .andExpect(jsonPath("$.userId").doesNotExist())
+                .andExpect(jsonPath("$.userId").value(USER_ID))
                 .andExpect(jsonPath("$.authorizationCode").doesNotExist())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("no-store")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString(

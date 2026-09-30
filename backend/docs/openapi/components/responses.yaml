@@ -76,6 +76,9 @@ LeaveForbidden:
 UserNotFound:
   description: 사용자 정보가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/UserNotFoundError' } } }
+StudyLeaderWithdrawalBlocked:
+  description: 리더인 스터디가 남아 있어 사용자 탈퇴가 차단됨
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyLeaderWithdrawalBlockedError' } } }
 StudyNotFound:
   description: 스터디가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyNotFoundError' } } }
@@ -85,6 +88,9 @@ StudyMemberNotFound:
 NoticeNotFound:
   description: 공지가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeNotFoundError' } } }
+NotificationNotFound:
+  description: 알림이 존재하지 않거나 현재 사용자의 알림이 아님
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NotificationNotFoundError' } } }
 NoticeRecipientNotFound:
   description: 현재 사용자의 공지 수신자 정보가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeRecipientNotFoundError' } } }
@@ -142,3 +148,14 @@ Conflict:
     application/json:
       schema: { $ref: './schemas/errors.yaml#/ErrorResponse' }
       example: { code: ALREADY_JOINED_STUDY, message: 해당 스터디에 이미 가입되어 있습니다. }
+WebPushSubscriptionAlreadyRegistered:
+  description: 다른 사용자가 이미 등록한 Web Push endpoint임
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/WebPushSubscriptionAlreadyRegisteredError' }
+
+StudyUpdateBadRequest:
+  description: 경로·입력 검증 또는 요청 형식 오류, 빈 문자열·공백으로 된 스터디 이름
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/StudyInvalidNameError' }] }

@@ -108,7 +108,8 @@ public class Notice extends BaseEntity {
     }
 
     public int getReadRecipientCount() {
-        return Math.toIntExact(this.recipients.stream().filter(NoticeRecipient::isRead).count());
+        return Math.toIntExact(this.recipients.stream().filter(
+                noticeRecipient -> NoticeReadStatus.READ.equals(noticeRecipient.readStatus())).count());
     }
 
     public LocalDateTime getNextRemindAt() {

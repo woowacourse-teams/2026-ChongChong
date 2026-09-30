@@ -56,12 +56,14 @@ public class SecurityConfig {
                                 AUTH_PATH + "/logout",
                                 AUTH_PATH + "/csrf",
                                 "/actuator/health",
+                                "/actuator/prometheus",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/api/v3/api-docs",
                                 "/api/v3/api-docs/**",
                                 "/api/v3/api-docs.yaml"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, API_PREFIX + "/web-push/config").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

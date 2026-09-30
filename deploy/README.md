@@ -176,3 +176,64 @@ sudo bash -c '
 Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
 새 컨테이너 시작에 실패하면 직전 backend 이미지로 복구를 시도한다. 단일 EC2를 사용하므로 배포 중 짧은 중단은
 허용하며, 운영 전 무중단 전환은 별도 결정으로 다룬다.
+
+## 7. CloudWatch HTTP 메트릭 수집기를 환경별로 활성화한다
+
+[ADR-0044](../backend/docs/adr/0044-collect-http-metrics-with-adot-and-cloudwatch.md)에 따라 각 EC2의 ADOT
+수집기는 사설 Docker 네트워크에서 백엔드의 `/actuator/prometheus`를 읽고 CloudWatch의 OTLP 메트릭
+엔드포인트로 전송한다. AMP workspace나 추가 메트릭 서버는 만들지 않는다. `CLOUD_WATCH_AWS_REGION`과
+`CLOUD_WATCH_APP_ENV`는 기존 로그 설정값을 사용한다. dev에서는 `dev`, prod에서는 `prod`를 설정한다.
+컨테이너에 정적 AWS 키를 넣지 않고 EC2 Instance Profile의 임시 자격 증명을 사용한다. 메트릭용 inbound
+포트는 열지 않으며 CloudWatch `monitoring` 엔드포인트로 HTTPS 443 outbound가 가능해야 한다.
+
+EC2 역할에는 `cloudwatch:PutMetricData` 권한이 필요하다. dev의 `ec2-project` 역할에서는 CLI의 기본
+`PutMetricData` 호출이 성공했다. 이는 수집기의 OTLP 전송까지 확인한 것은 아니다. prod에서도 실제 역할과
+권한을 확인한다. 수집기에서 자격 증명을 읽지 못하면 EC2 IMDSv2 접근과 응답 hop limit을 확인한다. hop limit
+변경은 같은 호스트의 다른 컨테이너에도 역할 접근을 허용할 수 있으므로 적용 범위를 검토한다.
+
+수집기 활성화 전 `free -h`, `vmstat 1 5`, `df -h /`, `sudo docker stats --no-stream`으로 기준값을 확인한다.
+2026-09-29 측정 기준 prod `t4g.small`의 가용 메모리는 766MiB, dev `t4g.micro`는 209MiB였다. prod 루트
+파일시스템은 이후 확장했으므로 현재 여유 용량을 다시 확인한다. dev 백엔드는 약 305MiB를 사용했고 스왑
+337MiB가 사용 중이었다. 수집기의 192MB 제한은 최대치일 뿐 실제 사용량이나 안전한 여유를 보장하지 않는다.
+
+dev 단기 시험에서는 `/opt/chongchong/.env`에 `COMPOSE_PROFILES=metrics`를 아직 설정하지 않는다. 이미
+존재하는 `CLOUD_WATCH_AWS_REGION=ap-northeast-2`와 `CLOUD_WATCH_APP_ENV=dev`를 확인하고, 백엔드가 실행
+중일 때 아래 명령으로 수집기만 시작한다.
+
+```bash
+sudo docker compose \
+  --env-file /opt/chongchong/.env \
+  --env-file /opt/chongchong/deploy/image.env \
+  --file /opt/chongchong/deploy/docker-compose.yml \
+  --profile metrics up --detach --no-deps metrics-collector
+sudo docker logs --tail 100 chongchong-metrics-collector
+free -h
+vmstat 1 30
+sudo docker stats --no-stream
+sudo docker inspect --format '{{.State.OOMKilled}}' chongchong-metrics-collector
+```
+
+Prometheus 출력의 누적 히스토그램에는 OTLP 시작 시각이 없어 수집기가 `cumulativetodelta`로 수집 간 증가분을
+만든다. 첫 관측값은 기준값으로만 사용하므로 최소 두 번의 60초 수집 이후 전송 결과를 확인한다. 수집기 로그에서
+`Partial success response`와 자격 증명·네트워크·OTLP 전송 오류가 없는지 확인한다. CloudWatch Query Studio에서 실제
+HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후 요청 수가 증가하는지 조회한다. 통제된 dev
+환경에서만 5xx 요청과 p95 계산을 검증한다. Prometheus 출력이 OTLP로 변환되므로 실제 이름과 쿼리를 확인한
+뒤 바니에게 전달한다. Query Studio 읽기 권한은 EC2의 쓰기 권한과 별개다. 공개 HTTPS에서
+`/actuator/prometheus`가 프록시되지 않는지도 확인한다.
+
+`vmstat`의 첫 줄은 부팅 이후 평균이므로 그 뒤의 `si`·`so`를 본다. 지속적인 스왑 입출력, OOM, 백엔드
+응답 악화 또는 전송 실패가 보이면 아래 명령으로 수집기만 중지한다.
+
+```bash
+sudo docker compose \
+  --env-file /opt/chongchong/.env \
+  --env-file /opt/chongchong/deploy/image.env \
+  --file /opt/chongchong/deploy/docker-compose.yml \
+  --profile metrics stop metrics-collector
+```
+
+dev 단기 시험에서 안정성을 확인한 뒤에만 `.env`에 `COMPOSE_PROFILES=metrics`를 추가해 이후 배포에서도
+수집기가 실행되게 한다. dev가 불안정하면 상시 실행하지 않고 인스턴스 증설 또는 수집 위치 변경을 결정한다.
+그 다음 prod에서도 권한·자원·실제 메트릭을 검증한다. 수집 중단 구간에는 데이터 공백이 생길 수 있지만
+백엔드의 요청 처리와 CloudWatch Logs 수집은 계속 동작한다. CloudWatch OpenTelemetry 메트릭은 수집
+데이터량에 따라 과금되므로 실제 수집량과 비용을 확인한다.

@@ -15,7 +15,7 @@ post:
     content:
       application/json:
         schema: { $ref: '../../components/schemas/studies.yaml#/StudyInviteTokenRequest' }
-        example: { token: eyJhbGciOiJIUzI1NiJ9... }
+        example: { token: Ab3xY7kLm2Qp9VtR4Nc8Zd }
   responses:
     '201':
       description: 스터디 참여 성공

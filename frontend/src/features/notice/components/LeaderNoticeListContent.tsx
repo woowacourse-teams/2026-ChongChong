@@ -8,6 +8,7 @@ import Badge from '../../../shared/ui/Badge';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
 import noticeQueries from '../queries';
 import NoticeList from './NoticeList';
+import type { LeaderNoticeSummary } from '../types';
 
 interface Props {
   studyId: number;
@@ -32,7 +33,9 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     noticeQueries.list(studyId),
   );
-  const notices = data.pages.flatMap((page) => page.notices);
+  const notices = data.pages
+    .flatMap((page) => page.notices)
+    .filter((notice): notice is LeaderNoticeSummary => 'isComplete' in notice);
   const loadMoreRef = useInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,

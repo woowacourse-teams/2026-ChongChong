@@ -5,11 +5,14 @@ post:
     status: done
     owner: JYL35
     description: |
-      카카오 인가 코드로 로그인한다. Access Token은 JSON, Refresh Token은 HttpOnly 쿠키로 전달한다.
+      이슈 #360에서 로그인 응답에 PostHog 식별용 userId를 추가한다.
+      Access Token은 JSON, Refresh Token은 HttpOnly 쿠키로 전달한다.
   summary: 소셜 로그인
   security: []
   description: |
-    소셜 로그인 인가 코드로 액세스 토큰을 발급하고 Refresh Token은 HttpOnly 쿠키로 발급한다.
+    소셜 로그인 인가 코드로 액세스 토큰을 발급하고 로그인한 사용자의 userId를 반환한다.
+    프론트는 userId를 문자열로 변환해 PostHog distinct_id로 사용한다.
+    Refresh Token은 HttpOnly 쿠키로 발급한다.
     오류: 입력 검증/형식 오류(400), 지원하지 않는 제공자(400), CSRF 불일치(403),
     소셜 인증 실패(401), 사용자 없음(404).
   parameters:
@@ -29,7 +32,7 @@ post:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/auth.yaml#/SocialLoginResponse' }
-          example: { tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9..., accessTokenExpiresAt: '2026-08-27T12:00:00Z' }
+          example: { userId: 1, tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9..., accessTokenExpiresAt: '2026-08-27T12:00:00Z' }
     '400': { $ref: '../../components/responses.yaml#/LoginBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/SocialAuthenticationFailed' }
     '403': { $ref: '../../components/responses.yaml#/InvalidCsrfToken' }

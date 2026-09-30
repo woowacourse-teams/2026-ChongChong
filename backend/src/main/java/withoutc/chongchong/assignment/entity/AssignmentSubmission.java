@@ -81,8 +81,11 @@ public class AssignmentSubmission extends BaseEntity {
         }
     }
 
-    public boolean isSubmitted() {
-        return submittedAt != null;
+    public SubmissionStatus submissionStatus() {
+        if (submittedAt == null) {
+            return SubmissionStatus.NOT_SUBMITTED;
+        }
+        return SubmissionStatus.SUBMITTED;
     }
 
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,

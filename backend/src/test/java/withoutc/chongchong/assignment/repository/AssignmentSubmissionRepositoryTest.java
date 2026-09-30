@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
@@ -55,6 +59,9 @@ class AssignmentSubmissionRepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Test
     @DisplayName("여러 과제의 제출 상태를 StudyMember id로 한 번에 조회한다")
     void findMySubmissionStatusesByAssignmentIdsAndMemberIdTest() {
@@ -80,10 +87,10 @@ class AssignmentSubmissionRepositoryTest {
                 member.getId()
         ))
                 .extracting(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::isSubmitted)
+                        AssignmentSubmissionStatusProjection::submissionStatus)
                 .containsExactlyInAnyOrder(
-                        tuple(submittedAssignment.getId(), true),
-                        tuple(unsubmittedAssignment.getId(), false)
+                        tuple(submittedAssignment.getId(), SubmissionStatus.SUBMITTED),
+                        tuple(unsubmittedAssignment.getId(), SubmissionStatus.NOT_SUBMITTED)
                 );
     }
 
@@ -99,6 +106,44 @@ class AssignmentSubmissionRepositoryTest {
         assertThatThrownBy(() -> assignmentSubmissionRepository.saveAndFlush(
                 AssignmentSubmission.create(member, assignment)
         )).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("미제출 상태인 스터디원만 과제별로 조회한다")
+    void findUnsubmittedMembersByAssignmentIdTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
+        StudyMember unsubmittedMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(study, "과제");
+
+        AssignmentSubmission submitted = AssignmentSubmission.create(submittedMember, assignment);
+        submitted.submit("제출 내용", null, NOW);
+        assignmentSubmissionRepository.saveAllAndFlush(List.of(
+                submitted,
+                AssignmentSubmission.create(unsubmittedMember, assignment)
+        ));
+
+        assertThat(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(assignment.getId()))
+                .extracting(StudyMember::getId)
+                .containsExactly(unsubmittedMember.getId());
+    }
+
+    @Test
+    @DisplayName("과제 제출 정보를 비관적 쓰기 잠금으로 조회한다")
+    void findAssignmentSubmissionForUpdateTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
+        Assignment assignment = createAssignment(study, "과제");
+        AssignmentSubmission submission = assignmentSubmissionRepository.saveAndFlush(
+                AssignmentSubmission.create(member, assignment)
+        );
+        entityManager.clear();
+
+        AssignmentSubmission locked = assignmentSubmissionRepository.findByAssignmentIdAndMemberIdForUpdate(
+                assignment.getId(), member.getId()
+        ).orElseThrow();
+
+        assertThat(entityManager.getLockMode(locked)).isEqualTo(LockModeType.PESSIMISTIC_WRITE);
     }
 
     @Test
@@ -118,11 +163,14 @@ class AssignmentSubmissionRepositoryTest {
         ));
         LocalDateTime firstRemindAt = NOW.plusHours(1);
         LocalDateTime lastRemindAt = NOW.plusHours(2);
-        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", firstRemindAt);
-        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "ASSIGNMENT", lastRemindAt);
-        insertNotification(study.getId(), incompleteMember.getId(), otherAssignment.getId(), "ASSIGNMENT",
+        insertNotification(incompleteMember.getUser().getId(), assignment.getId(), "ASSIGNMENT",
+                firstRemindAt);
+        insertNotification(incompleteMember.getUser().getId(), assignment.getId(), "ASSIGNMENT",
+                lastRemindAt);
+        insertNotification(incompleteMember.getUser().getId(), otherAssignment.getId(), "ASSIGNMENT",
                 NOW.plusHours(3));
-        insertNotification(study.getId(), incompleteMember.getId(), assignment.getId(), "NOTICE", NOW.plusHours(4));
+        insertNotification(incompleteMember.getUser().getId(), assignment.getId(), "NOTICE",
+                NOW.plusHours(4));
 
         Map<Long, AssignmentSubmitterStatusProjection> statusesByMemberId = assignmentSubmissionRepository
                 .findAllSubmitterStatusesByAssignmentId(assignment.getId())
@@ -186,13 +234,15 @@ class AssignmentSubmissionRepositoryTest {
         return studyMemberRepository.save(StudyMember.create(study, user, name, null, role));
     }
 
-    private void insertNotification(Long studyId, Long recipientId, Long resourceId, String resourceType,
+    private void insertNotification(Long recipientId, Long resourceId, String resourceType,
                                     LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update("""
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                studyId, recipientId, resourceId, resourceType, createdAt, createdAt);
+                recipientId, title, resourceId, resourceType, createdAt, createdAt);
     }
 }

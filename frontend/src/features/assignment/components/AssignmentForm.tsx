@@ -1,13 +1,16 @@
 import { CSSProperties, useState } from 'react';
 import Button from '../../../shared/ui/Button';
-import Field from '../../../shared/ui/inputs/Field';
-import Input from '../../../shared/ui/inputs/Input';
-import TextArea from '../../../shared/ui/inputs/TextArea';
+import { Field } from '../../../shared/ui/inputs/Field';
 import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
+import InputField from '../../../shared/widgets/InputField';
+import TextAreaField from '../../../shared/widgets/TextAreaField';
+import CheckField from '../../../shared/widgets/CheckField';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
+import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../constants';
 import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
+import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
   display: 'flex',
@@ -21,7 +24,9 @@ interface AssignmentFormProps {
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: AssignmentValue) => void;
-  fieldErrors?: Partial<Record<'title' | 'content' | 'submissionMethod' | 'closeAt', string>>;
+  fieldErrors?: Partial<
+    Record<'title' | 'content' | 'submissionMethod' | 'closeAt' | 'submissionTarget', string>
+  >;
 }
 
 const emptyValues = {
@@ -29,7 +34,8 @@ const emptyValues = {
   content: '',
   submissionMethod: '',
   closeAt: '',
-};
+  submissionTarget: 'MEMBERS_AND_LEADER',
+} satisfies AssignmentValue;
 
 export default function AssignmentForm({
   initialValues = emptyValues,
@@ -38,10 +44,26 @@ export default function AssignmentForm({
   submitLabel,
   onSubmit,
 }: AssignmentFormProps) {
-  const [title, setTitle] = useState(initialValues.title);
-  const [content, setContent] = useState(initialValues.content);
-  const [submissionMethod, setsubmissionMethod] = useState(initialValues.submissionMethod);
+  const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
+    if (value.length > ASSIGNMENT_TITLE.length) return prevValue;
+    return value;
+  });
+  const [content, handleContentChange] = useInputState(
+    initialValues.content,
+    (value, prevValue) => {
+      if (value.length > ASSIGNMENT_CONTENT.length) return prevValue;
+      return value;
+    },
+  );
+  const [submissionMethod, handleSubmissionMethodChange] = useInputState(
+    initialValues.submissionMethod,
+    (value, prevValue) => {
+      if (value.length > ASSIGNMENT_CONTENT.length) return prevValue;
+      return value;
+    },
+  );
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
+  const [submissionTarget, setSubmissionTarget] = useState(initialValues.submissionTarget);
   const posthog = usePostHog();
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -53,70 +75,51 @@ export default function AssignmentForm({
       location: 'assignment_create_page',
     });
 
-    onSubmit({ title, content, submissionMethod, closeAt });
+    onSubmit({ title, content, submissionMethod, closeAt, submissionTarget });
   }
 
   return (
     <form css={formStyle} onSubmit={handleSubmit}>
-      <Field
+      <InputField
         id="assignment-title"
+        name="title"
         label="제목"
-        isRequired
-        isError={Boolean(fieldErrors.title)}
+        value={title}
+        autoFocus
+        onChange={handleTitleChange}
+        maxLength={ASSIGNMENT_TITLE.length}
+        placeholder="제목을 입력해주세요"
         errorText={fieldErrors.title}
-      >
-        <Input
-          id="assignment-title"
-          name="title"
-          value={title}
-          autoFocus
-          onChange={(event) => setTitle(event.target.value)}
-          maxLength={20}
-          placeholder="제목을 입력해주세요"
-        />
-      </Field>
-
-      <Field
+        isRequired
+        testId="assignment-title-field"
+      />
+      <TextAreaField
         id="assignment-content"
+        name="content"
         label="내용"
-        isRequired
-        isError={Boolean(fieldErrors.content)}
+        value={content}
+        placeholder="내용을 입력해주세요"
+        maxLength={ASSIGNMENT_CONTENT.length}
+        onChange={handleContentChange}
         errorText={fieldErrors.content}
-      >
-        <TextArea
-          id="assignment-content"
-          name="content"
-          value={content}
-          placeholder="내용을 입력해주세요"
-          maxLength={10000}
-          onChange={(event) => setContent(event.target.value)}
-        />
-      </Field>
-
-      <Field
+        isRequired
+        testId="assignment-content-field"
+      />
+      <InputField
         id="submit-method"
+        name="method"
         label="제출 방법"
-        isRequired
-        isError={Boolean(fieldErrors.submissionMethod)}
+        value={submissionMethod}
+        maxLength={ASSIGNMENT_CONTENT.length}
+        onChange={handleSubmissionMethodChange}
+        placeholder="제출 방법을 입력해주세요"
         errorText={fieldErrors.submissionMethod}
-      >
-        <Input
-          id="submit-method"
-          name="method"
-          value={submissionMethod}
-          autoFocus
-          onChange={(event) => setsubmissionMethod(event.target.value)}
-          placeholder="제출 방법을 입력해주세요"
-        />
-      </Field>
-
-      <Field
-        id="assignment-close-at"
-        label="마감 시각"
         isRequired
-        isError={Boolean(fieldErrors.closeAt)}
-        errorText={fieldErrors.closeAt}
-      >
+      />
+      <Field>
+        <Field.Label htmlFor={'assignment-close-at'} isRequired={true}>
+          마감 시각
+        </Field.Label>
         <DateTimePicker
           id="assignment-close-at"
           title="마감 시각 설정"
@@ -127,7 +130,22 @@ export default function AssignmentForm({
             setCloseAt(toLocalDateTime(value));
           }}
         />
+        <Field.SubText errorText={fieldErrors.closeAt} />
       </Field>
+
+      <CheckField
+        id="leader-submission"
+        name="leaderSubmission"
+        label="리드 제출 여부"
+        checkLabel="나도 과제를 제출할게요"
+        checked={submissionTarget === 'MEMBERS_AND_LEADER'}
+        onChange={(event) =>
+          setSubmissionTarget(event.target.checked ? 'MEMBERS_AND_LEADER' : 'MEMBERS_ONLY')
+        }
+        helpText="체크하지 않으면 리드는 과제 제출 대상에서 제외돼요"
+        errorText={fieldErrors.submissionTarget}
+        isRequired
+      />
 
       <Button
         type="submit"

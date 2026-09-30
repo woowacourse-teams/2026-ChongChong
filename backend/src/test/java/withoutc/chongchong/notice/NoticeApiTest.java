@@ -2,8 +2,8 @@ package withoutc.chongchong.notice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -27,7 +27,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
+import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -55,6 +60,12 @@ class NoticeApiTest {
 
     @Autowired
     private NoticeRepository noticeRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private NoticeRecipientRepository noticeRecipientRepository;
 
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
@@ -190,6 +201,23 @@ class NoticeApiTest {
         );
         assertThat(recipientCount).isEqualTo(2);
         assertThat(reminderCount).isEqualTo(1);
+
+        List<Notification> memberNotifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(memberUser.getId());
+        List<Notification> secondMemberNotifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(secondMember.getUser().getId());
+        assertThat(memberNotifications).hasSize(1);
+        assertThat(secondMemberNotifications).hasSize(1);
+
+        assertThat(memberNotifications).allSatisfy(notification -> {
+            assertThat(notification.getType()).isEqualTo(NotificationType.NEW);
+            assertThat(notification.getResourceId()).isEqualTo(createdNoticeId);
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
+            assertThat(notification.getTitle()).isEqualTo("[자바 스터디] 새 공지");
+            assertThat(notification.getBody()).isEqualTo(maxLengthTitle);
+            assertThat(notification.getDeepLink())
+                    .isEqualTo("/studies/%d/notices/%d".formatted(study.getId(), createdNoticeId));
+        });
     }
 
     @Test
@@ -250,7 +278,7 @@ class NoticeApiTest {
                 .then()
                 .statusCode(200)
                 .body("notices[0].id", equalTo(notice.getId().intValue()))
-                .body("notices[0].isComplete", equalTo(false))
+                .body("notices[0].readStatus", equalTo("UNREAD"))
                 .body("notices[0]", not(hasKey("recipientCount")))
                 .body("notices[0]", not(hasKey("readRecipientCount")))
                 .body("notices[0]", not(hasKey("remindAt")));
@@ -352,7 +380,7 @@ class NoticeApiTest {
                 .get("/studies/{studyId}/notices", study.getId())
                 .then()
                 .statusCode(200)
-                .body("notices[0].isComplete", equalTo(true));
+                .body("notices[0].readStatus", equalTo("READ"));
     }
 
     @Test
@@ -617,7 +645,57 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("공지 수신자 정보가 없는 공지는 목록에서 제외한다")
+    @DisplayName("신규 가입자는 이전 공지를 조회하지만 확인 대상으로 추가되지 않는다")
+    void getPreviousNoticesByNewMemberTest() {
+        User newUser = userRepository.save(User.create("신규 회원", null));
+        StudyMember newMember = studyMemberRepository.save(
+                StudyMember.create(study, newUser, "신규 회원", null, StudyMemberRole.MEMBER)
+        );
+        long recipientCount = noticeRecipientRepository.count();
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(200)
+                .body("notices", hasSize(1))
+                .body("notices[0].id", equalTo(notice.getId().intValue()))
+                .body("notices[0].readStatus", equalTo("NOT_ASSIGNED"))
+                .body("notices[0]", not(hasKey("isComplete")));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("id", equalTo(notice.getId().intValue()));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}/status/me", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("readStatus", equalTo("NOT_ASSIGNED"))
+                .body("$", not(hasKey("readAt")));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .patch("/studies/{studyId}/notices/{noticeId}/read", study.getId(), notice.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("NOTICE_RECIPIENT_NOT_FOUND"));
+
+        assertThat(noticeRecipientRepository.count()).isEqualTo(recipientCount);
+        assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(
+                notice.getId(), newMember.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공지 수신자 정보가 없는 공지도 미해당 상태로 조회한다")
     void getNoticesWithoutRecipientTest() {
         jdbcTemplate.update(
                 "DELETE FROM notice_recipients WHERE notice_id = ? AND member_id = ?",
@@ -631,7 +709,8 @@ class NoticeApiTest {
                 .get("/studies/{studyId}/notices", study.getId())
                 .then()
                 .statusCode(200)
-                .body("notices", hasSize(0));
+                .body("notices", hasSize(1))
+                .body("notices[0].readStatus", equalTo("NOT_ASSIGNED"));
     }
 
     @Test
@@ -686,7 +765,7 @@ class NoticeApiTest {
                 .get("/studies/{studyId}/notices/{noticeId}/status/me", study.getId(), notice.getId())
                 .then()
                 .statusCode(200)
-                .body("isRead", equalTo(false))
+                .body("readStatus", equalTo("UNREAD"))
                 .body("readAt", nullValue());
     }
 
@@ -701,7 +780,7 @@ class NoticeApiTest {
                 notice.getId(),
                 member.getId()
         );
-        insertNotification(secondMember.getId(), notice.getId(), "NOTICE", lastRemindAt);
+        insertNotification(secondMember.getUser().getId(), notice.getId(), "NOTICE", lastRemindAt);
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -717,6 +796,8 @@ class NoticeApiTest {
                 .body("readMembers", hasSize(1))
                 .body("readMembers[0].id", equalTo(member.getId().intValue()))
                 .body("readMembers[0].name", equalTo("스터디원"))
+                .body("readMembers[0].readAt",
+                        equalTo(readAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("readMembers[0]", hasKey("profileImage"))
                 .body("readMembers[0]", not(hasKey("profileImageUrl")))
                 .body("unreadMembers", hasSize(1))
@@ -753,14 +834,16 @@ class NoticeApiTest {
     }
 
     private void insertNotification(Long recipientId, Long resourceId, String resourceType, LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update(
                 """
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                study.getId(),
                 recipientId,
+                title,
                 resourceId,
                 resourceType,
                 createdAt,

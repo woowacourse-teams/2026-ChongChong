@@ -3,7 +3,9 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
 import { tokens, typography } from '../../../styles/global';
 import CopyIcon from '../../../shared/assets/copy.svg';
+import CopySuccessIcon from '../../../shared/assets/check.svg';
 import studyQueries from '../../study/queries';
+import useCopyLink from '../hooks/useCopyLink';
 
 interface InviteStudyLinkBoxProps {
   studyId: number;
@@ -58,14 +60,14 @@ export default function InviteStudyLinkBox({ studyId }: InviteStudyLinkBoxProps)
 }
 
 export function InviteLinkBox({ title, inviteLink }: InviteLinkBoxProps) {
+  const { isCopySuccess, copyLink } = useCopyLink();
   const posthog = usePostHog();
 
   const handleCopy = () => {
     posthog?.capture('copy-invite-link', {
       location: 'member_list_page',
     });
-
-    navigator.clipboard.writeText(inviteLink);
+    copyLink(inviteLink);
   };
 
   return (
@@ -73,8 +75,14 @@ export function InviteLinkBox({ title, inviteLink }: InviteLinkBoxProps) {
       <p css={inviteDescriptionStyle}>{title}</p>
       <div css={inviteLinkBlockStyle}>
         <span css={inviteLinkStyle}>{inviteLink}</span>
-        <button css={copyButtonStyle} type="button" onClick={handleCopy} aria-label="링크 복사">
-          <img src={CopyIcon} width={16} height={20} alt="" />
+        <button
+          css={[copyButtonStyle, isCopySuccess && { cursor: 'default' }]}
+          type="button"
+          onClick={handleCopy}
+          aria-label="링크 복사"
+          disabled={isCopySuccess}
+        >
+          <img src={isCopySuccess ? CopySuccessIcon : CopyIcon} width={20} height={20} alt="" />
         </button>
       </div>
     </>

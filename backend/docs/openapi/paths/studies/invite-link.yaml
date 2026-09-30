@@ -17,7 +17,7 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/studies.yaml#/StudyInviteLinkResponse' }
-          example: { inviteLink: 'https://chongchong.app/studies/join?token=eyJ...' }
+          example: { inviteLink: 'https://chongchong.app/studies/join?token=Ab3xY7kLm2Qp9VtR4Nc8Zd' }
     '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }

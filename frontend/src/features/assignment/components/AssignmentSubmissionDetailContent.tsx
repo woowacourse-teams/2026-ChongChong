@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
-import assignmentIcon from '../../../shared/assets/assign-green.svg';
+import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import linkIcon from '../../../shared/assets/link-green.svg';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';

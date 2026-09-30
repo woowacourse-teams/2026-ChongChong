@@ -13,20 +13,27 @@ import { userTable } from '../features/user/mocks/db';
 interface WrapperParams {
   initialEntries?: string[];
   routes?: (element: React.ReactNode) => React.ReactNode;
+  queryClient?: QueryClient;
 }
 
 export function mockResponse<T>(url: string, studies: T[]) {
   server.use(http.get(url, () => HttpResponse.json({ studies })));
 }
 
-export function createWrapper({ initialEntries, routes }: WrapperParams = {}) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
+export function createWrapper({
+  initialEntries,
+  routes,
+  queryClient: providedQueryClient,
+}: WrapperParams = {}) {
+  const queryClient =
+    providedQueryClient ??
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
       },
-    },
-  });
+    });
 
   return function Wrapper({ children }: PropsWithChildren) {
     return (

@@ -20,6 +20,32 @@ spring:
     baseline-version: '1'
     clean-disabled: true
 
+app:
+  environment: ${CLOUD_WATCH_APP_ENV:local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+logging:
+  structured:
+    format:
+      console: logstash
+    json:
+      rename:
+        "[@timestamp]": timestamp
+      exclude:
+        - "@version"
+        - logger_name
+        - thread_name
+        - level_value
+
 jwt:
   study-invite-secret: ${STUDY_INVITE_JWT_SECRET}
 
@@ -51,3 +77,11 @@ auth:
       http-only: true
       same-site: Lax
       path: /api/auth
+
+web-push:
+  delivery:
+    processing-timeout-ms: ${WEB_PUSH_DELIVERY_PROCESSING_TIMEOUT_MS:300000}
+  vapid:
+    public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY}
+    private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY}
+    subject: ${WEB_PUSH_VAPID_SUBJECT}

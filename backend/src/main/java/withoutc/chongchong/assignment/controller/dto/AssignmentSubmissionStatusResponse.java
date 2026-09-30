@@ -33,10 +33,12 @@ public record AssignmentSubmissionStatusResponse(
     public record CompleteMember(
             Long id,
             String name,
-            String profileImage
+            String profileImage,
+            LocalDateTime submittedAt
     ) {
-        public static CompleteMember of(Long studyMemberId, String name, String profileImageUrl) {
-            return new CompleteMember(studyMemberId, name, profileImageUrl);
+        public static CompleteMember of(Long studyMemberId, String name, String profileImageUrl,
+                                        LocalDateTime submittedAt) {
+            return new CompleteMember(studyMemberId, name, profileImageUrl, submittedAt);
         }
 
     }

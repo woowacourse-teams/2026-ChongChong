@@ -1,8 +1,8 @@
 import List from '../../../shared/ui/List';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import Badge from '../../../shared/ui/Badge';
-import noticeIcon from '../../../shared/assets/notice.svg';
-import assignIcon from '../../../shared/assets/assign.svg';
+import noticeIcon from '../../../shared/assets/notice.webp';
+import assignIcon from '../../../shared/assets/assign.webp';
 import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
 import { Link } from 'react-router';
 import { Study } from '../types';

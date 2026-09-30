@@ -4,11 +4,11 @@ import { Routes, Route, useLocation } from 'react-router';
 import { createWrapper } from '../../test/render';
 import { PrevButton } from './PrevButton';
 
-function SomePage({ name }: { name: string }) {
+function SomePage({ name, to }: { name: string; to?: string }) {
   const { pathname } = useLocation();
   return (
     <div>
-      <PrevButton />
+      <PrevButton to={to} />
       <h1>{name}</h1>
       <p data-testid="pathname">{pathname}</p>
     </div>
@@ -18,6 +18,7 @@ function SomePage({ name }: { name: string }) {
 function SomeRoutes() {
   return (
     <Routes>
+      <Route path="/notifications" element={<SomePage name="알림 목록" to="/studies" />} />
       <Route path="/studies" element={<SomePage name="내 스터디 목록" />} />
       <Route path="/studies/:studyId" element={<SomePage name="스터디 상세" />} />
       <Route path="/studies/:studyId/members" element={<SomePage name="멤버 목록" />} />
@@ -52,6 +53,15 @@ function clickPrevButton(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('이전 버튼 이동 테스트', () => {
+  test('알림 목록에서 지정한 스터디 목록 경로로 이동한다', async () => {
+    const user = renderPrevButton('/notifications');
+
+    await clickPrevButton(user);
+
+    expect(screen.getByRole('heading', { name: '내 스터디 목록' })).toBeInTheDocument();
+    expect(screen.getByTestId('pathname')).toHaveTextContent('/studies');
+  });
+
   test('공지 목록에서 클릭하면 특정 스터디 디테일로 이동한다', async () => {
     const user = renderPrevButton('/studies/1/notices');
 

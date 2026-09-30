@@ -10,9 +10,12 @@ import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
+import { routes as mypageRoutes } from './src/features/mypage/routes';
+import { routes as notificationRoutes } from './src/features/notification/routes';
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
+import * as Sentry from '@sentry/react';
 
 const appRoutes = [
   {
@@ -24,16 +27,24 @@ const appRoutes = [
   ...AssignmentRoutes,
   ...memberRoutes,
   ...loginRoutes,
+  ...mypageRoutes,
+  ...notificationRoutes,
 ];
 
-const root = document.getElementById('root')!;
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  enabled: Boolean(process.env.SENTRY_DSN),
+  environment: process.env.SENTRY_ENVIRONMENT,
+  integrations: [Sentry.replayIntegration()],
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 1.0,
+});
 
 async function enableMocking() {
   // .env의 USE_MSW가 true일 때 MSW를 사용합니다.
   if (process.env.USE_MSW !== 'true') {
     return;
   }
-
   const { worker } = await import('./src/mocks/msw-browser');
 
   return worker.start();
@@ -44,22 +55,41 @@ const queryClient = new QueryClient();
 const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
 
 async function restoreSession() {
-  if (publicPaths.has(window.location.pathname)) return;
+  if (publicPaths.has(window.location.pathname)) return false;
 
   try {
     await refreshAccessToken();
+    return false;
   } catch {
     window.history.replaceState({}, document.title, '/login');
+    return true;
   }
 }
 
 async function bootstrap() {
   await enableMocking();
-  await restoreSession();
+  const shouldResetIdentity = await restoreSession();
+  const rootElement = document.getElementById('root');
+
+  if (!rootElement) {
+    throw new Error('Root element "#root" was not found.');
+  }
 
   const router = createBrowserRouter(appRoutes);
 
-  ReactDOM.createRoot(root).render(
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register(new URL('./src/features/notification/push-sw.ts', import.meta.url), {
+        scope: '/push/',
+      })
+      .catch(console.error);
+  }
+
+  ReactDOM.createRoot(rootElement, {
+    onUncaughtError: Sentry.reactErrorHandler(),
+    onCaughtError: Sentry.reactErrorHandler(),
+    onRecoverableError: Sentry.reactErrorHandler(),
+  }).render(
     <StrictMode>
       <PostHogProvider
         apiKey={process.env.POSTHOG_PROJECT_TOKEN!}
@@ -67,6 +97,11 @@ async function bootstrap() {
           api_host: process.env.POSTHOG_HOST,
           defaults: '2026-05-30',
           autocapture: false,
+          loaded: (posthog) => {
+            if (shouldResetIdentity) {
+              posthog.reset();
+            }
+          },
         }}
       >
         <QueryClientProvider client={queryClient}>

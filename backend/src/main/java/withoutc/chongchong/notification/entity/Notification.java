@@ -17,8 +17,7 @@ import lombok.NoArgsConstructor;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.notification.exception.NotificationErrorCode;
 import withoutc.chongchong.notification.exception.NotificationException;
-import withoutc.chongchong.study.entity.Study;
-import withoutc.chongchong.study.entity.StudyMember;
+import withoutc.chongchong.user.entity.User;
 
 @Entity
 @Getter
@@ -30,12 +29,14 @@ public class Notification extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "study_id", nullable = false)
-    private Study study;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "recipient_id", nullable = false)
-    private StudyMember recipient;
+    private User recipient;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String body;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -46,41 +47,63 @@ public class Notification extends BaseEntity {
 
     @Column(name = "resource_type", nullable = false)
     @Enumerated(EnumType.STRING)
-    private NotificationResourceType resourceType;
+    private ResourceType resourceType;
+
+    @Column(name = "deep_link", nullable = false)
+    private String deepLink;
 
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
 
-    public static Notification create(
-            Study study,
-            StudyMember recipient,
-            NotificationType type,
-            Long resourceId,
-            NotificationResourceType resourceType
-    ) {
-        return new Notification(study, recipient, type, resourceId, resourceType);
+    public void read() {
+        isRead = true;
     }
 
-    private void validateRequiredValues(Study study, StudyMember recipient, NotificationType type, Long resourceId,
-                                        NotificationResourceType resourceType) {
-        if (study == null || recipient == null || type == null || resourceId == null || resourceType == null) {
+    public static Notification create(
+            User recipient,
+            String title,
+            String body,
+            NotificationType type,
+            Long resourceId,
+            ResourceType resourceType,
+            String deepLink
+    ) {
+        return new Notification(recipient, title, body, type, resourceId, resourceType, deepLink);
+    }
+
+    private void validateRequiredValues(
+            User recipient,
+            String title,
+            String body,
+            NotificationType type,
+            Long resourceId,
+            ResourceType resourceType,
+            String deepLink
+    ) {
+        if (recipient == null || title == null || title.isBlank() || body == null || body.isBlank()
+                || type == null || resourceId == null || resourceType == null || deepLink == null
+                || deepLink.isBlank()) {
             throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION);
         }
     }
 
     private Notification(
-            Study study,
-            StudyMember recipient,
+            User recipient,
+            String title,
+            String body,
             NotificationType type,
             Long resourceId,
-            NotificationResourceType resourceType
+            ResourceType resourceType,
+            String deepLink
     ) {
-        validateRequiredValues(study, recipient, type, resourceId, resourceType);
-        this.study = study;
+        validateRequiredValues(recipient, title, body, type, resourceId, resourceType, deepLink);
         this.recipient = recipient;
+        this.title = title;
+        this.body = body;
         this.type = type;
         this.resourceId = resourceId;
         this.resourceType = resourceType;
+        this.deepLink = deepLink;
         this.isRead = false;
     }
 }

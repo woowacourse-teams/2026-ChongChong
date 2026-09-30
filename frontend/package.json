@@ -4,7 +4,7 @@
   "description": "chongchong frontend",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --mode production",
+    "build": "webpack --mode production && cp -R src/pwa dist/pwa",
     "start": "webpack serve --mode development",
     "type-check": "tsc --noemit",
     "lint": "eslint .",
@@ -85,6 +85,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@posthog/react": "^1.10.5",
+    "@sentry/react": "^11.0.0",
     "@tanstack/react-query": "^5.101.4",
     "ky": "^2.0.2",
     "posthog-js": "^1.422.5",

@@ -2,8 +2,8 @@ import { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { tokens, typography } from '../../../styles/global';
-import noticeIcon from '../../../shared/assets/notice-green.svg';
-import assignmentIcon from '../../../shared/assets/assign-green.svg';
+import noticeIcon from '../../../shared/assets/notice-green.webp';
+import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import List from '../../../shared/ui/List';
 import studyQueries from '../queries';
 import {

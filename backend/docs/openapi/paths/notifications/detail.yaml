@@ -1,0 +1,17 @@
+patch:
+  tags: [Notification]
+  operationId: readNotification
+  x-backend:
+    status: review
+    owner: wontop02
+    description: 현재 인증된 사용자의 알림을 읽음 처리한다.
+  summary: 알림 읽음 처리
+  description: 현재 사용자가 받은 알림만 읽음 처리한다. 존재하지 않거나 다른 사용자의 알림은 404를 반환하며, 이미 읽은 알림에 다시 요청해도 204를 반환한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/NotificationId' }
+  responses:
+    '204': { description: 알림 읽음 처리 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/NotificationNotFound' }

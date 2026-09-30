@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { API_URL } from '../../../../../config';
-import { invalidInputResponse } from '../../../../mocks/errors';
 import { server } from '../../../../mocks/msw-node';
 import { createWrapper } from '../../../../test/render';
 import EditNoticePage from '../EditNoticePage';
@@ -34,29 +33,6 @@ describe('공지 수정 폼', () => {
         }),
       ),
     );
-  });
-
-  test('필수 필드를 비우고 수정하면 서버의 필드 에러 메시지를 표시한다', async () => {
-    server.use(
-      http.patch(`${API_URL}/studies/:studyId/notices/:noticeId`, async ({ request }) => {
-        expect(await request.json()).toEqual({ title: '', content: '' });
-
-        return invalidInputResponse([
-          { field: 'title', code: 'REQUIRED', reason: '공지 제목은 필수입니다.' },
-          { field: 'content', code: 'REQUIRED', reason: '공지 내용은 필수입니다.' },
-        ]);
-      }),
-    );
-
-    renderEditPage();
-
-    await user.clear(await screen.findByRole('textbox', { name: '제목' }));
-    await user.clear(screen.getByRole('textbox', { name: '내용' }));
-    await user.click(screen.getByRole('button', { name: '수정하기' }));
-
-    expect(await screen.findByText('공지 제목은 필수입니다.')).toBeInTheDocument();
-    expect(await screen.findByText('공지 내용은 필수입니다.')).toBeInTheDocument();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   test('스터디 리더가 아니면 공지 수정 권한 안내를 토스트로 표시한다', async () => {

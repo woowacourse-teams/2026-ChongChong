@@ -18,7 +18,7 @@ class AssignmentVisibilityMigrationTest {
     void migrateExistingAssignmentsAsLeaderOnly() {
         String url = "jdbc:h2:mem:visibility-" + UUID.randomUUID() + ";MODE=PostgreSQL";
         try (SingleConnectionDataSource dataSource = new SingleConnectionDataSource(url, "sa", "", true)) {
-            Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").target("6")
+            Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").target("15")
                     .load().migrate();
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
             jdbc.update("INSERT INTO studies (id, name) VALUES (1, '스터디')");
@@ -27,7 +27,7 @@ class AssignmentVisibilityMigrationTest {
                     VALUES (1, '기존 과제', '내용', TIMESTAMP '2099-01-01 00:00:00', 1)
                     """);
 
-            Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").target("7")
+            Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").target("16")
                     .load().migrate();
 
             assertThat(jdbc.queryForObject(
