@@ -13,10 +13,9 @@ export function renderBoard(spec) {
   const operations = collectOperations(spec);
   const rows = operations.map((operation) => {
     const { id, method, path, summary, status, owner, description, frontend } = operation;
+    const needsUpdate = frontend?.status === 'needs-update';
+    const frontendBadge = needsUpdate ? `<details class="frontend-details"><summary class="badge frontend-badge">프론트 수정 필요</summary><p class="note frontend-note">${escapeHtml(frontend.description)}</p></details>` : '';
     const href = `index.html#operation/${encodeURIComponent(id)}`;
-    const frontendBadge = frontend
-      ? `<details class="frontend-change"><summary class="frontend-badge">프론트 반영 필요${frontend.issue === undefined ? '' : ` · #${frontend.issue}`}</summary><ul class="frontend-items">${frontend.description.trim().split('\n').map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul></details>`
-      : '';
     const notes = description.trim() ? description.split(/\n(?=후속 예정:)/).map((line) =>
       `<p class="note${line.startsWith('후속 예정:') ? ' followup' : ''}">${escapeHtml(line)}</p>`
     ).join('\n') : '<p class="muted">등록된 설명 없음</p>';
@@ -35,8 +34,8 @@ export function renderBoard(spec) {
 <link rel="stylesheet" href="board.css"></head>
 <body><main><nav class="topbar" aria-label="문서"><div class="brand">총총<span>/</span><span>개발 문서</span></div><a class="doc-link" href="index.html">API 문서로 이동<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17 17 7M7 7h10v10"/></svg></a></nav>
 <header class="page-heading"><h1>백엔드 개발 보드</h1></header>
-<div class="results-bar"><p>전체 ${operations.length}개 API</p>
-<details class="status-guide"><summary>상태 기준 안내</summary><p>현재 명세의 구현 상태입니다. 완료는 배포나 후속 작업의 완료를 뜻하지 않습니다. 미확인은 상태 확인 전, 미배정은 담당자 지정 전입니다.</p></details></div>
+<div class="results-bar"><p>전체 ${operations.length}개 API · 프론트 수정 필요 ${operations.filter((operation) => operation.frontend?.status === 'needs-update').length}개</p>
+<details class="status-guide"><summary>상태 기준 안내</summary><p>현재 명세의 구현 상태입니다. 완료는 배포나 후속 작업의 완료를 뜻하지 않습니다. 미확인은 상태 확인 전, 미배정은 담당자 지정 전입니다. 프론트 수정 필요는 frontend/src의 요청·응답 처리 또는 화면 연결에 남은 작업이며, 실제 배포 환경의 연동 검증 결과는 아닙니다.</p></details></div>
 <div class="table-scroll" role="region" aria-label="API 목록. 좌우로 스크롤할 수 있습니다." tabindex="0">
 <table role="table"><caption>백엔드 API별 작업 현황</caption>
 <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">메서드</th><th role="columnheader" scope="col">이름</th><th role="columnheader" scope="col">개발 설명</th><th role="columnheader" scope="col">URI</th><th role="columnheader" scope="col">상태</th><th role="columnheader" scope="col">담당자</th></tr></thead><tbody role="rowgroup">${rows}</tbody></table></div>

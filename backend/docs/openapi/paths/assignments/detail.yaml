@@ -5,18 +5,19 @@ get:
   tags: [Assignment]
   operationId: getAssignmentDetail
   x-frontend:
-    issue: 276
-    description: |
-      기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다.
-      기존 연동 수정: 응답의 submissionTarget을 상세 타입에 추가하고 수정 폼의 제출 대상 초기값으로 사용한다.
-      리더 본인의 제출 가능 여부는 내 제출 상태 API의 submissionStatus로 판단한다.
+    status: needs-update
+    description: "상세 조회는 연결되어 있으나 타입·응답 검증·화면에서 submissionTarget·submissionVisibility를 사용하지 않는다. 공개 범위와 리더 제출 여부를 반영해야 한다. 기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다. 기존 연동 수정: 응답의 submissionTarget을 상세 타입에 추가하고 수정 폼의 제출 대상 초기값으로 사용한다. 리더 본인의 제출 가능 여부는 내 제출 상태 API의 submissionStatus로 판단한다."
+    sources:
+      - frontend/src/features/assignment/types.ts
+      - frontend/src/features/assignment/responseSchemas.ts
+      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
+      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
-    status: done
+    status: review
     owner: frombunny
     description: |
-      과제 상세를 조회하며 스터디 소속을 검증한다.
-      현재 스터디 구성원은 가입 전 과제도 열람할 수 있다. 조회로 제출 대상에 추가되지 않는다.
-      후속 예정: 이미지·제출 형식(#296), 제출물 공개 설정 응답(#278).
+      과제 상세의 submissionTarget·submissionVisibility를 반환하며 스터디 소속을 검증한다.
+      후속 예정: 이미지·제출 형식(#296).
   summary: 과제 상세 조회
   description: 스터디 과제 상세를 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -26,7 +27,7 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentDetailResponse' }
-          example: { id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, closeAt: '2026-08-29T23:59:00' }
+          example: { id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, submissionVisibility: LEADER_ONLY, closeAt: '2026-08-29T23:59:00' }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
@@ -35,25 +36,27 @@ patch:
   tags: [Assignment]
   operationId: updateAssignment
   x-frontend:
-    issue: 276
-    description: |
-      기능 연동 추가: 제출 대상 선택값을 submissionTarget으로 전송한다. 생략하거나 null이면 기존 값을 유지한다.
-      기능 연동 추가: remindAts를 전달해 예약을 변경한다. 생략하거나 null이면 유지하고 빈 배열이면 대기 중인 예약을 제거한다.
+    status: needs-update
+    description: "기존 필드 PATCH는 연동되어 있다. submissionTarget·submissionVisibility 수정 UI·초기값·전송을 추가하고 제목 제한을 100자로 맞춰야 한다. 기능 연동 추가: 제출 대상 선택값을 submissionTarget으로 전송한다. 생략하거나 null이면 기존 값을 유지한다. 기능 연동 추가: remindAts를 전달해 예약을 변경한다. 생략하거나 null이면 유지하고 빈 배열이면 대기 중인 예약을 제거한다."
+    sources:
+      - frontend/src/features/assignment/pages/EditAssignmentPage.tsx
+      - frontend/src/features/assignment/components/AssignmentForm.tsx
+      - frontend/src/features/assignment/types.ts
   x-backend:
-    status: done
+    status: review
     owner: frombunny
     description: |
       과제를 부분 수정하고 대기 중인 리마인더를 교체한다. 리더 미포함으로 변경하면 리더의 기존 제출물도 삭제한다.
-      후속 예정: 이미지·제출 형식(#296), 제출물 공개 설정 변경(#278).
+      후속 예정: 이미지·제출 형식(#296).
   summary: 과제 수정
-  description: 스터디 리더가 과제를 부분 수정한다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  description: 스터디 리더가 과제를 부분 수정한다. submissionVisibility를 생략하거나 null로 보내면 기존 값을 유지한다. 공개·비공개 전환은 이후 제출물 조회 권한에 즉시 반영되며 타인의 제출물 수정 권한을 부여하지 않는다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
     content:
       application/json:
         schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentUpdateRequest' }
-        example: { title: 수정된 과제, content: 수정된 과제 내용입니다., submissionMethod: 텍스트 제출, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
+        example: { title: 수정된 과제, content: 수정된 과제 내용입니다., submissionMethod: 텍스트 제출, submissionTarget: MEMBERS_ONLY, submissionVisibility: ALL_STUDY_MEMBERS, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
   responses:
     '204': { description: 과제 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/AssignmentWriteBadRequest' }
@@ -63,6 +66,12 @@ patch:
 delete:
   tags: [Assignment]
   operationId: deleteAssignment
+  x-frontend:
+    status: integrated
+    description: "리더 화면에서 삭제 요청 후 과제 목록으로 이동한다."
+    sources:
+      - frontend/src/features/assignment/api.ts
+      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
   x-backend:
     status: done
     owner: frombunny

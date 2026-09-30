@@ -1,6 +1,11 @@
 post:
   tags: [Auth]
   operationId: logout
+  x-frontend:
+    status: needs-update
+    description: "CSRF를 포함한 logout 함수는 있으나 실제 화면에서 호출하는 진입점이 없다."
+    sources:
+      - frontend/src/features/login/api.ts
   x-backend:
     status: done
     owner: JYL35

@@ -6,18 +6,20 @@ get:
   tags: [Assignment Submission]
   operationId: getSubmissionDetail
   x-frontend:
-    description: |
-      기존 연동 수정: createdAt은 미제출 상태에서 null이므로 응답 검증·타입·날짜 표시에 반영한다.
-      기존 연동 수정: content는 null일 수 있으므로 응답 검증과 타입에서 허용한다. 본문 없이 링크만 제출한 경우에도 상세 화면을 표시한다.
+    status: needs-update
+    description: "상세 API 호출은 있으나 일반 멤버의 공개 제출물 진입 경로가 없다. createdAt·content의 null 허용도 타입과 응답 검증에 반영해야 한다. 기존 연동 수정: createdAt은 미제출 상태에서 null이므로 응답 검증·타입·날짜 표시에 반영한다. 기존 연동 수정: content는 null일 수 있으므로 응답 검증과 타입에서 허용한다. 본문 없이 링크만 제출한 경우에도 상세 화면을 표시한다."
+    sources:
+      - frontend/src/features/assignment/responseSchemas.ts
+      - frontend/src/features/assignment/types.ts
+      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
-    status: done
+    status: review
     owner: frombunny
     description: |
-      제출물 상세를 조회하며 제출자·리더의 접근 권한을 검증한다.
-      리더 본인의 제출물도 조회할 수 있다.
-      후속 예정: 공개 과제의 다른 제출자 조회(#278).
+      리더·본인은 제출물 상세를 조회할 수 있고 공개 과제의 다른 스터디원은 제출 완료된 내용만 조회할 수 있다.
+      미제출 상세의 createdAt은 null이며 content·link도 null일 수 있다.
   summary: 과제 제출 상세 조회
-  description: 스터디 리더 또는 제출 정보의 소유자가 상세를 조회한다. 제출 대상 행이 존재하면 미제출 상태에서도 조회할 수 있다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
+  description: 리더와 본인은 제출물 상세를 조회한다. ALL_STUDY_MEMBERS 과제에서는 다른 소속 멤버도 제출 완료된 제출물을 조회할 수 있다. 미제출 내용은 리더와 본인만 조회할 수 있고 createdAt은 null이다. 비회원은 거부한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   responses:
     '200':
@@ -34,9 +36,11 @@ patch:
   tags: [Assignment Submission]
   operationId: updateSubmission
   x-frontend:
-    description: |
-      입력 계약 반영: content와 link는 각각 최대 10,000자이며 생략하거나 null이면 기존 값을 유지한다. 빈 문자열은 값을 비우는 요청이다.
-      현재 폼의 본문 필수·URL 입력 제약은 서버의 필수·형식 검증과 다르므로 화면 정책을 구분한다.
+    status: needs-update
+    description: "일반 멤버의 본인 제출물 수정은 연결되어 있다. 리더의 본인 제출물 수정 흐름은 LeaderAssignmentDetailContent에 없다. 타인 수정 권한은 추가하지 않는다. 입력 계약 반영: content와 link는 각각 최대 10,000자이며 생략하거나 null이면 기존 값을 유지한다. 빈 문자열은 값을 비우는 요청이다. 현재 폼의 본문 필수·URL 입력 제약은 서버의 필수·형식 검증과 다르므로 화면 정책을 구분한다."
+    sources:
+      - frontend/src/features/assignment/components/CompletedAssignmentSubmission.tsx
+      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
   x-backend:
     status: done
     owner: frombunny

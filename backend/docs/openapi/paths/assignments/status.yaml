@@ -1,6 +1,12 @@
 get:
   tags: [Assignment]
   operationId: getAssignmentSubmissionStatus
+  x-frontend:
+    status: integrated
+    description: "리더 화면에서 제출 대상 집계와 완료·미완료 멤버를 표시한다."
+    sources:
+      - frontend/src/features/assignment/responseSchemas.ts
+      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
   x-backend:
     status: done
     owner: frombunny

@@ -9,7 +9,10 @@ AssignmentCreateRequest:
     submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다.", type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
     closeAt: { description: "과제 제출 마감 시각. 새 값을 전달하면 서버의 현재 시각보다 미래여야 한다.", $ref: './common.yaml#/LocalDateTime' }
     remindAts: { description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다.", type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
-    submissionVisibility: { type: string, enum: [LEADER_ONLY, ALL_STUDY_MEMBERS] }
+    submissionVisibility:
+      type: string
+      enum: [LEADER_ONLY, ALL_STUDY_MEMBERS]
+      description: LEADER_ONLY는 리더·본인의 상세 조회만 허용하고 목록은 리더만 조회한다. ALL_STUDY_MEMBERS는 소속 멤버에게 제출 완료된 타인의 제출물 조회를 허용한다. 생성 시 필수이며 서버가 생략값을 채우지 않는다.
 AssignmentUpdateRequest:
   type: object
   additionalProperties: false
@@ -18,7 +21,10 @@ AssignmentUpdateRequest:
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 수정된 과제 내용입니다. }
     submissionMethod: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 리더가 안내하는 과제 제출 방법. 링크 제출이나 텍스트 제출 등 자유 형식의 설명이다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 텍스트 제출 }
     submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
-    submissionVisibility: { type: [string, 'null'], enum: [LEADER_ONLY, ALL_STUDY_MEMBERS, null] }
+    submissionVisibility:
+      type: [string, 'null']
+      enum: [LEADER_ONLY, ALL_STUDY_MEMBERS, null]
+      description: 생략하거나 null이면 기존 공개 범위를 유지한다. 변경하면 이후 제출물 조회에 반영된다.
     closeAt:
       description: "과제 제출 마감 시각. 새 값을 전달하면 서버의 현재 시각보다 미래여야 한다. 생략하거나 null이면 기존 값을 유지한다."
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
@@ -39,7 +45,10 @@ AssignmentDetailResponse:
     content: { type: string, example: 이번 주 과제를 제출해주세요. }
     submissionMethod: { type: string, example: 링크 제출 }
     submissionTarget: { type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
-    submissionVisibility: { type: string, enum: [LEADER_ONLY, ALL_STUDY_MEMBERS] }
+    submissionVisibility:
+      type: string
+      enum: [LEADER_ONLY, ALL_STUDY_MEMBERS]
+      description: 현재 제출물 공개 범위. 기존 과제는 LEADER_ONLY로 이관한다. 공개 여부와 제출 대상 여부는 독립적이다.
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
 AssignmentSummaryResponse:
   type: object

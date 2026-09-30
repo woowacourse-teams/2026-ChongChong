@@ -1,6 +1,12 @@
 post:
   tags: [Study Member]
   operationId: join
+  x-frontend:
+    status: integrated
+    description: "초대 URL에서 token을 읽어 전송하고 응답 studyId로 이동한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/pages/StudyJoinPage.tsx
   x-backend:
     status: done
     owner: wontop02

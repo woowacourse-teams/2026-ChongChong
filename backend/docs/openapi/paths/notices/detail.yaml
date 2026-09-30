@@ -4,6 +4,12 @@ parameters:
 get:
   tags: [Notice]
   operationId: getNoticeDetail
+  x-frontend:
+    status: integrated
+    description: "상세 응답의 제목·내용·생성 시각을 검증하고 화면에 표시한다."
+    sources:
+      - frontend/src/features/notice/api.ts
+      - frontend/src/features/notice/responseSchemas.ts
   x-backend:
     status: done
     owner: frombunny
@@ -34,10 +40,11 @@ patch:
   tags: [Notice]
   operationId: updateNotice
   x-frontend:
-    description: |
-      기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다.
-      기능 연동 추가: 공지 수정 폼에서 remindAts로 알림 예약을 변경할 수 있도록 한다.
-      생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 이미 발송된 기록은 유지한다.
+    status: needs-update
+    description: "수정 PATCH는 연동되어 있다. 공용 NoticeForm의 제목 20자 제한을 서버의 100자 제한에 맞춰야 한다. 기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다. 기능 연동 추가: 공지 수정 폼에서 remindAts로 알림 예약을 변경할 수 있도록 한다. 생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 이미 발송된 기록은 유지한다."
+    sources:
+      - frontend/src/features/notice/api.ts
+      - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
     status: done
     owner: frombunny
@@ -62,6 +69,11 @@ patch:
 delete:
   tags: [Notice]
   operationId: deleteNotice
+  x-frontend:
+    status: integrated
+    description: "공지 삭제 요청과 본문 없는 응답을 처리한다."
+    sources:
+      - frontend/src/features/notice/api.ts
   x-backend:
     status: done
     owner: frombunny
