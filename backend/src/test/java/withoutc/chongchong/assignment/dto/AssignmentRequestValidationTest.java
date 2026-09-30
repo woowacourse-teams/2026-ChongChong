@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 
 class AssignmentRequestValidationTest {
 
@@ -46,6 +47,7 @@ class AssignmentRequestValidationTest {
                 "가".repeat(10000),
                 "가".repeat(10000),
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 FUTURE,
                 List.of(FUTURE)
         );
@@ -61,6 +63,7 @@ class AssignmentRequestValidationTest {
                 "가".repeat(10001),
                 "가".repeat(10001),
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 FUTURE,
                 List.of(FUTURE)
         );
@@ -82,6 +85,7 @@ class AssignmentRequestValidationTest {
                 null,
                 null,
                 null,
+                null,
                 Collections.singletonList(null)
         );
 
@@ -93,6 +97,7 @@ class AssignmentRequestValidationTest {
                         "content",
                         "submissionMethod",
                         "submissionTarget",
+                        "submissionVisibility",
                         "closeAt",
                         "remindAts[0].<list element>"
                 );
@@ -102,6 +107,7 @@ class AssignmentRequestValidationTest {
                         "내용은 필수 값입니다.",
                         "제출 방법은 필수 값입니다.",
                         "리더 제출 여부는 필수 값입니다.",
+                        "제출물 공개 범위는 필수 값입니다.",
                         "마감 시각은 필수 값입니다.",
                         "리마인드 시각은 필수 값입니다."
                 );
@@ -115,6 +121,7 @@ class AssignmentRequestValidationTest {
                 "과제 내용",
                 "링크 제출",
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 PAST,
                 List.of(PAST)
         );
@@ -129,7 +136,7 @@ class AssignmentRequestValidationTest {
     @Test
     @DisplayName("과제 수정 요청은 모든 필드를 생략할 수 있다")
     void validateEmptyUpdateRequestTest() {
-        AssignmentUpdateRequest request = new AssignmentUpdateRequest(null, null, null, null, null, null);
+        AssignmentUpdateRequest request = new AssignmentUpdateRequest(null, null, null, null, null, null, null);
 
         assertThat(validator.validate(request)).isEmpty();
     }
@@ -141,6 +148,7 @@ class AssignmentRequestValidationTest {
                 "가".repeat(101),
                 "가".repeat(10001),
                 "가".repeat(10001),
+                null,
                 null,
                 null,
                 null
@@ -158,6 +166,7 @@ class AssignmentRequestValidationTest {
     @DisplayName("과제 수정 요청에 시각을 제공하면 마감 및 리마인드 시각은 미래여야 한다")
     void validateUpdateRequestFutureTimesTest() {
         AssignmentUpdateRequest request = new AssignmentUpdateRequest(
+                null,
                 null,
                 null,
                 null,

@@ -244,7 +244,7 @@ class AssignmentSubmissionServiceTest {
         assertThat(response.id()).isEqualTo(300L);
         assertThat(response.name()).isEqualTo("스터디원");
         assertThat(response.content()).isEqualTo("제출 내용");
-        verify(assignmentAccessPolicy).requireCanReadSubmission(member, submission);
+        verify(assignmentAccessPolicy).requireCanReadSubmission(member, assignment, submission);
         verify(assignmentSubmissionRepository).getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID);
     }
 
@@ -260,12 +260,12 @@ class AssignmentSubmissionServiceTest {
         when(assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID))
                 .thenReturn(submission);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
-                .when(assignmentAccessPolicy).requireCanReadSubmission(actor, submission);
+                .when(assignmentAccessPolicy).requireCanReadSubmission(actor, assignment, submission);
 
         assertAccessDenied(() -> assignmentSubmissionService.getSubmissionDetail(
                 USER_ID, STUDY_ID, ASSIGNMENT_ID, 300L));
 
-        verify(assignmentAccessPolicy).requireCanReadSubmission(actor, submission);
+        verify(assignmentAccessPolicy).requireCanReadSubmission(actor, assignment, submission);
     }
 
     @Test
@@ -286,7 +286,7 @@ class AssignmentSubmissionServiceTest {
 
         assertThat(response.submissions()).singleElement()
                 .satisfies(summary -> assertThat(summary.id()).isEqualTo(300L));
-        verify(assignmentAccessPolicy).requireCanReadSubmissionList(leader);
+        verify(assignmentAccessPolicy).requireCanReadSubmissionList(assignment, leader);
         verify(assignmentSubmissionRepository).findAllByAssignmentIdAndSubmittedAtIsNotNull(ASSIGNMENT_ID);
     }
 
@@ -296,13 +296,14 @@ class AssignmentSubmissionServiceTest {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
-                .when(assignmentAccessPolicy).requireCanReadSubmissionList(member);
+                .when(assignmentAccessPolicy).requireCanReadSubmissionList(assignment, member);
 
         assertAccessDenied(() -> assignmentSubmissionService.getSubmissionList(USER_ID, STUDY_ID, ASSIGNMENT_ID));
 
-        verify(assignmentAccessPolicy).requireCanReadSubmissionList(member);
-        verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
+        verify(assignmentAccessPolicy).requireCanReadSubmissionList(assignment, member);
+        verifyNoInteractions(assignmentSubmissionRepository);
     }
 
     private Assignment assignmentWithId(Long assignmentId) {
