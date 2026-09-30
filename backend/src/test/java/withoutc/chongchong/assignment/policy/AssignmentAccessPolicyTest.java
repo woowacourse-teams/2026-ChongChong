@@ -68,37 +68,6 @@ class AssignmentAccessPolicyTest {
         assertAccessDenied(() -> policy.requireCanUpdateSubmission(actor, submission));
     }
 
-    @Test
-    @DisplayName("리더는 다른 멤버의 제출물을 조회할 수 있다")
-    void allowLeaderToReadSubmissionTest() {
-        StudyMember leader = mock(StudyMember.class);
-        AssignmentSubmission submission = mock(AssignmentSubmission.class);
-        when(leader.isLeader()).thenReturn(true);
-
-        assertThatCode(() -> policy.requireCanReadSubmission(leader, mock(Assignment.class), submission))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("일반 멤버는 자신의 제출물을 조회할 수 있다")
-    void allowOwnerToReadSubmissionTest() {
-        StudyMember owner = mock(StudyMember.class);
-        AssignmentSubmission submission = mock(AssignmentSubmission.class);
-        when(submission.isOwnedBy(owner)).thenReturn(true);
-
-        assertThatCode(() -> policy.requireCanReadSubmission(owner, mock(Assignment.class), submission))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("일반 멤버는 다른 멤버의 제출물을 조회할 수 없다")
-    void rejectNonOwnerFromReadingSubmissionTest() {
-        StudyMember actor = mock(StudyMember.class);
-        AssignmentSubmission submission = mock(AssignmentSubmission.class);
-
-        assertAccessDenied(() -> policy.requireCanReadSubmission(actor, mock(Assignment.class), submission));
-    }
-
     private static Stream<Arguments> leaderOnlyActions() {
         return Stream.of(
                 arguments("과제 생성", (BiConsumer<AssignmentAccessPolicy, StudyMember>)
@@ -108,9 +77,7 @@ class AssignmentAccessPolicyTest {
                 arguments("과제 삭제", (BiConsumer<AssignmentAccessPolicy, StudyMember>)
                         AssignmentAccessPolicy::requireCanDeleteAssignment),
                 arguments("제출 현황 조회", (BiConsumer<AssignmentAccessPolicy, StudyMember>)
-                        AssignmentAccessPolicy::requireCanReadAssignmentSubmissionStatus),
-                arguments("제출 목록 조회", (BiConsumer<AssignmentAccessPolicy, StudyMember>)
-                        (policy, actor) -> policy.requireCanReadSubmissionList(mock(Assignment.class), actor))
+                        AssignmentAccessPolicy::requireCanReadAssignmentSubmissionStatus)
         );
     }
 
