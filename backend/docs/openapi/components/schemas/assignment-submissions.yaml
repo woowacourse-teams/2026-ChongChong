@@ -42,7 +42,9 @@ SubmissionDetailResponse:
     id: { type: integer, format: int64, example: 1 }
     name: { type: string, example: 홍길동 }
     profileImage: { type: [string, 'null'], example: 'https://example.com/profile.png' }
-    createdAt: { $ref: './common.yaml#/LocalDateTime' }
+    createdAt:
+      description: 제출 시각이며 미제출 상태에서는 null입니다.
+      oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     content: { type: [string, 'null'], example: 이번 주 과제를 완료했습니다. }
     link: { type: [string, 'null'], example: 'https://github.com/example/project' }
 SubmissionSummary:
