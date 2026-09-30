@@ -2,10 +2,9 @@ get:
   tags: [Notice]
   operationId: getMyReadStatus
   x-frontend:
-    status: needs-update
-    description: "isRead 및 nullable readAt 응답을 처리한다. isRead(boolean)를 readStatus(NOT_ASSIGNED / UNREAD / READ)로 교체한다. 미해당도 200 JSON 응답이다. readAt은 READ일 때만 있으며 나머지 상태에서는 생략된다. NOT_ASSIGNED이면 본문은 열람하되 읽음 버튼과 자동 읽음 요청을 비활성화한다."
+    status: integrated
+    description: "readStatus와 READ일 때의 readAt을 검증하고 대상 아님을 처리한다."
     sources:
-      - frontend/src/features/notice/api.ts
       - frontend/src/features/notice/responseSchemas.ts
   x-backend:
     status: done

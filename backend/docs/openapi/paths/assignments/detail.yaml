@@ -6,12 +6,9 @@ get:
   operationId: getAssignmentDetail
   x-frontend:
     status: needs-update
-    description: "상세 조회는 연결되어 있으나 타입·응답 검증·화면에서 submissionTarget·submissionVisibility를 사용하지 않는다. 공개 범위와 리더 제출 여부를 반영해야 한다. 기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다. 기존 연동 수정: 응답의 submissionTarget을 상세 타입에 추가하고 수정 폼의 제출 대상 초기값으로 사용한다. 리더 본인의 제출 가능 여부는 내 제출 상태 API의 submissionStatus로 판단한다."
+    description: "기능 추가: submissionVisibility를 읽어 과제의 공개·비공개 상태를 표시."
     sources:
-      - frontend/src/features/assignment/types.ts
       - frontend/src/features/assignment/responseSchemas.ts
-      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
-      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
     status: review
     owner: frombunny
@@ -37,11 +34,9 @@ patch:
   operationId: updateAssignment
   x-frontend:
     status: needs-update
-    description: "기존 필드 PATCH는 연동되어 있다. submissionTarget·submissionVisibility 수정 UI·초기값·전송을 추가하고 제목 제한을 100자로 맞춰야 한다. 기능 연동 추가: 제출 대상 선택값을 submissionTarget으로 전송한다. 생략하거나 null이면 기존 값을 유지한다. 기능 연동 추가: remindAts를 전달해 예약을 변경한다. 생략하거나 null이면 유지하고 빈 배열이면 대기 중인 예약을 제거한다."
+    description: "기능 추가: 기존 공개 범위를 초기값으로 표시하고 변경값 저장. 리마인드 예약 추가·변경·취소."
     sources:
-      - frontend/src/features/assignment/pages/EditAssignmentPage.tsx
       - frontend/src/features/assignment/components/AssignmentForm.tsx
-      - frontend/src/features/assignment/types.ts
   x-backend:
     status: review
     owner: frombunny

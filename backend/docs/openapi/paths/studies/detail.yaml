@@ -40,7 +40,7 @@ patch:
   operationId: updateStudy
   x-frontend:
     status: needs-update
-    description: "스터디 수정 PATCH 호출 함수와 수정 화면 연결이 없다. 신규 연동: 리더용 스터디 이름·설명 수정 화면에서 PATCH 요청을 연결한다. 이름은 최대 15자, 설명은 최대 30자이며 생략하거나 null이면 기존 값을 유지한다. 성공은 본문 없는 204이므로 JSON을 파싱하지 않는다."
+    description: "기능 추가: 스터디 설정에서 이름·설명을 수정하고 저장하는 기능."
     sources:
       - frontend/src/features/study/api.ts
   x-backend:

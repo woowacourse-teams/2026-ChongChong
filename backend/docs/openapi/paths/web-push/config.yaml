@@ -2,12 +2,10 @@ get:
   tags: [Web Push]
   operationId: getWebPushConfig
   x-frontend:
-    status: needs-update
-    description: |
-      브라우저에서 PushSubscription을 생성하기 전에 VAPID 공개 키를 조회한다.
-      공개 정보이므로 로그인 없이 호출할 수 있다.
+    status: integrated
+    description: "브라우저 구독 전에 VAPID 공개 키를 조회한다."
     sources:
-      - frontend/src/
+      - frontend/src/features/notification/push.ts
   x-backend:
     status: done
     owner: wontop02

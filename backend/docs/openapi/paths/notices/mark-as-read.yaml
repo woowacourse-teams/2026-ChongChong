@@ -2,11 +2,10 @@ patch:
   tags: [Notice]
   operationId: readNotice
   x-frontend:
-    status: needs-update
-    description: "읽음 PATCH의 readAt 응답을 검증한다. 내 읽음 상태가 NOT_ASSIGNED이면 읽음 요청을 보내지 않는다. 상세 열람만으로 확인 대상에 추가되지 않는다. 미해당 사용자의 요청은 404 NOTICE_RECIPIENT_NOT_FOUND이며, 공지가 삭제된 경우와 구분한다."
+    status: integrated
+    description: "readAt 응답을 검증하며 UNREAD인 경우에만 자동 읽음 요청을 보낸다."
     sources:
-      - frontend/src/features/notice/api.ts
-      - frontend/src/features/notice/responseSchemas.ts
+      - frontend/src/features/notice/components/MemberNoticeDetailContent.tsx
   x-backend:
     status: done
     owner: frombunny

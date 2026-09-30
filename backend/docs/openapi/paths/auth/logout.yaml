@@ -2,10 +2,10 @@ post:
   tags: [Auth]
   operationId: logout
   x-frontend:
-    status: needs-update
-    description: "CSRF를 포함한 logout 함수는 있으나 실제 화면에서 호출하는 진입점이 없다."
+    status: integrated
+    description: "마이페이지 로그아웃 메뉴에서 푸시 구독 해제 후 로그아웃을 호출한다."
     sources:
-      - frontend/src/features/login/api.ts
+      - frontend/src/features/mypage/components/AccountMenuSection.tsx
   x-backend:
     status: done
     owner: JYL35

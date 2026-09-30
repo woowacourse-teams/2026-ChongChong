@@ -2,12 +2,10 @@ get:
   tags: [Assignment Submission]
   operationId: getMySubmissionDetail
   x-frontend:
-    status: needs-update
-    description: "submitted(boolean)를 submissionStatus(NOT_ASSIGNED / NOT_SUBMITTED / SUBMITTED)로 교체한다. 미해당도 빈 본문이 아닌 200 JSON 객체다. NOT_ASSIGNED에는 submissionId와 제출 상세 필드가 없다. NOT_SUBMITTED에는 submissionId가 있다. SUBMITTED일 때 제출 내용과 시각을 표시한다. NOT_ASSIGNED이면 과제는 열람하되 제출 폼과 제출 요청을 비활성화한다. SUBMITTED여도 content와 link는 값이 null이면 생략된다. 선택 문자열로 처리한다. link는 서버에서 URL 형식을 검증하지 않는 문자열이므로 응답 검증에서 URL 형식을 강제하지 않는다."
+    status: integrated
+    description: "제출 상태 세 종류와 제출 내용의 선택 필드를 처리한다."
     sources:
-      - frontend/src/features/assignment/api.ts
       - frontend/src/features/assignment/responseSchemas.ts
-      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
     status: done
     owner: frombunny

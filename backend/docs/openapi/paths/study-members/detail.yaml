@@ -6,7 +6,7 @@ delete:
     description: "memberId로 방출 요청을 보내고 본문 없는 응답을 처리한다."
     sources:
       - frontend/src/features/member/api.ts
-      - frontend/src/features/member/hooks/useKickMember.ts
+      - frontend/src/features/member/hooks/useKickMember.tsx
   x-backend:
     status: done
     owner: JYL35

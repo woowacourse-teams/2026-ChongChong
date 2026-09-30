@@ -5,11 +5,9 @@ post:
   operationId: createAssignment
   x-frontend:
     status: needs-update
-    description: "생성 요청에 필수 submissionTarget·submissionVisibility가 없다. 선택 UI·타입·요청 전송을 추가하고 제목 20자 제한을 100자로 맞춰야 한다. 기존 연동 수정: 제목 입력 제한을 현재 20자에서 API 계약인 100자로 맞춘다. 기존 연동 수정: 생성 요청에 필수 submissionTarget을 추가한다. 누락하면 400 응답이다. MEMBERS_ONLY(스터디원만)와 MEMBERS_AND_LEADER(리더 포함)를 선택할 수 있도록 폼과 요청 타입을 변경한다. 기능 연동 추가: remindAts 배열로 미래 리마인드 시각을 전달한다. 생략하면 예약하지 않는다."
+    description: "계약 수정: 생성 요청에 필수 submissionVisibility가 빠져 400 오류 발생.\n기능 추가: 제출물 공개·비공개 선택, 리마인드 예약 입력."
     sources:
-      - frontend/src/features/assignment/types.ts
       - frontend/src/features/assignment/components/AssignmentForm.tsx
-      - frontend/src/features/assignment/api.ts
   x-backend:
     status: review
     owner: frombunny
@@ -39,11 +37,10 @@ get:
   tags: [Assignment]
   operationId: getAssignments
   x-frontend:
-    status: needs-update
-    description: "커서 목록과 역할별 완료 상태·집계를 검증한다. 서버가 생략하는 집계 필드는 optional로 처리한다. 스터디원: isComplete 대신 submissionStatus로 제출 상태를 표시하고 응답 검증·타입을 변경한다. NOT_ASSIGNED=제출 대상 아님, NOT_SUBMITTED=미제출, SUBMITTED=제출 완료. 가입 전 과제도 목록에 표시한다. 리더: isComplete는 전체 완료 여부로 유지하며 submissionStatus는 리더 본인의 상태다. 두 값을 구분한다. 미해당 과제를 미제출 배지·개인 할 일에 포함하지 않는다."
+    status: integrated
+    description: "submissionStatus에 따라 제출 완료·미제출·대상 아님을 표시한다."
     sources:
-      - frontend/src/features/assignment/api.ts
-      - frontend/src/features/assignment/responseSchemas.ts
+      - frontend/src/features/assignment/components/MemberAssignmentListContent.tsx
   x-backend:
     status: done
     owner: frombunny

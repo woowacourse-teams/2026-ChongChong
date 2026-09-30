@@ -6,7 +6,7 @@ delete:
     description: "본인 탈퇴 요청이 멤버 화면에 연결되어 있다."
     sources:
       - frontend/src/features/member/api.ts
-      - frontend/src/features/member/hooks/useLeaveStudyMember.ts
+      - frontend/src/features/member/hooks/useLeaveStudyMember.tsx
       - frontend/src/features/member/components/MemberListContent.tsx
   x-backend:
     status: done

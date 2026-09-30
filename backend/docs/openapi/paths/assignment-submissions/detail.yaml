@@ -7,11 +7,9 @@ get:
   operationId: getSubmissionDetail
   x-frontend:
     status: needs-update
-    description: "상세 API 호출은 있으나 일반 멤버의 공개 제출물 진입 경로가 없다. createdAt·content의 null 허용도 타입과 응답 검증에 반영해야 한다. 기존 연동 수정: createdAt은 미제출 상태에서 null이므로 응답 검증·타입·날짜 표시에 반영한다. 기존 연동 수정: content는 null일 수 있으므로 응답 검증과 타입에서 허용한다. 본문 없이 링크만 제출한 경우에도 상세 화면을 표시한다."
+    description: "계약 수정: createdAt·content가 null인 정상 응답을 프론트 검증이 거부함. nullable 타입·검증·표시 처리 필요.\n기능 추가: 공개 과제의 제출 목록에서 다른 스터디원의 제출 상세로 이동."
     sources:
       - frontend/src/features/assignment/responseSchemas.ts
-      - frontend/src/features/assignment/types.ts
-      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
     status: review
     owner: frombunny
@@ -36,11 +34,10 @@ patch:
   tags: [Assignment Submission]
   operationId: updateSubmission
   x-frontend:
-    status: needs-update
-    description: "일반 멤버의 본인 제출물 수정은 연결되어 있다. 리더의 본인 제출물 수정 흐름은 LeaderAssignmentDetailContent에 없다. 타인 수정 권한은 추가하지 않는다. 입력 계약 반영: content와 link는 각각 최대 10,000자이며 생략하거나 null이면 기존 값을 유지한다. 빈 문자열은 값을 비우는 요청이다. 현재 폼의 본문 필수·URL 입력 제약은 서버의 필수·형식 검증과 다르므로 화면 정책을 구분한다."
+    status: integrated
+    description: "멤버와 리더의 본인 제출물 편집 흐름이 연결되어 있다."
     sources:
       - frontend/src/features/assignment/components/CompletedAssignmentSubmission.tsx
-      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
   x-backend:
     status: done
     owner: frombunny

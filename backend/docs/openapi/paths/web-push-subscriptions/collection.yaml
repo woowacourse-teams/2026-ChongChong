@@ -2,13 +2,10 @@ post:
   tags: [Web Push]
   operationId: registerWebPushSubscription
   x-frontend:
-    status: needs-update
-    description: |
-      브라우저 프로필에서 생성·보관하는 installationId와 Service Worker의 PushSubscription JSON(endpoint, keys.p256dh, keys.auth)을
-      로그인한 사용자의 구독으로 등록한다. 같은 사용자와 installationId를 다시 등록하면 endpoint와 키를 갱신하고 기존 구독을 활성화한다.
-      installationId는 사용자별로 관리되므로 같은 브라우저 프로필을 다른 사용자도 등록할 수 있다.
+    status: integrated
+    description: "브라우저 구독과 installationId를 등록하고 subscriptionId를 저장한다."
     sources:
-      - frontend/src/
+      - frontend/src/features/notification/push.ts
   x-backend:
     status: done
     owner: wontop02

@@ -5,12 +5,10 @@ post:
   tags: [Assignment Submission]
   operationId: submitAssignment
   x-frontend:
-    status: needs-update
-    description: "일반 멤버 제출과 submissionId 응답은 연결되어 있다. MEMBERS_AND_LEADER 과제에서 리더가 제출할 화면 흐름은 없다. 입력 계약 반영: content와 link는 각각 선택 값이며 최대 10,000자다. 링크만 제출하는 입력과 길이 제한을 반영한다. 내 제출 상태가 NOT_ASSIGNED이면 제출 요청을 보내지 않는다. 미해당 사용자의 요청은 404 ASSIGNMENT_SUBMISSION_NOT_FOUND이며, 과제가 삭제된 경우와 구분한다."
+    status: integrated
+    description: "멤버와 제출 대상 리더의 제출 흐름이 연결되어 있다. 대상 아님에는 제출 폼을 표시하지 않는다."
     sources:
-      - frontend/src/features/assignment/api.ts
-      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
-      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
+      - frontend/src/features/assignment/components/MyAssignmentSubmission.tsx
   x-backend:
     status: done
     owner: frombunny
@@ -43,10 +41,9 @@ get:
   operationId: getSubmissionList
   x-frontend:
     status: needs-update
-    description: "제출 목록 조회는 리더 화면에만 연결되어 있다. 공개 과제의 일반 멤버 화면에도 제출 완료 목록을 연결해야 한다."
+    description: "기능 추가: 공개 과제에서 일반 스터디원도 제출 완료 목록을 조회."
     sources:
       - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
-      - frontend/src/features/assignment/components/LeaderAssignmentDetailContent.tsx
   x-backend:
     status: review
     owner: frombunny
