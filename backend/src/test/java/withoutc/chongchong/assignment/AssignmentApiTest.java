@@ -408,8 +408,21 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("리더가 과제를 삭제하면 과제 애그리거트가 삭제되고 더는 조회할 수 없다")
+    @DisplayName("리더가 과제를 삭제하면 과제와 제출물 알림을 지우고 다른 과제 알림은 유지한다")
     void deleteAssignmentTest() {
+        Assignment otherAssignment = createAssignment("다른 과제", "내용", "링크 제출", closeAt, null);
+        Long retainedSubmissionId = submitAssignment(
+                memberUser, otherAssignment, "다른 과제 제출", "https://example.com/other"
+        );
+        submitAssignment(memberUser, assignment, "제출 내용", "https://example.com/first");
+        submitAssignment(secondMemberUser, assignment, "제출 내용", "https://example.com/second");
+        notificationRepository.saveAndFlush(Notification.create(
+                memberUser, "과제 알림", "내용", NotificationType.NEW,
+                assignment.getId(), ResourceType.ASSIGNMENT,
+                "/studies/%d/assignments/%d".formatted(study.getId(), assignment.getId())
+        ));
+        assertThat(notificationRepository.count()).isEqualTo(4);
+
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .when()
@@ -420,6 +433,10 @@ class AssignmentApiTest {
         assertThat(countRows("assignments", assignment.getId())).isZero();
         assertThat(countRows("assignment_submissions", assignment.getId())).isZero();
         assertThat(countRows("assignment_reminders", assignment.getId())).isZero();
+        assertThat(notificationRepository.findAll()).singleElement().satisfies(notification -> {
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
+            assertThat(notification.getResourceId()).isEqualTo(retainedSubmissionId);
+        });
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
