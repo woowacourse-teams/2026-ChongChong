@@ -1,7 +1,7 @@
 package withoutc.chongchong.notification.worker;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
@@ -55,7 +55,7 @@ class DeliveryResultServiceTest {
                 "p256dh-key",
                 "auth-secret"
         );
-        doReturn(subscription).when(webPushSubscriptionRepository).getByIdOrThrow(SUBSCRIPTION_ID);
+        when(webPushSubscriptionRepository.findById(SUBSCRIPTION_ID)).thenReturn(Optional.of(subscription));
 
         deliveryResultService.markSent(DELIVERY_ID);
         assertThat(deliveryResultService.markRetry(DELIVERY_ID, "재시도 오류")).isFalse();
@@ -64,5 +64,17 @@ class DeliveryResultServiceTest {
 
         assertThat(subscription.isActive()).isFalse();
         verify(notificationDeliveryRepository, times(4)).findById(DELIVERY_ID);
+    }
+
+    @Test
+    @DisplayName("탈퇴 후 발송 기록과 구독이 모두 삭제되어도 만료 결과 처리를 마친다")
+    void completeExpiredResultHandlingWhenDeliveryAndSubscriptionWereDeleted() {
+        when(webPushSubscriptionRepository.findById(SUBSCRIPTION_ID)).thenReturn(Optional.empty());
+
+        assertThatCode(() -> deliveryResultService.markExpired(DELIVERY_ID, SUBSCRIPTION_ID, "구독 만료"))
+                .doesNotThrowAnyException();
+
+        verify(notificationDeliveryRepository).findById(DELIVERY_ID);
+        verify(webPushSubscriptionRepository).findById(SUBSCRIPTION_ID);
     }
 }

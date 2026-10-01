@@ -56,12 +56,14 @@ public class DeliveryResultService {
     @Transactional
     public void markExpired(Long deliveryId, Long subscriptionId, String error) {
         NotificationDelivery delivery = notificationDeliveryRepository.findById(deliveryId).orElse(null);
-        WebPushSubscription subscription = webPushSubscriptionRepository.getByIdOrThrow(subscriptionId);
+        WebPushSubscription subscription = webPushSubscriptionRepository.findById(subscriptionId).orElse(null);
 
         if (delivery != null) {
             delivery.markFailed(error);
         }
-        subscription.deactivate();
+        if (subscription != null) {
+            subscription.deactivate();
+        }
     }
 
     @Transactional

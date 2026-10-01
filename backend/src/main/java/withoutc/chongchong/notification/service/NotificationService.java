@@ -98,11 +98,21 @@ public class NotificationService {
 
     @Transactional
     public void deleteNotificationsForStudy(Long studyId) {
+        noticeReminderRepository.findAllByStudyIdForUpdate(studyId);
+        assignmentReminderRepository.findAllByStudyIdForUpdate(studyId);
         notificationRepository.deleteAllByStudyId(studyId);
     }
 
     @Transactional
     public void deleteNotificationsForResource(ResourceType resourceType, Long resourceId) {
+        // 리마인드 알림 생성과 삭제가 겹치지 않도록 리마인더 행 잠금
+        if (resourceType == ResourceType.NOTICE) {
+            noticeReminderRepository.findAllByNoticeIdForUpdate(resourceId);
+        }
+        if (resourceType == ResourceType.ASSIGNMENT) {
+            assignmentReminderRepository.findAllByAssignmentIdForUpdate(resourceId);
+        }
+
         notificationRepository.deleteAllByResourceTypeAndResourceId(resourceType, resourceId);
         if (resourceType == ResourceType.ASSIGNMENT) {
             notificationRepository.deleteAllForAssignmentSubmissions(resourceId);
