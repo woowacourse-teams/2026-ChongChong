@@ -32,13 +32,16 @@ public class DeliveryResultService {
 
     @Transactional
     public void markSent(Long deliveryId) {
-        NotificationDelivery delivery = notificationDeliveryRepository.getByIdOrThrow(deliveryId);
-        delivery.markSent(LocalDateTime.now(clock));
+        notificationDeliveryRepository.findById(deliveryId)
+                .ifPresent(delivery -> delivery.markSent(LocalDateTime.now(clock)));
     }
 
     @Transactional
     public boolean markRetry(Long deliveryId, String error) {
-        NotificationDelivery delivery = notificationDeliveryRepository.getByIdOrThrow(deliveryId);
+        NotificationDelivery delivery = notificationDeliveryRepository.findById(deliveryId).orElse(null);
+        if (delivery == null) {
+            return false;
+        }
         int attemptCount = delivery.getAttemptCount();
 
         if (attemptCount >= MAX_ATTEMPTS || attemptCount < 1) {
@@ -52,17 +55,19 @@ public class DeliveryResultService {
 
     @Transactional
     public void markExpired(Long deliveryId, Long subscriptionId, String error) {
-        NotificationDelivery delivery = notificationDeliveryRepository.getByIdOrThrow(deliveryId);
+        NotificationDelivery delivery = notificationDeliveryRepository.findById(deliveryId).orElse(null);
         WebPushSubscription subscription = webPushSubscriptionRepository.getByIdOrThrow(subscriptionId);
 
-        delivery.markFailed(error);
+        if (delivery != null) {
+            delivery.markFailed(error);
+        }
         subscription.deactivate();
     }
 
     @Transactional
     public void markFailed(Long deliveryId, String error) {
-        NotificationDelivery delivery = notificationDeliveryRepository.getByIdOrThrow(deliveryId);
-        delivery.markFailed(error);
+        notificationDeliveryRepository.findById(deliveryId)
+                .ifPresent(delivery -> delivery.markFailed(error));
     }
 
     private LocalDateTime nextRetryAt(int attemptCount, LocalDateTime now) {

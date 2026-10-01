@@ -6,6 +6,7 @@
   [0035. 수동 알림 검증 방식을 검토 및 선택한다](0035-detect-notification-events-in-backend-and-separate-channel-delivery.md),
   [0037. 브라우저 Web Push 구독을 endpoint 단위로 관리한다](0037-manage-browser-web-push-subscriptions.md)
 - 구독 식별자, 유일성, 비활성화 정책은 [0040. 브라우저 Web Push 구독에 설치 식별자를 사용한다](0040-manage-web-push-subscriptions-by-installation.md)로 대체한다.
+- 원본 자원 삭제 뒤에도 snapshot 알림을 보존하는 정책은 [0042. 자원 삭제 시 관련 인앱 알림을 삭제한다](0042-delete-notifications-with-resources.md)로 대체한다.
 
 ## 배경
 

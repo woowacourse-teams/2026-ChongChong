@@ -27,6 +27,7 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmission
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -91,6 +92,7 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
+        notificationService.deleteNotificationsForResource(ResourceType.ASSIGNMENT, assignmentId);
         assignmentRepository.delete(assignment);
     }
 

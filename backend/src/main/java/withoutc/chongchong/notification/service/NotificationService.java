@@ -96,6 +96,29 @@ public class NotificationService {
         createAssignmentRemindNotifications(now);
     }
 
+    @Transactional
+    public void deleteNotificationsForStudy(Long studyId) {
+        notificationRepository.deleteAllByStudyId(studyId);
+    }
+
+    @Transactional
+    public void deleteNotificationsForResource(ResourceType resourceType, Long resourceId) {
+        notificationRepository.deleteAllByResourceTypeAndResourceId(resourceType, resourceId);
+        if (resourceType == ResourceType.ASSIGNMENT) {
+            notificationRepository.deleteAllForAssignmentSubmissions(resourceId);
+        }
+    }
+
+    @Transactional
+    public void deleteNotificationsForStudyMember(Long memberId) {
+        notificationRepository.deleteAllByMemberId(memberId);
+    }
+
+    @Transactional
+    public void deleteNotificationsForUser(Long userId) {
+        notificationRepository.deleteAllByUserId(userId);
+    }
+
     private void createNoticeRemindNotifications(LocalDateTime now) {
         List<NoticeReminder> noticeReminders = noticeReminderRepository.findClaimableForUpdate(
                 now, REMINDER_BATCH_SIZE);

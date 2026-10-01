@@ -473,8 +473,25 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("리더가 공지 삭제 요청을 보내면 공지 애그리거트가 함께 삭제된다")
+    @DisplayName("리더가 공지를 삭제하면 관련 알림도 삭제하고 다른 공지 알림은 유지한다")
     void deleteNoticeTest() {
+        Notice otherNotice = Notice.create(study, "다른 공지", "내용");
+        otherNotice.addRecipients(List.of(member));
+        noticeRepository.saveAndFlush(otherNotice);
+        Notification otherNotification = notificationRepository.saveAndFlush(Notification.create(
+                memberUser, "다른 공지 알림", "내용", NotificationType.NEW,
+                otherNotice.getId(), ResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), otherNotice.getId())
+        ));
+        notificationRepository.saveAllAndFlush(List.of(
+                Notification.create(memberUser, "공지 알림", "내용", NotificationType.NEW,
+                        notice.getId(), ResourceType.NOTICE,
+                        "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())),
+                Notification.create(secondMember.getUser(), "공지 알림", "내용", NotificationType.REMIND,
+                        notice.getId(), ResourceType.NOTICE,
+                        "/studies/%d/notices/%d".formatted(study.getId(), notice.getId()))
+        ));
+
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .when()
@@ -485,6 +502,9 @@ class NoticeApiTest {
         assertThat(countRows("notices", notice.getId())).isZero();
         assertThat(countRows("notice_recipients", notice.getId())).isZero();
         assertThat(countRows("notice_reminders", notice.getId())).isZero();
+        assertThat(notificationRepository.findAll())
+                .extracting(Notification::getId)
+                .containsExactly(otherNotification.getId());
     }
 
     @Test

@@ -638,7 +638,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더가 삭제 요청을 보내면 스터디와 하위 데이터가 모두 삭제된다")
+    @DisplayName("스터디 삭제 시 공지·과제·제출물 알림을 지우고 다른 스터디 알림은 유지한다")
     void deleteStudyTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
@@ -668,6 +668,24 @@ class StudyAcceptanceTest {
 
         saveNotification(study, memberStudyMember, notice.getId(), ResourceType.NOTICE);
         saveNotification(study, memberStudyMember, assignment.getId(), ResourceType.ASSIGNMENT);
+        Long submissionId = assignment.getSubmissions().getFirst().getId();
+        notificationRepository.saveAndFlush(Notification.create(
+                leader, "새 제출물", "알림", NotificationType.NEW,
+                submissionId, ResourceType.ASSIGNMENT_SUBMISSION,
+                "/studies/%d/assignments/%d/submissions/%d".formatted(study.getId(), assignment.getId(),
+                        submissionId)
+        ));
+
+        Study otherStudy = studyRepository.saveAndFlush(Study.create("다른 스터디", "설명"));
+        StudyMember otherLeader = studyMemberRepository.saveAndFlush(
+                StudyMember.create(otherStudy, member, member.getName(), member.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        Notice otherNotice = Notice.create(otherStudy, "다른 공지", "내용");
+        otherNotice.addRecipients(List.of(otherLeader));
+        noticeRepository.saveAndFlush(otherNotice);
+        saveNotification(otherStudy, otherLeader, otherNotice.getId(), ResourceType.NOTICE);
+        assertThat(notificationRepository.count()).isEqualTo(4);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
                 .port(port)
@@ -677,12 +695,19 @@ class StudyAcceptanceTest {
                 .statusCode(204);
 
         assertThat(studyRepository.findById(study.getId())).isEmpty();
-        assertThat(studyMemberRepository.findAll()).isEmpty();
-        assertThat(noticeRepository.findAll()).isEmpty();
-        assertThat(noticeRecipientRepository.findAll()).isEmpty();
+        assertThat(studyMemberRepository.findAll())
+                .extracting(StudyMember::getId)
+                .containsExactly(otherLeader.getId());
+        assertThat(noticeRepository.findAll())
+                .extracting(Notice::getId)
+                .containsExactly(otherNotice.getId());
+        assertThat(noticeRecipientRepository.findAll()).hasSize(1);
         assertThat(assignmentRepository.findAll()).isEmpty();
         assertThat(assignmentSubmissionRepository.findAll()).isEmpty();
-        assertThat(notificationRepository.findAll()).hasSize(2);
+        assertThat(notificationRepository.findAll()).singleElement().satisfies(notification -> {
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
+            assertThat(notification.getResourceId()).isEqualTo(otherNotice.getId());
+        });
     }
 
     @Test

@@ -35,6 +35,7 @@ import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -80,6 +81,7 @@ public class NoticeService {
         Notice notice = noticeRepository.getByIdOrThrow(noticeId);
         validateNoticeBelongsToStudy(studyId, notice);
 
+        notificationService.deleteNotificationsForResource(ResourceType.NOTICE, noticeId);
         noticeRepository.delete(notice);
     }
 
