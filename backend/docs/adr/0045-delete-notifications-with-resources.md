@@ -1,4 +1,4 @@
-# 0042. 자원 삭제 시 관련 인앱 알림을 삭제한다
+# 0045. 자원 삭제 시 관련 인앱 알림을 삭제한다
 
 - 날짜: 2026-10-01
 - 관련 이슈: [#415](https://github.com/woowacourse-teams/2026-ChongChong/issues/415)
