@@ -49,11 +49,11 @@ AssignmentSummaryResponse:
     submissionMethod: { type: string, example: 링크 제출 }
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
     memberCount: { type: integer, example: 5 }
-    completeCount: { type: integer, example: 3 }
+    completeCount: { type: integer, description: 정상 제출과 지각 제출을 모두 포함한 제출 완료 인원, example: 3 }
     remindAt:
       description: 대기 중인 리마인더의 가장 이른 예약 시각. 예약이 없으면 목록에서는 생략하고 현황 응답에서는 null을 반환한다.
       $ref: './common.yaml#/LocalDateTime'
-    isComplete: { type: boolean, description: 리더에게만 반환하는 전체 제출 완료 여부, example: false }
+    isComplete: { type: boolean, description: 리더에게만 반환하는 전체 제출 완료 여부. 지각 제출도 완료에 포함한다., example: false }
     submissionStatus: { $ref: './assignment-submissions.yaml#/SubmissionStatus' }
 AssignmentListResponse:
   type: object
