@@ -45,9 +45,7 @@ export default function StudyManagementPage() {
         fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
       >
         <Suspense fallback={<Loading />}>
-          <Main>
-            <Content />
-          </Main>
+          <Content />
         </Suspense>
       </ErrorBoundary>
     </Page>
@@ -62,7 +60,7 @@ function Content() {
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return (
-    <>
+    <Main>
       <section aria-labelledby="study-name" css={SectionStyle}>
         <img src={StudyIcon} alt="" width={68} height={68} />
         <h2 id="study-name" css={StudyProfileTitleStyle}>
@@ -77,6 +75,6 @@ function Content() {
           <StudyMemberManagementList studyId={studyId} />
         )}
       </section>
-    </>
+    </Main>
   );
 }
