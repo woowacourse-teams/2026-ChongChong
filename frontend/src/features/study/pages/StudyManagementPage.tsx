@@ -7,8 +7,8 @@ import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import StudyIcon from '../../../shared/assets/icons/header-icon.svg';
 import { tokens, typography } from '../../../styles/global';
-import { ManagementSection } from '../components/ManagementSection';
 import studyQueries from '../queries';
+import { StudyLeaderManagementList, StudyMemberManagementList } from '../components/ManagementList';
 import useIntegerParam from '../../../shared/hooks/useIntegerParams';
 import Loading from '../../../shared/ui/Loading';
 import ErrorContent from '../../../shared/ui/ErrorContent';
@@ -41,14 +41,18 @@ export default function StudyManagementPage() {
         left={<PrevButton />}
         middle={<TopHeader.Title>스터디 참여하기</TopHeader.Title>}
       />
-      <Main>
-        <StudyManagementPage.Content />
-      </Main>
+      <ErrorBoundary
+        fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+      >
+        <Suspense fallback={<Loading />}>
+          <Content />
+        </Suspense>
+      </ErrorBoundary>
     </Page>
   );
 }
 
-StudyManagementPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParam(['studyId']);
 
   const {
@@ -56,19 +60,21 @@ StudyManagementPage.Content = function Content() {
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return (
-    <ErrorBoundary
-      fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
-    >
-      <Suspense fallback={<Loading />}>
-        <section aria-labelledby="study-name" css={SectionStyle}>
-          <img src={StudyIcon} alt="" width={68} height={68} />
-          <h2 id="study-name" css={StudyProfileTitleStyle}>
-            {studyName}
-          </h2>
-          <p css={StudyProfileSubTitleStyle}>{description}</p>
-        </section>
-        <ManagementSection role={role} />
-      </Suspense>
-    </ErrorBoundary>
+    <Main>
+      <section aria-labelledby="study-name" css={SectionStyle}>
+        <img src={StudyIcon} alt="" width={68} height={68} />
+        <h2 id="study-name" css={StudyProfileTitleStyle}>
+          {studyName}
+        </h2>
+        <p css={StudyProfileSubTitleStyle}>{description}</p>
+      </section>
+      <section>
+        {role === 'LEADER' ? (
+          <StudyLeaderManagementList studyId={studyId} />
+        ) : (
+          <StudyMemberManagementList studyId={studyId} />
+        )}
+      </section>
+    </Main>
   );
-};
+}

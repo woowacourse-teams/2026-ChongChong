@@ -113,6 +113,17 @@ export async function joinStudy(body: { token: string }) {
   }
 }
 
+export async function leaveStudy({ studyId }: { studyId: number }) {
+  try {
+    await api.delete(`/studies/${studyId}/members/me`);
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('스터디 탈퇴에 실패했습니다.', { cause: error }),
+    });
+  }
+}
+
 export async function removeStudy(studyId: number) {
   try {
     await api.delete(`/studies/${studyId}`);
