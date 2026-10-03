@@ -96,7 +96,7 @@ class AssignmentSubmissionServiceTest {
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("제출 내용", "https://example.com");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID))
+        when(assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
         when(studyMemberRepository.findAllByStudyIdAndRole(STUDY_ID, StudyMemberRole.LEADER))
                 .thenReturn(List.of(leader));
@@ -110,7 +110,7 @@ class AssignmentSubmissionServiceTest {
         assertThat(submission.getLink()).isEqualTo("https://example.com");
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
         verify(assignmentRepository).getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID);
-        verify(assignmentSubmissionRepository).getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID);
+        verify(assignmentSubmissionRepository).getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID);
         verify(notificationService).createAssignmentSubmissionSubmittedEventNotifications(submission, List.of(leader));
     }
 
@@ -124,7 +124,7 @@ class AssignmentSubmissionServiceTest {
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("수정 내용", "https://new.example.com");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID))
+        when(assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
 
         assignmentSubmissionService.submit(USER_ID, STUDY_ID, ASSIGNMENT_ID, request);
@@ -146,7 +146,7 @@ class AssignmentSubmissionServiceTest {
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("a".repeat(10_001), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(ASSIGNMENT_ID, MEMBER_ID))
+        when(assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
 
         assertThatThrownBy(() -> assignmentSubmissionService.submit(USER_ID, STUDY_ID, ASSIGNMENT_ID, request))

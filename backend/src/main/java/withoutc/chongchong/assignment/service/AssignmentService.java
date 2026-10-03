@@ -23,7 +23,6 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
@@ -166,15 +165,18 @@ public class AssignmentService {
             return List.of();
         }
 
+        LocalDateTime now = LocalDateTime.now(clock);
         List<Long> assignmentIds = assignments.stream().map(Assignment::getId).toList();
         Map<Long, SubmissionStatus> submissionStatusByAssignmentId = assignmentSubmissionRepository
-                .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
-                .stream().collect(Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::submissionStatus));
+                .findAllByAssignmentIdInAndMemberId(assignmentIds, member.getId())
+                .stream().collect(Collectors.toMap(submission -> submission.getAssignment().getId(),
+                        submission -> submission.submissionStatus(now)));
 
         if (member.isLeader()) {
-            return assignments.stream().map(assignment -> AssignmentSummaryResponse.forLeader(assignment,
-                            submissionStatusByAssignmentId.getOrDefault(assignment.getId(), SubmissionStatus.NOT_ASSIGNED)))
+            return assignments.stream().map(assignment ->
+                            AssignmentSummaryResponse.forLeader(now, assignment,
+                                    submissionStatusByAssignmentId.getOrDefault(assignment.getId(),
+                                            SubmissionStatus.NOT_ASSIGNED)))
                     .toList();
         }
 

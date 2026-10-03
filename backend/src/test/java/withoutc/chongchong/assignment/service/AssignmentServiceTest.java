@@ -42,7 +42,7 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
@@ -311,7 +311,7 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().completeCount()).isEqualTo(2);
         assertThat(response.assignments().getFirst().isComplete()).isFalse();
         assertThat(response.assignments().getLast().isComplete()).isTrue();
-        verify(assignmentSubmissionRepository).findMySubmissionStatusesByAssignmentIdsAndMemberId(
+        verify(assignmentSubmissionRepository).findAllByAssignmentIdInAndMemberId(
                 List.of(300L, 200L), leader.getId());
     }
 
@@ -368,9 +368,11 @@ class AssignmentServiceTest {
         StudyMember member = mock(StudyMember.class);
         Assignment firstAssignment = assignmentWithId(ASSIGNMENT_ID);
         Assignment secondAssignment = assignmentWithId(200L);
-        List<AssignmentSubmissionStatusProjection> statuses = List.of(
-                new AssignmentSubmissionStatusProjection(ASSIGNMENT_ID, NOW),
-                new AssignmentSubmissionStatusProjection(200L, null)
+        AssignmentSubmission submitted = AssignmentSubmission.create(member, firstAssignment);
+        submitted.submit("제출 내용", null, NOW);
+        List<AssignmentSubmission> statuses = List.of(
+                submitted,
+                AssignmentSubmission.create(member, secondAssignment)
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
@@ -378,7 +380,7 @@ class AssignmentServiceTest {
                 STUDY_ID, null, PageRequest.of(0, 11)
         ))
                 .thenReturn(List.of(firstAssignment, secondAssignment));
-        when(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
+        when(assignmentSubmissionRepository.findAllByAssignmentIdInAndMemberId(
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
         )).thenReturn(statuses);
 
@@ -392,7 +394,7 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().remindAt()).isNull();
         assertThat(response.assignments().getFirst().submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(response.assignments().getLast().submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
-        verify(assignmentSubmissionRepository).findMySubmissionStatusesByAssignmentIdsAndMemberId(
+        verify(assignmentSubmissionRepository).findAllByAssignmentIdInAndMemberId(
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
         );
     }
