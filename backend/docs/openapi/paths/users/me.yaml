@@ -26,7 +26,7 @@ patch:
   tags: [User]
   operationId: updateMyProfileName
   x-backend:
-    status: todo
+    status: review
     owner: JYL35
     description: |
       #423 홈 마이페이지의 이름만 수정한다. 프로필 이미지 변경은 S3 이미지 처리 작업에서 별도로 구현한다.
