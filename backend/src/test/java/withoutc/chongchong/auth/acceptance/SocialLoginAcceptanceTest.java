@@ -315,6 +315,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
@@ -331,6 +334,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
         assertThat(response.asString())
                 .doesNotContain(unknownRefreshToken)
@@ -512,6 +518,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("UNSUPPORTED_SOCIAL_PROVIDER"))
                 .body("message", equalTo("지원하지 않는 소셜 로그인 제공자입니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
@@ -530,8 +539,11 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
                 .body("errors.field", hasItem("provider"))
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
+        assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
         assertDatabaseEmpty();
     }
 
@@ -544,6 +556,8 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
                 .body("errors.field", hasItem("authorizationCode"))
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
@@ -558,6 +572,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST"))
                 .body("message", equalTo("요청 형식이 잘못되었습니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);

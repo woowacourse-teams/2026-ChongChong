@@ -23,6 +23,7 @@ import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -211,6 +212,7 @@ class AssignmentSubmissionRepositoryTest {
                 "과제 내용",
                 "GitHub PR",
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));

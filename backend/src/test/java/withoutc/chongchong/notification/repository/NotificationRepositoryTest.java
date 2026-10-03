@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.notification.entity.Notification;
@@ -79,6 +80,7 @@ class NotificationRepositoryTest {
                 "내용",
                 "링크",
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2030, 1, 2, 0, 0),
                 LocalDateTime.of(2030, 1, 1, 0, 0)
         );

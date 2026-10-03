@@ -12,6 +12,7 @@ import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse.SubmissionSummary;
+import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -88,21 +89,19 @@ public class AssignmentSubmissionService {
     public SubmissionDetailResponse getSubmissionDetail(Long userId, Long studyId, Long assignmentId,
                                                         Long submissionId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(submissionId,
                 assignmentId);
-        assignmentAccessPolicy.requireCanReadSubmission(actor, submission);
+        assignmentAccessPolicy.requireCanReadSubmission(actor, assignment, submission);
 
         return SubmissionDetailResponse.of(submission, submission.getMember());
     }
 
     public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        assignmentAccessPolicy.requireCanReadSubmissionList(actor);
-
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        assignmentAccessPolicy.requireCanReadSubmissionList(assignment, actor);
 
         List<AssignmentSubmission> submissions = assignmentSubmissionRepository
                 .findAllByAssignmentIdAndSubmittedAtIsNotNull(assignmentId);

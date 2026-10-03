@@ -20,6 +20,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentReminder;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentReminderRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.notice.entity.Notice;
@@ -153,7 +154,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
                 "과제 제목",
                 "과제 내용",
                 "제출 방법",
-                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionTarget.MEMBERS_ONLY, SubmissionVisibility.LEADER_ONLY,
                 NOW.plusDays(1),
                 CREATION_TIME
         );

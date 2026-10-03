@@ -1,6 +1,12 @@
 get:
   tags: [Notice]
   operationId: getAllReadStatuses
+  x-frontend:
+    status: integrated
+    description: "읽음·미읽음 멤버 및 집계와 nullable 리마인드 시각을 처리한다."
+    sources:
+      - frontend/src/features/notice/api.ts
+      - frontend/src/features/notice/responseSchemas.ts
   x-backend:
     status: done
     owner: frombunny

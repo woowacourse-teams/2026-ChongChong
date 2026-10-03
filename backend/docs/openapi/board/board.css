@@ -53,6 +53,11 @@ code { font: inherit; overflow-wrap: anywhere; }
 .badge[data-state="done"] { color: var(--yellow-text); background: var(--yellow); }
 .badge[data-state="in-progress"] { color: var(--blue-text); background: var(--blue); }
 .badge[data-state="review"] { color: var(--purple-text); background: var(--purple); }
+.frontend-details { margin-bottom: var(--s2); }
+.frontend-badge { color: var(--surface); background: var(--blue-text); font-size: var(--sm); font-weight: 700; }
+.frontend-badge:hover { color: var(--surface); background: var(--accent); }
+.frontend-details > summary { display: list-item; width: fit-content; list-style-position: inside; padding: var(--s1) var(--s2); }
+.frontend-note { margin-top: var(--s2); font-size: var(--sm); overflow-wrap: anywhere; }
 .owner { display: flex; align-items: center; gap: var(--s2); white-space: nowrap; }
 .avatar { width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--neutral); color: var(--neutral-text); display: grid; place-items: center; font-size: var(--xs); }
 .note-body { font-size: var(--sm); color: var(--text); overflow-wrap: anywhere; min-width: 0; }
@@ -78,7 +83,6 @@ code { font: inherit; overflow-wrap: anywhere; }
   .notes { grid-column: 1 / -1; grid-row: 3; }
 }
 
-.frontend-badge { display: list-item; width: fit-content; cursor: pointer; padding: var(--s1) var(--s2); border-radius: var(--tag-radius); background: var(--blue); color: var(--blue-text); font-size: var(--sm); font-weight: 700; line-height: 1.5; }
 
 .frontend-items { margin: var(--s2) 0 0; padding-left: var(--s4); font-size: var(--sm); line-height: 1.6; overflow-wrap: anywhere; }
 .frontend-items li + li { margin-top: var(--s2); }

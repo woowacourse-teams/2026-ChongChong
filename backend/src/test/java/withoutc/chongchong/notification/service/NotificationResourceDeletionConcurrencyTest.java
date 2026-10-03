@@ -22,6 +22,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.notice.entity.Notice;
@@ -164,7 +165,7 @@ class NotificationResourceDeletionConcurrencyTest extends PostgresContainerTest 
         StudyMember member = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, recipient, "스터디원", null, StudyMemberRole.MEMBER));
         Assignment assignment = Assignment.create(study, "과제", "내용", "제출 방법",
-                SubmissionTarget.MEMBERS_ONLY, now.plusDays(1), creationTime);
+                SubmissionTarget.MEMBERS_ONLY, SubmissionVisibility.LEADER_ONLY, now.plusDays(1), creationTime);
         assignment.initializeSubmissions(List.of(member));
         assignment.addReminders(List.of(now.minusMinutes(1)), creationTime);
         assignmentRepository.saveAndFlush(assignment);

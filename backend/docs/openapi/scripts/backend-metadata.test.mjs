@@ -45,3 +45,16 @@ test('중복 operationId와 미해결 path 참조를 거부한다', () => {
   assert.throws(() => collectOperations(duplicate), /고유한 operationId/);
   assert.throws(() => collectOperations({ paths: { '/api/studies': { $ref: './study.yaml' } } }), /번들 명세/);
 });
+
+test('프론트 확인 근거와 상태를 보존하고 잘못된 메타데이터를 거부한다', () => {
+  const input = spec(unconfirmed);
+  const frontend = { status: 'needs-update', description: '필수 요청 필드 누락', sources: ['frontend/src/client.ts'] };
+  input.paths['/api/studies'].post['x-frontend'] = frontend;
+  assert.deepEqual(collectOperations(input)[0].frontend, frontend);
+  for (const invalid of [false, [], {}, { ...frontend, status: 'done' },
+    { ...frontend, description: '' }, { ...frontend, sources: [] },
+    { ...frontend, sources: ['missing.ts'] }, { ...frontend, stauts: 'integrated' }]) {
+    input.paths['/api/studies'].post['x-frontend'] = invalid;
+    assert.throws(() => collectOperations(input), /x-frontend/);
+  }
+});

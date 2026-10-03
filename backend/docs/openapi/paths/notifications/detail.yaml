@@ -2,7 +2,7 @@ patch:
   tags: [Notification]
   operationId: readNotification
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: 현재 인증된 사용자의 알림을 읽음 처리한다.
   summary: 알림 읽음 처리

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 
 public record AssignmentCreateRequest(
         @NotBlank(message = "제목은 필수 값입니다.")
@@ -20,6 +21,8 @@ public record AssignmentCreateRequest(
         String submissionMethod,
         @NotNull(message = "리더 제출 여부는 필수 값입니다.")
         SubmissionTarget submissionTarget,
+        @NotNull(message = "제출물 공개 범위는 필수 값입니다.")
+        SubmissionVisibility submissionVisibility,
         @NotNull(message = "마감 시각은 필수 값입니다.")
         @Future(message = "마감 시각은 현재보다 미래여야 합니다.")
         LocalDateTime closeAt,

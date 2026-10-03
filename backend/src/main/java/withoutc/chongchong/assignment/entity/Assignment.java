@@ -58,6 +58,10 @@ public class Assignment extends BaseEntity {
     @Column(name = "submission_target", nullable = false)
     private SubmissionTarget submissionTarget;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "submission_visibility", nullable = false)
+    private SubmissionVisibility submissionVisibility;
+
     @Column(name = "close_at", nullable = false)
     private LocalDateTime closeAt;
 
@@ -68,12 +72,14 @@ public class Assignment extends BaseEntity {
     private final List<AssignmentSubmission> submissions = new ArrayList<>();
 
     public static Assignment create(Study study, String title, String content, String submissionMethod,
-                                    SubmissionTarget submissionTarget, LocalDateTime closeAt, LocalDateTime now) {
-        return new Assignment(study, title, content, submissionMethod, submissionTarget, closeAt, now);
+                                    SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
+                                    LocalDateTime closeAt, LocalDateTime now) {
+        return new Assignment(study, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt,
+                now);
     }
 
     private Assignment(Study study, String title, String content, String submissionMethod,
-                       SubmissionTarget submissionTarget,
+                       SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
                        LocalDateTime closeAt, LocalDateTime now) {
         validateTitle(title);
         validateContent(content);
@@ -85,11 +91,12 @@ public class Assignment extends BaseEntity {
         this.content = content;
         this.submissionMethod = submissionMethod;
         this.submissionTarget = submissionTarget;
+        this.submissionVisibility = submissionVisibility;
         this.closeAt = closeAt;
     }
 
     public void update(StudyMember leader, String title, String content, String submissionMethod,
-                       SubmissionTarget submissionTarget,
+                       SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
                        LocalDateTime closeAt, List<LocalDateTime> remindAts, LocalDateTime now) {
         if (title != null) {
             validateTitle(title);
@@ -116,6 +123,10 @@ public class Assignment extends BaseEntity {
             }
         }
 
+        if (submissionVisibility != null) {
+            this.submissionVisibility = submissionVisibility;
+        }
+
         if (closeAt != null) {
             validateCloseAt(closeAt, now);
             this.closeAt = closeAt;
@@ -124,6 +135,10 @@ public class Assignment extends BaseEntity {
         if (remindAts != null) {
             replacePendingReminders(remindAts, now);
         }
+    }
+
+    public boolean visibleToAllStudyMembers() {
+        return SubmissionVisibility.ALL_STUDY_MEMBERS.equals(submissionVisibility);
     }
 
     public int getSubmissionCount() {

@@ -1,6 +1,12 @@
 post:
   tags: [Auth]
   operationId: refresh
+  x-frontend:
+    status: integrated
+    description: "401 응답에서 쿠키 기반 재발급 후 원 요청을 재시도한다."
+    sources:
+      - frontend/src/features/login/api.ts
+      - frontend/src/client.ts
   x-backend:
     status: done
     owner: JYL35

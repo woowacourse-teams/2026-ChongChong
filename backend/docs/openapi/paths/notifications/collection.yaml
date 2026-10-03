@@ -2,7 +2,7 @@ get:
   tags: [Notification]
   operationId: getMyNotifications
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: 현재 인증된 사용자가 받은 알림을 최신순으로 조회한다.
   summary: 내 알림 목록 조회

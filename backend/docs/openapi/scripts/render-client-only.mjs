@@ -2,8 +2,24 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const hydration = 'Redoc.hydrate(__redoc_state, container);';
+
+export function addFrontendNotes(spec) {
+  for (const item of Object.values(spec.paths ?? {})) {
+    for (const operation of Object.values(item)) {
+      if (operation?.['x-frontend']?.status !== 'needs-update') continue;
+      const note = operation['x-frontend'].description.replace(/[&<>]/g,
+        (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[character]);
+      const heading = '**프론트 수정 필요**';
+      if (!operation.description?.startsWith(heading)) {
+        operation.description = `${heading}\n\n${note}\n\n${operation.description ?? ''}`;
+      }
+    }
+  }
+}
+
 const clientRendering = [
   'container.replaceChildren();',
+  `(${addFrontendNotes.toString()})(__redoc_state.spec.data);`,
   'Redoc.init(__redoc_state.spec.data, __redoc_state.options, container);',
 ].join('\n      ');
 

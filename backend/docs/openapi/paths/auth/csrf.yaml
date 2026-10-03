@@ -1,6 +1,12 @@
 get:
   tags: [Auth]
   operationId: csrf
+  x-frontend:
+    status: integrated
+    description: "CSRF 조회와 헤더·쿠키 전달이 인증 요청에 연결되어 있다."
+    sources:
+      - frontend/src/features/login/api.ts
+      - frontend/src/features/login/authClient.ts
   x-backend:
     status: done
     owner: JYL35

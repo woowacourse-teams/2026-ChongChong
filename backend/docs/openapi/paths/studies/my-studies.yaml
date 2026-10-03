@@ -1,6 +1,13 @@
 get:
   tags: [Study]
   operationId: getMyStudies
+  x-frontend:
+    status: integrated
+    description: "studies 배열과 역할·집계를 검증해 내 스터디 목록에 사용한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/responseSchemas.ts
+      - frontend/src/features/study/pages/MyStudiesPage.tsx
   x-backend:
     status: done
     owner: wontop02

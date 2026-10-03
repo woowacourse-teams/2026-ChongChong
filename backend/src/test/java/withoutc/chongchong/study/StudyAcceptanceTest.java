@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -515,6 +516,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         SubmissionTarget.MEMBERS_ONLY,
+                        SubmissionVisibility.LEADER_ONLY,
                         LocalDateTime.of(2026, 8, 20, 0, 0),
                         ASSIGNMENT_NOW
                 )
@@ -565,6 +567,7 @@ class StudyAcceptanceTest {
                         "내용",
                         "링크",
                         SubmissionTarget.MEMBERS_ONLY,
+                        SubmissionVisibility.LEADER_ONLY,
                         LocalDateTime.of(2026, 8, 20, 0, 0),
                         ASSIGNMENT_NOW
                 )
@@ -660,6 +663,7 @@ class StudyAcceptanceTest {
                 "내용",
                 "링크",
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2026, 8, 20, 0, 0),
                 ASSIGNMENT_NOW
         );

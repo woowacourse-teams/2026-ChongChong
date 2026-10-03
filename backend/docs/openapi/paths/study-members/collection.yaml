@@ -1,6 +1,13 @@
 get:
   tags: [Study Member]
   operationId: getAllStudyMembers
+  x-frontend:
+    status: integrated
+    description: "members 배열의 id·이름·프로필·역할을 검증해 표시한다."
+    sources:
+      - frontend/src/features/member/api.ts
+      - frontend/src/features/member/responseSchemas.ts
+      - frontend/src/features/member/components/MemberListContent.tsx
   x-backend:
     status: done
     owner: JYL35

@@ -27,6 +27,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitResponse;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.service.AssignmentSubmissionService;
@@ -208,7 +209,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
                 "동시성 과제",
                 "과제 내용",
                 "링크 제출",
-                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionTarget.MEMBERS_ONLY, SubmissionVisibility.LEADER_ONLY,
                 now.plusDays(1),
                 now
         ));

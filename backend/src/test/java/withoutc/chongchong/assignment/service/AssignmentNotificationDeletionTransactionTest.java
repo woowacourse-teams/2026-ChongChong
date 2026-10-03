@@ -17,6 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.notification.entity.Notification;
@@ -133,7 +134,7 @@ class AssignmentNotificationDeletionTransactionTest {
                 StudyMember.create(study, memberUser, "스터디원", null, StudyMemberRole.MEMBER));
         LocalDateTime now = LocalDateTime.now();
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크",
-                SubmissionTarget.MEMBERS_ONLY, now.plusDays(1), now);
+                SubmissionTarget.MEMBERS_ONLY, SubmissionVisibility.LEADER_ONLY, now.plusDays(1), now);
         assignment.initializeSubmissions(List.of(member));
         assignmentRepository.saveAndFlush(assignment);
         AssignmentSubmission submission = assignmentSubmissionRepository
