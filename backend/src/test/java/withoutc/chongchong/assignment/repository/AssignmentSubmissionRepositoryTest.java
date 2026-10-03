@@ -137,7 +137,7 @@ class AssignmentSubmissionRepositoryTest {
         );
         entityManager.clear();
 
-        AssignmentSubmission locked = assignmentSubmissionRepository.findWithLockByAssignmentIdAndMemberIdForUpdate(
+        AssignmentSubmission locked = assignmentSubmissionRepository.findWithLockByAssignmentIdAndMemberId(
                 assignment.getId(), member.getId()
         ).orElseThrow();
 

@@ -220,7 +220,7 @@ class AssignmentTest {
         assignment.getReminders().getFirst().markAsSent();
 
         assertThat(assignment.getSubmissionCount()).isEqualTo(2);
-        assertThat(assignment.getSubmittedCount()).isEqualTo(1);
+        assertThat(assignment.getSubmittedCount(NOW)).isEqualTo(1);
         assertThat(assignment.getNextRemindAt()).isEqualTo(nextRemindAt);
     }
 

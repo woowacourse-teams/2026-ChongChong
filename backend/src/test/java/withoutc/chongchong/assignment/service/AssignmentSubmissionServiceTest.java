@@ -105,7 +105,7 @@ class AssignmentSubmissionServiceTest {
                 request);
 
         assertThat(response.submissionId()).isEqualTo(300L);
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertThat(submission.submissionStatus(NOW)).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://example.com");
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);

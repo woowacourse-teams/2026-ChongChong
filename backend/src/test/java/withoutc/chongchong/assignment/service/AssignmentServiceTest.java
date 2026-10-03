@@ -434,7 +434,7 @@ class AssignmentServiceTest {
         when(assignment.getSubmissionMethod()).thenReturn("링크 제출");
         when(assignment.getCloseAt()).thenReturn(NOW.plusDays(7));
         when(assignment.getSubmissionCount()).thenReturn(memberCount);
-        when(assignment.getSubmittedCount()).thenReturn(completeCount);
+        when(assignment.getSubmittedCount(NOW)).thenReturn(completeCount);
         return assignment;
     }
 
