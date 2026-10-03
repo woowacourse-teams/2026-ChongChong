@@ -40,6 +40,7 @@ ErrorResponse:
         - STUDY_NOT_FOUND
         - STUDY_MEMBER_NOT_FOUND
         - USER_NOT_FOUND
+        - INVALID_USER_NAME
         - NOTICE_NOT_FOUND
         - NOTICE_RECIPIENT_NOT_FOUND
         - NOTIFICATION_NOT_FOUND
@@ -96,6 +97,7 @@ StudyLeaderWithdrawalBlockedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { 
 StudyNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_NOT_FOUND }, message: { const: 존재하지 않는 스터디입니다. } } }], examples: [{ code: STUDY_NOT_FOUND, message: 존재하지 않는 스터디입니다. }] }
 StudyMemberNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_MEMBER_NOT_FOUND }, message: { const: 존재하지 않는 스터디 멤버입니다. } } }], examples: [{ code: STUDY_MEMBER_NOT_FOUND, message: 존재하지 않는 스터디 멤버입니다. }] }
 UserNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: USER_NOT_FOUND }, message: { const: 해당 사용자를 찾을 수 없습니다. } } }], examples: [{ code: USER_NOT_FOUND, message: 해당 사용자를 찾을 수 없습니다. }] }
+InvalidUserNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_USER_NAME }, message: { const: 사용자 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_USER_NAME, message: 사용자 이름이 올바르지 않습니다. }] }
 NoticeNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_NOT_FOUND }, message: { const: 존재하지 않는 공지입니다. } } }], examples: [{ code: NOTICE_NOT_FOUND, message: 존재하지 않는 공지입니다. }] }
 NotificationNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_NOT_FOUND }, message: { const: 존재하지 않는 알림입니다. } } }], examples: [{ code: NOTIFICATION_NOT_FOUND, message: 존재하지 않는 알림입니다. }] }
 NoticeRecipientNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_RECIPIENT_NOT_FOUND }, message: { const: 공지 수신자 정보를 찾을 수 없습니다. } } }], examples: [{ code: NOTICE_RECIPIENT_NOT_FOUND, message: 공지 수신자 정보를 찾을 수 없습니다. }] }
