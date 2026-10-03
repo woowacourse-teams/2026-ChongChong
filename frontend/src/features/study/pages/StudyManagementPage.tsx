@@ -46,7 +46,7 @@ export default function StudyManagementPage() {
       >
         <Suspense fallback={<Loading />}>
           <Main>
-            <StudyManagementPage.Content />
+            <Content />
           </Main>
         </Suspense>
       </ErrorBoundary>
@@ -54,7 +54,7 @@ export default function StudyManagementPage() {
   );
 }
 
-StudyManagementPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParam(['studyId']);
 
   const {
@@ -79,4 +79,4 @@ StudyManagementPage.Content = function Content() {
       </section>
     </>
   );
-};
+}
