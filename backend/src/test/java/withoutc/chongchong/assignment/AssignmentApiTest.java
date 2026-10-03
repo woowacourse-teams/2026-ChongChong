@@ -28,6 +28,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
@@ -84,6 +86,9 @@ class AssignmentApiTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @LocalServerPort
     private int port;
 
@@ -97,6 +102,13 @@ class AssignmentApiTest {
     private Assignment assignment;
     private LocalDateTime closeAt;
     private LocalDateTime remindAt;
+
+    private void assertSubmissionStatus(Long submissionId, SubmissionStatus expected) {
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
+            assertThat(submission.submissionStatus(LocalDateTime.now(CLOCK))).isEqualTo(expected);
+        });
+    }
 
     @BeforeEach
     void setUp() {
@@ -559,7 +571,7 @@ class AssignmentApiTest {
         );
 
         AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertSubmissionStatus(submission.getId(), SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://submission.example.com");
 
@@ -690,7 +702,7 @@ class AssignmentApiTest {
         AssignmentSubmission otherSubmission = assignmentSubmissionRepository
                 .findByAssignmentIdAndMemberId(otherAssignment.getId(), otherMember.getId())
                 .orElseThrow();
-        assertThat(otherSubmission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertSubmissionStatus(otherSubmission.getId(), SubmissionStatus.NOT_SUBMITTED);
         assertThat(otherSubmission.getContent()).isNull();
     }
 
@@ -831,6 +843,7 @@ class AssignmentApiTest {
                 .body("submissions", hasSize(1))
                 .body("submissions[0].id", equalTo(submissionId.intValue()))
                 .body("submissions[0].name", equalTo(member.getName()))
+                .body("submissions[0].submissionStatus", equalTo("SUBMITTED"))
                 .body("submissions[0].createdAt",
                         equalTo(savedSubmission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
@@ -900,7 +913,7 @@ class AssignmentApiTest {
         assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
         assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(submission -> {
             assertThat(submission.getContent()).isEqualTo("리더의 제출 내용");
-            assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+            assertSubmissionStatus(submission.getId(), SubmissionStatus.SUBMITTED);
         });
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)

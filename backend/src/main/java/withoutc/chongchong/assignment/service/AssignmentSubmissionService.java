@@ -41,10 +41,12 @@ public class AssignmentSubmissionService {
 
         assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
-        AssignmentSubmission submission = assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(
+        AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
-        boolean isFirstSubmit = submission.getSubmittedAt() == null;
-        submission.submit(request.content(), request.link(), LocalDateTime.now(clock));
+        LocalDateTime now = LocalDateTime.now(clock);
+        boolean isFirstSubmit = !submission.isSubmit(now);
+
+        submission.submit(request.content(), request.link(), now);
 
         // TODO: 리더가 과제를 제출할 경우 나머지 리더들에게 알림을 보낼지, 아예 안 보낼지 결정 필요
         if (isFirstSubmit) {
@@ -79,7 +81,7 @@ public class AssignmentSubmissionService {
         assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         return assignmentSubmissionRepository.findByAssignmentIdAndMemberId(assignmentId, member.getId())
-                .map(MySubmissionDetailResponse::from)
+                .map(submission -> MySubmissionDetailResponse.of(LocalDateTime.now(clock), submission))
                 .orElseGet(MySubmissionDetailResponse::notAssigned);
     }
 
@@ -105,6 +107,8 @@ public class AssignmentSubmissionService {
         List<AssignmentSubmission> submissions = assignmentSubmissionRepository
                 .findAllByAssignmentIdAndSubmittedAtIsNotNull(assignmentId);
 
-        return SubmissionListResponse.from(submissions.stream().map(SubmissionSummary::from).toList());
+        LocalDateTime now = LocalDateTime.now(clock);
+        return SubmissionListResponse.from(submissions.stream().map(
+                submission -> SubmissionSummary.of(now, submission)).toList());
     }
 }

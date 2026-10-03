@@ -130,7 +130,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
         try {
             Future<Void> holder = executor.submit(() -> {
                 transactionTemplate.executeWithoutResult(status -> {
-                    assignmentSubmissionRepository.findByAssignmentIdAndMemberIdForUpdate(
+                    assignmentSubmissionRepository.findWithLockByAssignmentIdAndMemberId(
                             fixture.assignmentId(), fixture.submitterMemberId()
                     ).orElseThrow();
                     lockAcquired.countDown();
@@ -144,7 +144,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
             Future<Void> waiter = executor.submit(() -> {
                 transactionTemplate.executeWithoutResult(status -> {
                     jdbcTemplate.execute("SET LOCAL lock_timeout = '1000ms'");
-                    assignmentSubmissionRepository.findByAssignmentIdAndMemberIdForUpdate(
+                    assignmentSubmissionRepository.findWithLockByAssignmentIdAndMemberId(
                             fixture.assignmentId(), fixture.submitterMemberId()
                     ).orElseThrow();
                 });
