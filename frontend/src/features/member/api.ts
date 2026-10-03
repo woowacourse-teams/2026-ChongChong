@@ -31,14 +31,3 @@ export async function kickMember({ studyId, memberId }: { studyId: number; membe
     });
   }
 }
-
-export async function leaveStudyMember({ studyId }: { studyId: number }) {
-  try {
-    await api.delete(`/studies/${studyId}/members/me`);
-  } catch (error) {
-    throw handleError(error, {
-      mappers: [ApiError],
-      fallback: new Error('스터디 탈퇴에 실패했습니다.', { cause: error }),
-    });
-  }
-}

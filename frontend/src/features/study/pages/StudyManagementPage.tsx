@@ -7,8 +7,8 @@ import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import StudyIcon from '../../../shared/assets/icons/header-icon.svg';
 import { tokens, typography } from '../../../styles/global';
-import { ManagementSection } from '../components/ManagementSection';
 import studyQueries from '../queries';
+import { StudyLeaderManagementList, StudyMemberManagementList } from '../components/ManagementList';
 import useIntegerParam from '../../../shared/hooks/useIntegerParams';
 import Loading from '../../../shared/ui/Loading';
 import ErrorContent from '../../../shared/ui/ErrorContent';
@@ -67,7 +67,13 @@ StudyManagementPage.Content = function Content() {
           </h2>
           <p css={StudyProfileSubTitleStyle}>{description}</p>
         </section>
-        <ManagementSection role={role} />
+        <section>
+          {role === 'LEADER' ? (
+            <StudyLeaderManagementList studyId={studyId} />
+          ) : (
+            <StudyMemberManagementList studyId={studyId} />
+          )}
+        </section>
       </Suspense>
     </ErrorBoundary>
   );
