@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.user.controller.dto.UserProfileNameUpdateRequest;
 import withoutc.chongchong.user.controller.dto.UserProfileResponse;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.exception.UserErrorCode;
@@ -38,9 +39,9 @@ public class UserService {
     }
 
     @Transactional
-    public UserProfileResponse updateMyProfileName(Long userId, String newName) {
+    public UserProfileResponse updateMyProfileName(Long userId, UserProfileNameUpdateRequest request) {
         User user = userRepository.getByIdOrThrow(userId);
-        user.updateName(newName);
+        user.updateName(request.name());
         return UserProfileResponse.from(user);
     }
 }
