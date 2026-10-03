@@ -145,9 +145,9 @@ public class Assignment extends BaseEntity {
         return this.submissions.size();
     }
 
-    public int getSubmittedCount() {
-        return Math.toIntExact(this.submissions.stream().filter(submission
-                -> SubmissionStatus.SUBMITTED.equals(submission.submissionStatus())).count());
+    public int getSubmittedCount(LocalDateTime now) {
+        return Math.toIntExact(this.submissions.stream()
+                .filter(submission -> submission.isSubmit(now)).count());
     }
 
     public LocalDateTime getNextRemindAt() {

@@ -22,4 +22,26 @@ public interface NoticeReminderRepository extends JpaRepository<NoticeReminder, 
             @Param("now") LocalDateTime now,
             @Param("batchSize") int batchSize
     );
+
+    @Query(value = """
+            SELECT *
+            FROM notice_reminders
+            WHERE notice_id = :noticeId
+            ORDER BY id
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<NoticeReminder> findAllByNoticeIdForUpdate(@Param("noticeId") Long noticeId);
+
+    @Query(value = """
+            SELECT *
+            FROM notice_reminders
+            WHERE notice_id IN (
+                SELECT id
+                FROM notices
+                WHERE study_id = :studyId
+            )
+            ORDER BY id
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<NoticeReminder> findAllByStudyIdForUpdate(@Param("studyId") Long studyId);
 }

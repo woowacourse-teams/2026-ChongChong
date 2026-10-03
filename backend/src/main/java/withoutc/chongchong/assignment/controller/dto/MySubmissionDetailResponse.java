@@ -23,10 +23,10 @@ public record MySubmissionDetailResponse(
         );
     }
 
-    public static MySubmissionDetailResponse from(AssignmentSubmission submission) {
+    public static MySubmissionDetailResponse of(LocalDateTime now, AssignmentSubmission submission) {
         return new MySubmissionDetailResponse(
                 submission.getId(),
-                submission.submissionStatus(),
+                submission.submissionStatus(now),
                 submission.getSubmittedAt(),
                 submission.getContent(),
                 submission.getLink()

@@ -148,6 +148,27 @@ class AssignmentAccessPolicyTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource({"LEADER_ONLY, false", "ALL_STUDY_MEMBERS, true"})
+    @DisplayName("지각 제출물도 공개 범위에 따라 일반 멤버의 상세 조회 권한을 적용한다")
+    void readLateSubmissionPermissions(SubmissionVisibility visibility, boolean allowed) {
+        LocalDateTime now = LocalDateTime.of(2026, 10, 3, 10, 0);
+        Study study = Study.create("스터디", "설명");
+        Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
+                visibility, now.plusDays(1), now);
+        AssignmentSubmission submission = AssignmentSubmission.create(
+                member(study, 1L, StudyMemberRole.MEMBER), assignment);
+        submission.submit("지각 제출 내용", null, now.plusDays(2));
+        StudyMember actor = member(study, 2L, StudyMemberRole.MEMBER);
+
+        Runnable action = () -> policy.requireCanReadSubmission(actor, assignment, submission);
+        if (allowed) {
+            assertThatCode(action::run).doesNotThrowAnyException();
+        } else {
+            assertAccessDenied(action);
+        }
+    }
+
     private StudyMember member(Study study, Long id, StudyMemberRole role) {
         StudyMember member = StudyMember.create(study, User.create("사용자", null), "사용자", null, role);
         ReflectionTestUtils.setField(member, "id", id);

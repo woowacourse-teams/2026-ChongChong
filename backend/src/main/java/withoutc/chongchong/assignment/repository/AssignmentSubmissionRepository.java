@@ -12,24 +12,14 @@ import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.study.entity.StudyMember;
 
 public interface AssignmentSubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
 
-    @Query("""
-            SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection(
-                       submission.assignment.id,
-                       submission.submittedAt
-                   )
-            FROM AssignmentSubmission submission
-            WHERE submission.assignment.id IN :assignmentIds
-              AND submission.member.id = :memberId
-            """)
-    List<AssignmentSubmissionStatusProjection> findMySubmissionStatusesByAssignmentIdsAndMemberId(
-            @Param("assignmentIds") List<Long> assignmentIds,
-            @Param("memberId") Long memberId
+    List<AssignmentSubmission> findAllByAssignmentIdInAndMemberId(
+            List<Long> assignmentIds,
+            Long memberId
     );
 
     @Query("""
@@ -75,24 +65,13 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
     }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT submission
-            FROM AssignmentSubmission submission
-            WHERE submission.assignment.id = :assignmentId AND submission.member.id = :memberId
-            """
-    )
-    Optional<AssignmentSubmission> findByAssignmentIdAndMemberIdForUpdate(
+    Optional<AssignmentSubmission> findWithLockByAssignmentIdAndMemberId(
             @Param("assignmentId") Long assignmentId,
             @Param("memberId") Long memberId
     );
 
-    default AssignmentSubmission getByAssignmentIdAndMemberIdForUpdateOrThrow(Long assignmentId, Long memberId) {
-        return findByAssignmentIdAndMemberIdForUpdate(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
-                AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
-    }
-
-    default AssignmentSubmission getByAssignmentIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
-        return findByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
+    default AssignmentSubmission getWithLockByAssignmentIdAndMemberIdOrThrow(Long assignmentId, Long memberId) {
+        return findWithLockByAssignmentIdAndMemberId(assignmentId, memberId).orElseThrow(() -> new AssignmentException(
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
     }
 

@@ -22,4 +22,26 @@ public interface AssignmentReminderRepository extends JpaRepository<AssignmentRe
             @Param("now") LocalDateTime now,
             @Param("batchSize") int batchSize
     );
+
+    @Query(value = """
+            SELECT *
+            FROM assignment_reminders
+            WHERE assignment_id = :assignmentId
+            ORDER BY id
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<AssignmentReminder> findAllByAssignmentIdForUpdate(@Param("assignmentId") Long assignmentId);
+
+    @Query(value = """
+            SELECT *
+            FROM assignment_reminders
+            WHERE assignment_id IN (
+                SELECT id
+                FROM assignments
+                WHERE study_id = :studyId
+            )
+            ORDER BY id
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<AssignmentReminder> findAllByStudyIdForUpdate(@Param("studyId") Long studyId);
 }

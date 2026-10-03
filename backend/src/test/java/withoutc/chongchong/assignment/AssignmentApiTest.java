@@ -28,6 +28,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
@@ -85,6 +87,9 @@ class AssignmentApiTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @LocalServerPort
     private int port;
 
@@ -98,6 +103,13 @@ class AssignmentApiTest {
     private Assignment assignment;
     private LocalDateTime closeAt;
     private LocalDateTime remindAt;
+
+    private void assertSubmissionStatus(Long submissionId, SubmissionStatus expected) {
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
+            assertThat(submission.submissionStatus(LocalDateTime.now(CLOCK))).isEqualTo(expected);
+        });
+    }
 
     @BeforeEach
     void setUp() {
@@ -411,8 +423,21 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("리더가 과제를 삭제하면 과제 애그리거트가 삭제되고 더는 조회할 수 없다")
+    @DisplayName("리더가 과제를 삭제하면 과제와 제출물 알림을 지우고 다른 과제 알림은 유지한다")
     void deleteAssignmentTest() {
+        Assignment otherAssignment = createAssignment("다른 과제", "내용", "링크 제출", closeAt, null);
+        Long retainedSubmissionId = submitAssignment(
+                memberUser, otherAssignment, "다른 과제 제출", "https://example.com/other"
+        );
+        submitAssignment(memberUser, assignment, "제출 내용", "https://example.com/first");
+        submitAssignment(secondMemberUser, assignment, "제출 내용", "https://example.com/second");
+        notificationRepository.saveAndFlush(Notification.create(
+                memberUser, "과제 알림", "내용", NotificationType.NEW,
+                assignment.getId(), ResourceType.ASSIGNMENT,
+                "/studies/%d/assignments/%d".formatted(study.getId(), assignment.getId())
+        ));
+        assertThat(notificationRepository.count()).isEqualTo(4);
+
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .when()
@@ -423,6 +448,10 @@ class AssignmentApiTest {
         assertThat(countRows("assignments", assignment.getId())).isZero();
         assertThat(countRows("assignment_submissions", assignment.getId())).isZero();
         assertThat(countRows("assignment_reminders", assignment.getId())).isZero();
+        assertThat(notificationRepository.findAll()).singleElement().satisfies(notification -> {
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
+            assertThat(notification.getResourceId()).isEqualTo(retainedSubmissionId);
+        });
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
@@ -547,7 +576,7 @@ class AssignmentApiTest {
         );
 
         AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertSubmissionStatus(submission.getId(), SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://submission.example.com");
 
@@ -679,7 +708,7 @@ class AssignmentApiTest {
         AssignmentSubmission otherSubmission = assignmentSubmissionRepository
                 .findByAssignmentIdAndMemberId(otherAssignment.getId(), otherMember.getId())
                 .orElseThrow();
-        assertThat(otherSubmission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertSubmissionStatus(otherSubmission.getId(), SubmissionStatus.NOT_SUBMITTED);
         assertThat(otherSubmission.getContent()).isNull();
     }
 
@@ -820,6 +849,7 @@ class AssignmentApiTest {
                 .body("submissions", hasSize(1))
                 .body("submissions[0].id", equalTo(submissionId.intValue()))
                 .body("submissions[0].name", equalTo(member.getName()))
+                .body("submissions[0].submissionStatus", equalTo("SUBMITTED"))
                 .body("submissions[0].createdAt",
                         equalTo(savedSubmission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
@@ -889,7 +919,7 @@ class AssignmentApiTest {
         assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
         assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(submission -> {
             assertThat(submission.getContent()).isEqualTo("리더의 제출 내용");
-            assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+            assertSubmissionStatus(submission.getId(), SubmissionStatus.SUBMITTED);
         });
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
@@ -990,7 +1020,7 @@ class AssignmentApiTest {
                 .then().statusCode(204);
 
         assertThat(assignmentSubmissionRepository.findById(id)).hasValueSatisfying(saved -> {
-            assertThat(saved.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+            assertThat(saved.getSubmittedAt()).isNull();
             assertThat(saved.getContent()).isEqualTo("미제출 내용");
         });
         assertSubmissionReadStatus(secondMemberUser, id, 403);

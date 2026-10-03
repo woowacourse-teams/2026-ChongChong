@@ -3,6 +3,7 @@ package withoutc.chongchong.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.user.controller.dto.UserProfileResponse;
@@ -18,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final StudyMemberRepository studyMemberRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public void withdraw(Long userId) {
@@ -26,6 +28,7 @@ public class UserService {
             throw new UserException(UserErrorCode.STUDY_LEADER_WITHDRAWAL_BLOCKED);
         }
 
+        notificationService.deleteNotificationsForUser(userId);
         userRepository.delete(user);
     }
 

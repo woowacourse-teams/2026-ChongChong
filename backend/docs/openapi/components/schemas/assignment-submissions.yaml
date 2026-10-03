@@ -51,11 +51,12 @@ SubmissionDetailResponse:
 SubmissionSummary:
   type: object
   additionalProperties: false
-  required: [id, name, profileImage, createdAt]
+  required: [id, name, profileImage, submissionStatus, createdAt]
   properties:
     id: { type: integer, format: int64, example: 1 }
     name: { type: string, example: 홍길동 }
     profileImage: { type: [string, 'null'], example: 'https://example.com/profile.png' }
+    submissionStatus: { $ref: '#/SubmissionStatus' }
     createdAt: { $ref: './common.yaml#/LocalDateTime' }
 SubmissionListResponse:
   type: object
@@ -66,8 +67,12 @@ SubmissionListResponse:
 
 SubmissionStatus:
   type: string
-  enum: [NOT_ASSIGNED, NOT_SUBMITTED, SUBMITTED]
-  description: 제출 대상 아님, 미제출, 제출 완료를 구분하는 본인의 상태
+  enum: [NOT_ASSIGNED, NOT_SUBMITTED, SUBMITTED, LATE_SUBMITTED, MISSING]
+  description: |
+    NOT_ASSIGNED는 제출 대상이 아닌 경우다.
+    제출 대상이면서 최초 제출 시각이 없으면 현재 시각이 마감 시각 이하일 때 NOT_SUBMITTED, 마감 시각을 지나면 MISSING이다.
+    최초 제출 시각이 마감 시각 이하이면 SUBMITTED, 마감 시각을 지나면 LATE_SUBMITTED이다.
+    재제출·내용 수정은 최초 제출 시각을 바꾸지 않는다. 마감 시각이 수정되면 변경된 마감 시각을 기준으로 상태를 다시 판정한다.
 
 CompleteMember:
   type: object

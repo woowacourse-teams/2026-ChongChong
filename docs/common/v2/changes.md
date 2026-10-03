@@ -50,3 +50,12 @@
 - [과제 권한](../../../backend/src/main/java/withoutc/chongchong/assignment/policy/AssignmentAccessPolicy.java), [과제 서비스](../../../backend/src/main/java/withoutc/chongchong/assignment/service/AssignmentService.java), [공지 서비스](../../../backend/src/main/java/withoutc/chongchong/notice/service/NoticeService.java).
 - [마이페이지](../../../frontend/src/features/mypage/pages/MyPage.tsx), [사용자 서비스](../../../backend/src/main/java/withoutc/chongchong/user/service/UserService.java).
 - [알림 서비스](../../../backend/src/main/java/withoutc/chongchong/notification/service/NotificationService.java), [웹 푸시](../../../frontend/src/features/notification/push.ts), [알림함](../../../frontend/src/features/notification/pages/NotificationListPage.tsx).
+
+## 2026-10-03 과제 제출 변경 반영
+
+- 백엔드: 과제 목록·내 제출 조회에 `LATE_SUBMITTED`, `MISSING`을 추가하고 제출물 목록에 `submissionStatus`를 제공한다. 지각 제출도 완료 집계에 포함한다.
+- 확정 정책: 과제 조회의 5개 제출 상태 구분과 마감 후 제출 허용은 사용자 확인에 따라 Figma에도 반영되었다. 프론트엔드는 해당 타입·표시를 연동하며 실제 구현·배포 완료 여부는 별도 검증 대상이다.
+- 알림: 현재 구현은 최초 제출 시 제출자를 제외한 리더에게 알림을 생성하고, 재제출·수정 시에는 추가하지 않는다. 리더 제출 시 수신 대상 정책은 TODO가 남아 있다.
+- 검증: 관련 테스트 155개 통과. 명세 보드의 관련 조회 API 3개는 완료로 표시한다. 배포 여부를 뜻하지 않는다.
+
+상태 경계와 집계 기준은 [과제의 백엔드 구현 반영](assignment.md#2026-10-03-백엔드-구현-반영)을 따른다.

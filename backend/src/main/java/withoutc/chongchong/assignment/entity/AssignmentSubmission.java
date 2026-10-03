@@ -81,10 +81,20 @@ public class AssignmentSubmission extends BaseEntity {
         }
     }
 
-    public SubmissionStatus submissionStatus() {
+    public SubmissionStatus submissionStatus(LocalDateTime now) {
+        LocalDateTime closeAt = assignment.getCloseAt();
+
         if (submittedAt == null) {
+            if (now.isAfter(closeAt)) {
+                return SubmissionStatus.MISSING;
+            }
             return SubmissionStatus.NOT_SUBMITTED;
         }
+
+        if (submittedAt.isAfter(closeAt)) {
+            return SubmissionStatus.LATE_SUBMITTED;
+        }
+
         return SubmissionStatus.SUBMITTED;
     }
 
@@ -116,5 +126,11 @@ public class AssignmentSubmission extends BaseEntity {
         if (link != null && link.length() > 10000) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_LINK);
         }
+    }
+
+    public boolean isSubmit(LocalDateTime now) {
+        SubmissionStatus status = submissionStatus(now);
+
+        return status == SubmissionStatus.SUBMITTED || status == SubmissionStatus.LATE_SUBMITTED;
     }
 }

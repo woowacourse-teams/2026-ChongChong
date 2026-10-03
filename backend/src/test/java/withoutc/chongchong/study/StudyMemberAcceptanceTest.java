@@ -147,7 +147,7 @@ class StudyMemberAcceptanceTest {
 
         StudyMember joinedMember = studyMemberRepository
                 .getByStudyIdAndUserIdOrThrow(study.getId(), user.getId());
-        assertThat(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
+        assertThat(assignmentSubmissionRepository.findAllByAssignmentIdInAndMemberId(
                 List.of(assignment.getId()), joinedMember.getId()))
                 .isEmpty();
     }
