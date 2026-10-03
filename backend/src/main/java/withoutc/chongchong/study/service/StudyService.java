@@ -100,7 +100,7 @@ public class StudyService {
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        return new StudyInfoResponse(study.getName(), studyMember.getRole(), studyMember.getName());
+        return new StudyInfoResponse(study.getName(), study.getDescription(), studyMember.getRole(), studyMember.getName());
     }
 
     public StudyDetailResponse getStudyDetail(Long userId, Long studyId) {

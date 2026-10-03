@@ -38,9 +38,10 @@ StudyInviteLinkResponse:
 StudyInfoResponse:
   type: object
   additionalProperties: false
-  required: [studyName, role, userName]
+  required: [studyName, description, role, userName]
   properties:
     studyName: { type: string, example: 자바 스터디 }
+    description: { type: [string, 'null'], example: 매주 월요일에 진행한다. }
     role: { type: string, enum: [LEADER, MEMBER], example: LEADER }
     userName: { type: string, example: 홍길동 }
 StudyMemberResponse:
