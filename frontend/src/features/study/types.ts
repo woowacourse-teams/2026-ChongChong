@@ -37,6 +37,7 @@ export type StudyDetail<R extends Role> = R extends 'LEADER'
 
 export interface UserStudyInfo {
   studyName: string;
+  description: string;
   role: Role;
   userName: string;
 }

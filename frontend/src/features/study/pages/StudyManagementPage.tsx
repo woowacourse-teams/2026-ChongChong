@@ -52,7 +52,7 @@ StudyManagementPage.Content = function Content() {
   const { studyId } = useIntegerParam(['studyId']);
 
   const {
-    data: { studyName, role },
+    data: { studyName, role, description },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return (
@@ -65,7 +65,7 @@ StudyManagementPage.Content = function Content() {
           <h2 id="study-name" css={StudyProfileTitleStyle}>
             {studyName}
           </h2>
-          <p css={StudyProfileSubTitleStyle}>스터디 설명입니다. 스터디 설명입니다</p>
+          <p css={StudyProfileSubTitleStyle}>{description}</p>
         </section>
         <ManagementSection role={role} />
       </Suspense>

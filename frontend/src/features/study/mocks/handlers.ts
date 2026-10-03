@@ -227,6 +227,7 @@ export const handlers = [
       studyName: study.name,
       role: member.role,
       userName: member.name,
+      description: study.description,
     });
   }),
 
