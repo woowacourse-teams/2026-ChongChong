@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import hasNotificationLogo from '../../../shared/assets/notification-green.png';
-import notificationLogo from '../../../shared/assets/notification.svg';
+import hasNotificationLogo from '../../../shared/assets/notification-green.webp';
+import notificationLogo from '../../../shared/assets/notification.webp';
 import notificationQueries from '../queries';
 
 export default function NotificationLink() {
