@@ -11,6 +11,8 @@ import { studyTable } from '../../mocks/db';
 import { memberTable } from '../../../member/mocks/db';
 import { MEMBER_URLS } from '../../../member/urls';
 
+const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
+
 function setupStudyManagementPage() {
   return setup(<StudyManagementPage />, {
     wrapper: createWrapper({
@@ -61,6 +63,27 @@ describe('스터디 관리 페이지 테스트', () => {
 
   afterEach(() => {
     logout();
+  });
+
+  describe('컨텐츠 렌더링 테스트', () => {
+    test('스터디 정보를 가져오지 못하면 에러 텍스트를 표시한다', async () => {
+      server.use(
+        http.get(STUDY_INFO_URL, () =>
+          HttpResponse.json(
+            {
+              code: 'SOME_CODE',
+              message: '스터디 기본 정보 응답 형식이 올바르지 않습니다.',
+            },
+            { status: 400 },
+          ),
+        ),
+      );
+      setupStudyManagementPage();
+
+      expect(
+        await screen.findByText('스터디 기본 정보 응답 형식이 올바르지 않습니다.'),
+      ).toBeInTheDocument();
+    });
   });
 
   describe('스터디 리드', () => {

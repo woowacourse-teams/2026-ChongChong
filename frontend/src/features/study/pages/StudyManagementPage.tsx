@@ -41,9 +41,15 @@ export default function StudyManagementPage() {
         left={<PrevButton />}
         middle={<TopHeader.Title>스터디 참여하기</TopHeader.Title>}
       />
-      <Main>
-        <StudyManagementPage.Content />
-      </Main>
+      <ErrorBoundary
+        fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+      >
+        <Suspense fallback={<Loading />}>
+          <Main>
+            <StudyManagementPage.Content />
+          </Main>
+        </Suspense>
+      </ErrorBoundary>
     </Page>
   );
 }
@@ -56,25 +62,21 @@ StudyManagementPage.Content = function Content() {
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return (
-    <ErrorBoundary
-      fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
-    >
-      <Suspense fallback={<Loading />}>
-        <section aria-labelledby="study-name" css={SectionStyle}>
-          <img src={StudyIcon} alt="" width={68} height={68} />
-          <h2 id="study-name" css={StudyProfileTitleStyle}>
-            {studyName}
-          </h2>
-          <p css={StudyProfileSubTitleStyle}>{description}</p>
-        </section>
-        <section>
-          {role === 'LEADER' ? (
-            <StudyLeaderManagementList studyId={studyId} />
-          ) : (
-            <StudyMemberManagementList studyId={studyId} />
-          )}
-        </section>
-      </Suspense>
-    </ErrorBoundary>
+    <>
+      <section aria-labelledby="study-name" css={SectionStyle}>
+        <img src={StudyIcon} alt="" width={68} height={68} />
+        <h2 id="study-name" css={StudyProfileTitleStyle}>
+          {studyName}
+        </h2>
+        <p css={StudyProfileSubTitleStyle}>{description}</p>
+      </section>
+      <section>
+        {role === 'LEADER' ? (
+          <StudyLeaderManagementList studyId={studyId} />
+        ) : (
+          <StudyMemberManagementList studyId={studyId} />
+        )}
+      </section>
+    </>
   );
 };
