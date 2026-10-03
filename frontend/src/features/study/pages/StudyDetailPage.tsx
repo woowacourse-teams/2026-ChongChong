@@ -16,6 +16,7 @@ import ErrorContent from '../../../shared/ui/ErrorContent';
 import { usePostHog } from '@posthog/react';
 import { Suspense } from 'react';
 import Loading from '../../../shared/ui/Loading';
+import StudyManagementLink from '../components/StudyManagementLink';
 
 export default function StudyDetailPage() {
   return (
@@ -65,6 +66,7 @@ StudyDetailPage.Content = function Content() {
             </TopHeader.Subtitle>
           </>
         }
+        right={<StudyManagementLink studyId={studyId} />}
       />
       <Main>
         <ErrorBoundary

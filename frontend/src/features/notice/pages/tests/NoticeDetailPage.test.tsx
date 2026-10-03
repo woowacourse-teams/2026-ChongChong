@@ -29,6 +29,7 @@ describe('리드 공지 상세 조회 실패', () => {
           studyName: '객체지향 스터디',
           role: 'LEADER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
       http.get(`${NOTICE_DETAIL_URL}/status`, () =>
@@ -102,6 +103,7 @@ describe('리드 공지 상세', () => {
           studyName: '객체지향 스터디',
           role: 'LEADER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디 입니다',
         }),
       ),
       http.get(NOTICE_DETAIL_URL, () =>
@@ -207,6 +209,7 @@ describe('스터디원 공지 상세 조회 실패', () => {
           studyName: '객체지향 스터디',
           role: 'MEMBER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
       http.get(`${NOTICE_DETAIL_URL}/status/me`, () => HttpResponse.json({ readStatus: 'UNREAD' })),
@@ -252,6 +255,7 @@ describe('리드 공지 읽음 현황 조회 실패', () => {
           studyName: '객체지향 스터디',
           role: 'LEADER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
       http.get(NOTICE_DETAIL_URL, () =>
@@ -304,6 +308,7 @@ describe('스터디원 내 공지 읽음 상태 조회 실패', () => {
           studyName: '객체지향 스터디',
           role: 'MEMBER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
       http.get(NOTICE_DETAIL_URL, () =>

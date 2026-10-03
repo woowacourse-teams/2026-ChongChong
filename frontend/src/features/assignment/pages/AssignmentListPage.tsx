@@ -12,6 +12,7 @@ import BottomTab from '../../../shared/widgets/BottomTab';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import studyQueries from '../../study/queries';
+import StudyManagementLink from '../../study/components/StudyManagementLink';
 
 export default function AssignmentListPage() {
   return (
@@ -54,6 +55,7 @@ AssignmentListPage.Content = function Content() {
             </TopHeader.Subtitle>
           </>
         }
+        right={<StudyManagementLink studyId={studyId} />}
       />
       <Main>
         <ErrorBoundary

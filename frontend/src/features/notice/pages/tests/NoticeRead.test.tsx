@@ -51,6 +51,7 @@ describe('공지 읽음 처리', () => {
           studyName: '객체지향 스터디',
           role: 'MEMBER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
       http.get(NOTICE_DETAIL_URL, () =>
