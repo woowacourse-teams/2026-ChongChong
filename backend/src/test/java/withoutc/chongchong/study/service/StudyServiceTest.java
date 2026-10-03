@@ -345,7 +345,7 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 정보를 조회하면 스터디명과 현재 사용자의 역할·이름을 반환한다")
+    @DisplayName("스터디 정보를 조회하면 스터디명·설명과 현재 사용자의 역할·이름을 반환한다")
     void getStudyInfoTest() {
         Long userId = 1L;
         Long studyId = 1L;
@@ -360,6 +360,7 @@ class StudyServiceTest {
         StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
 
         assertThat(response.studyName()).isEqualTo("자바 스터디");
+        assertThat(response.description()).isEqualTo("설명");
         assertThat(response.role()).isEqualTo(StudyMemberRole.MEMBER);
         assertThat(response.userName()).isEqualTo("스터디 내 이름");
     }

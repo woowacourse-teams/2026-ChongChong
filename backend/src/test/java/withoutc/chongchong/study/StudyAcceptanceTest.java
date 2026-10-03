@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.http.ContentType;
@@ -440,7 +442,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 정보 조회 요청을 보내면 스터디명과 내 역할·이름을 반환한다")
+    @DisplayName("스터디 정보 조회 요청을 보내면 스터디명·설명과 내 역할·이름을 반환한다")
     void getStudyInfoTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
         Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
@@ -455,8 +457,28 @@ class StudyAcceptanceTest {
                 .then()
                 .statusCode(200)
                 .body("studyName", equalTo("자바 스터디"))
+                .body("description", equalTo("설명"))
                 .body("role", equalTo("MEMBER"))
                 .body("userName", equalTo("스터디 내 이름"));
+    }
+
+    @Test
+    @DisplayName("설명이 없는 스터디 정보 조회에서도 description 필드를 null로 반환한다")
+    void getStudyInfoWithoutDescriptionTest() {
+        User user = userRepository.saveAndFlush(User.create("스터디 리더", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", null));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/info", study.getId())
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("description"))
+                .body("description", nullValue());
     }
 
     @Test
