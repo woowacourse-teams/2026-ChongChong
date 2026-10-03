@@ -36,4 +36,11 @@ public class UserService {
         User user = userRepository.getByIdOrThrow(userId);
         return UserProfileResponse.from(user);
     }
+
+    @Transactional
+    public UserProfileResponse updateMyProfileName(Long userId, String newName) {
+        User user = userRepository.getByIdOrThrow(userId);
+        user.updateName(newName);
+        return UserProfileResponse.from(user);
+    }
 }
