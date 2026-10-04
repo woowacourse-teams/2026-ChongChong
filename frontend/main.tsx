@@ -10,7 +10,7 @@ import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
-import { routes as mypageRoutes } from './src/features/mypage/routes';
+import { routes as userRoutes } from './src/features/user/routes';
 import { routes as notificationRoutes } from './src/features/notification/routes';
 import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
@@ -27,7 +27,7 @@ const appRoutes = [
   ...AssignmentRoutes,
   ...memberRoutes,
   ...loginRoutes,
-  ...mypageRoutes,
+  ...userRoutes,
   ...notificationRoutes,
 ];
 

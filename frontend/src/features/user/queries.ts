@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { getProfile } from './api';
 
-const myPageQueries = {
+const userQueries = {
   profile: () =>
     queryOptions({
       queryKey: ['profile'],
@@ -9,4 +9,4 @@ const myPageQueries = {
     }),
 };
 
-export default myPageQueries;
+export default userQueries;

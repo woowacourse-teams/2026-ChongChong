@@ -2,11 +2,11 @@ import { HttpResponse, http } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable } from '../../member/mocks/db';
-import { userTable } from '../../user/mocks/db';
-import { MYPAGE_URLS } from '../urls';
+import { userTable } from './db';
+import { USER_URLS } from '../urls';
 
 export const handlers = [
-  http.get(`${API_URL}${MYPAGE_URLS.me}`, async ({ request }) => {
+  http.get(`${API_URL}${USER_URLS.me}`, async ({ request }) => {
     const user = findUserFromHeader(request.headers);
 
     if (!user) {
@@ -19,7 +19,7 @@ export const handlers = [
     });
   }),
 
-  http.delete(`${API_URL}${MYPAGE_URLS.me}`, ({ request }) => {
+  http.delete(`${API_URL}${USER_URLS.me}`, ({ request }) => {
     const user = findUserFromHeader(request.headers);
 
     if (!user) {
