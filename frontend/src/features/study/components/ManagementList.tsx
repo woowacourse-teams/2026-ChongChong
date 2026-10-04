@@ -9,10 +9,12 @@ import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
 
 const StudyManagementItemStyle = {
   ...typography.title,
+  display: 'block',
   padding: `${tokens.spacing[5]} 0`,
   borderBottom: tokens.border.neutral,
   cursor: 'pointer',
   textAlign: 'left',
+  width: '100%',
 } satisfies CSSProperties;
 
 interface StudyLeaderManagementListProps {
@@ -31,11 +33,16 @@ export function StudyLeaderManagementList({ studyId }: StudyLeaderManagementList
     <List>
       {/* <List.Item css={StudyManagementItemStyle}>스터디 프로필 수정 (준비 중)</List.Item> */}
       {/* TODO: 스터디 프로필 수정 페이지가 추가되면 링크를 연결합니다. */}
-      <List.Item css={StudyManagementItemStyle}>
-        <Link to="">스터디 정보 수정</Link>
+      <List.Item>
+        <Link css={StudyManagementItemStyle} to={`/studies/${studyId}/edit`}>
+          스터디 정보 수정
+        </Link>
       </List.Item>
-      <List.Item css={StudyManagementItemStyle}>
-        <button css={{ color: tokens.text.critical }} onClick={openDialog}>
+      <List.Item>
+        <button
+          css={{ ...StudyManagementItemStyle, color: tokens.text.critical }}
+          onClick={openDialog}
+        >
           스터디 삭제하기
         </button>
         {isOpen && (

@@ -65,6 +65,20 @@ export async function createStudy(body: {
   }
 }
 
+export async function editStudy(studyId: number, body: { name: string; description: string }) {
+  try {
+    const response = await api.patch(`/studies/${studyId}`, { json: body });
+    const data: unknown = await response.json();
+
+    return data;
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('스터디를 수정하는데 실패했습니다.', { cause: error }),
+    });
+  }
+}
+
 export async function fetchStudyInfo(studyId: number) {
   try {
     const response = await api.get(`/studies/${studyId}/info`);

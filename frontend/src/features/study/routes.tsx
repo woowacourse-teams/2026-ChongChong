@@ -4,6 +4,7 @@ import CreateStudyPage from './pages/CreateStudyPage';
 import StudyDetailPage from './pages/StudyDetailPage';
 import StudyJoinPage from './pages/StudyJoinPage';
 import StudyManagementPage from './pages/StudyManagementPage';
+import StudyEditPage from './pages/StudyEditPage';
 
 export const routes: RouteObject[] = [
   {
@@ -25,5 +26,9 @@ export const routes: RouteObject[] = [
   {
     path: '/studies/:studyId/management',
     element: <StudyManagementPage />,
+  },
+  {
+    path: '/studies/:studyId/edit',
+    element: <StudyEditPage />,
   },
 ];

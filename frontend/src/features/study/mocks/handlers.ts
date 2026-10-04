@@ -178,6 +178,39 @@ export const handlers = [
     return HttpResponse.json({ studyId }, { status: 201 });
   }),
 
+  http.patch(`${API_URL}${STUDY_URLS.detail}`, async ({ params, request }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+
+    const body = (await request.json()) as {
+      name: string;
+      description: string;
+    };
+
+    const fieldErrors = validateStudy(body);
+    if (fieldErrors.length > 0) {
+      return invalidInputResponse(fieldErrors);
+    }
+
+    const studyId = Number(params.studyId);
+    const study = studyTable.findFirst((q) => q.where({ id: studyId }));
+    if (!study) return new HttpResponse(null, { status: 404 });
+
+    const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
+    if (member?.role !== 'LEADER') {
+      return new HttpResponse(null, { status: 403 });
+    }
+
+    await studyTable.update(study, {
+      data(study) {
+        study.name = body.name;
+        study.description = body.description;
+      },
+    });
+
+    return HttpResponse.json({ studyId });
+  }),
+
   http.post(`${API_URL}${STUDY_URLS.join}`, async ({ request }) => {
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
