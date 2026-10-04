@@ -1,6 +1,6 @@
 import api from '../../client';
 import { ApiError } from '../../shared/api/error';
-import { MYPAGE_URLS } from './urls';
+import { USER_URLS } from './urls';
 import { handleError } from '../../shared/api/error';
 import z from 'zod';
 
@@ -11,7 +11,7 @@ const profileSchema = z.object({
 
 export async function withdrawAccount() {
   try {
-    await api.delete(MYPAGE_URLS.me);
+    await api.delete(USER_URLS.me);
   } catch (error) {
     throw handleError(error, {
       mappers: [ApiError],
@@ -22,7 +22,7 @@ export async function withdrawAccount() {
 
 export async function getProfile() {
   try {
-    const response = await api.get(MYPAGE_URLS.me);
+    const response = await api.get(USER_URLS.me);
     const data: unknown = await response.json();
     const profile = profileSchema.safeParse(data);
 

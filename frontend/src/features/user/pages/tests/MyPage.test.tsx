@@ -5,7 +5,7 @@ import { API_URL } from '../../../../../config';
 import { clearAccessToken, setAccessToken } from '../../../login/accessToken';
 import { createWrapper } from '../../../../test/render';
 import { server } from '../../../../mocks/msw-node';
-import { MYPAGE_URLS } from '../../urls';
+import { USER_URLS } from '../../urls';
 import MyPage from '../MyPage';
 
 function renderMyPage() {
@@ -24,7 +24,7 @@ describe('프로필', () => {
 
   test('로그인한 사용자의 이름과 프로필 이미지를 읽기 전용으로 표시한다', async () => {
     server.use(
-      http.get(`${API_URL}${MYPAGE_URLS.me}`, () =>
+      http.get(`${API_URL}${USER_URLS.me}`, () =>
         HttpResponse.json({ name: '이든', profileImageUrl: 'https://example.com/profile.webp' }),
       ),
     );
@@ -41,7 +41,7 @@ describe('프로필', () => {
 
   test('프로필 이미지가 없으면 기본 이미지를 표시한다', async () => {
     server.use(
-      http.get(`${API_URL}${MYPAGE_URLS.me}`, () =>
+      http.get(`${API_URL}${USER_URLS.me}`, () =>
         HttpResponse.json({ name: '이든', profileImageUrl: null }),
       ),
     );
