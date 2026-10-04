@@ -91,6 +91,12 @@ describe('스터디 관리 페이지 테스트', () => {
       login(leaderUserName);
     });
 
+    test('스터디 리드에게는 스터디 프로필 수정 링크가 표시된다', async () => {
+      setupStudyManagementPage();
+
+      expect(await screen.findByRole('link', { name: '스터디 정보 수정' })).toBeVisible();
+    });
+
     test('스터디 리드에게는 삭제 버튼만 표시된다', async () => {
       setupStudyManagementPage();
 
@@ -147,6 +153,7 @@ describe('스터디 관리 페이지 테스트', () => {
       setupStudyManagementPage();
 
       expect(await screen.findByRole('button', { name: '스터디 탈퇴하기' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: '스터디 정보 수정' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: '스터디 삭제하기' })).not.toBeInTheDocument();
     });
 
