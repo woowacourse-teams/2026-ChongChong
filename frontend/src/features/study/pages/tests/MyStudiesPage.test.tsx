@@ -10,6 +10,12 @@ import { userTable } from '../../../user/mocks/db';
 import { memberTable } from '../../../member/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
 
+// 가이드라인 연동은 guideline/tests/GuidelineIntegration.test.tsx에서 검증합니다.
+jest.mock('../../../guideline/Guideline', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 const STUDIES_URL = `${API_URL}${STUDY_URLS.list}`;
 
 describe('스터디 목록 페이지 테스트', () => {
@@ -82,7 +88,10 @@ describe('스터디 목록 페이지 테스트', () => {
     server.use(http.get(STUDIES_URL, () => HttpResponse.error()));
     setup(<MyStudiesPage />, { wrapper: createWrapper() });
 
-    expect(await screen.findByText('스터디 목록을 불러오는데 실패했습니다.')).toBeInTheDocument();
+    // 네트워크 오류에 대한 HTTP 클라이언트의 재시도가 끝난 뒤 오류 화면을 확인한다.
+    expect(
+      await screen.findByText('스터디 목록을 불러오는데 실패했습니다.', {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
   });
 
   test('참여 중인 스터디가 없으면 비어있는 상태를 렌더링 한다', async () => {

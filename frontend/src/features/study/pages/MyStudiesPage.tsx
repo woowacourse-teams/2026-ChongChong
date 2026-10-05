@@ -11,6 +11,9 @@ import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
 import Loading from '../../../shared/ui/Loading';
 import NotificationLink from '../../notification/components/NotificationLink';
+import Guideline from '../../guideline/Guideline';
+import GuidelineHelpButton from '../../guideline/components/GuidelineHelpButton';
+import { useGuidelineController } from '../../guideline/hooks/useGuidelineController';
 
 const actionsStyle = {
   display: 'flex',
@@ -20,6 +23,8 @@ const actionsStyle = {
 } satisfies CSSProperties;
 
 export default function MyStudiesPage() {
+  const guideline = useGuidelineController();
+
   return (
     <Page>
       <TopHeader
@@ -36,7 +41,15 @@ export default function MyStudiesPage() {
         }
       />
 
-      <Main>
+      <Main css={{ paddingTop: 0 }}>
+        <div
+          css={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <GuidelineHelpButton onClick={guideline.openHelp} />
+        </div>
         <ErrorBoundary
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
@@ -59,6 +72,7 @@ export default function MyStudiesPage() {
           </Suspense>
         </ErrorBoundary>
       </Main>
+      <Guideline controller={guideline} />
     </Page>
   );
 }
