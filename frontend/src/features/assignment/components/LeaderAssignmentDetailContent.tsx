@@ -52,14 +52,7 @@ export default function LeaderAssignmentDetailContent({ studyId, userName }: Pro
         summary={
           <>
             <SubmitStatus status={submitStatusResponse} />
-            {mySubmission ? (
-              <MySubmissionStatus
-                studyId={studyId}
-                assignmentId={assignmentId}
-                submission={mySubmission}
-                member={member}
-              />
-            ) : null}
+            {mySubmission ? <MySubmissionStatus submission={mySubmission} member={member} /> : null}
             <CompletedSubmissionList submissions={submissions.submissions} />
             <IncompleteMemberList
               title={`미제출 ${submitStatusResponse.incompleteCount}명`}

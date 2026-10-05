@@ -6,8 +6,6 @@ import { tokens, typography } from '../../../styles/global';
 import type { Submission, UserAssignmentSubmitDetail } from '../types';
 
 interface Props {
-  studyId: number;
-  assignmentId: number;
   submission: UserAssignmentSubmitDetail;
   member: Pick<Submission, 'name' | 'profileImage'>;
 }
@@ -72,7 +70,7 @@ const detailLinkStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-export default function MySubmissionStatus({ studyId, assignmentId, submission, member }: Props) {
+export default function MySubmissionStatus({ submission, member }: Props) {
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
   return (
@@ -97,10 +95,7 @@ export default function MySubmissionStatus({ studyId, assignmentId, submission, 
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link
-            css={detailLinkStyle}
-            to={`/studies/${studyId}/assignments/${assignmentId}/submissions/${submission.submissionId}`}
-          >
+          <Link css={detailLinkStyle} to="?view=detail">
             상세 보기
           </Link>
         </div>

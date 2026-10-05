@@ -23,10 +23,10 @@ const SUBMISSIONS_URL = `${ASSIGNMENT_DETAIL_URL}/submissions`;
 const MY_SUBMISSION_URL = `${SUBMISSIONS_URL}/my`;
 const SUBMISSION_DETAIL_URL = `${SUBMISSIONS_URL}/:submissionId`;
 
-function setupAssignmentDetailPage() {
+function setupAssignmentDetailPage(initialEntry = '/studies/1/assignments/1') {
   return setup(<AssignmentDetailPage />, {
     wrapper: createWrapper({
-      initialEntries: ['/studies/1/assignments/1'],
+      initialEntries: [initialEntry],
       routes: (element) => (
         <Route path="/studies/:studyId/assignments/:assignmentId" element={element} />
       ),
@@ -392,6 +392,17 @@ describe('과제 상세 페이지 테스트', () => {
         expect(screen.getByRole('region', { name: '내 제출' })).toBeVisible();
       });
 
+      test('view=detail로 접근하면 상세 탭을 표시한다', async () => {
+        setupAssignmentDetailPage('/studies/1/assignments/1?view=detail');
+
+        expect(await screen.findByRole('tab', { name: '상세' })).toHaveAttribute(
+          'aria-selected',
+          'true',
+        );
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+      });
+
       test('내 제출만 공개하면 다른 제출물과 리더 전용 제출 현황을 조회하지 않는다', async () => {
         const getSubmissions = jest.fn(() => HttpResponse.json({ submissions: [] }));
         const getSubmissionStatus = jest.fn(() => HttpResponse.json({}));
@@ -448,6 +459,23 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('본인 제출 정보 조회', () => {
+      test('내 제출 상세 보기를 누르면 수정할 수 있는 상세 탭으로 이동한다', async () => {
+        await markSubmissionAsSubmitted(2, {
+          content: '내가 제출한 과제',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+
+        const detailLink = await screen.findByRole('link', { name: '상세 보기' });
+        expect(detailLink).toHaveAttribute('href', '/studies/1/assignments/1?view=detail');
+
+        await user.click(detailLink);
+
+        expect(screen.getByRole('tab', { name: '상세' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByText('내가 제출한 과제')).toBeVisible();
+        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+      });
+
       test('제출 대상이 아니면 제출 폼을 표시하지 않고 제출 요청을 보내지 않는다', async () => {
         submissionTable.delete((q) => q.where({ assignmentId: 1, userId: 2 }));
         const submitRequest = jest.fn(() =>

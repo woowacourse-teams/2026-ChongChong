@@ -46,12 +46,7 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
       <DetailTabs
         summary={
           <>
-            <MySubmissionStatus
-              studyId={studyId}
-              assignmentId={assignmentId}
-              submission={submission}
-              member={member}
-            />
+            <MySubmissionStatus submission={submission} member={member} />
             {submissions ? <CompletedSubmissionList submissions={submissions.submissions} /> : null}
           </>
         }
