@@ -9,12 +9,7 @@ import { studyTable } from '../../mocks/db';
 import { userTable } from '../../../user/mocks/db';
 import { memberTable } from '../../../member/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
-
-// 가이드라인 연동은 guideline/tests/GuidelineIntegration.test.tsx에서 검증합니다.
-jest.mock('../../../guideline/Guideline', () => ({
-  __esModule: true,
-  default: () => null,
-}));
+import { GUIDELINE_STORAGE_KEY } from '../../../guideline/utils/guidelineStorage';
 
 const STUDIES_URL = `${API_URL}${STUDY_URLS.list}`;
 
@@ -22,6 +17,8 @@ describe('스터디 목록 페이지 테스트', () => {
   const userId = 1;
 
   beforeEach(async () => {
+    // 테스트에 필요하지 않은 가이드라인을 숨깁니다.
+    localStorage.setItem(GUIDELINE_STORAGE_KEY, JSON.stringify({ page: 1, dismissed: true }));
     await userTable.create({
       id: userId,
       name: '벤지',
@@ -31,6 +28,7 @@ describe('스터디 목록 페이지 테스트', () => {
   });
 
   afterEach(() => {
+    localStorage.removeItem(GUIDELINE_STORAGE_KEY);
     logout();
   });
 
