@@ -10,6 +10,7 @@ const assignmentSchema = z.object({
   submissionMethod: z.string(),
   closeAt: z.string(),
   submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
+  submissionVisibility: z.enum(['LEADER_ONLY', 'ALL_STUDY_MEMBERS']).default('LEADER_ONLY'),
   completeUserIds: z.array(z.number()),
 });
 
@@ -18,6 +19,7 @@ export const assignmentTable = new Collection({
 });
 
 export type AssignmentSchemaType = z.infer<typeof assignmentSchema>;
+type AssignmentSchemaInput = z.input<typeof assignmentSchema>;
 
 export const mockAssigments = [
   {
@@ -160,7 +162,29 @@ export const mockAssigments = [
     submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [],
   },
-] satisfies AssignmentSchemaType[];
+  {
+    id: 15,
+    studyId: 9,
+    title: '내 제출만 보이는 과제',
+    content: '요약 탭에 내 제출만 표시되는지 확인해주세요.',
+    submissionMethod: '텍스트와 링크로 제출하세요.',
+    closeAt: '2030-10-31T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
+    submissionVisibility: 'LEADER_ONLY',
+    completeUserIds: [1],
+  },
+  {
+    id: 16,
+    studyId: 9,
+    title: '전체 제출물이 보이는 과제',
+    content: '요약 탭에 스터디원의 제출물이 함께 표시되는지 확인해주세요.',
+    submissionMethod: '텍스트와 링크로 제출하세요.',
+    closeAt: '2030-11-07T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
+    submissionVisibility: 'ALL_STUDY_MEMBERS',
+    completeUserIds: [1, 5],
+  },
+] satisfies AssignmentSchemaInput[];
 
 export function createSeedAssignments() {
   for (const mockAssignment of mockAssigments) {
@@ -382,6 +406,30 @@ export const mockSubmissions = [
     assignmentId: 7,
     userId: 1,
     submitted: false,
+  },
+  {
+    id: 25,
+    assignmentId: 15,
+    userId: 1,
+    content: '내 제출만 보이는 과제의 확인용 제출입니다.',
+    link: 'https://example.com/my-submission',
+    createdAt: '2026-10-01T09:00:00',
+  },
+  {
+    id: 26,
+    assignmentId: 16,
+    userId: 1,
+    content: '전체 공개 과제의 이든 제출입니다.',
+    link: 'https://example.com/eden-submission',
+    createdAt: '2026-10-02T09:00:00',
+  },
+  {
+    id: 27,
+    assignmentId: 16,
+    userId: 5,
+    content: '전체 공개 과제의 바니 제출입니다.',
+    link: 'https://example.com/bunny-submission',
+    createdAt: '2026-10-02T10:00:00',
   },
 ] satisfies SubmissionSchemaInput[];
 

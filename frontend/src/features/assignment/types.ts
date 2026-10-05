@@ -53,9 +53,11 @@ export interface AssignmentDetail {
   submissionMethod: string;
   closeAt: string;
   submissionTarget: SubmissionTarget;
+  submissionVisibility: SubmissionVisibility;
 }
 
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
+export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
 export type AssignmentValue = Omit<AssignmentDetail, 'id'> & {
   remindAts?: string[] | null;

@@ -6,10 +6,8 @@ import { tokens, typography } from '../../../styles/global';
 import type { Submission, UserAssignmentSubmitDetail } from '../types';
 
 interface Props {
-  studyId: number;
-  assignmentId: number;
   submission: UserAssignmentSubmitDetail;
-  member?: Submission;
+  member: Pick<Submission, 'name' | 'profileImage'>;
 }
 
 const sectionStyle = {
@@ -72,7 +70,7 @@ const detailLinkStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-export default function MySubmissionStatus({ studyId, assignmentId, submission, member }: Props) {
+export default function MySubmissionStatus({ submission, member }: Props) {
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
   return (
@@ -86,21 +84,18 @@ export default function MySubmissionStatus({ studyId, assignmentId, submission, 
       ) : (
         <div css={cardStyle}>
           <img
-            src={member?.profileImage ?? profileIcon}
+            src={member.profileImage ?? profileIcon}
             alt=""
             aria-hidden="true"
             css={profileStyle}
           />
           <div css={memberStyle}>
-            <span css={nameStyle}>{member ? `${member.name} (나)` : '나'}</span>
+            <span css={nameStyle}>{member.name} (나)</span>
             <time css={dateStyle} dateTime={submission.createdAt}>
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link
-            css={detailLinkStyle}
-            to={`/studies/${studyId}/assignments/${assignmentId}/submissions/${submission.submissionId}`}
-          >
+          <Link css={detailLinkStyle} to="?view=detail">
             상세 보기
           </Link>
         </div>

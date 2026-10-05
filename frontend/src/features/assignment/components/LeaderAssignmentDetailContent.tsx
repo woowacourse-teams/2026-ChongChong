@@ -1,7 +1,7 @@
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import DetailTabs from '../../../shared/widgets/DetailTabs';
-import MemberStatusList from '../../../shared/widgets/MemberStatusList';
+import IncompleteMemberList from '../../../shared/widgets/IncompleteMemberList';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import SubmitStatus from './SubmitStatus';
@@ -13,9 +13,10 @@ import MySubmissionStatus from './MySubmissionStatus';
 
 interface Props {
   studyId: number;
+  userName: string;
 }
 
-export default function LeaderAssignmentDetailContent({ studyId }: Props) {
+export default function LeaderAssignmentDetailContent({ studyId, userName }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
 
   const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
@@ -35,6 +36,10 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
     mySubmission?.submissionStatus === 'SUBMITTED'
       ? submissions.submissions.find(({ id }) => id === mySubmission.submissionId)
       : undefined;
+  const member = {
+    name: myCompletedSubmission?.name ?? userName,
+    profileImage: myCompletedSubmission?.profileImage ?? null,
+  };
 
   return (
     <>
@@ -47,16 +52,9 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
         summary={
           <>
             <SubmitStatus status={submitStatusResponse} />
-            {mySubmission ? (
-              <MySubmissionStatus
-                studyId={studyId}
-                assignmentId={assignmentId}
-                submission={mySubmission}
-                member={myCompletedSubmission}
-              />
-            ) : null}
+            {mySubmission ? <MySubmissionStatus submission={mySubmission} member={member} /> : null}
             <CompletedSubmissionList submissions={submissions.submissions} />
-            <MemberStatusList
+            <IncompleteMemberList
               title={`미제출 ${submitStatusResponse.incompleteCount}명`}
               members={submitStatusResponse.incompleteMembers}
             />

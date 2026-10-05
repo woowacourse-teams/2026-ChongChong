@@ -22,3 +22,8 @@ export const submissionStatusBadge = {
   NOT_SUBMITTED: { variant: 'brandOutline', label: '미제출' },
   NOT_ASSIGNED: { variant: 'neutralSolid', label: '제출 대상 아님' },
 } satisfies Record<SubmissionStatus, { variant: Variant; label: string }>;
+
+export const visibilityOptions = [
+  { label: '공개', value: 'ALL_STUDY_MEMBERS' },
+  { label: '비공개', value: 'LEADER_ONLY' },
+] as const;

@@ -121,6 +121,22 @@ export const mockMembers = [
     profileImage: null,
     role: 'MEMBER',
   },
+  {
+    id: 14,
+    studyId: 9,
+    userId: 1,
+    name: '이든',
+    profileImage: null,
+    role: 'MEMBER',
+  },
+  {
+    id: 15,
+    studyId: 9,
+    userId: 5,
+    name: '바니',
+    profileImage: null,
+    role: 'LEADER',
+  },
 ] satisfies MemberSchemaType[];
 
 export function createSeedMembers() {

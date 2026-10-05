@@ -45,13 +45,13 @@ export default function AssignmentDetailPage() {
 AssignmentDetailPage.Content = function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const {
-    data: { role },
+    data: { role, userName },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return role === 'LEADER' ? (
-    <LeaderAssignmentDetailContent studyId={studyId} />
+    <LeaderAssignmentDetailContent studyId={studyId} userName={userName} />
   ) : (
-    <MemberAssignmentDetailContent studyId={studyId} />
+    <MemberAssignmentDetailContent studyId={studyId} userName={userName} />
   );
 };
 

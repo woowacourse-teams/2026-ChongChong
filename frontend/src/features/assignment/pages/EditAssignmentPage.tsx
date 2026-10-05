@@ -81,6 +81,7 @@ EditAssignmentPage.Content = function Content() {
         submissionMethod: assignment.submissionMethod,
         closeAt: assignment.closeAt,
         submissionTarget: assignment.submissionTarget,
+        submissionVisibility: assignment.submissionVisibility,
       }}
       fieldErrors={fieldErrors}
     />
