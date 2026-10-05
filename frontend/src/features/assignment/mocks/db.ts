@@ -10,6 +10,7 @@ const assignmentSchema = z.object({
   submissionMethod: z.string(),
   closeAt: z.string(),
   submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
+  submissionVisibility: z.enum(['LEADER_ONLY', 'ALL_STUDY_MEMBERS']).default('LEADER_ONLY'),
   completeUserIds: z.array(z.number()),
 });
 
@@ -18,6 +19,7 @@ export const assignmentTable = new Collection({
 });
 
 export type AssignmentSchemaType = z.infer<typeof assignmentSchema>;
+type AssignmentSchemaInput = z.input<typeof assignmentSchema>;
 
 export const mockAssigments = [
   {
@@ -160,7 +162,7 @@ export const mockAssigments = [
     submissionTarget: 'MEMBERS_AND_LEADER',
     completeUserIds: [],
   },
-] satisfies AssignmentSchemaType[];
+] satisfies AssignmentSchemaInput[];
 
 export function createSeedAssignments() {
   for (const mockAssignment of mockAssigments) {

@@ -62,6 +62,30 @@ describe('과제 생성 페이지 테스트', () => {
 
   describe('과제 입력 검증', () => {
     test.each([
+      { label: '공개', submissionVisibility: 'ALL_STUDY_MEMBERS' },
+      { label: '비공개', submissionVisibility: 'LEADER_ONLY' },
+    ])('$label 선택을 생성 요청에 반영한다', async ({ label, submissionVisibility }) => {
+      const requestBody = jest.fn();
+      server.use(
+        http.post(ASSIGNMENT_CREATE_URL, async ({ request }) => {
+          requestBody(await request.json());
+          return HttpResponse.json({ assignmentId: 999 }, { status: 201 });
+        }),
+      );
+      const { user } = setupCreateAssignmentPage();
+
+      await user.type(getTitleInput(), '객체지향 설계 과제');
+      await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+      await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+      await user.click(screen.getByRole('radio', { name: label }));
+      await user.click(getSubmitButton());
+
+      await waitFor(() =>
+        expect(requestBody).toHaveBeenCalledWith(expect.objectContaining({ submissionVisibility })),
+      );
+    });
+
+    test.each([
       { leaderSubmits: true, submissionTarget: 'MEMBERS_AND_LEADER' },
       { leaderSubmits: false, submissionTarget: 'MEMBERS_ONLY' },
     ])(

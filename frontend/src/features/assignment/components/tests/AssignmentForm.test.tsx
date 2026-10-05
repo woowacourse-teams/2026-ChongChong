@@ -9,6 +9,7 @@ const initialValues = {
   submissionMethod: '링크 제출',
   closeAt: '2999-12-31T23:59:59',
   submissionTarget: 'MEMBERS_AND_LEADER',
+  submissionVisibility: 'LEADER_ONLY',
 } satisfies AssignmentValue;
 
 describe('AssignmentForm 테스트', () => {
@@ -37,5 +38,26 @@ describe('AssignmentForm 테스트', () => {
     expect(field.getByText(0, countOptions)).toBeVisible();
     await user.type(textbox, '치킨 먹을게요');
     expect(field.getByText(7, countOptions)).toBeVisible();
+  });
+
+  test('저장된 제출물 공개 여부를 선택하고 변경할 수 있다', async () => {
+    const user = userEvent.setup();
+    const onSubmit = jest.fn();
+    render(
+      <AssignmentForm
+        initialValues={initialValues}
+        submitLabel="과제 수정하기"
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
+
+    await user.click(screen.getByRole('radio', { name: '공개' }));
+    await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ submissionVisibility: 'ALL_STUDY_MEMBERS' }),
+    );
   });
 });
