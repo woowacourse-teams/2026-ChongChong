@@ -52,7 +52,7 @@ const nameStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-export default function MemberStatusList({ title, members }: Props) {
+export default function IncompleteMemberList({ title, members }: Props) {
   return (
     <section css={sectionStyle} aria-label={title}>
       <h2 css={titleStyle}>{title}</h2>
