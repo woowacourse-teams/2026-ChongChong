@@ -1,5 +1,5 @@
 import { tokens } from '../../../styles/global';
-import bowingChongchong from '../assets/chongchong-greeting.png';
+import bowingChongchong from '../../../shared/assets/icons/chongchong-greeting.png';
 
 export default function CompleteArtwork() {
   return (
