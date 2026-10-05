@@ -63,6 +63,12 @@ export const mockStudies = [
     description: '과제가 하나',
     inviteLink: 'only-one-assignment',
   },
+  {
+    id: 9,
+    name: '과제 공개 범위 확인 스터디',
+    description: '스터디원 화면에서 과제 공개 범위를 확인하는 스터디',
+    inviteLink: 'assignment-visibility-preview',
+  },
 ] satisfies studySchemaType[];
 
 export function createSeedStudies() {

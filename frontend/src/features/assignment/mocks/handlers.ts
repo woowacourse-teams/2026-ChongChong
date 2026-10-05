@@ -226,10 +226,13 @@ export const handlers = [
 
       const [studyId, assignmentId] = [params.studyId, params.assignmentId].map(Number);
       const member = memberTable.findFirst((q) => q.where({ studyId, userId: user.id }));
-      if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
+      if (!member) return new HttpResponse(null, { status: 403 });
 
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
+      if (member.role !== 'LEADER' && assignment.submissionVisibility !== 'ALL_STUDY_MEMBERS') {
+        return new HttpResponse(null, { status: 403 });
+      }
 
       const submissions = submissionTable
         .findMany((q) => q.where({ assignmentId }))

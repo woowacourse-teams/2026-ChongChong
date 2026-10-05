@@ -1,16 +1,20 @@
-import { useSuspenseQueries } from '@tanstack/react-query';
+import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
+import DetailTabs from '../../../shared/widgets/DetailTabs';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import assignmentQueries from '../queries';
 import AssignmentArticle from './AssignmentArticle';
+import CompletedSubmissionList from './CompletedSubmissionList';
 import MyAssignmentSubmission from './MyAssignmentSubmission';
+import MySubmissionStatus from './MySubmissionStatus';
 
 interface Props {
   studyId: number;
+  userName: string;
 }
 
-export default function MemberAssignmentDetailContent({ studyId }: Props) {
+export default function MemberAssignmentDetailContent({ studyId, userName }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
   const [{ data: assignment }, { data: submission }] = useSuspenseQueries({
     queries: [
@@ -18,6 +22,19 @@ export default function MemberAssignmentDetailContent({ studyId }: Props) {
       assignmentQueries.mySubmission(studyId, assignmentId),
     ],
   });
+  const { data: submissions } = useQuery({
+    ...assignmentQueries.submissions(studyId, assignmentId),
+    enabled: assignment.submissionVisibility === 'ALL_STUDY_MEMBERS',
+    throwOnError: true,
+  });
+  const myCompletedSubmission =
+    submission.submissionStatus === 'SUBMITTED'
+      ? submissions?.submissions.find(({ id }) => id === submission.submissionId)
+      : undefined;
+  const member = {
+    name: myCompletedSubmission?.name ?? userName,
+    profileImage: myCompletedSubmission?.profileImage ?? null,
+  };
 
   return (
     <>
@@ -26,11 +43,28 @@ export default function MemberAssignmentDetailContent({ studyId }: Props) {
         dateTime={assignment.closeAt}
         meta={`${formatDateToString(assignment.closeAt)} 마감`}
       />
-      <AssignmentArticle assignment={assignment} />
-      <MyAssignmentSubmission
-        studyId={studyId}
-        assignmentId={assignmentId}
-        submission={submission}
+      <DetailTabs
+        summary={
+          <>
+            <MySubmissionStatus
+              studyId={studyId}
+              assignmentId={assignmentId}
+              submission={submission}
+              member={member}
+            />
+            {submissions ? <CompletedSubmissionList submissions={submissions.submissions} /> : null}
+          </>
+        }
+        detail={
+          <>
+            <AssignmentArticle assignment={assignment} />
+            <MyAssignmentSubmission
+              studyId={studyId}
+              assignmentId={assignmentId}
+              submission={submission}
+            />
+          </>
+        }
       />
     </>
   );

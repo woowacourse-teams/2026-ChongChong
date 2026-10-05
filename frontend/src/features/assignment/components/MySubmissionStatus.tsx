@@ -9,7 +9,7 @@ interface Props {
   studyId: number;
   assignmentId: number;
   submission: UserAssignmentSubmitDetail;
-  member?: Submission;
+  member: Pick<Submission, 'name' | 'profileImage'>;
 }
 
 const sectionStyle = {
@@ -86,13 +86,13 @@ export default function MySubmissionStatus({ studyId, assignmentId, submission, 
       ) : (
         <div css={cardStyle}>
           <img
-            src={member?.profileImage ?? profileIcon}
+            src={member.profileImage ?? profileIcon}
             alt=""
             aria-hidden="true"
             css={profileStyle}
           />
           <div css={memberStyle}>
-            <span css={nameStyle}>{member ? `${member.name} (나)` : '나'}</span>
+            <span css={nameStyle}>{member.name} (나)</span>
             <time css={dateStyle} dateTime={submission.createdAt}>
               {formatSubmittedAt(submission.createdAt)}
             </time>
