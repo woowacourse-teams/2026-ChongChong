@@ -22,9 +22,10 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
       assignmentQueries.mySubmission(studyId, assignmentId),
     ],
   });
+  const canViewSubmissions = assignment.submissionVisibility === 'ALL_STUDY_MEMBERS';
   const { data: submissions } = useQuery({
     ...assignmentQueries.submissions(studyId, assignmentId),
-    enabled: assignment.submissionVisibility === 'ALL_STUDY_MEMBERS',
+    enabled: canViewSubmissions,
   });
   const myCompletedSubmission =
     submission.submissionStatus === 'SUBMITTED'
@@ -46,7 +47,9 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
         summary={
           <>
             <MySubmissionStatus submission={submission} member={member} />
-            {submissions ? <CompletedSubmissionList submissions={submissions.submissions} /> : null}
+            {canViewSubmissions && submissions ? (
+              <CompletedSubmissionList submissions={submissions.submissions} />
+            ) : null}
           </>
         }
         detail={
