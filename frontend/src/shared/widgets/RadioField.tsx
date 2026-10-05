@@ -76,26 +76,32 @@ export default function RadioField<T extends string>({
   helpText,
   errorText,
 }: RadioFieldProps<T>) {
+  const labelId = `${id}-label`;
+
   return (
     <Field>
-      <Field.Label htmlFor={id} isRequired={isRequired}>
+      <Field.GroupLabel id={labelId} isRequired={isRequired}>
         {label}
-      </Field.Label>
-      <div role="radiogroup" aria-labelledby={id} css={optionsStyle}>
-        {options.map((option) => (
-          <label key={option.value} css={optionStyle}>
-            <input
-              id={`${id}-${option.value}`}
-              type="radio"
-              name={name}
-              value={option.value}
-              checked={value === option.value}
-              onChange={() => onChange(option.value)}
-              css={radioStyle}
-            />
-            {option.label}
-          </label>
-        ))}
+      </Field.GroupLabel>
+      <div role="radiogroup" aria-labelledby={labelId} css={optionsStyle}>
+        {options.map((option) => {
+          const optionId = `${id}-${option.value}`;
+
+          return (
+            <label key={option.value} htmlFor={optionId} css={optionStyle}>
+              <input
+                id={optionId}
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={value === option.value}
+                onChange={() => onChange(option.value)}
+                css={radioStyle}
+              />
+              {option.label}
+            </label>
+          );
+        })}
       </div>
       <Field.SubText errorText={errorText} helpText={helpText} />
     </Field>

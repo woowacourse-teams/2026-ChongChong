@@ -51,9 +51,13 @@ describe('AssignmentForm 테스트', () => {
       />,
     );
 
-    expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
+    const visibilityGroup = screen.getByRole('radiogroup', { name: '제출물 공개 여부' });
+    const publicRadio = within(visibilityGroup).getByRole('radio', { name: '공개' });
 
-    await user.click(screen.getByRole('radio', { name: '공개' }));
+    expect(publicRadio.closest('label')).toHaveAttribute('for', publicRadio.id);
+    expect(within(visibilityGroup).getByRole('radio', { name: '비공개' })).toBeChecked();
+
+    await user.click(publicRadio);
     await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
 
     expect(onSubmit).toHaveBeenCalledWith(
