@@ -25,7 +25,6 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
   const { data: submissions } = useQuery({
     ...assignmentQueries.submissions(studyId, assignmentId),
     enabled: assignment.submissionVisibility === 'ALL_STUDY_MEMBERS',
-    throwOnError: true,
   });
   const myCompletedSubmission =
     submission.submissionStatus === 'SUBMITTED'
