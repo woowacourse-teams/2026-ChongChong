@@ -5,9 +5,10 @@ import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
 import CheckField from '../../../shared/widgets/CheckField';
+import RadioField from '../../../shared/widgets/RadioField';
 import { tokens } from '../../../styles/global';
 import { AssignmentValue } from '../types';
-import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../constants';
+import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, visibilityOptions } from '../constants';
 import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
 import { useInputState } from '../../../shared/hooks/useInputState';
@@ -25,7 +26,15 @@ interface AssignmentFormProps {
   isSubmitting?: boolean;
   onSubmit: (values: AssignmentValue) => void;
   fieldErrors?: Partial<
-    Record<'title' | 'content' | 'submissionMethod' | 'closeAt' | 'submissionTarget', string>
+    Record<
+      | 'title'
+      | 'content'
+      | 'submissionMethod'
+      | 'closeAt'
+      | 'submissionTarget'
+      | 'submissionVisibility',
+      string
+    >
   >;
 }
 
@@ -35,6 +44,7 @@ const emptyValues = {
   submissionMethod: '',
   closeAt: '',
   submissionTarget: 'MEMBERS_AND_LEADER',
+  submissionVisibility: 'ALL_STUDY_MEMBERS',
 } satisfies AssignmentValue;
 
 export default function AssignmentForm({
@@ -64,6 +74,9 @@ export default function AssignmentForm({
   );
   const [closeAt, setCloseAt] = useState(initialValues.closeAt);
   const [submissionTarget, setSubmissionTarget] = useState(initialValues.submissionTarget);
+  const [submissionVisibility, setSubmissionVisibility] = useState(
+    initialValues.submissionVisibility,
+  );
   const posthog = usePostHog();
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -75,7 +88,14 @@ export default function AssignmentForm({
       location: 'assignment_create_page',
     });
 
-    onSubmit({ title, content, submissionMethod, closeAt, submissionTarget });
+    onSubmit({
+      title,
+      content,
+      submissionMethod,
+      closeAt,
+      submissionTarget,
+      submissionVisibility,
+    });
   }
 
   return (
@@ -132,6 +152,18 @@ export default function AssignmentForm({
         />
         <Field.SubText errorText={fieldErrors.closeAt} />
       </Field>
+
+      <RadioField
+        id="submission-visibility"
+        name="submissionVisibility"
+        label="제출물 공개 여부"
+        options={visibilityOptions}
+        value={submissionVisibility}
+        onChange={setSubmissionVisibility}
+        helpText="공개로 설정하면 스터디원들끼리 서로의 제출물을 확인할 수 있어요"
+        errorText={fieldErrors.submissionVisibility}
+        isRequired
+      />
 
       <CheckField
         id="leader-submission"

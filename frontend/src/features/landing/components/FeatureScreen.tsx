@@ -40,6 +40,7 @@ const assignment = {
   submissionMethod: '독서 노트 링크를 제출해주세요',
   closeAt: '2026-09-09T20:00:00',
   submissionTarget: 'MEMBERS_AND_LEADER' as const,
+  submissionVisibility: 'LEADER_ONLY' as const,
 };
 const noticeTitle = '이번 주 모임 장소 안내';
 const formStyle = {
