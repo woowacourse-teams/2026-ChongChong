@@ -9,6 +9,7 @@ import { studyTable } from '../../mocks/db';
 import { userTable } from '../../../user/mocks/db';
 import { memberTable } from '../../../member/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
+import { GUIDELINE_STORAGE_KEY } from '../../../guideline/utils/guidelineStorage';
 
 const STUDIES_URL = `${API_URL}${STUDY_URLS.list}`;
 
@@ -16,6 +17,8 @@ describe('스터디 목록 페이지 테스트', () => {
   const userId = 1;
 
   beforeEach(async () => {
+    // 테스트에 필요하지 않은 가이드라인을 숨깁니다.
+    localStorage.setItem(GUIDELINE_STORAGE_KEY, JSON.stringify({ page: 1, dismissed: true }));
     await userTable.create({
       id: userId,
       name: '벤지',
@@ -25,6 +28,7 @@ describe('스터디 목록 페이지 테스트', () => {
   });
 
   afterEach(() => {
+    localStorage.removeItem(GUIDELINE_STORAGE_KEY);
     logout();
   });
 
@@ -82,7 +86,10 @@ describe('스터디 목록 페이지 테스트', () => {
     server.use(http.get(STUDIES_URL, () => HttpResponse.error()));
     setup(<MyStudiesPage />, { wrapper: createWrapper() });
 
-    expect(await screen.findByText('스터디 목록을 불러오는데 실패했습니다.')).toBeInTheDocument();
+    // 네트워크 오류에 대한 HTTP 클라이언트의 재시도가 끝난 뒤 오류 화면을 확인한다.
+    expect(
+      await screen.findByText('스터디 목록을 불러오는데 실패했습니다.', {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
   });
 
   test('참여 중인 스터디가 없으면 비어있는 상태를 렌더링 한다', async () => {
