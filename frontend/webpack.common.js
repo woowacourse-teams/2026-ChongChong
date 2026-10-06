@@ -85,6 +85,7 @@ export function createCommonConfig({ envFile, environment, assetFilename }) {
         'process.env.USE_MSW': JSON.stringify(process.env.USE_MSW ?? 'false'),
         'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
         'process.env.SENTRY_ENVIRONMENT': JSON.stringify(process.env.DEPLOY_ENV ?? environment),
+        'process.env.E2E_MODE': JSON.stringify(process.env.E2E_MODE ?? 'false'),
       }),
     ],
   };

@@ -16,6 +16,7 @@ import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
+import { initializeMocking } from './src/mocks/main';
 
 const appRoutes = [
   {
@@ -46,16 +47,6 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 });
 
-async function enableMocking() {
-  // .env의 USE_MSW가 true일 때 MSW를 사용합니다.
-  if (process.env.USE_MSW !== 'true') {
-    return;
-  }
-  const { worker } = await import('./src/mocks/msw-browser');
-
-  return worker.start();
-}
-
 const queryClient = new QueryClient();
 
 const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
@@ -73,7 +64,7 @@ async function restoreSession() {
 }
 
 async function bootstrap() {
-  await enableMocking();
+  await initializeMocking();
   const shouldResetIdentity = await restoreSession();
   const rootElement = document.getElementById('root');
 
