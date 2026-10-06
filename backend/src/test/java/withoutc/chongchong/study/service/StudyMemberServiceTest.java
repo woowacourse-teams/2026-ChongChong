@@ -130,7 +130,7 @@ class StudyMemberServiceTest {
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(studyId);
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(30);
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(50);
 
         assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
                 .isInstanceOf(StudyMemberException.class)
@@ -205,6 +205,8 @@ class StudyMemberServiceTest {
 
         StudyMembersResponse response = studyMemberService.getAllStudyMembers(userId, studyId);
 
+        assertThat(response.maxMemberCount()).isEqualTo(50);
+        assertThat(response.nowMemberCount()).isEqualTo(2);
         assertThat(response.members())
                 .containsExactly(StudyMemberResponse.from(projection1), StudyMemberResponse.from(projection2));
     }

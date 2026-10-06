@@ -25,7 +25,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @Transactional(readOnly = true)
 public class StudyMemberService {
 
-    private static final int MAX_STUDY_MEMBER_COUNT = 30;
+    private static final int MAX_STUDY_MEMBER_COUNT = 50;
 
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
@@ -54,7 +54,8 @@ public class StudyMemberService {
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
         studyRepository.getByIdOrThrow(studyId);
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        return StudyMembersResponse.from(studyMemberRepository.findAllSummariesByStudyId(studyId));
+        return StudyMembersResponse.from(MAX_STUDY_MEMBER_COUNT,
+                studyMemberRepository.findAllSummariesByStudyId(studyId));
     }
 
     @Transactional
