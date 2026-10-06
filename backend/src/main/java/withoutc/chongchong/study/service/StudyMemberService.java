@@ -25,7 +25,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 @Transactional(readOnly = true)
 public class StudyMemberService {
 
-    private static final int MAX_STUDY_MEMBER_COUNT = 30;
+    private static final int MAX_STUDY_MEMBER_COUNT = 50;
 
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;

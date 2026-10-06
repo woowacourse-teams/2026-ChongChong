@@ -65,7 +65,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
     @Test
     @DisplayName("동시에 두 명이 가입해도 스터디 정원을 초과하지 않는다")
     void doesNotExceedStudyMemberLimitWhenJoiningConcurrently() throws Exception {
-        Study study = createStudyWithMembers(29);
+        Study study = createStudyWithMembers(49);
         User firstUser = saveUser("첫 번째 참여자");
         User secondUser = saveUser("두 번째 참여자");
         String inviteToken = studyInviteTokenProvider.generate(study.getId());
@@ -88,7 +88,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
         assertThat(failure.failure()).isInstanceOf(StudyMemberException.class);
         assertThat(((StudyMemberException) failure.failure()).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_LIMIT_EXCEEDED);
-        assertThat(studyMemberRepository.countByStudyId(study.getId())).isEqualTo(30);
+        assertThat(studyMemberRepository.countByStudyId(study.getId())).isEqualTo(50);
     }
 
     @Test

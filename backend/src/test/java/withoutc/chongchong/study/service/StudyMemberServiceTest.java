@@ -130,7 +130,7 @@ class StudyMemberServiceTest {
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(studyId);
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(30);
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(50);
 
         assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
                 .isInstanceOf(StudyMemberException.class)
