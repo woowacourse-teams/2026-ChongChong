@@ -121,7 +121,18 @@ const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submissionStatus'
     link: z.string().optional(),
   }),
   z.object({
+    submissionStatus: z.literal('LATE_SUBMITTED'),
+    submissionId: z.number(),
+    createdAt: z.string(),
+    content: z.string().optional(),
+    link: z.string().optional(),
+  }),
+  z.object({
     submissionStatus: z.literal('NOT_SUBMITTED'),
+    submissionId: z.number(),
+  }),
+  z.object({
+    submissionStatus: z.literal('MISSING'),
     submissionId: z.number(),
   }),
   z.object({

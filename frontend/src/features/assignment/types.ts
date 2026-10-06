@@ -103,8 +103,21 @@ export interface SubmittedAssignment {
   link?: string;
 }
 
+export interface LateSubmittedAssignment {
+  submissionStatus: 'LATE_SUBMITTED';
+  submissionId: number;
+  createdAt: string;
+  content?: string;
+  link?: string;
+}
+
 export interface UnsubmittedAssignment {
   submissionStatus: 'NOT_SUBMITTED';
+  submissionId: number;
+}
+
+export interface MissingAssignment {
+  submissionStatus: 'MISSING';
   submissionId: number;
 }
 
@@ -113,4 +126,10 @@ export interface NotAssignedAssignment {
 }
 
 export type UserAssignmentSubmitDetail =
-  SubmittedAssignment | UnsubmittedAssignment | NotAssignedAssignment;
+  | SubmittedAssignment
+  | LateSubmittedAssignment
+  | UnsubmittedAssignment
+  | MissingAssignment
+  | NotAssignedAssignment;
+
+export type CompletedAssignment = SubmittedAssignment | LateSubmittedAssignment;

@@ -8,6 +8,7 @@ import AssignmentArticle from './AssignmentArticle';
 import CompletedSubmissionList from './CompletedSubmissionList';
 import MyAssignmentSubmission from './MyAssignmentSubmission';
 import MySubmissionStatus from './MySubmissionStatus';
+import { isCompletedAssignment } from '../submissionStatus';
 
 interface Props {
   studyId: number;
@@ -27,10 +28,9 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
     ...assignmentQueries.submissions(studyId, assignmentId),
     enabled: canViewSubmissions,
   });
-  const myCompletedSubmission =
-    submission.submissionStatus === 'SUBMITTED'
-      ? submissions?.submissions.find(({ id }) => id === submission.submissionId)
-      : undefined;
+  const myCompletedSubmission = isCompletedAssignment(submission)
+    ? submissions?.submissions.find(({ id }) => id === submission.submissionId)
+    : undefined;
   const member = {
     name: myCompletedSubmission?.name ?? userName,
     profileImage: myCompletedSubmission?.profileImage ?? null,
