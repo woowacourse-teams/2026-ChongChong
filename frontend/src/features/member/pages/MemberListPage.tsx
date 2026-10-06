@@ -6,10 +6,7 @@ import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
-import {
-  MemberListSectionForLeader,
-  MemberListSectionForMember,
-} from '../components/MemberListSection';
+import { MemberListSection, MemberListSectionFallback } from '../components/MemberListSection';
 import {
   InviteStudyLinkSection,
   InviteStudyLinkSectionFallback,
@@ -48,7 +45,13 @@ function Content() {
 
   return (
     <>
-      {role === 'LEADER' ? <MemberListSectionForLeader /> : <MemberListSectionForMember />}
+      <ErrorBoundary
+        fallbackRender={({ error }) => (
+          <MemberListSectionFallback message={getErrorMessage(error)} />
+        )}
+      >
+        <MemberListSection role={role} />
+      </ErrorBoundary>
 
       <div css={{ flexShrink: 0 }}>
         <ErrorBoundary
