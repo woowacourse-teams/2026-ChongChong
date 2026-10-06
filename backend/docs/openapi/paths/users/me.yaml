@@ -26,7 +26,7 @@ patch:
   tags: [User]
   operationId: updateMyProfileName
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       #423 홈 마이페이지 이름 수정 API 구현 완료.
