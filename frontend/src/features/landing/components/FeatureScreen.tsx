@@ -22,7 +22,7 @@ import { tokens, typography } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
-import { InviteLinkBox } from '../../member/components/InviteStudyLinkBox';
+import { InviteLinkBox } from '../../member/components/InviteStudyLinkSection';
 import MemberRow from '../../member/components/MemberRow';
 import {
   MemberActiveAssignmentCard,

@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastProvider } from '../../../../shared/providers/ToastProvider';
-import { InviteLinkBox } from '../InviteStudyLinkBox';
+import { InviteLinkBox } from '../InviteStudyLinkSection';
 
 const INVITE_LINK = 'https://chongchong.app/join?token=mock-token';
 
@@ -9,7 +9,7 @@ function setupInviteLinkBox() {
   const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
   const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
 
-  render(<InviteLinkBox title="스터디 초대" inviteLink={INVITE_LINK} />, {
+  render(<InviteLinkBox inviteLink={INVITE_LINK} />, {
     wrapper: ToastProvider,
   });
 

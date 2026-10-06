@@ -4,11 +4,17 @@ import { MEMBER_URLS } from '../urls';
 import { memberTable } from './db';
 import { findUserFromHeader } from '../../../mocks/auth';
 
+const MAX_MEMBER_COUNT = 50;
+
 export const handlers = [
   http.get(`${API_URL}${MEMBER_URLS.list}`, async ({ params }) => {
     const { studyId } = params;
     const members = await memberTable.findMany((q) => q.where({ studyId: Number(studyId) }));
-    return HttpResponse.json({ members });
+    return HttpResponse.json({
+      maxMemberCount: MAX_MEMBER_COUNT,
+      nowMemberCount: members.length,
+      members,
+    });
   }),
 
   http.delete(`${API_URL}${MEMBER_URLS.leave}`, async ({ request, params }) => {
