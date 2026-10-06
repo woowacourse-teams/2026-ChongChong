@@ -1,4 +1,5 @@
-export type SubmissionStatus = 'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED';
+export type SubmissionStatus =
+  'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED' | 'LATE_SUBMITTED' | 'MISSING';
 
 interface AssignmentSummaryBase {
   id: number;

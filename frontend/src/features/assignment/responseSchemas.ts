@@ -16,7 +16,13 @@ import type {
   IncompleteMember,
 } from './types';
 
-const submissionStatusSchema = z.enum(['NOT_ASSIGNED', 'NOT_SUBMITTED', 'SUBMITTED']);
+const submissionStatusSchema = z.enum([
+  'NOT_ASSIGNED',
+  'NOT_SUBMITTED',
+  'SUBMITTED',
+  'LATE_SUBMITTED',
+  'MISSING',
+]);
 
 const assignmentSummaryBaseSchema = z.object({
   id: z.number(),

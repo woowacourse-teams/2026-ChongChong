@@ -161,5 +161,36 @@ describe('과제 목록 페이지 테스트', () => {
       expect(await screen.findByText(message)).toBeVisible();
       expect(assignmentListContent().getByText(message)).toBeVisible();
     });
+
+    test.each([
+      { submissionStatus: 'LATE_SUBMITTED', badgeLabel: '지각 제출' },
+      { submissionStatus: 'MISSING', badgeLabel: '마감 후 미제출' },
+    ] as const)(
+      '$submissionStatus 상태의 과제 목록을 표시한다',
+      async ({ submissionStatus, badgeLabel }) => {
+        server.use(
+          http.get(ASSIGNMENT_LIST_URL, () =>
+            HttpResponse.json({
+              nextCursor: null,
+              hasNext: false,
+              assignments: [
+                {
+                  id: 1,
+                  title: '마감된 과제',
+                  content: '과제 내용',
+                  submissionMethod: '링크 제출',
+                  closeAt: '2026-10-05T23:59:59',
+                  submissionStatus,
+                },
+              ],
+            }),
+          ),
+        );
+        setupAssignmentListPage();
+
+        expect(await screen.findByText('마감된 과제')).toBeVisible();
+        expect(assignmentListContent().getByText(badgeLabel)).toBeVisible();
+      },
+    );
   });
 });
