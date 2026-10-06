@@ -152,9 +152,13 @@ class UserProfileAcceptanceTest {
             "{\"name\":\" \"}",
             "{\"name\":\"가나다라마바사아자\"}"
     })
-    @DisplayName("유효하지 않은 이름은 거부하고 기존 홈 프로필을 유지한다")
+    @DisplayName("유효하지 않은 이름은 거부하고 홈과 스터디의 기존 이름을 유지한다")
     void rejectInvalidProfileNameUpdate(String requestBody) {
         User user = userRepository.saveAndFlush(User.create("기존이름", null));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", null));
+        StudyMember member = studyMemberRepository.saveAndFlush(StudyMember.create(
+                study, user, user.getName(), null, StudyMemberRole.MEMBER
+        ));
 
         Response response = updateProfileName(user.getId(), requestBody);
 
@@ -163,6 +167,10 @@ class UserProfileAcceptanceTest {
         assertThat(userRepository.findById(user.getId()))
                 .get()
                 .extracting(User::getName)
+                .isEqualTo("기존이름");
+        assertThat(studyMemberRepository.findById(member.getId()))
+                .get()
+                .extracting(StudyMember::getName)
                 .isEqualTo("기존이름");
     }
 
@@ -190,21 +198,54 @@ class UserProfileAcceptanceTest {
     }
 
     @Test
-    @DisplayName("홈 이름 수정은 기존 스터디 프로필을 유지하고 새 스터디에는 변경된 이름을 복사한다")
-    void updateHomeNameWithoutChangingExistingStudyProfile() {
-        User user = userRepository.saveAndFlush(User.create("기존이름", null));
-        Study existingStudy = studyRepository.saveAndFlush(Study.create("기존 스터디", null));
-        StudyMember existingMember = studyMemberRepository.saveAndFlush(StudyMember.create(
-                existingStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
+    @DisplayName("홈 이름 수정은 모든 참여 스터디에 반영하고 이후 새 스터디에도 변경된 이름을 복사한다")
+    void updateHomeNameAcrossExistingAndNewStudies() {
+        User user = userRepository.saveAndFlush(User.create(
+                "기존이름", "https://cdn.example.com/profiles/user.webp"
+        ));
+        User otherUser = userRepository.saveAndFlush(User.create("다른이름", null));
+        Study leaderStudy = studyRepository.saveAndFlush(Study.create("리더 스터디", null));
+        Study memberStudy = studyRepository.saveAndFlush(Study.create("멤버 스터디", null));
+        StudyMember leader = studyMemberRepository.saveAndFlush(StudyMember.create(
+                leaderStudy, user, user.getName(), "https://cdn.example.com/profiles/leader.webp",
+                StudyMemberRole.LEADER
+        ));
+        StudyMember member = studyMemberRepository.saveAndFlush(StudyMember.create(
+                memberStudy, user, user.getName(), "https://cdn.example.com/profiles/member.webp",
+                StudyMemberRole.MEMBER
+        ));
+        StudyMember otherMember = studyMemberRepository.saveAndFlush(StudyMember.create(
+                leaderStudy, otherUser, otherUser.getName(), null, StudyMemberRole.MEMBER
         ));
 
         Response updateResponse = updateProfileName(user.getId(), "{\"name\":\"새이름\"}");
 
         assertThat(updateResponse.statusCode()).isEqualTo(200);
-        assertThat(studyMemberRepository.findById(existingMember.getId()))
+        assertThat(updateResponse.jsonPath().getMap("$"))
+                .containsEntry("name", "새이름")
+                .containsEntry("profileImageUrl", "https://cdn.example.com/profiles/user.webp");
+        assertThat(studyMemberRepository.findById(leader.getId()))
+                .get()
+                .satisfies(updatedLeader -> {
+                    assertThat(updatedLeader.getName()).isEqualTo("새이름");
+                    assertThat(updatedLeader.getProfileImageUrl())
+                            .isEqualTo("https://cdn.example.com/profiles/leader.webp");
+                });
+        assertThat(studyMemberRepository.findById(member.getId()))
+                .get()
+                .satisfies(updatedMember -> {
+                    assertThat(updatedMember.getName()).isEqualTo("새이름");
+                    assertThat(updatedMember.getProfileImageUrl())
+                            .isEqualTo("https://cdn.example.com/profiles/member.webp");
+                });
+        assertThat(studyMemberRepository.findById(otherMember.getId()))
                 .get()
                 .extracting(StudyMember::getName)
-                .isEqualTo("기존이름");
+                .isEqualTo("다른이름");
+        assertThat(userRepository.findById(otherUser.getId()))
+                .get()
+                .extracting(User::getName)
+                .isEqualTo("다른이름");
 
         Response createResponse = testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
