@@ -459,6 +459,39 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('본인 제출 정보 조회', () => {
+      test('지각 제출 상태면 제출 완료 내용을 표시한다', async () => {
+        server.use(
+          http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json({
+              submissionStatus: 'LATE_SUBMITTED',
+              submissionId: 1,
+              createdAt: '2026-10-06T10:00:00',
+              content: '지각 제출한 과제',
+            }),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        await openDetailTab(user);
+
+        expect(await screen.findByText('지각 제출한 과제')).toBeVisible();
+        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+      });
+
+      test('마감 후 미제출 상태면 제출 폼을 표시한다', async () => {
+        server.use(
+          http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json({ submissionStatus: 'MISSING', submissionId: 1 }),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        expect(await screen.findByText('아직 과제를 제출하지 않았어요')).toBeVisible();
+        await openDetailTab(user);
+
+        expect(screen.getByRole('button', { name: '제출하기' })).toBeVisible();
+      });
+
       test('내 제출 상세 보기를 누르면 수정할 수 있는 상세 탭으로 이동한다', async () => {
         await markSubmissionAsSubmitted(2, {
           content: '내가 제출한 과제',

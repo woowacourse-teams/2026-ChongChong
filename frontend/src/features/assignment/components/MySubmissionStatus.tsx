@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
+import { isCompletedAssignment } from '../submissionStatus';
 import type { Submission, UserAssignmentSubmitDetail } from '../types';
 
 interface Props {
@@ -73,13 +74,15 @@ const detailLinkStyle = {
 export default function MySubmissionStatus({ submission, member }: Props) {
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
+  const isCompleted = isCompletedAssignment(submission);
+
   return (
     <section css={sectionStyle} aria-labelledby="my-submission-status-title">
       <h2 id="my-submission-status-title" css={titleStyle}>
         내 제출
       </h2>
 
-      {submission.submissionStatus === 'NOT_SUBMITTED' ? (
+      {!isCompleted ? (
         <p css={emptyStyle}>아직 과제를 제출하지 않았어요</p>
       ) : (
         <div css={cardStyle}>

@@ -8,19 +8,17 @@ import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { updateAssignmentSubmission } from '../api';
 import assignmentQueries from '../queries';
-import type { AssignmentSubmissionValue, UserAssignmentSubmitDetail } from '../types';
+import type { AssignmentSubmissionValue, CompletedAssignment } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import InfoCard from './InfoCard';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
-type SubmittedAssignment = Extract<UserAssignmentSubmitDetail, { submissionStatus: 'SUBMITTED' }>;
-
 interface Props {
   assignmentId: number;
   studyId: number;
-  submission: SubmittedAssignment;
+  submission: CompletedAssignment;
 }
 
 const sectionStyle = {

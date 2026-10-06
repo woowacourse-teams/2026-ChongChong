@@ -10,6 +10,7 @@ import CompletedSubmissionList from './CompletedSubmissionList';
 import assignmentQueries from '../queries';
 import MyAssignmentSubmission from './MyAssignmentSubmission';
 import MySubmissionStatus from './MySubmissionStatus';
+import { isCompletedAssignment } from '../submissionStatus';
 
 interface Props {
   studyId: number;
@@ -33,7 +34,7 @@ export default function LeaderAssignmentDetailContent({ studyId, userName }: Pro
     throwOnError: true,
   });
   const myCompletedSubmission =
-    mySubmission?.submissionStatus === 'SUBMITTED'
+    mySubmission && isCompletedAssignment(mySubmission)
       ? submissions.submissions.find(({ id }) => id === mySubmission.submissionId)
       : undefined;
   const member = {
