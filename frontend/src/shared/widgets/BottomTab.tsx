@@ -1,4 +1,3 @@
-import type { CSSObject } from '@emotion/react';
 import { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useParams, useLocation } from 'react-router';
@@ -19,22 +18,19 @@ const tabStyle = {
   background: tokens.bg.default,
   maxWidth: tokens.screenSize.default,
   display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: `${tokens.spacing[2]} ${tokens.spacing[10]}`,
+  alignItems: 'stretch',
   borderTop: tokens.border.neutral,
   borderTopLeftRadius: tokens.radius.lg,
   borderTopRightRadius: tokens.radius.lg,
 } satisfies CSSProperties;
 
 const linkStyle = {
-  position: 'relative',
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    inset: `-8px -12px`,
-  },
-} satisfies CSSObject;
+  flex: 1,
+  minWidth: 0,
+  textAlign: 'center',
+  padding: `${tokens.spacing[2]} 0`,
+  paddingBottom: `calc(${tokens.spacing[2]} + ${tokens.layout.safeBottom})`,
+} satisfies CSSProperties;
 
 const textStyle = {
   ...typography.footnote,
