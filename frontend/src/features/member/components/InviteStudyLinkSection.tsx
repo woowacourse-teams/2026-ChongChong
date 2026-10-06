@@ -100,12 +100,12 @@ export function InviteStudyLinkSectionFallback({ message }: InviteStudyLinkSecti
           {message ?? '초대링크를 가져오지 못했어요'}
         </span>
         <button
-          css={[copyButtonStyle, { cursor: 'none', opacity: 0.5 }]}
+          css={[copyButtonStyle, { cursor: 'default', opacity: 0.5 }]}
           type="button"
           aria-label="링크 복사"
           disabled
         >
-          <img src={CopyIcon} width={16} height={20} alt="" />
+          <img src={CopyIcon} width={20} height={20} alt="" />
         </button>
       </div>
     </section>
