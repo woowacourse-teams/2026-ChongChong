@@ -56,8 +56,10 @@ StudyMemberResponse:
 StudyMembersResponse:
   type: object
   additionalProperties: false
-  required: [members]
+  required: [maxMemberCount, nowMemberCount, members]
   properties:
+    maxMemberCount: { description: 리더를 포함한 최대 스터디 인원 수, type: integer, example: 50 }
+    nowMemberCount: { description: 리더를 포함한 현재 스터디 인원 수, type: integer, example: 1 }
     members:
       type: array
       items: { $ref: '#/StudyMemberResponse' }

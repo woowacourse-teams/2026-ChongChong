@@ -231,6 +231,8 @@ class StudyMemberAcceptanceTest {
                 .get("/studies/{studyId}/members", study.getId())
                 .then()
                 .statusCode(200)
+                .body("maxMemberCount", equalTo(50))
+                .body("nowMemberCount", equalTo(2))
                 .body("members", hasSize(2))
                 .body("members[0].id", equalTo(leader.getId().intValue()))
                 .body("members[0].name", equalTo("리더"))
@@ -262,7 +264,10 @@ class StudyMemberAcceptanceTest {
                 .when()
                 .get("/studies/{studyId}/members", study.getId())
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .body("maxMemberCount", equalTo(50))
+                .body("nowMemberCount", equalTo(1))
+                .body("members", hasSize(1));
     }
 
     @Test

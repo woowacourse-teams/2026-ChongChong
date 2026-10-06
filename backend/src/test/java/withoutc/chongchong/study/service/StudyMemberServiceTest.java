@@ -205,6 +205,8 @@ class StudyMemberServiceTest {
 
         StudyMembersResponse response = studyMemberService.getAllStudyMembers(userId, studyId);
 
+        assertThat(response.maxMemberCount()).isEqualTo(50);
+        assertThat(response.nowMemberCount()).isEqualTo(2);
         assertThat(response.members())
                 .containsExactly(StudyMemberResponse.from(projection1), StudyMemberResponse.from(projection2));
     }

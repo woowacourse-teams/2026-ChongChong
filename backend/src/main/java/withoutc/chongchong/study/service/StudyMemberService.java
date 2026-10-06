@@ -54,7 +54,8 @@ public class StudyMemberService {
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
         studyRepository.getByIdOrThrow(studyId);
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        return StudyMembersResponse.from(studyMemberRepository.findAllSummariesByStudyId(studyId));
+        return StudyMembersResponse.from(MAX_STUDY_MEMBER_COUNT,
+                studyMemberRepository.findAllSummariesByStudyId(studyId));
     }
 
     @Transactional
