@@ -63,3 +63,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0044](0044-collect-http-metrics-with-adot-and-cloudwatch.md)                           | ADOT으로 HTTP 메트릭을 수집해 CloudWatch에 저장한다 |
 | [0045](0045-delete-notifications-with-resources.md)                                    | 자원 삭제 시 관련 인앱 알림을 삭제한다 |
 | [0046](0046-separate-user-name-edit-limit-from-social-initialization.md)                 | 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다 |
+| [0047](0047-sync-home-name-to-current-study-memberships.md)                               | 홈 이름 변경을 현재 참여 스터디의 멤버 이름에 동기화한다 |
