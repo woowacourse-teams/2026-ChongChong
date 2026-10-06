@@ -67,10 +67,7 @@ export async function createStudy(body: {
 
 export async function editStudy(studyId: number, body: { name: string; description: string }) {
   try {
-    const response = await api.patch(`/studies/${studyId}`, { json: body });
-    const data: unknown = await response.json();
-
-    return data;
+    await api.patch(`/studies/${studyId}`, { json: body });
   } catch (error) {
     throw handleError(error, {
       mappers: [ValidationError, ApiError],
