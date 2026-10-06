@@ -30,8 +30,10 @@ import withoutc.chongchong.study.service.StudyService;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
+import withoutc.chongchong.user.controller.dto.UserProfileNameUpdateRequest;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserService;
 
 class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
@@ -49,6 +51,9 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private StudyInviteTokenProvider studyInviteTokenProvider;
@@ -177,6 +182,33 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
                 .isEqualTo(StudyMemberErrorCode.ALREADY_JOINED_STUDY);
         assertThat(studyMemberRepository.countByStudyId(study.getId())).isEqualTo(2);
         assertThat(studyMemberRepository.countByUserId(user.getId())).isOne();
+    }
+
+    @Test
+    @DisplayName("홈 이름 수정과 스터디 생성이 동시에 일어나도 모든 멤버십에 최신 이름이 저장된다")
+    void syncsNameWhenUpdatingProfileAndCreatingStudyConcurrently() throws Exception {
+        User user = saveUser("기존이름");
+        Study existingStudy = studyRepository.saveAndFlush(Study.create("기존 스터디", null));
+        studyMemberRepository.saveAndFlush(StudyMember.create(
+                existingStudy, user, user.getName(), null, StudyMemberRole.LEADER
+        ));
+
+        List<ConcurrentResult<Boolean>> results = runConcurrently(
+                () -> {
+                    userService.updateMyProfileName(user.getId(), new UserProfileNameUpdateRequest("새이름"));
+                    return true;
+                },
+                () -> {
+                    studyService.createStudy(user.getId(), new StudyCreateRequest("새 스터디", null));
+                    return true;
+                }
+        );
+
+        assertThat(results).allMatch(ConcurrentResult::succeeded);
+        assertThat(userRepository.getByIdOrThrow(user.getId()).getName()).isEqualTo("새이름");
+        assertThat(studyMemberRepository.findAllByUserId(user.getId()))
+                .hasSize(2)
+                .allSatisfy(member -> assertThat(member.getName()).isEqualTo("새이름"));
     }
 
     private Study createStudyWithMembers(int memberCount) {

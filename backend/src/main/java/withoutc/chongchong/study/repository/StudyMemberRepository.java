@@ -36,6 +36,8 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
     @EntityGraph(attributePaths = "study")
     List<StudyMember> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
+    List<StudyMember> findAllByUserId(Long userId);
+
     boolean existsByUserIdAndRole(Long userId, StudyMemberRole role);
 
     int countByUserId(Long userId);

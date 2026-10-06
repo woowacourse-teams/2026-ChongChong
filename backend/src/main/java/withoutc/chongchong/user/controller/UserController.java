@@ -33,7 +33,8 @@ public class UserController {
     @PatchMapping("/me")
     public ResponseEntity<UserProfileResponse> updateMyProfileName(
             @AuthenticationPrincipal AuthenticatedUser user, @RequestBody UserProfileNameUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateMyProfileName(user.id(), request));
+        UserProfileResponse response = userService.updateMyProfileName(user.id(), request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/me")

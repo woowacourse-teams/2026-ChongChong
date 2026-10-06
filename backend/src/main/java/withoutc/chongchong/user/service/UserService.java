@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.service.NotificationService;
+import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.user.controller.dto.UserProfileNameUpdateRequest;
@@ -12,6 +13,8 @@ import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.exception.UserErrorCode;
 import withoutc.chongchong.user.exception.UserException;
 import withoutc.chongchong.user.repository.UserRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,8 +43,12 @@ public class UserService {
 
     @Transactional
     public UserProfileResponse updateMyProfileName(Long userId, UserProfileNameUpdateRequest request) {
-        User user = userRepository.getByIdOrThrow(userId);
-        user.updateName(request.name());
+        User user = userRepository.getByIdForUpdateOrThrow(userId);
+        String newName = request.name();
+        user.updateName(newName);
+        List<StudyMember> studyMembers = studyMemberRepository.findAllByUserId(userId);
+        studyMembers.forEach(studyMember -> studyMember.syncNameFromUser(newName));
+
         return UserProfileResponse.from(user);
     }
 }
