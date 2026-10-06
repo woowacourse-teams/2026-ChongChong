@@ -208,7 +208,7 @@ export const handlers = [
       },
     });
 
-    return HttpResponse.json({ studyId });
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.post(`${API_URL}${STUDY_URLS.join}`, async ({ request }) => {
