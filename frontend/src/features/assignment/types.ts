@@ -1,4 +1,5 @@
-export type SubmissionStatus = 'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED';
+export type SubmissionStatus =
+  'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED' | 'LATE_SUBMITTED' | 'MISSING';
 
 interface AssignmentSummaryBase {
   id: number;
@@ -53,9 +54,11 @@ export interface AssignmentDetail {
   submissionMethod: string;
   closeAt: string;
   submissionTarget: SubmissionTarget;
+  submissionVisibility: SubmissionVisibility;
 }
 
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
+export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
 export type AssignmentValue = Omit<AssignmentDetail, 'id'> & {
   remindAts?: string[] | null;
@@ -100,8 +103,21 @@ export interface SubmittedAssignment {
   link?: string;
 }
 
+export interface LateSubmittedAssignment {
+  submissionStatus: 'LATE_SUBMITTED';
+  submissionId: number;
+  createdAt: string;
+  content?: string;
+  link?: string;
+}
+
 export interface UnsubmittedAssignment {
   submissionStatus: 'NOT_SUBMITTED';
+  submissionId: number;
+}
+
+export interface MissingAssignment {
+  submissionStatus: 'MISSING';
   submissionId: number;
 }
 
@@ -110,4 +126,10 @@ export interface NotAssignedAssignment {
 }
 
 export type UserAssignmentSubmitDetail =
-  SubmittedAssignment | UnsubmittedAssignment | NotAssignedAssignment;
+  | SubmittedAssignment
+  | LateSubmittedAssignment
+  | UnsubmittedAssignment
+  | MissingAssignment
+  | NotAssignedAssignment;
+
+export type CompletedAssignment = SubmittedAssignment | LateSubmittedAssignment;

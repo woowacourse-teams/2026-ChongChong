@@ -23,7 +23,7 @@ import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -63,7 +63,7 @@ class AssignmentSubmissionRepositoryTest {
 
     @Test
     @DisplayName("여러 과제의 제출 상태를 StudyMember id로 한 번에 조회한다")
-    void findMySubmissionStatusesByAssignmentIdsAndMemberIdTest() {
+    void findAllByAssignmentIdInAndMemberIdTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember member = createMemberWithIdDifferentFromUserId(study);
@@ -81,12 +81,12 @@ class AssignmentSubmissionRepositoryTest {
         ));
 
         assertThat(member.getId()).isNotEqualTo(member.getUser().getId());
-        assertThat(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
+        assertThat(assignmentSubmissionRepository.findAllByAssignmentIdInAndMemberId(
                 List.of(submittedAssignment.getId(), unsubmittedAssignment.getId(), otherMemberAssignment.getId()),
                 member.getId()
         ))
-                .extracting(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::submissionStatus)
+                .extracting(submission -> submission.getAssignment().getId(),
+                        submission -> submission.submissionStatus(NOW))
                 .containsExactlyInAnyOrder(
                         tuple(submittedAssignment.getId(), SubmissionStatus.SUBMITTED),
                         tuple(unsubmittedAssignment.getId(), SubmissionStatus.NOT_SUBMITTED)
@@ -138,7 +138,7 @@ class AssignmentSubmissionRepositoryTest {
         );
         entityManager.clear();
 
-        AssignmentSubmission locked = assignmentSubmissionRepository.findByAssignmentIdAndMemberIdForUpdate(
+        AssignmentSubmission locked = assignmentSubmissionRepository.findWithLockByAssignmentIdAndMemberId(
                 assignment.getId(), member.getId()
         ).orElseThrow();
 
@@ -212,6 +212,7 @@ class AssignmentSubmissionRepositoryTest {
                 "과제 내용",
                 "GitHub PR",
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));

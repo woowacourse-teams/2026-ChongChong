@@ -1,6 +1,6 @@
 import { useSuspenseQueries } from '@tanstack/react-query';
 import DetailTabs from '../../../shared/widgets/DetailTabs';
-import MemberStatusList from '../../../shared/widgets/MemberStatusList';
+import IncompleteMemberList from '../../../shared/widgets/IncompleteMemberList';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import noticeQueries from '../queries';
@@ -30,7 +30,7 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
           <>
             <NoticeReadStatus status={readStatus} />
             <ReadMemberList members={readStatus.readMembers} />
-            <MemberStatusList
+            <IncompleteMemberList
               title={`미확인 ${readStatus.unreadCount}명`}
               members={readStatus.unreadMembers}
             />

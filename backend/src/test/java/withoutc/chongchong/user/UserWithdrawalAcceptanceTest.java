@@ -17,7 +17,9 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.entity.AuthSession;
@@ -174,6 +176,7 @@ public class UserWithdrawalAcceptanceTest {
     @Test
     @DisplayName("일반 멤버 탈퇴 시 활동 데이터만 삭제하고 스터디와 다른 멤버의 데이터는 보존한다")
     void withdrawMemberDeletesActivityOnly() {
+        userRepository.saveAndFlush(User.create("ID 간격용 사용자", null));
         User leaderUser = userRepository.saveAndFlush(User.create("리더", null));
         User withdrawingUser = userRepository.saveAndFlush(User.create("탈퇴할 멤버", null));
         User remainingUser = userRepository.saveAndFlush(User.create("남는 멤버", null));
@@ -194,9 +197,37 @@ public class UserWithdrawalAcceptanceTest {
 
         LocalDateTime now = LocalDateTime.of(2026, 9, 20, 12, 0);
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크",
-                SubmissionTarget.MEMBERS_ONLY, now.plusDays(1), now);
+                SubmissionTarget.MEMBERS_ONLY, SubmissionVisibility.LEADER_ONLY, now.plusDays(1), now);
         assignment.initializeSubmissions(List.of(withdrawingMember, remainingMember));
         assignmentRepository.saveAndFlush(assignment);
+
+        AssignmentSubmission withdrawingSubmission = assignmentSubmissionRepository
+                .findByAssignmentIdAndMemberId(assignment.getId(), withdrawingMember.getId())
+                .orElseThrow();
+        AssignmentSubmission remainingSubmission = assignmentSubmissionRepository
+                .findByAssignmentIdAndMemberId(assignment.getId(), remainingMember.getId())
+                .orElseThrow();
+        Notification withdrawingSubmissionNotification = notificationRepository.saveAndFlush(Notification.create(
+                leaderUser,
+                "[자바 스터디] 새 제출물",
+                "제출할 멤버 스터디원이 과제를 제출했어요",
+                NotificationType.NEW,
+                withdrawingSubmission.getId(),
+                ResourceType.ASSIGNMENT_SUBMISSION,
+                "/studies/%d/assignments/%d/submissions/%d".formatted(
+                        study.getId(), assignment.getId(), withdrawingSubmission.getId())
+        ));
+        Notification remainingSubmissionNotification = notificationRepository.saveAndFlush(Notification.create(
+                leaderUser,
+                "[자바 스터디] 새 제출물",
+                "남는 멤버 스터디원이 과제를 제출했어요",
+                NotificationType.NEW,
+                remainingSubmission.getId(),
+                ResourceType.ASSIGNMENT_SUBMISSION,
+                "/studies/%d/assignments/%d/submissions/%d".formatted(
+                        study.getId(), assignment.getId(), remainingSubmission.getId())
+        ));
+        assertThat(withdrawingUser.getId()).isNotEqualTo(withdrawingMember.getId());
 
         Notification withdrawingNotification = notificationRepository.saveAndFlush(Notification.create(
                 withdrawingUser,
@@ -253,6 +284,8 @@ public class UserWithdrawalAcceptanceTest {
                 .isPresent();
         assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(
                 assignment.getId(), remainingMember.getId())).isPresent();
+        assertThat(notificationRepository.existsById(withdrawingSubmissionNotification.getId())).isFalse();
+        assertThat(notificationRepository.existsById(remainingSubmissionNotification.getId())).isTrue();
         assertThat(notificationRepository.existsById(remainingNotification.getId())).isTrue();
         assertThat(notificationDeliveryRepository.existsById(remainingDelivery.getId())).isTrue();
     }

@@ -2,9 +2,10 @@ delete:
   tags: [Web Push]
   operationId: deactivateWebPushSubscription
   x-frontend:
-    description: |
-      로그아웃 등 현재 브라우저의 알림 수신을 중단할 때 등록 응답으로 받은 subscriptionId를 사용한다.
-      성공은 본문 없는 204이다.
+    status: integrated
+    description: "푸시 해제·로그아웃에서 저장된 subscriptionId로 비활성화한다."
+    sources:
+      - frontend/src/features/notification/push.ts
   x-backend:
     status: done
     owner: wontop02

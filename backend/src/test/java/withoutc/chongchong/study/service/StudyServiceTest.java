@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,6 +29,7 @@ import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSumm
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
@@ -71,6 +74,9 @@ class StudyServiceTest {
 
     @Mock
     private EntityManager entityManager;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private StudyService studyService;
@@ -259,7 +265,7 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더가 스터디를 삭제하면 스터디 삭제를 저장소에 위임한다")
+    @DisplayName("스터디 리더가 삭제하면 관련 알림을 지운 뒤 스터디를 삭제한다")
     void deleteStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
@@ -275,7 +281,9 @@ class StudyServiceTest {
         studyService.deleteStudy(userId, studyId);
 
         verify(entityManager).clear();
-        verify(studyRepository).delete(study);
+        InOrder inOrder = inOrder(notificationService, studyRepository);
+        inOrder.verify(notificationService).deleteNotificationsForStudy(studyId);
+        inOrder.verify(studyRepository).delete(study);
     }
 
     @Test
@@ -291,7 +299,7 @@ class StudyServiceTest {
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
 
-        verifyNoInteractions(studyMemberRepository, assignmentRepository, noticeRepository);
+        verifyNoInteractions(studyMemberRepository, assignmentRepository, noticeRepository, notificationService);
     }
 
     @Test
@@ -309,7 +317,7 @@ class StudyServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
-        verifyNoInteractions(assignmentRepository, noticeRepository);
+        verifyNoInteractions(assignmentRepository, noticeRepository, notificationService);
         verify(studyRepository, never()).delete(any(Study.class));
     }
 
@@ -332,12 +340,12 @@ class StudyServiceTest {
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.NOT_STUDY_LEADER);
 
-        verifyNoInteractions(assignmentRepository, noticeRepository);
+        verifyNoInteractions(assignmentRepository, noticeRepository, notificationService);
         verify(studyRepository, never()).delete(any(Study.class));
     }
 
     @Test
-    @DisplayName("스터디 정보를 조회하면 스터디명과 현재 사용자의 역할·이름을 반환한다")
+    @DisplayName("스터디 정보를 조회하면 스터디명·설명과 현재 사용자의 역할·이름을 반환한다")
     void getStudyInfoTest() {
         Long userId = 1L;
         Long studyId = 1L;
@@ -352,6 +360,7 @@ class StudyServiceTest {
         StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
 
         assertThat(response.studyName()).isEqualTo("자바 스터디");
+        assertThat(response.description()).isEqualTo("설명");
         assertThat(response.role()).isEqualTo(StudyMemberRole.MEMBER);
         assertThat(response.userName()).isEqualTo("스터디 내 이름");
     }

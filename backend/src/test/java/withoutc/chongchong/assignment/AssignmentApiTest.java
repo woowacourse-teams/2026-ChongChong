@@ -28,11 +28,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmitRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -84,6 +87,9 @@ class AssignmentApiTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @LocalServerPort
     private int port;
 
@@ -97,6 +103,13 @@ class AssignmentApiTest {
     private Assignment assignment;
     private LocalDateTime closeAt;
     private LocalDateTime remindAt;
+
+    private void assertSubmissionStatus(Long submissionId, SubmissionStatus expected) {
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
+            assertThat(submission.submissionStatus(LocalDateTime.now(CLOCK))).isEqualTo(expected);
+        });
+    }
 
     @BeforeEach
     void setUp() {
@@ -190,6 +203,7 @@ class AssignmentApiTest {
                           "content": "새 과제 내용",
                           "submissionMethod": "텍스트 제출",
                           "submissionTarget": "MEMBERS_ONLY",
+                          "submissionVisibility": "LEADER_ONLY",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
@@ -368,6 +382,7 @@ class AssignmentApiTest {
                           "content": "수정 과제 내용",
                           "submissionMethod": "텍스트 제출",
                           "submissionTarget": "MEMBERS_ONLY",
+                          "submissionVisibility": "LEADER_ONLY",
                           "closeAt": "%s",
                           "remindAts": ["%s"]
                         }
@@ -408,8 +423,21 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("리더가 과제를 삭제하면 과제 애그리거트가 삭제되고 더는 조회할 수 없다")
+    @DisplayName("리더가 과제를 삭제하면 과제와 제출물 알림을 지우고 다른 과제 알림은 유지한다")
     void deleteAssignmentTest() {
+        Assignment otherAssignment = createAssignment("다른 과제", "내용", "링크 제출", closeAt, null);
+        Long retainedSubmissionId = submitAssignment(
+                memberUser, otherAssignment, "다른 과제 제출", "https://example.com/other"
+        );
+        submitAssignment(memberUser, assignment, "제출 내용", "https://example.com/first");
+        submitAssignment(secondMemberUser, assignment, "제출 내용", "https://example.com/second");
+        notificationRepository.saveAndFlush(Notification.create(
+                memberUser, "과제 알림", "내용", NotificationType.NEW,
+                assignment.getId(), ResourceType.ASSIGNMENT,
+                "/studies/%d/assignments/%d".formatted(study.getId(), assignment.getId())
+        ));
+        assertThat(notificationRepository.count()).isEqualTo(4);
+
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .when()
@@ -420,6 +448,10 @@ class AssignmentApiTest {
         assertThat(countRows("assignments", assignment.getId())).isZero();
         assertThat(countRows("assignment_submissions", assignment.getId())).isZero();
         assertThat(countRows("assignment_reminders", assignment.getId())).isZero();
+        assertThat(notificationRepository.findAll()).singleElement().satisfies(notification -> {
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.ASSIGNMENT_SUBMISSION);
+            assertThat(notification.getResourceId()).isEqualTo(retainedSubmissionId);
+        });
 
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
@@ -462,6 +494,7 @@ class AssignmentApiTest {
                         "다른 과제 내용",
                         "링크 제출",
                         SubmissionTarget.MEMBERS_ONLY,
+                        SubmissionVisibility.LEADER_ONLY,
                         closeAt,
                         LocalDateTime.now(CLOCK)
                 )
@@ -502,6 +535,7 @@ class AssignmentApiTest {
                           "content": "과제 내용",
                           "submissionMethod": "링크 제출",
                           "submissionTarget": "MEMBERS_ONLY",
+                          "submissionVisibility": "LEADER_ONLY",
                           "closeAt": "%s",
                           "remindAts": []
                         }
@@ -542,7 +576,7 @@ class AssignmentApiTest {
         );
 
         AssignmentSubmission submission = assignmentSubmissionRepository.findById(submissionId).orElseThrow();
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertSubmissionStatus(submission.getId(), SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://submission.example.com");
 
@@ -653,6 +687,7 @@ class AssignmentApiTest {
                 "다른 과제 내용",
                 "링크 제출",
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 closeAt,
                 LocalDateTime.now(CLOCK)
         );
@@ -673,7 +708,7 @@ class AssignmentApiTest {
         AssignmentSubmission otherSubmission = assignmentSubmissionRepository
                 .findByAssignmentIdAndMemberId(otherAssignment.getId(), otherMember.getId())
                 .orElseThrow();
-        assertThat(otherSubmission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertSubmissionStatus(otherSubmission.getId(), SubmissionStatus.NOT_SUBMITTED);
         assertThat(otherSubmission.getContent()).isNull();
     }
 
@@ -814,6 +849,7 @@ class AssignmentApiTest {
                 .body("submissions", hasSize(1))
                 .body("submissions[0].id", equalTo(submissionId.intValue()))
                 .body("submissions[0].name", equalTo(member.getName()))
+                .body("submissions[0].submissionStatus", equalTo("SUBMITTED"))
                 .body("submissions[0].createdAt",
                         equalTo(savedSubmission.getSubmittedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
     }
@@ -851,7 +887,7 @@ class AssignmentApiTest {
                 .port(port)
                 .contentType(ContentType.JSON)
                 .body(Map.of("title", "대상 선택 과제", "content", "내용", "submissionMethod", "링크 제출",
-                        "submissionTarget", target.name(),
+                        "submissionTarget", target.name(), "submissionVisibility", "LEADER_ONLY",
                         "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .post("/studies/{studyId}/assignments", study.getId())
@@ -883,7 +919,7 @@ class AssignmentApiTest {
         assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
         assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(submission -> {
             assertThat(submission.getContent()).isEqualTo("리더의 제출 내용");
-            assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+            assertSubmissionStatus(submission.getId(), SubmissionStatus.SUBMITTED);
         });
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
@@ -906,6 +942,162 @@ class AssignmentApiTest {
                         WHERE assignment_id = ? AND member_id = ? AND id <> ?
                           AND content IS NULL AND link IS NULL AND submitted_at IS NULL
                         """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(SubmissionVisibility.class)
+    @DisplayName("생성한 공개 범위를 저장하고 상세 응답에 반환한다")
+    void createWithSubmissionVisibilityTest(SubmissionVisibility visibility) {
+        Long id = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "공개 설정 과제", "content", "내용", "submissionMethod", "링크",
+                        "submissionTarget", "MEMBERS_ONLY", "submissionVisibility", visibility.name(),
+                        "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+
+        assertThat(assignmentRepository.findById(id)).hasValueSatisfying(saved ->
+                assertThat(saved.getSubmissionVisibility()).isEqualTo(visibility));
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), id)
+                .then().statusCode(200).body("submissionVisibility", equalTo(visibility.name()));
+    }
+
+    @Test
+    @DisplayName("생성 요청에 공개 범위가 없으면 저장하지 않는다")
+    void rejectCreateWithoutVisibilityTest() {
+        long count = assignmentRepository.count();
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "과제", "content", "내용", "submissionMethod", "링크",
+                        "submissionTarget", "MEMBERS_ONLY",
+                        "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(400).body("errors.field", hasItem("submissionVisibility"));
+        assertThat(assignmentRepository.count()).isEqualTo(count);
+    }
+
+    @Test
+    @DisplayName("공개 전환은 미제출 멤버의 열람을 허용하고 비공개 전환은 다시 차단한다")
+    void changeVisibilityUpdatesReadPermissionsTest() {
+        Long id = submitAssignment(memberUser, assignment, "공유할 내용", null);
+        assertSubmissionReadStatus(secondMemberUser, id, 403);
+        assertSubmissionListStatus(secondMemberUser, 403);
+
+        updateSubmissionVisibility(SubmissionVisibility.ALL_STUDY_MEMBERS);
+        assertSubmissionReadStatus(secondMemberUser, id, 200);
+        testAuthRequest.givenAuthenticatedUser(secondMemberUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}/submissions",
+                        study.getId(), assignment.getId())
+                .then().statusCode(200).body("submissions", hasSize(1))
+                .body("submissions[0].id", equalTo(id.intValue()));
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("title", "제목만 변경"))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertSubmissionReadStatus(secondMemberUser, id, 200);
+        assertThat(assignmentRepository.findById(assignment.getId())).hasValueSatisfying(saved ->
+                assertThat(saved.getSubmissionVisibility()).isEqualTo(SubmissionVisibility.ALL_STUDY_MEMBERS));
+
+        updateSubmissionVisibility(SubmissionVisibility.LEADER_ONLY);
+        assertSubmissionReadStatus(secondMemberUser, id, 403);
+        assertSubmissionListStatus(secondMemberUser, 403);
+        assertSubmissionReadStatus(memberUser, id, 200);
+        assertSubmissionReadStatus(leaderUser, id, 200);
+    }
+
+    @Test
+    @DisplayName("공개 과제라도 수정 API로 저장한 미제출 내용은 리더와 본인에게만 노출한다")
+    void hideUnsubmittedContentFromOtherMembersTest() {
+        updateSubmissionVisibility(SubmissionVisibility.ALL_STUDY_MEMBERS);
+        Long id = assignmentSubmissionRepository
+                .findByAssignmentIdAndMemberId(assignment.getId(), member.getId()).orElseThrow().getId();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(new AssignmentSubmitRequest("미제출 내용", null))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}",
+                        study.getId(), assignment.getId(), id)
+                .then().statusCode(204);
+
+        assertThat(assignmentSubmissionRepository.findById(id)).hasValueSatisfying(saved -> {
+            assertThat(saved.getSubmittedAt()).isNull();
+            assertThat(saved.getContent()).isEqualTo("미제출 내용");
+        });
+        assertSubmissionReadStatus(secondMemberUser, id, 403);
+        assertSubmissionReadStatus(memberUser, id, 200);
+        assertSubmissionReadStatus(leaderUser, id, 200);
+        testAuthRequest.givenAuthenticatedUser(secondMemberUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}/submissions",
+                        study.getId(), assignment.getId())
+                .then().statusCode(200).body("submissions", hasSize(0));
+    }
+
+    @Test
+    @DisplayName("공개 과제라도 리더와 다른 멤버는 타인의 제출물을 수정할 수 없다")
+    void publicSubmissionDoesNotGrantWritePermissionTest() {
+        updateSubmissionVisibility(SubmissionVisibility.ALL_STUDY_MEMBERS);
+        Long id = submitAssignment(memberUser, assignment, "원본", null);
+        for (User actor : List.of(leaderUser, secondMemberUser)) {
+            testAuthRequest.givenAuthenticatedUser(actor.getId()).port(port)
+                    .contentType(ContentType.JSON).body(new AssignmentSubmitRequest("변조", null))
+                    .when().patch("/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}",
+                            study.getId(), assignment.getId(), id)
+                    .then().statusCode(403).body("code", equalTo("ACCESS_DENIED"));
+        }
+        assertThat(assignmentSubmissionRepository.findById(id)).hasValueSatisfying(saved ->
+                assertThat(saved.getContent()).isEqualTo("원본"));
+    }
+
+    @Test
+    @DisplayName("공개 과제의 제출물도 비회원은 조회할 수 없고 제출 행이 없는 신규 멤버는 조회할 수 있다")
+    void publicSubmissionRequiresStudyMembershipTest() {
+        updateSubmissionVisibility(SubmissionVisibility.ALL_STUDY_MEMBERS);
+        Long id = submitAssignment(memberUser, assignment, "공유 내용", null);
+        User newcomer = userRepository.save(User.create("신규 사용자", null));
+        assertSubmissionReadStatus(newcomer, id, 403);
+        assertSubmissionListStatus(newcomer, 403);
+
+        StudyMember newMember = studyMemberRepository.save(
+                StudyMember.create(study, newcomer, "신규 멤버", null, StudyMemberRole.MEMBER));
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(assignment.getId(), newMember.getId()))
+                .isEmpty();
+        assertSubmissionReadStatus(newcomer, id, 200);
+        assertSubmissionListStatus(newcomer, 200);
+    }
+
+    @Test
+    @DisplayName("일반 멤버는 과제의 공개 범위를 변경할 수 없다")
+    void rejectVisibilityUpdateByMemberTest() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submissionVisibility", "ALL_STUDY_MEMBERS"))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(403).body("code", equalTo("ACCESS_DENIED"));
+        assertThat(assignmentRepository.findById(assignment.getId())).hasValueSatisfying(saved ->
+                assertThat(saved.getSubmissionVisibility()).isEqualTo(SubmissionVisibility.LEADER_ONLY));
+    }
+
+    private void updateSubmissionVisibility(SubmissionVisibility visibility) {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submissionVisibility", visibility.name()))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(200).body("submissionVisibility", equalTo(visibility.name()));
+    }
+
+    private void assertSubmissionReadStatus(User actor, Long submissionId, int status) {
+        testAuthRequest.givenAuthenticatedUser(actor.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}",
+                        study.getId(), assignment.getId(), submissionId)
+                .then().statusCode(status);
+    }
+
+    private void assertSubmissionListStatus(User actor, int status) {
+        testAuthRequest.givenAuthenticatedUser(actor.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}/submissions",
+                        study.getId(), assignment.getId())
+                .then().statusCode(status);
     }
 
     private void updateSubmissionTarget(SubmissionTarget target) {
@@ -940,6 +1132,7 @@ class AssignmentApiTest {
                 content,
                 submissionMethod,
                 SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 assignmentCloseAt,
                 now
         );

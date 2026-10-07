@@ -11,10 +11,20 @@ interface LabelProps extends React.ComponentProps<'label'> {
   isRequired?: boolean;
 }
 
+interface GroupLabelProps extends ComponentProps<'span'> {
+  isRequired?: boolean;
+}
+
 interface CurrentLengthProps {
   currentLength: number;
   maxLength: number;
 }
+
+const labelStyle = {
+  ...typography.sectionLabel,
+  color: tokens.text.primary,
+  marginBottom: tokens.spacing[1],
+} satisfies CSSProperties;
 
 const inputSectionStyle = {
   display: 'flex',
@@ -32,15 +42,7 @@ export function Field({ children, ...props }: ComponentProps<'div'>) {
 
 Field.Label = function Label({ htmlFor, children, isRequired = false, ...props }: LabelProps) {
   return (
-    <label
-      htmlFor={htmlFor}
-      css={{
-        ...typography.sectionLabel,
-        color: tokens.text.primary,
-        marginBottom: tokens.spacing[1],
-      }}
-      {...props}
-    >
+    <label htmlFor={htmlFor} css={labelStyle} {...props}>
       {children}
       {isRequired && (
         <span aria-hidden="true" css={{ color: tokens.text.brand }}>
@@ -49,6 +51,24 @@ Field.Label = function Label({ htmlFor, children, isRequired = false, ...props }
         </span>
       )}
     </label>
+  );
+};
+
+Field.GroupLabel = function GroupLabel({
+  children,
+  isRequired = false,
+  ...props
+}: GroupLabelProps) {
+  return (
+    <span css={labelStyle} {...props}>
+      {children}
+      {isRequired && (
+        <span aria-hidden="true" css={{ color: tokens.text.brand }}>
+          {' '}
+          *
+        </span>
+      )}
+    </span>
   );
 };
 

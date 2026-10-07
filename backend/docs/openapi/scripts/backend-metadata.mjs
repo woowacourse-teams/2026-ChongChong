@@ -40,18 +40,22 @@ export function collectOperations(spec) {
         fail('작업을 시작한 API에는 owner가 필요합니다.');
       }
       if (typeof description !== 'string') fail('description은 문자열이어야 합니다.');
-      const frontend = operation['x-frontend'];
-      if (frontend !== undefined && (
-        !frontend || typeof frontend !== 'object' || Array.isArray(frontend)
-        || (frontend.issue !== undefined && (!Number.isInteger(frontend.issue) || frontend.issue <= 0))
-        || typeof frontend.description !== 'string' || !frontend.description.trim()
-      )) fail('x-frontend에는 반영 사항 description이 필요하며 issue는 생략하거나 양의 정수여야 합니다.');
+      const frontend = operation['x-frontend'] ?? null;
+      if (frontend !== null) {
+        if (typeof frontend !== 'object' || Array.isArray(frontend)
+          || Object.keys(frontend).some((key) => !['status', 'description', 'sources'].includes(key))
+          || !['integrated', 'needs-update'].includes(frontend.status)
+          || typeof frontend.description !== 'string' || !frontend.description.trim()
+          || !Array.isArray(frontend.sources) || frontend.sources.length === 0
+          || frontend.sources.some((source) => typeof source !== 'string' || !source.startsWith('frontend/src/'))) {
+          fail('x-frontend에는 status(integrated, needs-update), description, sources(frontend/src/ 경로)가 필요합니다.');
+        }
+      }
       operations.push({
         id, method: method.toUpperCase(), path,
         summary: operation.summary ?? id,
         tags: operation.tags ?? [],
-        status, owner, description,
-        ...(frontend === undefined ? {} : { frontend }),
+        status, owner, description, frontend,
       });
     }
   }

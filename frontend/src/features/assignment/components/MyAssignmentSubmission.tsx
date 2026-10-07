@@ -4,6 +4,7 @@ import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import { createAssignmentSubmission } from '../api';
 import assignmentQueries from '../queries';
+import { isCompletedAssignment } from '../submissionStatus';
 import type { AssignmentSubmissionValue, UserAssignmentSubmitDetail } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import CompletedAssignmentSubmission from './CompletedAssignmentSubmission';
@@ -39,7 +40,7 @@ export default function MyAssignmentSubmission({ studyId, assignmentId, submissi
 
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
-  return submission.submissionStatus === 'SUBMITTED' ? (
+  return isCompletedAssignment(submission) ? (
     <CompletedAssignmentSubmission
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
       assignmentId={assignmentId}

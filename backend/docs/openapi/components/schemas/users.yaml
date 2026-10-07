@@ -1,3 +1,14 @@
+UserProfileNameUpdateRequest:
+  type: object
+  additionalProperties: false
+  required: [name]
+  properties:
+    name:
+      description: 변경할 홈 프로필 이름. 공백만 있는 값은 허용하지 않는다.
+      type: string
+      minLength: 1
+      maxLength: 8
+      example: 바니
 UserProfileResponse:
   type: object
   additionalProperties: false

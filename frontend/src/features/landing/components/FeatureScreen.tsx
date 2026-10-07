@@ -22,7 +22,7 @@ import { tokens, typography } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
-import { InviteLinkBox } from '../../member/components/InviteStudyLinkBox';
+import { InviteLinkBox } from '../../member/components/InviteStudyLinkSection';
 import MemberRow from '../../member/components/MemberRow';
 import {
   MemberActiveAssignmentCard,
@@ -40,6 +40,7 @@ const assignment = {
   submissionMethod: '독서 노트 링크를 제출해주세요',
   closeAt: '2026-09-09T20:00:00',
   submissionTarget: 'MEMBERS_AND_LEADER' as const,
+  submissionVisibility: 'LEADER_ONLY' as const,
 };
 const noticeTitle = '이번 주 모임 장소 안내';
 const formStyle = {
@@ -184,10 +185,17 @@ function InviteScreen() {
               </List.Item>
             ))}
           </List>
-          <InviteLinkBox
-            title="링크를 통해 새로운 스터디원을 초대해요"
-            inviteLink="https://chongchong.app/studies/join?token=book-study"
-          />
+          <h2 css={typography.subtitle}>초대 링크</h2>
+          <InviteLinkBox inviteLink="https://chongchong.app/studies/join?token=book-study" />
+          <p
+            css={{
+              ...typography.paragraph,
+              margin: `${tokens.spacing[2]} 0`,
+              color: tokens.text.muted,
+            }}
+          >
+            링크를 통해 새로운 스터디원을 초대해요
+          </p>
         </section>
         <Button variant="criticalSolid" size="large" css={{ margin: tokens.spacing[5] + ' 0' }}>
           스터디 탈퇴하기

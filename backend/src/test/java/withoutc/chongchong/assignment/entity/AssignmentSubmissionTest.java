@@ -23,7 +23,7 @@ class AssignmentSubmissionTest {
 
         submission.submit(null, null, NOW);
 
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertThat(submission.submissionStatus(NOW)).isEqualTo(SubmissionStatus.SUBMITTED);
         assertThat(submission.getContent()).isNull();
         assertThat(submission.getLink()).isNull();
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
@@ -38,7 +38,7 @@ class AssignmentSubmissionTest {
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertThat(submission.submissionStatus(NOW)).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(submission.getContent()).isNull();
     }
 
@@ -51,7 +51,7 @@ class AssignmentSubmissionTest {
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_LINK);
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertThat(submission.submissionStatus(NOW)).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(submission.getLink()).isNull();
     }
 
@@ -87,7 +87,7 @@ class AssignmentSubmissionTest {
     void isNotSubmittedWhenSubmittedAtIsNullTest() {
         AssignmentSubmission submission = createSubmission();
 
-        assertThat(submission.submissionStatus()).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertThat(submission.submissionStatus(NOW)).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
         assertThat(submission.getSubmittedAt()).isNull();
     }
 
@@ -123,7 +123,45 @@ class AssignmentSubmissionTest {
         assertThat(submission.isOwnedBy(actor)).isTrue();
     }
 
+    @Test
+    @DisplayName("미제출 과제는 마감 시각을 지난 뒤 미제출 확정 상태가 된다")
+    void missingAfterDeadlineTest() {
+        AssignmentSubmission submission = createSubmission();
+        LocalDateTime closeAt = NOW.plusHours(1);
+
+        assertThat(submission.submissionStatus(closeAt)).isEqualTo(SubmissionStatus.NOT_SUBMITTED);
+        assertThat(submission.submissionStatus(closeAt.plusNanos(1))).isEqualTo(SubmissionStatus.MISSING);
+        assertThat(submission.isSubmit(closeAt.plusNanos(1))).isFalse();
+    }
+
+    @Test
+    @DisplayName("마감 시각에 제출하면 이후 조회에도 정상 제출로 유지된다")
+    void submittedAtDeadlineTest() {
+        AssignmentSubmission submission = createSubmission();
+        LocalDateTime closeAt = NOW.plusHours(1);
+        submission.submit(null, null, closeAt);
+
+        assertThat(submission.submissionStatus(closeAt.plusDays(1))).isEqualTo(SubmissionStatus.SUBMITTED);
+        assertThat(submission.isSubmit(closeAt.plusDays(1))).isTrue();
+    }
+
+    @Test
+    @DisplayName("마감 후 제출은 지각 제출이며 재제출해도 최초 제출 시각을 유지한다")
+    void lateSubmissionKeepsFirstSubmittedAtTest() {
+        AssignmentSubmission submission = createSubmission();
+        LocalDateTime submittedAt = NOW.plusHours(2);
+        submission.submit("최초 내용", null, submittedAt);
+        submission.submit("수정 내용", null, submittedAt.plusHours(1));
+
+        assertThat(submission.submissionStatus(submittedAt.plusHours(1))).isEqualTo(SubmissionStatus.LATE_SUBMITTED);
+        assertThat(submission.isSubmit(submittedAt.plusHours(1))).isTrue();
+        assertThat(submission.getSubmittedAt()).isEqualTo(submittedAt);
+        assertThat(submission.getContent()).isEqualTo("수정 내용");
+    }
+
     private AssignmentSubmission createSubmission() {
-        return AssignmentSubmission.create(mock(StudyMember.class), mock(Assignment.class));
+        Assignment assignment = mock(Assignment.class);
+        when(assignment.getCloseAt()).thenReturn(NOW.plusHours(1));
+        return AssignmentSubmission.create(mock(StudyMember.class), assignment);
     }
 }

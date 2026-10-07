@@ -101,6 +101,15 @@ describe('멤버 목록 페이지 테스트', () => {
       mockStudyInviteLink();
     });
 
+    test.each([leaderUserName, memberUserName])(
+      '현재 인원수와 최대 인원수가 표시된다',
+      async (userName) => {
+        login(userName);
+        setupMemberListPage();
+        expect(await screen.findByText('2 / 50')).toBeVisible();
+      },
+    );
+
     test.each([leaderUserName, memberUserName])('초대링크가 표시된다', async (userName) => {
       login(userName);
       setupMemberListPage();
@@ -157,7 +166,6 @@ describe('멤버 목록 페이지 테스트', () => {
         expect(await screen.findByText(message)).toBeVisible();
         expect(screen.getByRole('heading', { name: '스터디 멤버' })).toBeVisible();
         expect(screen.getByText(INVITE_LINK)).toBeVisible();
-        expect(screen.getByRole('button', { name: '스터디 삭제하기' })).toBeVisible();
         expect(screen.queryAllByTestId('member-row')).toHaveLength(0);
       },
     );
@@ -196,7 +204,6 @@ describe('멤버 목록 페이지 테스트', () => {
 
       expect(screen.getByRole('heading', { name: '스터디 멤버' })).toBeVisible();
       expect(await findMemberRow(leaderUserName)).toBeVisible();
-      expect(screen.getByRole('button', { name: '스터디 삭제하기' })).toBeVisible();
     });
 
     test('스터디 리드 행에는 방출하기 버튼이 존재하지 않는다', async () => {
@@ -215,17 +222,6 @@ describe('멤버 목록 페이지 테스트', () => {
 
       expect(screen.queryByText('피트')).not.toBeInTheDocument();
     });
-
-    // E2E 테스트로 전환합니다.
-    // test('스터디를 삭제하면 스터디 리스트 페이지로 이동한다', async () => {
-    //   const user = userEvent.setup();
-    //   renderMemberListContent(<MemberListContent.Leader />);
-
-    //   await user.click(await screen.findByRole('button', { name: '스터디 삭제하기' }));
-    //   await user.click(screen.getByRole('button', { name: '삭제' }));
-
-    //   expect(await screen.findByText('내 스터디')).toBeInTheDocument();
-    // });
 
     test.each([
       {
@@ -266,43 +262,6 @@ describe('멤버 목록 페이지 테스트', () => {
       expect(dialog).not.toBeVisible();
       expect(within(memberRow).getByText(memberUserName)).toBeInTheDocument();
     });
-
-    test.each([
-      {
-        title: '스터디 삭제 중 네트워크 오류가 발생하면',
-        handler: http.delete(`${API_URL}${STUDY_URLS.remove}`, () => HttpResponse.error()),
-        message: '스터디를 삭제하는데 실패했습니다.',
-      },
-      {
-        title: '존재하지 않은 스터디 삭제를 요청하면',
-        handler: http.delete(`${API_URL}${STUDY_URLS.remove}`, () =>
-          HttpResponse.json(
-            {
-              code: 'STUDY_NOT_FOUND',
-              message: '존재하지 않는 스터디입니다.',
-            },
-            { status: 404 },
-          ),
-        ),
-        message: '존재하지 않는 스터디입니다.',
-      },
-    ])(
-      '$title 에러 메시지를 토스트로 표시하고 다이얼로그를 닫는다',
-      async ({ handler, message }) => {
-        server.use(handler);
-        const { user } = setupMemberListPage();
-
-        await user.click(await screen.findByRole('button', { name: '스터디 삭제하기' }));
-        const dialog = screen.getByRole('alertdialog', { name: '스터디를 삭제할까요?' });
-        expect(dialog).toBeVisible();
-        await user.click(within(dialog).getByRole('button', { name: '삭제' }));
-
-        const toast = await screen.findByRole('status', {}, { timeout: 3000 });
-        expect(toast).toHaveTextContent(message);
-        expect(toast).toBeVisible();
-        expect(dialog).not.toBeVisible();
-      },
-    );
   });
 
   describe('스터디 원', () => {
@@ -339,7 +298,6 @@ describe('멤버 목록 페이지 테스트', () => {
         expect(await screen.findByText(message, {}, { timeout: 3000 })).toBeVisible();
         expect(screen.getByRole('heading', { name: '스터디 멤버' })).toBeVisible();
         expect(screen.getByText(INVITE_LINK)).toBeVisible();
-        expect(screen.getByRole('button', { name: '스터디 탈퇴하기' })).toBeVisible();
         expect(screen.queryAllByTestId('member-row')).toHaveLength(0);
       },
     );
@@ -378,7 +336,6 @@ describe('멤버 목록 페이지 테스트', () => {
 
       expect(screen.getByRole('heading', { name: '스터디 멤버' })).toBeVisible();
       expect(await findMemberRow(leaderUserName)).toBeVisible();
-      expect(screen.getByRole('button', { name: '스터디 탈퇴하기' })).toBeVisible();
     });
 
     test('스터디원에게는 방출하기 버튼이 표시 되지 않는다', async () => {
@@ -397,77 +354,6 @@ describe('멤버 목록 페이지 테스트', () => {
       const memberRow = await findMemberRow(memberUserName);
       expect(within(memberRow).queryByAltText('스터디 리드')).not.toBeInTheDocument();
     });
-
-    test('스터디 탈퇴하기 버튼을 누르면 확인 다이얼로그가 렌더링 된다', async () => {
-      const { user } = setupMemberListPage();
-      const leaveButton = await screen.findByRole('button', {
-        name: '스터디 탈퇴하기',
-      });
-      await user.click(leaveButton);
-      const dialog = screen.getByRole('alertdialog', { name: '스터디를 탈퇴하시겠습니까?' });
-      expect(dialog).toBeVisible();
-    });
-
-    // E2E로 전환합니다.
-    // test('스터디를 탈퇴하면 스터디 리스트 페이지로 이동한다.', async () => {
-    //   const user = userEvent.setup();
-    //   renderMemberListContent(<MemberListContent.Member />);
-
-    //   const leaveButton = await screen.findByRole('button', {
-    //     name: '스터디 탈퇴하기',
-    //   });
-    //   await user.click(leaveButton);
-
-    //   const button = screen.getByRole('button', { name: '탈퇴' });
-    //   await user.click(button);
-
-    //   expect(await screen.findByText('내 스터디')).toBeInTheDocument();
-    // });
-
-    test.each([
-      {
-        title: '스터디 접근 권한이 없는데 탈퇴하면',
-        handler: http.delete(`${API_URL}${MEMBER_URLS.leave}`, () =>
-          HttpResponse.json(
-            {
-              code: 'STUDY_ACCESS_DENIED',
-              message: '해당 스터디에 대한 접근 권한이 없습니다.',
-            },
-            { status: 403 },
-          ),
-        ),
-        message: '해당 스터디에 대한 접근 권한이 없습니다.',
-      },
-      {
-        title: '스터디 탈퇴중 네트워크 에러가 발생하면',
-        handler: http.delete(`${API_URL}${MEMBER_URLS.leave}`, () => HttpResponse.error()),
-        message: '스터디 탈퇴에 실패했습니다.',
-      },
-    ])(
-      '$title 에러 메시지를 토스트로 표시하고 다이얼로그를 닫는다',
-      async ({ handler, message }) => {
-        server.use(handler);
-
-        const { user } = setupMemberListPage();
-
-        const leaveButton = await screen.findByRole('button', {
-          name: '스터디 탈퇴하기',
-        });
-        await user.click(leaveButton);
-
-        const dialog = screen.getByRole('alertdialog', {
-          name: '스터디를 탈퇴하시겠습니까?',
-        });
-        expect(dialog).toBeVisible();
-
-        await user.click(within(dialog).getByRole('button', { name: '탈퇴' }));
-
-        const toast = await screen.findByRole('status');
-        expect(toast).toHaveTextContent(message);
-        expect(toast).toBeVisible();
-        expect(dialog).not.toBeVisible();
-      },
-    );
   });
 
   describe('조회 테스트', () => {

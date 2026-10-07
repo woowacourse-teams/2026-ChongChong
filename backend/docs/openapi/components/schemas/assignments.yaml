@@ -1,7 +1,7 @@
 AssignmentCreateRequest:
   type: object
   additionalProperties: false
-  required: [title, content, submissionMethod, submissionTarget, closeAt]
+  required: [title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt]
   properties:
     title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 제목.", type: string, minLength: 1, maxLength: 100, example: 1주 차 과제 }
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다.", type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
@@ -9,6 +9,10 @@ AssignmentCreateRequest:
     submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다.", type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
     closeAt: { description: "과제 제출 마감 시각. 새 값을 전달하면 서버의 현재 시각보다 미래여야 한다.", $ref: './common.yaml#/LocalDateTime' }
     remindAts: { description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다.", type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
+    submissionVisibility:
+      type: string
+      enum: [LEADER_ONLY, ALL_STUDY_MEMBERS]
+      description: LEADER_ONLY는 리더·본인의 상세 조회만 허용하고 목록은 리더만 조회한다. ALL_STUDY_MEMBERS는 소속 멤버에게 제출 완료된 타인의 제출물 조회를 허용한다. 생성 시 필수이며 서버가 생략값을 채우지 않는다.
 AssignmentUpdateRequest:
   type: object
   additionalProperties: false
@@ -17,6 +21,10 @@ AssignmentUpdateRequest:
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 수정된 과제 내용입니다. }
     submissionMethod: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 리더가 안내하는 과제 제출 방법. 링크 제출이나 텍스트 제출 등 자유 형식의 설명이다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 텍스트 제출 }
     submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
+    submissionVisibility:
+      type: [string, 'null']
+      enum: [LEADER_ONLY, ALL_STUDY_MEMBERS, null]
+      description: 생략하거나 null이면 기존 공개 범위를 유지한다. 변경하면 이후 제출물 조회에 반영된다.
     closeAt:
       description: "과제 제출 마감 시각. 새 값을 전달하면 서버의 현재 시각보다 미래여야 한다. 생략하거나 null이면 기존 값을 유지한다."
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
@@ -30,13 +38,17 @@ AssignmentCreateResponse:
 AssignmentDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, submissionTarget, closeAt]
+  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 1주 차 과제 }
     content: { type: string, example: 이번 주 과제를 제출해주세요. }
     submissionMethod: { type: string, example: 링크 제출 }
     submissionTarget: { type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
+    submissionVisibility:
+      type: string
+      enum: [LEADER_ONLY, ALL_STUDY_MEMBERS]
+      description: 현재 제출물 공개 범위. 기존 과제는 LEADER_ONLY로 이관한다. 공개 여부와 제출 대상 여부는 독립적이다.
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
 AssignmentSummaryResponse:
   type: object
@@ -49,11 +61,11 @@ AssignmentSummaryResponse:
     submissionMethod: { type: string, example: 링크 제출 }
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
     memberCount: { type: integer, example: 5 }
-    completeCount: { type: integer, example: 3 }
+    completeCount: { type: integer, description: 정상 제출과 지각 제출을 모두 포함한 제출 완료 인원, example: 3 }
     remindAt:
       description: 대기 중인 리마인더의 가장 이른 예약 시각. 예약이 없으면 목록에서는 생략하고 현황 응답에서는 null을 반환한다.
       $ref: './common.yaml#/LocalDateTime'
-    isComplete: { type: boolean, description: 리더에게만 반환하는 전체 제출 완료 여부, example: false }
+    isComplete: { type: boolean, description: 리더에게만 반환하는 전체 제출 완료 여부. 지각 제출도 완료에 포함한다., example: false }
     submissionStatus: { $ref: './assignment-submissions.yaml#/SubmissionStatus' }
 AssignmentListResponse:
   type: object

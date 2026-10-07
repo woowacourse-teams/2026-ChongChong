@@ -15,20 +15,36 @@ const StudyFormStyle = {
 } satisfies CSSProperties;
 
 interface Props {
+  submitLabel: string;
   onSubmit: ({ name, description }: { name: string; description: string }) => void;
   isSubmitting: boolean;
   fieldErrors: Partial<Record<'name' | 'description', string>>;
+  initialValues?: { name: string; description: string };
 }
 
-export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props) {
-  const [nameValue, handleNameValue] = useInputState('', (value, prevValue) => {
+const defaultInitialValues = {
+  name: '',
+  description: '',
+};
+
+export default function StudyForm({
+  submitLabel,
+  onSubmit,
+  isSubmitting,
+  fieldErrors,
+  initialValues = defaultInitialValues,
+}: Props) {
+  const [nameValue, handleNameValue] = useInputState(initialValues.name, (value, prevValue) => {
     if (value.length > STUDY_NAME.length) return prevValue;
     return value;
   });
-  const [descriptionValue, handleDescriptionValue] = useInputState('', (value, prevValue) => {
-    if (value.length > STUDY_DESCRIPTION.length) return prevValue;
-    return value;
-  });
+  const [descriptionValue, handleDescriptionValue] = useInputState(
+    initialValues.description,
+    (value, prevValue) => {
+      if (value.length > STUDY_DESCRIPTION.length) return prevValue;
+      return value;
+    },
+  );
   const posthog = usePostHog();
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -70,7 +86,7 @@ export default function StudyForm({ onSubmit, isSubmitting, fieldErrors }: Props
         disabled={isBlank(nameValue) || isSubmitting}
         css={{ marginTop: tokens.spacing[1] }}
       >
-        스터디 만들기
+        {submitLabel}
       </Button>
     </form>
   );

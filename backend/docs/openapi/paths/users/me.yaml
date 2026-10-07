@@ -22,6 +22,42 @@ get:
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
 
+patch:
+  tags: [User]
+  operationId: updateMyProfileName
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      #423 홈 마이페이지 이름 수정 API 구현 완료.
+      #455 이름 수정 시 기존 참여 스터디의 멤버 이름도 동기화할 예정이다.
+      프로필 이미지 변경은 S3 이미지 처리 작업에서 별도로 구현한다.
+  summary: 내 홈 프로필 이름 수정
+  description: |
+    인증된 사용자의 홈 프로필 이름을 수정한다. 프로필 이미지 URL은 변경하지 않고 현재 값을 반환한다.
+    이름 수정 시 현재 참여 중인 모든 스터디의 해당 사용자 멤버 이름도 같은 트랜잭션에서 변경한다.
+    새 스터디 생성·가입 시에는 변경된 홈 이름을 멤버 이름의 초깃값으로 복사한다.
+    스터디별 프로필의 분리 여부는 추후 결정하며, 이 API는 스터디 멤버의 프로필 이미지를 변경하지 않는다.
+    수정 요청의 이름은 1~8자이며 공백만 있는 값은 허용하지 않는다.
+    소셜 최초 로그인으로 저장하는 이름의 기존 최대 255자 정책은 변경하지 않는다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/users.yaml#/UserProfileNameUpdateRequest' }
+        example: { name: 바니 }
+  responses:
+    '200':
+      description: 홈 프로필 이름 수정 성공. 프로필 이미지 URL은 기존 값을 반환한다.
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/users.yaml#/UserProfileResponse' }
+          example: { name: 바니, profileImageUrl: 'https://cdn.example.com/profiles/uuid.webp' }
+    '400': { $ref: '../../components/responses.yaml#/UserProfileNameUpdateBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+
 delete:
   tags: [User]
   operationId: withdrawUser

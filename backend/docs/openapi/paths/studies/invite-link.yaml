@@ -1,6 +1,12 @@
 get:
   tags: [Study]
   operationId: getInviteLink
+  x-frontend:
+    status: integrated
+    description: "inviteLink 문자열을 받아 초대 링크로 사용한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/responseSchemas.ts
   x-backend:
     status: done
     owner: wontop02

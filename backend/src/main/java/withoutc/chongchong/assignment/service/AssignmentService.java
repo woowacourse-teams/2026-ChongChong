@@ -23,10 +23,10 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.assignment.repository.projection.AssignmentSubmissionStatusProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -57,8 +57,8 @@ public class AssignmentService {
         Study study = studyRepository.getByIdOrThrow(studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
-        Assignment assignment = Assignment.create(study, request.title(), request.content(),
-                request.submissionMethod(), request.submissionTarget(), request.closeAt(), now);
+        Assignment assignment = Assignment.create(study, request.title(), request.content(), request.submissionMethod(),
+                request.submissionTarget(), request.submissionVisibility(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
 
         assignment.initializeSubmissions(submitters);
@@ -78,8 +78,8 @@ public class AssignmentService {
 
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(actor, request.title(), request.content(), request.submissionMethod(),
-                request.submissionTarget(), request.closeAt(),
-                request.remindAts(), now);
+                request.submissionTarget(), request.submissionVisibility(), request.closeAt(), request.remindAts(),
+                now);
 
         assignmentRepository.save(assignment);
     }
@@ -91,6 +91,7 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
+        notificationService.deleteNotificationsForResource(ResourceType.ASSIGNMENT, assignmentId);
         assignmentRepository.delete(assignment);
     }
 
@@ -101,8 +102,8 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
-        List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository
-                .findAllSubmitterStatusesByAssignmentId(assignmentId);
+        List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(
+                assignmentId);
 
         List<AssignmentSubmissionStatusResponse.CompleteMember> completeMembers = statuses.stream()
                 .filter(AssignmentSubmitterStatusProjection::isSubmitted)
@@ -115,12 +116,8 @@ public class AssignmentService {
 
         List<AssignmentSubmissionStatusResponse.IncompleteMember> incompleteMembers = statuses.stream()
                 .filter(status -> !status.isSubmitted())
-                .map(status -> AssignmentSubmissionStatusResponse.IncompleteMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.lastRemindAt()
-                )).toList();
+                .map(status -> AssignmentSubmissionStatusResponse.IncompleteMember.of(status.memberId(), status.name(),
+                        status.profileImageUrl(), status.lastRemindAt())).toList();
 
         return AssignmentSubmissionStatusResponse.of(assignmentId, assignment.getNextRemindAt(), completeMembers,
                 incompleteMembers);
@@ -164,15 +161,18 @@ public class AssignmentService {
             return List.of();
         }
 
+        LocalDateTime now = LocalDateTime.now(clock);
         List<Long> assignmentIds = assignments.stream().map(Assignment::getId).toList();
         Map<Long, SubmissionStatus> submissionStatusByAssignmentId = assignmentSubmissionRepository
-                .findMySubmissionStatusesByAssignmentIdsAndMemberId(assignmentIds, member.getId())
-                .stream().collect(Collectors.toMap(AssignmentSubmissionStatusProjection::assignmentId,
-                        AssignmentSubmissionStatusProjection::submissionStatus));
+                .findAllByAssignmentIdInAndMemberId(assignmentIds, member.getId())
+                .stream().collect(Collectors.toMap(submission -> submission.getAssignment().getId(),
+                        submission -> submission.submissionStatus(now)));
 
         if (member.isLeader()) {
-            return assignments.stream().map(assignment -> AssignmentSummaryResponse.forLeader(assignment,
-                            submissionStatusByAssignmentId.getOrDefault(assignment.getId(), SubmissionStatus.NOT_ASSIGNED)))
+            return assignments.stream().map(assignment ->
+                            AssignmentSummaryResponse.forLeader(now, assignment,
+                                    submissionStatusByAssignmentId.getOrDefault(assignment.getId(),
+                                            SubmissionStatus.NOT_ASSIGNED)))
                     .toList();
         }
 

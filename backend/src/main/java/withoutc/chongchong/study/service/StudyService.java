@@ -13,6 +13,7 @@ import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSumm
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryListResponse;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse;
@@ -53,6 +54,7 @@ public class StudyService {
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
     private final AssignmentRepository assignmentRepository;
+    private final NotificationService notificationService;
 
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
 
@@ -92,6 +94,7 @@ public class StudyService {
         validateLeaderRole(studyMember);
 
         entityManager.clear();
+        notificationService.deleteNotificationsForStudy(studyId);
         studyRepository.delete(study);
     }
 
@@ -100,7 +103,7 @@ public class StudyService {
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        return new StudyInfoResponse(study.getName(), studyMember.getRole(), studyMember.getName());
+        return new StudyInfoResponse(study.getName(), study.getDescription(), studyMember.getRole(), studyMember.getName());
     }
 
     public StudyDetailResponse getStudyDetail(Long userId, Long studyId) {

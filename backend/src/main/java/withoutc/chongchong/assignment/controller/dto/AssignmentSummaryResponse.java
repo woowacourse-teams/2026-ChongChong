@@ -18,10 +18,11 @@ public record AssignmentSummaryResponse(
         LocalDateTime remindAt,
         SubmissionStatus submissionStatus
 ) {
-    public static AssignmentSummaryResponse forLeader(Assignment assignment, SubmissionStatus submissionStatus) {
+    public static AssignmentSummaryResponse forLeader(LocalDateTime now, Assignment assignment,
+                                                      SubmissionStatus submissionStatus) {
 
         int memberCount = assignment.getSubmissionCount();
-        int completeCount = assignment.getSubmittedCount();
+        int completeCount = assignment.getSubmittedCount(now);
 
         boolean isComplete = (memberCount == completeCount);
 

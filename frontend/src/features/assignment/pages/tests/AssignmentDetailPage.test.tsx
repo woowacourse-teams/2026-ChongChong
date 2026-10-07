@@ -23,10 +23,10 @@ const SUBMISSIONS_URL = `${ASSIGNMENT_DETAIL_URL}/submissions`;
 const MY_SUBMISSION_URL = `${SUBMISSIONS_URL}/my`;
 const SUBMISSION_DETAIL_URL = `${SUBMISSIONS_URL}/:submissionId`;
 
-function setupAssignmentDetailPage() {
+function setupAssignmentDetailPage(initialEntry = '/studies/1/assignments/1') {
   return setup(<AssignmentDetailPage />, {
     wrapper: createWrapper({
-      initialEntries: ['/studies/1/assignments/1'],
+      initialEntries: [initialEntry],
       routes: (element) => (
         <Route path="/studies/:studyId/assignments/:assignmentId" element={element} />
       ),
@@ -57,6 +57,21 @@ async function findSubmissionForm() {
   const linkInput = submissionForm.getByRole('textbox', { name: '링크' });
 
   return { submissionForm, contentInput, linkInput };
+}
+
+async function setAssignmentVisibility(submissionVisibility: 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS') {
+  const assignment = assignmentTable.findFirst((q) => q.where({ id: 1, studyId: 1 }));
+  if (!assignment) throw new Error('과제를 찾을 수 없습니다.');
+
+  await assignmentTable.update(assignment, {
+    data(currentAssignment) {
+      currentAssignment.submissionVisibility = submissionVisibility;
+    },
+  });
+}
+
+async function openDetailTab(user: ReturnType<typeof setupAssignmentDetailPage>['user']) {
+  await user.click(await screen.findByRole('tab', { name: '상세' }));
 }
 
 describe('과제 상세 페이지 테스트', () => {
@@ -155,6 +170,7 @@ describe('과제 상세 페이지 테스트', () => {
               submissionMethod: '텍스트로 제출하세요',
               closeAt: '2999-12-31T23:59:59',
               submissionTarget: 'MEMBERS_ONLY',
+              submissionVisibility: 'LEADER_ONLY',
             }),
           ),
         );
@@ -360,12 +376,60 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('과제 상세 조회', () => {
-      test('스터디원에게는 과제 관리 메뉴를 표시하지 않는다', async () => {
-        setupAssignmentDetailPage();
+      test('스터디원에게는 과제 관리 메뉴 없이 요약과 상세 탭을 표시한다', async () => {
+        const { user } = setupAssignmentDetailPage();
 
         expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
         expect(screen.queryByRole('button', { name: '과제 더보기' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: '요약' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('region', { name: '내 제출' })).toBeVisible();
+        expect(screen.queryByText('과제 내용')).not.toBeInTheDocument();
+
+        await openDetailTab(user);
+
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+        expect(screen.getByRole('region', { name: '내 제출' })).toBeVisible();
+      });
+
+      test('view=detail로 접근하면 상세 탭을 표시한다', async () => {
+        setupAssignmentDetailPage('/studies/1/assignments/1?view=detail');
+
+        expect(await screen.findByRole('tab', { name: '상세' })).toHaveAttribute(
+          'aria-selected',
+          'true',
+        );
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+      });
+
+      test('내 제출만 공개하면 다른 제출물과 리더 전용 제출 현황을 조회하지 않는다', async () => {
+        const getSubmissions = jest.fn(() => HttpResponse.json({ submissions: [] }));
+        const getSubmissionStatus = jest.fn(() => HttpResponse.json({}));
+        server.use(http.get(SUBMISSIONS_URL, getSubmissions));
+        server.use(http.get(SUBMISSION_STATUS_URL, getSubmissionStatus));
+
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByRole('region', { name: '내 제출' })).toBeVisible();
+        expect(screen.queryByText(/제출 완료 \d+명/)).not.toBeInTheDocument();
+        expect(getSubmissions).not.toHaveBeenCalled();
+        expect(getSubmissionStatus).not.toHaveBeenCalled();
+      });
+
+      test('제출물을 공개하면 완료된 제출물만 표시한다', async () => {
+        await setAssignmentVisibility('ALL_STUDY_MEMBERS');
+        await markSubmissionAsSubmitted(1, { content: '리더 제출', link: null });
+        await markSubmissionAsSubmitted(2, { content: '내 제출', link: null });
+
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByRole('region', { name: '내 제출' })).toBeVisible();
+        expect(await screen.findByRole('heading', { name: '제출 완료 2명' })).toBeVisible();
+        expect(screen.getByText(`${memberUserName} (나)`)).toBeVisible();
+        expect(screen.queryByRole('progressbar', { name: '과제 제출률' })).not.toBeInTheDocument();
+        expect(screen.queryByText(/미제출/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/지각/)).not.toBeInTheDocument();
       });
 
       test.each([
@@ -395,6 +459,56 @@ describe('과제 상세 페이지 테스트', () => {
     });
 
     describe('본인 제출 정보 조회', () => {
+      test('지각 제출 상태면 제출 완료 내용을 표시한다', async () => {
+        server.use(
+          http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json({
+              submissionStatus: 'LATE_SUBMITTED',
+              submissionId: 1,
+              createdAt: '2026-10-06T10:00:00',
+              content: '지각 제출한 과제',
+            }),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        await openDetailTab(user);
+
+        expect(await screen.findByText('지각 제출한 과제')).toBeVisible();
+        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+      });
+
+      test('마감 후 미제출 상태면 제출 폼을 표시한다', async () => {
+        server.use(
+          http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json({ submissionStatus: 'MISSING', submissionId: 1 }),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        expect(await screen.findByText('아직 과제를 제출하지 않았어요')).toBeVisible();
+        await openDetailTab(user);
+
+        expect(screen.getByRole('button', { name: '제출하기' })).toBeVisible();
+      });
+
+      test('내 제출 상세 보기를 누르면 수정할 수 있는 상세 탭으로 이동한다', async () => {
+        await markSubmissionAsSubmitted(2, {
+          content: '내가 제출한 과제',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+
+        const detailLink = await screen.findByRole('link', { name: '상세 보기' });
+        expect(detailLink).toHaveAttribute('href', '/studies/1/assignments/1?view=detail');
+
+        await user.click(detailLink);
+
+        expect(screen.getByRole('tab', { name: '상세' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByText('내가 제출한 과제')).toBeVisible();
+        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+      });
+
       test('제출 대상이 아니면 제출 폼을 표시하지 않고 제출 요청을 보내지 않는다', async () => {
         submissionTable.delete((q) => q.where({ assignmentId: 1, userId: 2 }));
         const submitRequest = jest.fn(() =>
@@ -445,6 +559,8 @@ describe('과제 상세 페이지 테스트', () => {
         });
         const { user } = setupAssignmentDetailPage();
 
+        await openDetailTab(user);
+
         const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
         expect(mySubmission.getByText('링크 없이 제출한 내용')).toBeVisible();
         expect(mySubmission.queryByRole('link')).not.toBeInTheDocument();
@@ -460,6 +576,7 @@ describe('과제 상세 페이지 테스트', () => {
     describe('과제 제출', () => {
       test('제출 성공 시 내 제출 내용으로 전환한다', async () => {
         const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
         const { submissionForm, contentInput } = await findSubmissionForm();
 
         await user.type(contentInput, '스터디원의 스프링 설계 과제');
@@ -480,6 +597,7 @@ describe('과제 상세 페이지 테스트', () => {
           ),
         );
         const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
         const { submissionForm, contentInput, linkInput } = await findSubmissionForm();
 
         await user.type(contentInput, '객체의 역할과 책임');
@@ -510,6 +628,7 @@ describe('과제 상세 페이지 테스트', () => {
       ])('$title 에러 메시지를 토스트로 표시한다', async ({ handler, message }) => {
         server.use(handler);
         const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
         const { submissionForm, contentInput } = await findSubmissionForm();
 
         await user.type(contentInput, '객체의 역할과 책임');
@@ -540,6 +659,7 @@ describe('과제 상세 페이지 테스트', () => {
         );
         const { user } = setupAssignmentDetailPage();
 
+        await openDetailTab(user);
         await user.click(await screen.findByRole('button', { name: '편집하기' }));
         const { submissionForm, contentInput, linkInput } = await findSubmissionForm();
         await user.clear(contentInput);
@@ -575,6 +695,7 @@ describe('과제 상세 페이지 테스트', () => {
           server.use(handler);
           const { user } = setupAssignmentDetailPage();
 
+          await openDetailTab(user);
           await user.click(await screen.findByRole('button', { name: '편집하기' }));
           const { submissionForm, contentInput } = await findSubmissionForm();
           await user.clear(contentInput);

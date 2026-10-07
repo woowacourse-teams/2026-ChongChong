@@ -6,11 +6,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.http.WebRefreshCookie;
 import withoutc.chongchong.auth.http.WebRefreshCookieWriter;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.user.controller.dto.UserProfileNameUpdateRequest;
 import withoutc.chongchong.user.controller.dto.UserProfileResponse;
 import withoutc.chongchong.user.service.UserService;
 
@@ -25,6 +28,13 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> getMyProfile(@AuthenticationPrincipal AuthenticatedUser user) {
         return ResponseEntity.ok(userService.getMyProfile(user.id()));
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<UserProfileResponse> updateMyProfileName(
+            @AuthenticationPrincipal AuthenticatedUser user, @RequestBody UserProfileNameUpdateRequest request) {
+        UserProfileResponse response = userService.updateMyProfileName(user.id(), request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/me")

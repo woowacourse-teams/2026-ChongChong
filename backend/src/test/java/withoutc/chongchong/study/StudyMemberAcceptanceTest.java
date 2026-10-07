@@ -20,6 +20,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -117,6 +118,7 @@ class StudyMemberAcceptanceTest {
                         "과제 내용",
                         "링크 제출",
                         SubmissionTarget.MEMBERS_ONLY,
+                        SubmissionVisibility.LEADER_ONLY,
                         now.plusDays(1),
                         now
                 )
@@ -145,7 +147,7 @@ class StudyMemberAcceptanceTest {
 
         StudyMember joinedMember = studyMemberRepository
                 .getByStudyIdAndUserIdOrThrow(study.getId(), user.getId());
-        assertThat(assignmentSubmissionRepository.findMySubmissionStatusesByAssignmentIdsAndMemberId(
+        assertThat(assignmentSubmissionRepository.findAllByAssignmentIdInAndMemberId(
                 List.of(assignment.getId()), joinedMember.getId()))
                 .isEmpty();
     }
@@ -229,6 +231,8 @@ class StudyMemberAcceptanceTest {
                 .get("/studies/{studyId}/members", study.getId())
                 .then()
                 .statusCode(200)
+                .body("maxMemberCount", equalTo(50))
+                .body("nowMemberCount", equalTo(2))
                 .body("members", hasSize(2))
                 .body("members[0].id", equalTo(leader.getId().intValue()))
                 .body("members[0].name", equalTo("리더"))
@@ -260,7 +264,10 @@ class StudyMemberAcceptanceTest {
                 .when()
                 .get("/studies/{studyId}/members", study.getId())
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .body("maxMemberCount", equalTo(50))
+                .body("nowMemberCount", equalTo(1))
+                .body("members", hasSize(1));
     }
 
     @Test

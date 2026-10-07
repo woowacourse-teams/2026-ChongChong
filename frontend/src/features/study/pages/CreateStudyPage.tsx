@@ -27,7 +27,12 @@ export default function NewStudyPage() {
         >
           <img src={headerIcon} alt="" css={{ width: '70px', height: '70px' }} />
         </div>
-        <StudyForm onSubmit={createStudy} isSubmitting={isPending} fieldErrors={fieldErrors} />
+        <StudyForm
+          submitLabel={'스터디 만들기'}
+          onSubmit={createStudy}
+          isSubmitting={isPending}
+          fieldErrors={fieldErrors}
+        />
       </Main>
     </Page>
   );

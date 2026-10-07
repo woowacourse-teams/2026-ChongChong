@@ -3,6 +3,13 @@ parameters:
 get:
   tags: [Study]
   operationId: getStudyDetail
+  x-frontend:
+    status: integrated
+    description: "리더·멤버별 응답을 구분해 스터디 상세 화면에서 조회한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/responseSchemas.ts
+      - frontend/src/features/study/pages/StudyDetailPage.tsx
   x-backend:
     status: done
     owner: wontop02
@@ -32,9 +39,10 @@ patch:
   tags: [Study]
   operationId: updateStudy
   x-frontend:
-    description: |
-      신규 연동: 리더용 스터디 이름·설명 수정 화면에서 PATCH 요청을 연결한다.
-      이름은 최대 15자, 설명은 최대 30자이며 생략하거나 null이면 기존 값을 유지한다. 성공은 본문 없는 204이므로 JSON을 파싱하지 않는다.
+    status: needs-update
+    description: "기능 추가: 스터디 설정에서 이름·설명을 수정하고 저장하는 기능."
+    sources:
+      - frontend/src/features/study/api.ts
   x-backend:
     status: done
     owner: wontop02
@@ -58,6 +66,11 @@ patch:
 delete:
   tags: [Study]
   operationId: deleteStudy
+  x-frontend:
+    status: integrated
+    description: "스터디 삭제 요청과 본문 없는 응답 처리가 연결되어 있다."
+    sources:
+      - frontend/src/features/study/api.ts
   x-backend:
     status: done
     owner: wontop02

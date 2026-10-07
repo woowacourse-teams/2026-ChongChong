@@ -1,6 +1,12 @@
 post:
   tags: [Auth]
   operationId: login
+  x-frontend:
+    status: integrated
+    description: "카카오 인가 코드를 전송하고 Access Token을 저장하는 로그인 흐름이 연결되어 있다."
+    sources:
+      - frontend/src/features/login/api.ts
+      - frontend/src/features/login/pages/KakaoCallbackPage.tsx
   x-backend:
     status: done
     owner: JYL35

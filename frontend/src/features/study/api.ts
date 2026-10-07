@@ -65,6 +65,17 @@ export async function createStudy(body: {
   }
 }
 
+export async function editStudy(studyId: number, body: { name: string; description: string }) {
+  try {
+    await api.patch(`/studies/${studyId}`, { json: body });
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('스터디를 수정하는데 실패했습니다.', { cause: error }),
+    });
+  }
+}
+
 export async function fetchStudyInfo(studyId: number) {
   try {
     const response = await api.get(`/studies/${studyId}/info`);
@@ -109,6 +120,17 @@ export async function joinStudy(body: { token: string }) {
     throw handleError(error, {
       mappers: [ValidationError, ApiError],
       fallback: new Error('스터디 참여에 실패했습니다.', { cause: error }),
+    });
+  }
+}
+
+export async function leaveStudy({ studyId }: { studyId: number }) {
+  try {
+    await api.delete(`/studies/${studyId}/members/me`);
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('스터디 탈퇴에 실패했습니다.', { cause: error }),
     });
   }
 }

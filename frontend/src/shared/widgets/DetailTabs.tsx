@@ -1,4 +1,5 @@
-import { useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, type CSSProperties, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
 import { tokens, typography } from '../../styles/global';
 
 type Tab = 'summary' | 'detail';
@@ -38,12 +39,27 @@ const panelStyle = {
 } satisfies CSSProperties;
 
 export default function DetailTabs({ summary, detail }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('summary');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: Tab = searchParams.get('view') === 'detail' ? 'detail' : 'summary';
   const id = useId();
   const summaryTabId = `${id}-summary-tab`;
   const detailTabId = `${id}-detail-tab`;
   const summaryPanelId = `${id}-summary-panel`;
   const detailPanelId = `${id}-detail-panel`;
+
+  const selectTab = (tab: Tab) => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+
+      if (tab === 'detail') {
+        nextParams.set('view', 'detail');
+      } else {
+        nextParams.delete('view');
+      }
+
+      return nextParams;
+    });
+  };
 
   return (
     <>
@@ -55,7 +71,7 @@ export default function DetailTabs({ summary, detail }: Props) {
           aria-selected={activeTab === 'summary'}
           aria-controls={summaryPanelId}
           css={{ ...tabStyle, ...(activeTab === 'summary' ? selectedTabStyle : {}) }}
-          onClick={() => setActiveTab('summary')}
+          onClick={() => selectTab('summary')}
         >
           요약
         </button>
@@ -66,7 +82,7 @@ export default function DetailTabs({ summary, detail }: Props) {
           aria-selected={activeTab === 'detail'}
           aria-controls={detailPanelId}
           css={{ ...tabStyle, ...(activeTab === 'detail' ? selectedTabStyle : {}) }}
-          onClick={() => setActiveTab('detail')}
+          onClick={() => selectTab('detail')}
         >
           상세
         </button>

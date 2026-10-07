@@ -12,6 +12,7 @@ import withoutc.chongchong.assignment.controller.dto.MySubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse.SubmissionSummary;
+import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -41,10 +42,12 @@ public class AssignmentSubmissionService {
 
         assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
-        AssignmentSubmission submission = assignmentSubmissionRepository.getByAssignmentIdAndMemberIdForUpdateOrThrow(
+        AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
-        boolean isFirstSubmit = submission.getSubmittedAt() == null;
-        submission.submit(request.content(), request.link(), LocalDateTime.now(clock));
+        LocalDateTime now = LocalDateTime.now(clock);
+        boolean isFirstSubmit = !submission.isSubmit(now);
+
+        submission.submit(request.content(), request.link(), now);
 
         // TODO: 리더가 과제를 제출할 경우 나머지 리더들에게 알림을 보낼지, 아예 안 보낼지 결정 필요
         if (isFirstSubmit) {
@@ -79,32 +82,32 @@ public class AssignmentSubmissionService {
         assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         return assignmentSubmissionRepository.findByAssignmentIdAndMemberId(assignmentId, member.getId())
-                .map(MySubmissionDetailResponse::from)
+                .map(submission -> MySubmissionDetailResponse.of(LocalDateTime.now(clock), submission))
                 .orElseGet(MySubmissionDetailResponse::notAssigned);
     }
 
     public SubmissionDetailResponse getSubmissionDetail(Long userId, Long studyId, Long assignmentId,
                                                         Long submissionId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(submissionId,
                 assignmentId);
-        assignmentAccessPolicy.requireCanReadSubmission(actor, submission);
+        assignmentAccessPolicy.requireCanReadSubmission(actor, assignment, submission);
 
         return SubmissionDetailResponse.of(submission, submission.getMember());
     }
 
     public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        assignmentAccessPolicy.requireCanReadSubmissionList(actor);
-
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        assignmentAccessPolicy.requireCanReadSubmissionList(assignment, actor);
 
         List<AssignmentSubmission> submissions = assignmentSubmissionRepository
                 .findAllByAssignmentIdAndSubmittedAtIsNotNull(assignmentId);
 
-        return SubmissionListResponse.from(submissions.stream().map(SubmissionSummary::from).toList());
+        LocalDateTime now = LocalDateTime.now(clock);
+        return SubmissionListResponse.from(submissions.stream().map(
+                submission -> SubmissionSummary.of(now, submission)).toList());
     }
 }

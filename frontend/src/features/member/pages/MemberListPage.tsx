@@ -5,36 +5,65 @@ import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import MemberListContent from '../components/MemberListContent';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
+import { MemberListSection, MemberListSectionFallback } from '../components/MemberListSection';
+import {
+  InviteStudyLinkSection,
+  InviteStudyLinkSectionFallback,
+} from '../components/InviteStudyLinkSection';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import Loading from '../../../shared/ui/Loading';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
+import { tokens } from '../../../styles/global';
 
 export default function MemberListPage() {
   return (
     <Page>
-      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>멤버</TopHeader.Title>} />
-      <Main>
-        <ErrorBoundary
-          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
-        >
-          <Suspense fallback={<Loading />}>
-            <MemberListPage.Content />
-          </Suspense>
-        </ErrorBoundary>
-      </Main>
-      <BottomTab />
+      <div css={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+        <TopHeader left={<PrevButton />} middle={<TopHeader.Title>멤버</TopHeader.Title>} />
+        <Main css={{ minHeight: 0, gap: tokens.spacing[5] }}>
+          <ErrorBoundary
+            fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+          >
+            <Suspense fallback={<Loading />}>
+              <Content />
+            </Suspense>
+          </ErrorBoundary>
+        </Main>
+        <BottomTab />
+      </div>
     </Page>
   );
 }
 
-MemberListPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
-  return role === 'LEADER' ? <MemberListContent.Leader /> : <MemberListContent.Member />;
-};
+  return (
+    <>
+      <ErrorBoundary
+        fallbackRender={({ error }) => (
+          <MemberListSectionFallback message={getErrorMessage(error)} />
+        )}
+      >
+        <MemberListSection role={role} />
+      </ErrorBoundary>
+
+      <div css={{ flexShrink: 0 }}>
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <InviteStudyLinkSectionFallback message={getErrorMessage(error)} />
+          )}
+        >
+          <Suspense fallback={<Loading />}>
+            <InviteStudyLinkSection studyId={studyId} />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+    </>
+  );
+}

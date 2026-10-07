@@ -3,13 +3,12 @@ import { Link } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
+import { isCompletedAssignment } from '../submissionStatus';
 import type { Submission, UserAssignmentSubmitDetail } from '../types';
 
 interface Props {
-  studyId: number;
-  assignmentId: number;
   submission: UserAssignmentSubmitDetail;
-  member?: Submission;
+  member: Pick<Submission, 'name' | 'profileImage'>;
 }
 
 const sectionStyle = {
@@ -72,8 +71,10 @@ const detailLinkStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-export default function MySubmissionStatus({ studyId, assignmentId, submission, member }: Props) {
+export default function MySubmissionStatus({ submission, member }: Props) {
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
+
+  const isCompleted = isCompletedAssignment(submission);
 
   return (
     <section css={sectionStyle} aria-labelledby="my-submission-status-title">
@@ -81,26 +82,23 @@ export default function MySubmissionStatus({ studyId, assignmentId, submission, 
         내 제출
       </h2>
 
-      {submission.submissionStatus === 'NOT_SUBMITTED' ? (
+      {!isCompleted ? (
         <p css={emptyStyle}>아직 과제를 제출하지 않았어요</p>
       ) : (
         <div css={cardStyle}>
           <img
-            src={member?.profileImage ?? profileIcon}
+            src={member.profileImage ?? profileIcon}
             alt=""
             aria-hidden="true"
             css={profileStyle}
           />
           <div css={memberStyle}>
-            <span css={nameStyle}>{member ? `${member.name} (나)` : '나'}</span>
+            <span css={nameStyle}>{member.name} (나)</span>
             <time css={dateStyle} dateTime={submission.createdAt}>
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link
-            css={detailLinkStyle}
-            to={`/studies/${studyId}/assignments/${assignmentId}/submissions/${submission.submissionId}`}
-          >
+          <Link css={detailLinkStyle} to="?view=detail">
             상세 보기
           </Link>
         </div>
