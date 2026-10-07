@@ -22,9 +22,6 @@ import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.service.NoticeService;
 
@@ -74,17 +71,6 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{noticeId}/status")
-    public ResponseEntity<NoticeStatusesResponse> getAllReadStatuses(
-            @AuthenticationPrincipal AuthenticatedUser currentUser,
-            @PathVariable Long studyId,
-            @PathVariable Long noticeId
-    ) {
-        NoticeStatusesResponse response = noticeService.getAllReadStatuses(currentUser.id(), studyId, noticeId);
-
-        return ResponseEntity.ok(response);
-    }
-
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Void> updateNotice(
             @AuthenticationPrincipal AuthenticatedUser currentUser,
@@ -108,25 +94,4 @@ public class NoticeController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{noticeId}/read")
-    public ResponseEntity<NoticeReadResponse> readNotice(
-            @AuthenticationPrincipal AuthenticatedUser currentUser,
-            @PathVariable Long studyId,
-            @PathVariable Long noticeId
-    ) {
-        NoticeReadResponse response = noticeService.markAsRead(currentUser.id(), studyId, noticeId);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{noticeId}/status/me")
-    public ResponseEntity<NoticeReadStatusResponse> getMyReadStatus(
-            @AuthenticationPrincipal AuthenticatedUser currentUser,
-            @PathVariable Long studyId,
-            @PathVariable Long noticeId
-    ) {
-        NoticeReadStatusResponse response = noticeService.getMyReadStatus(currentUser.id(), studyId, noticeId);
-
-        return ResponseEntity.ok(response);
-    }
 }
