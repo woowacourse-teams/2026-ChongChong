@@ -133,7 +133,7 @@ class NoticeReadServiceTest {
 
         NoticeReadStatusesResponse response = noticeReadService.getAllReadStatuses(USER_ID, STUDY_ID, NOTICE_ID);
 
-        verify(noticeAccessPolicy).requireCanReadNoticeReadStatuses(leader);
+        verify(noticeAccessPolicy).requireCanViewReadStatuses(leader);
         assertThat(response.id()).isEqualTo(NOTICE_ID);
         assertThat(response.memberCount()).isEqualTo(3);
         assertThat(response.readCount()).isEqualTo(1);
@@ -154,7 +154,7 @@ class NoticeReadServiceTest {
         StudyMember member = mock(StudyMember.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
-                .when(noticeAccessPolicy).requireCanReadNoticeReadStatuses(member);
+                .when(noticeAccessPolicy).requireCanViewReadStatuses(member);
 
         assertThatThrownBy(() -> noticeReadService.getAllReadStatuses(USER_ID, STUDY_ID, NOTICE_ID))
                 .isInstanceOf(AuthException.class)

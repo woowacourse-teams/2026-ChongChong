@@ -48,7 +48,7 @@ class NoticeAccessPolicyTest {
                 arguments("공지 삭제", (BiConsumer<NoticeAccessPolicy, StudyMember>)
                         NoticeAccessPolicy::requireCanDeleteNotice),
                 arguments("공지 읽음 현황 조회", (BiConsumer<NoticeAccessPolicy, StudyMember>)
-                        NoticeAccessPolicy::requireCanReadNoticeReadStatuses)
+                        NoticeAccessPolicy::requireCanViewReadStatuses)
         );
     }
 

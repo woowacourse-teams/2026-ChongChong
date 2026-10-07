@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeReadStatusesResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeReadStatusesResponse.ReadMember;
 import withoutc.chongchong.notice.controller.dto.NoticeReadStatusesResponse.UnreadMember;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
@@ -34,39 +35,30 @@ public class NoticeReadService {
 
     public NoticeReadStatusesResponse getAllReadStatuses(Long userId, Long studyId, Long noticeId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        noticeAccessPolicy.requireCanReadNoticeReadStatuses(actor);
+        noticeAccessPolicy.requireCanViewReadStatuses(actor);
 
         Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
 
         List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(
                 noticeId);
 
-        List<NoticeReadStatusesResponse.ReadMember> readMembers = statuses.stream()
+        return NoticeReadStatusesResponse.of(noticeId, notice.getNextRemindAt(),
+                toReadMembers(statuses), toUnreadMembers(statuses));
+    }
+
+    private List<ReadMember> toReadMembers(List<NoticeRecipientStatusProjection> statuses) {
+        return statuses.stream()
                 .filter(NoticeRecipientStatusProjection::isRead)
-                .map(status -> NoticeReadStatusesResponse.ReadMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.readAt()
-                ))
+                .map(status -> ReadMember.of(status.memberId(), status.name(), status.profileImageUrl(), status.readAt()))
                 .toList();
+    }
 
-        List<UnreadMember> unreadMembers = statuses.stream()
+    private List<UnreadMember> toUnreadMembers(List<NoticeRecipientStatusProjection> statuses) {
+        return statuses.stream()
                 .filter(status -> !status.isRead())
-                .map(status -> UnreadMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.lastRemindAt()
-                ))
+                .map(status -> UnreadMember.of(status.memberId(), status.name(), status.profileImageUrl(),
+                        status.lastRemindAt()))
                 .toList();
-
-        return NoticeReadStatusesResponse.of(
-                noticeId,
-                notice.getNextRemindAt(),
-                readMembers,
-                unreadMembers
-        );
     }
 
     @Transactional

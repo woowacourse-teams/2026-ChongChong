@@ -20,7 +20,7 @@ public class NoticeAccessPolicy {
         requireLeader(actor);
     }
 
-    public void requireCanReadNoticeReadStatuses(StudyMember actor) {
+    public void requireCanViewReadStatuses(StudyMember actor) {
         requireLeader(actor);
     }
 
