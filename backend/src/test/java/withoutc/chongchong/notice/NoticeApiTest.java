@@ -833,8 +833,8 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("스터디원은 공지를 생성하거나 삭제할 수 없으며 공지는 유지된다")
-    void rejectCreateAndDeleteNoticeByMemberTest() {
+    @DisplayName("스터디원은 공지를 생성할 수 없으며 공지 수는 유지된다")
+    void rejectCreateNoticeByMemberTest() {
         long originalCount = noticeRepository.count();
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
@@ -846,6 +846,13 @@ class NoticeApiTest {
                 .statusCode(403)
                 .body("code", equalTo("ACCESS_DENIED"));
 
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("스터디원은 공지를 삭제할 수 없으며 기존 공지는 유지된다")
+    void rejectDeleteNoticeByMemberTest() {
+        long originalCount = noticeRepository.count();
         testAuthRequest.givenAuthenticatedUser(memberUser.getId())
                 .port(port)
                 .when()
