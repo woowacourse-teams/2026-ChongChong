@@ -17,7 +17,7 @@ public enum StudyErrorCode implements ErrorCode {
 
     INVALID_STUDY_ID(HttpStatus.BAD_REQUEST, "INVALID_STUDY_ID", "유효하지 않은 스터디 ID입니다."),
 
-    INVALID_INVITE_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_INVITE_TOKEN", "유효하지 않은 초대 토큰입니다."),
+    INVALID_INVITE_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_INVITE_TOKEN", "유효하지 않거나 만료된 초대 토큰입니다."),
 
     INVITE_TOKEN_SIGN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INVITE_TOKEN_SIGN_FAILED", "초대 토큰 서명에 실패했습니다.");
 

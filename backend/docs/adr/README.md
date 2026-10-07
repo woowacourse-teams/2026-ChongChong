@@ -22,6 +22,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0045](0045-delete-notifications-with-resources.md)                                    | 자원 삭제 시 관련 인앱 알림을 삭제한다 |
 | [0046](0046-separate-user-name-edit-limit-from-social-initialization.md)                 | 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다 |
 | [0047](0047-sync-home-name-to-current-study-memberships.md)                               | 홈 이름 변경을 현재 참여 스터디의 멤버 이름에 동기화한다 |
+| [0048](0048-expire-study-invite-tokens-after-three-days.md)                                | 스터디 초대 토큰에 3일 만료를 적용한다 |
 
 ### 이전 ADR
 | 번호                                                                            | 제목                                        |
