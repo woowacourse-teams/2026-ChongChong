@@ -19,7 +19,7 @@ interface Props {
   onSubmit: ({ name, description }: { name: string; description: string }) => void;
   isSubmitting: boolean;
   fieldErrors: Partial<Record<'name' | 'description', string>>;
-  initialValues?: { name: string; description: string };
+  initialValues?: { name: string; description: string | null };
 }
 
 const defaultInitialValues = {
@@ -39,7 +39,7 @@ export default function StudyForm({
     return value;
   });
   const [descriptionValue, handleDescriptionValue] = useInputState(
-    initialValues.description,
+    initialValues.description ?? '',
     (value, prevValue) => {
       if (value.length > STUDY_DESCRIPTION.length) return prevValue;
       return value;
