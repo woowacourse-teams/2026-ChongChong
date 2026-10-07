@@ -7,17 +7,16 @@ import CopySuccessIcon from '../../../shared/assets/check.svg';
 import studyQueries from '../../study/queries';
 import useCopyLink from '../hooks/useCopyLink';
 
-interface InviteStudyLinkBoxProps {
+interface InviteStudyLinkSectionProps {
   studyId: number;
 }
 
 interface InviteLinkBoxProps {
-  title: string;
   inviteLink: string;
 }
 
-interface InviteStudyLinkBoxFallbackProps {
-  message: string | undefined;
+interface InviteStudyLinkSectionFallbackProps {
+  message?: string;
 }
 
 const inviteDescriptionStyle = {
@@ -51,15 +50,21 @@ const copyButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-export default function InviteStudyLinkBox({ studyId }: InviteStudyLinkBoxProps) {
+export function InviteStudyLinkSection({ studyId }: InviteStudyLinkSectionProps) {
   const {
     data: { inviteLink },
   } = useSuspenseQuery(studyQueries.inviteLink(studyId));
 
-  return <InviteLinkBox title="링크를 통해 새로운 스터디원을 초대해요" inviteLink={inviteLink} />;
+  return (
+    <section>
+      <h2 css={typography.subtitle}>초대 링크</h2>
+      <InviteLinkBox inviteLink={inviteLink} />
+      <p css={inviteDescriptionStyle}>링크를 통해 새로운 스터디원을 초대해요</p>
+    </section>
+  );
 }
 
-export function InviteLinkBox({ title, inviteLink }: InviteLinkBoxProps) {
+export function InviteLinkBox({ inviteLink }: InviteLinkBoxProps) {
   const { isCopySuccess, copyLink } = useCopyLink();
   const posthog = usePostHog();
 
@@ -71,40 +76,38 @@ export function InviteLinkBox({ title, inviteLink }: InviteLinkBoxProps) {
   };
 
   return (
-    <>
-      <p css={inviteDescriptionStyle}>{title}</p>
-      <div css={inviteLinkBlockStyle}>
-        <span css={inviteLinkStyle}>{inviteLink}</span>
-        <button
-          css={[copyButtonStyle, isCopySuccess && { cursor: 'default' }]}
-          type="button"
-          onClick={handleCopy}
-          aria-label="링크 복사"
-          disabled={isCopySuccess}
-        >
-          <img src={isCopySuccess ? CopySuccessIcon : CopyIcon} width={20} height={20} alt="" />
-        </button>
-      </div>
-    </>
+    <div css={inviteLinkBlockStyle}>
+      <span css={inviteLinkStyle}>{inviteLink}</span>
+      <button
+        css={[copyButtonStyle, isCopySuccess && { cursor: 'default' }]}
+        type="button"
+        onClick={handleCopy}
+        aria-label="링크 복사"
+        disabled={isCopySuccess}
+      >
+        <img src={isCopySuccess ? CopySuccessIcon : CopyIcon} width={20} height={20} alt="" />
+      </button>
+    </div>
   );
 }
 
-export function InviteStudyLinkBoxFallback({
-  message = '요청이 실패했습니다.',
-}: InviteStudyLinkBoxFallbackProps) {
+export function InviteStudyLinkSectionFallback({ message }: InviteStudyLinkSectionFallbackProps) {
   return (
-    <div css={inviteLinkBlockStyle}>
-      <span css={inviteLinkStyle} role="alert">
-        {message}
-      </span>
-      <button
-        css={[copyButtonStyle, { cursor: 'none', opacity: 0.5 }]}
-        type="button"
-        aria-label="링크 복사"
-        disabled
-      >
-        <img src={CopyIcon} width={16} height={20} alt="" />
-      </button>
-    </div>
+    <section>
+      <h2 css={typography.subtitle}>초대 링크</h2>
+      <div css={inviteLinkBlockStyle}>
+        <span css={inviteLinkStyle} role="alert">
+          {message ?? '초대링크를 가져오지 못했어요'}
+        </span>
+        <button
+          css={[copyButtonStyle, { cursor: 'default', opacity: 0.5 }]}
+          type="button"
+          aria-label="링크 복사"
+          disabled
+        >
+          <img src={CopyIcon} width={20} height={20} alt="" />
+        </button>
+      </div>
+    </section>
   );
 }

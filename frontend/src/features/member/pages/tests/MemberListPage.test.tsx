@@ -101,6 +101,15 @@ describe('멤버 목록 페이지 테스트', () => {
       mockStudyInviteLink();
     });
 
+    test.each([leaderUserName, memberUserName])(
+      '현재 인원수와 최대 인원수가 표시된다',
+      async (userName) => {
+        login(userName);
+        setupMemberListPage();
+        expect(await screen.findByText('2 / 50')).toBeVisible();
+      },
+    );
+
     test.each([leaderUserName, memberUserName])('초대링크가 표시된다', async (userName) => {
       login(userName);
       setupMemberListPage();
