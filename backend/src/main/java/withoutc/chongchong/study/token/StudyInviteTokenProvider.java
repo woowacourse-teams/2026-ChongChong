@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.Mac;
@@ -25,18 +27,28 @@ public class StudyInviteTokenProvider {
     private static final String PURPOSE = "study_join";
     private static final byte[] PURPOSE_BYTES = PURPOSE.getBytes(StandardCharsets.UTF_8);
     private static final int FPE_RADIX = 256;
+
+    private static final int STUDY_ID_BYTE_LENGTH = 8;
+    private static final int EXPIRES_AT_BYTE_LENGTH = 4;
+    private static final int PAYLOAD_LENGTH = STUDY_ID_BYTE_LENGTH + EXPIRES_AT_BYTE_LENGTH;
+
     private static final int SIGNATURE_LENGTH = 8;
-    private static final int TOKEN_BYTE_LENGTH = Long.BYTES + SIGNATURE_LENGTH;
-    private static final int TOKEN_LENGTH = 22;
+    private static final int TOKEN_BYTE_LENGTH = PAYLOAD_LENGTH + SIGNATURE_LENGTH;
+    private static final int TOKEN_LENGTH = 27;
+
+    private static final Duration INVITE_TOKEN_TTL = Duration.ofDays(3);
 
     private final SecretKey secretKey;
     private final byte[] secretBytes;
+    private final Clock clock;
 
     public StudyInviteTokenProvider(
-            @Value("${jwt.study-invite-secret}") String secret
+            @Value("${jwt.study-invite-secret}") String secret,
+            Clock clock
     ) {
         this.secretBytes = Base64.getDecoder().decode(secret);
         this.secretKey = new SecretKeySpec(secretBytes, HMAC_ALGORITHM);
+        this.clock = clock;
     }
 
     public String generate(Long studyId) {
@@ -44,19 +56,40 @@ public class StudyInviteTokenProvider {
             throw new StudyException(StudyErrorCode.INVALID_STUDY_ID);
         }
 
-        byte[] studyIdBytes = ByteBuffer.allocate(Long.BYTES)
-                .putLong(studyId)
-                .array();
-        byte[] transformedStudyIdBytes = transformStudyId(studyIdBytes, true);
-        byte[] tokenBytes = new byte[TOKEN_BYTE_LENGTH];
-
-        // [ 섞인 studyId 8바이트 ][ 서명 8바이트 ]
-        System.arraycopy(transformedStudyIdBytes, 0, tokenBytes, 0, Long.BYTES);
-        System.arraycopy(sign(transformedStudyIdBytes), 0, tokenBytes, Long.BYTES, SIGNATURE_LENGTH);
+        byte[] payload = generatePayload(studyId);
+        byte[] tokenBytes = createTokenBytes(payload);
 
         return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(tokenBytes);
+    }
+
+    private byte[] generatePayload(Long studyId) {
+        byte[] studyIdBytes = ByteBuffer.allocate(Long.BYTES)
+                .putLong(studyId)
+                .array();
+        byte[] transformedStudyIdBytes = transformStudyId(studyIdBytes, true);
+
+        long expiresAt = clock.instant()
+                .plus(INVITE_TOKEN_TTL)
+                .getEpochSecond();
+
+        // 변환한 스터디 ID와 만료 시각을 payload로 직렬화
+        return ByteBuffer.allocate(PAYLOAD_LENGTH)
+                .put(transformedStudyIdBytes)
+                .putInt((int) expiresAt)
+                .array();
+    }
+
+    private byte[] createTokenBytes(byte[] payload) {
+        // HMAC-SHA256 결과 총 32바이트 중 앞 8바이트만 서명으로 사용
+        byte[] signature = Arrays.copyOf(sign(payload), SIGNATURE_LENGTH);
+
+        // payload와 서명을 연결해 토큰 바이트 생성
+        return ByteBuffer.allocate(TOKEN_BYTE_LENGTH)
+                .put(payload)
+                .put(signature)
+                .array();
     }
 
     public Long verifyAndExtractStudyId(String token) {
@@ -66,28 +99,16 @@ public class StudyInviteTokenProvider {
 
         try {
             byte[] tokenBytes = Base64.getUrlDecoder().decode(token);
-            String reEncodedToken = Base64.getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(tokenBytes);
-            if (!reEncodedToken.equals(token)) {
-                throw invalidInviteToken();
-            }
 
-            byte[] transformedStudyIdBytes = Arrays.copyOf(tokenBytes, Long.BYTES);
-            byte[] actualSignature = Arrays.copyOfRange(tokenBytes, Long.BYTES, TOKEN_BYTE_LENGTH);
+            validateCanonicalEncoding(tokenBytes, token);
 
-            // 서명 다시 생성 후 추출한 서명과 비교
-            byte[] expectedSignature = Arrays.copyOf(sign(transformedStudyIdBytes), SIGNATURE_LENGTH);
-            if (!MessageDigest.isEqual(actualSignature, expectedSignature)) {
-                throw invalidInviteToken();
-            }
+            byte[] payload = Arrays.copyOf(tokenBytes, PAYLOAD_LENGTH);
+            byte[] actualSignature = Arrays.copyOfRange(tokenBytes, PAYLOAD_LENGTH, TOKEN_BYTE_LENGTH);
 
-            byte[] studyIdBytes = transformStudyId(transformedStudyIdBytes, false);
-            long studyId = ByteBuffer.wrap(studyIdBytes).getLong();
-            if (studyId <= 0) {
-                throw invalidInviteToken();
-            }
-            return studyId;
+            validateSignature(payload, actualSignature);
+            validateNotExpired(payload);
+
+            return extractStudyId(payload);
         } catch (IllegalArgumentException e) {
             throw invalidInviteToken();
         }
@@ -95,6 +116,7 @@ public class StudyInviteTokenProvider {
 
     private byte[] transformStudyId(byte[] studyIdBytes, boolean encrypt) {
         FPEEngine fpe = new FPEFF1Engine();
+        // encrypt 값에 따라 스터디 ID를 암호화 또는 복호화
         fpe.init(encrypt, new FPEParameters(new KeyParameter(secretBytes), FPE_RADIX, PURPOSE_BYTES));
 
         byte[] transformedStudyIdBytes = new byte[studyIdBytes.length];
@@ -102,14 +124,50 @@ public class StudyInviteTokenProvider {
         return transformedStudyIdBytes;
     }
 
-    private byte[] sign(byte[] studyIdBytes) {
+    private byte[] sign(byte[] payload) {
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             mac.init(secretKey);
             mac.update(PURPOSE_BYTES);
-            return mac.doFinal(studyIdBytes);
+            return mac.doFinal(payload);
         } catch (GeneralSecurityException e) {
             throw new StudyException(StudyErrorCode.INVITE_TOKEN_SIGN_FAILED);
+        }
+    }
+
+    private long extractStudyId(byte[] payload) {
+        byte[] transformedStudyIdBytes = Arrays.copyOf(payload, STUDY_ID_BYTE_LENGTH);
+        byte[] studyIdBytes = transformStudyId(transformedStudyIdBytes, false);
+        long studyId = ByteBuffer.wrap(studyIdBytes).getLong();
+        if (studyId <= 0) {
+            throw invalidInviteToken();
+        }
+        return studyId;
+    }
+
+    private void validateCanonicalEncoding(byte[] tokenBytes, String token) {
+        String reEncodedToken = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(tokenBytes);
+        if (!reEncodedToken.equals(token)) {
+            throw invalidInviteToken();
+        }
+    }
+
+    private void validateSignature(byte[] payload, byte[] actualSignature) {
+        // 서명 재생성 후 추출한 서명과 비교
+        byte[] expectedSignature = Arrays.copyOf(sign(payload), SIGNATURE_LENGTH);
+        if (!MessageDigest.isEqual(actualSignature, expectedSignature)) {
+            throw invalidInviteToken();
+        }
+    }
+
+    private void validateNotExpired(byte[] payload) {
+        long expiresAt = Integer.toUnsignedLong(
+                ByteBuffer.wrap(payload, STUDY_ID_BYTE_LENGTH, EXPIRES_AT_BYTE_LENGTH).getInt()
+        );
+        if (clock.instant().getEpochSecond() >= expiresAt) {
+            throw invalidInviteToken();
         }
     }
 
