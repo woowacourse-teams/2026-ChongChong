@@ -1,6 +1,7 @@
 package withoutc.chongchong.notice.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,6 +27,13 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     default Notice getByIdOrThrow(Long noticeId) {
         return findById(noticeId).orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
+    }
+
+    Optional<Notice> findByIdAndStudyId(Long noticeId, Long studyId);
+
+    default Notice getByIdAndStudyIdOrThrow(Long noticeId, Long studyId) {
+        return findByIdAndStudyId(noticeId, studyId)
+                .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
     // 리더용

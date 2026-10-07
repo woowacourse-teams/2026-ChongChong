@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
+import withoutc.chongchong.notice.exception.NoticeErrorCode;
+import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.study.entity.Study;
@@ -52,6 +54,30 @@ class NoticeRecipientRepositoryTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Test
+    @DisplayName("공지와 멤버가 모두 일치하는 수신자만 조회한다")
+    void getByNoticeIdAndMemberIdOrThrowTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember firstMember = createMember(study, "첫 번째 멤버", StudyMemberRole.MEMBER);
+        StudyMember secondMember = createMember(study, "두 번째 멤버", StudyMemberRole.MEMBER);
+        Notice firstNotice = Notice.create(study, "첫 번째 공지", "내용");
+        firstNotice.addRecipients(List.of(firstMember));
+        Notice secondNotice = Notice.create(study, "두 번째 공지", "내용");
+        secondNotice.addRecipients(List.of(secondMember));
+        noticeRepository.saveAllAndFlush(List.of(firstNotice, secondNotice));
+
+        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                firstNotice.getId(), firstMember.getId());
+
+        assertThat(recipient.getId()).isEqualTo(firstNotice.getRecipients().getFirst().getId());
+        assertThatThrownBy(() -> noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                firstNotice.getId(), secondMember.getId()))
+                .isInstanceOfSatisfying(NoticeException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND));
+        assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(
+                secondNotice.getId(), firstMember.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("여러 공지의 읽음 상태를 StudyMember id로 한 번에 조회한다")
