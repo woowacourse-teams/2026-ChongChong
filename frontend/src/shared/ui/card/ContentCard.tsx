@@ -105,6 +105,7 @@ const footerStyle = {
   alignItems: 'flex-start',
   gap: tokens.spacing[2],
   marginTop: 'auto',
+  overflow: 'hidden',
 } satisfies CSSProperties;
 
 const metaStyle = {
