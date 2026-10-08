@@ -6,7 +6,7 @@
 
 | 영역     | 기술                                                                   |
 | -------- | ---------------------------------------------------------------------- |
-| Frontend | React 19, TypeScript 6, Webpack 5, pnpm 11 (React Native 앱 배포 예정) |
+| Frontend | React 19, TypeScript 6, Webpack 5, pnpm 11 |
 | Backend  | Java 25, Spring Boot 4, Gradle                                         |
 
 ## 저장소 구조
@@ -15,22 +15,11 @@
 .
 ├── backend/     # Spring Boot 애플리케이션
 ├── frontend/    # React 애플리케이션
-├── app/         # React Native + Expo 네이티브 앱
 ├── docs/        # 프로젝트 문서
 └── .github/     # GitHub Actions와 협업 템플릿
 ```
 
 ## 로컬 실행
-
-### App
-
-```bash
-cd app
-pnpm install --frozen-lockfile
-pnpm start
-```
-
-플랫폼별 실행과 UI 확인 방법은 [앱 실행 가이드](app/README.md)를 참고합니다.
 
 ### Frontend
 
@@ -67,7 +56,6 @@ cd backend
 ```text
 fe/*      ─┐
 be/*      ─┼→ dev → prod
-app/*     ─┤
 common/*  ─┘
 ```
 
