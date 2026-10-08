@@ -3,12 +3,12 @@
 -- Auditing, so shift suspect earlier values and keep it no earlier than corrected created_at.
 UPDATE web_push_subscriptions
 SET updated_at = CASE
-        WHEN updated_at < created_at + INTERVAL '9 hours'
+        WHEN updated_at < created_at + INTERVAL '9' HOUR
             THEN GREATEST(
-                updated_at + INTERVAL '9 hours',
-                created_at + INTERVAL '9 hours'
+                updated_at + INTERVAL '9' HOUR,
+                created_at + INTERVAL '9' HOUR
             )
         ELSE updated_at
     END,
-    created_at = created_at + INTERVAL '9 hours'
+    created_at = created_at + INTERVAL '9' HOUR
 WHERE created_at IS NOT NULL;
