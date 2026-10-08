@@ -14,6 +14,7 @@ import InfoCard from './InfoCard';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import { CSSObject } from '@emotion/react';
 
 interface Props {
   assignmentId: number;
@@ -48,9 +49,15 @@ const cardListStyle = {
 
 const linkStyle = {
   display: 'block',
-  color: 'inherit',
+  color: tokens.text.link,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
   overflowWrap: 'anywhere',
-} satisfies CSSProperties;
+
+  '&:hover': {
+    opacity: 0.7,
+  },
+} satisfies CSSObject;
 
 const editButtonStyle = {
   marginTop: tokens.spacing[5],
@@ -64,6 +71,8 @@ export default function CompletedAssignmentSubmission({
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
+
+  const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
@@ -113,7 +122,7 @@ export default function CompletedAssignmentSubmission({
 
         {submission.link && (
           <InfoCard icon={linkIcon} title="링크">
-            <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
+            <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
           </InfoCard>
