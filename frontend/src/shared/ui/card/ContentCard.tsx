@@ -105,14 +105,21 @@ const footerStyle = {
   alignItems: 'flex-start',
   gap: tokens.spacing[2],
   marginTop: 'auto',
-  overflow: 'hidden',
 } satisfies CSSProperties;
 
 const metaStyle = {
   ...typography.footnote,
   display: 'inline-flex',
+  width: '100%',
+  minWidth: 0,
   alignItems: 'center',
   gap: '6px',
+} satisfies CSSProperties;
+
+const metaTextStyle = {
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
@@ -170,7 +177,7 @@ function Meta({ tone = 'muted', icon, children }: MetaProps) {
   return (
     <span css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}>
       {icon && <>{icon}</>}
-      {children}
+      <span css={metaTextStyle}>{children}</span>
     </span>
   );
 }
