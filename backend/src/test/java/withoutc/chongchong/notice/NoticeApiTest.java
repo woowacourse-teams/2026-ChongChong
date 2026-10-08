@@ -20,6 +20,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -774,6 +776,93 @@ class NoticeApiTest {
 
         assertThat(persistedReadAt).isNotNull();
         assertThat(readAt).isEqualTo(persistedReadAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        assertThat(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                notice.getId(), secondMember.getId()).getReadAt()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"GET,''", "PATCH,''", "DELETE,''", "GET,/status", "GET,/status/me", "PATCH,/read"})
+    @DisplayName("다른 스터디의 공지는 단건 API에서 찾을 수 없고 공지와 읽음 상태가 유지된다")
+    void rejectNoticeFromOtherStudyTest(String method, String suffix) {
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        StudyMember otherLeader = studyMemberRepository.save(
+                StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
+        );
+        Notice otherNotice = Notice.create(otherStudy, "다른 공지", "다른 공지 내용");
+        otherNotice.addRecipients(List.of(otherLeader));
+        noticeRepository.saveAndFlush(otherNotice);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "변경 시도"))
+                .when()
+                .request(method, "/studies/{studyId}/notices/{noticeId}" + suffix,
+                        study.getId(), otherNotice.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("NOTICE_NOT_FOUND"));
+
+        Notice unchangedNotice = noticeRepository.findById(otherNotice.getId()).orElseThrow();
+        assertThat(unchangedNotice.getTitle()).isEqualTo("다른 공지");
+        assertThat(unchangedNotice.getContent()).isEqualTo("다른 공지 내용");
+        assertThat(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                otherNotice.getId(), otherLeader.getId()).getReadAt()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"GET,''", "PATCH,''", "DELETE,''", "GET,/status", "GET,/status/me", "PATCH,/read"})
+    @DisplayName("스터디 비참여자는 단건 공지 API에 접근할 수 없다")
+    void rejectNoticeAccessByNonParticipantTest(String method, String suffix) {
+        User outsider = userRepository.saveAndFlush(User.create("외부 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(outsider.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "변경 시도"))
+                .when()
+                .request(method, "/studies/{studyId}/notices/{noticeId}" + suffix,
+                        study.getId(), notice.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+
+        assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle()).isEqualTo("기존 공지");
+        assertThat(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                notice.getId(), member.getId()).getReadAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("스터디원은 공지를 생성할 수 없으며 공지 수는 유지된다")
+    void rejectCreateNoticeByMemberTest() {
+        long originalCount = noticeRepository.count();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "공지 제목", "content", "공지 내용"))
+                .when()
+                .post("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("스터디원은 공지를 삭제할 수 없으며 기존 공지는 유지된다")
+    void rejectDeleteNoticeByMemberTest() {
+        long originalCount = noticeRepository.count();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+        assertThat(noticeRepository.existsById(notice.getId())).isTrue();
     }
 
     @Test
