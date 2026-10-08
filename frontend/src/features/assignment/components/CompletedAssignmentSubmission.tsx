@@ -65,6 +65,8 @@ export default function CompletedAssignmentSubmission({
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
 
+  const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
+
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
@@ -113,7 +115,7 @@ export default function CompletedAssignmentSubmission({
 
         {submission.link && (
           <InfoCard icon={linkIcon} title="링크">
-            <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
+            <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
           </InfoCard>

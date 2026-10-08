@@ -71,6 +71,8 @@ export default function AssignmentSubmissionDetailContent() {
     assignmentQueries.submissionDetail(studyId, assignmentId, submissionId),
   );
 
+  const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
+
   return (
     <article css={articleStyle} aria-labelledby="submission-member-name">
       <header css={submitterStyle}>
@@ -93,7 +95,7 @@ export default function AssignmentSubmissionDetailContent() {
 
         {submission.link && (
           <InfoCard icon={linkIcon} title="링크">
-            <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
+            <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
           </InfoCard>
