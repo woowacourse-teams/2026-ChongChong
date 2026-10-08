@@ -14,6 +14,7 @@ import InfoCard from './InfoCard';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import { CSSObject } from '@emotion/react';
 
 interface Props {
   assignmentId: number;
@@ -48,9 +49,15 @@ const cardListStyle = {
 
 const linkStyle = {
   display: 'block',
-  color: 'inherit',
+  color: tokens.text.link,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
   overflowWrap: 'anywhere',
-} satisfies CSSProperties;
+
+  '&:hover': {
+    opacity: 0.7,
+  },
+} satisfies CSSObject;
 
 const editButtonStyle = {
   marginTop: tokens.spacing[5],

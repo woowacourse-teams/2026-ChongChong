@@ -63,6 +63,7 @@ export const globalStyles = css`
     --text-muted: var(--option-sub-font-color-55);
     --text-placeholder: var(--option-placeholder-40);
     --text-brand: var(--green-500);
+    --text-link: #0ea5e9;
     --text-critical: var(--red-500);
     --text-on-brand: #ffffff;
     --text-on-brand-strong: var(--main-black);
@@ -195,6 +196,7 @@ export const tokens = {
     muted: 'var(--text-muted)',
     placeholder: 'var(--text-placeholder)',
     brand: 'var(--text-brand)',
+    link: 'var(--text-link)',
     critical: 'var(--text-critical)',
     onBrand: 'var(--text-on-brand)',
     onBrandStrong: 'var(--text-on-brand-strong)',

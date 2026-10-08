@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { CSSObject } from '@emotion/react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
@@ -56,9 +57,15 @@ const cardListStyle = {
 
 const linkStyle = {
   display: 'block',
-  color: 'inherit',
+  color: tokens.text.link,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
   overflowWrap: 'anywhere',
-} satisfies CSSProperties;
+
+  '&:hover': {
+    opacity: 0.7,
+  },
+} satisfies CSSObject;
 
 export default function AssignmentSubmissionDetailContent() {
   const { studyId, assignmentId, submissionId } = useIntegerParams([
