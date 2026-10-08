@@ -1,46 +1,33 @@
 # 공지
 
-[← v2 개요](README.md) · [v1 대비 변경](changes.md)
+[← 현재 PRD](README.md) · [구현 범위](scope.md)
 
-## 디자인에 있는 기능
+## 작성과 운영
 
-- 리더가 공지를 작성·수정·삭제한다.
-- 리더는 ‘요약’에서 확인 현황을, ‘상세’에서 본문을 확인한다.
-- 공지에 이미지를 추가하고 첨부한 항목을 제거할 수 있다.
-- 리마인드 날짜·시간을 선택하고 여러 예약을 추가·제거한다.
-- 스터디원은 공지 본문과 첨부 이미지를 조회한다.
-- 읽는 중에는 진행률을, 읽음 완료 시에는 완료 상태와 토스트를 표시한다.
-- 확인 대상이 아닌 스터디원도 본문을 열람하는 별도 상태가 있다.
+리더는 제목·내용을 입력해 공지를 작성하고 수정·삭제한다.
+제목은 최대 100자, 내용은 최대 10,000자까지 입력할 수 있다. 둘 다 비어 있거나 공백만으로 이루어져 있으면 저장할 수 없다.
+리더는 요약 화면에서 공지를 읽은 멤버와 아직 읽지 않은 멤버, 각각의 인원을 확인한다. 상세 화면에서는 공지 본문을 읽을 수 있다.
 
-## 현재 디자인의 정책
+## 공지를 읽으면 어떻게 표시되는가
 
-- 작성 후 가입한 스터디원에게 이전 글을 보여주되 확인 대상으로 할당하지 않는 방향이 메모에 명시되어 있다.
-- 리마인드 안내는 설정 시각까지 읽지 않은 스터디원을 대상으로 한다.
-- 대상이 아닌 사용자의 열람을 읽음 현황에 포함하지 않도록 조회와 확인 대상을 분리한다.
+공지를 작성할 당시의 일반 멤버가 확인 대상이 된다. 리더는 확인 대상에서 제외한다.
 
-> [!IMPORTANT]
-> 읽는 중 화면은 ‘끝까지 읽으면 읽음으로 표시돼요’라고 안내하지만, 일부 본문·작성 도움말에는 읽음 버튼 표현이 남아 있다.
-> 자동 읽음 처리와 버튼 확인 중 최종 동작을 확정해야 한다. v1은 스크롤 완료 시 자동 처리한다.
+확인 대상인 스터디원이 본문 끝까지 스크롤하면 웹이 자동으로 읽음 요청을 보낸다. 본문이 짧아 스크롤할 필요가 없을 때도 자동으로 요청한다.
+서버가 읽음을 저장하면 화면에 읽음 상태와 읽은 시각, 완료 안내를 표시한다. 이미 읽은 공지는 읽음 완료 상태로 보여준다.
 
-## v1에서 추가·변경할 기능
+공지 작성 후 가입한 멤버도 본문을 읽을 수 있지만 확인 대상은 아니다. 서버는 이 상태를 `NOT_ASSIGNED`로 구분하며, 웹은 읽음 요청을 보내지 않는다.
 
-- 이미지 업로드·연결·조회·제거와 작성 화면을 추가한다.
-- 예약 처리·알림 생성·Web Push 발송은 서버에 구현되어 있다. 웹 날짜·시간 예약 입력은 남아 있다.
-- 과거 공지 목록·상세 열람과 `NOT_ASSIGNED` 처리는 서버와 웹에 반영됐다. 대상이 아닌 사용자는 읽음 요청을 보내지 않는다.
-- 리더 요약·상세 탭, 읽음 진행률·자동 완료·토스트는 웹에 반영됐다. 이미지 첨부 화면은 남아 있다.
+## 다시 읽도록 알리는 예약 알림
 
-현재 구현 근거: [공지 서비스](../../../backend/src/main/java/withoutc/chongchong/notice/service/NoticeService.java), [멤버 상세](../../../frontend/src/features/notice/components/MemberNoticeDetailContent.tsx).
+서버에는 아직 공지를 읽지 않은 멤버에게 예약 알림을 보내는 기능이 있다. 앞으로의 시각만 예약할 수 있고, 같은 시각을 여러 번 보내면 하나로 저장한다.
+예약 시각이 되면 아직 읽지 않은 확인 대상에게 알림을 만든다. 웹 작성 화면에는 예약 시각을 입력하는 기능이 없다.
 
-> [!NOTE]
-> 이미지 형식·용량·개수와 확대 방식은 미확정이다. 서버의 예약 시각은 미래여야 하며 중복 시각은 하나로 합친다. 수정 시 생략·null은 유지하고 빈 배열은 대기 예약을 제거한다.
+예약을 수정하는 API는 요청 값에 따라 다음과 같이 처리한다.
 
-## Figma 근거
+- 예약 목록을 보내지 않거나 `null`을 보내면 기존 예약을 유지한다.
+- 빈 배열을 보내면 아직 발송하지 않은 예약을 지운다.
+- 시각 목록을 보내면 아직 발송하지 않은 예약을 새 목록으로 바꾼다.
 
-- [03-02-01 리더 요약](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-20772)
-- [03-03-01 공지 작성·수정](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-18804)
-- [03-03-02 날짜 선택](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-18848)
-- [03-03-03 시간 선택](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-18987)
-- [03-02-05 읽는 중](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19370)
-- [03-02-06 대상 아님](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19358)
-- [03-02-07 단일 이미지](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19298)
-- [03-02-08 읽음 완료 토스트](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19336)
+공지에 이미지를 첨부하는 기능은 없다. 멤버가 공지를 읽었을 때 리더에게 별도 알림을 보내는 기능도 없다.
+
+근거: [공지 서비스](../../../backend/src/main/java/withoutc/chongchong/notice/service/NoticeService.java), [읽음 서비스](../../../backend/src/main/java/withoutc/chongchong/notice/service/NoticeReadService.java), [공지 모델](../../../backend/src/main/java/withoutc/chongchong/notice/entity/Notice.java), [작성 폼](../../../frontend/src/features/notice/components/NoticeForm.tsx), [자동 읽음 화면](../../../frontend/src/features/notice/components/MemberNoticeDetailContent.tsx).

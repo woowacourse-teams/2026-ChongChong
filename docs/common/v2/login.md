@@ -1,26 +1,20 @@
 # 로그인
 
-[← v2 개요](README.md) · [v1 대비 변경](changes.md)
+[← 현재 PRD](README.md) · [구현 범위](scope.md)
 
-## 디자인에 있는 기능
+## 로그인과 로그아웃
 
-- 앱 시작 시 스플래시를 표시한다.
-- 카카오·Google·Apple 계정으로 로그인·회원가입하는 진입 버튼을 제공한다.
-- 로그인 화면에 서비스 이용약관·개인정보처리방침 동의 안내를 표시한다.
-- 푸시 알림 권한 안내에서 ‘나중에’ 또는 ‘알림 허용’을 선택한다.
+사용자는 카카오 로그인 버튼을 눌러 로그인한다. 처음 이용하는 사용자라면 로그인 과정에서 계정을 만든다.
+카카오 인증이 끝나면 웹이 인가 코드를 서버에 보내고, 서버가 발급한 액세스 토큰으로 로그인 상태를 유지한다. 토큰을 갱신할 때는 Refresh 쿠키를 사용한다.
 
-## v1에서 달라지는 점
+로그아웃을 선택하면 현재 브라우저의 푸시 알림 구독을 해제한 뒤 서버에 로그아웃을 요청한다.
 
-- v1의 카카오 로그인에 Google·Apple 로그인 진입과 연동을 추가한다.
-- 스플래시와 앱 알림 권한 안내를 추가한다.
-- 서버에 소셜 제공자 열거형이 있는 것과 실제 로그인 제공자 연동 완료는 구분한다.
+## 정책과 예외
 
-> [!NOTE]
-> 계정 연결·동일 이메일 병합, 로그인 취소·실패 처리, 권한 거부 후 재안내 시점은 화면만으로 확정할 수 없다.
-> 권한 안내의 정확한 노출 순서도 구현 전에 확인한다.
+- 현재 로그인할 수 있는 소셜 계정은 카카오다. Google·Apple 로그인은 제공하지 않는다.
+- 웹은 로그인·인증 갱신·로그아웃을 요청할 때 요청 위조를 막기 위한 CSRF 토큰을 함께 보낸다.
+- 인증 갱신에 실패하면 웹에 보관한 액세스 토큰을 지운다. 사용자는 다시 로그인해야 한다.
+- 서버는 로그아웃할 때 인증 세션을 처리하고 Refresh 쿠키를 만료시킨다.
+- 로그인해도 브라우저 푸시 알림이 자동으로 허용되지는 않는다. 푸시 알림은 [계정 메뉴](account.md)에서 관리한다.
 
-## Figma 근거
-
-- [00-01-01 스플래시](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19897)
-- [00-02-01 로그인 및 회원가입](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19876)
-- [00-03-01 알림 권한 안내](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19902)
+근거: [웹 인증 요청](../../../frontend/src/features/login/api.ts), [로그인 화면](../../../frontend/src/features/login/pages/LoginPage.tsx), [인증 컨트롤러](../../../backend/src/main/java/withoutc/chongchong/auth/controller/AuthController.java), [소셜 로그인 서비스](../../../backend/src/main/java/withoutc/chongchong/auth/service/SocialLoginService.java), [카카오 연동](../../../backend/src/main/java/withoutc/chongchong/auth/social/kakao/KakaoSocialLoginClient.java).

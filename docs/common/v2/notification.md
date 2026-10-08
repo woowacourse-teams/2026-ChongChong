@@ -1,38 +1,33 @@
 # 알림
 
-[← v2 개요](README.md) · [v1 대비 변경](changes.md)
+[← 현재 PRD](README.md) · [구현 범위](scope.md)
 
-## 디자인에 있는 기능
+## 알림함과 이동
 
-- 알림 목록에서 메시지·관련 내용·발생 시각과 상태 점을 표시한다.
-- 예시에는 ‘공지를 확인해주세요’, ‘새 공지가 올라왔어요’가 있다.
-- 시작 단계의 권한 안내와 마이페이지의 푸시 스위치를 제공한다.
-- 공지·과제 작성 화면에서 리마인드 날짜·시간을 등록·제거한다.
+알림함에서는 내 알림을 최신순으로 볼 수 있다. 아직 읽지 않은 알림은 따로 표시한다.
+알림을 누르면 서버에 읽음 처리를 요청하고 관련 화면으로 이동한다. 알림을 읽었다고 해서 공지를 끝까지 읽었거나 과제를 제출한 것으로 처리되지는 않는다.
 
-## 디자인 메모에 있는 발송 범위
+## 언제, 누구에게 알리는가
 
-- 공지·과제를 올렸을 때 스터디원에게 알림을 보낸다.
-- 설정한 리마인드 시각에 알림을 보낸다.
-- 과제에 참여하는 리더도 과제 리마인드 대상에 포함한다.
-- 당시 디자인 메모는 읽음·제출 알림을 후속 검토로 남겼다. 현재 서버는 최초 과제 제출 시 본인을 제외한 리더에게 알림을 생성한다. 공지 읽음 알림은 구현되지 않았다.
+| 계기 | 대상 |
+| --- | --- |
+| 새 공지 | 생성 시 공지 확인 대상인 일반 멤버 |
+| 새 과제 | 생성 시 제출 대상 중 작성자 제외 |
+| 공지 예약 시각이 됨 | 확인 대상 중 아직 공지를 읽지 않은 멤버 |
+| 과제 예약 시각이 됨 | 제출 대상 중 아직 제출하지 않은 멤버. 참여 중인 리더도 포함 |
+| 최초 과제 제출 | 제출자를 제외한 스터디 리더 |
 
-## 현재 구현과 남은 작업 (2026-09-30)
+다시 제출하거나 제출물을 수정할 때, 공지를 읽을 때는 새 알림을 만들지 않는다.
+공지·과제·스터디가 삭제되거나 멤버가 탈퇴·방출되면 관련 알림도 정리한다.
 
-- 기존 앱 푸시 토큰 API는 Web Push 구독 API로 교체되었다. 브라우저 설치 ID·endpoint·암호화 키를 등록하고 구독 ID로 비활성화한다.
-- 새 공지·과제, 최초 제출, 도래한 리마인드의 알림 생성과 활성 구독별 발송 워커가 구현되어 있다. 일시 장애 재시도와 만료 구독 비활성화도 처리한다.
-- 알림 목록·읽음 API와 웹 알림함이 연결돼 있다. 상태 점은 `isRead=false`를 의미한다. 알림함에서 선택하면 읽음 요청을 보내고 관련 화면으로 이동한다.
-- 마이페이지의 푸시 스위치, 브라우저 권한 요청, 서비스 워커 수신·클릭 이동이 연결되어 있다. 네이티브 앱 푸시와 계정 전체 수신 설정은 별도다.
-- 리마인드 예약 입력 UI는 남아 있다. 실제 운영 환경의 푸시 수신은 이번 문서 수정에서 검증하지 않았다.
+## 브라우저 푸시 알림
 
-근거: [알림 서비스](../../../backend/src/main/java/withoutc/chongchong/notification/service/NotificationService.java), [발송 워커](../../../backend/src/main/java/withoutc/chongchong/notification/worker/NotificationDeliveryWorker.java), [웹 푸시](../../../frontend/src/features/notification/push.ts), [알림함](../../../frontend/src/features/notification/pages/NotificationListPage.tsx).
+브라우저에서 알림 권한을 허용하고 푸시 구독을 등록하면 알림을 받을 수 있다. 웹은 서비스 워커를 통해 푸시 알림을 수신한다.
+서버에는 브라우저 설치 ID, 알림을 보낼 주소(endpoint), 암호화 키를 저장한다.
+서버의 발송 작업은 활성 구독으로 알림을 보낸다. 일시적인 오류로 보내지 못하면 다시 시도하고, 구독이 만료되면 더 이상 보내지 않도록 비활성화한다.
 
-> [!IMPORTANT]
-> 공지 읽음 알림 확대와 알림 보관 기간은 추가 정책 확인이 필요하다. 최초 제출 알림은 이미 구현된 동작으로 구분한다.
-> 2026-10-03 현재 백엔드는 최초 제출 시 제출자를 제외한 리더들에게 알림을 생성한다. 재제출·수정에는 추가하지 않는다. 리더 제출 시 다른 리더에게 보낼지에 대한 TODO는 남아 있다. [현재 구현 정책](assignment.md#최초-제출-알림)을 참고한다.
+마이페이지의 푸시 스위치는 현재 브라우저에만 적용된다. 계정 전체나 네이티브 앱의 알림 설정을 바꾸지는 않는다.
+서버에는 예약 알림 기능이 있지만, 웹의 공지·과제 작성 화면에는 예약 시각을 입력하는 기능이 없다.
+실제 운영 환경에서 푸시가 도착하는지는 확인하지 않았다. 알림 보관 기간도 이 문서에서 확정하지 않는다.
 
-## Figma 근거
-
-- [06-01-01 알림 목록](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-18702)
-- [발송 범위 메모](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1892-764)
-- [00-03-01 권한 안내](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19902)
-- [01-02-01 푸시 스위치](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-19740)
+근거: [알림 서비스](../../../backend/src/main/java/withoutc/chongchong/notification/service/NotificationService.java), [발송 워커](../../../backend/src/main/java/withoutc/chongchong/notification/worker/NotificationDeliveryWorker.java), [구독 서비스](../../../backend/src/main/java/withoutc/chongchong/notification/service/WebPushSubscriptionService.java), [웹 푸시](../../../frontend/src/features/notification/push.ts), [알림함](../../../frontend/src/features/notification/pages/NotificationListPage.tsx).
