@@ -10,7 +10,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default (_, argv) => {
   const mode = argv.mode ?? 'development';
-  const envFile = mode === 'production' ? '.env.production' : '.env.local';
+  const isProduction = mode === 'production';
+  const envFile = isProduction ? '.env.production' : '.env.local';
   const envPath = path.resolve(__dirname, envFile);
 
   // 배포 플랫폼에 등록된 환경 변수는 유지하고,
@@ -20,10 +21,15 @@ export default (_, argv) => {
   }
 
   const devApiProxyTarget = process.env.DEV_API_PROXY_TARGET;
+  const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+
+  if (isProduction && !sentryAuthToken) {
+    throw new Error('SENTRY_AUTH_TOKEN is required for a production build.');
+  }
 
   return {
     mode,
-    devtool: mode === 'production' ? 'hidden-source-map' : 'eval-cheap-module-source-map',
+    devtool: isProduction ? 'hidden-source-map' : 'eval-cheap-module-source-map',
 
     entry: './main.tsx',
 
@@ -82,15 +88,17 @@ export default (_, argv) => {
         'process.env.SENTRY_ENVIRONMENT': JSON.stringify(process.env.DEPLOY_ENV ?? mode),
       }),
 
-      ...(mode === 'production'
+      ...(isProduction
         ? [
             sentryWebpackPlugin({
               org: 'woowacourse-31',
               project: 'chongchong',
-              authToken: process.env.SENTRY_AUTH_TOKEN,
+              authToken: sentryAuthToken,
+              errorHandler(error) {
+                throw error;
+              },
               sourcemaps: {
                 assets: './dist/**/*.{js,map}',
-                filesToDeleteAfterUpload: './dist/**/*.map',
               },
             }),
           ]
