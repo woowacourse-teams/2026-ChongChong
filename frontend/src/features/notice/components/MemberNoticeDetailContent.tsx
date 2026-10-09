@@ -32,6 +32,12 @@ const contentStyle = {
   overflowY: 'auto',
 } satisfies CSSProperties;
 
+const contentBodyStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: tokens.spacing[5],
+} satisfies CSSProperties;
+
 const readStateStyle = {
   flexShrink: 0,
   // 공통 Main의 좌우·하단 여백을 상쇄해 읽음 상태 영역을 하단 탭에 맞춘다.
@@ -137,7 +143,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
         css={contentStyle}
         onScroll={canMarkAsRead ? updateReadProgress : undefined}
       >
-        <div ref={contentBodyRef}>
+        <div ref={contentBodyRef} css={contentBodyStyle}>
           <ContentDetailHeader
             title={notice.title}
             dateTime={notice.createdAt}
