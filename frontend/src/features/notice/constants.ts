@@ -12,5 +12,5 @@ export const NOTICE_CONTENT = {
 export const readStatusBadge = {
   READ: { variant: 'brandSolid', label: '읽음' },
   UNREAD: { variant: 'brandOutline', label: '읽지 않음' },
-  NOT_ASSIGNED: { variant: 'neutralSolid', label: '확인 대상 아님' },
+  NOT_ASSIGNED: { variant: 'neutralSolid', label: '이전 공지' },
 } satisfies Record<NoticeReadState, { variant: Variant; label: string }>;
