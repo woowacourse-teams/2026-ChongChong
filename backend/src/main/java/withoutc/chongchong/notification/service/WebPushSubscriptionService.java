@@ -1,5 +1,7 @@
 package withoutc.chongchong.notification.service;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ public class WebPushSubscriptionService {
 
     private final WebPushSubscriptionRepository webPushSubscriptionRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     @Transactional
     public WebPushSubscriptionRegisterResponse register(
@@ -32,20 +35,23 @@ public class WebPushSubscriptionService {
                 request.keys().auth()
         );
 
-        // 모든 등록 요청은 installationId -> endpoint 순서로 같은 키를 잠가 교차 충돌을 직렬화한다.
+        // 같은 installationId 또는 endpoint를 사용하는 등록 요청 직렬화
         webPushSubscriptionRepository.lockInstallationRegistration(request.installationId());
         webPushSubscriptionRepository.lockEndpointRegistration(request.endpoint());
+        LocalDateTime now = LocalDateTime.now(clock);
         webPushSubscriptionRepository.deactivateConflictingActiveSubscriptions(
                 userId,
                 request.installationId(),
-                request.endpoint()
+                request.endpoint(),
+                now
         );
         webPushSubscriptionRepository.upsert(
                 userId,
                 request.installationId(),
                 request.endpoint(),
                 request.keys().p256dh(),
-                request.keys().auth()
+                request.keys().auth(),
+                now
         );
 
         WebPushSubscription subscription = webPushSubscriptionRepository.getByUserIdAndInstallationIdOrThrow(userId,
@@ -55,6 +61,10 @@ public class WebPushSubscriptionService {
 
     @Transactional
     public void deactivate(Long userId, Long subscriptionId) {
-        webPushSubscriptionRepository.deactivateByIdAndUserId(subscriptionId, userId);
+        webPushSubscriptionRepository.deactivateByIdAndUserId(
+                subscriptionId,
+                userId,
+                LocalDateTime.now(clock)
+        );
     }
 }

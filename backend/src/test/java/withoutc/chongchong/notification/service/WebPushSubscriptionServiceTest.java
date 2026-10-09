@@ -1,12 +1,17 @@
 package withoutc.chongchong.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +35,7 @@ class WebPushSubscriptionServiceTest {
     private static final String ENDPOINT = "https://push.example.com/subscription";
     private static final String P256DH = "p256dh-key";
     private static final String AUTH = "auth-secret";
+    private static final Clock CLOCK = Clock.system(ZoneId.of("Asia/Seoul"));
 
     @Mock
     private WebPushSubscriptionRepository webPushSubscriptionRepository;
@@ -45,12 +51,15 @@ class WebPushSubscriptionServiceTest {
         when(userRepository.getByIdForUpdateOrThrow(USER_ID)).thenReturn(user);
         when(webPushSubscriptionRepository.getByUserIdAndInstallationIdOrThrow(USER_ID, INSTALLATION_ID))
                 .thenReturn(subscription);
-        when(webPushSubscriptionRepository.upsert(USER_ID, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)).thenReturn(1);
+        when(webPushSubscriptionRepository.upsert(
+                eq(USER_ID), eq(INSTALLATION_ID), eq(ENDPOINT), eq(P256DH), eq(AUTH), any(LocalDateTime.class)
+        )).thenReturn(1);
         when(subscription.getId()).thenReturn(10L);
 
         WebPushSubscriptionService service = new WebPushSubscriptionService(
                 webPushSubscriptionRepository,
-                userRepository
+                userRepository,
+                CLOCK
         );
 
         var response = service.register(USER_ID, request());
@@ -60,9 +69,11 @@ class WebPushSubscriptionServiceTest {
         inOrder.verify(webPushSubscriptionRepository).lockInstallationRegistration(INSTALLATION_ID);
         inOrder.verify(webPushSubscriptionRepository).lockEndpointRegistration(ENDPOINT);
         inOrder.verify(webPushSubscriptionRepository).deactivateConflictingActiveSubscriptions(
-                USER_ID, INSTALLATION_ID, ENDPOINT
+                eq(USER_ID), eq(INSTALLATION_ID), eq(ENDPOINT), any(LocalDateTime.class)
         );
-        inOrder.verify(webPushSubscriptionRepository).upsert(USER_ID, INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
+        inOrder.verify(webPushSubscriptionRepository).upsert(
+                eq(USER_ID), eq(INSTALLATION_ID), eq(ENDPOINT), eq(P256DH), eq(AUTH), any(LocalDateTime.class)
+        );
         org.assertj.core.api.Assertions.assertThat(response.subscriptionId()).isEqualTo(10L);
     }
 
@@ -74,7 +85,8 @@ class WebPushSubscriptionServiceTest {
 
         WebPushSubscriptionService service = new WebPushSubscriptionService(
                 webPushSubscriptionRepository,
-                userRepository
+                userRepository,
+                CLOCK
         );
 
         assertThatThrownBy(() -> service.register(USER_ID, request())).isSameAs(exception);
@@ -87,12 +99,15 @@ class WebPushSubscriptionServiceTest {
     void deactivateWebPushSubscription() {
         WebPushSubscriptionService service = new WebPushSubscriptionService(
                 webPushSubscriptionRepository,
-                userRepository
+                userRepository,
+                CLOCK
         );
 
         service.deactivate(USER_ID, 10L);
 
-        verify(webPushSubscriptionRepository).deactivateByIdAndUserId(10L, USER_ID);
+        verify(webPushSubscriptionRepository).deactivateByIdAndUserId(
+                eq(10L), eq(USER_ID), any(LocalDateTime.class)
+        );
         verifyNoInteractions(userRepository);
     }
 
