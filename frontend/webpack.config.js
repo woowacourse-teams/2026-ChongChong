@@ -4,6 +4,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'url';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import webpack from 'webpack';
+import { sentryWebpackPlugin } from '@sentry/webpack-plugin';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,6 +23,8 @@ export default (_, argv) => {
 
   return {
     mode,
+    devtool: mode === 'production' ? 'hidden-source-map' : 'eval-cheap-module-source-map',
+
     entry: './main.tsx',
 
     module: {
@@ -78,6 +81,20 @@ export default (_, argv) => {
         'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
         'process.env.SENTRY_ENVIRONMENT': JSON.stringify(process.env.DEPLOY_ENV ?? mode),
       }),
+
+      ...(mode === 'production'
+        ? [
+            sentryWebpackPlugin({
+              org: 'woowacourse-31',
+              project: 'chongchong',
+              authToken: process.env.SENTRY_AUTH_TOKEN,
+              sourcemaps: {
+                assets: './dist/**/*.{js,map}',
+                filesToDeleteAfterUpload: './dist/**/*.map',
+              },
+            }),
+          ]
+        : []),
     ],
 
     devServer: {
