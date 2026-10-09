@@ -2,10 +2,10 @@ import { useId, type CSSProperties, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { tokens, typography } from '../../styles/global';
 
-type Tab = 'summary' | 'detail';
+type Tab = 'status' | 'detail';
 
 interface Props {
-  summary: ReactNode;
+  status: ReactNode;
   detail: ReactNode;
 }
 
@@ -38,21 +38,21 @@ const panelStyle = {
   paddingTop: tokens.spacing[5],
 } satisfies CSSProperties;
 
-export default function DetailTabs({ summary, detail }: Props) {
+export default function DetailTabs({ status, detail }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab: Tab = searchParams.get('view') === 'detail' ? 'detail' : 'summary';
+  const activeTab: Tab = searchParams.get('view') === 'status' ? 'status' : 'detail';
   const id = useId();
-  const summaryTabId = `${id}-summary-tab`;
+  const statusTabId = `${id}-status-tab`;
   const detailTabId = `${id}-detail-tab`;
-  const summaryPanelId = `${id}-summary-panel`;
+  const statusPanelId = `${id}-status-panel`;
   const detailPanelId = `${id}-detail-panel`;
 
   const selectTab = (tab: Tab) => {
     setSearchParams((currentParams) => {
       const nextParams = new URLSearchParams(currentParams);
 
-      if (tab === 'detail') {
-        nextParams.set('view', 'detail');
+      if (tab === 'status') {
+        nextParams.set('view', 'status');
       } else {
         nextParams.delete('view');
       }
@@ -65,17 +65,6 @@ export default function DetailTabs({ summary, detail }: Props) {
     <>
       <div role="tablist" aria-label="콘텐츠 정보" css={tabListStyle}>
         <button
-          id={summaryTabId}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'summary'}
-          aria-controls={summaryPanelId}
-          css={{ ...tabStyle, ...(activeTab === 'summary' ? selectedTabStyle : {}) }}
-          onClick={() => selectTab('summary')}
-        >
-          요약
-        </button>
-        <button
           id={detailTabId}
           type="button"
           role="tab"
@@ -84,17 +73,28 @@ export default function DetailTabs({ summary, detail }: Props) {
           css={{ ...tabStyle, ...(activeTab === 'detail' ? selectedTabStyle : {}) }}
           onClick={() => selectTab('detail')}
         >
-          상세
+          내용
+        </button>
+        <button
+          id={statusTabId}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'status'}
+          aria-controls={statusPanelId}
+          css={{ ...tabStyle, ...(activeTab === 'status' ? selectedTabStyle : {}) }}
+          onClick={() => selectTab('status')}
+        >
+          현황
         </button>
       </div>
 
       <div
-        id={activeTab === 'summary' ? summaryPanelId : detailPanelId}
+        id={activeTab === 'detail' ? detailPanelId : statusPanelId}
         role="tabpanel"
-        aria-labelledby={activeTab === 'summary' ? summaryTabId : detailTabId}
+        aria-labelledby={activeTab === 'detail' ? detailTabId : statusTabId}
         css={panelStyle}
       >
-        {activeTab === 'summary' ? summary : detail}
+        {activeTab === 'detail' ? detail : status}
       </div>
     </>
   );
