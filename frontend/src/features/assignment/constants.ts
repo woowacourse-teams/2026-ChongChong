@@ -22,7 +22,7 @@ export const submissionStatusBadge = {
   LATE_SUBMITTED: { variant: 'brandSolid', label: '지각 제출' },
   NOT_SUBMITTED: { variant: 'brandOutline', label: '미제출' },
   MISSING: { variant: 'brandOutline', label: '마감 후 미제출' },
-  NOT_ASSIGNED: { variant: 'neutralSolid', label: '제출 대상 아님' },
+  NOT_ASSIGNED: { variant: 'neutralSolid', label: '이전 과제' },
 } satisfies Record<SubmissionStatus, { variant: Variant; label: string }>;
 
 export const visibilityOptions = [
