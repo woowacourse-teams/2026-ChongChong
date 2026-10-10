@@ -4,8 +4,10 @@
   "description": "chongchong frontend",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --mode production && find dist -type f -name '*.map' -delete && cp -R src/pwa dist/pwa",
-    "start": "webpack serve --mode development",
+    "build": "pnpm build:production",
+    "build:development": "webpack --config webpack.dev.js && cp -R src/pwa dist/pwa",
+    "build:production": "webpack --config webpack.prod.js && find dist -type f -name '*.map' -delete && cp -R src/pwa dist/pwa",
+    "start": "webpack serve --config webpack.dev.js",
     "type-check": "tsc --noemit",
     "lint": "eslint .",
     "format": "prettier --write .",
