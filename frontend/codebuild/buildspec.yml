@@ -30,10 +30,7 @@ phases:
         if (!expectedOrigin || process.env.API_BASE_URL !== expectedOrigin) {
           throw new Error('DEPLOY_ENV must be dev or prod and match API_BASE_URL');
         }
-        const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY'];
-        if (process.env.DEPLOY_ENV === 'prod') {
-          required.push('SENTRY_AUTH_TOKEN');
-        }
+        const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY', 'SENTRY_AUTH_TOKEN'];
         for (const name of required) {
           if (!process.env[name]?.trim()) {
             throw new Error(`Missing CodeBuild environment variable: ${name}`);

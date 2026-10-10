@@ -2,10 +2,25 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { sentryWebpackPlugin } from '@sentry/webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import webpack from 'webpack';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export function createSentryPlugin(authToken) {
+  return sentryWebpackPlugin({
+    org: 'woowacourse-31',
+    project: 'chongchong',
+    authToken,
+    errorHandler(error) {
+      throw error;
+    },
+    sourcemaps: {
+      assets: './dist/**/*.{js,map}',
+    },
+  });
+}
 
 export function createCommonConfig({ envFile, environment, assetFilename }) {
   if (envFile) {

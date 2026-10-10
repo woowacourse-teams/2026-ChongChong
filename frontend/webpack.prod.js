@@ -1,7 +1,6 @@
 import process from 'node:process';
-import { sentryWebpackPlugin } from '@sentry/webpack-plugin';
 import { merge } from 'webpack-merge';
-import { createCommonConfig } from './webpack.common.js';
+import { createCommonConfig, createSentryPlugin } from './webpack.common.js';
 
 const commonConfig = createCommonConfig({
   envFile: '.env.production',
@@ -23,17 +22,5 @@ export default merge(commonConfig, {
     chunkFilename: '[name].[contenthash:16].js',
   },
 
-  plugins: [
-    sentryWebpackPlugin({
-      org: 'woowacourse-31',
-      project: 'chongchong',
-      authToken: sentryAuthToken,
-      errorHandler(error) {
-        throw error;
-      },
-      sourcemaps: {
-        assets: './dist/**/*.{js,map}',
-      },
-    }),
-  ],
+  plugins: [createSentryPlugin(sentryAuthToken)],
 });

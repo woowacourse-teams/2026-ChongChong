@@ -2,7 +2,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { merge } from 'webpack-merge';
-import { createCommonConfig } from './webpack.common.js';
+import { createCommonConfig, createSentryPlugin } from './webpack.common.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const commonConfig = createCommonConfig({
@@ -10,6 +10,12 @@ const commonConfig = createCommonConfig({
   environment: 'development',
   assetFilename: 'assets/[name][ext]',
 });
+const isDeploymentBuild = process.env.DEPLOY_ENV === 'dev';
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+
+if (isDeploymentBuild && !sentryAuthToken) {
+  throw new Error('SENTRY_AUTH_TOKEN is required for a development deployment build.');
+}
 
 export default merge(commonConfig, {
   mode: 'development',
@@ -19,6 +25,8 @@ export default merge(commonConfig, {
     filename: 'bundle.js',
     chunkFilename: '[name].js',
   },
+
+  plugins: isDeploymentBuild ? [createSentryPlugin(sentryAuthToken)] : [],
 
   devServer: {
     static: [
