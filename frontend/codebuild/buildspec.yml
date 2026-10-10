@@ -87,10 +87,17 @@ phases:
         NODE_ENV="$BUILD_ENV" BABEL_ENV="$BUILD_ENV" pnpm "$BUILD_SCRIPT"
 
         test -s dist/index.html
+        test -s dist/pwa/manifest.webmanifest
 
-        # 자산을 먼저 올립니다. 기존 S3 파일은 삭제하지 않습니다.
-        aws s3 cp dist/ "$SITE_PATH/" --recursive --exclude "index.html" \
+        # 해시 자산을 먼저 올립니다. 기존 S3 파일은 삭제하지 않습니다.
+        aws s3 cp dist/ "$SITE_PATH/" --recursive \
+          --exclude "index.html" --exclude "pwa/*" \
           --no-follow-symlinks --cache-control "$ASSET_CACHE_CONTROL" \
+          --only-show-errors --region ap-northeast-2
+
+        # PWA 파일은 이름이 고정되어 있으므로 환경과 관계없이 재검증하도록 합니다.
+        aws s3 cp dist/pwa/ "$SITE_PATH/pwa/" --recursive \
+          --no-follow-symlinks --cache-control "no-cache" \
           --only-show-errors --region ap-northeast-2
 
         # 자산 업로드가 성공한 뒤 HTML을 교체합니다.
