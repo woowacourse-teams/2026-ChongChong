@@ -50,7 +50,7 @@ export default function LeaderAssignmentDetailContent({ studyId, userName }: Pro
         meta={`${formatDateToString(assignment.closeAt)} 마감`}
       />
       <DetailTabs
-        summary={
+        status={
           <>
             <SubmitStatus status={submitStatusResponse} />
             {mySubmission ? <MySubmissionStatus submission={mySubmission} member={member} /> : null}
