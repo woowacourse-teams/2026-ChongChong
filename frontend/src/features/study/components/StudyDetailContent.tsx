@@ -1,5 +1,5 @@
-import { CSSProperties } from 'react';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { CSSProperties, useMemo } from 'react';
+import { useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { tokens, typography } from '../../../styles/global';
 import noticeIcon from '../../../shared/assets/notice-green.webp';
@@ -12,10 +12,11 @@ import {
   MemberActiveNoticeCard,
   MemberActiveAssignmentCard,
 } from './ActiveStudyCard';
-import { StudyLeaderWelcomeBanner, StudyMemberWelcomeBanner } from './WelcomeBanner';
+import { CheeringBanner, TodoBanner, InviteMemberBanner } from './Banner';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import SleepIcon from '../../../shared/assets/icons/sleep-icon.webp';
 import WritingLogo from '../../../shared/assets/icons/writing-logo.webp';
+import { memberQueries } from '../../member/queries';
 
 const StatusCardListStyle = {
   display: 'flex',
@@ -110,26 +111,43 @@ const IconStyle = {
 
 export function LeaderStudyDetailContent({ username }: { username: string }) {
   const { studyId } = useIntegerParams(['studyId']);
-  const { data } = useSuspenseQuery(studyQueries.detail(studyId, 'LEADER'));
-  const activeContentCount = data.notices.count + data.assignments.count;
+  const [
+    {
+      data: { notices, assignments },
+    },
+    {
+      data: { nowMemberCount },
+    },
+  ] = useSuspenseQueries({
+    queries: [studyQueries.detail(studyId, 'LEADER'), memberQueries.list(studyId)],
+  });
+
+  const activeContentCount = useMemo(
+    () => notices.count + assignments.count,
+    [notices, assignments],
+  );
 
   return (
     <div css={DetailContentStyle}>
-      <StudyLeaderWelcomeBanner username={username} />
+      {nowMemberCount === 1 ? (
+        <InviteMemberBanner invitePageLink={`/studies/${studyId}/members`} />
+      ) : (
+        <CheeringBanner username={username} />
+      )}
       <section css={SectionStyle}>
         <h2 css={SectionLabelStyle}>스터디 현황</h2>
         <div css={StatusCardListStyle}>
           <Link to="notices" css={StatusCardStyle}>
             <div>
               <img src={noticeIcon} alt="" css={IconStyle} />
-              <p css={StatusCountStyle}>{data.notices.count}</p>
+              <p css={StatusCountStyle}>{notices.count}</p>
               <p css={StatusLabelStyle}>안내 중인 공지</p>
             </div>
           </Link>
           <Link to="assignments" css={StatusCardStyle}>
             <div>
               <img src={assignmentIcon} alt="" css={IconStyle} />
-              <p css={StatusCountStyle}>{data.assignments.count}</p>
+              <p css={StatusCountStyle}>{assignments.count}</p>
               <p css={StatusLabelStyle}>진행 중인 과제</p>
             </div>
           </Link>
@@ -142,7 +160,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
           </div>
         ) : (
           <List aria-label="진행 중인 공지와 과제">
-            {data.notices.items.map((notice) => (
+            {notices.items.map((notice) => (
               <List.Item key={`notice-${notice.id}`}>
                 <Link to={`notices/${notice.id}`}>
                   <LeaderActiveNoticeCard
@@ -153,7 +171,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
                 </Link>
               </List.Item>
             ))}
-            {data.assignments.items.map((assignment) => (
+            {assignments.items.map((assignment) => (
               <List.Item key={`assignment-${assignment.id}`}>
                 <Link to={`assignments/${assignment.id}`}>
                   <LeaderActiveAssignmentCard
@@ -178,7 +196,7 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
 
   return (
     <div css={DetailContentStyle}>
-      <StudyMemberWelcomeBanner username={username} todoCount={todoCount} />
+      <TodoBanner username={username} todoCount={todoCount} />
       <div css={SectionListStyle}>
         {todoCount === 0 ? (
           <section css={CompletedContentStyle}>
