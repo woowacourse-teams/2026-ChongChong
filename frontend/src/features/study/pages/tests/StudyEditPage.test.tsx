@@ -33,7 +33,7 @@ async function findNameInput() {
 }
 
 function getDescriptionInput() {
-  return screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+  return screen.getByRole('textbox', { name: '스터디 설명' });
 }
 
 function getSubmitButton() {
