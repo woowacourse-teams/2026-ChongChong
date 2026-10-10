@@ -1,5 +1,5 @@
 export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-export const TIME_INTERVAL_MINUTES = 5;
+export const TIME_INTERVAL_MINUTES = 1;
 
 export interface CalendarDay {
   date: Date;
