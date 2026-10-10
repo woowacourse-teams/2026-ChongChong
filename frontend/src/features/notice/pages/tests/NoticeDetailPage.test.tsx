@@ -139,18 +139,17 @@ describe('리드 공지 상세', () => {
     userEvent.setup();
     renderNoticeDetailPage();
 
-    const detailTab = screen.getByRole('tab', { name: '내용' });
+    const detailTab = await screen.findByRole('tab', { name: '내용' });
     expect(detailTab).toHaveAttribute('aria-selected', 'true');
 
-    expect(screen.getByText('과제 내용')).toBeVisible();
-    expect(screen.getByText('제출 방법')).toBeVisible();
+    expect(screen.getByText('이번 주 스터디는 토요일에 진행합니다.')).toBeVisible();
   });
 
   test('내용에는 공지 본문을 표시하고 현황에는 확인 현황을 표시한다,', async () => {
     const user = userEvent.setup();
     renderNoticeDetailPage();
 
-    const detailTab = screen.getByRole('tab', { name: '내용' });
+    const detailTab = await screen.findByRole('tab', { name: '내용' });
     expect(detailTab).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByText('이번 주 스터디는 토요일에 진행합니다.')).toBeVisible();
     expect(screen.queryByRole('progressbar', { name: '공지 읽음률' })).not.toBeInTheDocument();
