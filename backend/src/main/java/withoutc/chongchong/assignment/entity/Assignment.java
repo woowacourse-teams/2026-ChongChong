@@ -36,6 +36,8 @@ import withoutc.chongchong.study.entity.StudyMember;
 public class Assignment extends BaseEntity {
 
     private static final int MAX_TITLE_LENGTH = 100;
+    private static final int MAX_CONTENT_LENGTH = 10000;
+    private static final int MAX_SUBMISSION_METHOD_LENGTH = 10000;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -89,7 +91,7 @@ public class Assignment extends BaseEntity {
         this.study = study;
         this.title = title;
         this.content = content;
-        this.submissionMethod = submissionMethod;
+        this.submissionMethod = normalizeSubmissionMethod(submissionMethod);
         this.submissionTarget = submissionTarget;
         this.submissionVisibility = submissionVisibility;
         this.closeAt = closeAt;
@@ -108,7 +110,7 @@ public class Assignment extends BaseEntity {
         }
         if (submissionMethod != null) {
             validateSubmissionMethod(submissionMethod);
-            this.submissionMethod = submissionMethod;
+            this.submissionMethod = normalizeSubmissionMethod(submissionMethod);
         }
 
         if (submissionTarget != null) {
@@ -185,15 +187,22 @@ public class Assignment extends BaseEntity {
     }
 
     private static void validateContent(String content) {
-        if (content == null || content.isBlank() || content.length() > 10000) {
+        if (content == null || content.isBlank() || content.length() > MAX_CONTENT_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
         }
     }
 
     private static void validateSubmissionMethod(String submissionMethod) {
-        if (submissionMethod == null || submissionMethod.isBlank() || submissionMethod.length() > 10000) {
+        if (submissionMethod != null && submissionMethod.length() > MAX_SUBMISSION_METHOD_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
         }
+    }
+
+    private static String normalizeSubmissionMethod(String submissionMethod) {
+        if (submissionMethod == null || submissionMethod.isBlank()) {
+            return "";
+        }
+        return submissionMethod;
     }
 
     private static void validateCloseAt(LocalDateTime closeAt, LocalDateTime now) {
