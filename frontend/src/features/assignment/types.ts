@@ -66,18 +66,22 @@ export type AssignmentValue = Omit<AssignmentDetail, 'id'> & {
 
 export type UpdateAssignmentValue = Partial<AssignmentValue>;
 
-export interface Submission {
+interface SubmissionBase {
   id: number;
   name: string;
   profileImage: string | null;
   createdAt: string;
 }
 
+export interface Submission extends SubmissionBase {
+  submissionStatus: 'SUBMITTED' | 'LATE_SUBMITTED';
+}
+
 export interface SubmissionListResponse {
   submissions: Submission[];
 }
 
-export interface SubmissionDetail extends Submission {
+export interface SubmissionDetail extends SubmissionBase {
   content: string;
   link: string | null;
 }
