@@ -26,7 +26,7 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
         meta={`${formatDateToString(notice.createdAt)} 작성`}
       />
       <DetailTabs
-        summary={
+        status={
           <>
             <NoticeReadStatus status={readStatus} />
             <ReadMemberList members={readStatus.readMembers} />
