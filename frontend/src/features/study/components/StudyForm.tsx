@@ -64,20 +64,22 @@ export default function StudyForm({
         value={nameValue}
         onChange={handleNameValue}
         maxLength={STUDY_NAME.length}
-        helpText="스터디원에게 그대로 보여요"
+        helpText="스터디 이름을 입력해 주세요"
         errorText={fieldErrors.name}
         isRequired
         testId="study-name-field"
+        placeholder="영어 회화 스터디"
       />
       <TextAreaField
         id="study-description"
-        label="어떤 스터디인가요?"
+        label="스터디 설명"
         value={descriptionValue}
         onChange={handleDescriptionValue}
         maxLength={STUDY_DESCRIPTION.length}
-        helpText="모이는 요일과 시간을 적어두면 초대할 때 설명이 줄어들어요"
+        helpText="스터디를 소개해 주세요"
         errorText={fieldErrors.description}
         testId="study-description-field"
+        placeholder="매주 수요일 저녁 7시, 영어로 대화해요"
       />
       <Button
         variant="brandSolid"
