@@ -1,6 +1,11 @@
 post:
   tags: [Auth]
   operationId: logout
+  x-frontend:
+    status: integrated
+    description: "마이페이지 로그아웃 메뉴에서 푸시 구독 해제 후 로그아웃을 호출한다."
+    sources:
+      - frontend/src/features/mypage/components/AccountMenuSection.tsx
   x-backend:
     status: done
     owner: JYL35

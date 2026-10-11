@@ -56,6 +56,31 @@ class UserTest {
                 .isEqualTo(UserErrorCode.INVALID_USER_NAME);
     }
 
+    @Test
+    @DisplayName("이름을 8자까지 수정할 수 있고 프로필 이미지는 유지한다")
+    void updateNameTest() {
+        User user = User.create("가".repeat(255), "https://example.com/profile.png");
+
+        user.updateName("가".repeat(8));
+
+        assertThat(user.getName()).isEqualTo("가".repeat(8));
+        assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " ", "가나다라마바사아자"})
+    @DisplayName("수정할 이름이 비어 있거나 8자를 초과하면 거부하고 기존 이름을 유지한다")
+    void rejectInvalidUpdatedNameTest(String name) {
+        User user = User.create("기존이름", null);
+
+        assertThatThrownBy(() -> user.updateName(name))
+                .isInstanceOf(UserException.class)
+                .extracting(exception -> ((UserException) exception).getErrorCode())
+                .isEqualTo(UserErrorCode.INVALID_USER_NAME);
+        assertThat(user.getName()).isEqualTo("기존이름");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"", " "})
     @DisplayName("프로필 이미지 URL이 공백이면 사용자를 생성할 수 없다")

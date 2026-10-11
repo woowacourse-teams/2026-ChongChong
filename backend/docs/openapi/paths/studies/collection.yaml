@@ -1,6 +1,12 @@
 post:
   tags: [Study]
   operationId: createStudy
+  x-frontend:
+    status: integrated
+    description: "name·description을 전송하고 studyId 응답으로 생성 후 이동한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/pages/CreateStudyPage.tsx
   x-backend:
     status: done
     owner: wontop02

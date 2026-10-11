@@ -1,6 +1,6 @@
 import type { FieldError } from '../../../shared/api/error';
 
-const ASSIGNMENT_TITLE_LIMIT_LENGTH = 20;
+const ASSIGNMENT_TITLE_LIMIT_LENGTH = 100;
 const ASSIGNMENT_CONTENT_LIMIT_LENGTH = 10000;
 
 interface AssignmentInput {
@@ -44,6 +44,13 @@ const assignmentValidator = {
   submissionMethod: (value) => {
     if (value.trim().length === 0) {
       return { code: 'REQUIRED', reason: '제출 방법은 필수입니다.' };
+    }
+
+    if (value.length > ASSIGNMENT_CONTENT_LIMIT_LENGTH) {
+      return {
+        code: 'MAX_LENGTH',
+        reason: `제출 방법은 ${ASSIGNMENT_CONTENT_LIMIT_LENGTH.toLocaleString()}자 이하만 가능해요.`,
+      };
     }
     return null;
   },

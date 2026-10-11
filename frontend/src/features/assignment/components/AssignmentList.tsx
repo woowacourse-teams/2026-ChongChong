@@ -7,13 +7,17 @@ import { ReactNode } from 'react';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import LinkIcon from '../../../shared/assets/link.svg';
 
-interface AssigmentListProps {
-  assignments: Assignment[];
+interface AssigmentListProps<T extends Assignment> {
+  assignments: T[];
   studyId: number;
-  children: (assignment: Assignment) => ReactNode;
+  children: (assignment: T) => ReactNode;
 }
 
-export default function AssigmentList({ assignments, studyId, children }: AssigmentListProps) {
+export default function AssigmentList<T extends Assignment>({
+  assignments,
+  studyId,
+  children,
+}: AssigmentListProps<T>) {
   return (
     <List>
       {assignments.map((assignment) => (
@@ -39,8 +43,7 @@ export default function AssigmentList({ assignments, studyId, children }: Assigm
                 <ContentCard.Meta tone="brand">
                   {formatDateToString(assignment.closeAt) + ' 마감'}
                 </ContentCard.Meta>
-                <ContentCard.Meta>
-                  <img src={LinkIcon} alt="" width={13} height={13} />
+                <ContentCard.Meta icon={<img src={LinkIcon} alt="" width={13} height={13} />}>
                   {assignment.submissionMethod}
                 </ContentCard.Meta>
               </ContentCard.Footer>

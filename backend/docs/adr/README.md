@@ -15,6 +15,16 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 ## ADR 목록
 
+### 최근 ADR
+
+| 번호 | 제목 |
+| --- | --- |
+| [0045](0045-delete-notifications-with-resources.md)                                    | 자원 삭제 시 관련 인앱 알림을 삭제한다 |
+| [0046](0046-separate-user-name-edit-limit-from-social-initialization.md)                 | 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다 |
+| [0047](0047-sync-home-name-to-current-study-memberships.md)                               | 홈 이름 변경을 현재 참여 스터디의 멤버 이름에 동기화한다 |
+| [0048](0048-expire-study-invite-tokens-after-three-days.md)                                | 스터디 초대 토큰에 3일 만료를 적용한다 |
+
+### 이전 ADR
 | 번호                                                                            | 제목                                        |
 |-------------------------------------------------------------------------------| ------------------------------------------- |
 | [0001](0001-adopt-architecture-decision-records.md)                           | Architecture Decision Record를 도입한다     |
@@ -48,4 +58,17 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0029](0029-protect-study-membership-limits-with-row-locks.md)                  | 스터디 멤버십 상한을 행 잠금과 트랜잭션으로 보호한다 |
 | [0030](0030-manage-push-tokens-by-installation.md)                              | 설치 단위 upsert와 활성 상태로 푸시 토큰을 관리한다 |
 | [0031](0031-run-postgresql-specific-tests-with-testcontainers.md)               | Testcontainers PostgreSQL로 데이터베이스 특화 테스트를 실행하고 CI에서 Docker를 확인한다 |
-| [0032](0032-use-presigned-urls-for-file-uploads.md)                             | 첨부파일 업로드에 S3 Presigned URL을 사용한다 |
+| [0032](0032-use-submitted-at-as-assignment-submission-state.md)                  | 제출 시각을 과제 제출 상태의 단일 기준으로 사용한다 |
+| [0033](0033-create-logical-reminder-notifications.md)                            | 리마인드 시각에 논리 알림을 생성하고 발송·동시성 전략은 후속으로 결정한다 |
+| [0034](0034-delete-user-account-in-one-transaction.md)                             | 사용자 탈퇴를 단일 트랜잭션에서 검증하고 삭제한다 |
+| [0035](0035-detect-notification-events-in-backend-and-separate-channel-delivery.md) | 수동 알림 검증 방식 검토 및 선택 |
+| [0036](0036-provide-user-id-in-login-response.md)                                    | 로그인 응답에 사용자 식별자를 제공한다 |
+| [0037](0037-manage-browser-web-push-subscriptions.md)                                 | 브라우저 Web Push 구독을 endpoint 단위로 관리한다 |
+| [0038](0038-separate-logical-notifications-and-web-push-delivery.md)                   | 논리 알림과 Web Push 전달을 NotificationDelivery 파이프라인으로 분리한다 |
+| [0039](0039-use-fixed-length-keyed-study-invite-tokens.md)                             | 고정 길이 키 기반 스터디 초대 토큰을 사용한다 |
+| [0040](0040-manage-web-push-subscriptions-by-installation.md)                           | 브라우저 Web Push 구독에 설치 식별자를 사용한다 |
+| [0041](0041-collect-structured-backend-logs-with-cloudwatch.md)                         | 백엔드 구조화 로그를 CloudWatch Logs로 수집한다 |
+| [0042](0042-expose-backend-http-metrics-for-prometheus.md)                              | 백엔드 HTTP 메트릭을 Prometheus 형식으로 노출한다 |
+| [0043](0043-collect-http-metrics-with-adot-and-amp.md)                                  | ADOT으로 HTTP 메트릭을 수집해 AMP에 저장한다 |
+| [0044](0044-collect-http-metrics-with-adot-and-cloudwatch.md)                           | ADOT으로 HTTP 메트릭을 수집해 CloudWatch에 저장한다 |
+| [0045](0045-use-presigned-urls-for-file-uploads.md)                             | 첨부파일 업로드에 S3 Presigned URL을 사용한다 |

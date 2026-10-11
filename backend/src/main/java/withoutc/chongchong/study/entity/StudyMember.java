@@ -67,6 +67,15 @@ public class StudyMember extends BaseEntity {
         return new StudyMember(study, user, name, profileImageUrl, role);
     }
 
+    public boolean isLeader() {
+        return StudyMemberRole.LEADER.equals(role);
+    }
+
+    public void syncNameFromUser(String name) {
+        validateName(name);
+        this.name = name;
+    }
+
     private StudyMember(
             Study study,
             User user,
@@ -82,10 +91,6 @@ public class StudyMember extends BaseEntity {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
         this.role = role;
-    }
-
-    public boolean isLeader() {
-        return StudyMemberRole.LEADER.equals(role);
     }
 
     private void validateRequiredValues(Study study, User user, StudyMemberRole role) {

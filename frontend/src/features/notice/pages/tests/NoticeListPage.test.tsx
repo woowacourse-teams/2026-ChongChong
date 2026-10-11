@@ -57,6 +57,7 @@ describe('리드 공지 목록 조회 실패', () => {
           studyName: '객체지향 스터디',
           role: 'LEADER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
     );
@@ -121,6 +122,7 @@ describe('스터디원 공지 목록 조회 실패', () => {
           studyName: '객체지향 스터디',
           role: 'MEMBER',
           userName: '안톨리니',
+          description: '즐거운 객체지향 스터디',
         }),
       ),
     );

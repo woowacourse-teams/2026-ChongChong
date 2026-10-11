@@ -4,6 +4,7 @@
 - 관련 이슈: [#243](https://github.com/woowacourse-teams/2026-ChongChong/issues/243)
 - 관련 ADR: [0003. 백엔드 테스트 범위와 역할을 정의한다](0003-define-backend-test-strategy.md),
   [0006. 공통 예외 처리 타입의 책임을 분리한다](0006-design-common-exception-types.md)
+- 일부 대체: [0046. 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다](0046-separate-user-name-edit-limit-from-social-initialization.md)에서 `User.name`의 생성·수정 길이 규칙을 구분한다.
 
 ## 배경
 

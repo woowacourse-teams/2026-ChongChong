@@ -14,9 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
@@ -60,6 +61,8 @@ class AssignmentRepositoryTest {
                             "과제 " + index,
                             "과제 내용 " + index,
                             "GitHub PR",
+                            SubmissionTarget.MEMBERS_ONLY,
+                            SubmissionVisibility.LEADER_ONLY,
                             LocalDateTime.of(2026, 8, 30, 23, 59),
                             NOW
                     )
@@ -70,6 +73,8 @@ class AssignmentRepositoryTest {
                 "다른 과제",
                 "다른 과제 내용",
                 "GitHub PR",
+                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));
@@ -92,28 +97,6 @@ class AssignmentRepositoryTest {
         assertThat(secondPage)
                 .extracting(Assignment::getId)
                 .containsExactly(assignments.get(1).getId(), assignments.getFirst().getId());
-    }
-
-    @Test
-    @DisplayName("멤버별 과제 cursor 조회는 제출 정보가 존재하는 과제만 반환한다")
-    void findByCursorAndMemberIdTest() {
-        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
-        Assignment firstMemberAssignment = createAssignment(
-                fixture.study(), "첫 번째 멤버 과제", List.of(fixture.firstMember()), 0
-        );
-        createAssignment(fixture.study(), "두 번째 멤버 과제", List.of(fixture.secondMember()), 0);
-        assignmentRepository.flush();
-
-        List<Assignment> assignments = assignmentRepository.findByCursorAndMemberId(
-                fixture.study().getId(),
-                fixture.firstMember().getId(),
-                null,
-                PageRequest.of(0, 11)
-        );
-
-        assertThat(assignments)
-                .extracting(Assignment::getId)
-                .containsExactly(firstMemberAssignment.getId());
     }
 
     @Test
@@ -252,13 +235,15 @@ class AssignmentRepositoryTest {
                 title,
                 "과제 내용",
                 "GitHub PR",
+                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2026, 8, 30, 23, 59),
                 NOW
         ));
         assignment.initializeSubmissions(members);
         assignment.getSubmissions().stream()
                 .limit(submittedCount)
-                .forEach(submission -> ReflectionTestUtils.setField(submission, "submitted", true));
+                .forEach(submission -> submission.submit(null, null, NOW));
         return assignment;
     }
 

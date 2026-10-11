@@ -5,14 +5,19 @@ parameters:
 get:
   tags: [Assignment Submission]
   operationId: getSubmissionDetail
+  x-frontend:
+    status: needs-update
+    description: "계약 수정: createdAt·content가 null인 정상 응답을 프론트 검증이 거부함. nullable 타입·검증·표시 처리 필요.\n기능 추가: 공개 과제의 제출 목록에서 다른 스터디원의 제출 상세로 이동."
+    sources:
+      - frontend/src/features/assignment/responseSchemas.ts
   x-backend:
-    status: done
+    status: review
     owner: frombunny
     description: |
-      제출물 상세를 조회하며 제출자·리더의 접근 권한을 검증한다.
-      후속 예정: 공개 과제의 다른 제출자 조회(#278), 리드 제출 지원(#276).
+      리더·본인은 제출물 상세를 조회할 수 있고 공개 과제의 다른 스터디원은 제출 완료된 내용만 조회할 수 있다.
+      미제출 상세의 createdAt은 null이며 content·link도 null일 수 있다.
   summary: 과제 제출 상세 조회
-  description: 스터디 리더가 제출물 상세를 조회한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
+  description: 리더와 본인은 제출물 상세를 조회한다. ALL_STUDY_MEMBERS 과제에서는 다른 소속 멤버도 제출 완료된 제출물을 조회할 수 있다. 미제출 내용은 리더와 본인만 조회할 수 있고 createdAt은 null이다. 비회원은 거부한다. 형식 오류(400), 인증 실패(401), 접근·조회 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   responses:
     '200':
@@ -28,12 +33,18 @@ get:
 patch:
   tags: [Assignment Submission]
   operationId: updateSubmission
+  x-frontend:
+    status: integrated
+    description: "멤버와 리더의 본인 제출물 편집 흐름이 연결되어 있다."
+    sources:
+      - frontend/src/features/assignment/components/CompletedAssignmentSubmission.tsx
   x-backend:
     status: done
     owner: frombunny
     description: |
-      본인 제출물을 수정하며 과제와 제출물의 소속을 검증한다.
-      후속 예정: 이미지·파일 제출 검증(#275), 리드 제출 수정 지원(#276).
+      본인 제출물을 수정하며 과제와 제출물의 소속을 검증한다. 미제출 행도 수정할 수 있지만 수정 요청만으로 제출 완료 상태가 되지는 않는다.
+      리더도 본인의 제출물을 수정할 수 있다.
+      후속 예정: 이미지·파일 제출 검증(#296).
   summary: 과제 제출 수정
   description: 현재 사용자가 자신의 제출 내용을 수정한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

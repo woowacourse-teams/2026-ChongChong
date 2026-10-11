@@ -14,14 +14,18 @@ const backButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-export function PrevButton() {
+interface PrevButtonProps {
+  to?: string;
+}
+
+export function PrevButton({ to }: PrevButtonProps = {}) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const parentPath = parseParentPath(pathname);
 
   function goToPreviousPage() {
     // fallback 필요
-    navigate(parentPath);
+    navigate(to ?? parentPath);
   }
 
   return (

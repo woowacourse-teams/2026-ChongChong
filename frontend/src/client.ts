@@ -2,7 +2,7 @@ import ky from 'ky';
 import { API_PREFIX, BASE_URL } from '../config';
 import { clearAccessToken, getAccessToken } from './features/login/accessToken';
 import { refreshAccessToken } from './features/login/api';
-// import { alertErrorResponse } from './shared/api/error';
+import posthog from 'posthog-js';
 
 const api = ky.create({
   baseUrl: BASE_URL,
@@ -32,7 +32,7 @@ const api = ky.create({
           });
         } catch {
           clearAccessToken();
-
+          posthog.reset();
           if (window.location.pathname !== '/login') {
             window.location.assign('/login');
           }

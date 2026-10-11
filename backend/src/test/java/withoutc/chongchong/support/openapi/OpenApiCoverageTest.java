@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class OpenApiCoverageTest {
 
     @Test
-    void 모든_명세_API를_성공_응답으로_호출한다() throws IOException {
+    void 대기와_진행중_외_명세_API를_성공_응답으로_호출한다() throws IOException {
         OpenApiOperationCatalog catalog = OpenApiOperationCatalog.load(
                 Path.of(System.getProperty("openapi.spec.path"))
         );
@@ -25,6 +25,7 @@ class OpenApiCoverageTest {
 
         Set<ApiOperation> covered = catalog.resolveAll(successfulCalls);
 
-        assertThat(covered).containsExactlyInAnyOrderElementsOf(catalog.operations());
+        assertThat(covered).containsAll(catalog.requiredOperations());
+        assertThat(catalog.operations()).containsAll(covered);
     }
 }

@@ -3,19 +3,30 @@ package withoutc.chongchong.assignment.controller.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record MySubmissionDetailResponse(
         Long submissionId,
-        boolean submitted,
+        SubmissionStatus submissionStatus,
         LocalDateTime createdAt,
         String content,
         String link
 ) {
-    public static MySubmissionDetailResponse from(AssignmentSubmission submission) {
+    public static MySubmissionDetailResponse notAssigned() {
+        return new MySubmissionDetailResponse(
+                null,
+                SubmissionStatus.NOT_ASSIGNED,
+                null,
+                null,
+                null
+        );
+    }
+
+    public static MySubmissionDetailResponse of(LocalDateTime now, AssignmentSubmission submission) {
         return new MySubmissionDetailResponse(
                 submission.getId(),
-                submission.isSubmitted(),
+                submission.submissionStatus(now),
                 submission.getSubmittedAt(),
                 submission.getContent(),
                 submission.getLink()

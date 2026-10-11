@@ -2,7 +2,8 @@ import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import crownIcon from '../../../shared/assets/lead.svg';
 import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
+import useKickStudyMember from '../hooks/useKickMember';
 import { Member } from '../types';
 
 interface Props extends React.ComponentProps<'div'> {
@@ -17,7 +18,7 @@ interface ProfileProps {
 
 interface LeaderProps extends React.ComponentProps<'div'> {
   member: Member;
-  onKick: (memberId: number, dialogClose: () => void) => void;
+  studyId: number;
 }
 
 interface MemberProps extends React.ComponentProps<'div'> {
@@ -100,9 +101,10 @@ function Profile({ name, icon }: ProfileProps) {
   );
 }
 
-MemberRow.Leader = function Leader({ member, onKick, ...props }: LeaderProps) {
-  const { dialogRef, open, close } = useDialogControl();
+MemberRow.Leader = function Leader({ member, studyId, ...props }: LeaderProps) {
+  const [isOpen, openDialog, closeDialog] = useBooleanState();
 
+  const { mutate: kickStudyMember } = useKickStudyMember({ onError: closeDialog });
   return (
     <MemberRow
       {...props}
@@ -117,24 +119,28 @@ MemberRow.Leader = function Leader({ member, onKick, ...props }: LeaderProps) {
       right={
         member.role !== 'LEADER' && (
           <>
-            <button css={kickButtonStyle} type="button" onClick={open}>
+            <button css={kickButtonStyle} type="button" onClick={openDialog}>
               방출하기
             </button>
-            <ConfirmDialog
-              ref={dialogRef}
-              title={`${member.name} 님을 추방하시겠습니까?`}
-              description={
-                '추방된 스터디원은 스터디 정보에 다시 접근할 수 없으며, 이 작업은 되돌릴 수 없습니다.'
-              }
-              closeButton={
-                <ConfirmDialog.CloseButton onClick={close}>취소</ConfirmDialog.CloseButton>
-              }
-              confirmButton={
-                <ConfirmDialog.ConfirmButton onClick={() => onKick(member.id, close)}>
-                  추방
-                </ConfirmDialog.ConfirmButton>
-              }
-            />
+            {isOpen && (
+              <ConfirmDialog
+                title={`${member.name} 님을 추방하시겠습니까?`}
+                description={
+                  '추방된 스터디원은 스터디 정보에 다시 접근할 수 없으며, 이 작업은 되돌릴 수 없습니다.'
+                }
+                onClose={closeDialog}
+                closeButton={
+                  <ConfirmDialog.CloseButton onClick={closeDialog}>취소</ConfirmDialog.CloseButton>
+                }
+                confirmButton={
+                  <ConfirmDialog.ConfirmButton
+                    onClick={() => kickStudyMember({ studyId, memberId: member.id })}
+                  >
+                    추방
+                  </ConfirmDialog.ConfirmButton>
+                }
+              />
+            )}
           </>
         )
       }

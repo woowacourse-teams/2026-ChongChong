@@ -61,7 +61,10 @@ public class NoticeRecipient extends BaseEntity {
         }
     }
 
-    public boolean isRead() {
-        return readAt != null;
+    public NoticeReadStatus readStatus() {
+        if (readAt == null) {
+            return NoticeReadStatus.UNREAD;
+        }
+        return NoticeReadStatus.READ;
     }
 }

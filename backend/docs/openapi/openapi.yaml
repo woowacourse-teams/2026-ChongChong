@@ -11,12 +11,14 @@ servers:
   - url: /
 tags:
   - { name: Auth, description: 인증 API }
+  - { name: User, description: 사용자 API }
   - { name: Study, description: 스터디 API }
   - { name: Study Member, description: 스터디 멤버 API }
   - { name: Notice, description: 공지 API }
   - { name: Assignment, description: 과제 API }
   - { name: Assignment Submission, description: 과제 제출물 API }
-  - { name: Push Token, description: 푸시 토큰 API }
+  - { name: Web Push, description: Web Push 구독 API }
+  - { name: Notification, description: 알림 API }
 
 paths:
   /api/auth/csrf:
@@ -27,6 +29,8 @@ paths:
     $ref: './paths/auth/refresh.yaml'
   /api/auth/logout:
     $ref: './paths/auth/logout.yaml'
+  /api/users/me:
+    $ref: './paths/users/me.yaml'
   /api/studies:
     $ref: './paths/studies/collection.yaml'
   /api/studies/{studyId}:
@@ -67,10 +71,16 @@ paths:
     $ref: './paths/assignment-submissions/my-submission.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}:
     $ref: './paths/assignment-submissions/detail.yaml'
-  /api/push-tokens:
-    $ref: './paths/push-tokens/collection.yaml'
-  /api/push-tokens/{installationId}:
-    $ref: './paths/push-tokens/detail.yaml'
+  /api/web-push-subscriptions:
+    $ref: './paths/web-push-subscriptions/collection.yaml'
+  /api/web-push-subscriptions/{subscriptionId}:
+    $ref: './paths/web-push-subscriptions/detail.yaml'
+  /api/web-push/config:
+    $ref: './paths/web-push/config.yaml'
+  /api/notifications:
+    $ref: './paths/notifications/collection.yaml'
+  /api/notifications/{notificationId}:
+    $ref: './paths/notifications/detail.yaml'
 
 components:
   securitySchemes:

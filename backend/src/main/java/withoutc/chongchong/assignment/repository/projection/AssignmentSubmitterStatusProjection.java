@@ -7,6 +7,7 @@ public record AssignmentSubmitterStatusProjection(
         String name,
         String profileImageUrl,
         boolean isSubmitted,
+        LocalDateTime submittedAt,
         LocalDateTime lastRemindAt
 ) {
 }

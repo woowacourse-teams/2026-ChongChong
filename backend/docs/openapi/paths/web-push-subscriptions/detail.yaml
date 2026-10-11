@@ -1,0 +1,21 @@
+delete:
+  tags: [Web Push]
+  operationId: deactivateWebPushSubscription
+  x-frontend:
+    status: integrated
+    description: "푸시 해제·로그아웃에서 저장된 subscriptionId로 비활성화한다."
+    sources:
+      - frontend/src/features/notification/push.ts
+  x-backend:
+    status: done
+    owner: wontop02
+    description: 현재 사용자의 subscriptionId에 해당하는 Web Push 구독만 비활성화한다.
+  summary: Web Push 구독 비활성화
+  description: 현재 사용자의 subscriptionId에 해당하는 Web Push 구독을 비활성화한다. 등록 정보가 없거나 다른 사용자의 구독이면 변경 없이 204를 반환한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/SubscriptionId' }
+  responses:
+    '204': { description: Web Push 구독 비활성화 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

@@ -1,26 +1,25 @@
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import assignmentIcon from '../../../shared/assets/assign-green.svg';
+import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import linkIcon from '../../../shared/assets/link-green.svg';
 import Button from '../../../shared/ui/Button';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { updateAssignmentSubmission } from '../api';
 import assignmentQueries from '../queries';
-import type { AssignmentSubmissionValue, UserAssignmentSubmitDetail } from '../types';
+import type { AssignmentSubmissionValue, CompletedAssignment } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import InfoCard from './InfoCard';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
-
-type SubmittedAssignment = Extract<UserAssignmentSubmitDetail, { submitted: true }>;
+import { CSSObject } from '@emotion/react';
 
 interface Props {
   assignmentId: number;
   studyId: number;
-  submission: SubmittedAssignment;
+  submission: CompletedAssignment;
 }
 
 const sectionStyle = {
@@ -50,9 +49,15 @@ const cardListStyle = {
 
 const linkStyle = {
   display: 'block',
-  color: 'inherit',
+  color: tokens.text.link,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
   overflowWrap: 'anywhere',
-} satisfies CSSProperties;
+
+  '&:hover': {
+    opacity: 0.7,
+  },
+} satisfies CSSObject;
 
 const editButtonStyle = {
   marginTop: tokens.spacing[5],
@@ -66,6 +71,8 @@ export default function CompletedAssignmentSubmission({
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
+
+  const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
@@ -93,7 +100,7 @@ export default function CompletedAssignmentSubmission({
   return isEditing ? (
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
-      initialValues={{ content: submission.content, link: submission.link ?? '' }}
+      initialValues={{ content: submission.content ?? '', link: submission.link ?? '' }}
       isSubmitting={isPending}
       submitLabel="수정하기"
       onSubmit={mutate}
@@ -110,12 +117,12 @@ export default function CompletedAssignmentSubmission({
 
       <div css={cardListStyle}>
         <InfoCard icon={assignmentIcon} title="내용">
-          {submission.content}
+          {submission.content ?? ''}
         </InfoCard>
 
         {submission.link && (
           <InfoCard icon={linkIcon} title="링크">
-            <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
+            <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
           </InfoCard>

@@ -50,6 +50,7 @@ const rightStyle = {
 const titleStyle = {
   ...typography.title,
   color: tokens.text.default,
+  wordBreak: 'keep-all',
   margin: 0,
 } satisfies CSSProperties;
 

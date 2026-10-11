@@ -1,48 +1,24 @@
-import { useMutation, useQueryClient, useSuspenseQueries } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
+import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
-import ConfirmDialog from '../../../shared/ui/dialogs/ConfirmDialog';
-import { deleteAssignment } from '../api';
-import useDialogControl from '../../../shared/hooks/useDialogControl';
-import SubmitStatusSection from './SubmitStatusSection';
+import DetailTabs from '../../../shared/widgets/DetailTabs';
+import IncompleteMemberList from '../../../shared/widgets/IncompleteMemberList';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
+import { formatDateToString } from '../../../shared/utils/formatDate';
+import SubmitStatus from './SubmitStatus';
 import AssignmentArticle from './AssignmentArticle';
-import SubmissionList from './SubmissionList';
-import DetailActions from '../../../shared/widgets/DetailActions';
+import CompletedSubmissionList from './CompletedSubmissionList';
 import assignmentQueries from '../queries';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import MyAssignmentSubmission from './MyAssignmentSubmission';
+import MySubmissionStatus from './MySubmissionStatus';
+import { isCompletedAssignment } from '../submissionStatus';
 
 interface Props {
   studyId: number;
+  userName: string;
 }
 
-export default function LeaderAssignmentDetailContent({ studyId }: Props) {
-  const navigate = useNavigate();
+export default function LeaderAssignmentDetailContent({ studyId, userName }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
-  const queryClient = useQueryClient();
-  const toast = useToast();
-  const {
-    dialogRef: deleteConfirmDialog,
-    open: openDeleteConfirmDialog,
-    close: closeDeleteConfirmDialog,
-  } = useDialogControl();
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => deleteAssignment(studyId, assignmentId),
-    onSuccess: () => {
-      queryClient.removeQueries({
-        queryKey: assignmentQueries.detail(studyId, assignmentId).queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: assignmentQueries.lists(studyId),
-      });
-      navigate(`/studies/${studyId}/assignments`);
-    },
-    onError: (error) => {
-      closeDeleteConfirmDialog();
-      toast.open(<StatusToast status="Error" message={error.message} />);
-    },
-  });
 
   const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
     useSuspenseQueries({
@@ -52,30 +28,50 @@ export default function LeaderAssignmentDetailContent({ studyId }: Props) {
         assignmentQueries.submissions(studyId, assignmentId),
       ],
     });
-
-  const handleEditAssignment = () =>
-    navigate(`/studies/${studyId}/assignments/${assignmentId}/edit`);
+  const { data: mySubmission } = useQuery({
+    ...assignmentQueries.mySubmission(studyId, assignmentId),
+    enabled: assignment.submissionTarget === 'MEMBERS_AND_LEADER',
+    throwOnError: true,
+  });
+  const myCompletedSubmission =
+    mySubmission && isCompletedAssignment(mySubmission)
+      ? submissions.submissions.find(({ id }) => id === mySubmission.submissionId)
+      : undefined;
+  const member = {
+    name: myCompletedSubmission?.name ?? userName,
+    profileImage: myCompletedSubmission?.profileImage ?? null,
+  };
 
   return (
     <>
-      <SubmitStatusSection status={submitStatusResponse} />
-      <AssignmentArticle assignment={assignment} />
-      <SubmissionList submissions={submissions.submissions} />
-
-      <DetailActions onEdit={handleEditAssignment} onDelete={openDeleteConfirmDialog} />
-      <ConfirmDialog
-        ref={deleteConfirmDialog}
-        title="과제를 삭제할까요?"
-        description={'삭제한 과제는 다시 복구할 수 없어요.\n정말 삭제하시겠어요?'}
-        closeButton={
-          <ConfirmDialog.CloseButton onClick={closeDeleteConfirmDialog}>
-            취소
-          </ConfirmDialog.CloseButton>
+      <ContentDetailHeader
+        title={assignment.title}
+        dateTime={assignment.closeAt}
+        meta={`${formatDateToString(assignment.closeAt)} 마감`}
+      />
+      <DetailTabs
+        summary={
+          <>
+            <SubmitStatus status={submitStatusResponse} />
+            {mySubmission ? <MySubmissionStatus submission={mySubmission} member={member} /> : null}
+            <CompletedSubmissionList submissions={submissions.submissions} />
+            <IncompleteMemberList
+              title={`미제출 ${submitStatusResponse.incompleteCount}명`}
+              members={submitStatusResponse.incompleteMembers}
+            />
+          </>
         }
-        confirmButton={
-          <ConfirmDialog.ConfirmButton disabled={isPending} onClick={() => mutate()}>
-            {isPending ? '삭제 중...' : '삭제'}
-          </ConfirmDialog.ConfirmButton>
+        detail={
+          <>
+            <AssignmentArticle assignment={assignment} />
+            {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && mySubmission ? (
+              <MyAssignmentSubmission
+                studyId={studyId}
+                assignmentId={assignmentId}
+                submission={mySubmission}
+              />
+            ) : null}
+          </>
         }
       />
     </>

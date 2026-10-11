@@ -112,13 +112,13 @@ class SocialLoginAcceptanceTest {
 
         response.then()
                 .statusCode(200)
+                .body("userId", notNullValue())
                 .body("tokenType", equalTo("Bearer"))
                 .body("accessToken", notNullValue())
                 .body("accessTokenExpiresAt", notNullValue())
                 .body("$", not(hasKey("refreshToken")))
                 .body("$", not(hasKey("refreshTokenExpiresAt")))
                 .body("$", not(hasKey("authorizationCode")))
-                .body("$", not(hasKey("userId")))
                 .body("$", not(hasKey("sessionId")))
                 .body("$", not(hasKey("refreshTokenHash")))
                 .header(HttpHeaders.CACHE_CONTROL, containsString("no-store"))
@@ -145,6 +145,7 @@ class SocialLoginAcceptanceTest {
         );
         Jwt jwt = jwtDecoder.decode(accessToken);
 
+        assertThat(response.jsonPath().getLong("userId")).isEqualTo(user.getId());
         assertThat(userRepository.count()).isOne();
         assertThat(user.getName()).isEqualTo("총총이");
         assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
@@ -195,6 +196,8 @@ class SocialLoginAcceptanceTest {
         AuthSession replacedSession = authSessionRepository.findByUserId(reusedUser.getId()).orElseThrow();
         String secondAccessToken = secondResponse.jsonPath().getString("accessToken");
         String secondRefreshToken = secondResponse.getCookie("refresh_token");
+        Long firstUserId = firstResponse.jsonPath().getLong("userId");
+        Long secondUserId = secondResponse.jsonPath().getLong("userId");
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
@@ -207,6 +210,8 @@ class SocialLoginAcceptanceTest {
         assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
         assertThat(jwtDecoder.decode(secondAccessToken).getSubject())
                 .isEqualTo(firstUser.getId().toString());
+        assertThat(firstUserId).isEqualTo(firstUser.getId());
+        assertThat(secondUserId).isEqualTo(firstUserId);
     }
 
     @Test
@@ -244,6 +249,7 @@ class SocialLoginAcceptanceTest {
                 .body("tokenType", equalTo("Bearer"))
                 .body("accessToken", notNullValue())
                 .body("accessTokenExpiresAt", notNullValue())
+                .body("$", not(hasKey("userId")))
                 .body("$", not(hasKey("refreshToken")))
                 .body("$", not(hasKey("refreshTokenExpiresAt")))
                 .header(HttpHeaders.CACHE_CONTROL, containsString("no-store"))
@@ -309,6 +315,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
@@ -325,6 +334,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .body("message", equalTo("유효하지 않은 Refresh Token입니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
         assertThat(response.asString())
                 .doesNotContain(unknownRefreshToken)
@@ -506,6 +518,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("UNSUPPORTED_SOCIAL_PROVIDER"))
                 .body("message", equalTo("지원하지 않는 소셜 로그인 제공자입니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
@@ -524,8 +539,11 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
                 .body("errors.field", hasItem("provider"))
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
+        assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
         assertDatabaseEmpty();
     }
 
@@ -538,6 +556,8 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_INPUT_VALUE"))
                 .body("errors.field", hasItem("authorizationCode"))
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
@@ -552,6 +572,9 @@ class SocialLoginAcceptanceTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST"))
                 .body("message", equalTo("요청 형식이 잘못되었습니다."))
+                .body("errors", nullValue())
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);

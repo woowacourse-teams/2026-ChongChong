@@ -1,0 +1,53 @@
+extensions:
+  sigv4auth:
+    service: monitoring
+    region: ${env:CLOUD_WATCH_AWS_REGION}
+
+receivers:
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+        scrape_timeout: 10s
+      scrape_configs:
+        - job_name: chongchong-backend
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - targets: ["backend:8080"]
+              labels:
+                environment: ${env:CLOUD_WATCH_APP_ENV}
+                service: chongchong-backend
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: 'http_server_requests_seconds_(bucket|count|sum)|up'
+              action: keep
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 128
+    spike_limit_mib: 32
+  cumulativetodelta:
+    initial_value: drop
+  batch:
+    send_batch_size: 512
+    timeout: 10s
+
+exporters:
+  otlphttp:
+    metrics_endpoint: https://monitoring.${env:CLOUD_WATCH_AWS_REGION}.amazonaws.com/v1/metrics
+    auth:
+      authenticator: sigv4auth
+    compression: gzip
+    sending_queue:
+      enabled: true
+      queue_size: 64
+      num_consumers: 1
+
+service:
+  extensions: [sigv4auth]
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [memory_limiter, cumulativetodelta, batch]
+      exporters: [otlphttp]

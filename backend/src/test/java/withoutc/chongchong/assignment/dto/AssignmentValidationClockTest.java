@@ -21,6 +21,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.study.entity.Study;
@@ -56,6 +58,8 @@ class AssignmentValidationClockTest {
                 "과제 제목",
                 "과제 내용",
                 "링크 제출",
+                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 NOW,
                 NOW
         ))
@@ -87,6 +91,8 @@ class AssignmentValidationClockTest {
                 "과제 제목",
                 "과제 내용",
                 "링크 제출",
+                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 closeAt,
                 List.of(remindAt)
         );
@@ -98,6 +104,8 @@ class AssignmentValidationClockTest {
                 "과제 제목",
                 "과제 내용",
                 "링크 제출",
+                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 closeAt,
                 NOW
         );

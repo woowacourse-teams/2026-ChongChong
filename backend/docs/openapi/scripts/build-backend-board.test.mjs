@@ -28,3 +28,18 @@ test('설명과 API 이름은 HTML로 실행되지 않고 줄바꿈을 보존한
 test('보드 빌드에서도 잘못된 메타데이터를 거부한다', () => {
   assert.throws(() => renderBoard(spec({ status: 'done', owner: null, description: '' })), /owner/);
 });
+
+test('수정이 필요한 API에만 뱃지와 근거를 표시한다', () => {
+  const input = spec({ status: 'done', owner: 'frombunny', description: '구현 완료' });
+  input.paths['/api/studies'].post['x-frontend'] = {
+    status: 'needs-update', description: '<img src=x> 필드 추가', sources: ['frontend/src/client.ts'],
+  };
+  const html = renderBoard(input);
+  assert.match(html, /class="badge frontend-badge">프론트 수정 필요/);
+  assert.match(html, /프론트 수정 필요 1개/);
+  assert.match(html, /&lt;img src=x&gt; 필드 추가/);
+  input.paths['/api/studies'].post['x-frontend'].status = 'integrated';
+  const integrated = renderBoard(input);
+  assert.doesNotMatch(integrated, /class="badge frontend-badge"/);
+  assert.match(integrated, /프론트 수정 필요 0개/);
+});

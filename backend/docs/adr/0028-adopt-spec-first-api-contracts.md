@@ -85,3 +85,10 @@ GitHub Actions로 설정하고 공개 문서 범위를 확인해야 한다.
 2026-09-06 GitHub API 조회에서 `dev`에는 활성 ruleset `Protect dev`가 있지만 required status check 규칙은 없다.
 워크플로를 병합 조건으로 강제하려면 저장소 관리자가 Backend CI 워크플로의 `API documentation`과 `build` 검사를
 required status check로 ruleset에 추가해야 한다.
+
+## 2026-09-17 보완: 미구현 명세의 선등록
+
+`x-backend.status`가 `todo` 또는 `in-progress`인 API는 구현 완료 전에 명세만 먼저 반영할 수 있다. 해당 API는 Controller 매핑과
+성공 HTTP 호출의 필수 대상에서 제외한다. 그 외 상태와 상태 미지정 API에는 기존 검증을 유지한다.
+명세에 없는 Controller와 실제 호출된 요청·응답의 계약 불일치는 상태와 관계없이 실패한다.
+명세 형식과 메타데이터 검증도 유지하며, 구현·테스트를 추가할 때 개발 상태를 함께 갱신한다.

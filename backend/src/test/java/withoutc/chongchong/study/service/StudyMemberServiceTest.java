@@ -3,6 +3,7 @@ package withoutc.chongchong.study.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.controller.dto.StudyMemberResponse;
@@ -50,6 +53,9 @@ class StudyMemberServiceTest {
 
     @Mock
     private StudyInviteTokenProvider studyInviteTokenProvider;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private StudyMemberService studyMemberService;
@@ -124,7 +130,7 @@ class StudyMemberServiceTest {
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(studyId);
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(30);
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(50);
 
         assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
                 .isInstanceOf(StudyMemberException.class)
@@ -199,6 +205,8 @@ class StudyMemberServiceTest {
 
         StudyMembersResponse response = studyMemberService.getAllStudyMembers(userId, studyId);
 
+        assertThat(response.maxMemberCount()).isEqualTo(50);
+        assertThat(response.nowMemberCount()).isEqualTo(2);
         assertThat(response.members())
                 .containsExactly(StudyMemberResponse.from(projection1), StudyMemberResponse.from(projection2));
     }
@@ -256,7 +264,9 @@ class StudyMemberServiceTest {
 
         studyMemberService.expel(userId, studyId, memberId);
 
-        verify(studyMemberRepository).delete(target);
+        InOrder inOrder = inOrder(notificationService, studyMemberRepository);
+        inOrder.verify(notificationService).deleteNotificationsForStudyMember(memberId);
+        inOrder.verify(studyMemberRepository).delete(target);
     }
 
     @Test
@@ -342,13 +352,17 @@ class StudyMemberServiceTest {
     void leaveTest() {
         Long userId = 1L;
         Long studyId = 2L;
+        Long memberId = 3L;
         StudyMember member = mock(StudyMember.class);
+        when(member.getId()).thenReturn(memberId);
         when(member.isLeader()).thenReturn(false);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(member);
 
         studyMemberService.leave(userId, studyId);
 
-        verify(studyMemberRepository).delete(member);
+        InOrder inOrder = inOrder(notificationService, studyMemberRepository);
+        inOrder.verify(notificationService).deleteNotificationsForStudyMember(memberId);
+        inOrder.verify(studyMemberRepository).delete(member);
     }
 
     @Test

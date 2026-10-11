@@ -20,6 +20,7 @@ import withoutc.chongchong.user.exception.UserException;
 public class User extends BaseEntity {
 
     private static final int MAX_NAME_LENGTH = 255;
+    private static final int MAX_EDITABLE_NAME_LENGTH = 8;
     private static final int MAX_PROFILE_IMAGE_URL_LENGTH = 2048;
 
     @Id
@@ -39,18 +40,23 @@ public class User extends BaseEntity {
         return new User(name, profileImageUrl);
     }
 
+    public void updateName(String name) {
+        validateName(name, MAX_EDITABLE_NAME_LENGTH);
+        this.name = name;
+    }
+
     private User(
             String name,
             String profileImageUrl
     ) {
-        validateName(name);
+        validateName(name, MAX_NAME_LENGTH);
         validateProfileImageUrl(profileImageUrl);
         this.name = name;
         this.profileImageUrl = profileImageUrl;
     }
 
-    private void validateName(String name) {
-        if (name == null || name.isBlank() || name.length() > MAX_NAME_LENGTH) {
+    private void validateName(String name, int maxLength) {
+        if (name == null || name.isBlank() || name.length() > maxLength) {
             throw new UserException(UserErrorCode.INVALID_USER_NAME);
         }
     }

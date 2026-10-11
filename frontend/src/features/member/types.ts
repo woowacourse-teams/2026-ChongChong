@@ -8,5 +8,7 @@ export interface Member {
 }
 
 export interface MemberResponse {
+  maxMemberCount: number;
+  nowMemberCount: number;
   members: Member[];
 }

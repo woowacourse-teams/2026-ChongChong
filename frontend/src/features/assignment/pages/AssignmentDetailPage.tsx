@@ -12,11 +12,22 @@ import Loading from '../../../shared/ui/Loading';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
+import ContentActionMenu from '../../../shared/widgets/ContentActionMenu';
 
 export default function AssignmentDetailPage() {
   return (
     <Page>
-      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
+      <TopHeader
+        left={<PrevButton />}
+        middle={<TopHeader.Title>과제</TopHeader.Title>}
+        right={
+          <ErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <AssignmentDetailPage.HeaderActions />
+            </Suspense>
+          </ErrorBoundary>
+        }
+      />
       <Main>
         <ErrorBoundary
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
@@ -34,12 +45,23 @@ export default function AssignmentDetailPage() {
 AssignmentDetailPage.Content = function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const {
+    data: { role, userName },
+  } = useSuspenseQuery(studyQueries.info(studyId));
+
+  return role === 'LEADER' ? (
+    <LeaderAssignmentDetailContent studyId={studyId} userName={userName} />
+  ) : (
+    <MemberAssignmentDetailContent studyId={studyId} userName={userName} />
+  );
+};
+
+AssignmentDetailPage.HeaderActions = function HeaderActions() {
+  const { studyId, assignmentId } = useIntegerParams(['studyId', 'assignmentId']);
+  const {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return role === 'LEADER' ? (
-    <LeaderAssignmentDetailContent studyId={studyId} />
-  ) : (
-    <MemberAssignmentDetailContent studyId={studyId} />
-  );
+    <ContentActionMenu studyId={studyId} id={assignmentId} content="assignment" />
+  ) : null;
 };

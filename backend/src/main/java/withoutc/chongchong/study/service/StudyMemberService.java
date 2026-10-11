@@ -5,6 +5,7 @@ import static withoutc.chongchong.study.service.StudyService.MAX_JOINED_STUDY_CO
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
@@ -24,11 +25,12 @@ import withoutc.chongchong.user.repository.UserRepository;
 @Transactional(readOnly = true)
 public class StudyMemberService {
 
-    private static final int MAX_STUDY_MEMBER_COUNT = 30;
+    private static final int MAX_STUDY_MEMBER_COUNT = 50;
 
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
 
@@ -52,7 +54,8 @@ public class StudyMemberService {
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
         studyRepository.getByIdOrThrow(studyId);
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        return StudyMembersResponse.from(studyMemberRepository.findAllSummariesByStudyId(studyId));
+        return StudyMembersResponse.from(MAX_STUDY_MEMBER_COUNT,
+                studyMemberRepository.findAllSummariesByStudyId(studyId));
     }
 
     @Transactional
@@ -64,7 +67,7 @@ public class StudyMemberService {
         if (target.isLeader()) {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_BE_REMOVED);
         }
-
+        notificationService.deleteNotificationsForStudyMember(memberId);
         studyMemberRepository.delete(target);
     }
 
@@ -75,6 +78,7 @@ public class StudyMemberService {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
         }
 
+        notificationService.deleteNotificationsForStudyMember(member.getId());
         studyMemberRepository.delete(member);
     }
 

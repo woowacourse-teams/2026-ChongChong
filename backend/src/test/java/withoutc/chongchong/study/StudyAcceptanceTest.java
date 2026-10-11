@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
 import io.restassured.http.ContentType;
@@ -15,23 +17,23 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
-import withoutc.chongchong.auth.support.TestAuthRequest;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.Notification;
-import withoutc.chongchong.notification.entity.NotificationResourceType;
 import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -102,9 +104,8 @@ class StudyAcceptanceTest {
         configureCascadeIfColumnExists(
                 "notice_recipients", "member_id", "study_members", "fkpm6u1t0n3px52tld2apx6oess");
         configureCascadeIfColumnExists("notice_reminders", "notice_id", "notices", "fko0h19ha7jyrdtym2iy97ip03n");
-        configureCascadeIfColumnExists("notifications", "study_id", "studies", "fko5m57o40ivnn0td7m511dx42k");
         configureCascadeIfColumnExists(
-                "notifications", "recipient_id", "study_members", "fk60prjsdd6ahrlv3ayvjjqdlqi");
+                "notifications", "recipient_id", "users", "fk60prjsdd6ahrlv3ayvjjqdlqi");
     }
 
     @AfterEach
@@ -441,7 +442,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 정보 조회 요청을 보내면 스터디명과 내 역할·이름을 반환한다")
+    @DisplayName("스터디 정보 조회 요청을 보내면 스터디명·설명과 내 역할·이름을 반환한다")
     void getStudyInfoTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
         Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
@@ -456,8 +457,28 @@ class StudyAcceptanceTest {
                 .then()
                 .statusCode(200)
                 .body("studyName", equalTo("자바 스터디"))
+                .body("description", equalTo("설명"))
                 .body("role", equalTo("MEMBER"))
                 .body("userName", equalTo("스터디 내 이름"));
+    }
+
+    @Test
+    @DisplayName("설명이 없는 스터디 정보 조회에서도 description 필드를 null로 반환한다")
+    void getStudyInfoWithoutDescriptionTest() {
+        User user = userRepository.saveAndFlush(User.create("스터디 리더", "profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", null));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/info", study.getId())
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("description"))
+                .body("description", nullValue());
     }
 
     @Test
@@ -516,12 +537,14 @@ class StudyAcceptanceTest {
                         "과제",
                         "내용",
                         "링크",
+                        SubmissionTarget.MEMBERS_ONLY,
+                        SubmissionVisibility.LEADER_ONLY,
                         LocalDateTime.of(2026, 8, 20, 0, 0),
                         ASSIGNMENT_NOW
                 )
         );
         assignment.initializeSubmissions(List.of(firstStudyMember, secondStudyMember));
-        ReflectionTestUtils.setField(assignment.getSubmissions().getFirst(), "submitted", true);
+        assignment.getSubmissions().getFirst().submit(null, null, ASSIGNMENT_NOW);
         assignmentRepository.saveAndFlush(assignment);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
@@ -565,6 +588,8 @@ class StudyAcceptanceTest {
                         "과제",
                         "내용",
                         "링크",
+                        SubmissionTarget.MEMBERS_ONLY,
+                        SubmissionVisibility.LEADER_ONLY,
                         LocalDateTime.of(2026, 8, 20, 0, 0),
                         ASSIGNMENT_NOW
                 )
@@ -638,7 +663,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더가 삭제 요청을 보내면 스터디와 하위 데이터가 모두 삭제된다")
+    @DisplayName("스터디 삭제 시 공지·과제·제출물 알림을 지우고 다른 스터디 알림은 유지한다")
     void deleteStudyTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
@@ -659,14 +684,34 @@ class StudyAcceptanceTest {
                 "과제",
                 "내용",
                 "링크",
+                SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY,
                 LocalDateTime.of(2026, 8, 20, 0, 0),
                 ASSIGNMENT_NOW
         );
         assignment.initializeSubmissions(List.of(memberStudyMember));
         assignmentRepository.saveAndFlush(assignment);
 
-        saveNotification(study, memberStudyMember, notice.getId(), NotificationResourceType.NOTICE);
-        saveNotification(study, memberStudyMember, assignment.getId(), NotificationResourceType.ASSIGNMENT);
+        saveNotification(study, memberStudyMember, notice.getId(), ResourceType.NOTICE);
+        saveNotification(study, memberStudyMember, assignment.getId(), ResourceType.ASSIGNMENT);
+        Long submissionId = assignment.getSubmissions().getFirst().getId();
+        notificationRepository.saveAndFlush(Notification.create(
+                leader, "새 제출물", "알림", NotificationType.NEW,
+                submissionId, ResourceType.ASSIGNMENT_SUBMISSION,
+                "/studies/%d/assignments/%d/submissions/%d".formatted(study.getId(), assignment.getId(),
+                        submissionId)
+        ));
+
+        Study otherStudy = studyRepository.saveAndFlush(Study.create("다른 스터디", "설명"));
+        StudyMember otherLeader = studyMemberRepository.saveAndFlush(
+                StudyMember.create(otherStudy, member, member.getName(), member.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+        Notice otherNotice = Notice.create(otherStudy, "다른 공지", "내용");
+        otherNotice.addRecipients(List.of(otherLeader));
+        noticeRepository.saveAndFlush(otherNotice);
+        saveNotification(otherStudy, otherLeader, otherNotice.getId(), ResourceType.NOTICE);
+        assertThat(notificationRepository.count()).isEqualTo(4);
 
         testAuthRequest.givenAuthenticatedUser(leader.getId())
                 .port(port)
@@ -676,12 +721,19 @@ class StudyAcceptanceTest {
                 .statusCode(204);
 
         assertThat(studyRepository.findById(study.getId())).isEmpty();
-        assertThat(studyMemberRepository.findAll()).isEmpty();
-        assertThat(noticeRepository.findAll()).isEmpty();
-        assertThat(noticeRecipientRepository.findAll()).isEmpty();
+        assertThat(studyMemberRepository.findAll())
+                .extracting(StudyMember::getId)
+                .containsExactly(otherLeader.getId());
+        assertThat(noticeRepository.findAll())
+                .extracting(Notice::getId)
+                .containsExactly(otherNotice.getId());
+        assertThat(noticeRecipientRepository.findAll()).hasSize(1);
         assertThat(assignmentRepository.findAll()).isEmpty();
         assertThat(assignmentSubmissionRepository.findAll()).isEmpty();
-        assertThat(notificationRepository.findAll()).isEmpty();
+        assertThat(notificationRepository.findAll()).singleElement().satisfies(notification -> {
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
+            assertThat(notification.getResourceId()).isEqualTo(otherNotice.getId());
+        });
     }
 
     @Test
@@ -783,14 +835,18 @@ class StudyAcceptanceTest {
             Study study,
             StudyMember recipient,
             Long resourceId,
-            NotificationResourceType resourceType
+            ResourceType resourceType
     ) {
-        Notification notification = BeanUtils.instantiateClass(Notification.class);
-        ReflectionTestUtils.setField(notification, "study", study);
-        ReflectionTestUtils.setField(notification, "recipient", recipient);
-        ReflectionTestUtils.setField(notification, "type", NotificationType.REMIND);
-        ReflectionTestUtils.setField(notification, "resourceId", resourceId);
-        ReflectionTestUtils.setField(notification, "resourceType", resourceType);
+        String resourcePath = resourceType == ResourceType.NOTICE ? "notices" : "assignments";
+        Notification notification = Notification.create(
+                recipient.getUser(),
+                "[스터디] 새 " + resourceType.getName(),
+                "알림",
+                NotificationType.REMIND,
+                resourceId,
+                resourceType,
+                "/studies/%d/%s/%d".formatted(study.getId(), resourcePath, resourceId)
+        );
         notificationRepository.saveAndFlush(notification);
     }
 }

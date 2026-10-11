@@ -18,10 +18,21 @@ services:
       AUTH_KAKAO_REST_API_KEY: "${AUTH_KAKAO_REST_API_KEY}"
       AUTH_KAKAO_CLIENT_SECRET: "${AUTH_KAKAO_CLIENT_SECRET}"
       AUTH_KAKAO_REDIRECT_URI: "${AUTH_KAKAO_REDIRECT_URI}"
+      WEB_PUSH_VAPID_PUBLIC_KEY: "${WEB_PUSH_VAPID_PUBLIC_KEY}"
+      WEB_PUSH_VAPID_PRIVATE_KEY: "${WEB_PUSH_VAPID_PRIVATE_KEY}"
+      WEB_PUSH_VAPID_SUBJECT: "${WEB_PUSH_VAPID_SUBJECT}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV}"
     expose:
       - "8080"
     networks:
       - application
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "${CLOUD_WATCH_AWS_REGION}"
+        awslogs-group: "/chongchong/${CLOUD_WATCH_APP_ENV}/backend"
+        awslogs-stream: "backend"
+        awslogs-create-group: "false"
 
   nginx:
     image: nginx:1.28-alpine
@@ -40,6 +51,30 @@ services:
       - /var/www/certbot:/var/www/certbot:ro
     networks:
       - application
+
+  metrics-collector:
+    profiles:
+      - metrics
+    image: public.ecr.aws/aws-observability/aws-otel-collector:v0.49.0
+    container_name: chongchong-metrics-collector
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command:
+      - --config=/etc/otelcol/config.yaml
+    environment:
+      CLOUD_WATCH_AWS_REGION: "${CLOUD_WATCH_AWS_REGION:-}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV:-}"
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    networks:
+      - application
+    mem_limit: 192m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
 
 networks:
   application:

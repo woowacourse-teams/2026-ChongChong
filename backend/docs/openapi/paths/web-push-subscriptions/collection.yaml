@@ -1,0 +1,33 @@
+post:
+  tags: [Web Push]
+  operationId: registerWebPushSubscription
+  x-frontend:
+    status: integrated
+    description: "브라우저 구독과 installationId를 등록하고 subscriptionId를 저장한다."
+    sources:
+      - frontend/src/features/notification/push.ts
+  x-backend:
+    status: done
+    owner: wontop02
+    description: userId와 installationId를 복합 유일 키로 사용해 같은 사용자의 구독을 upsert한다. endpoint와 암호화 키는 재등록 시 갱신한다.
+  summary: Web Push 구독 등록
+  description: 현재 사용자의 브라우저 Web Push 구독을 등록하거나 갱신한다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/web-push-subscriptions.yaml#/WebPushSubscriptionRegisterRequest' }
+        example:
+          installationId: 4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1
+          endpoint: 'https://push.example.com/subscription'
+          keys: { p256dh: p256dh-key, auth: auth-secret }
+  responses:
+    '200':
+      description: Web Push 구독 등록 성공.
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/web-push-subscriptions.yaml#/WebPushSubscriptionRegisterResponse' }
+    '400': { $ref: '../../components/responses.yaml#/InvalidInputAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }

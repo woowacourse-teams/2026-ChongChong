@@ -3,6 +3,7 @@
 - 날짜: 2026-08-24
 - 관련 이슈: [#109](https://github.com/woowacourse-teams/2026-ChongChong/issues/109)
 - 대체하는 결정: [0018. RN 소셜 로그인 HTTP 계약을 정의한다](0018-define-rn-social-login-http-contract.md)
+- 일부 결정을 변경한 ADR: [0036. 로그인 응답에 사용자 식별자를 제공한다](0036-provide-user-id-in-login-response.md)
 - 관련 ADR: [0007. Access Token 인증 경계를 구성한다](0007-establish-access-token-authentication-boundary.md),
   [0008. 인증 토큰 발급과 세션 생명주기를 정의한다](0008-establish-auth-token-and-session-lifecycle.md),
   [0009. 제공자 독립 소셜 로그인 경계를 구성한다](0009-establish-provider-independent-social-login-boundary.md)

@@ -14,7 +14,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
-import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.study.entity.Study;
@@ -33,14 +32,14 @@ class AssignmentTest {
     void createWithInvalidTextTest() {
         assertInvalidCreate(" ", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
         assertInvalidCreate("과제 제목", " ", "링크 제출", AssignmentErrorCode.INVALID_CONTENT);
-        assertInvalidCreate("과제 제목", "과제 내용", " ", AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
+        assertInvalidCreate("과제 제목", "과제 내용", "가".repeat(10001), AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
     }
 
     @Test
     @DisplayName("제출 방법, 마감 시각, 리마인드 시각은 각각의 오류 코드로 구분한다")
     void distinguishFieldValidationErrorCodesTest() {
         assertErrorCode(
-                () -> createAssignment("과제 제목", "과제 내용", " ", NOW.plusHours(1)),
+                () -> createAssignment("과제 제목", "과제 내용", "가".repeat(10001), NOW.plusHours(1)),
                 "INVALID_SUBMISSION_METHOD"
         );
         assertErrorCode(
@@ -53,12 +52,12 @@ class AssignmentTest {
     }
 
     @Test
-    @DisplayName("과제 제목은 20자까지 허용하고 20자를 초과하면 거부한다")
+    @DisplayName("과제 제목은 100자까지 허용하고 100자를 초과하면 거부한다")
     void validateTitleLengthTest() {
-        assertThatCode(() -> createAssignment("가".repeat(20), "과제 내용", "링크 제출", NOW.plusHours(1)))
+        assertThatCode(() -> createAssignment("가".repeat(100), "과제 내용", "링크 제출", NOW.plusHours(1)))
                 .doesNotThrowAnyException();
 
-        assertInvalidCreate("가".repeat(21), "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
+        assertInvalidCreate("가".repeat(101), "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
     }
 
     @Test
@@ -98,7 +97,7 @@ class AssignmentTest {
         LocalDateTime updatedCloseAt = NOW.plusDays(2);
         Assignment assignment = createAssignment("기존 제목", "기존 내용", "기존 방법", originalCloseAt);
 
-        assignment.update("수정 제목", null, "수정 방법", updatedCloseAt, null, NOW);
+        assignment.update(null, "수정 제목", null, "수정 방법", null, null, updatedCloseAt, null, NOW);
 
         assertThat(assignment.getTitle()).isEqualTo("수정 제목");
         assertThat(assignment.getContent()).isEqualTo("기존 내용");
@@ -111,15 +110,15 @@ class AssignmentTest {
     void updateWithInvalidValuesTest() {
         Assignment assignment = createAssignment("기존 제목", "기존 내용", "기존 방법", NOW.plusDays(1));
 
-        assertThatThrownBy(() -> assignment.update(" ", null, null, null, null, NOW))
+        assertThatThrownBy(() -> assignment.update(null, " ", null, null, null, null, null, null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_TITLE);
-        assertThatThrownBy(() -> assignment.update(null, " ", null, null, null, NOW))
+        assertThatThrownBy(() -> assignment.update(null, null, " ", null, null, null, null, null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CONTENT);
-        assertThatThrownBy(() -> assignment.update(null, null, null, NOW.minusNanos(1), null, NOW))
+        assertThatThrownBy(() -> assignment.update(null, null, null, null, null, null, NOW.minusNanos(1), null, NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
@@ -166,7 +165,7 @@ class AssignmentTest {
         assignment.addReminders(List.of(sentRemindAt, pendingRemindAt), NOW);
         assignment.getReminders().getFirst().markAsSent();
 
-        assignment.update(null, null, null, null, List.of(newRemindAt, newRemindAt), NOW);
+        assignment.update(null, null, null, null, null, null, null, List.of(newRemindAt, newRemindAt), NOW);
 
         assertThat(assignment.getReminders())
                 .extracting(AssignmentReminder::getRemindAt)
@@ -181,7 +180,8 @@ class AssignmentTest {
         LocalDateTime existingRemindAt = NOW.plusHours(1);
         assignment.addReminders(List.of(existingRemindAt), NOW);
 
-        assertThatThrownBy(() -> assignment.update(null, null, null, null, List.of(NOW.plusHours(2), NOW), NOW))
+        assertThatThrownBy(() -> assignment.update(
+                null, null, null, null, null, null, null, List.of(NOW.plusHours(2), NOW), NOW))
                 .isInstanceOf(AssignmentException.class)
                 .extracting(exception -> ((AssignmentException) exception).getErrorCode())
                 .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
@@ -213,7 +213,7 @@ class AssignmentTest {
     void calculateSubmissionCountsAndNextReminderTest() {
         Assignment assignment = createAssignment();
         assignment.initializeSubmissions(List.of(memberWithId(1L), memberWithId(2L)));
-        ReflectionTestUtils.setField(assignment.getSubmissions().getFirst(), "submitted", true);
+        assignment.getSubmissions().getFirst().submit(null, null, NOW);
 
         LocalDateTime firstRemindAt = NOW.plusHours(1);
         LocalDateTime nextRemindAt = NOW.plusHours(2);
@@ -221,7 +221,7 @@ class AssignmentTest {
         assignment.getReminders().getFirst().markAsSent();
 
         assertThat(assignment.getSubmissionCount()).isEqualTo(2);
-        assertThat(assignment.getSubmittedCount()).isEqualTo(1);
+        assertThat(assignment.getSubmittedCount(NOW)).isEqualTo(1);
         assertThat(assignment.getNextRemindAt()).isEqualTo(nextRemindAt);
     }
 
@@ -230,7 +230,8 @@ class AssignmentTest {
     }
 
     private Assignment createAssignment(String title, String content, String submissionMethod, LocalDateTime closeAt) {
-        return Assignment.create(study, title, content, submissionMethod, closeAt, NOW);
+        return Assignment.create(study, title, content, submissionMethod, SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY, closeAt, NOW);
     }
 
     private StudyMember memberWithId(Long id) {

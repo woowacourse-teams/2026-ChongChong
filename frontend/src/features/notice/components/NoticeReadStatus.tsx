@@ -1,8 +1,4 @@
 import type { CSSProperties } from 'react';
-import checkIcon from '../../../shared/assets/check.svg';
-import clockIcon from '../../../shared/assets/clock.svg';
-import profileIcon from '../../../shared/assets/unknown-profile.svg';
-import Badge from '../../../shared/ui/Badge';
 import { tokens, typography } from '../../../styles/global';
 import type { NoticeReadStatus as NoticeReadStatusData } from '../types';
 
@@ -13,10 +9,6 @@ interface Props {
 const cardStyle = {
   display: 'flex',
   flexDirection: 'column',
-  padding: tokens.spacing[5],
-  border: tokens.border.neutral,
-  borderRadius: tokens.radius.lg,
-  background: tokens.bg.default,
 } satisfies CSSProperties;
 
 const headerStyle = {
@@ -66,32 +58,6 @@ const progressBarStyle = {
   background: tokens.bg.brand,
 } satisfies CSSProperties;
 
-const groupLabelStyle = {
-  ...typography.footnote,
-  display: 'flex',
-  alignItems: 'center',
-  gap: tokens.spacing[1],
-  margin: 0,
-} satisfies CSSProperties;
-
-const groupStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: tokens.spacing[1],
-  marginTop: tokens.spacing[3],
-} satisfies CSSProperties;
-
-const badgeRowStyle = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: tokens.spacing[1],
-} satisfies CSSProperties;
-
-const profileStyle = {
-  width: '22px',
-  height: '22px',
-} satisfies CSSProperties;
-
 export default function NoticeReadStatus({ status }: Props) {
   const progress = status.memberCount === 0 ? 0 : (status.readCount / status.memberCount) * 100;
 
@@ -117,37 +83,6 @@ export default function NoticeReadStatus({ status }: Props) {
         aria-valuenow={status.readCount}
       >
         <div css={{ ...progressBarStyle, width: `${progress}%` }} />
-      </div>
-
-      <div css={groupStyle}>
-        <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>
-          <img src={checkIcon} alt="" width={18} height={18} />
-          확인 {status.readCount}명
-        </p>
-        <div css={badgeRowStyle}>
-          {status.readMembers.map((member) => (
-            <Badge key={member.id} variant="neutralSolid" size="large">
-              <img src={profileIcon} alt="" css={profileStyle} />
-              {member.name}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      <div css={groupStyle}>
-        <p css={{ ...groupLabelStyle, color: tokens.text.muted }}>
-          <img src={clockIcon} alt="" width={18} height={18} />
-          미확인 {status.unreadCount}명
-        </p>
-
-        <div css={badgeRowStyle}>
-          {status.unreadMembers.map((member) => (
-            <Badge key={member.id} variant="neutralSolid" size="large">
-              <img src={profileIcon} alt="" css={profileStyle} />
-              {member.name}
-            </Badge>
-          ))}
-        </div>
       </div>
     </section>
   );

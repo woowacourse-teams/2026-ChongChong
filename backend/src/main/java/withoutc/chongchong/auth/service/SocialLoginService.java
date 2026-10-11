@@ -20,10 +20,11 @@ public class SocialLoginService {
     private final AuthTokenService authTokenService;
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public IssuedTokenPair login(SocialUserInfo socialUserInfo) {
+    public SocialLoginResult login(SocialUserInfo socialUserInfo) {
         validateSocialUserInfo(socialUserInfo);
         User user = findOrCreateUser(socialUserInfo);
-        return authTokenService.issue(user.getId());
+        IssuedTokenPair tokenPair = authTokenService.issue(user.getId());
+        return SocialLoginResult.of(user.getId(), tokenPair);
     }
 
     private User findOrCreateUser(SocialUserInfo socialUserInfo) {

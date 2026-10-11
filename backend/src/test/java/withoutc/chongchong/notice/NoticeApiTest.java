@@ -2,8 +2,8 @@ package withoutc.chongchong.notice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -15,10 +15,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -26,7 +29,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationType;
+import withoutc.chongchong.notification.entity.ResourceType;
+import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -40,6 +48,9 @@ import withoutc.chongchong.user.repository.UserRepository;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class NoticeApiTest {
 
+    private static final DateTimeFormatter REQUEST_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
     @Autowired
     private UserRepository userRepository;
 
@@ -51,6 +62,12 @@ class NoticeApiTest {
 
     @Autowired
     private NoticeRepository noticeRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private NoticeRecipientRepository noticeRecipientRepository;
 
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
@@ -103,9 +120,56 @@ class NoticeApiTest {
     }
 
     @Test
+    @DisplayName("생성 시 101자 제목은 거부하고 저장하지 않는다")
+    void createWithOverLengthTitleTest() {
+        long originalCount = noticeRepository.count();
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101), "content", "공지 내용"))
+                .when()
+                .post("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("수정 시 100자 제목은 저장하고 101자 제목은 거부하여 기존 제목을 유지한다")
+    void updateWithTitleLengthBoundaryTest() {
+        String title = "가".repeat(100);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", title))
+                .when()
+                .patch("/studies/{studyId}/notices/{id}", study.getId(), notice.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "가".repeat(101)))
+                .when()
+                .patch("/studies/{studyId}/notices/{id}", study.getId(), notice.getId())
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle())
+                .isEqualTo(title);
+    }
+
+    @Test
     @DisplayName("공지 생성 요청을 보내면 201과 공지 id를 반환하고 리더를 제외한 수신자를 저장한다")
     void createNoticeTest() {
-        String maxLengthTitle = "가".repeat(20);
+        String maxLengthTitle = "가".repeat(100);
         LocalDateTime newRemindAt = remindAt.plusDays(1);
 
         Long createdNoticeId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
@@ -117,7 +181,7 @@ class NoticeApiTest {
                           "content": "새 공지 내용",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(maxLengthTitle, newRemindAt))
+                        """.formatted(maxLengthTitle, newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .post("/studies/{studyId}/notices", study.getId())
                 .then()
@@ -139,6 +203,23 @@ class NoticeApiTest {
         );
         assertThat(recipientCount).isEqualTo(2);
         assertThat(reminderCount).isEqualTo(1);
+
+        List<Notification> memberNotifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(memberUser.getId());
+        List<Notification> secondMemberNotifications = notificationRepository
+                .findAllByRecipientIdOrderByCreatedAtDesc(secondMember.getUser().getId());
+        assertThat(memberNotifications).hasSize(1);
+        assertThat(secondMemberNotifications).hasSize(1);
+
+        assertThat(memberNotifications).allSatisfy(notification -> {
+            assertThat(notification.getType()).isEqualTo(NotificationType.NEW);
+            assertThat(notification.getResourceId()).isEqualTo(createdNoticeId);
+            assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
+            assertThat(notification.getTitle()).isEqualTo("[자바 스터디] 새 공지");
+            assertThat(notification.getBody()).isEqualTo(maxLengthTitle);
+            assertThat(notification.getDeepLink())
+                    .isEqualTo("/studies/%d/notices/%d".formatted(study.getId(), createdNoticeId));
+        });
     }
 
     @Test
@@ -199,7 +280,7 @@ class NoticeApiTest {
                 .then()
                 .statusCode(200)
                 .body("notices[0].id", equalTo(notice.getId().intValue()))
-                .body("notices[0].isComplete", equalTo(false))
+                .body("notices[0].readStatus", equalTo("UNREAD"))
                 .body("notices[0]", not(hasKey("recipientCount")))
                 .body("notices[0]", not(hasKey("readRecipientCount")))
                 .body("notices[0]", not(hasKey("remindAt")));
@@ -301,7 +382,7 @@ class NoticeApiTest {
                 .get("/studies/{studyId}/notices", study.getId())
                 .then()
                 .statusCode(200)
-                .body("notices[0].isComplete", equalTo(true));
+                .body("notices[0].readStatus", equalTo("READ"));
     }
 
     @Test
@@ -352,7 +433,7 @@ class NoticeApiTest {
                           "content": "수정 공지 내용",
                           "remindAts": ["%s"]
                         }
-                        """.formatted(newRemindAt))
+                        """.formatted(newRemindAt.format(REQUEST_DATE_TIME_FORMATTER)))
                 .when()
                 .patch("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
                 .then()
@@ -394,8 +475,25 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("리더가 공지 삭제 요청을 보내면 공지 애그리거트가 함께 삭제된다")
+    @DisplayName("리더가 공지를 삭제하면 관련 알림도 삭제하고 다른 공지 알림은 유지한다")
     void deleteNoticeTest() {
+        Notice otherNotice = Notice.create(study, "다른 공지", "내용");
+        otherNotice.addRecipients(List.of(member));
+        noticeRepository.saveAndFlush(otherNotice);
+        Notification otherNotification = notificationRepository.saveAndFlush(Notification.create(
+                memberUser, "다른 공지 알림", "내용", NotificationType.NEW,
+                otherNotice.getId(), ResourceType.NOTICE,
+                "/studies/%d/notices/%d".formatted(study.getId(), otherNotice.getId())
+        ));
+        notificationRepository.saveAllAndFlush(List.of(
+                Notification.create(memberUser, "공지 알림", "내용", NotificationType.NEW,
+                        notice.getId(), ResourceType.NOTICE,
+                        "/studies/%d/notices/%d".formatted(study.getId(), notice.getId())),
+                Notification.create(secondMember.getUser(), "공지 알림", "내용", NotificationType.REMIND,
+                        notice.getId(), ResourceType.NOTICE,
+                        "/studies/%d/notices/%d".formatted(study.getId(), notice.getId()))
+        ));
+
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .when()
@@ -406,6 +504,9 @@ class NoticeApiTest {
         assertThat(countRows("notices", notice.getId())).isZero();
         assertThat(countRows("notice_recipients", notice.getId())).isZero();
         assertThat(countRows("notice_reminders", notice.getId())).isZero();
+        assertThat(notificationRepository.findAll())
+                .extracting(Notification::getId)
+                .containsExactly(otherNotification.getId());
     }
 
     @Test
@@ -566,7 +667,57 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("공지 수신자 정보가 없는 공지는 목록에서 제외한다")
+    @DisplayName("신규 가입자는 이전 공지를 조회하지만 확인 대상으로 추가되지 않는다")
+    void getPreviousNoticesByNewMemberTest() {
+        User newUser = userRepository.save(User.create("신규 회원", null));
+        StudyMember newMember = studyMemberRepository.save(
+                StudyMember.create(study, newUser, "신규 회원", null, StudyMemberRole.MEMBER)
+        );
+        long recipientCount = noticeRecipientRepository.count();
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(200)
+                .body("notices", hasSize(1))
+                .body("notices[0].id", equalTo(notice.getId().intValue()))
+                .body("notices[0].readStatus", equalTo("NOT_ASSIGNED"))
+                .body("notices[0]", not(hasKey("isComplete")));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("id", equalTo(notice.getId().intValue()));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/notices/{noticeId}/status/me", study.getId(), notice.getId())
+                .then()
+                .statusCode(200)
+                .body("readStatus", equalTo("NOT_ASSIGNED"))
+                .body("$", not(hasKey("readAt")));
+
+        testAuthRequest.givenAuthenticatedUser(newUser.getId())
+                .port(port)
+                .when()
+                .patch("/studies/{studyId}/notices/{noticeId}/read", study.getId(), notice.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("NOTICE_RECIPIENT_NOT_FOUND"));
+
+        assertThat(noticeRecipientRepository.count()).isEqualTo(recipientCount);
+        assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(
+                notice.getId(), newMember.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공지 수신자 정보가 없는 공지도 미해당 상태로 조회한다")
     void getNoticesWithoutRecipientTest() {
         jdbcTemplate.update(
                 "DELETE FROM notice_recipients WHERE notice_id = ? AND member_id = ?",
@@ -580,7 +731,8 @@ class NoticeApiTest {
                 .get("/studies/{studyId}/notices", study.getId())
                 .then()
                 .statusCode(200)
-                .body("notices", hasSize(0));
+                .body("notices", hasSize(1))
+                .body("notices[0].readStatus", equalTo("NOT_ASSIGNED"));
     }
 
     @Test
@@ -624,6 +776,93 @@ class NoticeApiTest {
 
         assertThat(persistedReadAt).isNotNull();
         assertThat(readAt).isEqualTo(persistedReadAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        assertThat(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                notice.getId(), secondMember.getId()).getReadAt()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"GET,''", "PATCH,''", "DELETE,''", "GET,/status", "GET,/status/me", "PATCH,/read"})
+    @DisplayName("다른 스터디의 공지는 단건 API에서 찾을 수 없고 공지와 읽음 상태가 유지된다")
+    void rejectNoticeFromOtherStudyTest(String method, String suffix) {
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        StudyMember otherLeader = studyMemberRepository.save(
+                StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
+        );
+        Notice otherNotice = Notice.create(otherStudy, "다른 공지", "다른 공지 내용");
+        otherNotice.addRecipients(List.of(otherLeader));
+        noticeRepository.saveAndFlush(otherNotice);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "변경 시도"))
+                .when()
+                .request(method, "/studies/{studyId}/notices/{noticeId}" + suffix,
+                        study.getId(), otherNotice.getId())
+                .then()
+                .statusCode(404)
+                .body("code", equalTo("NOTICE_NOT_FOUND"));
+
+        Notice unchangedNotice = noticeRepository.findById(otherNotice.getId()).orElseThrow();
+        assertThat(unchangedNotice.getTitle()).isEqualTo("다른 공지");
+        assertThat(unchangedNotice.getContent()).isEqualTo("다른 공지 내용");
+        assertThat(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                otherNotice.getId(), otherLeader.getId()).getReadAt()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"GET,''", "PATCH,''", "DELETE,''", "GET,/status", "GET,/status/me", "PATCH,/read"})
+    @DisplayName("스터디 비참여자는 단건 공지 API에 접근할 수 없다")
+    void rejectNoticeAccessByNonParticipantTest(String method, String suffix) {
+        User outsider = userRepository.saveAndFlush(User.create("외부 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(outsider.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "변경 시도"))
+                .when()
+                .request(method, "/studies/{studyId}/notices/{noticeId}" + suffix,
+                        study.getId(), notice.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_ACCESS_DENIED"));
+
+        assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle()).isEqualTo("기존 공지");
+        assertThat(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                notice.getId(), member.getId()).getReadAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("스터디원은 공지를 생성할 수 없으며 공지 수는 유지된다")
+    void rejectCreateNoticeByMemberTest() {
+        long originalCount = noticeRepository.count();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "공지 제목", "content", "공지 내용"))
+                .when()
+                .post("/studies/{studyId}/notices", study.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+    }
+
+    @Test
+    @DisplayName("스터디원은 공지를 삭제할 수 없으며 기존 공지는 유지된다")
+    void rejectDeleteNoticeByMemberTest() {
+        long originalCount = noticeRepository.count();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
+                .port(port)
+                .when()
+                .delete("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("ACCESS_DENIED"));
+
+        assertThat(noticeRepository.count()).isEqualTo(originalCount);
+        assertThat(noticeRepository.existsById(notice.getId())).isTrue();
     }
 
     @Test
@@ -635,7 +874,7 @@ class NoticeApiTest {
                 .get("/studies/{studyId}/notices/{noticeId}/status/me", study.getId(), notice.getId())
                 .then()
                 .statusCode(200)
-                .body("isRead", equalTo(false))
+                .body("readStatus", equalTo("UNREAD"))
                 .body("readAt", nullValue());
     }
 
@@ -650,7 +889,7 @@ class NoticeApiTest {
                 notice.getId(),
                 member.getId()
         );
-        insertNotification(secondMember.getId(), notice.getId(), "NOTICE", lastRemindAt);
+        insertNotification(secondMember.getUser().getId(), notice.getId(), "NOTICE", lastRemindAt);
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
@@ -666,6 +905,8 @@ class NoticeApiTest {
                 .body("readMembers", hasSize(1))
                 .body("readMembers[0].id", equalTo(member.getId().intValue()))
                 .body("readMembers[0].name", equalTo("스터디원"))
+                .body("readMembers[0].readAt",
+                        equalTo(readAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
                 .body("readMembers[0]", hasKey("profileImage"))
                 .body("readMembers[0]", not(hasKey("profileImageUrl")))
                 .body("unreadMembers", hasSize(1))
@@ -702,14 +943,16 @@ class NoticeApiTest {
     }
 
     private void insertNotification(Long recipientId, Long resourceId, String resourceType, LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update(
                 """
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                study.getId(),
                 recipientId,
+                title,
                 resourceId,
                 resourceType,
                 createdAt,

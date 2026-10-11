@@ -20,3 +20,7 @@
 !**/.env.example
 frontend/dist/
 backend/docs/openapi/dist/
+
+# 제거한 Expo 패키지의 기존 로컬 생성물
+app/.expo/
+app/dist/

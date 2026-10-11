@@ -2,7 +2,7 @@ import { CSSProperties } from 'react';
 import { tokens } from '../../styles/global';
 import { typography } from '../../styles/global';
 
-type Variant = 'brandSolid' | 'neutralSolid' | 'brandOutline';
+export type Variant = 'brandSolid' | 'neutralSolid' | 'brandOutline';
 
 type Size = 'small' | 'large';
 

@@ -10,6 +10,8 @@ import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
 import Loading from '../../../shared/ui/Loading';
+import NotificationLink from '../../notification/components/NotificationLink';
+import MyIcon from '../../../shared/assets/my.webp';
 
 const actionsStyle = {
   display: 'flex',
@@ -22,9 +24,17 @@ export default function MyStudiesPage() {
   return (
     <Page>
       <TopHeader
-        middle={
+        left={
           <div>
             <img css={{ width: '40px', height: '40px' }} src={logo} alt="" />
+          </div>
+        }
+        right={
+          <div css={{ display: 'flex', gap: tokens.spacing[5], alignItems: 'center' }}>
+            <NotificationLink />
+            <Link to={'/studies/mypage'} aria-label="마이페이지">
+              <img css={{ width: '28px', height: '28px' }} src={MyIcon} alt="" />
+            </Link>
           </div>
         }
       />

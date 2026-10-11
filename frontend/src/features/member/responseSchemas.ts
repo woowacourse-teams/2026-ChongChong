@@ -9,6 +9,8 @@ const memberSchema = z.object({
 }) satisfies z.ZodType<Member>;
 
 const memberResponseSchema = z.object({
+  maxMemberCount: z.number(),
+  nowMemberCount: z.number(),
   members: z.array(memberSchema),
 }) satisfies z.ZodType<MemberResponse>;
 

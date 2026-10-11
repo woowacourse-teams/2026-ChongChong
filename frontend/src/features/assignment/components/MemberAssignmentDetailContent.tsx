@@ -1,68 +1,68 @@
-import { useMemo } from 'react';
-import { useQueryClient, useSuspenseQueries, useMutation } from '@tanstack/react-query';
+import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
+import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
+import DetailTabs from '../../../shared/widgets/DetailTabs';
+import { formatDateToString } from '../../../shared/utils/formatDate';
 import assignmentQueries from '../queries';
 import AssignmentArticle from './AssignmentArticle';
-import { AssignmentSubmissionValue } from '../types';
-import { createAssignmentSubmission } from '../api';
-import CompletedAssignmentSubmission from './CompletedAssignmentSubmission';
-import AssignmentSubmissionForm from './AssignmentSubmissionForm';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import { ValidationError } from '../../../shared/api/error';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import CompletedSubmissionList from './CompletedSubmissionList';
+import MyAssignmentSubmission from './MyAssignmentSubmission';
+import MySubmissionStatus from './MySubmissionStatus';
+import { isCompletedAssignment } from '../submissionStatus';
 
 interface Props {
   studyId: number;
+  userName: string;
 }
 
-export default function MemberAssignmentDetailContent({ studyId }: Props) {
+export default function MemberAssignmentDetailContent({ studyId, userName }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
-  const queryClient = useQueryClient();
-  const toast = useToast();
-
   const [{ data: assignment }, { data: submission }] = useSuspenseQueries({
     queries: [
       assignmentQueries.detail(studyId, assignmentId),
       assignmentQueries.mySubmission(studyId, assignmentId),
     ],
   });
-
-  const { mutate, isPending, error } = useMutation({
-    mutationFn: (values: AssignmentSubmissionValue) =>
-      createAssignmentSubmission(studyId, assignmentId, values),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) });
-    },
-    onError: (error) => {
-      if (error instanceof ValidationError) return;
-      toast.open(<StatusToast message={error.message} status={'Error'} />);
-    },
+  const canViewSubmissions = assignment.submissionVisibility === 'ALL_STUDY_MEMBERS';
+  const { data: submissions } = useQuery({
+    ...assignmentQueries.submissions(studyId, assignmentId),
+    enabled: canViewSubmissions,
   });
-
-  const fieldErrors = useMemo(
-    () => (error instanceof ValidationError ? error.fieldErrors : {}),
-    [error],
-  );
+  const myCompletedSubmission = isCompletedAssignment(submission)
+    ? submissions?.submissions.find(({ id }) => id === submission.submissionId)
+    : undefined;
+  const member = {
+    name: myCompletedSubmission?.name ?? userName,
+    profileImage: myCompletedSubmission?.profileImage ?? null,
+  };
 
   return (
     <>
-      <AssignmentArticle assignment={assignment} />
-
-      {submission.submitted ? (
-        <CompletedAssignmentSubmission
-          key={`${studyId}-${assignmentId}-${submission.submissionId}`}
-          assignmentId={assignmentId}
-          studyId={studyId}
-          submission={submission}
-        />
-      ) : (
-        <AssignmentSubmissionForm
-          key={`${studyId}-${assignmentId}`}
-          isSubmitting={isPending}
-          onSubmit={mutate}
-          fieldErrors={fieldErrors}
-        />
-      )}
+      <ContentDetailHeader
+        title={assignment.title}
+        dateTime={assignment.closeAt}
+        meta={`${formatDateToString(assignment.closeAt)} 마감`}
+      />
+      <DetailTabs
+        summary={
+          <>
+            <MySubmissionStatus submission={submission} member={member} />
+            {canViewSubmissions && submissions ? (
+              <CompletedSubmissionList submissions={submissions.submissions} />
+            ) : null}
+          </>
+        }
+        detail={
+          <>
+            <AssignmentArticle assignment={assignment} />
+            <MyAssignmentSubmission
+              studyId={studyId}
+              assignmentId={assignmentId}
+              submission={submission}
+            />
+          </>
+        }
+      />
     </>
   );
 }

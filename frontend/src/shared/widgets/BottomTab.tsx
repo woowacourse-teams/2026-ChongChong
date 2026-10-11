@@ -1,14 +1,14 @@
 import { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useParams, useLocation } from 'react-router';
-import HomeIcon from '../assets/home.svg';
-import ActivehomeIcon from '../assets/home-green.svg';
-import NoticeIcon from '../assets/notice.svg';
-import ActiveNoticeIcon from '../assets/notice-green.svg';
-import AssignmentIcon from '../assets/assign.svg';
-import ActiveAssignmentIcon from '../assets/assign-green.svg';
-import MemberIcon from '../assets/user.svg';
-import ActiveMemberIcon from '../assets/user-green.svg';
+import HomeIcon from '../assets/home.webp';
+import ActivehomeIcon from '../assets/home-green.webp';
+import NoticeIcon from '../assets/notice.webp';
+import ActiveNoticeIcon from '../assets/notice-green.webp';
+import AssignmentIcon from '../assets/assign.webp';
+import ActiveAssignmentIcon from '../assets/assign-green.webp';
+import MemberIcon from '../assets/user.webp';
+import ActiveMemberIcon from '../assets/user-green.webp';
 import { tokens, typography } from '../../styles/global';
 
 const tabStyle = {
@@ -18,12 +18,18 @@ const tabStyle = {
   background: tokens.bg.default,
   maxWidth: tokens.screenSize.default,
   display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: `${tokens.spacing[2]} ${tokens.spacing[10]}`,
+  alignItems: 'stretch',
   borderTop: tokens.border.neutral,
   borderTopLeftRadius: tokens.radius.lg,
   borderTopRightRadius: tokens.radius.lg,
+} satisfies CSSProperties;
+
+const linkStyle = {
+  flex: 1,
+  minWidth: 0,
+  textAlign: 'center',
+  padding: `${tokens.spacing[2]} 0`,
+  paddingBottom: `calc(${tokens.spacing[2]} + ${tokens.layout.safeBottom})`,
 } satisfies CSSProperties;
 
 const textStyle = {
@@ -44,15 +50,19 @@ export default function BottomTab() {
 
   return (
     <nav css={tabStyle}>
-      <Link to={basePath} aria-current={isHome ? 'page' : undefined}>
+      <Link css={linkStyle} to={basePath} aria-current={isHome ? 'page' : undefined}>
         {<img src={isHome ? ActivehomeIcon : HomeIcon} alt="" width={22} height={22} />}
         <p css={[textStyle, isHome && { color: tokens.text.brand }]}>홈</p>
       </Link>
-      <Link to={`${basePath}/notices`} aria-current={isNotice ? 'page' : undefined}>
+      <Link css={linkStyle} to={`${basePath}/notices`} aria-current={isNotice ? 'page' : undefined}>
         <img src={isNotice ? ActiveNoticeIcon : NoticeIcon} width={22} height={22} alt="" />
         <p css={[textStyle, isNotice && { color: tokens.text.brand }]}>공지</p>
       </Link>
-      <Link to={`${basePath}/assignments`} aria-current={isAssignment ? 'page' : undefined}>
+      <Link
+        css={linkStyle}
+        to={`${basePath}/assignments`}
+        aria-current={isAssignment ? 'page' : undefined}
+      >
         <img
           src={isAssignment ? ActiveAssignmentIcon : AssignmentIcon}
           width={22}
@@ -61,7 +71,7 @@ export default function BottomTab() {
         />
         <p css={[textStyle, isAssignment && { color: tokens.text.brand }]}>과제</p>
       </Link>
-      <Link to={`${basePath}/members`} aria-current={isMember ? 'page' : undefined}>
+      <Link css={linkStyle} to={`${basePath}/members`} aria-current={isMember ? 'page' : undefined}>
         <img src={isMember ? ActiveMemberIcon : MemberIcon} width={22} height={22} alt="" />
         <p css={[textStyle, isMember && { color: tokens.text.brand }]}>멤버</p>
       </Link>

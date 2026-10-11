@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.controller.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
+import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.study.entity.StudyMember;
 
 public record SubmissionListResponse(
@@ -16,14 +17,16 @@ public record SubmissionListResponse(
             Long id,
             String name,
             String profileImage,
+            SubmissionStatus submissionStatus,
             LocalDateTime createdAt
     ) {
-        public static SubmissionSummary from(AssignmentSubmission submission) {
+        public static SubmissionSummary of(LocalDateTime now, AssignmentSubmission submission) {
             StudyMember member = submission.getMember();
             return new SubmissionSummary(
                     submission.getId(),
                     member.getName(),
                     member.getProfileImageUrl(),
+                    submission.submissionStatus(now),
                     submission.getSubmittedAt()
             );
         }

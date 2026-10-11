@@ -50,6 +50,24 @@ load_deployment_environment() {
             return 1
         fi
     done
+
+    if [[ ",${COMPOSE_PROFILES:-}," == *,metrics,* ]]; then
+        local metrics_variables=(CLOUD_WATCH_AWS_REGION CLOUD_WATCH_APP_ENV)
+        for variable in "${metrics_variables[@]}"; do
+            if [[ -z "${!variable:-}" ]]; then
+                echo "Missing required metrics variable: ${variable}" >&2
+                return 1
+            fi
+        done
+        if [[ "${CLOUD_WATCH_APP_ENV}" != "dev" && "${CLOUD_WATCH_APP_ENV}" != "prod" ]]; then
+            echo "CLOUD_WATCH_APP_ENV must be dev or prod when metrics are enabled" >&2
+            return 1
+        fi
+        if [[ ! "${CLOUD_WATCH_AWS_REGION}" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]]; then
+            echo "CLOUD_WATCH_AWS_REGION must be an AWS region when metrics are enabled" >&2
+            return 1
+        fi
+    fi
 }
 
 compose() {

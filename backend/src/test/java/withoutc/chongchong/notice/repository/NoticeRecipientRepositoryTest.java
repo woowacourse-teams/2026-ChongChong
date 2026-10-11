@@ -17,8 +17,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
+import withoutc.chongchong.notice.exception.NoticeErrorCode;
+import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.study.entity.Study;
@@ -53,6 +56,30 @@ class NoticeRecipientRepositoryTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
+    @DisplayName("공지와 멤버가 모두 일치하는 수신자만 조회한다")
+    void getByNoticeIdAndMemberIdOrThrowTest() {
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        StudyMember firstMember = createMember(study, "첫 번째 멤버", StudyMemberRole.MEMBER);
+        StudyMember secondMember = createMember(study, "두 번째 멤버", StudyMemberRole.MEMBER);
+        Notice firstNotice = Notice.create(study, "첫 번째 공지", "내용");
+        firstNotice.addRecipients(List.of(firstMember));
+        Notice secondNotice = Notice.create(study, "두 번째 공지", "내용");
+        secondNotice.addRecipients(List.of(secondMember));
+        noticeRepository.saveAllAndFlush(List.of(firstNotice, secondNotice));
+
+        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                firstNotice.getId(), firstMember.getId());
+
+        assertThat(recipient.getId()).isEqualTo(firstNotice.getRecipients().getFirst().getId());
+        assertThatThrownBy(() -> noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(
+                firstNotice.getId(), secondMember.getId()))
+                .isInstanceOfSatisfying(NoticeException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND));
+        assertThat(noticeRecipientRepository.findByNoticeIdAndMemberId(
+                secondNotice.getId(), firstMember.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("여러 공지의 읽음 상태를 StudyMember id로 한 번에 조회한다")
     void findMyReadStatusesByNoticeIdsAndMemberIdTest() {
         Study study = studyRepository.save(Study.create("스터디", "설명"));
@@ -77,10 +104,10 @@ class NoticeRecipientRepositoryTest {
                 List.of(readNotice.getId(), unreadNotice.getId(), otherNotice.getId()),
                 recipient.getId()
         ))
-                .extracting(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::isRead)
+                .extracting(NoticeReadStatusProjection::noticeId, NoticeReadStatusProjection::readStatus)
                 .containsExactlyInAnyOrder(
-                        tuple(readNotice.getId(), true),
-                        tuple(unreadNotice.getId(), false)
+                        tuple(readNotice.getId(), NoticeReadStatus.READ),
+                        tuple(unreadNotice.getId(), NoticeReadStatus.UNREAD)
                 );
     }
 
@@ -105,10 +132,12 @@ class NoticeRecipientRepositoryTest {
         ReflectionTestUtils.setField(readRecipient, "readAt", readAt);
         noticeRepository.saveAndFlush(notice);
 
-        insertNotification(study.getId(), unreadMember.getId(), notice.getId(), "NOTICE", earlierRemindAt);
-        insertNotification(study.getId(), unreadMember.getId(), notice.getId(), "NOTICE", latestRemindAt);
-        insertNotification(study.getId(), unreadMember.getId(), notice.getId(), "ASSIGNMENT", irrelevantNotificationAt);
-        insertNotification(study.getId(), unreadMember.getId(), notice.getId() + 1, "NOTICE", irrelevantNotificationAt);
+        insertNotification(unreadMember.getUser().getId(), notice.getId(), "NOTICE", earlierRemindAt);
+        insertNotification(unreadMember.getUser().getId(), notice.getId(), "NOTICE", latestRemindAt);
+        insertNotification(unreadMember.getUser().getId(), notice.getId(), "ASSIGNMENT",
+                irrelevantNotificationAt);
+        insertNotification(unreadMember.getUser().getId(), notice.getId() + 1, "NOTICE",
+                irrelevantNotificationAt);
 
         Map<Long, NoticeRecipientStatusProjection> statusesByMemberId = noticeRecipientRepository
                 .findAllReadStatusesByNoticeId(notice.getId())
@@ -177,13 +206,15 @@ class NoticeRecipientRepositoryTest {
         return studyMemberRepository.save(StudyMember.create(study, user, name, null, role));
     }
 
-    private void insertNotification(Long studyId, Long recipientId, Long resourceId, String resourceType,
+    private void insertNotification(Long recipientId, Long resourceId, String resourceType,
                                     LocalDateTime createdAt) {
+        String title = resourceType.equals("NOTICE") ? "[스터디] 새 공지" : "[스터디] 새 과제";
         jdbcTemplate.update("""
                         INSERT INTO notifications (
-                            study_id, recipient_id, type, resource_id, resource_type, is_read, created_at, updated_at
-                        ) VALUES (?, ?, 'REMIND', ?, ?, false, ?, ?)
+                            recipient_id, title, body, type, resource_id, resource_type, deep_link, is_read,
+                            created_at, updated_at
+                        ) VALUES (?, ?, '알림', 'REMIND', ?, ?, '/notifications', false, ?, ?)
                         """,
-                studyId, recipientId, resourceId, resourceType, createdAt, createdAt);
+                recipientId, title, resourceId, resourceType, createdAt, createdAt);
     }
 }

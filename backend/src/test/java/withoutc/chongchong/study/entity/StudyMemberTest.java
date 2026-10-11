@@ -85,6 +85,29 @@ class StudyMemberTest {
     }
 
     @Test
+    @DisplayName("스터디 멤버 이름을 변경할 때는 저장 가능한 최대 255자를 허용한다")
+    void syncNameFromUserAllowsStoredNameLimit() {
+        StudyMember member = createMember(StudyMemberRole.MEMBER);
+        String name = "가".repeat(255);
+
+        member.syncNameFromUser(name);
+
+        assertThat(member.getName()).isEqualTo(name);
+    }
+
+    @Test
+    @DisplayName("스터디 멤버 이름을 잘못된 값으로 변경하면 기존 이름을 유지한다")
+    void rejectInvalidNameUpdate() {
+        StudyMember member = createMember(StudyMemberRole.MEMBER);
+
+        assertThatThrownBy(() -> member.syncNameFromUser("가".repeat(256)))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.INVALID_STUDY_MEMBER_NAME);
+        assertThat(member.getName()).isEqualTo("스터디원");
+    }
+
+    @Test
     @DisplayName("프로필 이미지 URL이 없어도 스터디 멤버를 생성할 수 있다")
     void createMemberWithNullProfileImageUrlTest() {
         StudyMember member = createMember("스터디원", null);

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { ToastProvider } from '../../../shared/providers/ToastProvider';
 import { useFeaturePreview } from '../useFeaturePreview';
 import FeatureCarousel from './FeatureCarousel';
 
@@ -89,13 +90,15 @@ afterAll(() => {
 function PreviewHarness({ suspended = false }: { suspended?: boolean }) {
   const preview = useFeaturePreview({ suspended });
   return (
-    <main>
-      <div aria-live={preview.playing ? 'off' : 'polite'}>
-        <h1>{preview.feature.title}</h1>
-        <p>{preview.feature.description}</p>
-      </div>
-      <FeatureCarousel preview={preview} />
-    </main>
+    <ToastProvider>
+      <main>
+        <div aria-live={preview.playing ? 'off' : 'polite'}>
+          <h1>{preview.feature.title}</h1>
+          <p>{preview.feature.description}</p>
+        </div>
+        <FeatureCarousel preview={preview} />
+      </main>
+    </ToastProvider>
   );
 }
 

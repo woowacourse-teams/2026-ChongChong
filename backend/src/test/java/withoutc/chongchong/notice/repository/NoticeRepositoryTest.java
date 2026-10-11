@@ -80,8 +80,8 @@ class NoticeRepositoryTest {
     }
 
     @Test
-    @DisplayName("멤버별 공지 cursor 조회는 수신 정보가 존재하는 공지만 반환한다")
-    void findByCursorAndMemberIdTest() {
+    @DisplayName("공지 cursor 조회는 수신 대상과 관계없이 스터디의 공지를 반환한다")
+    void findByCursorRegardlessOfRecipientTest() {
         StudyWithMembersFixture fixture = createStudyWithMembersFixture();
         Notice firstMemberNotice = Notice.create(fixture.study(), "첫 번째 멤버 공지", "내용");
         firstMemberNotice.addRecipients(List.of(fixture.firstMember()));
@@ -89,16 +89,15 @@ class NoticeRepositoryTest {
         secondMemberNotice.addRecipients(List.of(fixture.secondMember()));
         noticeRepository.saveAllAndFlush(List.of(firstMemberNotice, secondMemberNotice));
 
-        List<Notice> notices = noticeRepository.findByCursorAndMemberId(
+        List<Notice> notices = noticeRepository.findByCursor(
                 fixture.study().getId(),
-                fixture.firstMember().getId(),
                 null,
                 PageRequest.of(0, 11)
         );
 
         assertThat(notices)
                 .extracting(Notice::getId)
-                .containsExactly(firstMemberNotice.getId());
+                .containsExactly(secondMemberNotice.getId(), firstMemberNotice.getId());
     }
 
     @Test
@@ -121,6 +120,41 @@ class NoticeRepositoryTest {
                 .isInstanceOfSatisfying(NoticeException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(NoticeErrorCode.NOTICE_NOT_FOUND)
                 );
+    }
+
+    @Test
+    @DisplayName("요청한 스터디에 속한 공지만 조회한다")
+    void getByIdAndStudyIdOrThrowTest() {
+        StudyFixture fixture = createStudyFixture("스터디", "리더");
+        Notice notice = noticeRepository.save(Notice.create(fixture.study(), "공지", "공지 내용"));
+
+        Notice found = noticeRepository.getByIdAndStudyIdOrThrow(notice.getId(), fixture.study().getId());
+
+        assertThat(found.getId()).isEqualTo(notice.getId());
+    }
+
+    @Test
+    @DisplayName("공지가 다른 스터디에 속하면 공지 없음 예외를 던진다")
+    void getByIdAndStudyIdOrThrowFromOtherStudyTest() {
+        StudyFixture fixture = createStudyFixture("스터디", "리더");
+        StudyFixture otherFixture = createStudyFixture("다른 스터디", "다른 리더");
+        Notice notice = noticeRepository.save(Notice.create(fixture.study(), "공지", "공지 내용"));
+
+        assertThatThrownBy(() -> noticeRepository.getByIdAndStudyIdOrThrow(
+                notice.getId(), otherFixture.study().getId()))
+                .isInstanceOfSatisfying(NoticeException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(NoticeErrorCode.NOTICE_NOT_FOUND));
+    }
+
+    @Test
+    @DisplayName("스터디 범위 조회에서 공지가 존재하지 않으면 공지 없음 예외를 던진다")
+    void getByIdAndStudyIdOrThrowNotFoundTest() {
+        StudyFixture fixture = createStudyFixture("스터디", "리더");
+
+        assertThatThrownBy(() -> noticeRepository.getByIdAndStudyIdOrThrow(
+                Long.MAX_VALUE, fixture.study().getId()))
+                .isInstanceOfSatisfying(NoticeException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
     @Test

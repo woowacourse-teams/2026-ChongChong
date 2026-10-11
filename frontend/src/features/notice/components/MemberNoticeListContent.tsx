@@ -5,6 +5,8 @@ import Badge from '../../../shared/ui/Badge';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
 import noticeQueries from '../queries';
 import NoticeList from './NoticeList';
+import type { MemberNoticeSummary } from '../types';
+import { readStatusBadge } from '../constants';
 
 interface Props {
   studyId: number;
@@ -20,7 +22,9 @@ export default function MemberNoticeListContent({ studyId }: Props) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     noticeQueries.list(studyId),
   );
-  const notices = data.pages.flatMap((page) => page.notices);
+  const notices = data.pages
+    .flatMap((page) => page.notices)
+    .filter((notice): notice is MemberNoticeSummary => 'readStatus' in notice);
   const loadMoreRef = useInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -34,19 +38,15 @@ export default function MemberNoticeListContent({ studyId }: Props) {
       ) : (
         <>
           <NoticeList notices={notices} studyId={studyId}>
-            {(notice) => (
-              <>
-                {notice.isComplete ? (
-                  <Badge variant="brandSolid" size="small">
-                    읽음
-                  </Badge>
-                ) : (
-                  <Badge variant="brandOutline" size="small">
-                    읽지 않음
-                  </Badge>
-                )}
-              </>
-            )}
+            {(notice) => {
+              const badge = readStatusBadge[notice.readStatus];
+
+              return (
+                <Badge variant={badge.variant} size="small">
+                  {badge.label}
+                </Badge>
+              );
+            }}
           </NoticeList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
           {isFetchingNextPage && <p role="status">공지를 더 불러오는 중...</p>}

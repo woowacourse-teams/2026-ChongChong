@@ -86,6 +86,7 @@ function ToastWrapper({
         zIndex: 1000,
         bottom: `calc(${tokens.spacing[6]} + ${tokens.layout.safeBottom})`,
         left: '50%',
+        maxWidth: `calc(${tokens.screenSize.default} - ${tokens.layout.gutter} * 2)`,
       }}
       onTransitionEnd={(event: React.TransitionEvent<HTMLDivElement>) => {
         if (event.propertyName !== 'opacity') return;

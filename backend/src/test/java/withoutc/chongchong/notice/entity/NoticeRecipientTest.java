@@ -22,7 +22,7 @@ class NoticeRecipientTest {
         assertThat(recipient.getMember()).isSameAs(member);
         assertThat(recipient.getNotice()).isSameAs(notice);
         assertThat(recipient.getReadAt()).isNull();
-        assertThat(recipient.isRead()).isFalse();
+        assertThat(recipient.readStatus()).isEqualTo(NoticeReadStatus.UNREAD);
     }
 
     @Test
@@ -34,7 +34,7 @@ class NoticeRecipientTest {
         recipient.markAsRead(expectedReadAt);
 
         assertThat(recipient.getReadAt()).isEqualTo(expectedReadAt);
-        assertThat(recipient.isRead()).isTrue();
+        assertThat(recipient.readStatus()).isEqualTo(NoticeReadStatus.READ);
     }
 
     @Test

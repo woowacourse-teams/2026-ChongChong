@@ -5,6 +5,7 @@ import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg';
 import Page from '../../../shared/ui/Page';
 import { tokens, typography } from '../../../styles/global';
 import { loginWithKakaoCode } from '../api';
+import { usePostHog } from '@posthog/react';
 import { consumeKakaoCallback } from '../kakaoOAuth';
 
 const contentStyle = {
@@ -152,6 +153,7 @@ export default function KakaoCallbackPage() {
   const navigate = useNavigate();
   const startedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -160,7 +162,10 @@ export default function KakaoCallbackPage() {
     const completeLogin = async () => {
       try {
         const authorizationCode = consumeKakaoCallback(location.search);
-        await loginWithKakaoCode(authorizationCode);
+        const { userId } = await loginWithKakaoCode(authorizationCode);
+        // TODO: 아래와 같이 전환할경우 Posthog에서 유저 식별 필터링이 용이해진다. (논의필요)
+        // posthog.identify(String(userId), { username: '안톨리니', email: 'some@example.com' });
+        posthog.identify(String(userId));
         navigate('/studies', { replace: true });
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : '카카오 로그인에 실패했습니다.');
@@ -168,7 +173,7 @@ export default function KakaoCallbackPage() {
     };
 
     void completeLogin();
-  }, [location.search, navigate]);
+  }, [location.search, navigate, posthog]);
 
   return (
     <Page>

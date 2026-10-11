@@ -1,222 +1,713 @@
 import type { PropsWithChildren } from 'react';
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { Route, Routes } from 'react-router';
+import { Route } from 'react-router';
 import { API_URL } from '../../../../../config';
+import { invalidInputResponse } from '../../../../mocks/errors';
 import { server } from '../../../../mocks/msw-node';
-import { createWrapper } from '../../../../test/render';
-import { STUDY_URLS } from '../../../study/urls';
+import { createWrapper, login, logout, setup } from '../../../../test/render';
+import { memberTable } from '../../../member/mocks/db';
+import { studyTable } from '../../../study/mocks/db';
+import { userTable } from '../../../user/mocks/db';
+import { assignmentTable, submissionTable } from '../../mocks/db';
 import AssignmentDetailPage from '../AssignmentDetailPage';
 
-// 조회 추적에서 사용하는 IntersectionObserver는 Jest 환경에 없어 래퍼만 대체한다.
 jest.mock('@posthog/react', () => ({
   ...jest.requireActual('@posthog/react'),
   PostHogCaptureOnViewed: ({ children }: PropsWithChildren) => children,
 }));
 
-const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
 const ASSIGNMENT_DETAIL_URL = `${API_URL}/studies/:studyId/assignments/:assignmentId`;
+const SUBMISSION_STATUS_URL = `${ASSIGNMENT_DETAIL_URL}/status`;
+const SUBMISSIONS_URL = `${ASSIGNMENT_DETAIL_URL}/submissions`;
+const MY_SUBMISSION_URL = `${SUBMISSIONS_URL}/my`;
+const SUBMISSION_DETAIL_URL = `${SUBMISSIONS_URL}/:submissionId`;
 
-function renderAssignmentDetailPage() {
-  render(
-    <Routes>
-      <Route
-        path="/studies/:studyId/assignments/:assignmentId"
-        element={<AssignmentDetailPage />}
-      />
-    </Routes>,
-    { wrapper: createWrapper({ initialEntries: ['/studies/1/assignments/1'] }) },
-  );
+function setupAssignmentDetailPage(initialEntry = '/studies/1/assignments/1') {
+  return setup(<AssignmentDetailPage />, {
+    wrapper: createWrapper({
+      initialEntries: [initialEntry],
+      routes: (element) => (
+        <Route path="/studies/:studyId/assignments/:assignmentId" element={element} />
+      ),
+    }),
+  });
 }
 
-describe('리드 과제 상세 조회 실패', () => {
-  beforeEach(() => {
+async function markSubmissionAsSubmitted(
+  userId: number,
+  values: { content: string; link: string | null },
+) {
+  const submission = submissionTable.findFirst((q) => q.where({ assignmentId: 1, userId }));
+  if (!submission) throw new Error('과제 제출 대상을 찾을 수 없습니다.');
+
+  submissionTable.delete((q) => q.where({ id: submission.id }));
+  await submissionTable.create({
+    ...submission,
+    submitted: true,
+    createdAt: '2026-09-01T09:00:00',
+    content: values.content,
+    link: values.link,
+  });
+}
+
+async function findSubmissionForm() {
+  const submissionForm = within(await screen.findByRole('region', { name: '내 제출' }));
+  const contentInput = await submissionForm.findByRole('textbox', { name: '내용' });
+  const linkInput = submissionForm.getByRole('textbox', { name: '링크' });
+
+  return { submissionForm, contentInput, linkInput };
+}
+
+async function setAssignmentVisibility(submissionVisibility: 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS') {
+  const assignment = assignmentTable.findFirst((q) => q.where({ id: 1, studyId: 1 }));
+  if (!assignment) throw new Error('과제를 찾을 수 없습니다.');
+
+  await assignmentTable.update(assignment, {
+    data(currentAssignment) {
+      currentAssignment.submissionVisibility = submissionVisibility;
+    },
+  });
+}
+
+async function openDetailTab(user: ReturnType<typeof setupAssignmentDetailPage>['user']) {
+  await user.click(await screen.findByRole('tab', { name: '상세' }));
+}
+
+describe('과제 상세 페이지 테스트', () => {
+  const leaderUserName = '바니';
+  const memberUserName = '이든';
+
+  beforeEach(async () => {
+    await userTable.create({
+      id: 1,
+      name: leaderUserName,
+      profileImage: 'http://localhost:8000',
+    });
+    await userTable.create({
+      id: 2,
+      name: memberUserName,
+      profileImage: 'http://localhost:8000',
+    });
+    await studyTable.create({
+      id: 1,
+      name: '스프링 스터디',
+      description: '스프링을 실제로 만들어보는 스터디',
+      inviteLink: 'spring-winter-study',
+    });
+    await memberTable.create({
+      id: 1,
+      studyId: 1,
+      userId: 1,
+      name: leaderUserName,
+      profileImage: 'http://localhost:8000',
+      role: 'LEADER',
+    });
+    await memberTable.create({
+      id: 2,
+      studyId: 1,
+      userId: 2,
+      name: memberUserName,
+      profileImage: 'http://localhost:8000',
+      role: 'MEMBER',
+    });
+    await assignmentTable.create({
+      id: 1,
+      studyId: 1,
+      title: '스프링 설계 과제',
+      content: '스프링에서 가장 중요한걸 정리해서 보내주세요',
+      submissionMethod: '텍스트로 제출하세요',
+      closeAt: '2999-12-31T23:59:59',
+      submissionTarget: 'MEMBERS_AND_LEADER',
+      completeUserIds: [],
+    });
+    await submissionTable.create({
+      id: 100,
+      assignmentId: 1,
+      userId: 1,
+      submitted: false,
+    });
+    await submissionTable.create({
+      id: 101,
+      assignmentId: 1,
+      userId: 2,
+      submitted: false,
+    });
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    server.use(
-      http.get(STUDY_INFO_URL, () =>
-        HttpResponse.json({
-          studyName: '객체지향 스터디',
-          role: 'LEADER',
-          userName: '안톨리니',
-        }),
-      ),
-      http.get(`${ASSIGNMENT_DETAIL_URL}/status`, () =>
-        HttpResponse.json({
-          id: 1,
-          memberCount: 1,
-          completeCount: 0,
-          incompleteCount: 1,
-          completeMembers: [],
-          incompleteMembers: [{ id: 1, name: '안톨리니', profileImage: null }],
-        }),
-      ),
-      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions`, () =>
-        HttpResponse.json({ submissions: [] }),
-      ),
-    );
   });
 
-  test('접근 권한 관련 에러가 발생하면 에러 메시지를 본문에 표시한다', async () => {
-    server.use(
-      http.get(ASSIGNMENT_DETAIL_URL, () =>
-        HttpResponse.json(
-          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
-          { status: 403 },
-        ),
-      ),
-    );
-    renderAssignmentDetailPage();
-
-    expect(
-      await within(screen.getByRole('main')).findByText('해당 스터디에 대한 접근 권한이 없습니다.'),
-    ).toBeVisible();
+  afterEach(() => {
+    logout();
   });
 
-  test('네트워크 에러가 발생하면 본문에 기본 에러 메시지를 표시한다', async () => {
-    server.use(http.get(ASSIGNMENT_DETAIL_URL, () => HttpResponse.error()));
-    renderAssignmentDetailPage();
+  describe('스터디 리드', () => {
+    beforeEach(() => {
+      login(leaderUserName);
+    });
 
-    expect(
-      await within(screen.getByRole('main')).findByText(
-        '과제 정보를 불러오는데 실패했습니다.',
-        {},
-        { timeout: 3000 },
-      ),
-    ).toBeVisible();
+    describe('내 과제 제출', () => {
+      test('리더도 제출 대상이면 상세 하단에 제출 폼을 표시한다', async () => {
+        const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
+
+        const { submissionForm } = await findSubmissionForm();
+        const moreButton = screen.getByRole('button', { name: '과제 더보기' });
+        expect(submissionForm.getByRole('button', { name: '제출하기' })).toBeVisible();
+        expect(moreButton.closest('header')).toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: '과제 삭제' })).not.toBeInTheDocument();
+        await user.click(moreButton);
+        expect(screen.getByRole('menuitem', { name: '과제 수정' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: '과제 삭제' })).toBeVisible();
+      });
+
+      test('리더가 제출 대상이 아니면 내 제출 정보를 조회하지 않고 폼도 표시하지 않는다', async () => {
+        server.use(
+          http.get(ASSIGNMENT_DETAIL_URL, () =>
+            HttpResponse.json({
+              id: 1,
+              title: '스프링 설계 과제',
+              content: '스프링에서 가장 중요한걸 정리해서 보내주세요',
+              submissionMethod: '텍스트로 제출하세요',
+              closeAt: '2999-12-31T23:59:59',
+              submissionTarget: 'MEMBERS_ONLY',
+              submissionVisibility: 'LEADER_ONLY',
+            }),
+          ),
+        );
+        const getMySubmission = jest.fn(() =>
+          HttpResponse.json({ submissionStatus: 'NOT_ASSIGNED' }),
+        );
+        server.use(http.get(MY_SUBMISSION_URL, getMySubmission));
+
+        const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
+
+        expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
+        expect(screen.queryByRole('region', { name: '내 제출' })).not.toBeInTheDocument();
+        expect(getMySubmission).not.toHaveBeenCalled();
+      });
+
+      test('이미 제출했다면 제출 폼 대신 내 제출 내용을 표시한다', async () => {
+        await markSubmissionAsSubmitted(1, {
+          content: '리더가 제출한 과제',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
+
+        const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+        expect(mySubmission.getByText('리더가 제출한 과제')).toBeVisible();
+        expect(mySubmission.getByRole('button', { name: '편집하기' })).toBeVisible();
+        expect(mySubmission.queryByRole('button', { name: '제출하기' })).not.toBeInTheDocument();
+      });
+
+      test('제출 후 내 제출 내용과 현황을 갱신한다', async () => {
+        const { user } = setupAssignmentDetailPage();
+        await user.click(await screen.findByRole('tab', { name: '상세' }));
+        const { submissionForm, contentInput } = await findSubmissionForm();
+
+        await user.type(contentInput, '리더의 스프링 설계 과제');
+        await user.click(submissionForm.getByRole('button', { name: '제출하기' }));
+
+        const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+        expect(await mySubmission.findByRole('button', { name: '편집하기' })).toBeVisible();
+        expect(mySubmission.getByText('리더의 스프링 설계 과제')).toBeVisible();
+        await user.click(screen.getByRole('tab', { name: '요약' }));
+        await waitFor(() =>
+          expect(screen.getByRole('progressbar', { name: '과제 제출률' })).toHaveAttribute(
+            'aria-valuenow',
+            '1',
+          ),
+        );
+      });
+    });
+
+    describe('과제 상세 조회', () => {
+      test('리더에게만 요약과 상세 탭을 표시하고 탭별 콘텐츠를 구분한다', async () => {
+        const { user } = setupAssignmentDetailPage();
+
+        const summaryTab = await screen.findByRole('tab', { name: '요약' });
+        const detailTab = screen.getByRole('tab', { name: '상세' });
+
+        expect(summaryTab).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('progressbar', { name: '과제 제출률' })).toBeVisible();
+        expect(screen.queryByText('과제 내용')).not.toBeInTheDocument();
+        expect(screen.queryByText('모두에게 알리기')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /알리기/ })).not.toBeInTheDocument();
+
+        await user.click(detailTab);
+
+        expect(detailTab).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+        expect(screen.queryByRole('progressbar', { name: '과제 제출률' })).not.toBeInTheDocument();
+      });
+
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.get(ASSIGNMENT_DETAIL_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.get(ASSIGNMENT_DETAIL_URL, () => HttpResponse.error()),
+          message: '과제 정보를 불러오는데 실패했습니다.',
+        },
+      ])('$title 본문에 에러 메시지를 표시한다', async ({ handler, message }) => {
+        server.use(handler);
+        setupAssignmentDetailPage();
+
+        expect(
+          await within(screen.getByRole('main')).findByText(message, {}, { timeout: 3000 }),
+        ).toBeVisible();
+      });
+
+      test('조회에 실패해도 헤더와 하단 탭을 유지한다', async () => {
+        server.use(http.get(ASSIGNMENT_DETAIL_URL, () => new HttpResponse(null, { status: 403 })));
+        setupAssignmentDetailPage();
+
+        await within(screen.getByRole('main')).findByRole('img', { name: '오류' });
+
+        const header = screen.getByRole('banner');
+        expect(within(header).getByRole('heading', { name: '과제' })).toBeVisible();
+        expect(within(header).getByRole('button', { name: '뒤로 가기' })).toBeVisible();
+        expect(screen.getByRole('navigation')).toBeVisible();
+      });
+    });
+
+    describe('과제 제출 현황 조회', () => {
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.get(SUBMISSION_STATUS_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.get(SUBMISSION_STATUS_URL, () => HttpResponse.error()),
+          message: '과제 제출 현황을 불러오는데 실패했습니다.',
+        },
+      ])('$title 본문에 에러 메시지를 표시한다', async ({ handler, message }) => {
+        server.use(handler);
+        setupAssignmentDetailPage();
+
+        expect(
+          await within(screen.getByRole('main')).findByText(message, {}, { timeout: 3000 }),
+        ).toBeVisible();
+      });
+    });
+
+    describe('과제 제출 내역 조회', () => {
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.get(SUBMISSIONS_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.get(SUBMISSIONS_URL, () => HttpResponse.error()),
+          message: '제출 내역을 불러오는데 실패했습니다.',
+        },
+      ])('$title 본문에 에러 메시지를 표시한다', async ({ handler, message }) => {
+        server.use(handler);
+        setupAssignmentDetailPage();
+
+        expect(
+          await within(screen.getByRole('main')).findByText(message, {}, { timeout: 3000 }),
+        ).toBeVisible();
+      });
+    });
+
+    describe('과제 삭제', () => {
+      test.each([
+        {
+          title: '과제 삭제 권한이 없으면',
+          handler: http.delete(ASSIGNMENT_DETAIL_URL, () =>
+            HttpResponse.json(
+              { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '요청한 작업을 수행할 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.delete(ASSIGNMENT_DETAIL_URL, () => HttpResponse.error()),
+          message: '과제 삭제에 실패했습니다.',
+        },
+      ])('$title 에러 메시지를 토스트로 표시하고 확인창을 닫는다', async ({ handler, message }) => {
+        server.use(handler);
+        const { user } = setupAssignmentDetailPage();
+
+        await user.click(await screen.findByRole('button', { name: '과제 더보기' }));
+        await user.click(screen.getByRole('menuitem', { name: '과제 삭제' }));
+        const dialog = screen.getByRole('alertdialog', { name: '과제를 삭제할까요?' });
+        expect(dialog).toBeVisible();
+        await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+
+        const toast = await screen.findByRole('status');
+        expect(toast).toHaveTextContent(message);
+        expect(toast).toBeVisible();
+        expect(dialog).not.toBeVisible();
+      });
+    });
   });
 
-  test('조회에 실패해도 헤더와 하단 탭을 유지한다', async () => {
-    server.use(http.get(ASSIGNMENT_DETAIL_URL, () => new HttpResponse(null, { status: 403 })));
-    renderAssignmentDetailPage();
+  describe('스터디원', () => {
+    beforeEach(() => {
+      login(memberUserName);
+    });
 
-    await within(screen.getByRole('main')).findByRole('img', { name: '오류' });
+    describe('과제 상세 조회', () => {
+      test('스터디원에게는 과제 관리 메뉴 없이 요약과 상세 탭을 표시한다', async () => {
+        const { user } = setupAssignmentDetailPage();
 
-    const header = screen.getByRole('banner');
-    expect(within(header).getByRole('heading', { name: '과제' })).toBeVisible();
-    expect(within(header).getByRole('button', { name: '뒤로 가기' })).toBeVisible();
-    expect(screen.getByRole('navigation')).toBeVisible();
-  });
-});
+        expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
+        expect(screen.queryByRole('button', { name: '과제 더보기' })).not.toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: '요약' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('region', { name: '내 제출' })).toBeVisible();
+        expect(screen.queryByText('과제 내용')).not.toBeInTheDocument();
 
-describe('스터디원 과제 상세 조회 실패', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    server.use(
-      http.get(STUDY_INFO_URL, () =>
-        HttpResponse.json({
-          studyName: '객체지향 스터디',
-          role: 'MEMBER',
-          userName: '안톨리니',
-        }),
-      ),
-      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions/my`, () =>
-        HttpResponse.json({ submitted: false }),
-      ),
-    );
-  });
+        await openDetailTab(user);
 
-  test('접근 권한 관련 에러가 발생하면 에러 메시지를 본문에 표시한다', async () => {
-    server.use(
-      http.get(ASSIGNMENT_DETAIL_URL, () =>
-        HttpResponse.json(
-          { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
-          { status: 403 },
-        ),
-      ),
-    );
-    renderAssignmentDetailPage();
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+        expect(screen.getByRole('region', { name: '내 제출' })).toBeVisible();
+      });
 
-    expect(
-      await within(screen.getByRole('main')).findByText('해당 스터디에 대한 접근 권한이 없습니다.'),
-    ).toBeVisible();
-  });
+      test('view=detail로 접근하면 상세 탭을 표시한다', async () => {
+        setupAssignmentDetailPage('/studies/1/assignments/1?view=detail');
 
-  test('네트워크 에러가 발생하면 본문에 기본 에러 메시지를 표시한다', async () => {
-    server.use(http.get(ASSIGNMENT_DETAIL_URL, () => HttpResponse.error()));
-    renderAssignmentDetailPage();
+        expect(await screen.findByRole('tab', { name: '상세' })).toHaveAttribute(
+          'aria-selected',
+          'true',
+        );
+        expect(screen.getByText('과제 내용')).toBeVisible();
+        expect(screen.getByText('제출 방법')).toBeVisible();
+      });
 
-    expect(
-      await within(screen.getByRole('main')).findByText(
-        '과제 정보를 불러오는데 실패했습니다.',
-        {},
-        { timeout: 3000 },
-      ),
-    ).toBeVisible();
-  });
-});
+      test('내 제출만 공개하면 다른 제출물과 리더 전용 제출 현황을 조회하지 않는다', async () => {
+        const getSubmissions = jest.fn(() => HttpResponse.json({ submissions: [] }));
+        const getSubmissionStatus = jest.fn(() => HttpResponse.json({}));
+        server.use(http.get(SUBMISSIONS_URL, getSubmissions));
+        server.use(http.get(SUBMISSION_STATUS_URL, getSubmissionStatus));
 
-describe('리드 과제 삭제 실패', () => {
-  beforeEach(() => {
-    server.use(
-      http.get(STUDY_INFO_URL, () =>
-        HttpResponse.json({
-          studyName: '객체지향 스터디',
-          role: 'LEADER',
-          userName: '안톨리니',
-        }),
-      ),
-      http.get(ASSIGNMENT_DETAIL_URL, () =>
-        HttpResponse.json({
-          id: 1,
-          title: '객체지향 설계 과제',
-          content: '객체의 역할과 책임을 정리해주세요.',
-          submissionMethod: '텍스트로 제출하세요',
-          closeAt: '2999-12-31T23:59:59',
-        }),
-      ),
-      http.get(`${ASSIGNMENT_DETAIL_URL}/status`, () =>
-        HttpResponse.json({
-          id: 1,
-          memberCount: 1,
-          completeCount: 0,
-          incompleteCount: 1,
-          completeMembers: [],
-          incompleteMembers: [{ id: 1, name: '안톨리니', profileImage: null }],
-        }),
-      ),
-      http.get(`${ASSIGNMENT_DETAIL_URL}/submissions`, () =>
-        HttpResponse.json({ submissions: [] }),
-      ),
-    );
-  });
+        setupAssignmentDetailPage();
 
-  test('과제 삭제 권한이 없으면 권한 안내를 토스트로 표시하고 확인창을 닫는다', async () => {
-    const user = userEvent.setup();
-    server.use(
-      http.delete(ASSIGNMENT_DETAIL_URL, () =>
-        HttpResponse.json(
-          { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
-          { status: 403 },
-        ),
-      ),
-    );
-    renderAssignmentDetailPage();
+        expect(await screen.findByRole('region', { name: '내 제출' })).toBeVisible();
+        expect(screen.queryByText(/제출 완료 \d+명/)).not.toBeInTheDocument();
+        expect(getSubmissions).not.toHaveBeenCalled();
+        expect(getSubmissionStatus).not.toHaveBeenCalled();
+      });
 
-    await user.click(await screen.findByRole('button', { name: '삭제' }));
-    const dialog = screen.getByRole('alertdialog', { name: '과제를 삭제할까요?' });
-    expect(dialog).toBeVisible();
-    await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+      test('제출물을 공개하면 완료된 제출물만 표시한다', async () => {
+        await setAssignmentVisibility('ALL_STUDY_MEMBERS');
+        await markSubmissionAsSubmitted(1, { content: '리더 제출', link: null });
+        await markSubmissionAsSubmitted(2, { content: '내 제출', link: null });
 
-    const toast = await screen.findByRole('status');
-    expect(toast).toHaveTextContent('요청한 작업을 수행할 권한이 없습니다.');
-    expect(toast).toBeVisible();
-    expect(dialog).not.toBeVisible();
-  });
+        setupAssignmentDetailPage();
 
-  test('네트워크 에러가 발생하면 과제 삭제 실패 안내를 토스트로 표시하고 확인창을 닫는다', async () => {
-    const user = userEvent.setup();
-    server.use(http.delete(ASSIGNMENT_DETAIL_URL, () => HttpResponse.error()));
-    renderAssignmentDetailPage();
+        expect(await screen.findByRole('region', { name: '내 제출' })).toBeVisible();
+        expect(await screen.findByRole('heading', { name: '제출 완료 2명' })).toBeVisible();
+        expect(screen.getByText(`${memberUserName} (나)`)).toBeVisible();
+        expect(screen.queryByRole('progressbar', { name: '과제 제출률' })).not.toBeInTheDocument();
+        expect(screen.queryByText(/미제출/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/지각/)).not.toBeInTheDocument();
+      });
 
-    await user.click(await screen.findByRole('button', { name: '삭제' }));
-    const dialog = screen.getByRole('alertdialog', { name: '과제를 삭제할까요?' });
-    expect(dialog).toBeVisible();
-    await user.click(within(dialog).getByRole('button', { name: '삭제' }));
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.get(ASSIGNMENT_DETAIL_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.get(ASSIGNMENT_DETAIL_URL, () => HttpResponse.error()),
+          message: '과제 정보를 불러오는데 실패했습니다.',
+        },
+      ])('$title 본문에 에러 메시지를 표시한다', async ({ handler, message }) => {
+        server.use(handler);
+        setupAssignmentDetailPage();
 
-    const toast = await screen.findByRole('status', {}, { timeout: 3000 });
-    expect(toast).toHaveTextContent('과제 삭제에 실패했습니다.');
-    expect(toast).toBeVisible();
-    expect(dialog).not.toBeVisible();
+        expect(
+          await within(screen.getByRole('main')).findByText(message, {}, { timeout: 3000 }),
+        ).toBeVisible();
+      });
+    });
+
+    describe('본인 제출 정보 조회', () => {
+      test('지각 제출 상태면 제출 완료 내용을 표시한다', async () => {
+        server.use(
+          http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json({
+              submissionStatus: 'LATE_SUBMITTED',
+              submissionId: 1,
+              createdAt: '2026-10-06T10:00:00',
+              content: '지각 제출한 과제',
+            }),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        await openDetailTab(user);
+
+        expect(await screen.findByText('지각 제출한 과제')).toBeVisible();
+        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+      });
+
+      test('마감 후 미제출 상태면 제출 폼을 표시한다', async () => {
+        server.use(
+          http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json({ submissionStatus: 'MISSING', submissionId: 1 }),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        expect(await screen.findByText('아직 과제를 제출하지 않았어요')).toBeVisible();
+        await openDetailTab(user);
+
+        expect(screen.getByRole('button', { name: '제출하기' })).toBeVisible();
+      });
+
+      test('내 제출 상세 보기를 누르면 수정할 수 있는 상세 탭으로 이동한다', async () => {
+        await markSubmissionAsSubmitted(2, {
+          content: '내가 제출한 과제',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+
+        const detailLink = await screen.findByRole('link', { name: '상세 보기' });
+        expect(detailLink).toHaveAttribute('href', '/studies/1/assignments/1?view=detail');
+
+        await user.click(detailLink);
+
+        expect(screen.getByRole('tab', { name: '상세' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByText('내가 제출한 과제')).toBeVisible();
+        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+      });
+
+      test('제출 대상이 아니면 제출 폼을 표시하지 않고 제출 요청을 보내지 않는다', async () => {
+        submissionTable.delete((q) => q.where({ assignmentId: 1, userId: 2 }));
+        const submitRequest = jest.fn(() =>
+          HttpResponse.json({ submissionId: 101 }, { status: 201 }),
+        );
+        server.use(http.post(SUBMISSIONS_URL, submitRequest));
+
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByText('스프링 설계 과제')).toBeVisible();
+        expect(screen.queryByRole('region', { name: '내 제출' })).not.toBeInTheDocument();
+        expect(submitRequest).not.toHaveBeenCalled();
+      });
+
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.get(MY_SUBMISSION_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.get(MY_SUBMISSION_URL, () => HttpResponse.error()),
+          message: '내 제출 정보를 불러오는데 실패했습니다.',
+        },
+      ])(
+        '$title 본문에 에러 메시지를 표시하고 제출하기 버튼을 표시하지 않는다',
+        async ({ handler, message }) => {
+          server.use(handler);
+          setupAssignmentDetailPage();
+
+          expect(
+            await within(screen.getByRole('main')).findByText(message, {}, { timeout: 3000 }),
+          ).toBeVisible();
+          expect(screen.queryByRole('button', { name: '제출하기' })).not.toBeInTheDocument();
+        },
+      );
+
+      test('링크가 null인 제출 정보를 정상적으로 표시하고 편집 폼에는 빈 링크를 보여준다', async () => {
+        await markSubmissionAsSubmitted(2, {
+          content: '링크 없이 제출한 내용',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+
+        await openDetailTab(user);
+
+        const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+        expect(mySubmission.getByText('링크 없이 제출한 내용')).toBeVisible();
+        expect(mySubmission.queryByRole('link')).not.toBeInTheDocument();
+
+        await user.click(mySubmission.getByRole('button', { name: '편집하기' }));
+
+        const { contentInput, linkInput } = await findSubmissionForm();
+        expect(contentInput).toHaveValue('링크 없이 제출한 내용');
+        expect(linkInput).toHaveValue('');
+      });
+    });
+
+    describe('과제 제출', () => {
+      test('제출 성공 시 내 제출 내용으로 전환한다', async () => {
+        const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
+        const { submissionForm, contentInput } = await findSubmissionForm();
+
+        await user.type(contentInput, '스터디원의 스프링 설계 과제');
+        await user.click(submissionForm.getByRole('button', { name: '제출하기' }));
+
+        const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+        expect(await mySubmission.findByRole('button', { name: '편집하기' })).toBeVisible();
+        expect(mySubmission.getByText('스터디원의 스프링 설계 과제')).toBeVisible();
+      });
+
+      test('제출 내용과 링크가 유효하지 않으면 각 필드에 오류 메시지를 표시한다', async () => {
+        server.use(
+          http.post(SUBMISSIONS_URL, () =>
+            invalidInputResponse([
+              { field: 'content', code: 'INVALID', reason: '제출 내용을 확인해주세요.' },
+              { field: 'link', code: 'INVALID', reason: '제출 링크를 확인해주세요.' },
+            ]),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
+        const { submissionForm, contentInput, linkInput } = await findSubmissionForm();
+
+        await user.type(contentInput, '객체의 역할과 책임');
+        await user.type(linkInput, 'https://example.com/submission');
+        await user.click(submissionForm.getByRole('button', { name: '제출하기' }));
+
+        expect(await submissionForm.findByText('제출 내용을 확인해주세요.')).toBeVisible();
+        expect(await submissionForm.findByText('제출 링크를 확인해주세요.')).toBeVisible();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
+
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.post(SUBMISSIONS_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.post(SUBMISSIONS_URL, () => HttpResponse.error()),
+          message: '과제 제출에 실패했습니다.',
+        },
+      ])('$title 에러 메시지를 토스트로 표시한다', async ({ handler, message }) => {
+        server.use(handler);
+        const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
+        const { submissionForm, contentInput } = await findSubmissionForm();
+
+        await user.type(contentInput, '객체의 역할과 책임');
+        await user.click(submissionForm.getByRole('button', { name: '제출하기' }));
+
+        const toast = await screen.findByRole('status');
+        expect(toast).toHaveTextContent(message);
+        expect(toast).toBeVisible();
+      });
+    });
+
+    describe('과제 제출물 수정', () => {
+      beforeEach(async () => {
+        await markSubmissionAsSubmitted(2, {
+          content: '기존 제출 내용',
+          link: 'https://example.com/submission',
+        });
+      });
+
+      test('수정한 내용과 링크가 유효하지 않으면 각 필드에 오류 메시지를 표시한다', async () => {
+        server.use(
+          http.patch(SUBMISSION_DETAIL_URL, () =>
+            invalidInputResponse([
+              { field: 'content', code: 'INVALID', reason: '제출 내용을 확인해주세요.' },
+              { field: 'link', code: 'INVALID', reason: '제출 링크를 확인해주세요.' },
+            ]),
+          ),
+        );
+        const { user } = setupAssignmentDetailPage();
+
+        await openDetailTab(user);
+        await user.click(await screen.findByRole('button', { name: '편집하기' }));
+        const { submissionForm, contentInput, linkInput } = await findSubmissionForm();
+        await user.clear(contentInput);
+        await user.type(contentInput, '수정한 제출 내용');
+        await user.clear(linkInput);
+        await user.type(linkInput, 'https://example.com/revised-submission');
+        await user.click(submissionForm.getByRole('button', { name: '수정하기' }));
+
+        expect(await submissionForm.findByText('제출 내용을 확인해주세요.')).toBeVisible();
+        expect(await submissionForm.findByText('제출 링크를 확인해주세요.')).toBeVisible();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
+
+      test.each([
+        {
+          title: '스터디에 대한 접근 권한이 없으면',
+          handler: http.patch(SUBMISSION_DETAIL_URL, () =>
+            HttpResponse.json(
+              { code: 'STUDY_ACCESS_DENIED', message: '해당 스터디에 대한 접근 권한이 없습니다.' },
+              { status: 403 },
+            ),
+          ),
+          message: '해당 스터디에 대한 접근 권한이 없습니다.',
+        },
+        {
+          title: '네트워크 오류가 발생하면',
+          handler: http.patch(SUBMISSION_DETAIL_URL, () => HttpResponse.error()),
+          message: '과제 제출물 수정에 실패했습니다.',
+        },
+      ])(
+        '$title 에러 메시지를 토스트로 표시하고 입력값을 유지한다',
+        async ({ handler, message }) => {
+          server.use(handler);
+          const { user } = setupAssignmentDetailPage();
+
+          await openDetailTab(user);
+          await user.click(await screen.findByRole('button', { name: '편집하기' }));
+          const { submissionForm, contentInput } = await findSubmissionForm();
+          await user.clear(contentInput);
+          await user.type(contentInput, '수정한 제출 내용');
+          await user.click(submissionForm.getByRole('button', { name: '수정하기' }));
+
+          const toast = await screen.findByRole('status');
+          expect(toast).toHaveTextContent(message);
+          expect(toast).toBeVisible();
+          expect(screen.getByRole('textbox', { name: '내용' })).toHaveValue('수정한 제출 내용');
+        },
+      );
+    });
   });
 });

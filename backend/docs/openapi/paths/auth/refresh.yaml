@@ -1,6 +1,12 @@
 post:
   tags: [Auth]
   operationId: refresh
+  x-frontend:
+    status: integrated
+    description: "401 응답에서 쿠키 기반 재발급 후 원 요청을 재시도한다."
+    sources:
+      - frontend/src/features/login/api.ts
+      - frontend/src/client.ts
   x-backend:
     status: done
     owner: JYL35
@@ -20,7 +26,7 @@ post:
         Set-Cookie: { description: 회전된 HttpOnly Refresh Token 쿠키, schema: { type: string } }
       content:
         application/json:
-          schema: { $ref: '../../components/schemas/auth.yaml#/SocialLoginResponse' }
+          schema: { $ref: '../../components/schemas/auth.yaml#/AccessTokenRefreshResponse' }
           example: { tokenType: Bearer, accessToken: eyJhbGciOiJIUzI1NiJ9..., accessTokenExpiresAt: '2026-08-27T12:00:00Z' }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/InvalidRefreshToken' }
