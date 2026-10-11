@@ -432,6 +432,24 @@ describe('과제 상세 페이지 테스트', () => {
         expect(screen.queryByText(/지각/)).not.toBeInTheDocument();
       });
 
+      test('마감 이후 제출한 사람에게만 지각 제출 뱃지를 표시한다', async () => {
+        await setAssignmentVisibility('ALL_STUDY_MEMBERS');
+        const assignment = assignmentTable.findFirst((q) => q.where({ id: 1, studyId: 1 }));
+        if (!assignment) throw new Error('과제를 찾을 수 없습니다.');
+        await assignmentTable.update(assignment, {
+          data(currentAssignment) {
+            currentAssignment.closeAt = '2026-08-31T23:59:59';
+          },
+        });
+        await markSubmissionAsSubmitted(1, { content: '리더 제출', link: null });
+
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByText('지각 제출')).toBeVisible();
+        expect(screen.getByText(leaderUserName).parentElement).toHaveTextContent('지각 제출');
+        expect(screen.getAllByText('지각 제출')).toHaveLength(1);
+      });
+
       test.each([
         {
           title: '스터디에 대한 접근 권한이 없으면',
