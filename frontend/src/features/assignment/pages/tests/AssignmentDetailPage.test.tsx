@@ -198,6 +198,7 @@ describe('과제 상세 페이지 테스트', () => {
         const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
         expect(mySubmission.getByText('리더가 제출한 과제')).toBeVisible();
         expect(mySubmission.getByRole('button', { name: '편집하기' })).toBeVisible();
+        expect(mySubmission.queryByText('지각 제출')).not.toBeInTheDocument();
         expect(mySubmission.queryByRole('button', { name: '제출하기' })).not.toBeInTheDocument();
       });
 
@@ -492,8 +493,10 @@ describe('과제 상세 페이지 테스트', () => {
 
         await openDetailTab(user);
 
-        expect(await screen.findByText('지각 제출한 과제')).toBeVisible();
-        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+        const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+        expect(mySubmission.getByText('지각 제출한 과제')).toBeVisible();
+        expect(mySubmission.getByText('지각 제출')).toBeVisible();
+        expect(mySubmission.getByRole('button', { name: '편집하기' })).toBeVisible();
       });
 
       test('마감 후 미제출 상태면 제출 폼을 표시한다', async () => {

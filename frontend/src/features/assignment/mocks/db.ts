@@ -419,17 +419,17 @@ export const mockSubmissions = [
     id: 26,
     assignmentId: 16,
     userId: 1,
-    content: '전체 공개 과제의 이든 제출입니다.',
+    content: '전체 공개 과제의 지각 제출 확인용 데이터입니다.',
     link: 'https://example.com/eden-submission',
-    createdAt: '2026-10-02T09:00:00',
+    createdAt: '2026-10-02T10:00:00',
   },
   {
     id: 27,
     assignmentId: 16,
     userId: 5,
-    content: '전체 공개 과제의 지각 제출 확인용 데이터입니다.',
+    content: '전체 공개 과제의 바니 제출입니다.',
     link: 'https://example.com/bunny-submission',
-    createdAt: '2026-10-02T10:00:00',
+    createdAt: '2026-10-02T09:00:00',
   },
 ] satisfies SubmissionSchemaInput[];
 
