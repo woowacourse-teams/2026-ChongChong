@@ -130,7 +130,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
   return (
     <div css={DetailContentStyle}>
       {nowMemberCount === 1 ? (
-        <InviteMemberBanner invitePageLink={`/studies/${studyId}/members`} />
+        <InviteMemberBanner studyId={studyId} invitePageLink={`/studies/${studyId}/members`} />
       ) : (
         <CheeringBanner username={username} />
       )}

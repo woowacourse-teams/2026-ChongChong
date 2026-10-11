@@ -5,6 +5,7 @@ import { tokens, typography } from '../../../styles/global';
 import LaptopLogo from '../../../shared/assets/icons/laptop-icon.svg';
 import CheckLogo from '../../../shared/assets/icons/check-icon.svg';
 import InviteLogo from '../../../shared/assets/icons/invite-icon.svg';
+import { usePostHog } from '@posthog/react';
 
 const BANNER_THEMES = {
   brand: {
@@ -113,12 +114,27 @@ export function TodoBanner({ username, todoCount }: { username: string; todoCoun
   );
 }
 
-export function InviteMemberBanner({ invitePageLink }: { invitePageLink: string }) {
+export function InviteMemberBanner({
+  studyId,
+  invitePageLink,
+}: {
+  studyId: number;
+  invitePageLink: string;
+}) {
+  const posthog = usePostHog();
+
+  const handleInviteClick = () => {
+    posthog?.capture('invite_banner_clicked', {
+      study_id: studyId,
+      location: 'study_detail_page',
+    });
+  };
+
   return (
     <Banner
       title={'함께할 스터디원을 초대해 보세요'}
       content={
-        <Link to={invitePageLink} css={InviteLinkStyle}>
+        <Link to={invitePageLink} css={InviteLinkStyle} onClick={handleInviteClick}>
           <span>초대하러 가기</span>
           <span aria-hidden="true">→</span>
         </Link>
