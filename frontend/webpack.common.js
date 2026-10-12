@@ -26,7 +26,7 @@ export function createCommonConfig({ envFile, environment, assetFilename }) {
   if (envFile) {
     const envPath = path.resolve(__dirname, envFile);
 
-    // CodeBuild에 등록된 환경 변수는 유지하고, 없는 값만 로컬 env 파일에서 불러옵니다.
+    // 이미 주입된 환경 변수는 유지하고, 없는 값만 지정된 env 파일에서 불러옵니다.
     if (existsSync(envPath)) {
       process.loadEnvFile(envPath);
     }

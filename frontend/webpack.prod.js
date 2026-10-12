@@ -3,11 +3,14 @@ import { merge } from 'webpack-merge';
 import { createCommonConfig, createSentryPlugin } from './webpack.common.js';
 
 const commonConfig = createCommonConfig({
-  envFile: '.env.production',
-  environment: 'production',
+  environment: 'prod',
   assetFilename: 'assets/[name].[contenthash:16][ext]',
 });
 const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+
+if (process.env.DEPLOY_ENV !== 'prod') {
+  throw new Error('DEPLOY_ENV must be prod for a production deployment build.');
+}
 
 if (!sentryAuthToken) {
   throw new Error('SENTRY_AUTH_TOKEN is required for a production build.');
