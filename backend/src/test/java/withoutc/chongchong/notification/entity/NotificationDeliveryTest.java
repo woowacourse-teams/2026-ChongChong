@@ -16,6 +16,8 @@ class NotificationDeliveryTest {
     private static final LocalDateTime CLAIMED_AT = LocalDateTime.of(2026, 9, 25, 10, 0);
     private static final LocalDateTime NEXT_RETRY_AT = CLAIMED_AT.plusMinutes(1);
     private static final LocalDateTime SENT_AT = CLAIMED_AT.plusMinutes(2);
+    private static final LocalDateTime CLICKED_AT = CLAIMED_AT.plusMinutes(3);
+    private static final LocalDateTime RECLICKED_AT = CLICKED_AT.plusMinutes(1);
 
     @Test
     @DisplayName("알림과 Web Push 구독으로 발송 기록을 생성하면 발송 대기 상태로 생성된다")
@@ -86,6 +88,17 @@ class NotificationDeliveryTest {
         assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.FAILED);
         assertThat(delivery.getNextRetryAt()).isNull();
         assertThat(delivery.getLastError()).isEqualTo("영구적인 발송 실패");
+    }
+
+    @Test
+    @DisplayName("알림 발송 내역을 다시 클릭해도 최초 클릭 시각을 유지한다")
+    void keepFirstClickTime() {
+        NotificationDelivery delivery = createDelivery();
+
+        delivery.click(CLICKED_AT);
+        delivery.click(RECLICKED_AT);
+
+        assertThat(delivery.getClickedAt()).isEqualTo(CLICKED_AT);
     }
 
     @Test

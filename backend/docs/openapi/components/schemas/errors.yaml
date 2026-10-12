@@ -44,6 +44,8 @@ ErrorResponse:
         - NOTICE_NOT_FOUND
         - NOTICE_RECIPIENT_NOT_FOUND
         - NOTIFICATION_NOT_FOUND
+        - NOTIFICATION_DELIVERY_NOT_FOUND
+        - NOTIFICATION_DELIVERY_ACCESS_DENIED
         - ASSIGNMENT_NOT_FOUND
         - ASSIGNMENT_SUBMISSION_NOT_FOUND
         - INVALID_TITLE
@@ -100,6 +102,8 @@ UserNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { co
 InvalidUserNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_USER_NAME }, message: { const: 사용자 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_USER_NAME, message: 사용자 이름이 올바르지 않습니다. }] }
 NoticeNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_NOT_FOUND }, message: { const: 존재하지 않는 공지입니다. } } }], examples: [{ code: NOTICE_NOT_FOUND, message: 존재하지 않는 공지입니다. }] }
 NotificationNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_NOT_FOUND }, message: { const: 존재하지 않는 알림입니다. } } }], examples: [{ code: NOTIFICATION_NOT_FOUND, message: 존재하지 않는 알림입니다. }] }
+NotificationDeliveryNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_DELIVERY_NOT_FOUND }, message: { const: 존재하지 않는 알림 발송 내역입니다. } } }], examples: [{ code: NOTIFICATION_DELIVERY_NOT_FOUND, message: 존재하지 않는 알림 발송 내역입니다. }] }
+NotificationDeliveryAccessDeniedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_DELIVERY_ACCESS_DENIED }, message: { const: 해당 알림 발송 내역에 대한 접근 권한이 없습니다. } } }], examples: [{ code: NOTIFICATION_DELIVERY_ACCESS_DENIED, message: 해당 알림 발송 내역에 대한 접근 권한이 없습니다. }] }
 NoticeRecipientNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_RECIPIENT_NOT_FOUND }, message: { const: 공지 수신자 정보를 찾을 수 없습니다. } } }], examples: [{ code: NOTICE_RECIPIENT_NOT_FOUND, message: 공지 수신자 정보를 찾을 수 없습니다. }] }
 AssignmentNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ASSIGNMENT_NOT_FOUND }, message: { const: 존재하지 않는 과제입니다. } } }], examples: [{ code: ASSIGNMENT_NOT_FOUND, message: 존재하지 않는 과제입니다. }] }
 AssignmentSubmissionNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ASSIGNMENT_SUBMISSION_NOT_FOUND }, message: { const: 존재하지 않는 제출물입니다. } } }], examples: [{ code: ASSIGNMENT_SUBMISSION_NOT_FOUND, message: 존재하지 않는 제출물입니다. }] }

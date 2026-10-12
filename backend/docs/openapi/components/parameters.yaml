@@ -47,6 +47,13 @@ NotificationId:
   description: 알림 식별자
   schema: { type: integer, format: int64, minimum: 1 }
   example: 1
+DeliveryId:
+  name: deliveryId
+  in: path
+  required: true
+  description: 알림 발송 내역 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
 Cursor:
   name: cursor
   in: query
