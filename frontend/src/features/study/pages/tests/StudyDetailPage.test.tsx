@@ -11,7 +11,6 @@ import { studyTable } from '../../mocks/db';
 import { memberTable } from '../../../member/mocks/db';
 import { assignmentTable, submissionTable } from '../../../assignment/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
-import type { Role } from '../../types';
 
 const STUDY_DETAIL_URL = `${API_URL}${STUDY_URLS.detail}`;
 
@@ -38,23 +37,18 @@ function unsubmittedAssignmentsHeading() {
 
 describe('스터디 상세 페이지', () => {
   const studyId = 1;
-  const userId = 1;
-
-  function createStudyMember(role: Role) {
-    return memberTable.create({
-      id: 1,
-      studyId,
-      userId,
-      name: '안톨리니',
-      profileImage: 'http://localhost:8000',
-      role,
-    });
-  }
+  const leaderId = 1;
+  const memberId = 2;
 
   beforeEach(async () => {
     await userTable.create({
-      id: userId,
-      name: '안톨리니',
+      id: leaderId,
+      name: '리드임',
+      profileImage: 'http://localhost:8000',
+    });
+    await userTable.create({
+      id: memberId,
+      name: '멤버임',
       profileImage: 'http://localhost:8000',
     });
     await studyTable.create({
@@ -63,7 +57,22 @@ describe('스터디 상세 페이지', () => {
       description: '객체지향을 공부하는 스터디입니다',
       inviteLink: 'object-oriented',
     });
-    login('안톨리니');
+    await memberTable.create({
+      id: 1,
+      studyId,
+      userId: leaderId,
+      name: '리드임',
+      profileImage: 'http://localhost:8000',
+      role: 'LEADER',
+    });
+    await memberTable.create({
+      id: 2,
+      studyId,
+      userId: memberId,
+      name: '멤버임',
+      profileImage: 'http://localhost:8000',
+      role: 'MEMBER',
+    });
   });
 
   afterEach(() => {
@@ -71,8 +80,8 @@ describe('스터디 상세 페이지', () => {
   });
 
   describe('리드의 진행 현황 조회', () => {
-    beforeEach(async () => {
-      await createStudyMember('LEADER');
+    beforeEach(() => {
+      login('리드임');
     });
 
     test('스터디 현황에는 몇명이 과제/공지를 완료했는지 진행 상황이 렌더링된다', async () => {
@@ -123,11 +132,28 @@ describe('스터디 상세 페이지', () => {
       ).toBeInTheDocument();
       expect(screen.getByText('새로운 공지나 과제를 작성하러 가볼까요?')).toBeInTheDocument();
     });
+
+    test('스터디원이 없으면 멤버 초대 배너가 렌더링된다', async () => {
+      const member = await memberTable.findFirst((q) => q.where({ studyId, userId: memberId }));
+      memberTable.delete(member!);
+
+      setupStudyDetailPage(studyId);
+
+      expect(await screen.findByText('함께할 스터디원을 초대해 보세요')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: '초대하러 가기' })).toBeVisible();
+    });
+
+    test('스터디원이 있으면 환영 인사 배너가 렌더링된다', async () => {
+      setupStudyDetailPage(studyId);
+
+      expect(await screen.findByText('리드임님, 오늘도 화이팅!')).toBeInTheDocument();
+      expect(screen.queryByText('함께할 스터디원을 초대해 보세요')).not.toBeInTheDocument();
+    });
   });
 
   describe('스터디원 할 일 조회', () => {
-    beforeEach(async () => {
-      await createStudyMember('MEMBER');
+    beforeEach(() => {
+      login('멤버임');
     });
 
     test('읽지 않은 공지와 제출하지 않은 과제가 모두 없으면 할 일 완료 화면을 렌더링한다', async () => {
@@ -172,7 +198,7 @@ describe('스터디 상세 페이지', () => {
       await submissionTable.create({
         id: 1,
         assignmentId: 1,
-        userId,
+        userId: memberId,
         submitted: false,
       });
       setupStudyDetailPage(studyId);
@@ -189,8 +215,8 @@ describe('스터디 상세 페이지', () => {
     });
 
     describe('리드', () => {
-      beforeEach(async () => {
-        await createStudyMember('LEADER');
+      beforeEach(() => {
+        login('리드임');
       });
 
       test.each([
@@ -222,7 +248,7 @@ describe('스터디 상세 페이지', () => {
 
           const header = within(screen.getByRole('banner'));
           expect(header.getByRole('heading', { name: '객체지향 스터디' })).toBeVisible();
-          expect(header.getByText('안톨리니 · 리드')).toBeVisible();
+          expect(header.getByText('리드임 · 리드')).toBeVisible();
           expect(header.getByRole('button', { name: '뒤로 가기' })).toBeVisible();
           expect(screen.getByRole('navigation')).toBeVisible();
         },
@@ -230,8 +256,8 @@ describe('스터디 상세 페이지', () => {
     });
 
     describe('스터디원', () => {
-      beforeEach(async () => {
-        await createStudyMember('MEMBER');
+      beforeEach(() => {
+        login('멤버임');
       });
 
       test.each([
@@ -263,7 +289,7 @@ describe('스터디 상세 페이지', () => {
 
           const header = within(screen.getByRole('banner'));
           expect(header.getByRole('heading', { name: '객체지향 스터디' })).toBeVisible();
-          expect(header.getByText('안톨리니 · 스터디원')).toBeVisible();
+          expect(header.getByText('멤버임 · 스터디원')).toBeVisible();
           expect(header.getByRole('button', { name: '뒤로 가기' })).toBeVisible();
           expect(screen.getByRole('navigation')).toBeVisible();
         },

@@ -28,7 +28,7 @@ import {
   MemberActiveAssignmentCard,
   MemberActiveNoticeCard,
 } from '../../study/components/ActiveStudyCard';
-import { StudyMemberWelcomeBanner } from '../../study/components/WelcomeBanner';
+import { TodoBanner } from '../../study/components/Banner';
 import chongchongLogo from '../assets/chongchong-logo.png';
 import type { PreviewFeatureId } from '../previewFeatures';
 
@@ -299,7 +299,7 @@ function ReminderScreen({ active = false, animationPaused = false }: ScreenAnima
       <ScreenHeader title={studyName} subtitle="지우 · 스터디원" />
       <Main>
         <div className="cc-demo-study-content">
-          <StudyMemberWelcomeBanner username="지우" todoCount={2} />
+          <TodoBanner username="지우" todoCount={2} />
           <div className="cc-demo-study-sections">
             <section>
               <h2 css={sectionLabelStyle}>읽지 않은 공지</h2>
