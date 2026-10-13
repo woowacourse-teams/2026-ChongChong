@@ -61,3 +61,9 @@ export async function registerWebPushSubscription(subscription: WebPushSubscript
 export async function deactivateWebPushSubscription(subscriptionId: number) {
   await api.delete(`/web-push-subscriptions/${subscriptionId}`);
 }
+
+export async function recordNotificationDeliveryClick(deliveryId: string) {
+  await api.post(`/notification-deliveries/${encodeURIComponent(deliveryId)}/click`, {
+    context: { redirectOnAuthFailure: false },
+  });
+}

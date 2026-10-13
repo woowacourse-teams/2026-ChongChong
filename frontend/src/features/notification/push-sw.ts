@@ -4,11 +4,13 @@ export {};
 
 declare const self: ServiceWorkerGlobalScope;
 
+// 런타임 타입검증이 필요할거 같다. 푸시 메시지 서비스 응답 타입 확인
 interface PushPayload {
   notificationId?: number;
   title?: string;
   body?: string;
   deepLink?: string;
+  deliveryId?: number;
 }
 
 // 서비스 워커 설치 이벤트
@@ -34,6 +36,7 @@ self.addEventListener('push', (event) => {
       icon: '/pwa/images/icon-192.webp',
       data: {
         notificationId: payload.notificationId,
+        deliveryId: payload.deliveryId,
         deepLink: payload.deepLink ?? '/studies',
       },
     }),
@@ -44,7 +47,10 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const url = new URL(event.notification.data?.deepLink ?? '/studies', self.location.origin);
-
+  const deliveryId = event.notification.data?.deliveryId;
+  if (deliveryId != null) {
+    url.searchParams.set('pushDeliveryId', String(deliveryId));
+  }
   if (url.origin !== self.location.origin) return;
 
   event.waitUntil(self.clients.openWindow(url.href));
