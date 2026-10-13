@@ -13,7 +13,6 @@ import { routes as loginRoutes } from './src/features/login/routes/routes';
 import { routes as userRoutes } from './src/features/user/routes';
 import { routes as notificationRoutes } from './src/features/notification/routes';
 import { refreshAccessToken } from './src/features/login/api';
-import { readPushDeliveryId, recordPushClick } from './src/features/notification/pushClick';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
@@ -75,9 +74,7 @@ async function restoreSession() {
 
 async function bootstrap() {
   await enableMocking();
-  const deliveryId = readPushDeliveryId();
   const shouldResetIdentity = await restoreSession();
-  recordPushClick(deliveryId);
   const rootElement = document.getElementById('root');
 
   if (!rootElement) {
