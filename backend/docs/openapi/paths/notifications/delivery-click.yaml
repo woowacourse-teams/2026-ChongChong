@@ -1,0 +1,24 @@
+post:
+  tags: [Notification]
+  operationId: clickNotificationDelivery
+  x-frontend:
+    status: needs-update
+    description: "서비스 워커가 deliveryId를 앱에 전달하고, 앱이 세션 복구 후 기존 API client로 기록한 뒤 deepLink를 연다."
+    sources:
+      - frontend/src/features/notification/push-sw.ts
+      - frontend/src/features/notification/api.ts
+  x-backend:
+    status: done
+    owner: wontop02
+    description: 서버 시각으로 최초 클릭만 기록하고 이후 요청은 기존 시각을 유지한다.
+  summary: 푸시 알림 클릭 기록
+  description: 현재 인증된 사용자의 Web Push 구독에 연결된 발송 내역만 클릭 기록한다. 클릭 시각은 서버가 저장하고, 이미 클릭한 알림에 다시 요청해도 최초 시각을 유지한다. 다른 사용자의 발송 내역이면 403, 존재하지 않으면 404를 반환한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/DeliveryId' }
+  responses:
+    '204': { description: 푸시 알림 클릭 기록 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/NotificationDeliveryAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/NotificationDeliveryNotFound' }

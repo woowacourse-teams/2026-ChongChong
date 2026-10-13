@@ -27,6 +27,7 @@ public class WebPushNotificationSender implements NotificationSender {
 
     private String createPayload(ClaimedDelivery delivery) {
         WebPushPayload payload = new WebPushPayload(
+                delivery.id(),
                 delivery.notificationId(),
                 delivery.title(),
                 delivery.body(),
@@ -56,6 +57,7 @@ public class WebPushNotificationSender implements NotificationSender {
     }
 
     private record WebPushPayload(
+            Long deliveryId,
             Long notificationId,
             String title,
             String body,

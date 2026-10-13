@@ -57,6 +57,7 @@ class WebPushNotificationSenderTest {
         JsonNode payload = objectMapper.readTree(payloadCaptor.getValue());
 
         assertThat(result).isEqualTo(WebPushSendResult.SENT);
+        assertThat(payload.get("deliveryId").asLong()).isEqualTo(1L);
         assertThat(payload.get("notificationId").asLong()).isEqualTo(3L);
         assertThat(payload.get("title").asText()).isEqualTo("제목 \"테스트\"");
         assertThat(payload.get("body").asText()).isEqualTo("본문\n다음 줄");

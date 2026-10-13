@@ -96,6 +96,12 @@ NoticeNotFound:
 NotificationNotFound:
   description: 알림이 존재하지 않거나 현재 사용자의 알림이 아님
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NotificationNotFoundError' } } }
+NotificationDeliveryNotFound:
+  description: 알림 발송 내역이 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NotificationDeliveryNotFoundError' } } }
+NotificationDeliveryAccessDenied:
+  description: 알림 발송 내역이 다른 사용자의 Web Push 구독에 속함
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NotificationDeliveryAccessDeniedError' } } }
 NoticeRecipientNotFound:
   description: 현재 사용자의 공지 수신자 정보가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/NoticeRecipientNotFoundError' } } }
