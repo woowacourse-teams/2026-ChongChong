@@ -37,7 +37,11 @@ public enum WebPushErrorCode implements ErrorCode {
 
     WEB_PUSH_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "WEB_PUSH_INTERRUPTED", "웹 푸시 발송이 중단되었습니다."),
 
-    UNEXPECTED_WEB_PUSH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "UNEXPECTED_WEB_PUSH_ERROR", "예상치 못한 예외가 발생했습니다.");
+    UNEXPECTED_WEB_PUSH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "UNEXPECTED_WEB_PUSH_ERROR", "예상치 못한 예외가 발생했습니다."),
+
+    INVALID_CLICK_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_CLICK_TOKEN", "유효하지 않거나 만료된 웹 푸시 클릭 토큰입니다."),
+
+    CLICK_TOKEN_SIGN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CLICK_TOKEN_SIGN_FAILED", "웹 푸시 클릭 토큰 서명에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

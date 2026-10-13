@@ -85,3 +85,5 @@ web-push:
     public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY}
     private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY}
     subject: ${WEB_PUSH_VAPID_SUBJECT}
+  notification:
+    click-token-secret: ${WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET}

@@ -24,6 +24,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0047](0047-sync-home-name-to-current-study-memberships.md)                               | 홈 이름 변경을 현재 참여 스터디의 멤버 이름에 동기화한다 |
 | [0048](0048-expire-study-invite-tokens-after-three-days.md)                                | 스터디 초대 토큰에 3일 만료를 적용한다 |
 | [0049](0049-record-push-clicks-on-deliveries.md)                                           | NotificationDelivery에 최초 푸시 클릭 시각을 기록한다 |
+| [0050](0050-authenticate-push-click-recording-with-signed-capability-tokens.md)            | 서명된 단기 토큰으로 푸시 클릭 기록을 인증한다 |
 
 ### 이전 ADR
 | 번호                                                                            | 제목                                        |

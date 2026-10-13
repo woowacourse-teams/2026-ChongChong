@@ -8,6 +8,11 @@ InvalidParameterAndRequest:
   content:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }] }
+InvalidClickTokenAndParameter:
+  description: 경로·요청 형식이 잘못됐거나 클릭 토큰이 유효하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidClickTokenError' }] }
 InvalidRequestOnly:
   description: 요청 형식이 잘못됨
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/InvalidRequestError' } } }

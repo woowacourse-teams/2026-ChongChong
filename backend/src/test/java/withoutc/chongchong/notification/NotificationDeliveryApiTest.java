@@ -6,10 +6,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
-import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
@@ -26,6 +28,7 @@ import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
+import withoutc.chongchong.notification.token.WebPushNotificationClickTokenProvider;
 import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
@@ -55,10 +58,10 @@ class NotificationDeliveryApiTest extends PostgresContainerTest {
     private TestDatabaseCleaner databaseCleaner;
 
     @Autowired
-    private TestAuthRequest testAuthRequest;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private WebPushNotificationClickTokenProvider clickTokenProvider;
 
     @Autowired
     private Clock clock;
@@ -72,51 +75,48 @@ class NotificationDeliveryApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("인증된 사용자는 푸시 클릭을 기록하고 재요청해도 최초 시각을 유지한다")
+    @DisplayName("클릭 토큰이 있으면 로그인 없이 푸시 클릭을 기록하고 최초 시각을 유지한다")
     void recordFirstClickAndKeepItOnRepeatedRequest() {
         User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
         NotificationDelivery delivery = saveDelivery(user);
         LocalDateTime requestStartedAt = LocalDateTime.now(clock).minusSeconds(1);
+        String clickToken = clickTokenProvider.createClickToken(delivery.getId());
 
-        clickAs(user, delivery).then().statusCode(204);
+        clickWithToken(delivery.getId(), clickToken).then().statusCode(204);
 
         Timestamp firstClickedAt = findClickedAt(delivery.getId());
         assertThat(firstClickedAt).isNotNull();
         assertThat(firstClickedAt.toLocalDateTime())
                 .isBetween(requestStartedAt, LocalDateTime.now(clock).plusSeconds(1));
 
-        clickAs(user, delivery).then().statusCode(204);
+        clickWithToken(delivery.getId(), clickToken).then().statusCode(204);
 
         assertThat(findClickedAt(delivery.getId())).isEqualTo(firstClickedAt);
     }
 
     @Test
-    @DisplayName("다른 사용자의 발송 내역은 클릭 처리할 수 없다")
-    void rejectClickForOtherUsersDelivery() {
+    @DisplayName("다른 발송 내역 ID에 사용한 토큰은 거부한다")
+    void rejectClickTokenForDifferentDelivery() {
         User owner = userRepository.saveAndFlush(User.create("소유자", null));
-        User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", null));
         NotificationDelivery delivery = saveDelivery(owner);
+        NotificationDelivery anotherDelivery = saveDelivery(owner);
+        String clickToken = clickTokenProvider.createClickToken(delivery.getId());
 
-        testAuthRequest.givenAuthenticatedUser(otherUser.getId())
-                .port(port)
-                .when()
-                .post("/notification-deliveries/{deliveryId}/click", delivery.getId())
+        clickWithToken(anotherDelivery.getId(), clickToken)
                 .then()
-                .statusCode(403)
-                .body("code", equalTo("NOTIFICATION_DELIVERY_ACCESS_DENIED"));
+                .statusCode(400)
+                .body("code", equalTo("INVALID_CLICK_TOKEN"));
 
-        assertThat(findClickedAt(delivery.getId())).isNull();
+        assertThat(findClickedAt(anotherDelivery.getId())).isNull();
     }
 
     @Test
     @DisplayName("존재하지 않는 발송 내역을 클릭하면 발송 내역 없음 오류를 반환한다")
     void rejectClickForMissingDelivery() {
-        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+        long deliveryId = 999999L;
+        String clickToken = clickTokenProvider.createClickToken(deliveryId);
 
-        testAuthRequest.givenAuthenticatedUser(user.getId())
-                .port(port)
-                .when()
-                .post("/notification-deliveries/{deliveryId}/click", 999999L)
+        clickWithToken(deliveryId, clickToken)
                 .then()
                 .statusCode(404)
                 .body("code", equalTo("NOTIFICATION_DELIVERY_NOT_FOUND"));
@@ -125,12 +125,9 @@ class NotificationDeliveryApiTest extends PostgresContainerTest {
     @Test
     @DisplayName("양수가 아닌 발송 내역 ID로 클릭하면 파라미터 오류를 반환한다")
     void rejectClickWithInvalidId() {
-        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+        String clickToken = clickTokenProvider.createClickToken(1L);
 
-        testAuthRequest.givenAuthenticatedUser(user.getId())
-                .port(port)
-                .when()
-                .post("/notification-deliveries/{deliveryId}/click", 0L)
+        clickWithToken(0L, clickToken)
                 .then()
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
@@ -138,19 +135,16 @@ class NotificationDeliveryApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("인증 없이 푸시 클릭을 기록할 수 없다")
-    void rejectUnauthenticatedClick() {
-        given()
-                .basePath(API_PREFIX)
-                .port(port)
-                .when()
-                .post("/notification-deliveries/{deliveryId}/click", 1L)
+    @DisplayName("서명이 올바르지 않은 클릭 토큰은 거부한다")
+    void rejectInvalidClickToken() {
+        clickWithToken(1L, "invalid-token")
                 .then()
-                .statusCode(401)
-                .body("code", equalTo("AUTHENTICATION_REQUIRED"));
+                .statusCode(400)
+                .body("code", equalTo("INVALID_CLICK_TOKEN"));
     }
 
     private NotificationDelivery saveDelivery(User owner) {
+        String subscriptionSuffix = UUID.randomUUID().toString();
         Notification notification = notificationRepository.saveAndFlush(
                 Notification.create(
                         owner,
@@ -163,18 +157,27 @@ class NotificationDeliveryApiTest extends PostgresContainerTest {
                 )
         );
         WebPushSubscription subscription = webPushSubscriptionRepository.saveAndFlush(
-                WebPushSubscription.create(owner, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)
+                WebPushSubscription.create(
+                        owner,
+                        INSTALLATION_ID + subscriptionSuffix,
+                        ENDPOINT + "/" + subscriptionSuffix,
+                        P256DH,
+                        AUTH
+                )
         );
         return notificationDeliveryRepository.saveAndFlush(
                 NotificationDelivery.create(notification, subscription)
         );
     }
 
-    private Response clickAs(User user, NotificationDelivery delivery) {
-        return testAuthRequest.givenAuthenticatedUser(user.getId())
+    private Response clickWithToken(Long deliveryId, String clickToken) {
+        return given()
+                .basePath(API_PREFIX)
                 .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("clickToken", clickToken))
                 .when()
-                .post("/notification-deliveries/{deliveryId}/click", delivery.getId());
+                .post("/notification-deliveries/{deliveryId}/click", deliveryId);
     }
 
     private Timestamp findClickedAt(Long deliveryId) {
