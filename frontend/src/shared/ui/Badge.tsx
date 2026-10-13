@@ -2,9 +2,9 @@ import { CSSProperties } from 'react';
 import { tokens } from '../../styles/global';
 import { typography } from '../../styles/global';
 
-export type Variant = 'brandSolid' | 'neutralSolid' | 'brandOutline';
+export type Variant = 'brandSolid' | 'neutralSolid' | 'brandOutline' | 'warningSolid';
 
-type Size = 'small' | 'large';
+type Size = 'small' | 'large' | 'status';
 
 interface BadgeProps extends React.ComponentProps<'span'> {
   variant: Variant;
@@ -33,6 +33,10 @@ const variantStyle = {
     color: tokens.text.brand,
     border: tokens.border.brand,
   },
+  warningSolid: {
+    background: tokens.bg.warningSubtle,
+    color: tokens.text.warning,
+  },
 };
 
 const sizeStyle = {
@@ -43,6 +47,11 @@ const sizeStyle = {
   large: {
     padding: `5px ${tokens.spacing[3]} 5px 5px`,
     gap: '6px',
+  },
+  status: {
+    ...typography.label,
+    minHeight: '24px',
+    padding: `3px ${tokens.spacing[2]}`,
   },
 };
 

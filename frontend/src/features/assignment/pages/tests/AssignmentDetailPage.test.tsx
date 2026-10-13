@@ -202,6 +202,7 @@ describe('과제 디테일 페이지 테스트', () => {
         const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
         expect(mySubmission.getByText('리더가 제출한 과제')).toBeVisible();
         expect(mySubmission.getByRole('button', { name: '편집하기' })).toBeVisible();
+        expect(mySubmission.queryByText('지각 제출')).not.toBeInTheDocument();
         expect(mySubmission.queryByRole('button', { name: '제출하기' })).not.toBeInTheDocument();
       });
 
@@ -443,6 +444,24 @@ describe('과제 디테일 페이지 테스트', () => {
         expect(screen.queryByText(/지각/)).not.toBeInTheDocument();
       });
 
+      test('마감 이후 제출한 사람에게만 지각 제출 뱃지를 표시한다', async () => {
+        await setAssignmentVisibility('ALL_STUDY_MEMBERS');
+        const assignment = assignmentTable.findFirst((q) => q.where({ id: 1, studyId: 1 }));
+        if (!assignment) throw new Error('과제를 찾을 수 없습니다.');
+        await assignmentTable.update(assignment, {
+          data(currentAssignment) {
+            currentAssignment.closeAt = '2026-08-31T23:59:59';
+          },
+        });
+        await markSubmissionAsSubmitted(1, { content: '리더 제출', link: null });
+
+        setupAssignmentDetailPage();
+
+        expect(await screen.findByText('지각 제출')).toBeVisible();
+        expect(screen.getByText(leaderUserName).parentElement).toHaveTextContent('지각 제출');
+        expect(screen.getAllByText('지각 제출')).toHaveLength(1);
+      });
+
       test.each([
         {
           title: '스터디에 대한 접근 권한이 없으면',
@@ -485,8 +504,10 @@ describe('과제 디테일 페이지 테스트', () => {
 
         await openDetailTab(user);
 
-        expect(await screen.findByText('지각 제출한 과제')).toBeVisible();
-        expect(screen.getByRole('button', { name: '편집하기' })).toBeVisible();
+        const mySubmission = within(await screen.findByRole('region', { name: '내 제출' }));
+        expect(mySubmission.getByText('지각 제출한 과제')).toBeVisible();
+        expect(mySubmission.getByText('지각 제출')).toBeVisible();
+        expect(mySubmission.getByRole('button', { name: '편집하기' })).toBeVisible();
       });
 
       test('마감 후 미제출 상태면 제출 폼을 표시한다', async () => {
