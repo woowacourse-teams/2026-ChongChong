@@ -1,3 +1,23 @@
+NotificationDeliveryClickRequest:
+  type: object
+  additionalProperties: false
+  required: [clickToken]
+  properties:
+    clickToken: { description: "해당 deliveryId에 HMAC 서명되고 7일 후 만료되는 54자 URL-safe Base64 클릭 토큰.", type: string, minLength: 54, maxLength: 54, pattern: '^[A-Za-z0-9_-]{54}$' }
+
+WebPushPayload:
+  type: object
+  additionalProperties: false
+  description: Web Push 메시지의 JSON payload. 브라우저 서비스 워커가 push 이벤트에서 수신한다.
+  required: [deliveryId, notificationId, clickToken, title, body, deepLink]
+  properties:
+    deliveryId: { description: "클릭 기록 API 경로에 전달할 전달 건 ID.", type: integer, format: int64, example: 42 }
+    notificationId: { description: "논리 알림 ID.", type: integer, format: int64, example: 17 }
+    clickToken: { description: "해당 deliveryId에 서명되고 7일 후 만료되는 URL-safe Base64 클릭 토큰.", type: string, minLength: 54, maxLength: 54, pattern: '^[A-Za-z0-9_-]{54}$' }
+    title: { description: "브라우저 알림 제목.", type: string, example: '[알고리즘 스터디] 새 공지' }
+    body: { description: "브라우저 알림 본문.", type: string, example: 4주차부터 선택 미션이 추가됩니다 }
+    deepLink: { description: "클릭 후 앱에서 열 상대 경로.", type: string, example: /studies/2/notices/10 }
+
 MyNotificationListResponse:
   type: object
   additionalProperties: false

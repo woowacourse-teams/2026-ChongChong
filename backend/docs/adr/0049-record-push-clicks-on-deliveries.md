@@ -2,6 +2,7 @@
 
 - 날짜: 2026-10-12
 - 관련 이슈: [#495](https://github.com/woowacourse-teams/2026-ChongChong/issues/495)
+- 상태: 클릭 API 인증 방식은 [ADR 0050](0050-authenticate-push-click-recording-with-signed-capability-tokens.md)으로 대체됨
 
 ## 배경
 
