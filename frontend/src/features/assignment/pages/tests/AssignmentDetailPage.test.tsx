@@ -444,22 +444,35 @@ describe('과제 디테일 페이지 테스트', () => {
         expect(screen.queryByText(/지각/)).not.toBeInTheDocument();
       });
 
-      test('마감 이후 제출한 사람에게만 지각 제출 뱃지를 표시한다', async () => {
-        await setAssignmentVisibility('ALL_STUDY_MEMBERS');
-        const assignment = assignmentTable.findFirst((q) => q.where({ id: 1, studyId: 1 }));
-        if (!assignment) throw new Error('과제를 찾을 수 없습니다.');
-        await assignmentTable.update(assignment, {
-          data(currentAssignment) {
-            currentAssignment.closeAt = '2026-08-31T23:59:59';
-          },
+      test('마감 이후 제출하면 제출 완료 목록에 지각 제출 뱃지를 표시한다', async () => {
+        const assignment = await assignmentTable.create({
+          id: 2,
+          studyId: 1,
+          title: '지각 제출 확인 과제',
+          content: '스프링의 핵심 개념을 정리해 주세요',
+          submissionMethod: '텍스트로 제출하세요',
+          closeAt: '2026-08-31T23:59:59',
+          submissionTarget: 'MEMBERS_AND_LEADER',
+          submissionVisibility: 'ALL_STUDY_MEMBERS',
+          completeUserIds: [2],
         });
-        await markSubmissionAsSubmitted(1, { content: '리더 제출', link: null });
+        await submissionTable.create({
+          id: 103,
+          assignmentId: assignment.id,
+          userId: 2,
+          submitted: true,
+          createdAt: '2026-09-01T09:00:00',
+          content: '마감 후에 제출한 내 과제',
+          link: null,
+        });
 
-        setupAssignmentDetailPage();
+        const { user } = setupAssignmentDetailPage(`/studies/1/assignments/${assignment.id}`);
+        await openStatusTab(user);
 
-        expect(await screen.findByText('지각 제출')).toBeVisible();
-        expect(screen.getByText(leaderUserName).parentElement).toHaveTextContent('지각 제출');
-        expect(screen.getAllByText('지각 제출')).toHaveLength(1);
+        const submissions = await screen.findByRole('region', { name: '제출 완료 1명' });
+
+        expect(within(submissions).getByText(memberUserName)).toBeVisible();
+        expect(within(submissions).getByText('지각 제출')).toBeVisible();
       });
 
       test.each([
