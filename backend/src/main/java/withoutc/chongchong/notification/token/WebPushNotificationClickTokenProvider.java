@@ -18,6 +18,9 @@ import withoutc.chongchong.notification.exception.WebPushException;
 public class WebPushNotificationClickTokenProvider {
 
     private static final Duration CLICK_TOKEN_TTL = Duration.ofDays(7);
+    private static final int MIN_SECRET_LENGTH = 32;
+    private static final String INVALID_SECRET_LENGTH_MESSAGE =
+            "푸시 클릭 토큰 시크릿은 Base64 디코딩 후 최소 32바이트여야 합니다.";
     private static final int SIGNATURE_LENGTH = 32;
     private static final int TOKEN_BYTE_LENGTH = SIGNATURE_LENGTH + Long.BYTES;
     private static final int TOKEN_ENCODED_LENGTH = 54;
@@ -32,7 +35,11 @@ public class WebPushNotificationClickTokenProvider {
             @Value("${web-push.notification.click-token-secret}") String secret
     ) {
         this.clock = clock;
-        this.clickTokenSecret = Base64.getDecoder().decode(secret);
+        byte[] decodedSecret = Base64.getDecoder().decode(secret);
+        if (decodedSecret.length < MIN_SECRET_LENGTH) {
+            throw new IllegalArgumentException(INVALID_SECRET_LENGTH_MESSAGE);
+        }
+        this.clickTokenSecret = decodedSecret;
     }
 
     public String createClickToken(long deliveryId) {

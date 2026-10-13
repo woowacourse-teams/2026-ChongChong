@@ -20,6 +20,19 @@ class WebPushNotificationClickTokenProviderTest {
     private static final long DELIVERY_ID = 42L;
 
     @Test
+    @DisplayName("32바이트보다 짧은 서명 키로는 클릭 토큰 제공자를 생성할 수 없다")
+    void rejectSecretShorterThan32Bytes() {
+        String shortSecret = Base64.getEncoder().encodeToString(new byte[31]);
+
+        assertThatThrownBy(() -> new WebPushNotificationClickTokenProvider(
+                Clock.fixed(ISSUED_AT, ZoneOffset.UTC),
+                shortSecret
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("푸시 클릭 토큰 시크릿은 Base64 디코딩 후 최소 32바이트여야 합니다.");
+    }
+
+    @Test
     @DisplayName("발급한 클릭 토큰은 해당 발송 내역 ID에 대해 검증된다")
     void verifyTokenForDeliveryId() {
         WebPushNotificationClickTokenProvider provider = providerAt(ISSUED_AT);
