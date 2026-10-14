@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import withoutc.chongchong.notification.metrics.NotificationDeliveryMetrics;
+import withoutc.chongchong.notification.metrics.NotificationDeliveryProcessingMetrics;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -23,12 +23,12 @@ class HttpMetricsTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private NotificationDeliveryMetrics notificationDeliveryMetrics;
+    private NotificationDeliveryProcessingMetrics notificationDeliveryProcessingMetrics;
 
     @Test
     void 실제_API_요청을_Prometheus_요청_수와_응답_시간_버킷에_반영한다() throws Exception {
-        Timer.Sample sendSample = notificationDeliveryMetrics.startSend();
-        notificationDeliveryMetrics.stopSend(sendSample, true);
+        Timer.Sample sendSample = notificationDeliveryProcessingMetrics.startSend();
+        notificationDeliveryProcessingMetrics.stopSend(sendSample, true);
 
         mockMvc.perform(get("/api/auth/csrf"))
                 .andExpect(status().isOk());
@@ -48,6 +48,8 @@ class HttpMetricsTest {
                 && line.contains("le=\"+Inf\""));
         assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_queue_ready "));
         assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_queue_oldest_ready_age_seconds "));
+        assertThat(samples).anyMatch(line ->
+                line.startsWith("notification_delivery_queue_snapshot_last_success_timestamp_seconds "));
         assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_queue_wait_seconds_bucket{")
                 && line.contains("le=\"+Inf\""));
         assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_post_claim_wait_seconds_bucket{")

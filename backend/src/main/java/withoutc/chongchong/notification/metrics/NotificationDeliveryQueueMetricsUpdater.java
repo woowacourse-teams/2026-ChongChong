@@ -15,7 +15,7 @@ import withoutc.chongchong.notification.repository.projection.ClaimableQueueSnap
 public class NotificationDeliveryQueueMetricsUpdater {
 
     private final NotificationDeliveryRepository notificationDeliveryRepository;
-    private final NotificationDeliveryMetrics notificationDeliveryMetrics;
+    private final NotificationDeliveryQueueMetrics notificationDeliveryQueueMetrics;
     private final Clock clock;
 
     @Scheduled(fixedDelayString = "${web-push.delivery.metrics.fixed-delay-ms:10000}")
@@ -23,12 +23,13 @@ public class NotificationDeliveryQueueMetricsUpdater {
         LocalDateTime now = LocalDateTime.now(clock);
         ClaimableQueueSnapshotProjection snapshot = notificationDeliveryRepository.findClaimableQueueSnapshot(
                 now, DeliveryStatus.PENDING, DeliveryStatus.RETRY_WAIT);
-        if (snapshot.readyCount() == 0 || snapshot.oldestReadyAt() == null) {
-            notificationDeliveryMetrics.clearQueueSnapshot();
+        if (snapshot.readyCount() == 0) {
+            notificationDeliveryQueueMetrics.clearQueueSnapshot(clock.millis());
             return;
         }
 
         Duration oldestReadyAge = Duration.between(snapshot.oldestReadyAt(), now);
-        notificationDeliveryMetrics.updateQueueSnapshot(snapshot.readyCount(), oldestReadyAge);
+        notificationDeliveryQueueMetrics.updateQueueSnapshot(
+                snapshot.readyCount(), oldestReadyAge, clock.millis());
     }
 }
