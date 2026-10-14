@@ -58,7 +58,8 @@ class WebPushSubscriptionTimestampMigrationTest {
         assertTimestamps(jdbcTemplate, "at-corrected-created", correctedCreatedAt, correctedCreatedAt);
         assertTimestamps(jdbcTemplate, "after-corrected-created", correctedCreatedAt, createdAt.plusHours(10));
         assertThat(readTimestamp(jdbcTemplate, "null-updated-at", "created_at")).isEqualTo(correctedCreatedAt);
-        assertThat(readTimestamp(jdbcTemplate, "null-updated-at", "updated_at")).isNull();
+        assertThat(readTimestamp(jdbcTemplate, "null-updated-at", "updated_at"))
+                .isEqualTo(correctedCreatedAt);
     }
 
     private void insertSubscription(
