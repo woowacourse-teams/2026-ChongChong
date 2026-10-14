@@ -13,13 +13,13 @@ receivers:
         - job_name: chongchong-backend
           metrics_path: /actuator/prometheus
           static_configs:
-            - targets: ["backend:8080"]
+            - targets: [ "backend:8080" ]
               labels:
                 environment: ${env:CLOUD_WATCH_APP_ENV}
                 service: chongchong-backend
           metric_relabel_configs:
-            - source_labels: [__name__]
-              regex: 'http_server_requests_seconds_(bucket|count|sum)|up'
+            - source_labels: [ __name__ ]
+              regex: 'http_server_requests_seconds_(bucket|count|sum)|notification_delivery_.*|up'
               action: keep
 
 processors:
@@ -45,9 +45,9 @@ exporters:
       num_consumers: 1
 
 service:
-  extensions: [sigv4auth]
+  extensions: [ sigv4auth ]
   pipelines:
     metrics:
-      receivers: [prometheus]
-      processors: [memory_limiter, cumulativetodelta, batch]
-      exporters: [otlphttp]
+      receivers: [ prometheus ]
+      processors: [ memory_limiter, cumulativetodelta, batch ]
+      exporters: [ otlphttp ]
