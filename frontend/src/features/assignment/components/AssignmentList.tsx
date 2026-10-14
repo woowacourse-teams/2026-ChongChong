@@ -43,8 +43,7 @@ export default function AssigmentList<T extends Assignment>({
                 <ContentCard.Meta tone="brand">
                   {formatDateToString(assignment.closeAt) + ' 마감'}
                 </ContentCard.Meta>
-                <ContentCard.Meta>
-                  <img src={LinkIcon} alt="" width={13} height={13} />
+                <ContentCard.Meta icon={<img src={LinkIcon} alt="" width={13} height={13} />}>
                   {assignment.submissionMethod}
                 </ContentCard.Meta>
               </ContentCard.Footer>

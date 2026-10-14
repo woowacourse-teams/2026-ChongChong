@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import linkIcon from '../../../shared/assets/link-green.svg';
+import Badge from '../../../shared/ui/Badge';
 import Button from '../../../shared/ui/Button';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
@@ -14,6 +15,7 @@ import InfoCard from './InfoCard';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
+import { CSSObject } from '@emotion/react';
 
 interface Props {
   assignmentId: number;
@@ -33,6 +35,12 @@ const sectionTitleStyle = {
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
+const sectionTitleRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: tokens.spacing[3],
+} satisfies CSSProperties;
+
 const submittedAtStyle = {
   ...typography.footnote,
   marginTop: tokens.spacing[1],
@@ -48,9 +56,15 @@ const cardListStyle = {
 
 const linkStyle = {
   display: 'block',
-  color: 'inherit',
+  color: tokens.text.link,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
   overflowWrap: 'anywhere',
-} satisfies CSSProperties;
+
+  '&:hover': {
+    opacity: 0.7,
+  },
+} satisfies CSSObject;
 
 const editButtonStyle = {
   marginTop: tokens.spacing[5],
@@ -64,6 +78,8 @@ export default function CompletedAssignmentSubmission({
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
+
+  const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
@@ -99,9 +115,16 @@ export default function CompletedAssignmentSubmission({
     />
   ) : (
     <section css={sectionStyle} aria-labelledby="my-submission-title">
-      <h2 id="my-submission-title" css={sectionTitleStyle}>
-        내 제출
-      </h2>
+      <div css={sectionTitleRowStyle}>
+        <h2 id="my-submission-title" css={sectionTitleStyle}>
+          내 제출
+        </h2>
+        {submission.submissionStatus === 'LATE_SUBMITTED' && (
+          <Badge variant="warningSolid" size="status">
+            지각 제출
+          </Badge>
+        )}
+      </div>
       <time css={submittedAtStyle} dateTime={submission.createdAt}>
         {formatSubmittedAt(submission.createdAt)}
       </time>
@@ -113,7 +136,7 @@ export default function CompletedAssignmentSubmission({
 
         {submission.link && (
           <InfoCard icon={linkIcon} title="링크">
-            <a css={linkStyle} href={submission.link} target="_blank" rel="noreferrer">
+            <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
           </InfoCard>

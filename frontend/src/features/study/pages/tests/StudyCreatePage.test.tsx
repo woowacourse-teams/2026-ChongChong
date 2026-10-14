@@ -30,6 +30,10 @@ function studyNameInput() {
   return screen.getByRole('textbox', { name: '스터디 이름' });
 }
 
+function studyDescriptionInput() {
+  return screen.getByRole('textbox', { name: '스터디 설명' });
+}
+
 function studyCreateButton() {
   return screen.getByRole('button', { name: '스터디 만들기' });
 }
@@ -78,7 +82,7 @@ describe('스터디 생성 페이지', () => {
 
     test('빈 설명에 30자를 초과한 값이 전달되면 입력을 막는다', () => {
       setupStudyCreatePage();
-      const descriptionInput = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+      const descriptionInput = studyDescriptionInput();
 
       fireEvent.change(descriptionInput, { target: { value: createTextWithLength(31) } });
 
@@ -87,7 +91,7 @@ describe('스터디 생성 페이지', () => {
 
     test('설명이 30자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
       setupStudyCreatePage();
-      const descriptionInput = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+      const descriptionInput = studyDescriptionInput();
       const originalValue = createTextWithLength(30);
 
       fireEvent.change(descriptionInput, { target: { value: originalValue } });
@@ -100,7 +104,7 @@ describe('스터디 생성 페이지', () => {
 
     test('설명의 중간 삽입 결과가 30자 이하면 입력을 반영한다', () => {
       setupStudyCreatePage();
-      const descriptionInput = screen.getByRole('textbox', { name: '어떤 스터디인가요?' });
+      const descriptionInput = studyDescriptionInput();
       const originalValue = createTextWithLength(29);
 
       fireEvent.change(descriptionInput, { target: { value: originalValue } });

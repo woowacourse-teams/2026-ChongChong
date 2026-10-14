@@ -6,6 +6,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Base64;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +29,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import withoutc.chongchong.notification.exception.WebPushSendResult;
+import withoutc.chongchong.notification.token.WebPushNotificationClickTokenProvider;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,16 +38,22 @@ class WebPushNotificationSenderTest {
     private static final String ENDPOINT = "https://push.example.com/subscription";
     private static final String P256DH = "p256dh";
     private static final String AUTH = "auth";
+    private static final byte[] CLICK_TOKEN_SECRET_BYTES = new byte[32];
+    private static final String CLICK_TOKEN_SECRET = Base64.getEncoder().encodeToString(CLICK_TOKEN_SECRET_BYTES);
+    private static final Instant NOW = Instant.parse("2026-10-13T00:00:00Z");
+    private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
 
     @Mock
     private WebPushClient webPushClient;
 
     private final ObjectMapper objectMapper = JsonMapper.builder().build();
+    private final WebPushNotificationClickTokenProvider clickTokenProvider =
+            new WebPushNotificationClickTokenProvider(CLOCK, CLICK_TOKEN_SECRET);
 
     @Test
     @DisplayName("Web Push payload를 JSON으로 직렬화하고 특수 문자를 보존한다")
     void serializePayload() throws Exception {
-        WebPushNotificationSender sender = new WebPushNotificationSender(objectMapper, webPushClient);
+        WebPushNotificationSender sender = createSender();
         ClaimedDelivery delivery = new ClaimedDelivery(
                 1L,
                 2L,
@@ -45,7 +63,8 @@ class WebPushNotificationSenderTest {
                 3L,
                 "제목 \"테스트\"",
                 "본문\n다음 줄",
-                "/studies/1/notices/3?tab=detail"
+                "/studies/1/notices/3?tab=detail",
+                LocalDateTime.now(CLOCK)
         );
         when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
                 .thenReturn(new WebPushClient.WebPushResponse(201, ""));
@@ -57,7 +76,9 @@ class WebPushNotificationSenderTest {
         JsonNode payload = objectMapper.readTree(payloadCaptor.getValue());
 
         assertThat(result).isEqualTo(WebPushSendResult.SENT);
+        assertThat(payload.get("deliveryId").asLong()).isEqualTo(1L);
         assertThat(payload.get("notificationId").asLong()).isEqualTo(3L);
+        assertClickToken(payload.get("clickToken").asText(), delivery.id());
         assertThat(payload.get("title").asText()).isEqualTo("제목 \"테스트\"");
         assertThat(payload.get("body").asText()).isEqualTo("본문\n다음 줄");
         assertThat(payload.get("deepLink").asText()).isEqualTo("/studies/1/notices/3?tab=detail");
@@ -72,7 +93,7 @@ class WebPushNotificationSenderTest {
             "400, PERMANENT_FAILURE"
     })
     void classifyProviderResponse(int status, String expectedResult) {
-        WebPushNotificationSender sender = new WebPushNotificationSender(objectMapper, webPushClient);
+        WebPushNotificationSender sender = createSender();
         when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
                 .thenReturn(new WebPushClient.WebPushResponse(status, ""));
 
@@ -91,7 +112,29 @@ class WebPushNotificationSenderTest {
                 3L,
                 "제목",
                 "본문",
-                "/studies/1/notices/3"
+                "/studies/1/notices/3",
+                LocalDateTime.now(CLOCK)
         );
+    }
+
+    private WebPushNotificationSender createSender() {
+        return new WebPushNotificationSender(objectMapper, webPushClient, clickTokenProvider);
+    }
+
+    private void assertClickToken(String clickToken, long deliveryId) throws GeneralSecurityException {
+        byte[] token = Base64.getUrlDecoder().decode(clickToken);
+        assertThat(token).hasSize(32 + Long.BYTES);
+
+        ByteBuffer tokenBuffer = ByteBuffer.wrap(token);
+        byte[] signature = new byte[32];
+        tokenBuffer.get(signature);
+        long expiresAt = tokenBuffer.getLong();
+
+        assertThat(expiresAt).isEqualTo(NOW.plus(Duration.ofDays(7)).getEpochSecond());
+
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(CLICK_TOKEN_SECRET_BYTES, "HmacSHA256"));
+        String message = "push-click-v1:" + deliveryId + ":" + expiresAt;
+        assertThat(signature).isEqualTo(mac.doFinal(message.getBytes(StandardCharsets.UTF_8)));
     }
 }

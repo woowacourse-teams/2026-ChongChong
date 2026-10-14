@@ -100,7 +100,7 @@ export default function AssignmentSubmissionForm({
           id="assignment-submission-link"
           name="link"
           label="링크"
-          type="url"
+          type="text"
           value={link}
           onChange={handleLinkChange}
           maxLength={ASSIGNMENT_SUBMISSION_LINK.length}

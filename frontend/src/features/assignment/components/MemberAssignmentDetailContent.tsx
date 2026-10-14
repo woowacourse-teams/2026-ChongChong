@@ -44,7 +44,7 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
         meta={`${formatDateToString(assignment.closeAt)} 마감`}
       />
       <DetailTabs
-        summary={
+        status={
           <>
             <MySubmissionStatus submission={submission} member={member} />
             {canViewSubmissions && submissions ? (

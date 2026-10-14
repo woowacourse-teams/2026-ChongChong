@@ -35,7 +35,13 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
   enabled: Boolean(process.env.SENTRY_DSN),
   environment: process.env.SENTRY_ENVIRONMENT,
-  integrations: [Sentry.replayIntegration()],
+  integrations: [
+    Sentry.replayIntegration({
+      maskAllText: false,
+      maskAllInputs: true,
+      blockAllMedia: false,
+    }),
+  ],
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
 });

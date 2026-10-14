@@ -1,5 +1,6 @@
 package withoutc.chongchong.notification.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,7 +46,7 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
     @Query(value = """
             UPDATE web_push_subscriptions
             SET is_active = false,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = :updatedAt
             WHERE is_active = true
               AND user_id != :userId
               AND (
@@ -56,7 +57,8 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
     int deactivateConflictingActiveSubscriptions(
             @Param("userId") Long userId,
             @Param("installationId") String installationId,
-            @Param("endpoint") String endpoint
+            @Param("endpoint") String endpoint,
+            @Param("updatedAt") LocalDateTime updatedAt
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -78,8 +80,8 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
                 :p256dh,
                 :auth,
                 true,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
+                :now,
+                :now
             )
             ON CONFLICT (user_id, installation_id)
             DO UPDATE SET
@@ -87,27 +89,29 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
                 p256dh = EXCLUDED.p256dh,
                 auth = EXCLUDED.auth,
                 is_active = true,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = :now
             """, nativeQuery = true)
     int upsert(
             @Param("userId") Long userId,
             @Param("installationId") String installationId,
             @Param("endpoint") String endpoint,
             @Param("p256dh") String p256dh,
-            @Param("auth") String auth
+            @Param("auth") String auth,
+            @Param("now") LocalDateTime now
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             UPDATE web_push_subscriptions
             SET is_active = false,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = :updatedAt
             WHERE id = :subscriptionId
               AND user_id = :userId
             """, nativeQuery = true)
     void deactivateByIdAndUserId(
             @Param("subscriptionId") Long subscriptionId,
-            @Param("userId") Long userId
+            @Param("userId") Long userId,
+            @Param("updatedAt") LocalDateTime updatedAt
     );
 
     List<WebPushSubscription> findByUserIdAndIsActiveTrue(Long userId);

@@ -15,6 +15,8 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse.CompleteMember;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse.IncompleteMember;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -105,22 +107,8 @@ public class AssignmentService {
         List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(
                 assignmentId);
 
-        List<AssignmentSubmissionStatusResponse.CompleteMember> completeMembers = statuses.stream()
-                .filter(AssignmentSubmitterStatusProjection::isSubmitted)
-                .map(status -> AssignmentSubmissionStatusResponse.CompleteMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.submittedAt()
-                )).toList();
-
-        List<AssignmentSubmissionStatusResponse.IncompleteMember> incompleteMembers = statuses.stream()
-                .filter(status -> !status.isSubmitted())
-                .map(status -> AssignmentSubmissionStatusResponse.IncompleteMember.of(status.memberId(), status.name(),
-                        status.profileImageUrl(), status.lastRemindAt())).toList();
-
-        return AssignmentSubmissionStatusResponse.of(assignmentId, assignment.getNextRemindAt(), completeMembers,
-                incompleteMembers);
+        return AssignmentSubmissionStatusResponse.of(assignmentId, assignment.getNextRemindAt(),
+                toCompleteMembers(statuses), toIncompleteMembers(statuses));
     }
 
     public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long assignmentId) {
@@ -144,6 +132,22 @@ public class AssignmentService {
 
         List<AssignmentSummaryResponse> summaries = createAssignmentSummaries(member, assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
+    }
+
+    private List<CompleteMember> toCompleteMembers(List<AssignmentSubmitterStatusProjection> statuses) {
+        return statuses.stream()
+                .filter(AssignmentSubmitterStatusProjection::isSubmitted)
+                .map(status -> CompleteMember.of(status.memberId(), status.name(), status.profileImageUrl(),
+                        status.submittedAt()))
+                .toList();
+    }
+
+    private List<IncompleteMember> toIncompleteMembers(List<AssignmentSubmitterStatusProjection> statuses) {
+        return statuses.stream()
+                .filter(status -> !status.isSubmitted())
+                .map(status -> IncompleteMember.of(status.memberId(), status.name(), status.profileImageUrl(),
+                        status.lastRemindAt()))
+                .toList();
     }
 
     private List<StudyMember> getSubmitters(Long studyId, SubmissionTarget submissionTarget) {

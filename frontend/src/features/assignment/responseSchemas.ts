@@ -66,6 +66,7 @@ const submissionSchema = z.object({
   id: z.number(),
   name: z.string(),
   profileImage: z.string().nullable(),
+  submissionStatus: z.enum(['SUBMITTED', 'LATE_SUBMITTED']),
   createdAt: z.string(),
 }) satisfies z.ZodType<Submission>;
 

@@ -1,15 +1,8 @@
 /// <reference lib="webworker" />
-
+import { recordNotificationDeliveryClick } from './api';
 export {};
 
 declare const self: ServiceWorkerGlobalScope;
-
-interface PushPayload {
-  notificationId?: number;
-  title?: string;
-  body?: string;
-  deepLink?: string;
-}
 
 // 서비스 워커 설치 이벤트
 self.addEventListener('install', (event) => {
@@ -19,33 +12,27 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  let payload: PushPayload;
-
-  try {
-    payload = event.data?.json() ?? {};
-  } catch {
-    // payload에 데이터가 없는경우에는 애초에 알림이 안가도록 하는 처리가 필요할듯
-    payload = {};
-  }
+  // TODO: event.data.json은 어떤 값이 오게될지 예상되지 않습니다. (런타임 타입검증이 필요합니다)
+  const { title, body, deliveryId, clickToken, deepLink } = event.data!.json();
 
   event.waitUntil(
-    self.registration.showNotification(payload.title ?? '총총', {
-      body: payload.body ?? '새로운 알림이 도착했어요.',
-      icon: '/pwa/images/icon-192.webp',
-      data: {
-        notificationId: payload.notificationId,
-        deepLink: payload.deepLink ?? '/studies',
-      },
+    self.registration.showNotification(title, {
+      body,
+      data: { deliveryId, clickToken, deepLink },
     }),
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const { deliveryId, clickToken, deepLink } = event.notification.data;
 
-  const url = new URL(event.notification.data?.deepLink ?? '/studies', self.location.origin);
-
-  if (url.origin !== self.location.origin) return;
-
-  event.waitUntil(self.clients.openWindow(url.href));
+  event.waitUntil(
+    Promise.allSettled([
+      recordNotificationDeliveryClick(deliveryId, clickToken),
+      // TODO: deepLink또한 무조건 전달될지에 대한 보장이 판단되지 않습니다
+      // fallback이 필요할 수 있으며 응답 타입에 대한 정확한 파악이 필요합니다
+      self.clients.openWindow(deepLink),
+    ]),
+  );
 });

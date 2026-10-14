@@ -1,12 +1,18 @@
 package withoutc.chongchong.notification.worker;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.Instant;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +24,7 @@ import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.exception.WebPushSendResult;
 import withoutc.chongchong.notification.logging.NotificationDeliveryLogger;
+import withoutc.chongchong.notification.metrics.NotificationDeliveryProcessingMetrics;
 import withoutc.chongchong.notification.sender.NotificationSender;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
@@ -26,7 +33,10 @@ class NotificationDeliveryWorkerTest {
 
     private static final int BATCH_SIZE = 100;
     private static final Long DELIVERY_ID = 1L;
+    private static final Long SECOND_DELIVERY_ID = 4L;
     private static final Long SUBSCRIPTION_ID = 2L;
+    private static final Clock CLOCK = Clock.fixed(
+            Instant.parse("2026-10-14T00:00:00Z"), ZoneId.of("Asia/Seoul"));
 
     @Mock
     private DeliveryClaimService deliveryClaimService;
@@ -45,15 +55,20 @@ class NotificationDeliveryWorkerTest {
 
     private NotificationDeliveryWorker worker;
     private ClaimedDelivery delivery;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        NotificationDeliveryProcessingMetrics metrics = new NotificationDeliveryProcessingMetrics(meterRegistry);
         worker = new NotificationDeliveryWorker(
                 deliveryClaimService,
                 deliveryRecoveryService,
                 sender,
                 deliveryResultService,
-                notificationDeliveryLogger
+                notificationDeliveryLogger,
+                metrics,
+                CLOCK
         );
         delivery = new ClaimedDelivery(
                 DELIVERY_ID,
@@ -64,7 +79,8 @@ class NotificationDeliveryWorkerTest {
                 3L,
                 "제목",
                 "본문",
-                "/studies/1/notices/3"
+                "/studies/1/notices/3",
+                LocalDateTime.now(CLOCK).minusSeconds(10)
         );
     }
 
@@ -207,5 +223,12 @@ class NotificationDeliveryWorkerTest {
         inOrder.verify(deliveryClaimService).claimBatch(BATCH_SIZE);
         inOrder.verify(sender).send(delivery);
         inOrder.verify(deliveryResultService).markSent(DELIVERY_ID);
+
+        assertThat(meterRegistry.get("notification.delivery.claim").timer().count()).isOne();
+        assertThat(meterRegistry.get("notification.delivery.queue.wait").timer().count()).isOne();
+        assertThat(meterRegistry.get("notification.delivery.post.claim.wait").timer().count()).isOne();
+        assertThat(meterRegistry.get("notification.delivery.send")
+                .tag("outcome", "success").timer().count()).isOne();
     }
+
 }

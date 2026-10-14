@@ -18,7 +18,7 @@ const api = ky.create({
       },
     ],
     afterResponse: [
-      async ({ request, response, retryCount }) => {
+      async ({ request, response, retryCount, options }) => {
         if (response.status !== 401 || retryCount > 0) return;
 
         try {
@@ -33,7 +33,10 @@ const api = ky.create({
         } catch {
           clearAccessToken();
           posthog.reset();
-          if (window.location.pathname !== '/login') {
+          if (
+            options.context.redirectOnAuthFailure !== false &&
+            window.location.pathname !== '/login'
+          ) {
             window.location.assign('/login');
           }
 

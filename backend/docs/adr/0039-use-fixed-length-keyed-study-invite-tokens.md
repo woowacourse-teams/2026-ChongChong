@@ -2,6 +2,7 @@
 
 - 날짜: 2026-09-27
 - 관련 이슈: [#382](https://github.com/woowacourse-teams/2026-ChongChong/issues/382)
+- 일부 대체 관계: [0048. 스터디 초대 토큰에 3일 만료를 적용한다](0048-expire-study-invite-tokens-after-three-days.md)가 토큰 길이, 같은 스터디의 안정 토큰 생성, 유효 기간 결정을 대체한다.
 
 ## 배경
 

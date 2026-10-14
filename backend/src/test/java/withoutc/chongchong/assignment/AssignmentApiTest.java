@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -137,6 +138,72 @@ class AssignmentApiTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", ", \"submissionMethod\": null"})
+    @DisplayName("생성 시 제출 방법 필드를 생략하거나 null이면 빈 설명으로 저장한다")
+    void createWithMissingSubmissionMethodTest(String methodField) {
+        int assignmentId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"title":"과제", "content":"내용", "submissionTarget":"MEMBERS_ONLY",
+                         "submissionVisibility":"LEADER_ONLY", "closeAt":"%s"%s}
+                        """.formatted(closeAt.format(REQUEST_DATE_TIME_FORMATTER), methodField))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().path("assignmentId");
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{id}", study.getId(), assignmentId)
+                .then().statusCode(200).body("submissionMethod", equalTo(""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {", \"submissionMethod\": \"\"", ", \"submissionMethod\": \"   \""})
+    @DisplayName("제출 방법 없이 생성하고 조회하면 빈 설명을 반환한다")
+    void createWithoutSubmissionMethodTest(String methodField) {
+        int assignmentId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"title":"선택 입력 과제", "content":"내용", "submissionTarget":"MEMBERS_ONLY",
+                         "submissionVisibility":"LEADER_ONLY", "closeAt":"%s"%s}
+                        """.formatted(closeAt.format(REQUEST_DATE_TIME_FORMATTER), methodField))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().path("assignmentId");
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{id}", study.getId(), assignmentId)
+                .then().statusCode(200).body("submissionMethod", equalTo(""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    @DisplayName("빈 설명으로 수정하면 기존 제출 방법을 지운다")
+    void clearSubmissionMethodTest(String method) {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submissionMethod", method))
+                .when().patch("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then().statusCode(200).body("submissionMethod", equalTo(""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"submissionMethod\":null}"})
+    @DisplayName("수정 시 제출 방법을 생략하거나 null이면 기존 설명을 유지한다")
+    void preserveSubmissionMethodTest(String body) {
+        String originalMethod = assignment.getSubmissionMethod();
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(body)
+                .when().patch("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then().statusCode(200).body("submissionMethod", equalTo(originalMethod));
     }
 
     @Test

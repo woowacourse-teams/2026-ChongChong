@@ -1,34 +1,19 @@
 # 멤버 관리
 
-[← v2 개요](README.md) · [v1 대비 변경](changes.md)
+[← 현재 PRD](README.md) · [구현 범위](scope.md)
 
-## 디자인에 있는 기능
+## 조회와 초대
 
-- 스터디 멤버와 리더를 구분해 표시하고 초대 링크를 복사한다.
-- 리더는 일반 멤버의 더보기에서 ‘리더 양도’ 또는 ‘방출’을 선택한다.
-- 리더 양도 전 확인 대화상자를 표시한다.
-- 방출 전 확인 대화상자를 표시한다.
+스터디에 참여한 멤버는 멤버 목록과 초대 링크를 확인할 수 있다. 목록에서는 리더와 일반 멤버를 구분하고, 최대 50명까지 참여할 수 있음을 안내한다.
+초대 링크에 담긴 토큰은 발급 후 3일 동안 유효하다.
 
-## 현재 디자인의 정책
+## 방출과 탈퇴
 
-- 리더 양도 안내에는 양도한 사용자가 더 이상 리더 권한을 갖지 않는다고 명시되어 있다.
-- 회원탈퇴 안내는 리더 권한을 다른 멤버에게 넘긴 뒤 탈퇴하도록 안내한다.
-- 방출 안내에는 해당 스터디에 더 이상 참여할 수 없다고 표시되어 있다.
+리더는 같은 스터디의 일반 멤버를 방출할 수 있다. 리더를 방출할 수는 없다.
+일반 멤버는 스터디 관리 화면에서 탈퇴할 수 있다. 리더는 스터디를 탈퇴할 수 없다.
+멤버가 방출되거나 탈퇴하면 스터디 소속 정보와 그 멤버의 스터디 알림을 삭제한다.
+방출된 멤버를 따로 차단하지는 않으므로, 초대 링크로 다시 참여하는 것을 영구적으로 막지는 않는다.
 
-## v1에서 달라지는 점
+현재는 리더 권한을 다른 멤버에게 넘기는 기능이 없다.
 
-- 멤버 조회·초대 링크·방출은 기존 기능을 유지한다.
-- 리더 양도 API와 화면을 새로 연결하고, 양도 후 역할과 운영 권한을 갱신한다.
-- 스터디 삭제·탈퇴는 [스터디 설정](settings.md) 진입 구조로 정리한다.
-
-> [!IMPORTANT]
-> v1 방출은 소속 삭제이며 초대 링크를 통한 재가입 차단 정책은 없다.
-> v2의 ‘더 이상 참여할 수 없어요’가 재가입 영구 제한을 뜻하는지는 확인이 필요하다.
-> 동시 양도, 리더가 혼자인 경우, 기존 공지·과제 책임과 제출 대상 승계도 화면만으로 확정하지 않는다.
-
-## Figma 근거
-
-- [05-02-01 멤버 더보기](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-20189)
-- [05-02-02 리더 양도 확인](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-20045)
-- [05-02-03 방출 확인](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-20117)
-- [05-01-02 스터디원 목록](https://www.figma.com/design/sT7K2tOQl8JtyHzuwT0nnl?node-id=1702-20247)
+근거: [멤버 서비스](../../../backend/src/main/java/withoutc/chongchong/study/service/StudyMemberService.java), [웹 멤버 목록](../../../frontend/src/features/member/pages/MemberListPage.tsx), [관리 메뉴](../../../frontend/src/features/study/components/ManagementList.tsx), [초대 토큰](../../../backend/src/main/java/withoutc/chongchong/study/token/StudyInviteTokenProvider.java).

@@ -22,7 +22,7 @@ StudyInviteTokenRequest:
   additionalProperties: false
   required: [token]
   properties:
-    token: { description: "초대 링크의 token 쿼리 값. 전체 초대 URL이 아닌 22자 토큰 문자열을 전달한다.", type: string, minLength: 22, maxLength: 22, pattern: '^[A-Za-z0-9_-]{22}$', example: Ab3xY7kLm2Qp9VtR4Nc8Zd }
+    token: { description: "초대 링크의 token 쿼리 값. 전체 초대 URL이 아닌 발급 후 3일 동안 유효한 27자 토큰 문자열을 전달한다.", type: string, minLength: 27, maxLength: 27, pattern: '^[A-Za-z0-9_-]{27}$', example: Ab3xY7kLm2Qp9VtR4Nc8ZdAaBcD }
 StudyMemberJoinResponse:
   type: object
   additionalProperties: false
@@ -34,7 +34,7 @@ StudyInviteLinkResponse:
   additionalProperties: false
   required: [inviteLink]
   properties:
-    inviteLink: { type: string, example: 'https://chongchong.app/studies/join?token=Ab3xY7kLm2Qp9VtR4Nc8Zd' }
+    inviteLink: { type: string, example: 'https://chongchong.app/studies/join?token=Ab3xY7kLm2Qp9VtR4Nc8ZdAaBcD' }
 StudyInfoResponse:
   type: object
   additionalProperties: false

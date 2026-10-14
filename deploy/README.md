@@ -38,6 +38,9 @@ bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 
 - Study Invite 및 인증 JWT 설정
 - 프론트엔드 기준 URL과 선택적인 CORS 허용 Origin 목록
 - Kakao REST API 키, Client Secret과 환경별 Redirect URI
+- Web Push VAPID 키와 푸시 클릭 토큰 서명 키
+
+`WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET`에는 `openssl rand -base64 32`로 생성한 값을 설정한다. 같은 환경의 모든 백엔드 인스턴스는 같은 값을 사용하고, dev와 prod는 서로 다른 값을 사용해도 된다. 실제 값은 `/opt/chongchong/.env`에만 저장한다.
 
 배포 스크립트가 이 파일을 읽으므로 각 줄은 Bash에서 읽을 수 있는 `KEY=VALUE` 형식으로 작성한다. 공백이나 `$`,
 따옴표처럼 Shell에서 의미가 있는 문자가 포함된 값은 작은따옴표로 감싼다.

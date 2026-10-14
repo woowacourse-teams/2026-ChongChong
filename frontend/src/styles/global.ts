@@ -22,6 +22,11 @@ export const globalStyles = css`
 
     --red-500: #de5e56;
 
+    /* Primitive Orange */
+
+    --orange-50: #fff3e0;
+    --orange-700: #b45309;
+
     /* Primitive Social */
 
     --social-kakao: #fee500;
@@ -43,6 +48,7 @@ export const globalStyles = css`
     --bg-subtle: var(--gray-50);
     --bg-brand: var(--green-500);
     --bg-brand-subtle: var(--green-50);
+    --bg-warning-subtle: var(--orange-50);
     --bg-chip: var(--option-gray-background-icon);
     --bg-disabled: var(--option-deactivate);
     --bg-dim: rgba(0, 0, 0, 0.42);
@@ -63,7 +69,9 @@ export const globalStyles = css`
     --text-muted: var(--option-sub-font-color-55);
     --text-placeholder: var(--option-placeholder-40);
     --text-brand: var(--green-500);
+    --text-link: #0ea5e9;
     --text-critical: var(--red-500);
+    --text-warning: var(--orange-700);
     --text-on-brand: #ffffff;
     --text-on-brand-strong: var(--main-black);
 
@@ -153,6 +161,10 @@ export const tokens = {
     /* Primitive Red */
     red500: 'var(--red-500)',
 
+    /* Primitive Orange */
+    orange50: 'var(--orange-50)',
+    orange700: 'var(--orange-700)',
+
     /* Primitive Social */
     socialKakao: 'var(--social-kakao)',
 
@@ -172,6 +184,7 @@ export const tokens = {
     subtle: 'var(--bg-subtle)',
     brand: 'var(--bg-brand)',
     brandSubtle: 'var(--bg-brand-subtle)',
+    warningSubtle: 'var(--bg-warning-subtle)',
     chip: 'var(--bg-chip)',
     disabled: 'var(--bg-disabled)',
     dim: 'var(--bg-dim)',
@@ -195,7 +208,9 @@ export const tokens = {
     muted: 'var(--text-muted)',
     placeholder: 'var(--text-placeholder)',
     brand: 'var(--text-brand)',
+    link: 'var(--text-link)',
     critical: 'var(--text-critical)',
+    warning: 'var(--text-warning)',
     onBrand: 'var(--text-on-brand)',
     onBrandStrong: 'var(--text-on-brand-strong)',
   },

@@ -1,4 +1,5 @@
 allowBuilds:
+  '@sentry/cli': true
   core-js: false
   msw: true
   protobufjs: true

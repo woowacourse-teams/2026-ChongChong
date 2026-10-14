@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +25,7 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     private static final String INSTALLATION_ID = "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a5";
     private static final String P256DH = "p256dh-key";
     private static final String AUTH = "auth-secret";
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 10, 8, 12, 0);
 
     @Autowired
     private WebPushSubscriptionRepository webPushSubscriptionRepository;
@@ -80,8 +82,10 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     void upsertUpdatesRegistration() {
         User user = saveUser("사용자");
 
-        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
-        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, "new-p256dh", "new-auth");
+        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH, NOW);
+        webPushSubscriptionRepository.upsert(
+                user.getId(), INSTALLATION_ID, ENDPOINT, "new-p256dh", "new-auth", NOW
+        );
 
         WebPushSubscription saved = webPushSubscriptionRepository
                 .findByUserIdAndInstallationId(user.getId(), INSTALLATION_ID)
@@ -99,10 +103,10 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
         User owner = saveUser("소유자");
         User otherUser = saveUser("다른 사용자");
 
-        webPushSubscriptionRepository.upsert(owner.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
+        webPushSubscriptionRepository.upsert(owner.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH, NOW);
 
         int affectedRows = webPushSubscriptionRepository.upsert(
-                otherUser.getId(), INSTALLATION_ID, ENDPOINT, "new-p256dh", "new-auth"
+                otherUser.getId(), INSTALLATION_ID, ENDPOINT, "new-p256dh", "new-auth", NOW
         );
 
         WebPushSubscription ownerSubscription = webPushSubscriptionRepository
@@ -135,7 +139,7 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
         );
 
         int deactivatedCount = webPushSubscriptionRepository.deactivateConflictingActiveSubscriptions(
-                currentUser.getId(), INSTALLATION_ID, ENDPOINT
+                currentUser.getId(), INSTALLATION_ID, ENDPOINT, NOW
         );
 
         assertThat(deactivatedCount).isEqualTo(2);
@@ -156,7 +160,7 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
         entityManager.flush();
         entityManager.clear();
 
-        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH);
+        webPushSubscriptionRepository.upsert(user.getId(), INSTALLATION_ID, ENDPOINT, P256DH, AUTH, NOW);
 
         assertThat(webPushSubscriptionRepository
                 .findByUserIdAndInstallationId(user.getId(), INSTALLATION_ID)
@@ -172,10 +176,10 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
                 WebPushSubscription.create(user, INSTALLATION_ID, ENDPOINT, P256DH, AUTH)
         );
 
-        webPushSubscriptionRepository.deactivateByIdAndUserId(subscription.getId() + 1, user.getId());
+        webPushSubscriptionRepository.deactivateByIdAndUserId(subscription.getId() + 1, user.getId(), NOW);
         assertThat(webPushSubscriptionRepository.findById(subscription.getId()).orElseThrow().isActive()).isTrue();
 
-        webPushSubscriptionRepository.deactivateByIdAndUserId(subscription.getId(), user.getId());
+        webPushSubscriptionRepository.deactivateByIdAndUserId(subscription.getId(), user.getId(), NOW);
         assertThat(webPushSubscriptionRepository.findById(subscription.getId()).orElseThrow().isActive()).isFalse();
     }
 

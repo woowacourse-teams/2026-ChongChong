@@ -95,7 +95,6 @@ export default function NoticeForm({
         onChange={handleContentChange}
         placeholder="내용을 입력해주세요"
         errorText={fieldErrors.content}
-        helpText="스터디원은 끝까지 읽어야 읽음 처리를 할 수 있어요"
         maxLength={NOTICE_CONTENT.length}
         isRequired
         testId="notice-content-field"

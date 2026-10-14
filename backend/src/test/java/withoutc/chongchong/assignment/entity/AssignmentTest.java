@@ -32,14 +32,14 @@ class AssignmentTest {
     void createWithInvalidTextTest() {
         assertInvalidCreate(" ", "과제 내용", "링크 제출", AssignmentErrorCode.INVALID_TITLE);
         assertInvalidCreate("과제 제목", " ", "링크 제출", AssignmentErrorCode.INVALID_CONTENT);
-        assertInvalidCreate("과제 제목", "과제 내용", " ", AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
+        assertInvalidCreate("과제 제목", "과제 내용", "가".repeat(10001), AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
     }
 
     @Test
     @DisplayName("제출 방법, 마감 시각, 리마인드 시각은 각각의 오류 코드로 구분한다")
     void distinguishFieldValidationErrorCodesTest() {
         assertErrorCode(
-                () -> createAssignment("과제 제목", "과제 내용", " ", NOW.plusHours(1)),
+                () -> createAssignment("과제 제목", "과제 내용", "가".repeat(10001), NOW.plusHours(1)),
                 "INVALID_SUBMISSION_METHOD"
         );
         assertErrorCode(

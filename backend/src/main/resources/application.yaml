@@ -32,6 +32,10 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+        notification.delivery.queue.wait: true
+        notification.delivery.post.claim.wait: true
+        notification.delivery.claim: true
+        notification.delivery.send: true
 
 logging:
   structured:
@@ -85,3 +89,5 @@ web-push:
     public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY}
     private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY}
     subject: ${WEB_PUSH_VAPID_SUBJECT}
+  notification:
+    click-token-secret: ${WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET}

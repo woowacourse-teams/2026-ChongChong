@@ -63,7 +63,7 @@ const memberStudyDetailSchema = z.object({
 
 const studyInfoSchema = z.object({
   studyName: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   role: z.enum(['LEADER', 'MEMBER']),
   userName: z.string(),
 }) satisfies z.ZodType<UserStudyInfo>;

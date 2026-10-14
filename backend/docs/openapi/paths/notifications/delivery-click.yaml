@@ -1,0 +1,43 @@
+post:
+  tags: [Notification]
+  operationId: clickNotificationDelivery
+  x-frontend:
+    status: needs-update
+    description: "서비스 워커가 deliveryId와 clickToken을 앱에 전달하고, 앱이 로그인 없이 토큰을 기록한 뒤 deepLink를 연다."
+    sources:
+      - frontend/src/features/notification/push-sw.ts
+      - frontend/src/features/notification/api.ts
+  x-backend:
+    status: done
+    owner: wontop02
+    description: 서버 시각으로 최초 클릭만 기록하고 이후 요청은 기존 시각을 유지한다.
+  x-web-push-payload:
+    $ref: '../../components/schemas/notifications.yaml#/WebPushPayload'
+  summary: 푸시 알림 클릭 기록
+  description: |
+    푸시 payload에 포함된 만료형 클릭 토큰으로 해당 발송 내역의 클릭을 기록한다. 토큰은 경로의 `deliveryId`에 묶이며 7일 후 만료한다. 로그인은 필요하지 않다. 클릭 시각은 서버가 저장하고, 이미 클릭한 알림에 다시 요청해도 최초 시각을 유지한다.
+
+    ### Web Push payload 필드
+
+    서비스 워커는 다음 payload를 수신한다. 알림을 표시할 때 `deliveryId`, `clickToken`, `deepLink`를 `notification.data`에 보관한다. 클릭 시 `deliveryId`는 API 경로에, `clickToken`은 요청 body에 사용하고, `deepLink`로 앱 화면을 연다.
+
+    | 필드 | 타입 | 의미 |
+    | --- | --- | --- |
+    | `deliveryId` | `integer (int64)` | 이 알림의 Web Push 전달 기록 ID. 클릭 API 경로에 넣는다. |
+    | `notificationId` | `integer (int64)` | 앱의 논리 알림 ID. |
+    | `clickToken` | `string` (54자) | 해당 `deliveryId`에 서명된 토큰. 클릭 API body로 보내며 7일 후 만료한다. |
+    | `title` | `string` | 브라우저 알림 제목. |
+    | `body` | `string` | 브라우저 알림 본문. |
+    | `deepLink` | `string` | 클릭 후 앱에서 열 상대 경로. 클릭 기록 요청이 실패해도 이 경로로 이동한다. |
+  security: []
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/DeliveryId' }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/notifications.yaml#/NotificationDeliveryClickRequest' }
+  responses:
+    '204': { description: 푸시 알림 클릭 기록 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidClickTokenAndParameter' }
+    '404': { $ref: '../../components/responses.yaml#/NotificationDeliveryNotFound' }

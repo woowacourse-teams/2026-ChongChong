@@ -5,6 +5,7 @@ import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { isCompletedAssignment } from '../submissionStatus';
 import type { Submission, UserAssignmentSubmitDetail } from '../types';
+import Badge from '../../../shared/ui/Badge';
 
 interface Props {
   submission: UserAssignmentSubmitDetail;
@@ -53,6 +54,13 @@ const memberStyle = {
   marginLeft: tokens.spacing[3],
 } satisfies CSSProperties;
 
+const nameRowStyle = {
+  display: 'flex',
+  minWidth: 0,
+  alignItems: 'center',
+  gap: tokens.spacing[2],
+} satisfies CSSProperties;
+
 const nameStyle = {
   ...typography.body,
   color: tokens.text.primary,
@@ -93,7 +101,14 @@ export default function MySubmissionStatus({ submission, member }: Props) {
             css={profileStyle}
           />
           <div css={memberStyle}>
-            <span css={nameStyle}>{member.name} (나)</span>
+            <div css={nameRowStyle}>
+              <span css={nameStyle}>{member.name} (나)</span>
+              {submission.submissionStatus === 'LATE_SUBMITTED' && (
+                <Badge variant="warningSolid" size="status">
+                  지각 제출
+                </Badge>
+              )}
+            </div>
             <time css={dateStyle} dateTime={submission.createdAt}>
               {formatSubmittedAt(submission.createdAt)}
             </time>

@@ -1,7 +1,9 @@
 package withoutc.chongchong.notification.worker.dto;
 
+import java.time.LocalDateTime;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
+import withoutc.chongchong.notification.entity.DeliveryStatus;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
 
 public record ClaimedDelivery(
@@ -13,12 +15,19 @@ public record ClaimedDelivery(
         Long notificationId,
         String title,
         String body,
-        String deepLink
+        String deepLink,
+        LocalDateTime readyAt
 ) {
 
     public static ClaimedDelivery from(NotificationDelivery notificationDelivery) {
         WebPushSubscription subscription = notificationDelivery.getWebPushSubscription();
         Notification notification = notificationDelivery.getNotification();
+        LocalDateTime readyAt;
+        if (notificationDelivery.getStatus() == DeliveryStatus.RETRY_WAIT) {
+            readyAt = notificationDelivery.getNextRetryAt();
+        } else {
+            readyAt = notificationDelivery.getCreatedAt();
+        }
         return new ClaimedDelivery(
                 notificationDelivery.getId(),
                 subscription.getId(),
@@ -28,7 +37,8 @@ public record ClaimedDelivery(
                 notification.getId(),
                 notification.getTitle(),
                 notification.getBody(),
-                notification.getDeepLink()
+                notification.getDeepLink(),
+                readyAt
         );
     }
 }

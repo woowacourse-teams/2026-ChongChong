@@ -4,37 +4,26 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import withoutc.chongchong.auth.exception.AuthErrorCode;
-import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeReadResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeReadStatusResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse;
-import withoutc.chongchong.notice.controller.dto.NoticeStatusesResponse.UnreadMember;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeReadStatus;
-import withoutc.chongchong.notice.entity.NoticeRecipient;
-import withoutc.chongchong.notice.exception.NoticeErrorCode;
-import withoutc.chongchong.notice.exception.NoticeException;
+import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
-import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
@@ -52,11 +41,13 @@ public class NoticeService {
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
 
+    private final NoticeAccessPolicy noticeAccessPolicy;
     private final Clock clock;
 
     @Transactional
     public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
-        validateLeader(studyId, userId);
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        noticeAccessPolicy.requireCanCreateNotice(actor);
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
@@ -76,10 +67,10 @@ public class NoticeService {
 
     @Transactional
     public void delete(Long userId, Long studyId, Long noticeId) {
-        validateLeader(studyId, userId);
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        noticeAccessPolicy.requireCanDeleteNotice(actor);
 
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
+        Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
 
         notificationService.deleteNotificationsForResource(ResourceType.NOTICE, noticeId);
         noticeRepository.delete(notice);
@@ -87,10 +78,10 @@ public class NoticeService {
 
     @Transactional
     public void update(Long userId, Long studyId, Long noticeId, NoticeUpdateRequest request) {
-        validateLeader(studyId, userId);
+        StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        noticeAccessPolicy.requireCanUpdateNotice(actor);
 
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
+        Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
         notice.update(request.title(), request.content(), request.remindAts(), now);
@@ -100,8 +91,7 @@ public class NoticeService {
     public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
+        Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
 
         return NoticeDetailResponse.from(notice);
     }
@@ -117,68 +107,6 @@ public class NoticeService {
 
         List<NoticeSummaryResponse> noticeSummaries = createNoticeSummaries(member, noticePage.content());
         return NoticeListResponse.of(noticePage.nextCursor(), noticePage.hasNext(), noticeSummaries);
-    }
-
-    public NoticeStatusesResponse getAllReadStatuses(Long userId, Long studyId, Long noticeId) {
-        validateLeader(studyId, userId);
-
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
-
-        List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(
-                noticeId);
-
-        List<NoticeStatusesResponse.ReadMember> readMembers = statuses.stream()
-                .filter(NoticeRecipientStatusProjection::isRead)
-                .map(status -> NoticeStatusesResponse.ReadMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.readAt()
-                ))
-                .toList();
-
-        List<UnreadMember> unreadMembers = statuses.stream()
-                .filter(status -> !status.isRead())
-                .map(status -> UnreadMember.of(
-                        status.memberId(),
-                        status.name(),
-                        status.profileImageUrl(),
-                        status.lastRemindAt()
-                ))
-                .toList();
-
-        return NoticeStatusesResponse.of(
-                noticeId,
-                notice.getNextRemindAt(),
-                readMembers,
-                unreadMembers
-        );
-    }
-
-    @Transactional
-    public NoticeReadResponse markAsRead(Long userId, Long studyId, Long noticeId) {
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
-
-        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(noticeId, member.getId());
-        LocalDateTime now = LocalDateTime.now(clock);
-        recipient.markAsRead(now);
-
-        return NoticeReadResponse.from(recipient);
-    }
-
-    public NoticeReadStatusResponse getMyReadStatus(Long userId, Long studyId, Long noticeId) {
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        Notice notice = noticeRepository.getByIdOrThrow(noticeId);
-        validateNoticeBelongsToStudy(studyId, notice);
-
-        Optional<NoticeRecipient> recipient = noticeRecipientRepository.findByNoticeIdAndMemberId(noticeId,
-                member.getId());
-
-        return recipient.map(NoticeReadStatusResponse::from)
-                .orElseGet(NoticeReadStatusResponse::notAssigned);
     }
 
     private List<NoticeSummaryResponse> createNoticeSummaries(StudyMember member, List<Notice> notices) {
@@ -200,16 +128,4 @@ public class NoticeService {
                 readStatusByNoticeId.getOrDefault(notice.getId(), NoticeReadStatus.NOT_ASSIGNED))).toList();
     }
 
-    private void validateLeader(Long studyId, Long userId) {
-        StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        if (!member.isLeader()) {
-            throw new AuthException(AuthErrorCode.ACCESS_DENIED);
-        }
-    }
-
-    private void validateNoticeBelongsToStudy(Long studyId, Notice notice) {
-        if (!Objects.equals(notice.getStudy().getId(), studyId)) {
-            throw new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND);
-        }
-    }
 }

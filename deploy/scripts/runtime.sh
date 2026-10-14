@@ -41,6 +41,7 @@ load_deployment_environment() {
         AUTH_KAKAO_REST_API_KEY
         AUTH_KAKAO_CLIENT_SECRET
         AUTH_KAKAO_REDIRECT_URI
+        WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET
     )
 
     local variable

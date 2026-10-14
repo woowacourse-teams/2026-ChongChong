@@ -6,7 +6,7 @@ export async function clearLocalPushSubscription() {
     const scope = new URL('/push/', window.location.origin).href;
     const sw = await navigator.serviceWorker.getRegistration(scope);
 
-    if (sw?.scope === scope) {
+    if (sw?.scope === scope && sw.pushManager) {
       const subscription = await sw.pushManager.getSubscription();
       await subscription?.unsubscribe();
     }

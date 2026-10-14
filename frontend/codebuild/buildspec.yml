@@ -30,7 +30,7 @@ phases:
         if (!expectedOrigin || process.env.API_BASE_URL !== expectedOrigin) {
           throw new Error('DEPLOY_ENV must be dev or prod and match API_BASE_URL');
         }
-        const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY'];
+        const required = ['API_BASE_URL', 'KAKAO_REST_API_KEY', 'SENTRY_AUTH_TOKEN'];
         for (const name of required) {
           if (!process.env[name]?.trim()) {
             throw new Error(`Missing CodeBuild environment variable: ${name}`);
@@ -62,17 +62,21 @@ phases:
         # 빌드가 실패하면 아래 배포 명령은 실행하지 않습니다.
         rm -rf dist
 
-        NODE_ENV=production BABEL_ENV=production pnpm build
-
-        # 환경별로 업로드 경로와 CloudFront 배포를 선택합니다.
+        # 환경별로 Webpack 설정, 업로드 경로와 CloudFront 배포를 선택합니다.
         case "${DEPLOY_ENV:-}" in
           dev)
+            BUILD_SCRIPT="build:development"
+            BUILD_ENV="development"
             SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/dev"
             DISTRIBUTION_ID="E3QKIZ08X8L5CD"
+            ASSET_CACHE_CONTROL="no-cache"
             ;;
           prod)
+            BUILD_SCRIPT="build:production"
+            BUILD_ENV="production"
             SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/prod"
             DISTRIBUTION_ID="E3ADSTISVSMGFQ"
+            ASSET_CACHE_CONTROL="public,max-age=31536000,immutable"
             ;;
           *)
             echo "DEPLOY_ENV must be dev or prod" >&2
@@ -80,11 +84,20 @@ phases:
             ;;
         esac
 
-        test -s dist/index.html
+        NODE_ENV="$BUILD_ENV" BABEL_ENV="$BUILD_ENV" pnpm "$BUILD_SCRIPT"
 
-        # 자산을 먼저 올립니다. 기존 S3 파일은 삭제하지 않습니다.
-        aws s3 cp dist/ "$SITE_PATH/" --recursive --exclude "index.html" \
-          --no-follow-symlinks --cache-control "public,max-age=31536000,immutable" \
+        test -s dist/index.html
+        test -s dist/pwa/manifest.webmanifest
+
+        # 해시 자산을 먼저 올립니다. 기존 S3 파일은 삭제하지 않습니다.
+        aws s3 cp dist/ "$SITE_PATH/" --recursive \
+          --exclude "index.html" --exclude "pwa/*" \
+          --no-follow-symlinks --cache-control "$ASSET_CACHE_CONTROL" \
+          --only-show-errors --region ap-northeast-2
+
+        # PWA 파일은 이름이 고정되어 있으므로 환경과 관계없이 재검증하도록 합니다.
+        aws s3 cp dist/pwa/ "$SITE_PATH/pwa/" --recursive \
+          --no-follow-symlinks --cache-control "no-cache" \
           --only-show-errors --region ap-northeast-2
 
         # 자산 업로드가 성공한 뒤 HTML을 교체합니다.
