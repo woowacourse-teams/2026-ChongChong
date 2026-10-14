@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,33 @@ abstract class NotificationDeliveryRepositoryContractTest {
         assertThatThrownBy(() -> notificationDeliveryRepository.saveAndFlush(
                 NotificationDelivery.create(fixture.notification(), fixture.webPushSubscription())
                 )).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("claim 가능한 대기열 수와 가장 오래 기다린 작업을 집계한다")
+    void findClaimableQueueSnapshot() {
+        LocalDateTime now = LocalDateTime.now();
+        var before = notificationDeliveryRepository.findClaimableQueueSnapshot(
+                now, DeliveryStatus.PENDING, DeliveryStatus.RETRY_WAIT);
+
+        NotificationDelivery pending = saveDelivery(saveFixture());
+        NotificationDelivery dueRetry = saveDelivery(saveFixture());
+        NotificationDelivery futureRetry = saveDelivery(saveFixture());
+        LocalDateTime dueRetryAt = now.minusMinutes(1);
+        jdbcTemplate.update("UPDATE notification_deliveries SET status = 'RETRY_WAIT', next_retry_at = ? WHERE id = ?",
+                dueRetryAt, dueRetry.getId());
+        jdbcTemplate.update("UPDATE notification_deliveries SET status = 'RETRY_WAIT', next_retry_at = ? WHERE id = ?",
+                now.plusMinutes(1), futureRetry.getId());
+
+        var after = notificationDeliveryRepository.findClaimableQueueSnapshot(
+                now, DeliveryStatus.PENDING, DeliveryStatus.RETRY_WAIT);
+
+        assertThat(after.readyCount()).isEqualTo(before.readyCount() + 2);
+        LocalDateTime expectedOldestReadyAt = before.oldestReadyAt() == null
+                ? dueRetryAt
+                : before.oldestReadyAt().isBefore(dueRetryAt) ? before.oldestReadyAt() : dueRetryAt;
+        assertThat(after.oldestReadyAt()).isEqualTo(expectedOldestReadyAt);
+        assertThat(pending.getCreatedAt()).isNotNull();
     }
 
     protected NotificationDelivery saveDelivery(DeliveryFixture fixture) {

@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Clock;
+import java.time.LocalDateTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -62,7 +63,8 @@ class WebPushNotificationSenderTest {
                 3L,
                 "제목 \"테스트\"",
                 "본문\n다음 줄",
-                "/studies/1/notices/3?tab=detail"
+                "/studies/1/notices/3?tab=detail",
+                LocalDateTime.now(CLOCK)
         );
         when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
                 .thenReturn(new WebPushClient.WebPushResponse(201, ""));
@@ -110,7 +112,8 @@ class WebPushNotificationSenderTest {
                 3L,
                 "제목",
                 "본문",
-                "/studies/1/notices/3"
+                "/studies/1/notices/3",
+                LocalDateTime.now(CLOCK)
         );
     }
 

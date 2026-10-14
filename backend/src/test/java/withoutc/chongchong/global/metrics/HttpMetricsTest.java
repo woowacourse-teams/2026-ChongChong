@@ -5,12 +5,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import withoutc.chongchong.notification.metrics.NotificationDeliveryMetrics;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -20,8 +22,14 @@ class HttpMetricsTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private NotificationDeliveryMetrics notificationDeliveryMetrics;
+
     @Test
     void 실제_API_요청을_Prometheus_요청_수와_응답_시간_버킷에_반영한다() throws Exception {
+        Timer.Sample sendSample = notificationDeliveryMetrics.startSend();
+        notificationDeliveryMetrics.stopSend(sendSample, true);
+
         mockMvc.perform(get("/api/auth/csrf"))
                 .andExpect(status().isOk());
 
@@ -37,6 +45,16 @@ class HttpMetricsTest {
                 && line.matches(".* [1-9][0-9]*(\\.[0-9]+)?"));
         assertThat(samples).anyMatch(line -> line.startsWith("http_server_requests_seconds_bucket{")
                 && line.contains("uri=\"/api/auth/csrf\"")
+                && line.contains("le=\"+Inf\""));
+        assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_queue_ready "));
+        assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_queue_oldest_ready_age_seconds "));
+        assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_queue_wait_seconds_bucket{")
+                && line.contains("le=\"+Inf\""));
+        assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_post_claim_wait_seconds_bucket{")
+                && line.contains("le=\"+Inf\""));
+        assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_claim_seconds_bucket{")
+                && line.contains("le=\"+Inf\""));
+        assertThat(samples).anyMatch(line -> line.startsWith("notification_delivery_send_seconds_bucket{")
                 && line.contains("le=\"+Inf\""));
     }
 }

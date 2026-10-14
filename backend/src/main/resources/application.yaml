@@ -32,6 +32,10 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+        notification.delivery.queue.wait: true
+        notification.delivery.post.claim.wait: true
+        notification.delivery.claim: true
+        notification.delivery.send: true
 
 logging:
   structured:
