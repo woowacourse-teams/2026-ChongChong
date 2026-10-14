@@ -24,8 +24,8 @@ public class DeliveryClaimService {
         LocalDateTime now = LocalDateTime.now(clock);
 
         for (NotificationDelivery delivery : notificationDeliveryRepository.findClaimableForUpdate(now, batchSize)) {
-            delivery.claim(now);
             deliveries.add(ClaimedDelivery.from(delivery));
+            delivery.claim(now);
         }
         return deliveries;
     }
