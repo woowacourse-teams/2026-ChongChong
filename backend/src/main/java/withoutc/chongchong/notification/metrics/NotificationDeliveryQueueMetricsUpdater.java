@@ -18,7 +18,10 @@ public class NotificationDeliveryQueueMetricsUpdater {
     private final NotificationDeliveryQueueMetrics notificationDeliveryQueueMetrics;
     private final Clock clock;
 
-    @Scheduled(fixedDelayString = "${web-push.delivery.metrics.fixed-delay-ms:10000}")
+    @Scheduled(
+            scheduler = "notificationMetricsTaskScheduler",
+            fixedDelayString = "${web-push.delivery.metrics.fixed-delay-ms:10000}"
+    )
     public void refresh() {
         LocalDateTime now = LocalDateTime.now(clock);
         ClaimableQueueSnapshotProjection snapshot = notificationDeliveryRepository.findClaimableQueueSnapshot(
