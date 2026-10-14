@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.entity.DeliveryStatus;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
@@ -25,6 +26,7 @@ import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
+@Transactional
 abstract class NotificationDeliveryRepositoryContractTest {
 
     @Autowired
