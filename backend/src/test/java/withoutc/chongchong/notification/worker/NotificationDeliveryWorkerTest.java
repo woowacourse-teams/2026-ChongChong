@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.Instant;
@@ -34,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import withoutc.chongchong.notification.config.NotificationDeliveryExecutorConfig;
+import withoutc.chongchong.notification.config.NotificationDeliveryProperties;
 import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.exception.WebPushSendResult;
@@ -318,7 +320,8 @@ class NotificationDeliveryWorkerTest {
     @DisplayName("설정한 가용 슬롯 수만큼 실제 발송을 동시에 실행한다")
     void sendsDeliveriesConcurrentlyUpToAvailableSlots() throws InterruptedException {
         ThreadPoolTaskExecutor executor = new NotificationDeliveryExecutorConfig()
-                .notificationDeliveryExecutor(2);
+                .notificationDeliveryExecutor(new NotificationDeliveryProperties(
+                        2, Duration.ofSeconds(5), Duration.ofSeconds(8)));
         executor.initialize();
 
         CountDownLatch sendsStarted = new CountDownLatch(2);

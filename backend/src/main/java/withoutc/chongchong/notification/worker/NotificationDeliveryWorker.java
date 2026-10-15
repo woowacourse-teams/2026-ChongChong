@@ -5,7 +5,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -19,7 +19,6 @@ import withoutc.chongchong.notification.sender.NotificationSender;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @Component
-@RequiredArgsConstructor
 public class NotificationDeliveryWorker {
 
     private final DeliveryClaimService deliveryClaimService;
@@ -30,6 +29,26 @@ public class NotificationDeliveryWorker {
     private final NotificationDeliveryLogger notificationDeliveryLogger;
     private final NotificationDeliveryProcessingMetrics notificationDeliveryProcessingMetrics;
     private final Clock clock;
+
+    public NotificationDeliveryWorker(
+            DeliveryClaimService deliveryClaimService,
+            DeliveryRecoveryService deliveryRecoveryService,
+            DeliveryResultService deliveryResultService,
+            NotificationSender sender,
+            @Qualifier("notificationDeliveryExecutor") ThreadPoolTaskExecutor notificationDeliveryExecutor,
+            NotificationDeliveryLogger notificationDeliveryLogger,
+            NotificationDeliveryProcessingMetrics notificationDeliveryProcessingMetrics,
+            Clock clock
+    ) {
+        this.deliveryClaimService = deliveryClaimService;
+        this.deliveryRecoveryService = deliveryRecoveryService;
+        this.deliveryResultService = deliveryResultService;
+        this.sender = sender;
+        this.notificationDeliveryExecutor = notificationDeliveryExecutor;
+        this.notificationDeliveryLogger = notificationDeliveryLogger;
+        this.notificationDeliveryProcessingMetrics = notificationDeliveryProcessingMetrics;
+        this.clock = clock;
+    }
 
     @Scheduled(fixedDelayString = "${web-push.delivery.fixed-delay-ms:1000}")
     public void process() {

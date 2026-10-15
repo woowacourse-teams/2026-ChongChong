@@ -18,7 +18,7 @@ import withoutc.chongchong.notification.token.WebPushNotificationClickTokenProvi
 
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(NotificationSenderProperties.class)
+@EnableConfigurationProperties({NotificationSenderProperties.class, NotificationDeliveryProperties.class})
 public class NotificationSenderConfig {
 
     private static final Profiles LOAD_TEST_PROFILE = Profiles.of("load-test");
@@ -73,7 +73,10 @@ public class NotificationSenderConfig {
 
     @Bean
     @ConditionalOnProperty(prefix = "web-push.sender", name = "mode", havingValue = "real", matchIfMissing = true)
-    WebPushClient webPushClient(WebPushVapidProperties vapidProperties) {
-        return new WebPushClient(vapidProperties);
+    WebPushClient webPushClient(
+            WebPushVapidProperties vapidProperties,
+            NotificationDeliveryProperties deliveryProperties
+    ) {
+        return new WebPushClient(vapidProperties, deliveryProperties.sendTimeout());
     }
 }

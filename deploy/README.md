@@ -85,6 +85,24 @@ WEB_PUSH_SENDER_SIMULATED_DELAY_MS=500
 종료 시 테스트 Delivery와 합성 구독을 정리한 뒤 `load-test`를 제거하고 모드를 `real`로 복원해 재배포한다.
 데이터 준비와 20건 예행시험은 [알림 부하 테스트 sender](../backend/docs/load-test-sender.md)를 따른다.
 
+### 알림 발송 및 종료 설정
+
+다음 값은 `/opt/chongchong/.env`에서 설정한다. 기존 `.env`에 없으면 표의 기본값을 사용한다.
+
+| 변수 | 기본값 | 용도 |
+| --- | --- | --- |
+| `WEB_PUSH_DELIVERY_CONCURRENCY` | `1` | 최대 동시 발송 수 |
+| `WEB_PUSH_DELIVERY_SEND_TIMEOUT` | `5s` | Web Push 응답 대기 제한 시간 |
+| `WEB_PUSH_DELIVERY_SHUTDOWN_TIMEOUT` | `8s` | 종료 시 발송 작업 완료를 기다리는 시간 |
+| `BACKEND_STOP_TIMEOUT_SECONDS` | `60` | 컨테이너 강제 종료 전 유예 시간(초) |
+
+종료 대기 시간은 발송 제한 시간보다 1초 이상 길어야 한다. 애플리케이션은 발송 작업이 완료되거나 종료 대기
+시간이 지날 때까지 JPA와 데이터소스를 유지한다. 컨테이너 유예 시간은 이 대기와 Spring의 다른 종료 단계를
+포함한 전체 종료 시간보다 길게 설정한다.
+
+`BACKEND_STOP_TIMEOUT_SECONDS`는 backend의 `stop_grace_period`와 재배포·롤백 시 Compose `up --timeout`에
+동일하게 적용된다. 새 종료 정책을 처음 배포할 때에도 기존 컨테이너를 이 시간만큼 기다린다.
+
 ## 3. CodeBuild Project를 구성한다
 
 | 설정 | 값 |
