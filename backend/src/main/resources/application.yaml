@@ -36,6 +36,9 @@ management:
         notification.delivery.post.claim.wait: true
         notification.delivery.claim: true
         notification.delivery.send: true
+      maximum-expected-value:
+        notification.delivery.queue.wait: 10m
+        notification.delivery.post.claim.wait: 10m
 
 logging:
   structured:
