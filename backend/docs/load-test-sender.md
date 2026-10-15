@@ -37,18 +37,11 @@ WEB_PUSH_SENDER_SIMULATED_DELAY_MS=500
 ./gradlew bootRun
 ```
 
-Docker Compose는 호스트의 환경 변수를 컨테이너에 자동으로 전달하지 않는다. 컨테이너 실행 시에는 dev 전용 Compose override에서
-`backend.environment`에 위 변수를 명시적으로 전달해야 한다. 적용 형태는 다음과 같다.
-
-```yaml
-services:
-  backend:
-    environment:
-      CLOUD_WATCH_APP_ENV: dev
-      SPRING_PROFILES_ACTIVE: load-test
-      WEB_PUSH_SENDER_MODE: simulated
-      WEB_PUSH_SENDER_SIMULATED_DELAY_MS: "500"
-```
+배포 Compose는 `/opt/chongchong/.env`에서 위 환경 변수를 읽어 backend 컨테이너에 전달한다.
+컨테이너 실행 시에는 dev EC2의 해당 파일에 값을 설정하고 재배포한다. 별도 Compose override는 필요하지 않다.
+설정을 생략하면 활성 프로필 미지정, `real` 모드와 `500ms` 지연 기본값을 사용한다.
+기존 dev 또는 prod의 실제 전송을 유지할 때는 새 변수를 추가하지 않아도 된다.
+자세한 배포 절차는 [배포 가이드](../../deploy/README.md#dev-알림-부하-테스트-sender-설정)를 따른다.
 
 컨테이너 환경 변수 변경은 backend 컨테이너를 재생성한 뒤 적용된다. 단순 컨테이너 재시작으로는 변경된 환경 변수가 적용되지 않는다.
 로컬 실행은 변경된 환경 변수를 전달해 애플리케이션을 다시 시작한다. 부하를 시작하기 전에 시뮬레이터 시작 로그와 실제 컨테이너 설정을 확인한다.

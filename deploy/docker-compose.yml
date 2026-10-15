@@ -4,6 +4,9 @@ services:
     container_name: chongchong-backend
     restart: unless-stopped
     environment:
+      SPRING_PROFILES_ACTIVE: "${SPRING_PROFILES_ACTIVE:-}"
+      WEB_PUSH_SENDER_MODE: "${WEB_PUSH_SENDER_MODE:-real}"
+      WEB_PUSH_SENDER_SIMULATED_DELAY_MS: "${WEB_PUSH_SENDER_SIMULATED_DELAY_MS:-500}"
       DB_URL: "${DB_URL}"
       DB_USERNAME: "${DB_USERNAME}"
       DB_PASSWORD: "${DB_PASSWORD}"

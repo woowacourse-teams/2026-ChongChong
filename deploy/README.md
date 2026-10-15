@@ -61,6 +61,30 @@ Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
 배포 환경은 같은 `/auth/kakao/callback` 경로를 사용하는 실제 프론트엔드 HTTPS 주소로 설정한다. REST API 키와
 Client Secret의 실제 값은 `/opt/chongchong/.env`에만 저장하고 저장소에는 커밋하지 않는다.
 
+### dev 알림 부하 테스트 sender 설정
+
+Compose는 `/opt/chongchong/.env`의 `SPRING_PROFILES_ACTIVE`, `WEB_PUSH_SENDER_MODE`,
+`WEB_PUSH_SENDER_SIMULATED_DELAY_MS`를 backend 컨테이너에 전달한다. 기본값은 활성 프로필 미지정,
+`real`, `500ms`이므로 prod의 기존 `.env`에 새 변수를 추가하지 않아도 실제 전송을 유지한다.
+
+다른 사용자 작업이 섞이지 않은 dev 테스트 DB와 큐를 확인한 뒤 dev EC2의 `/opt/chongchong/.env`에 설정한다.
+
+```dotenv
+CLOUD_WATCH_APP_ENV=dev
+SPRING_PROFILES_ACTIVE=load-test
+WEB_PUSH_SENDER_MODE=simulated
+WEB_PUSH_SENDER_SIMULATED_DELAY_MS=500
+```
+
+기존 활성 프로필이 필요하면 유지하고 `load-test`를 추가한다. `prod` 프로필은 포함하지 않는다.
+시뮬레이터는 `app.environment=dev`, `load-test` 프로필과 `simulated` 모드를 함께 요구한다.
+기존 DB·인증·VAPID 설정은 유지한다. `.env` 변경 후 재배포하면 배포 스크립트가 backend를 재생성한다.
+단순 `docker restart`로는 변경한 환경 변수가 적용되지 않는다. 별도 Compose override는 필요하지 않다.
+
+테스트를 시작하기 전에 backend 컨테이너의 위 환경 변수와 시뮬레이터 시작 로그를 확인한다.
+종료 시 테스트 Delivery와 합성 구독을 정리한 뒤 `load-test`를 제거하고 모드를 `real`로 복원해 재배포한다.
+데이터 준비와 20건 예행시험은 [알림 부하 테스트 sender](../backend/docs/load-test-sender.md)를 따른다.
+
 ## 3. CodeBuild Project를 구성한다
 
 | 설정 | 값 |
