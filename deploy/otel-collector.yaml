@@ -7,8 +7,8 @@ receivers:
   prometheus:
     config:
       global:
-        scrape_interval: 60s
-        scrape_timeout: 10s
+        scrape_interval: ${env:METRICS_SCRAPE_INTERVAL}
+        scrape_timeout: ${env:METRICS_SCRAPE_TIMEOUT}
       scrape_configs:
         - job_name: chongchong-backend
           metrics_path: /actuator/prometheus
@@ -19,7 +19,7 @@ receivers:
                 service: chongchong-backend
           metric_relabel_configs:
             - source_labels: [ __name__ ]
-              regex: 'http_server_requests_seconds_(bucket|count|sum)|notification_delivery_.*|up'
+              regex: 'http_server_requests_seconds_(bucket|count|sum)|notification_delivery_.*|hikaricp_.*|jvm_memory_(used|committed|max)_bytes|jvm_gc_.*|jvm_threads_.*|process_cpu_usage|process_uptime_seconds|system_cpu_usage|up'
               action: keep
 
 processors:
