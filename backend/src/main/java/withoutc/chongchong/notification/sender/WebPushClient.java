@@ -8,12 +8,10 @@ import nl.martijndwars.webpush.PushService;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jose4j.lang.JoseException;
-import org.springframework.stereotype.Component;
 import withoutc.chongchong.notification.config.WebPushVapidProperties;
 import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 
-@Component
 public class WebPushClient {
 
     private static final int MAX_RESPONSE_BODY_LENGTH = 2_000;

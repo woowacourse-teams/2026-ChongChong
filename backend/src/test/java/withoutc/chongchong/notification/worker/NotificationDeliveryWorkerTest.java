@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.Instant;
+import java.util.stream.LongStream;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,7 @@ import withoutc.chongchong.notification.exception.WebPushSendResult;
 import withoutc.chongchong.notification.logging.NotificationDeliveryLogger;
 import withoutc.chongchong.notification.metrics.NotificationDeliveryProcessingMetrics;
 import withoutc.chongchong.notification.sender.NotificationSender;
+import withoutc.chongchong.notification.sender.SimulatedNotificationSender;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @ExtendWith(MockitoExtension.class)
@@ -229,6 +231,38 @@ class NotificationDeliveryWorkerTest {
         assertThat(meterRegistry.get("notification.delivery.post.claim.wait").timer().count()).isOne();
         assertThat(meterRegistry.get("notification.delivery.send")
                 .tag("outcome", "success").timer().count()).isOne();
+    }
+
+    @Test
+    @DisplayName("시뮬레이터를 사용한 20건도 기존 worker의 성공 반영과 알림 메트릭을 거친다")
+    void processSimulatedBatchThroughExistingResultAndMetrics() {
+        worker = new NotificationDeliveryWorker(
+                deliveryClaimService,
+                deliveryRecoveryService,
+                new SimulatedNotificationSender(0),
+                deliveryResultService,
+                notificationDeliveryLogger,
+                new NotificationDeliveryProcessingMetrics(meterRegistry),
+                CLOCK
+        );
+        List<ClaimedDelivery> deliveries = LongStream.rangeClosed(1, 20)
+                .mapToObj(id -> new ClaimedDelivery(
+                        id, id, "https://load-test.invalid/subscriptions/" + id, "synthetic-p256dh", "synthetic-auth",
+                        id, "제목", "본문", "/studies/1/notices/3", LocalDateTime.now(CLOCK).minusSeconds(10)
+                ))
+                .toList();
+        when(deliveryClaimService.claimBatch(BATCH_SIZE)).thenReturn(deliveries);
+
+        worker.process();
+
+        for (ClaimedDelivery claimed : deliveries) {
+            verify(deliveryResultService).markSent(claimed.id());
+        }
+        verifyNoMoreInteractions(deliveryResultService);
+        assertThat(meterRegistry.get("notification.delivery.queue.wait").timer().count()).isEqualTo(20);
+        assertThat(meterRegistry.get("notification.delivery.post.claim.wait").timer().count()).isEqualTo(20);
+        assertThat(meterRegistry.get("notification.delivery.send")
+                .tag("outcome", "success").timer().count()).isEqualTo(20);
     }
 
 }
