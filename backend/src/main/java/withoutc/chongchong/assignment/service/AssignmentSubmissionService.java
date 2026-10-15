@@ -40,7 +40,7 @@ public class AssignmentSubmissionService {
                                            AssignmentSubmitRequest request) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        assignmentRepository.getWithStudyByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());

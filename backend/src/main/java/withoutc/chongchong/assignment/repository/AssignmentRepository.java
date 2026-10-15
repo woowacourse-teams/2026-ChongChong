@@ -16,6 +16,14 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     Optional<Assignment> findByIdAndStudyId(Long id, Long studyId);
 
     @Query("""
+            SELECT a
+            FROM Assignment a
+            JOIN FETCH a.study
+            WHERE a.id = :id AND a.study.id = :studyId
+            """)
+    Optional<Assignment> findWithStudyByIdAndStudyId(@Param("id") Long id, @Param("studyId") Long studyId);
+
+    @Query("""
             SELECT n
             FROM Assignment n
             WHERE n.study.id = :studyId
@@ -98,6 +106,11 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     default Assignment getByIdAndStudyIdOrThrow(Long id, Long studyId) {
         return findByIdAndStudyId(id, studyId).orElseThrow(
+                () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+    }
+
+    default Assignment getWithStudyByIdAndStudyIdOrThrow(Long id, Long studyId) {
+        return findWithStudyByIdAndStudyId(id, studyId).orElseThrow(
                 () -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
     }
 
