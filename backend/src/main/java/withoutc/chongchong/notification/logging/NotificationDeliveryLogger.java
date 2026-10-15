@@ -61,6 +61,27 @@ public class NotificationDeliveryLogger {
         );
     }
 
+    public void submissionRejected(ClaimedDelivery delivery, boolean claimReleased, Throwable throwable) {
+        Level level = Level.WARN;
+        String message = "web push delivery returned to queue after executor rejection";
+        if (!claimReleased) {
+            level = Level.ERROR;
+            message = "web push delivery could not be returned to queue after executor rejection";
+        }
+
+        logDelivery(
+                WORKER_COMPONENT,
+                delivery.id(),
+                delivery.subscriptionId(),
+                level,
+                "web_push_delivery_submission_rejected",
+                "EXECUTOR_REJECTED",
+                null,
+                message,
+                throwable
+        );
+    }
+
     public void subscriptionExpired(ClaimedDelivery delivery, WebPushSendResult result) {
         logDelivery(
                 WORKER_COMPONENT,
