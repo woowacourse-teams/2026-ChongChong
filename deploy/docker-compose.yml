@@ -69,6 +69,8 @@ services:
     environment:
       CLOUD_WATCH_AWS_REGION: "${CLOUD_WATCH_AWS_REGION:-}"
       CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV:-}"
+      METRICS_SCRAPE_INTERVAL: "${METRICS_SCRAPE_INTERVAL:-60s}"
+      METRICS_SCRAPE_TIMEOUT: "${METRICS_SCRAPE_TIMEOUT:-10s}"
     volumes:
       - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
     networks:
