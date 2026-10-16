@@ -21,9 +21,10 @@ export CLOUD_WATCH_APP_ENV=dev
 for attempt in 1 2; do
     docker run --detach --name "$NAME" --network "$NAME" \
         --ulimit nofile=8192:8192 -p 127.0.0.1::443 \
-        -e SERVER_NAME=localhost -e 'NGINX_ENVSUBST_FILTER=^SERVER_NAME$' \
+        -e SERVER_NAME=localhost -e NGINX_API_LOG_FORMAT=loadtest \
+        -e 'NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$' \
         -v "$ROOT/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro" \
-        -v "$ROOT/nginx/default.dev.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+        -v "$ROOT/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
         -v "$TEMP/certs:/etc/letsencrypt:ro" nginx:1.28-alpine >/dev/null
     port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
     ready=false
@@ -61,4 +62,22 @@ assert 'must-not-log' not in json.dumps(row), row
 PY
     docker rm -f "$NAME" >/dev/null
 done
+docker run --detach --name "$NAME" --network "$NAME" \
+    -p 127.0.0.1::443 -e SERVER_NAME=localhost -e NGINX_API_LOG_FORMAT=main \
+    -e 'NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$' \
+    -v "$ROOT/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+    -v "$TEMP/certs:/etc/letsencrypt:ro" nginx:1.28-alpine >/dev/null
+port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
+ready=false
+for wait in {1..20}; do
+    if curl -ksS --output /dev/null "https://127.0.0.1:$port/api/prod-check"; then
+        ready=true
+        break
+    fi
+    sleep 0.2
+done
+[[ "$ready" == true ]]
+docker exec "$NAME" nginx -t
+docker logs "$NAME" > "$TEMP/log-prod.txt" 2>&1
+grep -Eq '"GET /api/prod-check HTTP/[0-9.]+" 404 ' "$TEMP/log-prod.txt"
 echo "PASS: syntax, worker limits, JSON proxy log, runtime variables, recreation ($TEMP)"

@@ -29,9 +29,9 @@
 
 ## 저장소 설정과 배포 순서
 
-`CLOUD_WATCH_APP_ENV=dev`일 때 `runtime.sh`의 `compose`가 `docker-compose.dev.yml`을 추가한다. 이 파일은 Nginx 메인 설정·dev 템플릿과 FD 한도를 적용한다. prod는 이 override를 사용하지 않는다. dev 템플릿은 기존 라우팅을 유지하며 API 위치에만 JSON 접근 로그를 추가한다. 공통 라우팅을 변경할 때 두 템플릿을 함께 확인한다.
+`CLOUD_WATCH_APP_ENV=dev`일 때 `runtime.sh`의 `compose`가 `docker-compose.dev.yml`을 추가한다. 이 파일은 Nginx 메인 설정과 FD 한도를 적용한다. prod는 이 override를 사용하지 않는다. 라우팅은 두 환경 모두 `default.conf.template` 하나로 관리한다. API 로그 형식은 기본 Compose에서 `NGINX_API_LOG_FORMAT=main`, dev override에서 `loadtest`로 지정한다. JSON 로그 형식은 dev 메인 설정에서만 정의한다.
 
-`NGINX_ENVSUBST_FILTER=^SERVER_NAME$`로 치환 대상을 제한한다. 요청 ID 두 종류, CloudFront ID, 연결 번호, URI, 상태, 전체·upstream 시간을 기록한다. 시간 단위는 초다. 인증 헤더·쿠키·본문·쿼리 문자열은 기록하지 않는다. API 로그가 기존 combined 형식에서 JSON으로 바뀌므로 외부 파서가 있다면 JSON 파서를 사용해야 한다. 저장소에서는 Nginx 접근 로그를 읽는 외부 수집기는 확인하지 못했다.
+`NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$`로 치환 대상을 제한한다. Compose 파일에서는 끝의 `$`를 `$$`로 이스케이프한다. dev API 로그에는 요청 ID 두 종류, CloudFront ID, 연결 번호, URI, 상태, 전체·upstream 시간을 기록한다. 시간 단위는 초다. 인증 헤더·쿠키·본문·쿼리 문자열은 기록하지 않는다. dev API 로그가 기존 combined 형식에서 JSON으로 바뀌므로 외부 파서가 있다면 JSON 파서를 사용해야 한다. prod API 로그는 기존 main 형식을 유지한다.
 
 배포는 다음 순서로 진행한다.
 

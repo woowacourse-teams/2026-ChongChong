@@ -50,6 +50,8 @@ services:
       - backend
     environment:
       SERVER_NAME: "${SERVER_NAME}"
+      NGINX_API_LOG_FORMAT: main
+      NGINX_ENVSUBST_FILTER: '^(SERVER_NAME|NGINX_API_LOG_FORMAT)$$'
     ports:
       - "80:80"
       - "443:443"
