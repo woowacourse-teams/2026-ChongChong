@@ -1,0 +1,10 @@
+services:
+  nginx:
+    environment:
+      NGINX_API_LOG_FORMAT: loadtest
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro

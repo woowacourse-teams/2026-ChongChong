@@ -52,7 +52,7 @@ load_deployment_environment() {
         fi
     done
 
-    if [[ ",${COMPOSE_PROFILES:-}," == *,metrics,* ]]; then
+    if [[ "${CLOUD_WATCH_APP_ENV:-}" == "dev" ]] || [[ ",${COMPOSE_PROFILES:-}," == *,metrics,* ]]; then
         local metrics_variables=(CLOUD_WATCH_AWS_REGION CLOUD_WATCH_APP_ENV)
         for variable in "${metrics_variables[@]}"; do
             if [[ -z "${!variable:-}" ]]; then
@@ -72,11 +72,46 @@ load_deployment_environment() {
 }
 
 compose() {
-    docker compose \
-        --env-file "${APP_ENV}" \
-        --env-file "${IMAGE_ENV}" \
-        --file "${COMPOSE_FILE}" \
-        "$@"
+    local compose_args=(--env-file "${APP_ENV}" --env-file "${IMAGE_ENV}" --file "${COMPOSE_FILE}")
+    if [[ "${CLOUD_WATCH_APP_ENV:-}" == "dev" ]]; then
+        compose_args+=(--file "${DEPLOY_ROOT}/docker-compose.dev.yml")
+    fi
+    docker compose "${compose_args[@]}" "$@"
+}
+
+verify_nginx_limits() {
+    local container="${1:-chongchong-nginx}"
+    docker exec "$container" nginx -t || return 1
+    if [[ "${CLOUD_WATCH_APP_ENV:-}" != "dev" ]]; then
+        return 0
+    fi
+    docker exec "$container" sh -ec '
+        nginx -T 2>&1 | grep -Eq "worker_connections[[:space:]]+4096;"
+        workers=0
+        for p in /proc/[0-9]*; do
+            [ "$(cat "$p/comm" 2>/dev/null)" = nginx ] || continue
+            [ "${p##*/}" = 1 ] && continue
+            workers=$((workers + 1))
+            awk '\''$1 == "Max" && $2 == "open" && $3 == "files" { found=1; if ($4 != 8192 || $5 != 8192) exit 1 } END { if (!found) exit 1 }'\'' "$p/limits" || exit 1
+        done
+        [ "$workers" -gt 0 ]
+    '
+}
+
+verify_metrics_collector() {
+    if [[ "${CLOUD_WATCH_APP_ENV:-}" != "dev" ]] && [[ ",${COMPOSE_PROFILES:-}," != *,metrics,* ]]; then
+        return 0
+    fi
+    local state
+    state="$(docker inspect --format '{{.State.Running}} {{.RestartCount}} {{.State.OOMKilled}}' chongchong-metrics-collector)" || return 1
+    if [[ "$state" != "true 0 false" ]]; then
+        echo "Metrics collector is not stable: $state" >&2
+        return 1
+    fi
+    local actual
+    actual="$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' chongchong-metrics-collector)" || return 1
+    grep -Fxq "METRICS_SCRAPE_INTERVAL=${METRICS_SCRAPE_INTERVAL:-60s}" <<< "$actual" || return 1
+    grep -Fxq "METRICS_SCRAPE_TIMEOUT=${METRICS_SCRAPE_TIMEOUT:-10s}" <<< "$actual" || return 1
 }
 
 wait_for_application() {
