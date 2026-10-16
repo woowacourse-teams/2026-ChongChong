@@ -1,0 +1,11 @@
+services:
+  nginx:
+    environment:
+      NGINX_ENVSUBST_FILTER: '^SERVER_NAME$'
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.dev.conf.template:/etc/nginx/templates/default.conf.template:ro

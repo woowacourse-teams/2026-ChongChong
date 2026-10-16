@@ -241,9 +241,10 @@ EC2 역할에는 `cloudwatch:PutMetricData` 권한이 필요하다. dev의 `ec2-
 파일시스템은 이후 확장했으므로 현재 여유 용량을 다시 확인한다. dev 백엔드는 약 305MiB를 사용했고 스왑
 337MiB가 사용 중이었다. 수집기의 192MB 제한은 최대치일 뿐 실제 사용량이나 안전한 여유를 보장하지 않는다.
 
-dev 단기 시험에서는 `/opt/chongchong/.env`에 `COMPOSE_PROFILES=metrics`를 아직 설정하지 않는다. 이미
-존재하는 `CLOUD_WATCH_AWS_REGION=ap-northeast-2`와 `CLOUD_WATCH_APP_ENV=dev`를 확인하고, 백엔드가 실행
-중일 때 아래 명령으로 수집기만 시작한다.
+`CLOUD_WATCH_APP_ENV=dev`이면 배포 스크립트가 애플리케이션 기동 확인 후 수집기를 별도로 pull·재생성한다.
+dev에서는 `COMPOSE_PROFILES=metrics`가 없어도 반영된다. prod는 기존처럼 명시적 프로필 활성화가 필요하다.
+수동으로 수집기만 적용할 때는 아래 명령을 사용한다. 변경 범위와 복구·검증은
+[Nginx 연결 한도와 수집기 배포](nginx-limits-and-observability.md)를 따른다.
 
 ```bash
 sudo docker compose \
@@ -277,9 +278,9 @@ sudo docker compose \
   --profile metrics stop metrics-collector
 ```
 
-dev 단기 시험에서 안정성을 확인한 뒤에만 `.env`에 `COMPOSE_PROFILES=metrics`를 추가해 이후 배포에서도
-수집기가 실행되게 한다. dev가 불안정하면 상시 실행하지 않고 인스턴스 증설 또는 수집 위치 변경을 결정한다.
-그 다음 prod에서도 권한·자원·실제 메트릭을 검증한다. 수집 중단 구간에는 데이터 공백이 생길 수 있지만
+dev는 이후 배포에서 수집기를 재생성하므로 수동 중지는 다음 배포까지의 조치다. 지속적으로 중단해야 한다면
+수집기 자동 배포 변경을 되돌린 배포본을 사용한다. prod는 별도로 권한·자원·실제 메트릭을 검증한 뒤
+`COMPOSE_PROFILES=metrics`를 설정한다. 수집 중단 구간에는 데이터 공백이 생길 수 있지만
 백엔드의 요청 처리와 CloudWatch Logs 수집은 계속 동작한다. CloudWatch OpenTelemetry 메트릭은 수집
 데이터량에 따라 과금되므로 실제 수집량과 비용을 확인한다.
 
