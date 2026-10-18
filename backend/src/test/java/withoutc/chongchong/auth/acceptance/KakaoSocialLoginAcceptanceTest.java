@@ -137,7 +137,7 @@ class KakaoSocialLoginAcceptanceTest {
                 SocialProvider.KAKAO,
                 "123456789"
         )).isPresent();
-        assertThat(authSessionRepository.findByUserId(user.getId())).isPresent();
+        assertThat(authSessionRepository.findAllByUserId(user.getId())).hasSize(1);
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
         assertThat(authSessionRepository.count()).isOne();
@@ -153,7 +153,9 @@ class KakaoSocialLoginAcceptanceTest {
         Response firstResponse = requestLogin(FIRST_AUTHORIZATION_CODE);
         firstResponse.then().statusCode(200);
         User firstUser = userRepository.findAll().getFirst();
-        AuthSession firstSession = authSessionRepository.findByUserId(firstUser.getId()).orElseThrow();
+        var firstSessions = authSessionRepository.findAllByUserId(firstUser.getId());
+        assertThat(firstSessions).hasSize(1);
+        AuthSession firstSession = firstSessions.getFirst();
         Long sessionId = firstSession.getId();
         String firstRefreshToken = firstResponse.getCookie("refresh_token");
 
@@ -167,7 +169,7 @@ class KakaoSocialLoginAcceptanceTest {
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.count()).isEqualTo(2);
+        assertThat(authSessionRepository.findAllByUserId(reusedUser.getId())).hasSize(2);
         assertThat(reusedUser.getId()).isEqualTo(firstUser.getId());
         assertThat(reusedUser.getName()).isEqualTo("처음 이름");
         assertThat(preservedSession.getRefreshTokenHash()).isEqualTo(firstSession.getRefreshTokenHash());

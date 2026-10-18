@@ -81,7 +81,7 @@ class AuthTokenServiceTest {
 
         Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
         HashedRefreshToken expectedHash = refreshTokenHasher.hash(tokenPair.refreshToken());
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
         String storedHash = findStoredRefreshTokenHash(authSession.getId());
 
         assertThat(accessToken.getSubject()).isEqualTo(user.getId().toString());
@@ -105,7 +105,7 @@ class AuthTokenServiceTest {
     void createNewSessionOnRepeatedIssue() {
         User user = saveUser("총총이");
         IssuedTokenPair first = authTokenService.issue(user.getId());
-        AuthSession firstSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession firstSession = findOnlySession(user.getId());
         Long sessionId = firstSession.getId();
         HashedRefreshToken firstHash = firstSession.getRefreshTokenHash();
 
@@ -116,7 +116,7 @@ class AuthTokenServiceTest {
         assertThat(authSessionRepository.count()).isEqualTo(2);
         assertThat(preserved.getRefreshTokenHash()).isEqualTo(firstHash);
         assertThat(preserved.getExpiresAt()).isEqualTo(first.refreshTokenExpiresAt());
-        assertThat(authSessionRepository.findAll())
+        assertThat(authSessionRepository.findAllByUserId(user.getId()))
                 .extracting(AuthSession::getRefreshTokenHash)
                 .containsExactlyInAnyOrder(firstHash, secondHash);
         assertThat(second.refreshToken()).isNotEqualTo(first.refreshToken());
@@ -132,9 +132,9 @@ class AuthTokenServiceTest {
         IssuedTokenPair second = authTokenService.issue(secondUser.getId());
 
         assertThat(authSessionRepository.count()).isEqualTo(2);
-        assertThat(authSessionRepository.findByUserId(firstUser.getId()).orElseThrow().getRefreshTokenHash())
+        assertThat(findOnlySession(firstUser.getId()).getRefreshTokenHash())
                 .isEqualTo(refreshTokenHasher.hash(first.refreshToken()));
-        assertThat(authSessionRepository.findByUserId(secondUser.getId()).orElseThrow().getRefreshTokenHash())
+        assertThat(findOnlySession(secondUser.getId()).getRefreshTokenHash())
                 .isEqualTo(refreshTokenHasher.hash(second.refreshToken()));
     }
 
@@ -164,6 +164,12 @@ class AuthTokenServiceTest {
 
     private User saveUser(String name) {
         return userRepository.saveAndFlush(User.create(name, null));
+    }
+
+    private AuthSession findOnlySession(Long userId) {
+        var sessions = authSessionRepository.findAllByUserId(userId);
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 
     private String findStoredRefreshTokenHash(Long authSessionId) {

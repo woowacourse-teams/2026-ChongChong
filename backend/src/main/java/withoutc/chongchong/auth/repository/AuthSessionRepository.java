@@ -1,6 +1,8 @@
 package withoutc.chongchong.auth.repository;
 
 import jakarta.persistence.LockModeType;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -13,7 +15,7 @@ import withoutc.chongchong.auth.token.HashedRefreshToken;
 @Repository
 public interface AuthSessionRepository extends JpaRepository<AuthSession, Long> {
 
-    Optional<AuthSession> findByUserId(Long userId);
+    List<AuthSession> findAllByUserId(Long userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

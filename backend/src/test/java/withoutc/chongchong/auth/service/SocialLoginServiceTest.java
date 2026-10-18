@@ -74,7 +74,7 @@ class SocialLoginServiceTest {
                 SocialProvider.GOOGLE,
                 "google-user-id"
         ).orElseThrow();
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
         Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
         HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
 
@@ -134,7 +134,7 @@ class SocialLoginServiceTest {
         SocialLoginResult firstResult = socialLoginService.login(socialUserInfo);
         IssuedTokenPair firstTokenPair = firstResult.tokenPair();
         User user = userRepository.findAll().getFirst();
-        AuthSession firstSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession firstSession = findOnlySession(user.getId());
         Long firstSessionId = firstSession.getId();
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
 
@@ -144,7 +144,7 @@ class SocialLoginServiceTest {
         AuthSession preservedSession = authSessionRepository.findById(firstSessionId).orElseThrow();
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.findAll())
+        assertThat(authSessionRepository.findAllByUserId(user.getId()))
                 .extracting(AuthSession::getRefreshTokenHash)
                 .containsExactlyInAnyOrder(
                         firstRefreshTokenHash,
@@ -194,6 +194,12 @@ class SocialLoginServiceTest {
         assertThat(userRepository.count()).isZero();
         assertThat(socialAccountRepository.count()).isZero();
         assertThat(authSessionRepository.count()).isZero();
+    }
+
+    private AuthSession findOnlySession(Long userId) {
+        var sessions = authSessionRepository.findAllByUserId(userId);
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 
     private SocialUserInfo createSocialUserInfo(

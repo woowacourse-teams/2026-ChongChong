@@ -139,7 +139,7 @@ class SocialLoginAcceptanceTest {
                 SocialProvider.KAKAO,
                 PROVIDER_USER_ID
         ).orElseThrow();
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
         HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(
                 new RawRefreshToken(refreshToken)
         );
@@ -178,7 +178,7 @@ class SocialLoginAcceptanceTest {
         Response firstResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
         firstResponse.then().statusCode(200);
         User firstUser = userRepository.findAll().getFirst();
-        AuthSession firstSession = authSessionRepository.findByUserId(firstUser.getId()).orElseThrow();
+        AuthSession firstSession = findOnlySession(firstUser.getId());
         Long firstSessionId = firstSession.getId();
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
         String firstRefreshToken = firstResponse.getCookie("refresh_token");
@@ -201,7 +201,7 @@ class SocialLoginAcceptanceTest {
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.findAll())
+        assertThat(authSessionRepository.findAllByUserId(reusedUser.getId()))
                 .extracting(AuthSession::getRefreshTokenHash)
                 .containsExactlyInAnyOrder(
                         firstRefreshTokenHash,
@@ -243,7 +243,7 @@ class SocialLoginAcceptanceTest {
         User user = userRepository.findAll().getFirst();
         assertProtectedApiAccessible(originalAccessToken, user.getId());
 
-        AuthSession originalSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession originalSession = findOnlySession(user.getId());
         Long sessionId = originalSession.getId();
         HashedRefreshToken originalHash = originalSession.getRefreshTokenHash();
 
@@ -268,7 +268,7 @@ class SocialLoginAcceptanceTest {
         HashedRefreshToken rotatedHash = refreshTokenHasher.hash(
                 new RawRefreshToken(rotatedRefreshToken)
         );
-        AuthSession rotatedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession rotatedSession = authSessionRepository.findById(sessionId).orElseThrow();
 
         assertThat(rotatedRefreshToken).isNotEqualTo(originalRefreshToken);
         assertThat(rotatedAccessToken).isNotEqualTo(originalAccessToken);
@@ -296,7 +296,7 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
                 .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"));
         assertThat(logoutResponse.asString()).isEmpty();
-        assertThat(authSessionRepository.findByUserId(user.getId())).isEmpty();
+        assertThat(authSessionRepository.findAllByUserId(user.getId())).isEmpty();
 
         Response refreshAfterLogoutResponse = requestRefresh(rotatedRefreshToken);
         refreshAfterLogoutResponse.then()
@@ -362,7 +362,7 @@ class SocialLoginAcceptanceTest {
         Response loginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
         String refreshToken = loginResponse.getCookie("refresh_token");
         User user = userRepository.findAll().getFirst();
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
         HashedRefreshToken refreshTokenHash = authSession.getRefreshTokenHash();
         Instant expiredAt = Instant.now().minusSeconds(1).truncatedTo(ChronoUnit.MICROS);
         authSession.replaceRefreshToken(refreshTokenHash, expiredAt);
@@ -374,7 +374,7 @@ class SocialLoginAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
-        AuthSession unchangedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession unchangedSession = authSessionRepository.findById(authSession.getId()).orElseThrow();
         assertThat(unchangedSession.getRefreshTokenHash()).isEqualTo(refreshTokenHash);
         assertThat(unchangedSession.getExpiresAt()).isEqualTo(expiredAt);
     }
@@ -469,7 +469,7 @@ class SocialLoginAcceptanceTest {
         requestLogout(firstRefreshToken).then().statusCode(204);
 
         assertThat(authSessionRepository.count()).isOne();
-        assertThat(authSessionRepository.findByUserId(userId).orElseThrow().getRefreshTokenHash())
+        assertThat(findOnlySession(userId).getRefreshTokenHash())
                 .isEqualTo(refreshTokenHasher.hash(new RawRefreshToken(secondRefreshToken)));
         requestRefresh(firstRefreshToken).then()
                 .statusCode(401)
@@ -510,17 +510,16 @@ class SocialLoginAcceptanceTest {
         ).orElseThrow();
         Long firstUserId = firstSocialAccount.getUser().getId();
         Long secondUserId = secondSocialAccount.getUser().getId();
-        HashedRefreshToken secondSessionHash = authSessionRepository.findByUserId(secondUserId)
-                .orElseThrow()
-                .getRefreshTokenHash();
+        HashedRefreshToken secondSessionHash = findOnlySession(secondUserId).getRefreshTokenHash();
 
         requestLogout(firstRefreshToken)
                 .then()
                 .statusCode(204);
 
-        assertThat(authSessionRepository.findByUserId(firstUserId)).isEmpty();
-        assertThat(authSessionRepository.findByUserId(secondUserId))
-                .hasValueSatisfying(session -> assertThat(session.getRefreshTokenHash())
+        assertThat(authSessionRepository.findAllByUserId(firstUserId)).isEmpty();
+        assertThat(authSessionRepository.findAllByUserId(secondUserId))
+                .singleElement()
+                .satisfies(session -> assertThat(session.getRefreshTokenHash())
                         .isEqualTo(secondSessionHash));
         assertThat(authSessionRepository.count()).isOne();
 
@@ -640,6 +639,12 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
+    }
+
+    private AuthSession findOnlySession(Long userId) {
+        var sessions = authSessionRepository.findAllByUserId(userId);
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 
     private Response requestLogin(

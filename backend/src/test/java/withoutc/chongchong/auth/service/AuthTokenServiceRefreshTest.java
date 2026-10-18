@@ -95,7 +95,7 @@ class AuthTokenServiceRefreshTest {
         IssuedTokenPair first = authTokenService.issue(user.getId());
         Long firstSessionId = findSession(user).getId();
         IssuedTokenPair second = authTokenService.issue(user.getId());
-        AuthSession secondSession = authSessionRepository.findAll().stream()
+        AuthSession secondSession = authSessionRepository.findAllByUserId(user.getId()).stream()
                 .filter(session -> !session.getId().equals(firstSessionId))
                 .findFirst().orElseThrow();
         Long secondSessionId = secondSession.getId();
@@ -187,7 +187,9 @@ class AuthTokenServiceRefreshTest {
     }
 
     private AuthSession findSession(User user) {
-        return authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        var sessions = authSessionRepository.findAllByUserId(user.getId());
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 
     @TestConfiguration(proxyBeanMethods = false)

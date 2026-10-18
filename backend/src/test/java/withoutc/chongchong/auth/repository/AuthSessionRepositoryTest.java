@@ -95,6 +95,10 @@ class AuthSessionRepositoryTest {
         AuthSession second = authSessionRepository.saveAndFlush(
                 AuthSession.create(user, secondHash, EXPIRES_AT)
         );
+        User otherUser = saveUser("다른 사용자");
+        AuthSession otherSession = authSessionRepository.saveAndFlush(
+                AuthSession.create(otherUser, new HashedRefreshToken("c".repeat(64)), EXPIRES_AT)
+        );
         entityManager.clear();
 
         AuthSession foundFirst = authSessionRepository.findById(first.getId()).orElseThrow();
@@ -105,6 +109,12 @@ class AuthSessionRepositoryTest {
         assertThat(foundSecond.getUser().getId()).isEqualTo(userId);
         assertThat(foundFirst.getRefreshTokenHash()).isEqualTo(REFRESH_TOKEN_HASH);
         assertThat(foundSecond.getRefreshTokenHash()).isEqualTo(secondHash);
+        assertThat(authSessionRepository.findAllByUserId(userId))
+                .extracting(AuthSession::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(authSessionRepository.findAllByUserId(otherUser.getId()))
+                .extracting(AuthSession::getId)
+                .containsExactly(otherSession.getId());
     }
 
     @Test
