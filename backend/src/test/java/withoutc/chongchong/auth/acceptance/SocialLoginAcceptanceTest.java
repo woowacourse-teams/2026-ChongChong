@@ -167,8 +167,8 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
-    @DisplayName("같은 소셜 사용자가 다시 로그인하면 사용자와 계정을 재사용하고 인증 세션을 교체한다")
-    void reuseSocialUserAndReplaceAuthSessionOnRelogin() {
+    @DisplayName("같은 소셜 사용자가 다시 로그인하면 사용자와 계정을 재사용하고 독립적인 인증 세션을 추가한다")
+    void reuseSocialUserAndCreateAuthSessionOnRelogin() {
         fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
                 SocialProvider.KAKAO,
                 PROVIDER_USER_ID,
@@ -193,7 +193,7 @@ class SocialLoginAcceptanceTest {
 
         secondResponse.then().statusCode(200);
         User reusedUser = userRepository.findAll().getFirst();
-        AuthSession replacedSession = authSessionRepository.findByUserId(reusedUser.getId()).orElseThrow();
+        AuthSession preservedSession = authSessionRepository.findById(firstSessionId).orElseThrow();
         String secondAccessToken = secondResponse.jsonPath().getString("accessToken");
         String secondRefreshToken = secondResponse.getCookie("refresh_token");
         Long firstUserId = firstResponse.jsonPath().getLong("userId");
@@ -201,12 +201,17 @@ class SocialLoginAcceptanceTest {
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.count()).isOne();
+        assertThat(authSessionRepository.findAll())
+                .extracting(AuthSession::getRefreshTokenHash)
+                .containsExactlyInAnyOrder(
+                        firstRefreshTokenHash,
+                        refreshTokenHasher.hash(new RawRefreshToken(secondRefreshToken))
+                );
         assertThat(reusedUser.getId()).isEqualTo(firstUser.getId());
         assertThat(reusedUser.getName()).isEqualTo("처음 이름");
         assertThat(reusedUser.getProfileImageUrl()).isEqualTo("https://example.com/first-profile.png");
-        assertThat(replacedSession.getId()).isEqualTo(firstSessionId);
-        assertThat(replacedSession.getRefreshTokenHash()).isNotEqualTo(firstRefreshTokenHash);
+        assertThat(preservedSession.getRefreshTokenHash()).isEqualTo(firstRefreshTokenHash);
+        assertThat(preservedSession.getExpiresAt()).isEqualTo(firstSession.getExpiresAt());
         assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
         assertThat(jwtDecoder.decode(secondAccessToken).getSubject())
                 .isEqualTo(firstUser.getId().toString());

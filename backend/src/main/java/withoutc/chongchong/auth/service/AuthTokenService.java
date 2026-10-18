@@ -43,16 +43,8 @@ public class AuthTokenService {
         IssuedTokenPair tokenPair = createTokenPair(userId);
         HashedRefreshToken refreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
 
-        authSessionRepository.findByUserId(userId)
-                .ifPresentOrElse(
-                        authSession -> authSession.replaceRefreshToken(
-                                refreshTokenHash,
-                                tokenPair.refreshTokenExpiresAt()
-                        ),
-                        () -> authSessionRepository.save(
-                                AuthSession.create(user, refreshTokenHash, tokenPair.refreshTokenExpiresAt())
-                        )
-                );
+        AuthSession newSession = AuthSession.create(user, refreshTokenHash, tokenPair.refreshTokenExpiresAt());
+        authSessionRepository.save(newSession);
 
         return tokenPair;
     }

@@ -89,6 +89,41 @@ class AuthTokenServiceRefreshTest {
     }
 
     @Test
+    @DisplayName("같은 사용자의 두 세션은 독립적으로 재발급되며 다른 세션을 변경하지 않는다")
+    void rotateSessionsIndependentlyForSameUser() {
+        User user = saveUser();
+        IssuedTokenPair first = authTokenService.issue(user.getId());
+        Long firstSessionId = findSession(user).getId();
+        IssuedTokenPair second = authTokenService.issue(user.getId());
+        AuthSession secondSession = authSessionRepository.findAll().stream()
+                .filter(session -> !session.getId().equals(firstSessionId))
+                .findFirst().orElseThrow();
+        Long secondSessionId = secondSession.getId();
+        HashedRefreshToken secondHash = secondSession.getRefreshTokenHash();
+        Instant secondExpiresAt = secondSession.getExpiresAt();
+
+        IssuedTokenPair rotatedFirst = authTokenService.rotate(first.refreshToken());
+
+        AuthSession preservedSecond = authSessionRepository.findById(secondSessionId).orElseThrow();
+        assertThat(preservedSecond.getRefreshTokenHash()).isEqualTo(secondHash);
+        assertThat(preservedSecond.getExpiresAt()).isEqualTo(secondExpiresAt);
+        assertInvalidRefreshToken(() -> authTokenService.rotate(first.refreshToken()));
+
+        IssuedTokenPair rotatedSecond = authTokenService.rotate(second.refreshToken());
+
+        assertThat(authSessionRepository.count()).isEqualTo(2);
+        assertThat(authSessionRepository.findById(firstSessionId).orElseThrow().getRefreshTokenHash())
+                .isEqualTo(refreshTokenHasher.hash(rotatedFirst.refreshToken()));
+        assertThat(authSessionRepository.findById(secondSessionId).orElseThrow().getRefreshTokenHash())
+                .isEqualTo(refreshTokenHasher.hash(rotatedSecond.refreshToken()));
+        assertInvalidRefreshToken(() -> authTokenService.rotate(second.refreshToken()));
+        assertThat(jwtDecoder.decode(rotatedFirst.accessToken().value()).getSubject())
+                .isEqualTo(user.getId().toString());
+        assertThat(jwtDecoder.decode(rotatedSecond.accessToken().value()).getSubject())
+                .isEqualTo(user.getId().toString());
+    }
+
+    @Test
     @DisplayName("회전이 끝난 이전 Refresh Token은 다시 사용할 수 없다")
     void rejectRotatedRefreshToken() {
         User user = saveUser();

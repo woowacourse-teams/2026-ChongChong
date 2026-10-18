@@ -101,8 +101,8 @@ class AuthTokenServiceTest {
     }
 
     @Test
-    @DisplayName("같은 사용자에게 다시 발급하면 기존 인증 세션을 새 Refresh Token으로 교체한다")
-    void replaceExistingAuthSession() {
+    @DisplayName("같은 사용자에게 다시 발급하면 기존 인증 세션을 보존하고 새 세션을 생성한다")
+    void createNewSessionOnRepeatedIssue() {
         User user = saveUser("총총이");
         IssuedTokenPair first = authTokenService.issue(user.getId());
         AuthSession firstSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
@@ -111,13 +111,14 @@ class AuthTokenServiceTest {
 
         IssuedTokenPair second = authTokenService.issue(user.getId());
 
-        AuthSession replaced = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession preserved = authSessionRepository.findById(sessionId).orElseThrow();
         HashedRefreshToken secondHash = refreshTokenHasher.hash(second.refreshToken());
-        assertThat(authSessionRepository.count()).isOne();
-        assertThat(replaced.getId()).isEqualTo(sessionId);
-        assertThat(replaced.getRefreshTokenHash())
-                .isEqualTo(secondHash)
-                .isNotEqualTo(firstHash);
+        assertThat(authSessionRepository.count()).isEqualTo(2);
+        assertThat(preserved.getRefreshTokenHash()).isEqualTo(firstHash);
+        assertThat(preserved.getExpiresAt()).isEqualTo(first.refreshTokenExpiresAt());
+        assertThat(authSessionRepository.findAll())
+                .extracting(AuthSession::getRefreshTokenHash)
+                .containsExactlyInAnyOrder(firstHash, secondHash);
         assertThat(second.refreshToken()).isNotEqualTo(first.refreshToken());
     }
 
