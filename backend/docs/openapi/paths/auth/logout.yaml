@@ -7,11 +7,12 @@ post:
     sources:
       - frontend/src/features/mypage/components/AccountMenuSection.tsx
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       요청의 Refresh Token에 해당하는 인증 세션을 삭제하고 Refresh 쿠키를 만료시킨다.
-      쿠키나 세션이 없어도 204를 반환한다. 이슈 #526에서 다른 세션의 로그인 유지 여부를 검증한다.
+      쿠키나 세션이 없어도 204를 반환한다. 이슈 #526의 다른 세션 유지 자동 테스트와 전체 백엔드 테스트를 통과했다.
+      PR 리뷰·병합 대기 상태다.
   summary: 로그아웃
   security: []
   description: |

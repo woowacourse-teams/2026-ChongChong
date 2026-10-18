@@ -8,10 +8,11 @@ post:
       - frontend/src/features/login/api.ts
       - frontend/src/features/login/pages/KakaoCallbackPage.tsx
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
-      이슈 #526에서 로그인마다 독립적인 인증 세션을 생성하도록 변경한다. 구현과 다중 세션 검증이 남아 있다.
+      이슈 #526에서 로그인마다 독립적인 인증 세션을 생성하도록 변경했다.
+      다중 세션 자동 테스트와 전체 백엔드 테스트를 통과했으며 실제 두 기기 확인 및 PR 리뷰·병합을 기다린다.
       Access Token은 JSON, Refresh Token은 HttpOnly 쿠키로 전달한다.
   summary: 소셜 로그인
   security: []

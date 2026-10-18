@@ -8,11 +8,11 @@ post:
       - frontend/src/features/login/api.ts
       - frontend/src/client.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       Refresh Token을 갱신하고 이전 토큰의 재사용을 차단한다. 쿠키와 CSRF 헤더를 함께 전송한다.
-      이슈 #526에서 같은 사용자의 여러 세션이 독립적으로 재발급되는지 검증한다.
+      이슈 #526의 세션별 독립 재발급 자동 테스트와 전체 백엔드 테스트를 통과했다. PR 리뷰·병합 대기 상태다.
   summary: 액세스 토큰 갱신
   security: []
   description: |
