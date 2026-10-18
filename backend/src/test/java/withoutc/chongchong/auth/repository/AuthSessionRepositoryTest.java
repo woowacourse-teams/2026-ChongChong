@@ -53,7 +53,7 @@ class AuthSessionRepositoryTest {
         );
         entityManager.clear();
 
-        AuthSession found = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession found = authSessionRepository.findById(saved.getId()).orElseThrow();
 
         assertThat(found.getId()).isEqualTo(saved.getId());
         assertThat(found.getUser().getId()).isEqualTo(user.getId());
@@ -84,18 +84,37 @@ class AuthSessionRepositoryTest {
     }
 
     @Test
-    @DisplayName("한 사용자에게 두 개의 인증 세션을 저장하지 않는다")
-    void rejectDuplicateUserSession() {
+    @DisplayName("한 사용자에게 서로 다른 Refresh Token을 가진 인증 세션을 여러 개 저장한다")
+    void saveMultipleSessionsForSameUser() {
         User user = saveUser("총총이");
-        authSessionRepository.saveAndFlush(AuthSession.create(user, REFRESH_TOKEN_HASH, EXPIRES_AT));
-        AuthSession duplicate = AuthSession.create(
-                user,
-                new HashedRefreshToken("b".repeat(64)),
-                EXPIRES_AT
+        Long userId = user.getId();
+        HashedRefreshToken secondHash = new HashedRefreshToken("b".repeat(64));
+        AuthSession first = authSessionRepository.saveAndFlush(
+                AuthSession.create(user, REFRESH_TOKEN_HASH, EXPIRES_AT)
         );
+        AuthSession second = authSessionRepository.saveAndFlush(
+                AuthSession.create(user, secondHash, EXPIRES_AT)
+        );
+        User otherUser = saveUser("다른 사용자");
+        AuthSession otherSession = authSessionRepository.saveAndFlush(
+                AuthSession.create(otherUser, new HashedRefreshToken("c".repeat(64)), EXPIRES_AT)
+        );
+        entityManager.clear();
 
-        assertThatThrownBy(() -> authSessionRepository.saveAndFlush(duplicate))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        AuthSession foundFirst = authSessionRepository.findById(first.getId()).orElseThrow();
+        AuthSession foundSecond = authSessionRepository.findById(second.getId()).orElseThrow();
+
+        assertThat(foundFirst.getId()).isNotEqualTo(foundSecond.getId());
+        assertThat(foundFirst.getUser().getId()).isEqualTo(userId);
+        assertThat(foundSecond.getUser().getId()).isEqualTo(userId);
+        assertThat(foundFirst.getRefreshTokenHash()).isEqualTo(REFRESH_TOKEN_HASH);
+        assertThat(foundSecond.getRefreshTokenHash()).isEqualTo(secondHash);
+        assertThat(authSessionRepository.findAllByUserId(userId))
+                .extracting(AuthSession::getId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(authSessionRepository.findAllByUserId(otherUser.getId()))
+                .extracting(AuthSession::getId)
+                .containsExactly(otherSession.getId());
     }
 
     @Test

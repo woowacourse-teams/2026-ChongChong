@@ -88,7 +88,9 @@ class AuthTokenServiceRefreshConcurrencyTest {
             assertThat(successes).hasSize(1);
             assertThat(failures).containsExactly(AuthErrorCode.INVALID_REFRESH_TOKEN);
 
-            AuthSession currentSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+            var sessions = authSessionRepository.findAllByUserId(user.getId());
+            assertThat(sessions).hasSize(1);
+            AuthSession currentSession = sessions.getFirst();
             HashedRefreshToken successfulHash = refreshTokenHasher.hash(
                     successes.getFirst().tokenPair().refreshToken()
             );

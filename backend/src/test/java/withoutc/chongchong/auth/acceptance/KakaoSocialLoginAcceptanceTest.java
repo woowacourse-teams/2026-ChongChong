@@ -137,7 +137,7 @@ class KakaoSocialLoginAcceptanceTest {
                 SocialProvider.KAKAO,
                 "123456789"
         )).isPresent();
-        assertThat(authSessionRepository.findByUserId(user.getId())).isPresent();
+        assertThat(authSessionRepository.findAllByUserId(user.getId())).hasSize(1);
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
         assertThat(authSessionRepository.count()).isOne();
@@ -147,13 +147,15 @@ class KakaoSocialLoginAcceptanceTest {
     }
 
     @Test
-    @DisplayName("같은 Kakao 회원이 다시 로그인하면 사용자와 계정을 재사용하고 Session을 교체한다")
-    void reuseKakaoUserAndReplaceSessionOnRelogin() {
+    @DisplayName("같은 Kakao 회원이 다시 로그인하면 사용자와 계정을 재사용하고 독립적인 Session을 추가한다")
+    void reuseKakaoUserAndCreateSessionOnRelogin() {
         KAKAO_STUB.succeed(FIRST_KAKAO_ACCESS_TOKEN, 123456789L, "처음 이름", null);
         Response firstResponse = requestLogin(FIRST_AUTHORIZATION_CODE);
         firstResponse.then().statusCode(200);
         User firstUser = userRepository.findAll().getFirst();
-        AuthSession firstSession = authSessionRepository.findByUserId(firstUser.getId()).orElseThrow();
+        var firstSessions = authSessionRepository.findAllByUserId(firstUser.getId());
+        assertThat(firstSessions).hasSize(1);
+        AuthSession firstSession = firstSessions.getFirst();
         Long sessionId = firstSession.getId();
         String firstRefreshToken = firstResponse.getCookie("refresh_token");
 
@@ -162,15 +164,16 @@ class KakaoSocialLoginAcceptanceTest {
 
         secondResponse.then().statusCode(200);
         User reusedUser = userRepository.findAll().getFirst();
-        AuthSession replacedSession = authSessionRepository.findByUserId(reusedUser.getId()).orElseThrow();
+        AuthSession preservedSession = authSessionRepository.findById(sessionId).orElseThrow();
         String secondRefreshToken = secondResponse.getCookie("refresh_token");
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.count()).isOne();
+        assertThat(authSessionRepository.findAllByUserId(reusedUser.getId())).hasSize(2);
         assertThat(reusedUser.getId()).isEqualTo(firstUser.getId());
         assertThat(reusedUser.getName()).isEqualTo("처음 이름");
-        assertThat(replacedSession.getId()).isEqualTo(sessionId);
+        assertThat(preservedSession.getRefreshTokenHash()).isEqualTo(firstSession.getRefreshTokenHash());
+        assertThat(preservedSession.getExpiresAt()).isEqualTo(firstSession.getExpiresAt());
         assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
         assertThat(KAKAO_STUB.tokenRequests()).hasSize(2);
         assertThat(KAKAO_STUB.userInfoRequests()).hasSize(2);
