@@ -444,6 +444,44 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
+    @DisplayName("같은 사용자의 한 브라우저가 로그아웃해도 다른 브라우저는 재발급하고 보호 API를 사용할 수 있다")
+    void logoutWithoutChangingOtherBrowserSessionOfSameUser() {
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID,
+                "총총이",
+                null
+        ));
+        Response firstLogin = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        firstLogin.then().statusCode(200);
+        Response secondLogin = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        secondLogin.then().statusCode(200);
+        String firstRefreshToken = firstLogin.getCookie("refresh_token");
+        String secondRefreshToken = secondLogin.getCookie("refresh_token");
+        Long userId = firstLogin.jsonPath().getLong("userId");
+        assertThat(secondLogin.jsonPath().getLong("userId")).isEqualTo(userId);
+        assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
+
+        requestLogout(firstRefreshToken).then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"));
+        requestLogout(firstRefreshToken).then().statusCode(204);
+
+        assertThat(authSessionRepository.count()).isOne();
+        assertThat(authSessionRepository.findByUserId(userId).orElseThrow().getRefreshTokenHash())
+                .isEqualTo(refreshTokenHasher.hash(new RawRefreshToken(secondRefreshToken)));
+        requestRefresh(firstRefreshToken).then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"));
+
+        Response refreshedSecond = requestRefresh(secondRefreshToken);
+        refreshedSecond.then().statusCode(200);
+        assertThat(refreshedSecond.getCookie("refresh_token")).isNotEqualTo(secondRefreshToken);
+        assertProtectedApiAccessible(refreshedSecond.jsonPath().getString("accessToken"), userId);
+    }
+
+    @Test
     @DisplayName("한 사용자의 로그아웃은 다른 사용자의 Session에 영향을 주지 않는다")
     void logoutWithoutChangingOtherUserSession() {
         fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
