@@ -61,7 +61,11 @@ NotificationListPage.Content = function Content() {
     <List aria-label="알림 목록" css={{ gap: tokens.spacing[2] }}>
       {notifications.map((notification) => (
         <List.Item key={notification.id}>
-          <Link to={notification.deepLink} onClick={() => handleNotificationClick(notification)}>
+          <Link
+            to={notification.deepLink}
+            state={{ returnTo: '/notifications' }}
+            onClick={() => handleNotificationClick(notification)}
+          >
             <NotificationItem key={notification.id} notification={notification} />
           </Link>
         </List.Item>
