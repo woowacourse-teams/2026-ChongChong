@@ -1,4 +1,4 @@
-# 0045. 첨부파일 업로드에 S3 Presigned URL을 사용한다
+# 0052. 첨부파일 업로드에 S3 Presigned URL을 사용한다
 
 - 날짜: 2026-09-11
 - 관련 이슈: [#295](https://github.com/woowacourse-teams/2026-ChongChong/issues/295)
