@@ -41,7 +41,8 @@ class FileServiceTest {
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create("test-access-key", "test-secret-key")))
                 .build()) {
-            FileUploadUrlGenerator generator = new FileUploadUrlGenerator(presigner, "test-upload-bucket");
+            FileUploadUrlGenerator generator = new FileUploadUrlGenerator(presigner);
+            ReflectionTestUtils.setField(generator, "bucket", "test-upload-bucket");
             FileService service = new FileService(fileRepository, userRepository, generator);
             Instant before = Instant.now();
 

@@ -1,6 +1,7 @@
 package withoutc.chongchong.file.service;
 
 import java.time.Duration;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -9,15 +10,15 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Component
+@RequiredArgsConstructor
 public class FileUploadUrlGenerator {
 
-    private final S3Presigner s3Presigner;
-    private final String bucket;
+    private static final int PRESIGNED_URL_EXPIRATION_MINUTES = 10;
 
-    public FileUploadUrlGenerator(S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucket) {
-        this.s3Presigner = s3Presigner;
-        this.bucket = bucket;
-    }
+    private final S3Presigner s3Presigner;
+
+    @Value("${aws.s3.bucket}")
+    private String bucket;
 
     public PresignedPutObjectRequest generatePresignedUrl(String objectKey, String contentType) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -27,7 +28,7 @@ public class FileUploadUrlGenerator {
                 .build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(10))
+                .signatureDuration(Duration.ofMinutes(PRESIGNED_URL_EXPIRATION_MINUTES))
                 .putObjectRequest(putObjectRequest)
                 .build();
 
