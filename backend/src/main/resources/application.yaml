@@ -22,6 +22,8 @@ spring:
 
 aws:
   region: ${AWS_REGION}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
 
 app:
   environment: ${CLOUD_WATCH_APP_ENV:local}

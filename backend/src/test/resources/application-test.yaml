@@ -10,6 +10,11 @@ spring:
   flyway:
     enabled: false
 
+aws:
+  region: ap-northeast-2
+  s3:
+    bucket: test-upload-bucket
+
 jwt:
   study-invite-secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
 
