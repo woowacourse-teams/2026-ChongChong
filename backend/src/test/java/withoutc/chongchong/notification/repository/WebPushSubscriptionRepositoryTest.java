@@ -7,12 +7,12 @@ import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.hibernate.Hibernate;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.support.PostgresContainerTest;
@@ -44,7 +44,7 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
     @Autowired
     private TestDatabaseCleaner databaseCleaner;
 
-    @BeforeEach
+    @BeforeTransaction
     void cleanDatabase() {
         databaseCleaner.clean();
     }
