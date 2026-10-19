@@ -60,7 +60,7 @@ class NoticeRequestValidationTest {
         assertThat(messages(validator.validate(request)))
                 .containsExactlyInAnyOrder(
                         "제목은 100자 이내로 입력 가능합니다.",
-                        "내용은 10,000자 이내로 입력 가능합니다."
+                        "내용은 10000자 이내로 입력 가능합니다."
                 );
     }
 
@@ -104,7 +104,7 @@ class NoticeRequestValidationTest {
         assertThat(messages(validator.validate(request)))
                 .containsExactlyInAnyOrder(
                         "제목은 100자 이내로 입력 가능합니다.",
-                        "내용은 10,000자 이내로 입력 가능합니다."
+                        "내용은 10000자 이내로 입력 가능합니다."
                 );
     }
 
