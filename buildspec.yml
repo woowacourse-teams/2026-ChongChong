@@ -2,6 +2,8 @@ version: 0.2
 
 env:
   shell: bash
+  variables:
+    GRADLE_USER_HOME: /root/.gradle
 
 phases:
   install:
@@ -20,7 +22,7 @@ phases:
   build:
     commands:
       - cd backend
-      - ./gradlew test bootJar --profile
+      - ./gradlew test bootJar --build-cache --profile -Pci
       - cd ..
       - docker build --platform linux/arm64 --tag "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" backend
 
@@ -28,6 +30,14 @@ phases:
     commands:
       - docker push "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}"
       - printf 'BACKEND_IMAGE=%s\nBACKEND_IMAGE_TAG=%s\n' "${DOCKERHUB_REPOSITORY}" "${IMAGE_TAG}" > deploy/image.env
+
+cache:
+  key: gradle-v1-$CODEBUILD_RESOLVED_SOURCE_VERSION
+  fallback-keys:
+    - gradle-v1-
+  paths:
+    - '/root/.gradle/caches/**/*'
+    - '/root/.gradle/wrapper/**/*'
 
 artifacts:
   files:

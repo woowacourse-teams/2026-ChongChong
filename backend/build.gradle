@@ -53,6 +53,13 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+tasks.withType(Test).configureEach {
+    if (providers.gradleProperty('ci').isPresent()) {
+        outputs.upToDateWhen { false }
+        outputs.doNotCacheIf('CI에서는 테스트를 매번 실행한다') { true }
+    }
+}
+
 tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'openapi-coverage'
