@@ -6,6 +6,6 @@ CREATE TABLE file_metadata (
     content_type VARCHAR(255) NOT NULL,
     size BIGINT NOT NULL,
     status VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
