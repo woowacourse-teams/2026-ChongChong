@@ -5,12 +5,13 @@ get:
   tags: [Assignment]
   operationId: getAssignmentDetail
   x-frontend:
-    status: needs-update
-    description: "기능 추가: submissionVisibility를 읽어 과제의 공개·비공개 상태를 표시."
+    status: integrated
+    description: "submissionVisibility를 검증하고 공개 과제의 제출 목록 조회와 수정 폼의 공개 범위 초기값에 사용한다."
     sources:
       - frontend/src/features/assignment/responseSchemas.ts
+      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
-    status: review
+    status: done
     owner: frombunny
     description: |
       과제 상세의 submissionTarget·submissionVisibility를 반환하며 스터디 소속을 검증한다.
@@ -34,11 +35,11 @@ patch:
   operationId: updateAssignment
   x-frontend:
     status: needs-update
-    description: "기능 추가: 기존 공개 범위를 초기값으로 표시하고 변경값 저장. 리마인드 예약 추가·변경·취소."
+    description: "공개 범위 초기값과 수정 저장은 연결되어 있다. 남은 작업: 제출 방법의 선택 입력과 리마인드 예약 추가·변경·취소 UI."
     sources:
       - frontend/src/features/assignment/components/AssignmentForm.tsx
   x-backend:
-    status: review
+    status: done
     owner: frombunny
     description: |
       과제를 부분 수정하고 대기 중인 리마인더를 교체한다. 리더 미포함으로 변경하면 리더의 기존 제출물도 삭제한다.

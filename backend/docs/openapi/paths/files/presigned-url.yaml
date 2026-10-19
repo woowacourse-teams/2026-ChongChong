@@ -1,6 +1,12 @@
 post:
   tags: [File]
   operationId: createPresignedUrl
+  x-frontend:
+    status: needs-update
+    description: "파일 선택과 업로드 URL 발급·S3 PUT 요청은 웹에 연결되지 않았다. 업로드 완료 확인과 게시물 첨부 연결은 별도 서버 계약이 필요하다."
+    sources:
+      - frontend/src/features/notice/components/NoticeForm.tsx
+      - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
   x-backend:
     status: done
     owner: frombunny
@@ -10,6 +16,8 @@ post:
     업로드 대기 상태의 파일을 생성한다. 반환된 uploadUrl에 요청과 같은 Content-Type으로
     파일 본문을 PUT한다. URL 발급은 실제 파일 업로드 완료를 의미하지 않는다.
     size는 클라이언트가 선언한 바이트 수이며 실제 업로드 결과는 별도로 검증해야 한다.
+    현재 최대 파일 크기와 허용 MIME 유형 목록은 제한하지 않는다.
+    업로드 완료 확인과 공지·과제·제출물에 파일을 연결하는 API는 아직 없다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
@@ -20,8 +28,8 @@ post:
           additionalProperties: false
           required: [originalFileName, contentType, size]
           properties:
-            originalFileName: { type: string, minLength: 1, maxLength: 255 }
-            contentType: { type: string, minLength: 1, maxLength: 255 }
+            originalFileName: { type: string, minLength: 1, maxLength: 255, description: 원본 파일명. 공백만 있는 값은 허용하지 않는다. }
+            contentType: { type: string, minLength: 1, maxLength: 255, description: PUT 요청에도 사용할 Content-Type. 공백만 있는 값은 허용하지 않는다. }
             size: { type: integer, format: int64, minimum: 0 }
   responses:
     '201':

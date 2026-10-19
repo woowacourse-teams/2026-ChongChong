@@ -7,7 +7,7 @@ get:
     sources:
       - frontend/src/features/member/api.ts
       - frontend/src/features/member/responseSchemas.ts
-      - frontend/src/features/member/components/MemberListContent.tsx
+      - frontend/src/features/member/components/MemberListSection.tsx
   x-backend:
     status: done
     owner: JYL35
