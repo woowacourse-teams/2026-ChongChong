@@ -113,4 +113,3 @@ class FileMetadataTest {
                 .isEqualTo(FileErrorCode.INVALID_CONTENT_TYPE);
     }
 }
-
