@@ -1,5 +1,7 @@
 # API 명세
 
+[← 프로젝트 소개와 문서 목록](../../../README.md) · [게시된 API 명세서](https://woowacourse-teams.github.io/2026-ChongChong/board)
+
 명세 원본은 `openapi.yaml`(목차), `paths/`(URL별 API), `components/`(공유 정의)로 나눈다.
 API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·응답·예시를 수정한다. 같은 URL의 여러 HTTP 메서드는 한 파일에서 관리한다.
 요청·응답 필드가 참조 스키마에 있으면 해당 `$ref` 파일도 함께 수정한다. API를 추가할 때는 Path Item 파일을 만들고
@@ -9,10 +11,13 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 
 | API | 메서드와 URL | 수정 파일 |
 | --- | --- | --- |
+| 파일 업로드 URL 발급 | `POST /api/files/presigned-url` | [paths/files/presigned-url.yaml](paths/files/presigned-url.yaml) |
 | CSRF 토큰 조회 | `GET /api/auth/csrf` | [paths/auth/csrf.yaml](paths/auth/csrf.yaml) |
 | 소셜 로그인 | `POST /api/auth/login` | [paths/auth/login.yaml](paths/auth/login.yaml) |
 | 액세스 토큰 갱신 | `POST /api/auth/refresh` | [paths/auth/refresh.yaml](paths/auth/refresh.yaml) |
 | 로그아웃 | `POST /api/auth/logout` | [paths/auth/logout.yaml](paths/auth/logout.yaml) |
+| 내 정보 조회 | `GET /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
+| 내 이름 수정 | `PATCH /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
 | 사용자 탈퇴 | `DELETE /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
 | 스터디 생성 | `POST /api/studies` | [paths/studies/collection.yaml](paths/studies/collection.yaml) |
 | 스터디 상세 조회 | `GET /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
@@ -110,9 +115,10 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 
 ## 백엔드 개발 진행 정보
 
-### 프론트 요청·응답 계약 확인 (2026-10-01)
+### 프론트 요청·응답 계약 확인 (2026-10-19)
 
-현재 frontend의 실제 호출 40개를 서버의 41개 API와 대조했다. URL·HTTP 메서드·필수 요청 값·응답 형태를 기준으로 한다.
+기준 커밋은 `c9884a248113b56b0db84adbea31d36d0a3a136e`이며 현재 명세에는 44개 API가 있다.
+웹의 호출·폼·응답 검증과 서버 구현을 URL·HTTP 메서드·필수 요청 값·응답 형태를 기준으로 대조했다.
 계약 불일치와 PRD에 명시된 기능 중 아직 웹에 연결되지 않은 작업을 구분한다. API 사용법만으로 수정 과제를 만들지 않는다.
 실제 배포 서버의 HTTP 요청을 실행한 결과는 아니다.
 
@@ -121,15 +127,18 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 `description`에는 구체적인 불일치와 영향을, `sources`에는 확인한 코드 경로를 기록한다.
 메타데이터가 없다는 이유로 수정 필요 또는 연동 완료로 추정하지 않는다.
 
-계약 불일치는 두 API다.
+현재 남아 있는 차이와 미연동 기능은 다음과 같다.
 
-- 과제 생성: 필수 `submissionVisibility`가 웹 요청에 없어 400 오류가 발생한다.
+- 과제 생성·수정: 공개 범위와 리더 참여 설정은 연결되어 있다. 제출 방법은 서버에서는 선택 값이지만 웹 폼에서는 필수다.
+- 과제 제출·수정: 서버는 내용과 링크를 각각 선택 값으로 받지만 웹 폼은 내용을 필수로 요구한다.
 - 제출 상세: 서버가 허용하는 `createdAt·content=null`을 웹 응답 검증이 거부한다.
+- 공지·과제 생성·수정: 서버의 리마인드 예약 API에 대응하는 웹 입력이 없다.
+- 파일 업로드: URL 발급 API는 구현되어 있지만 웹의 파일 선택·발급·PUT 요청은 없다. 업로드 완료 확인과 게시물 첨부 연결은 서버 계약도 별도로 필요하다.
 
-기능 추가는 스터디 정보 수정, 공지·과제 리마인드 예약, 제출물 공개 범위 선택·변경·표시, 일반 멤버의 공개 제출물 목록·상세 조회다.
-같은 API의 계약 수정과 기능 추가는 한 토글에 함께 표시하며, 총 8개 API에 남은 작업이 있다.
+위 항목은 총 8개 API에 `needs-update`로 표시한다. 웹 입력 제약을 서버보다 엄격하게 둔 경우와 서버의 정상 응답을 거부하는 경우를 구분해 설명했다.
 
-제목 100자, 읽음·제출 상태 구분, 로그아웃·Web Push, 리더 제출처럼 이미 반영된 항목에는 수정 안내를 표시하지 않는다.
+스터디 정보 수정, 공개 범위 설정·조회, 공개 제출물 목록·상세 이동, 다섯 제출 상태와 지각 배지, 푸시 클릭 기록은 웹에 반영되어 있다.
+로그인·갱신·로그아웃 명세는 다중 세션과 현재 세션만 갱신·종료하는 서버 동작을 설명한다.
 보드와 Redoc은 같은 메타데이터에서 안내를 생성한다. 수정 후 해당 계약을 다시 확인해 상태를 갱신한다.
 
 각 operation(`get`, `post` 등)에 `x-backend`를 작성한다. 같은 URL에서도 메서드마다 담당자와 상태가 다를 수 있다.

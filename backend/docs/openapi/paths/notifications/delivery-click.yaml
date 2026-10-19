@@ -2,8 +2,8 @@ post:
   tags: [Notification]
   operationId: clickNotificationDelivery
   x-frontend:
-    status: needs-update
-    description: "서비스 워커가 deliveryId와 clickToken을 앱에 전달하고, 앱이 로그인 없이 토큰을 기록한 뒤 deepLink를 연다."
+    status: integrated
+    description: "서비스 워커가 deliveryId와 clickToken으로 로그인·쿠키 없이 클릭을 기록하고 deepLink를 연다. 두 작업은 병렬로 실행하며 기록 실패가 화면 열기를 막지 않는다."
     sources:
       - frontend/src/features/notification/push-sw.ts
       - frontend/src/features/notification/api.ts

@@ -3,11 +3,11 @@ delete:
   operationId: leave
   x-frontend:
     status: integrated
-    description: "본인 탈퇴 요청이 멤버 화면에 연결되어 있다."
+    description: "일반 멤버가 스터디 관리 화면에서 확인 후 탈퇴하는 흐름이 연결되어 있다."
     sources:
       - frontend/src/features/member/api.ts
-      - frontend/src/features/member/hooks/useLeaveStudyMember.tsx
-      - frontend/src/features/member/components/MemberListContent.tsx
+      - frontend/src/features/study/hooks/useLeaveStudy.tsx
+      - frontend/src/features/study/components/ManagementList.tsx
   x-backend:
     status: done
     owner: JYL35
