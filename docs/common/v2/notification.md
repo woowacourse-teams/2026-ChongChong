@@ -30,4 +30,12 @@
 서버에는 예약 알림 기능이 있지만, 웹의 공지·과제 작성 화면에는 예약 시각을 입력하는 기능이 없다.
 실제 운영 환경에서 푸시가 도착하는지는 확인하지 않았다. 알림 보관 기간도 이 문서에서 확정하지 않는다.
 
+## 푸시 클릭 기록
+
+서비스 워커는 푸시의 `deliveryId`, `clickToken`, `deepLink`를 보관한다. 알림을 누르면 클릭 기록 요청과 관련 화면 열기를 병렬로 실행한다. 클릭 기록에 실패하더라도 화면 열기를 별도로 시도한다.
+클릭 기록에는 로그인 토큰이나 쿠키 대신 해당 발송 내역에 서명된 클릭 토큰을 사용한다. 토큰은 7일 뒤 만료하며, 서버는 최초 클릭 시각만 저장한다.
+이 기록은 알림함 읽음 처리나 공지 읽음·과제 제출과 별개다.
+
+근거: [서비스 워커](../../../frontend/src/features/notification/push-sw.ts), [클릭 요청](../../../frontend/src/features/notification/api.ts), [클릭 API 명세](../../../backend/docs/openapi/paths/notifications/delivery-click.yaml).
+
 근거: [알림 서비스](../../../backend/src/main/java/withoutc/chongchong/notification/service/NotificationService.java), [발송 워커](../../../backend/src/main/java/withoutc/chongchong/notification/worker/NotificationDeliveryWorker.java), [구독 서비스](../../../backend/src/main/java/withoutc/chongchong/notification/service/WebPushSubscriptionService.java), [웹 푸시](../../../frontend/src/features/notification/push.ts), [알림함](../../../frontend/src/features/notification/pages/NotificationListPage.tsx).
