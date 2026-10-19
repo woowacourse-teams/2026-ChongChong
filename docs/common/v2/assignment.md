@@ -27,7 +27,8 @@
 제출 대상인 사용자는 내용과 링크를 입력해 과제를 제출하고, 나중에 자신의 제출물을 수정할 수 있다. 서버는 내용과 링크를 각각 최대 10,000자까지 받는다. 이미지나 파일은 첨부할 수 없다.
 
 서버에서는 내용과 링크 모두 선택 값이지만, 웹 제출·수정 폼은 내용을 필수로 받는다. 따라서 링크만 제출하는 서버 기능은 웹에서 사용할 수 없다.
-제출 상세 API는 미제출 항목의 `createdAt`과 비어 있는 `content`에 `null`을 반환할 수 있다. 웹의 상세 응답 검증은 두 값을 문자열로 요구하므로 이 응답은 오류로 처리된다.
+제출물 상세 조회 `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}`는 미제출 항목의 `createdAt`과 비어 있는 `content`에 `null`을 반환할 수 있다. 이 API에 사용하는 `submissionDetailSchema`는 두 값을 문자열로 요구하므로 해당 응답은 웹 검증에서 실패한다.
+내 제출 조회 `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my`는 별도의 `userAssignmentSubmitDetailSchema`로 검증한다. `NOT_SUBMITTED`, `MISSING`, `NOT_ASSIGNED` 상태에서는 두 필드를 요구하지 않으며, 값이 없거나 `null`이라는 이유로 검증이 실패하지 않는다.
 근거: [제출 폼](../../../frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx), [웹 응답 검증](../../../frontend/src/features/assignment/responseSchemas.ts), [제출 API 스키마](../../../backend/docs/openapi/components/schemas/assignment-submissions.yaml).
 
 마감이 지나도 제출하거나 수정할 수 있다. 다만 마감 후 처음 제출하면 지각 제출로 표시한다. 다시 제출하거나 내용을 고쳐도 최초 제출 시각은 바뀌지 않는다.

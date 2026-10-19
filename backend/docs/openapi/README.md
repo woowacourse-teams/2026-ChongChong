@@ -131,7 +131,7 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 
 - 과제 생성·수정: 공개 범위와 리더 참여 설정은 연결되어 있다. 제출 방법은 서버에서는 선택 값이지만 웹 폼에서는 필수다.
 - 과제 제출·수정: 서버는 내용과 링크를 각각 선택 값으로 받지만 웹 폼은 내용을 필수로 요구한다.
-- 제출 상세: 서버가 허용하는 `createdAt·content=null`을 웹 응답 검증이 거부한다.
+- 제출물 상세(`/submissions/{submissionId}`): `submissionDetailSchema`가 서버에서 허용하는 `createdAt·content=null`을 거부한다. 내 제출 조회(`/submissions/my`)는 별도 스키마를 사용하며, `NOT_SUBMITTED`, `MISSING`, `NOT_ASSIGNED` 상태에서는 두 필드의 누락이나 null 때문에 검증이 실패하지 않는다.
 - 공지·과제 생성·수정: 서버의 리마인드 예약 API에 대응하는 웹 입력이 없다.
 - 파일 업로드: URL 발급 API는 구현되어 있지만 웹의 파일 선택·발급·PUT 요청은 없다. 업로드 완료 확인과 게시물 첨부 연결은 서버 계약도 별도로 필요하다.
 

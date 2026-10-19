@@ -19,7 +19,7 @@
 | 현재 구현 없음 | Google·Apple 로그인, 리더 양도, 스터디별 독립 이름 수정, 업로드 완료 확인·게시물 첨부 연결·웹 첨부 화면 |
 
 웹과 서버의 입력·응답 제약도 일부 다르다. 웹에서는 과제의 제출 방법과 제출 내용을 필수로 받지만 서버는 선택 값으로 받는다.
-제출 상세 API의 `createdAt·content=null` 응답은 웹 검증이 거부한다. [과제](assignment.md)에 현재 제약을 정리했다.
+제출물 상세 조회(`/submissions/{submissionId}`)의 `createdAt·content=null` 응답은 웹 검증이 거부한다. 내 제출 조회(`/submissions/my`)의 `NOT_SUBMITTED`, `MISSING`, `NOT_ASSIGNED` 상태는 이 문제에 해당하지 않는다. [과제](assignment.md)에 API별 검증 차이를 정리했다.
 
 모바일 홈 화면에 설치해 사용하는 기능과 브라우저 푸시는 웹에서 제공한다. 삭제한 네이티브 시연용 패키지는 이 문서의 기능 범위에 포함하지 않는다.
 
