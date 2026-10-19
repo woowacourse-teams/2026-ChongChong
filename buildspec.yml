@@ -34,3 +34,5 @@ artifacts:
     - appspec.yml
     - deploy/**/*
     - backend/build/reports/profile/**/*
+    - backend/build/test-results/test/*.xml
+    - backend/build/reports/tests/test/**/*
