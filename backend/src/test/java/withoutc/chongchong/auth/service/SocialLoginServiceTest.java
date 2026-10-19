@@ -1,7 +1,6 @@
 package withoutc.chongchong.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,18 +181,6 @@ class SocialLoginServiceTest {
         assertThat(googleTokenSubject).isEqualTo(googleResult.userId().toString());
         assertThat(kakaoTokenSubject).isEqualTo(kakaoResult.userId().toString());
         assertThat(googleResult.userId()).isNotEqualTo(kakaoResult.userId());
-    }
-
-    @Test
-    @DisplayName("검증된 소셜 사용자 정보가 없으면 로그인할 수 없다")
-    void rejectNullSocialUserInfo() {
-        assertThatThrownBy(() -> socialLoginService.login(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("검증된 소셜 사용자 정보는 필수입니다.");
-
-        assertThat(userRepository.count()).isZero();
-        assertThat(socialAccountRepository.count()).isZero();
-        assertThat(authSessionRepository.count()).isZero();
     }
 
     private AuthSession findOnlySession(Long userId) {

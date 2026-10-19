@@ -55,6 +55,7 @@ public class TestDatabaseCleaner {
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_SCHEMA = 'PUBLIC'
                   AND TABLE_TYPE = 'BASE TABLE'
+                  AND LOWER(TABLE_NAME) <> 'flyway_schema_history'
                 """, String.class);
     }
 
@@ -64,6 +65,7 @@ public class TestDatabaseCleaner {
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
                   AND table_type = 'BASE TABLE'
+                  AND table_name <> 'flyway_schema_history'
                 """, String.class);
     }
 

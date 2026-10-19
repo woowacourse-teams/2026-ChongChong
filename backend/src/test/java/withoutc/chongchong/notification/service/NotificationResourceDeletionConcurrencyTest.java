@@ -150,6 +150,9 @@ class NotificationResourceDeletionConcurrencyTest extends PostgresContainerTest 
             executor.shutdown();
             if (!executor.awaitTermination(TIMEOUT.toSeconds(), TimeUnit.SECONDS)) {
                 executor.shutdownNow();
+                assertThat(executor.awaitTermination(TIMEOUT.toSeconds(), TimeUnit.SECONDS))
+                        .as("알림 리소스 삭제와 생성 작업이 종료되어야 한다")
+                        .isTrue();
             }
         }
     }

@@ -24,10 +24,31 @@
 - PostgreSQL의 upsert, 제약 조건, 트랜잭션 또는 동시성 동작을 검증하는 테스트는 Testcontainers가 실행한 PostgreSQL을
   사용한다.
 - 공통 기반 클래스 `PostgresContainerTest`가 `postgres:16-alpine` 컨테이너의 생명주기와 Spring datasource 속성을 관리한다.
-- PostgreSQL 테스트는 컨테이너의 JDBC URL·사용자·비밀번호를 `@DynamicPropertySource`로 주입하고,
-  `ddl-auto=create-drop`과 Flyway 비활성화로 테스트 스키마를 격리한다.
-- 현재 `PushTokenConcurrencyTest`와 `StudyMembershipConcurrencyTest`가 이 기반 클래스를 사용한다.
+- PostgreSQL 테스트는 컨테이너의 JDBC URL·사용자·비밀번호를 `@DynamicPropertySource`로 주입한다.
+- 같은 테스트 JVM에서는 공통 기반 클래스의 정적 컨테이너를 한 번 시작해 재사용한다. 클래스별 `@Container` 종료와
+  `@DirtiesContext(AFTER_CLASS)`를 사용하지 않으며, JVM 종료 시 Testcontainers가 컨테이너를 정리한다.
+- 공유 컨테이너의 일반 테스트도 Flyway로 실제 마이그레이션을 적용하고 `ddl-auto=validate`로 엔티티 매핑을 검증한다.
+  이미 적용한 마이그레이션은 이력으로 관리하며, 컨텍스트 생성·종료 시 Hibernate가 공유 스키마를 변경하지 않는다.
+- `WebPushSubscriptionConcurrencyTest`와 `StudyMembershipConcurrencyTest` 등이 이 기반 클래스를 사용한다.
 - 테스트 데이터 정리는 데이터베이스 제품명을 확인해 H2와 PostgreSQL에 맞는 테이블 조회 및 truncate 구문을 사용한다.
+
+### 컨테이너 재사용과 테스트 격리 (2026-10-20 보완)
+
+- 컨테이너 재사용은 하나의 테스트 JVM 안으로 제한한다. 다른 CI 실행이나 개발 환경의 데이터베이스를 재사용하지 않는다.
+- 데이터 격리는 컨테이너 재생성 대신 각 테스트의 초기화에서 `TestDatabaseCleaner`로 수행한다. PostgreSQL에서는
+  `TRUNCATE ... RESTART IDENTITY CASCADE`로 행과 식별자 상태를 정리하며 `flyway_schema_history`는 보존한다.
+  DB 정리는 트랜잭션 테스트에서는 `@BeforeTransaction`, 그 밖에는 `@BeforeEach`에서 수행한다. 트랜잭션 테스트의 변경은 롤백한다.
+- 공통 기반 클래스는 각 테스트 전에 `TestNotificationSender`의 기록도 초기화한다. 그 밖의 Fake 상태는 사용하는
+  테스트가 정리해야 한다.
+- 공유 데이터베이스를 사용하는 테스트 클래스·메서드는 병렬 실행하지 않는다. 동시성 테스트 내부에서 생성한 작업은
+  해당 테스트가 종료 전에 완료·정리해야 한다. 병렬 실행을 도입하려면 데이터베이스나 스키마를 별도로 분리한다.
+- `test` 프로필에서는 자동 스케줄 실행을 비활성화한다. 워커 테스트는 작업을 직접 호출하여 DB 정리와 주기 작업이
+  경쟁하지 않도록 한다.
+- 마이그레이션 테스트는 독립 컨테이너와 스키마를 유지하며 이전 버전의 데이터 보존과 변경된 제약을 검증한다.
+  일반 테스트의 `validate`만으로 모든 인덱스·제약 및 데이터 변환의 정확성을 보장하지 않는다.
+
+기존 `create-drop`과 클래스별 컨텍스트 종료는 격리가 단순하지만 컨테이너 및 Spring 초기화가 반복된다. 일반 테스트는
+데이터 정리 책임을 명시하고 컨테이너·컨텍스트를 재사용하며, 스키마 자체를 변경하는 테스트는 독립 환경으로 유지한다.
 
 ### CI는 Docker를 Testcontainers 테스트의 사전 조건으로 확인한다
 
@@ -80,13 +101,15 @@ Docker가 없는 개발 환경에서는 편하지만 CI가 핵심 동시성 테�
 
 - PostgreSQL의 실제 upsert, 유일 제약과 동시성 동작을 검증할 수 있다.
 - 일반 테스트의 빠른 H2 피드백은 유지한다.
-- 컨테이너가 테스트별 데이터베이스 생명주기를 소유해 공유 상태와 포트 충돌을 줄인다.
+- 테스트 JVM이 컨테이너 생명주기를 소유하고 각 테스트가 데이터를 정리해 초기화 비용과 실행 간 포트 충돌을 줄인다.
 - CI에서 Docker가 준비되지 않은 경우 PostgreSQL 특화 테스트 누락을 조기에 발견한다.
 - 스터디 멤버십 행 잠금과 푸시 토큰 동시 upsert를 같은 실데이터베이스 전략으로 재현할 수 있다.
 
 ### 부정적 영향과 위험
 
 - PostgreSQL 특화 테스트를 실행하려면 로컬과 CI에 Docker가 필요하다.
+- 컨테이너를 공유하므로 데이터 및 Fake 초기화가 누락되면 테스트 순서에 의존할 수 있다. 스키마 변경 테스트는 공유 기반에
+  추가하지 않고 독립 환경에서 실행한다.
 - 첫 실행 시 `postgres:16-alpine` 이미지 다운로드와 컨테이너 시작으로 테스트 시간이 늘어날 수 있다.
 - H2와 PostgreSQL의 정리 구문·upsert 구문을 각각 유지해야 하므로 데이터베이스별 코드가 증가한다.
 - `disabledWithoutDocker = true`인 로컬 실행은 PostgreSQL 테스트를 건너뛸 수 있으므로 개발자가 해당 결과를 전체 검증으로
