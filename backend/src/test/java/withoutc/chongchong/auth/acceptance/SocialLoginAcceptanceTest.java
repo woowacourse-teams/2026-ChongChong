@@ -14,6 +14,8 @@ import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.AfterEach;
@@ -108,10 +110,13 @@ class SocialLoginAcceptanceTest {
                 "https://example.com/profile.png"
         ));
 
+        Instant requestStartedAt = Instant.now();
         Response response = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        Instant responseReceivedAt = Instant.now();
 
         response.then()
                 .statusCode(200)
+                .contentType(ContentType.JSON)
                 .body("userId", notNullValue())
                 .body("tokenType", equalTo("Bearer"))
                 .body("accessToken", notNullValue())
@@ -140,6 +145,12 @@ class SocialLoginAcceptanceTest {
                 PROVIDER_USER_ID
         ).orElseThrow();
         AuthSession authSession = findOnlySession(user.getId());
+        assertThat(response.asString()).doesNotContain(refreshToken, KAKAO_AUTHORIZATION_CODE);
+        assertThat(response.getDetailedCookie("refresh_token").getMaxAge())
+                .isBetween(
+                        Duration.between(responseReceivedAt, authSession.getExpiresAt()).getSeconds(),
+                        Duration.between(requestStartedAt, authSession.getExpiresAt()).getSeconds()
+                );
         HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(
                 new RawRefreshToken(refreshToken)
         );
@@ -586,6 +597,27 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertThat(response.asString()).doesNotContain(KAKAO_AUTHORIZATION_CODE);
+        assertDatabaseEmpty();
+    }
+
+    @Test
+    @DisplayName("authorizationCode가 누락되면 공통 입력 오류로 거부한다")
+    void rejectMissingAuthorizationCode() {
+        Response response = requestLoginBody("""
+                {"provider": "KAKAO"}
+                """);
+
+        response.then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"))
+                .body("message", equalTo("입력값이 올바르지 않습니다."))
+                .body("errors.field", hasItem("authorizationCode"))
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+
+        assertThat(new String(response.asByteArray(), StandardCharsets.UTF_8))
+                .contains("입력값이 올바르지 않습니다.");
         assertDatabaseEmpty();
     }
 

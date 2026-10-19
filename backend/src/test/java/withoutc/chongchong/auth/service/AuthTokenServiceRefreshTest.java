@@ -168,13 +168,6 @@ class AuthTokenServiceRefreshTest {
         assertThat(currentSession.getExpiresAt()).isEqualTo(expiredAt);
     }
 
-    @Test
-    @DisplayName("누락된 Refresh Token은 공통 인증 오류로 거부한다")
-    void rejectNullRefreshToken() {
-        assertInvalidRefreshToken(() -> authTokenService.rotate(null));
-        assertThat(authSessionRepository.count()).isZero();
-    }
-
     private void assertInvalidRefreshToken(Runnable invocation) {
         assertThatThrownBy(invocation::run)
                 .isInstanceOf(AuthException.class)

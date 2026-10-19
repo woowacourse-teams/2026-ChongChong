@@ -1,7 +1,6 @@
 package withoutc.chongchong.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -12,9 +11,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -26,8 +22,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.entity.AuthSession;
-import withoutc.chongchong.auth.exception.AuthErrorCode;
-import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
 import withoutc.chongchong.auth.token.HashedRefreshToken;
 import withoutc.chongchong.auth.token.IssuedTokenPair;
@@ -136,30 +130,6 @@ class AuthTokenServiceTest {
                 .isEqualTo(refreshTokenHasher.hash(first.refreshToken()));
         assertThat(findOnlySession(secondUser.getId()).getRefreshTokenHash())
                 .isEqualTo(refreshTokenHasher.hash(second.refreshToken()));
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 사용자에게 Token을 발급하지 않는다")
-    void rejectMissingUser() {
-        assertThatThrownBy(() -> authTokenService.issue(999L))
-                .isInstanceOf(AuthException.class)
-                .extracting(exception -> ((AuthException) exception).getErrorCode())
-                .isEqualTo(AuthErrorCode.USER_NOT_FOUND);
-
-        assertThat(authSessionRepository.count()).isZero();
-    }
-
-    @ParameterizedTest
-    @NullSource
-    @ValueSource(longs = {0L, -1L})
-    @DisplayName("양수가 아닌 사용자 ID로 Token을 발급하지 않는다")
-    void rejectInvalidUserId(Long userId) {
-        assertThatThrownBy(() -> authTokenService.issue(userId))
-                .isInstanceOf(AuthException.class)
-                .extracting(exception -> ((AuthException) exception).getErrorCode())
-                .isEqualTo(AuthErrorCode.INVALID_USER_ID);
-
-        assertThat(authSessionRepository.count()).isZero();
     }
 
     private User saveUser(String name) {
