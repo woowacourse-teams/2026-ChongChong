@@ -102,7 +102,9 @@ class AuthTokenServiceRefreshConcurrencyTest {
         } finally {
             start.countDown();
             executorService.shutdownNow();
-            executorService.awaitTermination(5, SECONDS);
+            assertThat(executorService.awaitTermination(5, SECONDS))
+                    .as("인증 토큰 갱신 작업이 종료되어야 한다")
+                    .isTrue();
         }
     }
 

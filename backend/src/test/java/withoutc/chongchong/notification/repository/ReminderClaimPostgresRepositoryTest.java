@@ -136,6 +136,9 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
         } finally {
             releaseFirst.countDown();
             executor.shutdownNow();
+            assertThat(executor.awaitTermination(TEST_TIMEOUT.toSeconds(), TimeUnit.SECONDS))
+                    .as("리마인더 선점 작업이 종료되어야 한다")
+                    .isTrue();
         }
     }
 
