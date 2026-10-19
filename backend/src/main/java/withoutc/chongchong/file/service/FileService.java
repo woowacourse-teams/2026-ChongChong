@@ -2,6 +2,7 @@ package withoutc.chongchong.file.service;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
@@ -20,11 +21,14 @@ public class FileService {
     private final UserRepository userRepository;
     private final FileUploadUrlGenerator fileUploadUrlGenerator;
 
+    @Value("${aws.s3.upload-prefix}")
+    private String uploadPrefix;
+
     @Transactional
     public PresignedUrlCreateResponse createPresignedUrl(Long userId, PresignedUrlCreateRequest request) {
         User user = userRepository.getByIdOrThrow(userId);
 
-        String objectKey = "uploads/" + UUID.randomUUID();
+        String objectKey = uploadPrefix + UUID.randomUUID();
         FileMetadata fileMetadata = FileMetadata.create(user, request.originalFileName(), objectKey,
                 request.contentType(), request.size());
 

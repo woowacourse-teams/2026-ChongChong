@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,9 @@ class FileServiceTest {
                 .build()) {
             FileUploadUrlGenerator generator = new FileUploadUrlGenerator(presigner);
             ReflectionTestUtils.setField(generator, "bucket", "test-upload-bucket");
+            ReflectionTestUtils.setField(generator, "urlValidity", Duration.ofMinutes(3));
             FileService service = new FileService(fileRepository, userRepository, generator);
+            ReflectionTestUtils.setField(service, "uploadPrefix", "chongchong/files/test/uploads/");
             Instant before = Instant.now();
 
             PresignedUrlCreateResponse response = service.createPresignedUrl(
@@ -52,13 +55,14 @@ class FileServiceTest {
             var captor = org.mockito.ArgumentCaptor.forClass(FileMetadata.class);
             org.mockito.Mockito.verify(fileRepository).save(captor.capture());
             FileMetadata saved = captor.getValue();
+            assertThat(saved.getObjectKey()).startsWith("chongchong/files/test/uploads/");
             assertThat(saved.getOwner()).isSameAs(owner);
             assertThat(response.fileId()).isEqualTo(123L);
             URI uploadUri = URI.create(response.uploadUrl());
             assertThat(uploadUri.getPath()).isEqualTo("/" + saved.getObjectKey());
             assertThat(uploadUri.getHost()).startsWith("test-upload-bucket.");
-            assertThat(uploadUri.getQuery()).contains("X-Amz-Expires=600", "X-Amz-Signature=");
-            assertThat(response.expiresAt()).isBetween(before.plusSeconds(599), Instant.now().plusSeconds(601));
+            assertThat(uploadUri.getQuery()).contains("X-Amz-Expires=180", "X-Amz-Signature=");
+            assertThat(response.expiresAt()).isBetween(before.plusSeconds(179), Instant.now().plusSeconds(181));
 
             var signed = generator.generatePresignedUrl(saved.getObjectKey(), saved.getContentType());
             assertThat(signed.httpRequest().method().name()).isEqualTo("PUT");

@@ -76,6 +76,7 @@ class FileApiTest {
         response.then().statusCode(201);
         Long fileId = response.jsonPath().getLong("fileId");
         FileMetadata saved = fileRepository.findById(fileId).orElseThrow();
+        assertThat(saved.getObjectKey()).startsWith("chongchong/files/test/uploads/");
         assertThat(saved.getOwner().getId()).isEqualTo(userId);
         assertThat(saved.getOriginalFileName()).isEqualTo("과제.pdf");
         assertThat(saved.getContentType()).isEqualTo("application/pdf");
@@ -83,7 +84,7 @@ class FileApiTest {
         assertThat(saved.getStatus()).isEqualTo(FileUploadStatus.PENDING);
         URI url = URI.create(response.jsonPath().getString("uploadUrl"));
         assertThat(url.getPath()).isEqualTo("/" + saved.getObjectKey());
-        assertThat(url.getQuery()).contains("X-Amz-Signature=", "X-Amz-Expires=600");
+        assertThat(url.getQuery()).contains("X-Amz-Signature=", "X-Amz-Expires=180");
         assertThat(Instant.parse(response.jsonPath().getString("expiresAt"))).isAfter(Instant.now());
     }
 

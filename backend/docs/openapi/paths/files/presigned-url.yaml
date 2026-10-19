@@ -4,7 +4,7 @@ post:
   x-backend:
     status: done
     owner: frombunny
-    description: 사용자 소유의 파일 메타데이터를 저장하고 10분 동안 유효한 S3 PUT URL을 발급한다.
+    description: 사용자 소유의 파일 메타데이터를 저장하고 설정한 유효기간(기본 10분)의 S3 PUT URL을 발급한다.
   summary: 파일 업로드 URL 발급
   description: |
     업로드 대기 상태의 파일을 생성한다. 반환된 uploadUrl에 요청과 같은 Content-Type으로
