@@ -20,7 +20,7 @@ phases:
   build:
     commands:
       - cd backend
-      - ./gradlew test bootJar
+      - ./gradlew test bootJar --profile
       - cd ..
       - docker build --platform linux/arm64 --tag "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" backend
 
@@ -33,3 +33,4 @@ artifacts:
   files:
     - appspec.yml
     - deploy/**/*
+    - backend/build/reports/profile/**/*
