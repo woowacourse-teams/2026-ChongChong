@@ -31,6 +31,7 @@ import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.TestDatabaseCleaner;
 
 class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
 
@@ -57,13 +58,12 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private TestDatabaseCleaner databaseCleaner;
+
     @BeforeEach
     void clearReminderFixtures() {
-        noticeReminderRepository.deleteAllInBatch();
-        assignmentReminderRepository.deleteAllInBatch();
-        noticeRepository.deleteAllInBatch();
-        assignmentRepository.deleteAllInBatch();
-        studyRepository.deleteAllInBatch();
+        databaseCleaner.clean();
     }
 
     @Test
