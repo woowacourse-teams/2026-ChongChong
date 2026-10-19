@@ -14,9 +14,9 @@ public record AssignmentCreateRequest(
         @Size(max = 100, message = "제목은 {max}자 이내로 입력 가능합니다.")
         String title,
         @NotBlank(message = "내용은 필수 값입니다.")
-        @Size(max = 10000, message = "내용은 10,000자 이내로 입력 가능합니다.")
+        @Size(max = 10000, message = "내용은 {max}자 이내로 입력 가능합니다.")
         String content,
-        @Size(max = 10000, message = "제출 방법은 10,000자 이내로 입력 가능합니다.")
+        @Size(max = 10000, message = "제출 방법은 {max}자 이내로 입력 가능합니다.")
         String submissionMethod,
         @NotNull(message = "리더 제출 여부는 필수 값입니다.")
         SubmissionTarget submissionTarget,

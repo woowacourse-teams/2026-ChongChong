@@ -1,0 +1,52 @@
+post:
+  tags: [File]
+  operationId: createPresignedUrl
+  x-backend:
+    status: done
+    owner: frombunny
+    description: 사용자 소유의 파일 메타데이터를 저장하고 설정한 유효기간(기본 10분)의 S3 PUT URL을 발급한다.
+  summary: 파일 업로드 URL 발급
+  description: |
+    업로드 대기 상태의 파일을 생성한다. 반환된 uploadUrl에 요청과 같은 Content-Type으로
+    파일 본문을 PUT한다. URL 발급은 실제 파일 업로드 완료를 의미하지 않는다.
+    size는 클라이언트가 선언한 바이트 수이며 실제 업로드 결과는 별도로 검증해야 한다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required: [originalFileName, contentType, size]
+          properties:
+            originalFileName: { type: string, minLength: 1, maxLength: 255 }
+            contentType: { type: string, minLength: 1, maxLength: 255 }
+            size: { type: integer, format: int64, minimum: 0 }
+  responses:
+    '201':
+      description: 업로드 대기 파일 생성 및 URL 발급 성공
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [fileId, uploadUrl, expiresAt]
+            properties:
+              fileId: { type: integer, format: int64 }
+              uploadUrl: { type: string, format: uri }
+              expiresAt: { type: string, format: date-time }
+    '400': { $ref: '../../components/responses.yaml#/InvalidInputAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+    '500':
+      description: URL 발급 실패 등 서버 오류. 파일 메타데이터 저장은 롤백된다.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [code, message]
+            properties:
+              code: { type: string, const: INTERNAL_SERVER_ERROR }
+              message: { type: string }

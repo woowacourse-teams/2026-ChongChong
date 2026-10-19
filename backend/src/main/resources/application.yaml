@@ -20,6 +20,13 @@ spring:
     baseline-version: '1'
     clean-disabled: true
 
+aws:
+  region: ${AWS_REGION}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    upload-prefix: ${AWS_S3_UPLOAD_PREFIX}
+    url-validity: ${AWS_URL_VALIDITY:10m}
+
 app:
   environment: ${CLOUD_WATCH_APP_ENV:local}
 

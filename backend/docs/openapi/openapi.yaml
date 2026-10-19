@@ -19,8 +19,11 @@ tags:
   - { name: Assignment Submission, description: 과제 제출물 API }
   - { name: Web Push, description: Web Push 구독 API }
   - { name: Notification, description: 알림 API }
+  - { name: File, description: 파일 업로드 API }
 
 paths:
+  /api/files/presigned-url:
+    $ref: './paths/files/presigned-url.yaml'
   /api/auth/csrf:
     $ref: './paths/auth/csrf.yaml'
   /api/auth/login:

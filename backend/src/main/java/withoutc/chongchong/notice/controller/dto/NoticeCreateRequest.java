@@ -12,7 +12,7 @@ public record NoticeCreateRequest(
         @Size(max = 100, message = "제목은 {max}자 이내로 입력 가능합니다.")
         String title,
         @NotBlank(message = "내용은 필수 값입니다.")
-        @Size(max = 10000, message = "내용은 10,000자 이내로 입력 가능합니다.")
+        @Size(max = 10000, message = "내용은 {max}자 이내로 입력 가능합니다.")
         String content,
         List<
                 @NotNull(message = "리마인드 시각은 필수 값입니다.")

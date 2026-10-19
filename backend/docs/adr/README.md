@@ -74,3 +74,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0042](0042-expose-backend-http-metrics-for-prometheus.md)                              | 백엔드 HTTP 메트릭을 Prometheus 형식으로 노출한다 |
 | [0043](0043-collect-http-metrics-with-adot-and-amp.md)                                  | ADOT으로 HTTP 메트릭을 수집해 AMP에 저장한다 |
 | [0044](0044-collect-http-metrics-with-adot-and-cloudwatch.md)                           | ADOT으로 HTTP 메트릭을 수집해 CloudWatch에 저장한다 |
+| [0052](0052-use-presigned-urls-for-file-uploads.md)                             | 첨부파일 업로드에 S3 Presigned URL을 사용한다 |

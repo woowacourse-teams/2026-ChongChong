@@ -10,6 +10,13 @@ spring:
   flyway:
     enabled: false
 
+aws:
+  region: ap-northeast-2
+  s3:
+    bucket: test-upload-bucket
+    upload-prefix: chongchong/files/test/uploads/
+    url-validity: 3m
+
 jwt:
   study-invite-secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
 
