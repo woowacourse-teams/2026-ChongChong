@@ -7,19 +7,19 @@ receivers:
   prometheus:
     config:
       global:
-        scrape_interval: 60s
-        scrape_timeout: 10s
+        scrape_interval: ${env:METRICS_SCRAPE_INTERVAL}
+        scrape_timeout: ${env:METRICS_SCRAPE_TIMEOUT}
       scrape_configs:
         - job_name: chongchong-backend
           metrics_path: /actuator/prometheus
           static_configs:
-            - targets: ["backend:8080"]
+            - targets: [ "backend:8080" ]
               labels:
                 environment: ${env:CLOUD_WATCH_APP_ENV}
                 service: chongchong-backend
           metric_relabel_configs:
-            - source_labels: [__name__]
-              regex: 'http_server_requests_seconds_(bucket|count|sum)|up'
+            - source_labels: [ __name__ ]
+              regex: 'http_server_requests_seconds_(bucket|count|sum)|notification_delivery_.*|hikaricp_.*|jvm_memory_(used|committed|max)_bytes|jvm_gc_.*|jvm_threads_.*|process_cpu_usage|process_uptime_seconds|system_cpu_usage|up'
               action: keep
 
 processors:
@@ -45,9 +45,9 @@ exporters:
       num_consumers: 1
 
 service:
-  extensions: [sigv4auth]
+  extensions: [ sigv4auth ]
   pipelines:
     metrics:
-      receivers: [prometheus]
-      processors: [memory_limiter, cumulativetodelta, batch]
-      exporters: [otlphttp]
+      receivers: [ prometheus ]
+      processors: [ memory_limiter, cumulativetodelta, batch ]
+      exporters: [ otlphttp ]

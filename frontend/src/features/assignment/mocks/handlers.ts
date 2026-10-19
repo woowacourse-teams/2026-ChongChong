@@ -8,6 +8,12 @@ import { assignmentTable, AssignmentSchemaType, submissionTable } from './db';
 import { validateAssignment } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
 
+function getCompletedSubmissionStatus(createdAt: string | null, closeAt: string) {
+  return createdAt && new Date(createdAt) > new Date(closeAt)
+    ? ('LATE_SUBMITTED' as const)
+    : ('SUBMITTED' as const);
+}
+
 export const handlers = [
   http.get(`${API_URL}/studies/:studyId/assignments`, ({ request, params }) => {
     const user = findUserFromHeader(request.headers);
@@ -34,7 +40,7 @@ export const handlers = [
       const submissionStatus = !mySubmission
         ? 'NOT_ASSIGNED'
         : mySubmission.submitted
-          ? 'SUBMITTED'
+          ? getCompletedSubmissionStatus(mySubmission.createdAt, assignment.closeAt)
           : 'NOT_SUBMITTED';
       const common = {
         id: assignment.id,
@@ -244,6 +250,7 @@ export const handlers = [
             id,
             name: submitter?.name ?? '',
             profileImage: submitter?.profileImage ?? null,
+            submissionStatus: getCompletedSubmissionStatus(createdAt, assignment.closeAt),
             createdAt,
           };
         });
@@ -262,6 +269,11 @@ export const handlers = [
       const member = memberTable.findFirst((query) => query.where({ studyId, userId: user.id }));
       if (!member) return new HttpResponse(null, { status: 403 });
 
+      const assignment = assignmentTable.findFirst((query) =>
+        query.where({ id: assignmentId, studyId }),
+      );
+      if (!assignment) return new HttpResponse(null, { status: 404 });
+
       const submission = submissionTable.findFirst((query) =>
         query.where({ assignmentId, userId: user.id }),
       );
@@ -279,7 +291,7 @@ export const handlers = [
 
       return HttpResponse.json({
         submissionId: submission.id,
-        submissionStatus: 'SUBMITTED' as const,
+        submissionStatus: getCompletedSubmissionStatus(submission.createdAt, assignment.closeAt),
         createdAt: submission.createdAt,
         ...(submission.content === null ? {} : { content: submission.content }),
         ...(submission.link === null ? {} : { link: submission.link }),

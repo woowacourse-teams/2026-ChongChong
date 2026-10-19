@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import linkIcon from '../../../shared/assets/link-green.svg';
+import Badge from '../../../shared/ui/Badge';
 import Button from '../../../shared/ui/Button';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
@@ -32,6 +33,12 @@ const sectionTitleStyle = {
   ...typography.title,
   margin: 0,
   color: tokens.text.primary,
+} satisfies CSSProperties;
+
+const sectionTitleRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: tokens.spacing[3],
 } satisfies CSSProperties;
 
 const submittedAtStyle = {
@@ -108,9 +115,16 @@ export default function CompletedAssignmentSubmission({
     />
   ) : (
     <section css={sectionStyle} aria-labelledby="my-submission-title">
-      <h2 id="my-submission-title" css={sectionTitleStyle}>
-        내 제출
-      </h2>
+      <div css={sectionTitleRowStyle}>
+        <h2 id="my-submission-title" css={sectionTitleStyle}>
+          내 제출
+        </h2>
+        {submission.submissionStatus === 'LATE_SUBMITTED' && (
+          <Badge variant="warningSolid" size="status">
+            지각 제출
+          </Badge>
+        )}
+      </div>
       <time css={submittedAtStyle} dateTime={submission.createdAt}>
         {formatSubmittedAt(submission.createdAt)}
       </time>

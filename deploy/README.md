@@ -38,6 +38,9 @@ bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 
 - Study Invite 및 인증 JWT 설정
 - 프론트엔드 기준 URL과 선택적인 CORS 허용 Origin 목록
 - Kakao REST API 키, Client Secret과 환경별 Redirect URI
+- Web Push VAPID 키와 푸시 클릭 토큰 서명 키
+
+`WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET`에는 `openssl rand -base64 32`로 생성한 값을 설정한다. 같은 환경의 모든 백엔드 인스턴스는 같은 값을 사용하고, dev와 prod는 서로 다른 값을 사용해도 된다. 실제 값은 `/opt/chongchong/.env`에만 저장한다.
 
 배포 스크립트가 이 파일을 읽으므로 각 줄은 Bash에서 읽을 수 있는 `KEY=VALUE` 형식으로 작성한다. 공백이나 `$`,
 따옴표처럼 Shell에서 의미가 있는 문자가 포함된 값은 작은따옴표로 감싼다.
@@ -57,6 +60,48 @@ Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
 백엔드가 Token 교환에 사용하는 URI가 완전히 같아야 한다. 로컬은 `http://localhost:3005/auth/kakao/callback`,
 배포 환경은 같은 `/auth/kakao/callback` 경로를 사용하는 실제 프론트엔드 HTTPS 주소로 설정한다. REST API 키와
 Client Secret의 실제 값은 `/opt/chongchong/.env`에만 저장하고 저장소에는 커밋하지 않는다.
+
+### dev 알림 부하 테스트 sender 설정
+
+Compose는 `/opt/chongchong/.env`의 `SPRING_PROFILES_ACTIVE`, `WEB_PUSH_SENDER_MODE`,
+`WEB_PUSH_SENDER_SIMULATED_DELAY_MS`를 backend 컨테이너에 전달한다. 기본값은 활성 프로필 미지정,
+`real`, `500ms`이므로 prod의 기존 `.env`에 새 변수를 추가하지 않아도 실제 전송을 유지한다.
+
+다른 사용자 작업이 섞이지 않은 dev 테스트 DB와 큐를 확인한 뒤 dev EC2의 `/opt/chongchong/.env`에 설정한다.
+
+```dotenv
+CLOUD_WATCH_APP_ENV=dev
+SPRING_PROFILES_ACTIVE=load-test
+WEB_PUSH_SENDER_MODE=simulated
+WEB_PUSH_SENDER_SIMULATED_DELAY_MS=500
+```
+
+기존 활성 프로필이 필요하면 유지하고 `load-test`를 추가한다. `prod` 프로필은 포함하지 않는다.
+시뮬레이터는 `app.environment=dev`, `load-test` 프로필과 `simulated` 모드를 함께 요구한다.
+기존 DB·인증·VAPID 설정은 유지한다. `.env` 변경 후 재배포하면 배포 스크립트가 backend를 재생성한다.
+단순 `docker restart`로는 변경한 환경 변수가 적용되지 않는다. 별도 Compose override는 필요하지 않다.
+
+테스트를 시작하기 전에 backend 컨테이너의 위 환경 변수와 시뮬레이터 시작 로그를 확인한다.
+종료 시 테스트 Delivery와 합성 구독을 정리한 뒤 `load-test`를 제거하고 모드를 `real`로 복원해 재배포한다.
+데이터 준비와 20건 예행시험은 [알림 부하 테스트 sender](../backend/docs/load-test-sender.md)를 따른다.
+
+### 알림 발송 및 종료 설정
+
+다음 값은 `/opt/chongchong/.env`에서 설정한다. 기존 `.env`에 없으면 표의 기본값을 사용한다.
+
+| 변수 | 기본값 | 용도 |
+| --- | --- | --- |
+| `WEB_PUSH_DELIVERY_CONCURRENCY` | `1` | 최대 동시 발송 수 |
+| `WEB_PUSH_DELIVERY_SEND_TIMEOUT` | `5s` | Web Push 응답 대기 제한 시간 |
+| `WEB_PUSH_DELIVERY_SHUTDOWN_TIMEOUT` | `8s` | 종료 시 발송 작업 완료를 기다리는 시간 |
+| `BACKEND_STOP_TIMEOUT_SECONDS` | `60` | 컨테이너 강제 종료 전 유예 시간(초) |
+
+종료 대기 시간은 발송 제한 시간보다 1초 이상 길어야 한다. 애플리케이션은 발송 작업이 완료되거나 종료 대기
+시간이 지날 때까지 JPA와 데이터소스를 유지한다. 컨테이너 유예 시간은 이 대기와 Spring의 다른 종료 단계를
+포함한 전체 종료 시간보다 길게 설정한다.
+
+`BACKEND_STOP_TIMEOUT_SECONDS`는 backend의 `stop_grace_period`와 재배포·롤백 시 Compose `up --timeout`에
+동일하게 적용된다. 새 종료 정책을 처음 배포할 때에도 기존 컨테이너를 이 시간만큼 기다린다.
 
 ## 3. CodeBuild Project를 구성한다
 
@@ -177,7 +222,7 @@ Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
 새 컨테이너 시작에 실패하면 직전 backend 이미지로 복구를 시도한다. 단일 EC2를 사용하므로 배포 중 짧은 중단은
 허용하며, 운영 전 무중단 전환은 별도 결정으로 다룬다.
 
-## 7. CloudWatch HTTP 메트릭 수집기를 환경별로 활성화한다
+## 7. CloudWatch HTTP·Hikari·JVM 메트릭 수집기를 환경별로 활성화한다
 
 [ADR-0044](../backend/docs/adr/0044-collect-http-metrics-with-adot-and-cloudwatch.md)에 따라 각 EC2의 ADOT
 수집기는 사설 Docker 네트워크에서 백엔드의 `/actuator/prometheus`를 읽고 CloudWatch의 OTLP 메트릭
@@ -196,9 +241,10 @@ EC2 역할에는 `cloudwatch:PutMetricData` 권한이 필요하다. dev의 `ec2-
 파일시스템은 이후 확장했으므로 현재 여유 용량을 다시 확인한다. dev 백엔드는 약 305MiB를 사용했고 스왑
 337MiB가 사용 중이었다. 수집기의 192MB 제한은 최대치일 뿐 실제 사용량이나 안전한 여유를 보장하지 않는다.
 
-dev 단기 시험에서는 `/opt/chongchong/.env`에 `COMPOSE_PROFILES=metrics`를 아직 설정하지 않는다. 이미
-존재하는 `CLOUD_WATCH_AWS_REGION=ap-northeast-2`와 `CLOUD_WATCH_APP_ENV=dev`를 확인하고, 백엔드가 실행
-중일 때 아래 명령으로 수집기만 시작한다.
+`CLOUD_WATCH_APP_ENV=dev`이면 배포 스크립트가 애플리케이션 기동 확인 후 수집기를 별도로 pull·재생성한다.
+dev에서는 `COMPOSE_PROFILES=metrics`가 없어도 반영된다. prod는 기존처럼 명시적 프로필 활성화가 필요하다.
+수동으로 수집기만 적용할 때는 아래 명령을 사용한다. 변경 범위와 복구·검증은
+[Nginx 연결 한도와 수집기 배포](nginx-limits-and-observability.md)를 따른다.
 
 ```bash
 sudo docker compose \
@@ -214,7 +260,7 @@ sudo docker inspect --format '{{.State.OOMKilled}}' chongchong-metrics-collector
 ```
 
 Prometheus 출력의 누적 히스토그램에는 OTLP 시작 시각이 없어 수집기가 `cumulativetodelta`로 수집 간 증가분을
-만든다. 첫 관측값은 기준값으로만 사용하므로 최소 두 번의 60초 수집 이후 전송 결과를 확인한다. 수집기 로그에서
+만든다. 첫 관측값은 기준값으로만 사용하므로 최소 두 번의 수집(기본 주기 60초) 이후 전송 결과를 확인한다. 수집기 로그에서
 `Partial success response`와 자격 증명·네트워크·OTLP 전송 오류가 없는지 확인한다. CloudWatch Query Studio에서 실제
 HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후 요청 수가 증가하는지 조회한다. 통제된 dev
 환경에서만 5xx 요청과 p95 계산을 검증한다. Prometheus 출력이 OTLP로 변환되므로 실제 이름과 쿼리를 확인한
@@ -232,8 +278,48 @@ sudo docker compose \
   --profile metrics stop metrics-collector
 ```
 
-dev 단기 시험에서 안정성을 확인한 뒤에만 `.env`에 `COMPOSE_PROFILES=metrics`를 추가해 이후 배포에서도
-수집기가 실행되게 한다. dev가 불안정하면 상시 실행하지 않고 인스턴스 증설 또는 수집 위치 변경을 결정한다.
-그 다음 prod에서도 권한·자원·실제 메트릭을 검증한다. 수집 중단 구간에는 데이터 공백이 생길 수 있지만
+dev는 이후 배포에서 수집기를 재생성하므로 수동 중지는 다음 배포까지의 조치다. 지속적으로 중단해야 한다면
+수집기 자동 배포 변경을 되돌린 배포본을 사용한다. prod는 별도로 권한·자원·실제 메트릭을 검증한 뒤
+`COMPOSE_PROFILES=metrics`를 설정한다. 수집 중단 구간에는 데이터 공백이 생길 수 있지만
 백엔드의 요청 처리와 CloudWatch Logs 수집은 계속 동작한다. CloudWatch OpenTelemetry 메트릭은 수집
 데이터량에 따라 과금되므로 실제 수집량과 비용을 확인한다.
+
+### 제출 집중 부하에서 Hikari·JVM 지표 확인
+
+기존 HTTP·알림 지표와 함께 아래 계열을 허용한다. 백엔드가 이미 노출하는 지표를 전달하며, 허용 목록 추가가 새 계측이나 히스토그램 버킷을 만들지는 않는다.
+
+| 지표 계열 | 확인 목적 |
+| --- | --- |
+| `hikaricp_*` | 연결 풀 active·idle·max·pending, 획득·사용·생성 시간, 획득 timeout |
+| `jvm_memory_(used/committed/max)_bytes` | JVM 영역별 메모리 사용량·한도 |
+| `jvm_gc_*` | GC 정지 시간과 할당·회수 관련 지표 |
+| `jvm_threads_*` | JVM 스레드 수·상태 |
+| `process_cpu_usage`, `system_cpu_usage` | JVM 프로세스와 실행 환경 CPU 사용률 |
+| `process_uptime_seconds` | 재시작에 따른 지표 초기화 구분 |
+
+Hikari pending은 수집 순간의 대기 수다. 60초 수집으로는 3초 부하를 놓칠 수 있으므로 dev 진단 실험에서만 `/opt/chongchong/.env`에 다음 값을 설정할 수 있다.
+
+```dotenv
+METRICS_SCRAPE_INTERVAL=1s
+METRICS_SCRAPE_TIMEOUT=1s
+```
+
+timeout은 interval보다 길면 안 된다. 기본값은 60s·10s이며 prod도 기본값을 유지한다. 1초 설정은 수집 횟수를 60배로 늘리므로 수집기 CPU·메모리와 전송 오류를 확인하고 실험 후 기본값으로 복원한다. 1초 수집도 모든 순간 대기를 포착하지는 못한다.
+
+YAML과 Compose 파일을 배포 위치에 함께 반영한 뒤 수집기만 재생성한다. 환경변수 추가는 단순 restart로 반영되지 않는다. 애플리케이션 재빌드나 연결 풀 크기 변경은 필요 없다.
+
+```bash
+sudo docker compose \
+  --env-file /opt/chongchong/.env \
+  --env-file /opt/chongchong/deploy/image.env \
+  --file /opt/chongchong/deploy/docker-compose.yml \
+  --profile metrics up --detach --no-deps --force-recreate metrics-collector
+sudo docker logs --tail 100 chongchong-metrics-collector
+sudo docker exec chongchong-nginx \
+  wget -qO- -T 10 http://backend:8080/actuator/prometheus \
+  | grep -E '^(hikaricp_|jvm_memory_|jvm_gc_|jvm_threads_|process_cpu_usage|system_cpu_usage|process_uptime_seconds)'
+```
+
+위 출력은 백엔드 노출 여부만 확인한다. 실제 CloudWatch 전송은 Query Studio에서 변환된 지표 이름, dev 환경·서비스·인스턴스·pool 라벨을 확인한다. 조회 step을 줄여도 원래 수집 간격보다 세밀한 자료가 생기지는 않는다. batch 전송 주기 10초는 그대로이며 수집 시각과 화면에 도착하는 시각을 구분한다.
+
+`acquire`와 `usage`의 count·sum 증가분으로 구간 평균을 비교한다. 버킷이 없으면 p95를 계산할 수 없고 max는 전체 실행의 최대값을 보장하지 않는다. pending 상승과 active가 max에 도달하는 시점, 획득 시간 증가가 함께 관측되는지 확인한다. 이것만으로 근본 원인을 확정하지 말고 SQL·잠금·트랜잭션 점유 시간과 연결한다.

@@ -53,6 +53,9 @@ public class NotificationDelivery extends BaseEntity {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
+    @Column(name = "clicked_at")
+    private LocalDateTime clickedAt;
+
     @Column(nullable = false)
     private int attemptCount;
 
@@ -67,6 +70,17 @@ public class NotificationDelivery extends BaseEntity {
         this.status = DeliveryStatus.PROCESSING;
         this.claimedAt = now;
         this.attemptCount++;
+    }
+
+    public void releaseClaim() {
+        validateStatus(DeliveryStatus.PROCESSING);
+        this.status = DeliveryStatus.RETRY_WAIT;
+
+        if (nextRetryAt == null) {
+            this.status = DeliveryStatus.PENDING;
+        }
+        this.claimedAt = null;
+        this.attemptCount--;
     }
 
     public void markSent(LocalDateTime now) {
@@ -94,6 +108,12 @@ public class NotificationDelivery extends BaseEntity {
         this.status = DeliveryStatus.FAILED;
         this.nextRetryAt = null;
         this.lastError = error;
+    }
+
+    public void click(LocalDateTime now) {
+        if (clickedAt == null) {
+            clickedAt = now;
+        }
     }
 
     public static NotificationDelivery create(

@@ -61,3 +61,11 @@ export async function registerWebPushSubscription(subscription: WebPushSubscript
 export async function deactivateWebPushSubscription(subscriptionId: number) {
   await api.delete(`/web-push-subscriptions/${subscriptionId}`);
 }
+
+export async function recordNotificationDeliveryClick(deliveryId: number, clickToken: string) {
+  // 인증용 로직이 불필요합니다
+  await ky.post(`${API_URL}/notification-deliveries/${deliveryId}/click`, {
+    credentials: 'omit',
+    json: { clickToken },
+  });
+}

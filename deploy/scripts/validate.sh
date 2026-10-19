@@ -8,6 +8,8 @@ source "${SCRIPT_DIR}/runtime.sh"
 
 load_deployment_environment
 wait_for_application
+verify_nginx_limits
+verify_metrics_collector
 
 HEALTH_STATUS_CODE="$(curl \
     --silent \

@@ -44,6 +44,8 @@ ErrorResponse:
         - NOTICE_NOT_FOUND
         - NOTICE_RECIPIENT_NOT_FOUND
         - NOTIFICATION_NOT_FOUND
+        - NOTIFICATION_DELIVERY_NOT_FOUND
+        - NOTIFICATION_DELIVERY_ACCESS_DENIED
         - ASSIGNMENT_NOT_FOUND
         - ASSIGNMENT_SUBMISSION_NOT_FOUND
         - INVALID_TITLE
@@ -56,6 +58,7 @@ ErrorResponse:
         - ALREADY_JOINED_STUDY
         - STUDY_MEMBER_LIMIT_EXCEEDED
         - WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED
+        - INVALID_CLICK_TOKEN
     message: { type: string }
 InvalidInputValueError:
   type: object
@@ -86,6 +89,7 @@ AuthenticationRequiredError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { proper
 InvalidRefreshTokenError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_REFRESH_TOKEN }, message: { const: 유효하지 않은 Refresh Token입니다. } } }], examples: [{ code: INVALID_REFRESH_TOKEN, message: 유효하지 않은 Refresh Token입니다. }] }
 SocialAuthenticationFailedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: SOCIAL_AUTHENTICATION_FAILED }, message: { const: 소셜 로그인 인증에 실패했습니다. } } }], examples: [{ code: SOCIAL_AUTHENTICATION_FAILED, message: 소셜 로그인 인증에 실패했습니다. }] }
 UnsupportedSocialProviderError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: UNSUPPORTED_SOCIAL_PROVIDER }, message: { const: 지원하지 않는 소셜 로그인 제공자입니다. } } }], examples: [{ code: UNSUPPORTED_SOCIAL_PROVIDER, message: 지원하지 않는 소셜 로그인 제공자입니다. }] }
+InvalidClickTokenError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_CLICK_TOKEN }, message: { const: 유효하지 않거나 만료된 웹 푸시 클릭 토큰입니다. } } }], examples: [{ code: INVALID_CLICK_TOKEN, message: 유효하지 않거나 만료된 웹 푸시 클릭 토큰입니다. }] }
 InvalidCsrfTokenError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_CSRF_TOKEN }, message: { const: 유효하지 않은 CSRF Token입니다. } } }], examples: [{ code: INVALID_CSRF_TOKEN, message: 유효하지 않은 CSRF Token입니다. }] }
 AccessDeniedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ACCESS_DENIED }, message: { const: 요청한 작업을 수행할 권한이 없습니다. } } }], examples: [{ code: ACCESS_DENIED, message: 요청한 작업을 수행할 권한이 없습니다. }] }
 StudyAccessDeniedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_ACCESS_DENIED }, message: { const: 해당 스터디에 대한 접근 권한이 없습니다. } } }], examples: [{ code: STUDY_ACCESS_DENIED, message: 해당 스터디에 대한 접근 권한이 없습니다. }] }
@@ -100,6 +104,8 @@ UserNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { co
 InvalidUserNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_USER_NAME }, message: { const: 사용자 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_USER_NAME, message: 사용자 이름이 올바르지 않습니다. }] }
 NoticeNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_NOT_FOUND }, message: { const: 존재하지 않는 공지입니다. } } }], examples: [{ code: NOTICE_NOT_FOUND, message: 존재하지 않는 공지입니다. }] }
 NotificationNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_NOT_FOUND }, message: { const: 존재하지 않는 알림입니다. } } }], examples: [{ code: NOTIFICATION_NOT_FOUND, message: 존재하지 않는 알림입니다. }] }
+NotificationDeliveryNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_DELIVERY_NOT_FOUND }, message: { const: 존재하지 않는 알림 발송 내역입니다. } } }], examples: [{ code: NOTIFICATION_DELIVERY_NOT_FOUND, message: 존재하지 않는 알림 발송 내역입니다. }] }
+NotificationDeliveryAccessDeniedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTIFICATION_DELIVERY_ACCESS_DENIED }, message: { const: 해당 알림 발송 내역에 대한 접근 권한이 없습니다. } } }], examples: [{ code: NOTIFICATION_DELIVERY_ACCESS_DENIED, message: 해당 알림 발송 내역에 대한 접근 권한이 없습니다. }] }
 NoticeRecipientNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: NOTICE_RECIPIENT_NOT_FOUND }, message: { const: 공지 수신자 정보를 찾을 수 없습니다. } } }], examples: [{ code: NOTICE_RECIPIENT_NOT_FOUND, message: 공지 수신자 정보를 찾을 수 없습니다. }] }
 AssignmentNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ASSIGNMENT_NOT_FOUND }, message: { const: 존재하지 않는 과제입니다. } } }], examples: [{ code: ASSIGNMENT_NOT_FOUND, message: 존재하지 않는 과제입니다. }] }
 AssignmentSubmissionNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: ASSIGNMENT_SUBMISSION_NOT_FOUND }, message: { const: 존재하지 않는 제출물입니다. } } }], examples: [{ code: ASSIGNMENT_SUBMISSION_NOT_FOUND, message: 존재하지 않는 제출물입니다. }] }

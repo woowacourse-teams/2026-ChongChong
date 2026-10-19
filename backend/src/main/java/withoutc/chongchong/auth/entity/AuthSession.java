@@ -1,16 +1,7 @@
 package withoutc.chongchong.auth.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,11 +14,13 @@ import withoutc.chongchong.user.entity.User;
 @Table(
         name = "auth_sessions",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_auth_sessions_user_id", columnNames = "user_id"),
                 @UniqueConstraint(
                         name = "uk_auth_sessions_refresh_token_hash",
                         columnNames = "refresh_token_hash"
                 )
+        },
+        indexes = {
+                @Index(name = "idx_auth_sessions_user_id", columnList = "user_id")
         }
 )
 @Getter

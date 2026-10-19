@@ -14,6 +14,15 @@ fi
 chown root:root "${APP_ROOT}/.env"
 chmod 0600 "${APP_ROOT}/.env"
 
+if [[ -f "${APP_ROOT}/deploy/docker-compose.yml" ]]; then
+    install -d -m 0700 "${APP_ROOT}/deploy-backups"
+    backup="$(mktemp -d "${APP_ROOT}/deploy-backups/before-install.XXXXXX")"
+    cp -a "${APP_ROOT}/deploy" "${backup}/deploy"
+    printf '%s\n' "${backup}/deploy" > "${APP_ROOT}/previous-deploy-dir"
+else
+    : > "${APP_ROOT}/previous-deploy-dir"
+fi
+
 docker --version
 docker compose version
 systemctl is-active --quiet codedeploy-agent

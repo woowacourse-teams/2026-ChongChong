@@ -39,6 +39,13 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+        notification.delivery.queue.wait: true
+        notification.delivery.post.claim.wait: true
+        notification.delivery.claim: true
+        notification.delivery.send: true
+      maximum-expected-value:
+        notification.delivery.queue.wait: 10m
+        notification.delivery.post.claim.wait: 10m
 
 logging:
   structured:
@@ -86,9 +93,17 @@ auth:
       path: /api/auth
 
 web-push:
+  sender:
+    mode: ${WEB_PUSH_SENDER_MODE:real}
+    simulated-delay-ms: ${WEB_PUSH_SENDER_SIMULATED_DELAY_MS:500}
   delivery:
+    concurrency: ${WEB_PUSH_DELIVERY_CONCURRENCY:1}
     processing-timeout-ms: ${WEB_PUSH_DELIVERY_PROCESSING_TIMEOUT_MS:300000}
+    send-timeout: ${WEB_PUSH_DELIVERY_SEND_TIMEOUT:5s}
+    shutdown-timeout: ${WEB_PUSH_DELIVERY_SHUTDOWN_TIMEOUT:8s}
   vapid:
     public-key: ${WEB_PUSH_VAPID_PUBLIC_KEY}
     private-key: ${WEB_PUSH_VAPID_PRIVATE_KEY}
     subject: ${WEB_PUSH_VAPID_SUBJECT}
+  notification:
+    click-token-secret: ${WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET}

@@ -1,5 +1,7 @@
 # 0020. 웹 인증 토큰 전달 경계를 구성한다
 
+> 부분 대체: [0051. 사용자당 여러 인증 세션을 허용한다](0051-allow-multiple-auth-sessions-per-user.md)에서 단일 활성 Session 전제를 대체한다. 웹 Token 전달 경계는 유지한다.
+
 - 날짜: 2026-08-24
 - 관련 이슈: [#109](https://github.com/woowacourse-teams/2026-ChongChong/issues/109)
 - 대체하는 결정: [0018. RN 소셜 로그인 HTTP 계약을 정의한다](0018-define-rn-social-login-http-contract.md)

@@ -84,6 +84,8 @@ paths:
     $ref: './paths/notifications/collection.yaml'
   /api/notifications/{notificationId}:
     $ref: './paths/notifications/detail.yaml'
+  /api/notification-deliveries/{deliveryId}/click:
+    $ref: './paths/notifications/delivery-click.yaml'
 
 components:
   securitySchemes:

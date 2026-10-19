@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/api/v3/api-docs.yaml"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, API_PREFIX + "/web-push/config").permitAll()
+                        .requestMatchers(HttpMethod.POST, API_PREFIX + "/notification-deliveries/*/click").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

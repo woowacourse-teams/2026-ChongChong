@@ -1,20 +1,20 @@
 package withoutc.chongchong.notification.sender;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.exception.WebPushSendResult;
+import withoutc.chongchong.notification.token.WebPushNotificationClickTokenProvider;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
-@Component
 @RequiredArgsConstructor
 public class WebPushNotificationSender implements NotificationSender {
 
     private final ObjectMapper objectMapper;
     private final WebPushClient webPushClient;
+    private final WebPushNotificationClickTokenProvider clickTokenProvider;
 
     @Override
     public WebPushSendResult send(ClaimedDelivery delivery) {
@@ -27,7 +27,9 @@ public class WebPushNotificationSender implements NotificationSender {
 
     private String createPayload(ClaimedDelivery delivery) {
         WebPushPayload payload = new WebPushPayload(
+                delivery.id(),
                 delivery.notificationId(),
+                clickTokenProvider.createClickToken(delivery.id()),
                 delivery.title(),
                 delivery.body(),
                 delivery.deepLink()
@@ -56,7 +58,9 @@ public class WebPushNotificationSender implements NotificationSender {
     }
 
     private record WebPushPayload(
+            Long deliveryId,
             Long notificationId,
+            String clickToken,
             String title,
             String body,
             String deepLink

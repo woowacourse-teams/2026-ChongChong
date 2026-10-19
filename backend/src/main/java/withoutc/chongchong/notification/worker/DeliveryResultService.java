@@ -37,6 +37,16 @@ public class DeliveryResultService {
     }
 
     @Transactional
+    public boolean releaseClaim(Long deliveryId) {
+        NotificationDelivery delivery = notificationDeliveryRepository.findById(deliveryId).orElse(null);
+        if (delivery == null) {
+            return false;
+        }
+        delivery.releaseClaim();
+        return true;
+    }
+
+    @Transactional
     public boolean markRetry(Long deliveryId, String error) {
         NotificationDelivery delivery = notificationDeliveryRepository.findById(deliveryId).orElse(null);
         if (delivery == null) {

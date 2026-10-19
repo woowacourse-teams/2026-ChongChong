@@ -1,7 +1,6 @@
-import { KAKAO_REDIRECT_URI, KAKAO_REST_API_KEY } from '../../../config';
-
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize';
 const KAKAO_OAUTH_STATE_KEY = 'kakao_oauth_state';
+const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY ?? '';
 
 export function startKakaoLogin() {
   if (!KAKAO_REST_API_KEY) {
@@ -11,10 +10,12 @@ export function startKakaoLogin() {
   const state = crypto.randomUUID();
   sessionStorage.setItem(KAKAO_OAUTH_STATE_KEY, state);
 
+  const redirectUri = new URL('/auth/kakao/callback', window.location.origin).toString();
+
   const searchParams = new URLSearchParams({
     response_type: 'code',
     client_id: KAKAO_REST_API_KEY,
-    redirect_uri: KAKAO_REDIRECT_URI,
+    redirect_uri: redirectUri,
     state,
   });
 

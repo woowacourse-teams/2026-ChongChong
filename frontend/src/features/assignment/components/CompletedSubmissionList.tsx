@@ -2,6 +2,7 @@ import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
+import Badge from '../../../shared/ui/Badge';
 import List from '../../../shared/ui/List';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
@@ -46,8 +47,16 @@ const memberStyle = {
   marginLeft: tokens.spacing[3],
 } satisfies CSSProperties;
 
+const nameRowStyle = {
+  display: 'flex',
+  minWidth: 0,
+  alignItems: 'center',
+  gap: tokens.spacing[2],
+} satisfies CSSProperties;
+
 const nameStyle = {
   ...typography.body,
+  minWidth: 0,
   overflow: 'hidden',
   color: tokens.text.primary,
   textOverflow: 'ellipsis',
@@ -94,7 +103,14 @@ export default function CompletedSubmissionList({ submissions }: Props) {
             />
 
             <div css={memberStyle}>
-              <span css={nameStyle}>{submission.name}</span>
+              <div css={nameRowStyle}>
+                <span css={nameStyle}>{submission.name}</span>
+                {submission.submissionStatus === 'LATE_SUBMITTED' && (
+                  <Badge variant="warningSolid" size="status">
+                    지각 제출
+                  </Badge>
+                )}
+              </div>
               <time css={dateStyle} dateTime={submission.createdAt}>
                 {formatSubmittedAt(submission.createdAt)}
               </time>

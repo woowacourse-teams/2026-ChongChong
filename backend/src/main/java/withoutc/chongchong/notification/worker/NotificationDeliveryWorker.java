@@ -1,43 +1,110 @@
 package withoutc.chongchong.notification.worker;
 
+import io.micrometer.core.instrument.Timer;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 import withoutc.chongchong.notification.exception.WebPushSendResult;
 import withoutc.chongchong.notification.logging.NotificationDeliveryLogger;
+import withoutc.chongchong.notification.metrics.NotificationDeliveryProcessingMetrics;
 import withoutc.chongchong.notification.sender.NotificationSender;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @Component
-@RequiredArgsConstructor
 public class NotificationDeliveryWorker {
-
-    // TODO: 적절한 배치 사이즈 결정
-    private static final int BATCH_SIZE = 100;
 
     private final DeliveryClaimService deliveryClaimService;
     private final DeliveryRecoveryService deliveryRecoveryService;
-    private final NotificationSender sender;
     private final DeliveryResultService deliveryResultService;
+    private final NotificationSender sender;
+    private final ThreadPoolTaskExecutor notificationDeliveryExecutor;
     private final NotificationDeliveryLogger notificationDeliveryLogger;
+    private final NotificationDeliveryProcessingMetrics notificationDeliveryProcessingMetrics;
+    private final Clock clock;
+
+    public NotificationDeliveryWorker(
+            DeliveryClaimService deliveryClaimService,
+            DeliveryRecoveryService deliveryRecoveryService,
+            DeliveryResultService deliveryResultService,
+            NotificationSender sender,
+            @Qualifier("notificationDeliveryExecutor") ThreadPoolTaskExecutor notificationDeliveryExecutor,
+            NotificationDeliveryLogger notificationDeliveryLogger,
+            NotificationDeliveryProcessingMetrics notificationDeliveryProcessingMetrics,
+            Clock clock
+    ) {
+        this.deliveryClaimService = deliveryClaimService;
+        this.deliveryRecoveryService = deliveryRecoveryService;
+        this.deliveryResultService = deliveryResultService;
+        this.sender = sender;
+        this.notificationDeliveryExecutor = notificationDeliveryExecutor;
+        this.notificationDeliveryLogger = notificationDeliveryLogger;
+        this.notificationDeliveryProcessingMetrics = notificationDeliveryProcessingMetrics;
+        this.clock = clock;
+    }
 
     @Scheduled(fixedDelayString = "${web-push.delivery.fixed-delay-ms:1000}")
     public void process() {
-        deliveryRecoveryService.recover(BATCH_SIZE);
+        int availableSlots = Math.max(
+                0,
+                notificationDeliveryExecutor.getMaxPoolSize() - notificationDeliveryExecutor.getActiveCount());
 
-        List<ClaimedDelivery> deliveries = deliveryClaimService.claimBatch(BATCH_SIZE);
+        if (availableSlots == 0) {
+            return;
+        }
 
-        for (ClaimedDelivery delivery : deliveries) {
-            processOne(delivery);
+        deliveryRecoveryService.recover(availableSlots);
+
+        List<ClaimedDelivery> deliveries;
+        Timer.Sample claimSample = notificationDeliveryProcessingMetrics.startClaim();
+        try {
+            deliveries = deliveryClaimService.claimBatch(availableSlots);
+        } finally {
+            notificationDeliveryProcessingMetrics.stopClaim(claimSample);
+        }
+
+        LocalDateTime claimCompletedAt = LocalDateTime.now(clock);
+        for (int index = 0; index < deliveries.size(); index++) {
+            ClaimedDelivery delivery = deliveries.get(index);
+            try {
+                notificationDeliveryExecutor.execute(
+                        () -> processOne(delivery, claimCompletedAt));
+                notificationDeliveryProcessingMetrics.recordQueueWait(
+                        Duration.between(delivery.readyAt(), claimCompletedAt)
+                );
+            } catch (TaskRejectedException exception) {
+                releaseUnsubmittedDeliveries(deliveries, index, exception);
+                return;
+            }
         }
     }
 
-    public void processOne(ClaimedDelivery delivery) {
+    private void releaseUnsubmittedDeliveries(
+            List<ClaimedDelivery> deliveries,
+            int firstUnsubmittedIndex,
+            TaskRejectedException rejection
+    ) {
+        for (int index = firstUnsubmittedIndex; index < deliveries.size(); index++) {
+            ClaimedDelivery delivery = deliveries.get(index);
+            try {
+                boolean isReleased = deliveryResultService.releaseClaim(delivery.id());
+                notificationDeliveryLogger.submissionRejected(delivery, isReleased, rejection);
+            } catch (RuntimeException exception) {
+                notificationDeliveryLogger.submissionRejected(delivery, false, exception);
+            }
+        }
+    }
+
+    private void processOne(ClaimedDelivery delivery, LocalDateTime claimCompletedAt) {
         try {
-            WebPushSendResult result = sender.send(delivery);
+            WebPushSendResult result = sendWithMetrics(delivery, claimCompletedAt);
 
             switch (result) {
                 case WebPushSendResult.SENT -> deliveryResultService.markSent(delivery.id());
@@ -75,6 +142,24 @@ public class NotificationDeliveryWorker {
                     WebPushErrorCode.UNEXPECTED_WEB_PUSH_ERROR.getMessage()
             );
             notificationDeliveryLogger.unexpectedFailure(delivery, exception);
+        }
+    }
+
+    private WebPushSendResult sendWithMetrics(ClaimedDelivery delivery, LocalDateTime claimCompletedAt) {
+        if (claimCompletedAt != null) {
+            notificationDeliveryProcessingMetrics.recordPostClaimWait(
+                    Duration.between(claimCompletedAt, LocalDateTime.now(clock))
+            );
+        }
+
+        Timer.Sample sendSample = notificationDeliveryProcessingMetrics.startSend();
+        boolean accepted = false;
+        try {
+            WebPushSendResult result = sender.send(delivery);
+            accepted = result == WebPushSendResult.SENT;
+            return result;
+        } finally {
+            notificationDeliveryProcessingMetrics.stopSend(sendSample, accepted);
         }
     }
 

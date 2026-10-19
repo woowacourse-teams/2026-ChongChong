@@ -25,6 +25,8 @@ frontend:
   allowed-origins: https://test.chongchong.app,http://localhost:3005
 
 web-push:
+  notification:
+    click-token-secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
   vapid:
     public-key: BDcLQBzrmGYpdNmsaQrk9_uU9Q_wQb2ziEN5AIcoUq4bi2uKlC2UKcmfBuUdJj_NzcDu-ldeUpif_na9i-u3HKw
     private-key: 67yyNB109eqWbw7r3HcJCuwmLDaDROaI6DJH4nCWUYU

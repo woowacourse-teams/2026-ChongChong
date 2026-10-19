@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.mock;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import withoutc.chongchong.notification.entity.DeliveryStatus;
+import withoutc.chongchong.notification.entity.Notification;
+import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.notification.repository.NotificationDeliveryRepository;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
@@ -76,5 +81,45 @@ class DeliveryResultServiceTest {
 
         verify(notificationDeliveryRepository).findById(DELIVERY_ID);
         verify(webPushSubscriptionRepository).findById(SUBSCRIPTION_ID);
+    }
+
+    @Test
+    @DisplayName("발송을 시작하지 못한 claim은 시도 횟수 없이 원래 대기 상태로 되돌린다")
+    void releasePendingClaimWithoutConsumingAttempt() {
+        NotificationDelivery delivery = createDelivery();
+        delivery.claim(LocalDateTime.of(2026, 10, 1, 8, 0));
+        when(notificationDeliveryRepository.findById(DELIVERY_ID)).thenReturn(Optional.of(delivery));
+
+        assertThat(deliveryResultService.releaseClaim(DELIVERY_ID)).isTrue();
+
+        assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.PENDING);
+        assertThat(delivery.getAttemptCount()).isZero();
+        assertThat(delivery.getClaimedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("재시도 발송의 claim을 해제하면 재시도 예정 시각을 유지한다")
+    void releaseRetryClaimAndPreserveRetryTime() {
+        NotificationDelivery delivery = createDelivery();
+        LocalDateTime retryAt = LocalDateTime.of(2026, 10, 1, 8, 0);
+        delivery.claim(retryAt.minusMinutes(2));
+        delivery.markRetry(retryAt, "이전 발송 실패");
+        delivery.claim(retryAt);
+        when(notificationDeliveryRepository.findById(DELIVERY_ID)).thenReturn(Optional.of(delivery));
+
+        assertThat(deliveryResultService.releaseClaim(DELIVERY_ID)).isTrue();
+
+        assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.RETRY_WAIT);
+        assertThat(delivery.getAttemptCount()).isEqualTo(1);
+        assertThat(delivery.getNextRetryAt()).isEqualTo(retryAt);
+        assertThat(delivery.getLastError()).isEqualTo("이전 발송 실패");
+        assertThat(delivery.getClaimedAt()).isNull();
+    }
+
+    private NotificationDelivery createDelivery() {
+        return NotificationDelivery.create(
+                mock(Notification.class),
+                mock(WebPushSubscription.class)
+        );
     }
 }
