@@ -64,6 +64,13 @@ public class FileMetadata extends BaseEntity {
         return ownerId != null && ownerId.equals(userId);
     }
 
+    public void completeUpload() {
+        if (status != FileUploadStatus.PENDING) {
+            throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
+        }
+        status = FileUploadStatus.COMPLETED;
+    }
+
     private FileMetadata(User owner, String originalFileName, String objectKey, String contentType, long size,
                          FileUploadStatus status) {
         validateOwner(owner);

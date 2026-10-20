@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
@@ -50,7 +51,9 @@ public class NoticeService {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeAccessPolicy.requireCanCreateNotice(actor);
 
-        noticeAttachmentService.prepareForCreate(userId, request.attachmentFileIds());
+        List<FileMetadata> attachmentFiles = noticeAttachmentService.prepareForCreate(
+                userId, request.attachmentFileIds()
+        );
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
@@ -61,6 +64,8 @@ public class NoticeService {
         LocalDateTime now = LocalDateTime.now(clock);
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
+        notice.addAttachments(attachmentFiles);
+        attachmentFiles.forEach(FileMetadata::completeUpload);
 
         noticeRepository.save(notice);
         notificationService.createNoticeCreatedEventNotifications(notice, members);

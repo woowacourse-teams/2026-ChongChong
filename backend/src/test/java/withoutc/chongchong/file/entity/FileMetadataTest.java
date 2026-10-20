@@ -18,6 +18,29 @@ class FileMetadataTest {
     private final User owner = User.create("사용자", null);
 
     @Test
+    @DisplayName("업로드 대기 파일을 완료 상태로 전환한다")
+    void completePendingUpload() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+
+        file.completeUpload();
+
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("이미 완료된 파일은 다시 완료 처리할 수 없다")
+    void rejectCompletingUploadTwice() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+        file.completeUpload();
+
+        assertThatThrownBy(file::completeUpload)
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+    }
+
+    @Test
     @DisplayName("파일 소유자의 사용자 ID로 본인 소유 여부를 확인한다")
     void checkOwnershipByUserId() {
         ReflectionTestUtils.setField(owner, "id", 1L);
