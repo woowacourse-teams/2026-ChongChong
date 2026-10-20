@@ -5,17 +5,22 @@ post:
   operationId: createNotice
   x-frontend:
     status: needs-update
-    description: "기능 추가: 공지 작성 시 리마인드 날짜·시간을 선택하고 remindAts로 저장."
+    description: |
+      기능 추가: 공지 작성 시 리마인드 날짜·시간을 선택하고 remindAts로 저장해야 한다.
+      이미지 선택·업로드 후 반환된 fileId 목록을 표시 순서대로 attachmentFileIds에 전달하는 흐름은 미연동이다.
+      새 파일을 포함한 공지 저장은 실제 업로드 검증 연결 전까지 503으로 차단된다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
-    status: done
-    owner: frombunny
+    status: in-progress
+    owner: JYL35
     description: |
       공지를 생성하고 수신자와 리마인더를 초기화한다.
-      이미지 첨부는 아직 연결되지 않았다. 공지 권한 검증은 NoticeAccessPolicy로 분리되어 있다.
+      첨부 메타데이터 연결 구조를 제공하며 새 첨부는 실제 업로드 검증 연결 전까지 503으로 차단한다.
+      무첨부 생성은 유지한다. 첨부 정책은 서버 설정으로 변경할 수 있다.
+      #542에서 요청 필드·첨부 저장·검증 연결 지점을 구현하며, 실제 S3 조회 연결과 통합 검증은 후속 작업이다.
   summary: 공지 생성
-  description: 스터디 리더가 공지를 생성한다. 입력·형식·도메인 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다. 리마인드 시각은 현재보다 미래여야 한다.
+  description: 스터디 리더가 공지를 생성한다. 첨부 식별자는 attachmentFileIds 순서로 전달한다. 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP(설정 가능). 새 파일은 본인 소유여야 하며 실제 검증 연결 전에는 503을 반환하고 전체 저장을 롤백한다. 첨부 생략·null·빈 배열은 기존 무첨부 생성과 같다. 리마인드 시각은 미래여야 한다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
@@ -32,7 +37,9 @@ post:
           example: { noticeId: 1 }
     '400': { $ref: '../../components/responses.yaml#/NoticeWriteBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '403': { $ref: '../../components/responses.yaml#/NoticeWriteForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/FileNotFound' }
+    '503': { $ref: '../../components/responses.yaml#/FileVerificationUnavailable' }
 get:
   tags: [Notice]
   operationId: getNotices

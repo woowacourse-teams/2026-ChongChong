@@ -3,7 +3,11 @@ post:
   operationId: createPresignedUrl
   x-frontend:
     status: needs-update
-    description: "파일 선택과 업로드 URL 발급·S3 PUT 요청은 웹에 연결되지 않았다. 업로드 완료 확인과 게시물 첨부 연결은 별도 서버 계약이 필요하다."
+    description: |
+      기능 추가: 파일 선택, 업로드 URL 발급, S3 PUT 요청을 웹에 연결해야 한다.
+      공지 생성·수정 요청에는 업로드한 파일의 fileId를 attachmentFileIds로 전달한다.
+      현재 새 파일 첨부는 S3의 실제 업로드 결과를 확인하는 기능이 연결될 때까지 503으로 차단된다.
+      과제·제출물 첨부와 파일 접근 URL 발급은 별도 후속 작업이다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
       - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
@@ -16,8 +20,13 @@ post:
     업로드 대기 상태의 파일을 생성한다. 반환된 uploadUrl에 요청과 같은 Content-Type으로
     파일 본문을 PUT한다. URL 발급은 실제 파일 업로드 완료를 의미하지 않는다.
     size는 클라이언트가 선언한 바이트 수이며 실제 업로드 결과는 별도로 검증해야 한다.
-    현재 최대 파일 크기와 허용 MIME 유형 목록은 제한하지 않는다.
-    업로드 완료 확인과 공지·과제·제출물에 파일을 연결하는 API는 아직 없다.
+    이 URL 발급 API 자체는 최대 파일 크기와 허용 MIME 유형 목록을 제한하지 않는다.
+    공지 생성·수정 API는 반환된 fileId를 attachmentFileIds로 받아 첨부 목록과 순서를 지정한다.
+    공지에 새로 첨부할 때는 파일 소유자·상태와 공지의 이미지 형식·크기·개수 정책을 검증한다.
+    이 검증을 통과하더라도 S3의 실제 파일 존재·크기 등을 확인하는 기능이 연결되기 전에는
+    새 파일을 포함한 공지 생성·수정 요청이 503 FILE_VERIFICATION_UNAVAILABLE로 실패하며 전체 변경이 롤백된다.
+    별도의 업로드 완료 확인 API는 없으며, 실제 업로드 검증은 공지 저장 과정에 연결할 예정이다.
+    과제·제출물 첨부와 파일 접근 URL 발급은 후속 작업이다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true

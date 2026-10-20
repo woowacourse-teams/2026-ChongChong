@@ -59,6 +59,25 @@ public class FileMetadata extends BaseEntity {
         return new FileMetadata(owner, originalFileName, objectKey, contentType, size, FileUploadStatus.PENDING);
     }
 
+    public boolean isOwnedBy(Long userId) {
+        Long ownerId = owner.getId();
+        return ownerId != null && ownerId.equals(userId);
+    }
+
+    public void completeUpload() {
+        if (status != FileUploadStatus.PENDING) {
+            throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
+        }
+        status = FileUploadStatus.COMPLETED;
+    }
+
+    public void markForDeletion() {
+        if (status != FileUploadStatus.COMPLETED) {
+            throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
+        }
+        status = FileUploadStatus.DELETE_PENDING;
+    }
+
     private FileMetadata(User owner, String originalFileName, String objectKey, String contentType, long size,
                          FileUploadStatus status) {
         validateOwner(owner);

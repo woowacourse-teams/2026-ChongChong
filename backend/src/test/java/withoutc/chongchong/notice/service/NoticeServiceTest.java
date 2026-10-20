@@ -29,6 +29,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.file.exception.FileErrorCode;
+import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
@@ -43,6 +45,7 @@ import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -78,6 +81,9 @@ class NoticeServiceTest {
     @Mock
     private NoticeAccessPolicy noticeAccessPolicy;
 
+    @Mock
+    private NoticeAttachmentService noticeAttachmentService;
+
     private NoticeService noticeService;
 
     @BeforeEach
@@ -90,6 +96,7 @@ class NoticeServiceTest {
                 noticeRecipientRepository,
                 studyRepository,
                 notificationService,
+                noticeAttachmentService,
                 noticeAccessPolicy,
                 clock
         );
@@ -102,7 +109,7 @@ class NoticeServiceTest {
         StudyMember leader = mock(StudyMember.class);
         StudyMember member = mock(StudyMember.class);
         LocalDateTime remindAt = NOW.plusDays(1);
-        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(remindAt));
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(remindAt), null);
         ArgumentCaptor<Notice> noticeCaptor = ArgumentCaptor.forClass(Notice.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
@@ -130,10 +137,28 @@ class NoticeServiceTest {
     }
 
     @Test
+    @DisplayName("첨부 검증이 준비되지 않았으면 공지 저장과 알림 생성을 진행하지 않는다")
+    void rejectCreateWhenAttachmentVerificationUnavailableTest() {
+        StudyMember actor = mock(StudyMember.class);
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", null, List.of(1L));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(actor);
+        when(noticeAttachmentService.prepareForCreate(USER_ID, List.of(1L)))
+                .thenThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE));
+
+        assertThatThrownBy(() -> noticeService.create(USER_ID, STUDY_ID, request))
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+
+        verify(noticeAccessPolicy).requireCanCreateNotice(actor);
+        verifyNoInteractions(studyRepository, noticeRepository, notificationService);
+    }
+
+    @Test
     @DisplayName("공지 수정 정책이 거부하면 저장소 조회를 중단한다")
     void updateByMemberTest() {
         StudyMember member = mock(StudyMember.class);
-        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null);
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
                 .when(noticeAccessPolicy).requireCanUpdateNotice(member);
@@ -155,9 +180,9 @@ class NoticeServiceTest {
         LocalDateTime oldRemindAt = NOW.plusHours(1);
         LocalDateTime newRemindAt = NOW.plusHours(2);
         notice.addReminders(List.of(oldRemindAt), NOW);
-        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, List.of(newRemindAt));
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, List.of(newRemindAt), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
 
         noticeService.update(USER_ID, STUDY_ID, NOTICE_ID, request);
 
@@ -166,6 +191,8 @@ class NoticeServiceTest {
         assertThat(notice.getContent()).isEqualTo("기존 내용");
         assertThat(notice.getNextRemindAt()).isEqualTo(newRemindAt);
         verify(noticeRepository).save(notice);
+        verifyNoInteractions(noticeAttachmentService);
+        verify(noticeRepository, never()).flush();
     }
 
     @Test
@@ -175,11 +202,13 @@ class NoticeServiceTest {
         StudyMember leader = mock(StudyMember.class);
         Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
 
         noticeService.delete(USER_ID, STUDY_ID, NOTICE_ID);
 
         verify(noticeAccessPolicy).requireCanDeleteNotice(leader);
+        verify(noticeAttachmentService).prepareForDelete(notice);
+        verify(notificationService).deleteNotificationsForResource(ResourceType.NOTICE, NOTICE_ID);
         verify(noticeRepository).delete(notice);
     }
 
@@ -322,9 +351,9 @@ class NoticeServiceTest {
     @DisplayName("다른 스터디의 공지는 수정할 수 없다")
     void updateNoticeFromOtherStudyTest() {
         StudyMember leader = mock(StudyMember.class);
-        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null);
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID))
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID))
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeService.update(USER_ID, STUDY_ID, NOTICE_ID, request));
@@ -336,7 +365,7 @@ class NoticeServiceTest {
     void deleteNoticeFromOtherStudyTest() {
         StudyMember leader = mock(StudyMember.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID))
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID))
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeService.delete(USER_ID, STUDY_ID, NOTICE_ID));
@@ -347,7 +376,7 @@ class NoticeServiceTest {
     @DisplayName("공지 생성 정책이 거부하면 공지를 생성하지 않는다")
     void rejectCreateWhenPolicyDeniesTest() {
         StudyMember actor = mock(StudyMember.class);
-        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of());
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(actor);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
                 .when(noticeAccessPolicy).requireCanCreateNotice(actor);
@@ -357,7 +386,7 @@ class NoticeServiceTest {
                 .extracting(exception -> ((AuthException) exception).getErrorCode())
                 .isEqualTo(AuthErrorCode.ACCESS_DENIED);
 
-        verifyNoInteractions(studyRepository, noticeRepository, notificationService);
+        verifyNoInteractions(studyRepository, noticeRepository, notificationService, noticeAttachmentService);
     }
 
     @Test

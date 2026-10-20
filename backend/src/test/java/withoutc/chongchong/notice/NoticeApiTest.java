@@ -337,7 +337,8 @@ class NoticeApiTest {
                 .body("$", not(hasKey("writer")))
                 .body("$", not(hasKey("profileImageUrl")))
                 .body("content", equalTo("기존 공지 내용"))
-                .body("createdAt", notNullValue());
+                .body("createdAt", notNullValue())
+                .body("attachments", hasSize(0));
     }
 
     @Test

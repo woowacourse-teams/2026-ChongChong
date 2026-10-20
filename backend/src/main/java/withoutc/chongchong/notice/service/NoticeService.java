@@ -4,12 +4,15 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
@@ -19,6 +22,7 @@ import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeAttachment;
 import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
@@ -40,6 +44,7 @@ public class NoticeService {
     private final NoticeRecipientRepository noticeRecipientRepository;
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
+    private final NoticeAttachmentService noticeAttachmentService;
 
     private final NoticeAccessPolicy noticeAccessPolicy;
     private final Clock clock;
@@ -48,6 +53,10 @@ public class NoticeService {
     public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeAccessPolicy.requireCanCreateNotice(actor);
+
+        List<FileMetadata> attachmentFiles = noticeAttachmentService.prepareForCreate(
+                userId, request.attachmentFileIds()
+        );
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
@@ -58,6 +67,8 @@ public class NoticeService {
         LocalDateTime now = LocalDateTime.now(clock);
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
+        notice.addAttachments(attachmentFiles);
+        attachmentFiles.forEach(FileMetadata::completeUpload);
 
         noticeRepository.save(notice);
         notificationService.createNoticeCreatedEventNotifications(notice, members);
@@ -70,7 +81,9 @@ public class NoticeService {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeAccessPolicy.requireCanDeleteNotice(actor);
 
-        Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
+        Notice notice = noticeRepository.getByIdAndStudyIdForUpdateOrThrow(noticeId, studyId);
+        List<FileMetadata> files = noticeAttachmentService.prepareForDelete(notice);
+        files.forEach(FileMetadata::markForDeletion);
 
         notificationService.deleteNotificationsForResource(ResourceType.NOTICE, noticeId);
         noticeRepository.delete(notice);
@@ -81,11 +94,28 @@ public class NoticeService {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeAccessPolicy.requireCanUpdateNotice(actor);
 
-        Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
+        Notice notice = noticeRepository.getByIdAndStudyIdForUpdateOrThrow(noticeId, studyId);
 
         LocalDateTime now = LocalDateTime.now(clock);
         notice.update(request.title(), request.content(), request.remindAts(), now);
+        replaceAttachments(userId, notice, request.attachmentFileIds());
         noticeRepository.save(notice);
+    }
+
+    private void replaceAttachments(Long userId, Notice notice, List<Long> fileIds) {
+        if (fileIds == null) {
+            return;
+        }
+        List<FileMetadata> files = noticeAttachmentService.prepareForUpdate(userId, notice, fileIds);
+        Set<Long> retainedIds = files.stream().map(FileMetadata::getId).collect(Collectors.toSet());
+        notice.getAttachments().stream().map(NoticeAttachment::getFile)
+                .filter(file -> !retainedIds.contains(file.getId())).forEach(FileMetadata::markForDeletion);
+        files.stream().filter(file -> file.getStatus() == FileUploadStatus.PENDING)
+                .forEach(FileMetadata::completeUpload);
+
+        notice.clearAttachments();
+        noticeRepository.flush();
+        notice.addAttachments(files);
     }
 
     public NoticeDetailResponse getDetail(Long userId, Long studyId, Long noticeId) {

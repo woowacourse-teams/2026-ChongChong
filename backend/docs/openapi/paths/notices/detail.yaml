@@ -5,18 +5,23 @@ get:
   tags: [Notice]
   operationId: getNoticeDetail
   x-frontend:
-    status: integrated
-    description: "상세 응답의 제목·내용·생성 시각을 검증하고 화면에 표시한다."
+    status: needs-update
+    description: |
+      기능 추가: 상세 응답의 attachments를 처리하고 첨부 목록을 표시해야 한다.
+      현재 웹은 제목·내용·생성 시각만 처리한다. 응답에는 파일 식별자·이름·형식·크기·순서가 추가된다.
+      실제 이미지 표시를 위한 파일 접근 URL 발급은 별도 후속 작업이다.
     sources:
       - frontend/src/features/notice/api.ts
       - frontend/src/features/notice/responseSchemas.ts
   x-backend:
-    status: done
-    owner: frombunny
+    status: in-progress
+    owner: JYL35
     description: |
       공지 상세를 조회하며 스터디 소속을 검증한다.
       현재 스터디 구성원은 가입 전 공지도 열람할 수 있다. 조회로 확인 대상에 추가되지 않는다.
-      이미지 첨부 정보는 아직 제공하지 않는다.
+      attachments에 순서대로 첨부 메타데이터를 반환한다. 첨부가 없으면 빈 배열이다.
+      파일 접근 URL 발급은 후속 단계이며 object key나 업로드 URL은 노출하지 않는다.
+      #542에서 상세 응답에 첨부 목록을 추가하는 작업을 진행한다.
   summary: 공지 상세 조회
   description: 스터디 공지의 상세 내용을 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -26,7 +31,7 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/notices.yaml#/NoticeDetailResponse' }
-          example: { id: 1, title: 이번 주 공지, content: 이번 주 스터디 일정을 확인해주세요., createdAt: '2026-08-27T10:00:00' }
+          example: { id: 1, title: 이번 주 공지, content: 이번 주 스터디 일정을 확인해주세요., createdAt: '2026-08-27T10:00:00', attachments: [] }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
@@ -41,17 +46,22 @@ patch:
   operationId: updateNotice
   x-frontend:
     status: needs-update
-    description: "기능 추가: 공지 수정 시 리마인드 예약을 추가·변경·취소."
+    description: |
+      기능 추가: 공지 수정 시 리마인드 예약을 추가·변경·취소해야 한다.
+      기존 첨부 목록을 불러오고 attachmentFileIds로 유지·추가·제거·순서 변경을 전달하는 흐름은 미연동이다.
+      새 파일 추가는 실제 업로드 검증 연결 전까지 503이며, 기존 첨부 유지·순서 변경·제거는 가능하다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
-    status: done
-    owner: frombunny
+    status: in-progress
+    owner: JYL35
     description: |
       공지를 부분 수정하고 대기 중인 리마인더를 교체한다. 이미 발송된 기록은 유지한다.
-      이미지 첨부 계약은 아직 제공하지 않는다.
+      attachmentFileIds 생략·null은 유지, 빈 배열은 제거, 배열은 표시 순서까지 교체한다.
+      새 파일 추가는 실제 업로드 검증 연결 전까지 503으로 차단한다. 기존 첨부 유지·순서 변경·제거는 허용한다.
+      #542에서 첨부 목록 교체와 파일 상태 변경을 구현하며, 실제 S3 조회 연결과 통합 검증은 후속 작업이다.
   summary: 공지 수정
-  description: 스터디 리더가 공지를 부분 수정한다. 입력·형식·도메인 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
+  description: 스터디 리더가 공지를 부분 수정한다. attachmentFileIds 생략·null은 유지, 빈 배열은 전체 제거, 배열은 최종 목록과 순서를 지정한다. 새 파일은 본인 소유여야 하며 이전 리더의 기존 첨부는 유지할 수 있다. 새 첨부의 검증 불가 시 503으로 제목·내용·리마인더·첨부 전체 변경을 롤백한다. 제거 파일은 삭제 대기로 전환한다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
@@ -63,8 +73,9 @@ patch:
     '204': { description: 공지 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/NoticeWriteBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
-    '404': { $ref: '../../components/responses.yaml#/NoticeNotFound' }
+    '403': { $ref: '../../components/responses.yaml#/NoticeWriteForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeOrFileNotFound' }
+    '503': { $ref: '../../components/responses.yaml#/FileVerificationUnavailable' }
 delete:
   tags: [Notice]
   operationId: deleteNotice
@@ -74,10 +85,12 @@ delete:
     sources:
       - frontend/src/features/notice/api.ts
   x-backend:
-    status: done
-    owner: frombunny
+    status: in-progress
+    owner: JYL35
     description: |
-      리더가 공지를 삭제하면 연관 데이터도 정리한다.
+      리더가 공지를 삭제하면 첨부 관계와 알림도 정리하고 파일은 삭제 대기로 전환한다.
+      S3 물리 삭제와 재시도 작업은 후속 단계다.
+      #542에서 공지 삭제 시 첨부 관계 정리와 파일의 삭제 대기 상태 전환을 구현한다.
   summary: 공지 삭제
   description: 스터디 리더가 공지를 삭제한다. 형식 오류(400), 인증 실패(401), 접근·삭제 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
