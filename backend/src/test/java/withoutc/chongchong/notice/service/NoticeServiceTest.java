@@ -102,7 +102,7 @@ class NoticeServiceTest {
         StudyMember leader = mock(StudyMember.class);
         StudyMember member = mock(StudyMember.class);
         LocalDateTime remindAt = NOW.plusDays(1);
-        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(remindAt));
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(remindAt), null);
         ArgumentCaptor<Notice> noticeCaptor = ArgumentCaptor.forClass(Notice.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
@@ -347,7 +347,7 @@ class NoticeServiceTest {
     @DisplayName("공지 생성 정책이 거부하면 공지를 생성하지 않는다")
     void rejectCreateWhenPolicyDeniesTest() {
         StudyMember actor = mock(StudyMember.class);
-        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of());
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(actor);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
                 .when(noticeAccessPolicy).requireCanCreateNotice(actor);

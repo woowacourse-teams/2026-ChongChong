@@ -40,7 +40,7 @@ class NoticeValidationClockTest {
     @Test
     @DisplayName("현재 시각은 Bean Validation과 공지 도메인에서 모두 거부한다")
     void rejectCurrentTimeTest() {
-        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(NOW));
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(NOW), null);
         Notice notice = createNotice();
 
         assertThat(validator.validate(request))
@@ -56,7 +56,7 @@ class NoticeValidationClockTest {
     @DisplayName("현재보다 미래인 시각은 Bean Validation과 공지 도메인에서 모두 허용한다")
     void acceptFutureTimeTest() {
         LocalDateTime future = NOW.plusNanos(1);
-        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(future));
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", List.of(future), null);
         Notice notice = createNotice();
 
         assertThat(validator.validate(request)).isEmpty();
