@@ -119,6 +119,113 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
+    @DisplayName("현재 installationId의 활성 Web Push 구독 상태와 ID를 조회한다")
+    void getActiveWebPushSubscriptionStatusTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+        long subscriptionId = ((Number) register(user.getId(), ENDPOINT, P256DH, AUTH)
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("subscriptionId")).longValue();
+
+        getStatus(user.getId(), INSTALLATION_ID)
+                .then()
+                .statusCode(200)
+                .body("isActive", equalTo(true))
+                .body("subscriptionId", equalTo((int) subscriptionId));
+    }
+
+    @Test
+    @DisplayName("비활성 Web Push 구독 상태는 false와 기존 구독 ID를 반환한다")
+    void getInactiveWebPushSubscriptionStatusTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+        long subscriptionId = ((Number) register(user.getId(), ENDPOINT, P256DH, AUTH)
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("subscriptionId")).longValue();
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .delete("/web-push-subscriptions/{subscriptionId}", subscriptionId)
+                .then()
+                .statusCode(204);
+
+        getStatus(user.getId(), INSTALLATION_ID)
+                .then()
+                .statusCode(200)
+                .body("isActive", equalTo(false))
+                .body("subscriptionId", equalTo((int) subscriptionId));
+    }
+
+    @Test
+    @DisplayName("등록되지 않은 installationId는 비활성 상태와 null ID를 반환한다")
+    void getUnregisteredWebPushSubscriptionStatusTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+
+        Response response = getStatus(user.getId(), INSTALLATION_ID);
+
+        response.then()
+                .statusCode(200)
+                .body("isActive", equalTo(false));
+        Object subscriptionId = response.jsonPath().get("subscriptionId");
+        assertThat(subscriptionId).isNull();
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 같은 installationId 구독 상태를 조회하지 않는다")
+    void doNotExposeAnotherUsersWebPushSubscriptionStatusTest() {
+        User owner = userRepository.saveAndFlush(User.create("소유자", null));
+        User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", null));
+        register(owner.getId(), ENDPOINT, P256DH, AUTH).then().statusCode(200);
+
+        Response response = getStatus(otherUser.getId(), INSTALLATION_ID);
+
+        response.then()
+                .statusCode(200)
+                .body("isActive", equalTo(false));
+        Object subscriptionId = response.jsonPath().get("subscriptionId");
+        assertThat(subscriptionId).isNull();
+        assertThat(findSubscription(owner.getId()).active()).isTrue();
+    }
+
+    @Test
+    @DisplayName("인증 없이 Web Push 구독 상태를 조회하면 인증 필요 오류를 반환한다")
+    void rejectUnauthenticatedStatusRequestTest() {
+        given()
+                .basePath(API_PREFIX)
+                .port(port)
+                .queryParam("installationId", INSTALLATION_ID)
+                .when()
+                .get("/web-push-subscriptions/me")
+                .then()
+                .statusCode(401)
+                .body("code", equalTo("AUTHENTICATION_REQUIRED"));
+    }
+
+    @Test
+    @DisplayName("공백 installationId로 Web Push 구독 상태를 조회하면 요청 파라미터 오류를 반환한다")
+    void rejectBlankInstallationIdForStatusRequestTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+
+        getStatus(user.getId(), "   ")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"));
+    }
+
+    @Test
+    @DisplayName("255자를 초과한 installationId로 Web Push 구독 상태를 조회하면 요청 파라미터 오류를 반환한다")
+    void rejectTooLongInstallationIdForStatusRequestTest() {
+        User user = userRepository.saveAndFlush(User.create("총총이", null));
+
+        getStatus(user.getId(), "x".repeat(256))
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"));
+    }
+
+    @Test
     @DisplayName("installationId가 다르면 endpoint가 같아도 별도 구독을 저장한다")
     void keepDifferentInstallationIdsSeparateTest() {
         User user = userRepository.saveAndFlush(User.create("총총이", null));
@@ -295,6 +402,15 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
 
     private Response register(Long userId, String endpoint, String p256dh, String auth) {
         return register(userId, INSTALLATION_ID, endpoint, p256dh, auth);
+    }
+
+    private Response getStatus(Long userId, String installationId) {
+        return testAuthRequest.givenAuthenticatedUser(userId)
+                .port(port)
+                .queryParam("installationId", installationId)
+                .when()
+                .get("/web-push-subscriptions/me")
+                .andReturn();
     }
 
     private Response register(
