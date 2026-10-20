@@ -1,0 +1,26 @@
+get:
+  tags: [Web Push]
+  operationId: getMyWebPushSubscriptionStatus
+  x-frontend:
+    status: needs-update
+    description: "로그인한 사용자의 현재 installationId 상태를 조회해 알림 설정 화면에 반영한다. 브라우저·운영체제 권한은 별도로 확인한다."
+    sources:
+      - frontend/src/features/notification/push.ts
+  x-backend:
+    status: review
+    owner: wontop02
+    description: "인증된 사용자의 installationId에 해당하는 구독 상태와 식별자를 반환한다."
+  summary: 내 Web Push 구독 상태 조회
+  description: 현재 사용자의 브라우저 프로필에 연결된 서버 Web Push 구독 상태를 조회한다. 브라우저·운영체제의 알림 권한 상태를 나타내지는 않는다. 등록된 구독이 없으면 isActive는 false, subscriptionId는 null을 반환하고, 비활성 구독이 있으면 false와 기존 subscriptionId를 반환한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/InstallationId' }
+  responses:
+    '200':
+      description: 내 Web Push 구독 상태 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/web-push-subscriptions.yaml#/WebPushSubscriptionStatusResponse' }
+          example: { isActive: false, subscriptionId: null }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
