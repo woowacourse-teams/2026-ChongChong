@@ -40,6 +40,13 @@ SubscriptionId:
   description: Web Push 구독 식별자
   schema: { type: integer, format: int64, minimum: 1 }
   example: 1
+InstallationId:
+  name: installationId
+  in: query
+  required: true
+  description: 공백만으로 된 값은 허용하지 않는 현재 브라우저 프로필 식별자
+  schema: { type: string, minLength: 1, maxLength: 255, pattern: '\S' }
+  example: 4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1
 NotificationId:
   name: notificationId
   in: path

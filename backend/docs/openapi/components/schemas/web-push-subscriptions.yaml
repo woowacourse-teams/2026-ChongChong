@@ -3,7 +3,7 @@ WebPushSubscriptionRegisterRequest:
   additionalProperties: false
   required: [installationId, endpoint, keys]
   properties:
-    installationId: { description: "브라우저 프로필을 식별하는 클라이언트 생성 설치 식별자.", type: string, minLength: 1, maxLength: 255, example: 4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1 }
+    installationId: { description: "공백만으로 된 값은 허용하지 않는 브라우저 프로필 식별자.", type: string, minLength: 1, maxLength: 255, pattern: '\S', example: 4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1 }
     endpoint: { description: "브라우저가 발급한 Web Push endpoint.", type: string, format: uri, minLength: 1, example: 'https://push.example.com/subscription' }
     keys:
       $ref: '#/WebPushSubscriptionKeys'
@@ -22,6 +22,14 @@ WebPushSubscriptionRegisterResponse:
   required: [subscriptionId]
   properties:
     subscriptionId: { description: "등록된 Web Push 구독 식별자.", type: integer, format: int64, example: 1 }
+
+WebPushSubscriptionStatusResponse:
+  type: object
+  additionalProperties: false
+  required: [isActive, subscriptionId]
+  properties:
+    isActive: { description: "현재 사용자의 installationId에 연결된 서버 구독이 활성 상태인지 나타낸다. 브라우저·운영체제의 알림 권한 상태는 포함하지 않는다.", type: boolean, example: false }
+    subscriptionId: { description: "기존 구독이 있으면 그 식별자를 반환하며, 등록된 적이 없으면 null이다.", type: [integer, 'null'], format: int64, example: null }
 
 WebPushConfigResponse:
   type: object

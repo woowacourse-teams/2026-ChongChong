@@ -79,6 +79,8 @@ paths:
     $ref: './paths/assignment-submissions/detail.yaml'
   /api/web-push-subscriptions:
     $ref: './paths/web-push-subscriptions/collection.yaml'
+  /api/web-push-subscriptions/me:
+    $ref: './paths/web-push-subscriptions/my-status.yaml'
   /api/web-push-subscriptions/{subscriptionId}:
     $ref: './paths/web-push-subscriptions/detail.yaml'
   /api/web-push/config:

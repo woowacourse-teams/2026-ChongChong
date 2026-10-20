@@ -18,7 +18,8 @@ public enum FileErrorCode implements ErrorCode {
     FILE_NOT_OWNED(HttpStatus.FORBIDDEN, "FILE_NOT_OWNED", "본인이 업로드한 파일만 첨부할 수 있습니다."),
     FILE_NOT_ATTACHABLE(HttpStatus.BAD_REQUEST, "FILE_NOT_ATTACHABLE", "파일을 첨부할 수 없습니다."),
     FILE_VERIFICATION_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "FILE_VERIFICATION_UNAVAILABLE",
-            "파일 업로드 확인 기능이 준비되지 않아 새 파일을 첨부할 수 없습니다.");
+            "파일 업로드 확인 기능이 준비되지 않아 새 파일을 첨부할 수 없습니다."),
+    FILE_LOOKUP_FAILED(HttpStatus.BAD_GATEWAY, "FILE_LOOKUP_FAILED", "파일 저장소 조회에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
