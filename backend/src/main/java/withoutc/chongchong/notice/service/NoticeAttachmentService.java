@@ -1,6 +1,5 @@
 package withoutc.chongchong.notice.service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,8 +12,7 @@ import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.file.service.UploadedFileVerifier;
-import withoutc.chongchong.notice.exception.NoticeErrorCode;
-import withoutc.chongchong.notice.exception.NoticeException;
+import withoutc.chongchong.notice.policy.NoticeAttachmentPolicy;
 
 @Service
 @RequiredArgsConstructor
@@ -23,12 +21,13 @@ public class NoticeAttachmentService {
 
     private final FileMetaDataRepository fileRepository;
     private final UploadedFileVerifier uploadedFileVerifier;
+    private final NoticeAttachmentPolicy attachmentPolicy;
 
     public List<FileMetadata> prepareForCreate(Long userId, List<Long> fileIds) {
         if (fileIds == null || fileIds.isEmpty()) {
             return List.of();
         }
-        validateIds(fileIds);
+        attachmentPolicy.validateIds(fileIds);
 
         List<FileMetadata> files = findFilesForUpdate(fileIds);
         for (FileMetadata file : files) {
@@ -36,13 +35,6 @@ public class NoticeAttachmentService {
         }
         files.forEach(uploadedFileVerifier::verify);
         return files;
-    }
-
-    private void validateIds(List<Long> fileIds) {
-        if (fileIds.stream().anyMatch(id -> id == null || id <= 0)
-                || new HashSet<>(fileIds).size() != fileIds.size()) {
-            throw new NoticeException(NoticeErrorCode.INVALID_ATTACHMENT_IDS);
-        }
     }
 
     private List<FileMetadata> findFilesForUpdate(List<Long> fileIds) {
@@ -67,5 +59,6 @@ public class NoticeAttachmentService {
         if (file.getStatus() != FileUploadStatus.PENDING) {
             throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
         }
+        attachmentPolicy.validateImage(file);
     }
 }

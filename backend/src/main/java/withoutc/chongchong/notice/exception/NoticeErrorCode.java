@@ -17,6 +17,12 @@ public enum NoticeErrorCode implements ErrorCode {
 
     INVALID_ATTACHMENT_IDS(HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_IDS", "첨부 파일 ID 목록이 올바르지 않습니다."),
 
+    ATTACHMENT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "ATTACHMENT_LIMIT_EXCEEDED", "첨부 파일 개수 제한을 초과했습니다."),
+
+    INVALID_NOTICE_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "INVALID_NOTICE_IMAGE_TYPE", "공지에 첨부할 수 없는 이미지 형식입니다."),
+
+    INVALID_NOTICE_IMAGE_SIZE(HttpStatus.BAD_REQUEST, "INVALID_NOTICE_IMAGE_SIZE", "공지 이미지 크기가 올바르지 않습니다."),
+
     NOTICE_RECIPIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE_RECIPIENT_NOT_FOUND", "공지 수신자 정보를 찾을 수 없습니다."),
 
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE_NOT_FOUND", "존재하지 않는 공지입니다.");

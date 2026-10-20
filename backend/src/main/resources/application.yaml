@@ -30,6 +30,12 @@ aws:
 app:
   environment: ${CLOUD_WATCH_APP_ENV:local}
 
+notice:
+  attachments:
+    max-count: ${NOTICE_ATTACHMENT_MAX_COUNT:10}
+    max-size-bytes: ${NOTICE_ATTACHMENT_MAX_SIZE_BYTES:5242880}
+    allowed-content-types: ${NOTICE_ATTACHMENT_ALLOWED_CONTENT_TYPES:image/jpeg,image/png,image/webp}
+
 management:
   endpoints:
     web:

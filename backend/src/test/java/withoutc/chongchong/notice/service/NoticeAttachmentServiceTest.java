@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.LongStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import withoutc.chongchong.file.service.UnavailableUploadedFileVerifier;
 import withoutc.chongchong.file.service.UploadedFileVerifier;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
+import withoutc.chongchong.notice.policy.NoticeAttachmentPolicy;
 import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,10 +45,12 @@ class NoticeAttachmentServiceTest {
     private UploadedFileVerifier uploadedFileVerifier;
 
     private NoticeAttachmentService attachmentService;
+    private NoticeAttachmentPolicy attachmentPolicy;
 
     @BeforeEach
     void setUp() {
-        attachmentService = new NoticeAttachmentService(fileRepository, uploadedFileVerifier);
+        attachmentPolicy = new NoticeAttachmentPolicy(10, 5242880, List.of("image/jpeg", "image/png", "image/webp"));
+        attachmentService = new NoticeAttachmentService(fileRepository, uploadedFileVerifier, attachmentPolicy);
     }
 
     @Test
@@ -152,6 +156,48 @@ class NoticeAttachmentServiceTest {
     }
 
     @Test
+    @DisplayName("첨부 개수 제한을 초과하면 DB 조회 전에 거부한다")
+    void rejectTooManyAttachments() {
+        List<Long> fileIds = LongStream.rangeClosed(1, 11).boxed().toList();
+
+        assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, fileIds))
+                .isInstanceOf(NoticeException.class)
+                .extracting(exception -> ((NoticeException) exception).getErrorCode())
+                .isEqualTo(NoticeErrorCode.ATTACHMENT_LIMIT_EXCEEDED);
+
+        verifyNoInteractions(fileRepository, uploadedFileVerifier);
+    }
+
+    @Test
+    @DisplayName("허용하지 않는 형식의 파일은 실제 업로드 검증 전에 거부한다")
+    void rejectUnsupportedImageType() {
+        FileMetadata file = createFile(7L, USER_ID, "application/pdf", 1024);
+        when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
+
+        assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L)))
+                .isInstanceOf(NoticeException.class)
+                .extracting(exception -> ((NoticeException) exception).getErrorCode())
+                .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_TYPE);
+
+        verifyNoInteractions(uploadedFileVerifier);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0L, 5242881L})
+    @DisplayName("빈 이미지나 용량을 초과한 이미지는 실제 업로드 검증 전에 거부한다")
+    void rejectInvalidImageSize(long size) {
+        FileMetadata file = createFile(7L, USER_ID, "image/png", size);
+        when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
+
+        assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L)))
+                .isInstanceOf(NoticeException.class)
+                .extracting(exception -> ((NoticeException) exception).getErrorCode())
+                .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_SIZE);
+
+        verifyNoInteractions(uploadedFileVerifier);
+    }
+
+    @Test
     @DisplayName("실제 업로드 검증에 실패해도 파일 상태를 변경하지 않는다")
     void preserveStatusWhenVerificationFails() {
         FileMetadata first = createFile(7L, USER_ID);
@@ -173,7 +219,9 @@ class NoticeAttachmentServiceTest {
     @Test
     @DisplayName("기본 업로드 검증기는 본인 소유의 대기 파일도 검증 불가로 거부한다")
     void rejectWithDefaultVerifier() {
-        attachmentService = new NoticeAttachmentService(fileRepository, new UnavailableUploadedFileVerifier());
+        attachmentService = new NoticeAttachmentService(
+                fileRepository, new UnavailableUploadedFileVerifier(), attachmentPolicy
+        );
         FileMetadata file = createFile(7L, USER_ID);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
 
@@ -195,9 +243,13 @@ class NoticeAttachmentServiceTest {
     }
 
     private FileMetadata createFile(Long fileId, Long ownerId) {
+        return createFile(fileId, ownerId, "image/png", 1024);
+    }
+
+    private FileMetadata createFile(Long fileId, Long ownerId, String contentType, long size) {
         User owner = User.create("사용자", null);
         ReflectionTestUtils.setField(owner, "id", ownerId);
-        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/" + fileId, "image/png", 1024);
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/" + fileId, contentType, size);
         ReflectionTestUtils.setField(file, "id", fileId);
         return file;
     }
