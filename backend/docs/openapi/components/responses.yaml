@@ -22,10 +22,28 @@ LoginBadRequest:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/UnsupportedSocialProviderError' }] }
 NoticeWriteBadRequest:
-  description: 입력값 검증 실패, 요청 형식 오류 또는 공지 제목·내용·리마인드 시각 도메인 규칙 위반
+  description: 입력값·요청 형식·공지 필드·첨부 식별자·이미지 형식·용량·개수·파일 상태 규칙 위반
   content:
     application/json:
-      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidTitleError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }] }
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidTitleError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }, { $ref: './schemas/errors.yaml#/NoticeAttachmentBadRequestError' }] }
+NoticeWriteForbidden:
+  description: 스터디 접근·공지 작성/수정 권한이 없거나 새 첨부 파일이 본인 소유가 아님
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyAccessDeniedError' }, { $ref: './schemas/errors.yaml#/AccessDeniedError' }, { $ref: './schemas/errors.yaml#/FileNotOwnedError' }] }
+FileNotFound:
+  description: 첨부할 파일 메타데이터가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/FileNotFoundError' } } }
+NoticeOrFileNotFound:
+  description: 공지 또는 첨부할 파일 메타데이터가 존재하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/NoticeNotFoundError' }, { $ref: './schemas/errors.yaml#/FileNotFoundError' }] }
+FileVerificationUnavailable:
+  description: 실제 업로드 검증이 준비되지 않아 새 첨부를 거부함. 공지·첨부·파일 상태·알림은 롤백된다. 무첨부와 기존 첨부 유지·순서 변경·제거에는 적용하지 않는다.
+  content:
+    application/json:
+      schema: { $ref: './schemas/errors.yaml#/FileVerificationUnavailableError' }
 AssignmentWriteBadRequest:
   description: 입력값 검증 실패, 요청 형식 오류 또는 과제 필드 도메인 규칙 위반
   content:
