@@ -14,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeAttachment;
@@ -175,11 +176,69 @@ class NoticeAttachmentPersistenceTest extends PostgresContainerTest {
         notice.addAttachments(List.of(file));
         noticeRepository.saveAndFlush(notice);
 
-        notice.getAttachments().clear();
+        notice.clearAttachments();
         noticeRepository.flush();
 
         assertThat(countAttachments(notice.getId())).isZero();
         assertThat(fileRepository.existsById(file.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("기존 관계를 비우고 flush한 뒤 재연결하면 파일과 순서의 UNIQUE 충돌 없이 재정렬된다")
+    void reorderAttachmentsAfterClearingAndFlushing() {
+        Notice notice = saveNotice();
+        FileMetadata first = saveFile();
+        FileMetadata second = saveFile();
+        first.completeUpload();
+        second.completeUpload();
+        notice.addAttachments(List.of(first, second));
+        noticeRepository.saveAndFlush(notice);
+
+        notice.clearAttachments();
+        noticeRepository.flush();
+        assertThat(countAttachments(notice.getId())).isZero();
+        notice.addAttachments(List.of(second, first));
+        noticeRepository.flush();
+        Long noticeId = notice.getId();
+        entityManager.clear();
+
+        Notice found = noticeRepository.findById(noticeId).orElseThrow();
+        assertThat(found.getAttachments())
+                .extracting(attachment -> attachment.getFile().getId(), NoticeAttachment::getSortOrder)
+                .containsExactly(tuple(second.getId(), 0), tuple(first.getId(), 1));
+        assertThat(found.getAttachments()).allSatisfy(attachment ->
+                assertThat(attachment.getFile().getStatus()).isEqualTo(FileUploadStatus.COMPLETED));
+    }
+
+    @Test
+    @DisplayName("제거 파일의 삭제 대기를 저장해도 메타데이터는 남고 유지 파일은 완료 상태로 재연결된다")
+    void persistRemovedFilePendingDeletion() {
+        Notice notice = saveNotice();
+        FileMetadata retained = saveFile();
+        FileMetadata removed = saveFile();
+        retained.completeUpload();
+        removed.completeUpload();
+        String removedObjectKey = removed.getObjectKey();
+        notice.addAttachments(List.of(retained, removed));
+        noticeRepository.saveAndFlush(notice);
+
+        removed.markForDeletion();
+        notice.clearAttachments();
+        noticeRepository.flush();
+        notice.addAttachments(List.of(retained));
+        noticeRepository.flush();
+        Long noticeId = notice.getId();
+        entityManager.clear();
+
+        Notice found = noticeRepository.findById(noticeId).orElseThrow();
+        assertThat(found.getAttachments())
+                .extracting(attachment -> attachment.getFile().getId(), NoticeAttachment::getSortOrder)
+                .containsExactly(tuple(retained.getId(), 0));
+        assertThat(fileRepository.findById(retained.getId()).orElseThrow().getStatus())
+                .isEqualTo(FileUploadStatus.COMPLETED);
+        FileMetadata removedFile = fileRepository.findById(removed.getId()).orElseThrow();
+        assertThat(removedFile.getStatus()).isEqualTo(FileUploadStatus.DELETE_PENDING);
+        assertThat(removedFile.getObjectKey()).isEqualTo(removedObjectKey);
     }
 
     @Test

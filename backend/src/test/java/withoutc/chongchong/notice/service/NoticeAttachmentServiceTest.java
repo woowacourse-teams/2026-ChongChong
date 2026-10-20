@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -106,11 +107,12 @@ class NoticeAttachmentServiceTest {
         verifyNoInteractions(uploadedFileVerifier);
     }
 
-    @Test
-    @DisplayName("이미 완료된 파일은 새 공지에 첨부할 수 없다")
-    void rejectCompletedFile() {
+    @ParameterizedTest
+    @EnumSource(value = FileUploadStatus.class, names = {"COMPLETED", "DELETE_PENDING"})
+    @DisplayName("완료되었거나 삭제 대기 중인 파일은 새 공지에 첨부할 수 없다")
+    void rejectNonPendingFile(FileUploadStatus status) {
         FileMetadata file = createFile(7L, USER_ID);
-        ReflectionTestUtils.setField(file, "status", FileUploadStatus.COMPLETED);
+        ReflectionTestUtils.setField(file, "status", status);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
 
         assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L)))

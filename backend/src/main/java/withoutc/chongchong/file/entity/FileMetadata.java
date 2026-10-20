@@ -71,6 +71,13 @@ public class FileMetadata extends BaseEntity {
         status = FileUploadStatus.COMPLETED;
     }
 
+    public void markForDeletion() {
+        if (status != FileUploadStatus.COMPLETED) {
+            throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
+        }
+        status = FileUploadStatus.DELETE_PENDING;
+    }
+
     private FileMetadata(User owner, String originalFileName, String objectKey, String contentType, long size,
                          FileUploadStatus status) {
         validateOwner(owner);

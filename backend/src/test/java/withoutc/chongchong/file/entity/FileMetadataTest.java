@@ -41,6 +41,62 @@ class FileMetadataTest {
     }
 
     @Test
+    @DisplayName("완료 파일을 삭제 대기로 전환하고 실제 삭제에 필요한 메타데이터는 보존한다")
+    void markCompletedFileForDeletion() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+        file.completeUpload();
+
+        file.markForDeletion();
+
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.DELETE_PENDING);
+        assertThat(file.getObjectKey()).isEqualTo("uploads/image");
+        assertThat(file.getOwner()).isSameAs(owner);
+        assertThat(file.getOriginalFileName()).isEqualTo("image.png");
+        assertThat(file.getContentType()).isEqualTo("image/png");
+        assertThat(file.getSize()).isEqualTo(1024);
+    }
+
+    @Test
+    @DisplayName("업로드 대기 파일은 첨부 제거를 위한 삭제 대기로 전환할 수 없다")
+    void rejectDeletingPendingFile() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+
+        assertThatThrownBy(file::markForDeletion)
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("삭제 대기 파일은 다시 완료 처리하여 재사용할 수 없다")
+    void rejectCompletingFilePendingDeletion() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+        file.completeUpload();
+        file.markForDeletion();
+
+        assertThatThrownBy(file::completeUpload)
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.DELETE_PENDING);
+    }
+
+    @Test
+    @DisplayName("삭제 대기 파일은 다시 삭제 대기로 전환할 수 없다")
+    void rejectMarkingFileForDeletionTwice() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+        file.completeUpload();
+        file.markForDeletion();
+
+        assertThatThrownBy(file::markForDeletion)
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.DELETE_PENDING);
+    }
+
+    @Test
     @DisplayName("파일 소유자의 사용자 ID로 본인 소유 여부를 확인한다")
     void checkOwnershipByUserId() {
         ReflectionTestUtils.setField(owner, "id", 1L);

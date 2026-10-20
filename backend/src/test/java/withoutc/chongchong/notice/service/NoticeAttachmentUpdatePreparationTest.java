@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
@@ -195,11 +196,12 @@ class NoticeAttachmentUpdatePreparationTest {
         verifyNoInteractions(uploadedFileVerifier);
     }
 
-    @Test
-    @DisplayName("요청자 소유여도 현재 공지에 연결되지 않은 완료 파일은 추가할 수 없다")
-    void rejectCompletedFileFromOtherResource() {
+    @ParameterizedTest
+    @EnumSource(value = FileUploadStatus.class, names = {"COMPLETED", "DELETE_PENDING"})
+    @DisplayName("요청자 소유여도 현재 공지의 첨부가 아닌 완료·삭제 대기 파일은 추가할 수 없다")
+    void rejectNonPendingFileFromOtherResource(FileUploadStatus status) {
         FileMetadata file = createFile(7L, USER_ID);
-        file.completeUpload();
+        ReflectionTestUtils.setField(file, "status", status);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
 
         assertThatThrownBy(() -> attachmentService.prepareForUpdate(USER_ID, notice, List.of(7L)))
@@ -210,10 +212,12 @@ class NoticeAttachmentUpdatePreparationTest {
         verifyNoInteractions(uploadedFileVerifier);
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = FileUploadStatus.class, names = {"PENDING", "DELETE_PENDING"})
     @DisplayName("현재 공지에 연결되어 있어도 완료 상태가 아닌 파일은 유지할 수 없다")
-    void rejectIncompleteExistingFile() {
+    void rejectNonCompletedExistingFile(FileUploadStatus status) {
         FileMetadata file = createFile(7L, PREVIOUS_LEADER_ID);
+        ReflectionTestUtils.setField(file, "status", status);
         notice.addAttachments(List.of(file));
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
 

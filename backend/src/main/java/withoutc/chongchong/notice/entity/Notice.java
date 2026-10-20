@@ -71,6 +71,10 @@ public class Notice extends BaseEntity {
         }
     }
 
+    public void clearAttachments() {
+        attachments.clear();
+    }
+
     public void addRecipients(List<StudyMember> members) {
         Set<Long> recipientMemberIds = recipients.stream().map(recipient -> recipient.getMember().getId())
                 .collect(Collectors.toCollection(HashSet::new));
