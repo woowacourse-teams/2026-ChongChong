@@ -77,3 +77,4 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0043](0043-collect-http-metrics-with-adot-and-amp.md)                                  | ADOT으로 HTTP 메트릭을 수집해 AMP에 저장한다 |
 | [0044](0044-collect-http-metrics-with-adot-and-cloudwatch.md)                           | ADOT으로 HTTP 메트릭을 수집해 CloudWatch에 저장한다 |
 | [0052](0052-use-presigned-urls-for-file-uploads.md)                             | 첨부파일 업로드에 S3 Presigned URL을 사용한다 |
+| [0053](0053-stage-notice-attachments-before-storage-verification.md) | 공지 첨부를 실제 업로드 검증과 분리해 단계적으로 구현한다 |
