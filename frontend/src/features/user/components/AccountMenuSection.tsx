@@ -67,7 +67,7 @@ export default function AccountMenuSection() {
         navigate('/login', { replace: true });
       },
       onError: (error) => {
-        toast.open(<StatusToast message={error.message} status="Error" />);
+        toast.open(<StatusToast message={error.message} status="error" />);
       },
     });
   }
@@ -81,7 +81,7 @@ export default function AccountMenuSection() {
       },
       onError: (error) => {
         closeDialog();
-        toast.open(<StatusToast message={error.message} status="Error" />);
+        toast.open(<StatusToast message={error.message} status="error" />);
       },
     });
   }

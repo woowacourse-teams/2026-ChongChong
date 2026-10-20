@@ -103,7 +103,7 @@ export default function ContentActionMenu({ studyId, id, content }: Props) {
     },
     onError: (error) => {
       closeDialog();
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
 

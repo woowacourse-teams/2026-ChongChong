@@ -12,7 +12,7 @@ export default function useMarkNotificationAsRead() {
   const { mutate } = useMutation({
     mutationFn: markNotificationAsRead,
     onError: (error) => {
-      toast.open(<StatusToast message={error.message} status={'Error'} />);
+      toast.open(<StatusToast message={error.message} status={'error'} />);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: notificationQueries.lists() });

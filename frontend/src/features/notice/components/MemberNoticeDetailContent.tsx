@@ -82,7 +82,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     },
     onError: (error) => {
       hasRequestedReadRef.current = false;
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
   const markAsRead = updateReadMutation.mutate;

@@ -17,7 +17,7 @@ export default function useEditStudy(studyId: number) {
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast message={error.message} status={'Error'} />);
+      toast.open(<StatusToast message={error.message} status={'error'} />);
     },
   });
 
