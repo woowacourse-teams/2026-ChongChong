@@ -13,7 +13,8 @@ public enum FileErrorCode implements ErrorCode {
     INVALID_ORIGINAL_FILE_NAME(HttpStatus.BAD_REQUEST, "INVALID_ORIGINAL_FILE_NAME", "원본 파일명이 올바르지 않습니다."),
     INVALID_OBJECT_KEY(HttpStatus.BAD_REQUEST, "INVALID_OBJECT_KEY", "파일 저장 키가 올바르지 않습니다."),
     INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "INVALID_CONTENT_TYPE", "파일 유형이 올바르지 않습니다."),
-    INVALID_FILE_SIZE(HttpStatus.BAD_REQUEST, "INVALID_FILE_SIZE", "파일 크기가 올바르지 않습니다.");
+    INVALID_FILE_SIZE(HttpStatus.BAD_REQUEST, "INVALID_FILE_SIZE", "파일 크기가 올바르지 않습니다."),
+    FILE_LOOKUP_FAILED(HttpStatus.BAD_GATEWAY, "FILE_LOOKUP_FAILED", "파일 저장소 조회에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
