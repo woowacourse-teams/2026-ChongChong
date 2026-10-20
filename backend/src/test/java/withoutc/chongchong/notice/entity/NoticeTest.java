@@ -12,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.study.entity.Study;
@@ -20,6 +21,35 @@ import withoutc.chongchong.study.entity.StudyMember;
 class NoticeTest {
 
     private final Study study = mock(Study.class);
+
+    @Test
+    @DisplayName("첨부 파일을 전달한 순서대로 연결하고 0부터 표시 순서를 부여한다")
+    void addAttachmentsInRequestedOrder() {
+        FileMetadata first = mock(FileMetadata.class);
+        FileMetadata second = mock(FileMetadata.class);
+        Notice notice = Notice.create(study, "공지 제목", "공지 내용");
+
+        notice.addAttachments(List.of(second, first));
+
+        assertThat(notice.getAttachments()).extracting(NoticeAttachment::getFile).containsExactly(second, first);
+        assertThat(notice.getAttachments()).extracting(NoticeAttachment::getSortOrder).containsExactly(0, 1);
+        assertThat(notice.getAttachments()).allSatisfy(attachment ->
+                assertThat(attachment.getNotice()).isSameAs(notice));
+    }
+
+    @Test
+    @DisplayName("첨부를 추가하면 기존 첨부의 다음 표시 순서부터 연결한다")
+    void appendAttachmentsAfterExistingOnes() {
+        FileMetadata first = mock(FileMetadata.class);
+        FileMetadata second = mock(FileMetadata.class);
+        Notice notice = Notice.create(study, "공지 제목", "공지 내용");
+        notice.addAttachments(List.of(first));
+
+        notice.addAttachments(List.of(second));
+
+        assertThat(notice.getAttachments()).extracting(NoticeAttachment::getFile).containsExactly(first, second);
+        assertThat(notice.getAttachments()).extracting(NoticeAttachment::getSortOrder).containsExactly(0, 1);
+    }
 
     @Test
     @DisplayName("공지 생성 시 제목과 내용을 검증한다")
