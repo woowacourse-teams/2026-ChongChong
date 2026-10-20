@@ -81,7 +81,9 @@ public class NoticeService {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeAccessPolicy.requireCanDeleteNotice(actor);
 
-        Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
+        Notice notice = noticeRepository.getByIdAndStudyIdForUpdateOrThrow(noticeId, studyId);
+        List<FileMetadata> files = noticeAttachmentService.prepareForDelete(notice);
+        files.forEach(FileMetadata::markForDeletion);
 
         notificationService.deleteNotificationsForResource(ResourceType.NOTICE, noticeId);
         noticeRepository.delete(notice);

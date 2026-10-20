@@ -45,6 +45,7 @@ import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
+import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -201,11 +202,13 @@ class NoticeServiceTest {
         StudyMember leader = mock(StudyMember.class);
         Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
 
         noticeService.delete(USER_ID, STUDY_ID, NOTICE_ID);
 
         verify(noticeAccessPolicy).requireCanDeleteNotice(leader);
+        verify(noticeAttachmentService).prepareForDelete(notice);
+        verify(notificationService).deleteNotificationsForResource(ResourceType.NOTICE, NOTICE_ID);
         verify(noticeRepository).delete(notice);
     }
 
@@ -362,7 +365,7 @@ class NoticeServiceTest {
     void deleteNoticeFromOtherStudyTest() {
         StudyMember leader = mock(StudyMember.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID))
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID))
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeService.delete(USER_ID, STUDY_ID, NOTICE_ID));

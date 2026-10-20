@@ -55,6 +55,14 @@ public class NoticeAttachmentService {
         return files;
     }
 
+    // 호출자는 공지 쓰기 잠금을 획득한 트랜잭션에서 파일 상태 변경과 공지 삭제를 함께 수행한다.
+    public List<FileMetadata> prepareForDelete(Notice notice) {
+        List<Long> fileIds = notice.getAttachments().stream().map(attachment -> attachment.getFile().getId()).toList();
+        List<FileMetadata> files = getFilesInOrder(findFilesForUpdate(fileIds), fileIds);
+        files.forEach(this::validateExistingFile);
+        return files;
+    }
+
     private void validateNewFiles(Long userId, List<FileMetadata> files) {
         for (FileMetadata file : files) {
             validateAttachableFile(userId, file);

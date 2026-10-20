@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -29,9 +30,11 @@ import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.file.service.UnavailableUploadedFileVerifier;
 import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.policy.NoticeAttachmentPolicy;
+import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -233,6 +236,55 @@ class NoticeAttachmentServiceTest {
                 .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
 
         assertThat(file.getStatus()).isEqualTo(FileUploadStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("삭제할 공지에 첨부가 없으면 파일 조회와 업로드 검증을 생략한다")
+    void prepareDeletionWithoutAttachments() {
+        Notice notice = Notice.create(mock(Study.class), "공지 제목", "공지 내용");
+
+        assertThat(attachmentService.prepareForDelete(notice)).isEmpty();
+
+        verifyNoInteractions(fileRepository, uploadedFileVerifier);
+    }
+
+    @Test
+    @DisplayName("이전 소유자의 파일도 현재 정책과 업로드 검증 없이 ID 순서로 잠금 조회하여 삭제를 준비한다")
+    void prepareDeletionWithoutApplyingNewFilePolicy() {
+        Notice notice = Notice.create(mock(Study.class), "공지 제목", "공지 내용");
+        FileMetadata first = createFile(7L, 2L, "application/pdf", 0);
+        FileMetadata second = createFile(31L, 2L, "application/pdf", 0);
+        first.completeUpload();
+        second.completeUpload();
+        notice.addAttachments(List.of(second, first));
+        when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(first, second));
+        attachmentService = new NoticeAttachmentService(fileRepository, new UnavailableUploadedFileVerifier(),
+                new NoticeAttachmentPolicy(1, 1, List.of("image/jpeg")));
+
+        assertThat(attachmentService.prepareForDelete(notice)).containsExactly(second, first);
+
+        assertThat(notice.getAttachments()).hasSize(2);
+        assertThat(List.of(first, second)).extracting(FileMetadata::getStatus)
+                .containsOnly(FileUploadStatus.COMPLETED);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = FileUploadStatus.class, names = {"PENDING", "DELETE_PENDING"})
+    @DisplayName("첨부 파일이 완료 상태가 아니면 삭제 준비 중 상태를 변경하지 않고 거부한다")
+    void rejectDeletionPreparationWithInvalidState(FileUploadStatus status) {
+        Notice notice = Notice.create(mock(Study.class), "공지 제목", "공지 내용");
+        FileMetadata file = createFile(7L, USER_ID);
+        ReflectionTestUtils.setField(file, "status", status);
+        notice.addAttachments(List.of(file));
+        when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
+
+        assertThatThrownBy(() -> attachmentService.prepareForDelete(notice))
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
+
+        assertThat(file.getStatus()).isEqualTo(status);
+        verifyNoInteractions(uploadedFileVerifier);
     }
 
     private void assertInvalidIds(List<Long> fileIds) {
