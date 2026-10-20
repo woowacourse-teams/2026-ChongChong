@@ -157,7 +157,7 @@ class NoticeServiceTest {
     @DisplayName("공지 수정 정책이 거부하면 저장소 조회를 중단한다")
     void updateByMemberTest() {
         StudyMember member = mock(StudyMember.class);
-        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null);
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
                 .when(noticeAccessPolicy).requireCanUpdateNotice(member);
@@ -179,7 +179,7 @@ class NoticeServiceTest {
         LocalDateTime oldRemindAt = NOW.plusHours(1);
         LocalDateTime newRemindAt = NOW.plusHours(2);
         notice.addReminders(List.of(oldRemindAt), NOW);
-        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, List.of(newRemindAt));
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, List.of(newRemindAt), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
 
@@ -346,7 +346,7 @@ class NoticeServiceTest {
     @DisplayName("다른 스터디의 공지는 수정할 수 없다")
     void updateNoticeFromOtherStudyTest() {
         StudyMember leader = mock(StudyMember.class);
-        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null);
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID))
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));

@@ -144,7 +144,7 @@ class NoticeRequestValidationTest {
     @Test
     @DisplayName("공지 수정 요청은 모든 필드를 생략할 수 있다")
     void validateEmptyUpdateRequestTest() {
-        NoticeUpdateRequest request = new NoticeUpdateRequest(null, null, null);
+        NoticeUpdateRequest request = new NoticeUpdateRequest(null, null, null, null);
 
         assertThat(validator.validate(request)).isEmpty();
     }
@@ -155,6 +155,7 @@ class NoticeRequestValidationTest {
         NoticeUpdateRequest request = new NoticeUpdateRequest(
                 "가".repeat(101),
                 "가".repeat(10001),
+                null,
                 null
         );
 
@@ -171,18 +172,73 @@ class NoticeRequestValidationTest {
         NoticeUpdateRequest nullRemindAtRequest = new NoticeUpdateRequest(
                 null,
                 null,
-                Collections.singletonList(null)
+                Collections.singletonList(null),
+                null
         );
         NoticeUpdateRequest pastRemindAtRequest = new NoticeUpdateRequest(
                 null,
                 null,
-                List.of(PAST)
+                List.of(PAST),
+                null
         );
 
         assertThat(messages(validator.validate(nullRemindAtRequest)))
                 .containsExactly("리마인드 시각은 null일 수 없습니다.");
         assertThat(messages(validator.validate(pastRemindAtRequest)))
                 .containsExactly("리마인드 시각은 미래여야 합니다.");
+    }
+
+    @Test
+    @DisplayName("공지 수정 요청은 첨부 파일 ID 목록이 null이어도 허용한다")
+    void validateUpdateRequestWithNullAttachmentIdsTest() {
+        NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null, null);
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공지 수정 요청은 빈 첨부 파일 ID 목록을 허용한다")
+    void validateUpdateRequestWithEmptyAttachmentIdsTest() {
+        NoticeUpdateRequest request = new NoticeUpdateRequest(null, null, null, List.of());
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공지 수정 요청은 양수인 첨부 파일 ID 목록을 허용한다")
+    void validateUpdateRequestWithPositiveAttachmentIdsTest() {
+        NoticeUpdateRequest request = new NoticeUpdateRequest(null, null, null, List.of(2L, 1L));
+
+        assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공지 수정 요청은 첨부 파일 ID 목록의 null 원소를 거부한다")
+    void validateUpdateRequestWithNullAttachmentIdTest() {
+        NoticeUpdateRequest request = new NoticeUpdateRequest(
+                null, null, null, Collections.singletonList(null)
+        );
+
+        assertThat(messages(validator.validate(request)))
+                .containsExactly("첨부 파일 ID는 null일 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("공지 수정 요청은 0인 첨부 파일 ID를 거부한다")
+    void validateUpdateRequestWithZeroAttachmentIdTest() {
+        NoticeUpdateRequest request = new NoticeUpdateRequest(null, null, null, List.of(0L));
+
+        assertThat(messages(validator.validate(request)))
+                .containsExactly("첨부 파일 ID는 양수여야 합니다.");
+    }
+
+    @Test
+    @DisplayName("공지 수정 요청은 음수인 첨부 파일 ID를 거부한다")
+    void validateUpdateRequestWithNegativeAttachmentIdTest() {
+        NoticeUpdateRequest request = new NoticeUpdateRequest(null, null, null, List.of(-1L));
+
+        assertThat(messages(validator.validate(request)))
+                .containsExactly("첨부 파일 ID는 양수여야 합니다.");
     }
 
     private Set<String> messages(Set<? extends ConstraintViolation<?>> violations) {
