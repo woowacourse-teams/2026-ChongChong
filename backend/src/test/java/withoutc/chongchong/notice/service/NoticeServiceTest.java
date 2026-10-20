@@ -181,7 +181,7 @@ class NoticeServiceTest {
         notice.addReminders(List.of(oldRemindAt), NOW);
         NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, List.of(newRemindAt), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
 
         noticeService.update(USER_ID, STUDY_ID, NOTICE_ID, request);
 
@@ -190,6 +190,8 @@ class NoticeServiceTest {
         assertThat(notice.getContent()).isEqualTo("기존 내용");
         assertThat(notice.getNextRemindAt()).isEqualTo(newRemindAt);
         verify(noticeRepository).save(notice);
+        verifyNoInteractions(noticeAttachmentService);
+        verify(noticeRepository, never()).flush();
     }
 
     @Test
@@ -348,7 +350,7 @@ class NoticeServiceTest {
         StudyMember leader = mock(StudyMember.class);
         NoticeUpdateRequest request = new NoticeUpdateRequest("수정 제목", null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID))
+        when(noticeRepository.getByIdAndStudyIdForUpdateOrThrow(NOTICE_ID, STUDY_ID))
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeService.update(USER_ID, STUDY_ID, NOTICE_ID, request));
