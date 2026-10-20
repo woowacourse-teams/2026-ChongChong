@@ -29,6 +29,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.file.exception.FileErrorCode;
+import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
@@ -78,6 +80,9 @@ class NoticeServiceTest {
     @Mock
     private NoticeAccessPolicy noticeAccessPolicy;
 
+    @Mock
+    private NoticeAttachmentService noticeAttachmentService;
+
     private NoticeService noticeService;
 
     @BeforeEach
@@ -90,6 +95,7 @@ class NoticeServiceTest {
                 noticeRecipientRepository,
                 studyRepository,
                 notificationService,
+                noticeAttachmentService,
                 noticeAccessPolicy,
                 clock
         );
@@ -127,6 +133,24 @@ class NoticeServiceTest {
         assertThat(notice.getRecipients().getFirst().getMember()).isSameAs(member);
         assertThat(notice.getNextRemindAt()).isEqualTo(remindAt);
         verify(notificationService).createNoticeCreatedEventNotifications(notice, List.of(member));
+    }
+
+    @Test
+    @DisplayName("첨부 검증이 준비되지 않았으면 공지 저장과 알림 생성을 진행하지 않는다")
+    void rejectCreateWhenAttachmentVerificationUnavailableTest() {
+        StudyMember actor = mock(StudyMember.class);
+        NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", null, List.of(1L));
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(actor);
+        when(noticeAttachmentService.prepareForCreate(USER_ID, List.of(1L)))
+                .thenThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE));
+
+        assertThatThrownBy(() -> noticeService.create(USER_ID, STUDY_ID, request))
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+
+        verify(noticeAccessPolicy).requireCanCreateNotice(actor);
+        verifyNoInteractions(studyRepository, noticeRepository, notificationService);
     }
 
     @Test
@@ -357,7 +381,7 @@ class NoticeServiceTest {
                 .extracting(exception -> ((AuthException) exception).getErrorCode())
                 .isEqualTo(AuthErrorCode.ACCESS_DENIED);
 
-        verifyNoInteractions(studyRepository, noticeRepository, notificationService);
+        verifyNoInteractions(studyRepository, noticeRepository, notificationService, noticeAttachmentService);
     }
 
     @Test

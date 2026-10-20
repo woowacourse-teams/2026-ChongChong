@@ -59,6 +59,11 @@ public class FileMetadata extends BaseEntity {
         return new FileMetadata(owner, originalFileName, objectKey, contentType, size, FileUploadStatus.PENDING);
     }
 
+    public boolean isOwnedBy(Long userId) {
+        Long ownerId = owner.getId();
+        return ownerId != null && ownerId.equals(userId);
+    }
+
     private FileMetadata(User owner, String originalFileName, String objectKey, String contentType, long size,
                          FileUploadStatus status) {
         validateOwner(owner);

@@ -40,6 +40,7 @@ public class NoticeService {
     private final NoticeRecipientRepository noticeRecipientRepository;
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
+    private final NoticeAttachmentService noticeAttachmentService;
 
     private final NoticeAccessPolicy noticeAccessPolicy;
     private final Clock clock;
@@ -48,6 +49,8 @@ public class NoticeService {
     public NoticeCreateResponse create(Long userId, Long studyId, NoticeCreateRequest request) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeAccessPolicy.requireCanCreateNotice(actor);
+
+        noticeAttachmentService.prepareForCreate(userId, request.attachmentFileIds());
 
         List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
