@@ -5,9 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import jakarta.persistence.EntityManager;
@@ -32,9 +29,11 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.exception.NoticeErrorCode;
+import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -76,7 +75,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
-    private UploadedFileVerifier uploadedFileVerifier;
+    private S3FileMetadataReader s3FileMetadataReader;
 
     @MockitoSpyBean
     private NoticeRepository noticeRepository;
@@ -92,7 +91,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("공지 내용·리마인더와 첨부를 교체하고 새 파일 완료와 제거 파일 삭제 대기를 함께 저장한다")
+    @DisplayName("완료 파일을 공지에 연결하고 제거 파일의 기존 삭제 대기 처리를 함께 저장한다")
     void replaceAttachmentsWithFileStatusChanges() {
         Fixture fixture = createFixture();
         Long retainedId = fixture.existingIds().getFirst();
@@ -114,9 +113,9 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         assertStatus(retainedId, FileUploadStatus.COMPLETED);
         assertStatus(addedId, FileUploadStatus.COMPLETED);
         assertStatus(removedId, FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.newIds().getLast(), FileUploadStatus.PENDING);
+        assertStatus(fixture.newIds().getLast(), FileUploadStatus.COMPLETED);
         assertRecipientUnchanged(fixture.noticeId());
-        verify(uploadedFileVerifier).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -136,7 +135,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
         assertStatus(fixture.existingIds().getLast(), FileUploadStatus.COMPLETED);
         assertRecipientUnchanged(fixture.noticeId());
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -153,7 +152,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         assertThat(noticeRepository.findById(fixture.noticeId()).orElseThrow().getTitle()).isEqualTo("제목만 수정");
         assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
         assertStatus(fixture.existingIds().getLast(), FileUploadStatus.COMPLETED);
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -167,28 +166,28 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         assertThat(attachmentFileIds(fixture.noticeId())).isEmpty();
         assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.DELETE_PENDING);
         assertStatus(fixture.existingIds().getLast(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.newIds().getFirst(), FileUploadStatus.PENDING);
+        assertStatus(fixture.newIds().getFirst(), FileUploadStatus.COMPLETED);
         assertThat(remindAt(fixture.noticeId())).isEqualTo(REMIND_AT);
         assertRecipientUnchanged(fixture.noticeId());
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
     @DisplayName("일부 새 파일 검증에 실패하면 제목·내용·리마인더·기존 첨부와 모든 파일 상태를 롤백한다")
-    void rollbackWhenStorageVerificationFails() {
+    void rollbackWhenNewImagePolicyFails() {
         Fixture fixture = createFixture();
         List<Long> originalAttachmentIds = attachmentIds(fixture.noticeId());
-        doNothing().doThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE))
-                .when(uploadedFileVerifier).verify(any(FileMetadata.class));
+        jdbcTemplate.update("UPDATE file_metadata SET content_type = 'application/pdf' WHERE id = ?",
+                fixture.newIds().getLast());
 
         assertThatThrownBy(() -> noticeService.update(fixture.userId(), fixture.studyId(), fixture.noticeId(),
                 new NoticeUpdateRequest("수정 제목", "수정 내용", List.of(REMIND_AT.plusDays(1)), fixture.newIds())))
-                .isInstanceOf(FileException.class)
-                .extracting(exception -> ((FileException) exception).getErrorCode())
-                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+                .isInstanceOf(NoticeException.class)
+                .extracting(exception -> ((NoticeException) exception).getErrorCode())
+                .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_TYPE);
 
         assertOriginalState(fixture, originalAttachmentIds);
-        verify(uploadedFileVerifier, times(2)).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -214,7 +213,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("같은 공지를 서로 다른 새 파일로 동시에 교체하면 순서대로 성공하고 최종 첨부만 완료로 남는다")
+    @DisplayName("같은 공지를 서로 다른 완료 파일로 동시에 교체하면 순서대로 성공하고 최종 첨부가 남는다")
     void serializeConcurrentUpdatesToSameNotice() throws Exception {
         Fixture fixture = createFixture();
         CyclicBarrier start = new CyclicBarrier(2);
@@ -309,10 +308,10 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember member = studyMemberRepository.save(
                 StudyMember.create(study, memberUser, "스터디원", null, StudyMemberRole.MEMBER));
-        FileMetadata first = saveFile(leader, true);
-        FileMetadata second = saveFile(leader, true);
-        FileMetadata third = saveFile(leader, false);
-        FileMetadata fourth = saveFile(leader, false);
+        FileMetadata first = saveCompletedFile(leader);
+        FileMetadata second = saveCompletedFile(leader);
+        FileMetadata third = saveCompletedFile(leader);
+        FileMetadata fourth = saveCompletedFile(leader);
         Notice notice = Notice.create(study, "기존 제목", "기존 내용");
         notice.addAttachments(List.of(first, second));
         notice.addReminders(List.of(REMIND_AT), READ_AT);
@@ -323,11 +322,9 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
                 List.of(third.getId(), fourth.getId()));
     }
 
-    private FileMetadata saveFile(User owner, boolean completed) {
+    private FileMetadata saveCompletedFile(User owner) {
         FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/" + UUID.randomUUID(), "image/png", 1024);
-        if (completed) {
-            file.completeUpload();
-        }
+        file.completeUpload();
         return fileRepository.saveAndFlush(file);
     }
 
@@ -366,7 +363,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         assertThat(fileRepository.findAllById(fixture.existingIds())).extracting(FileMetadata::getStatus)
                 .containsOnly(FileUploadStatus.COMPLETED);
         assertThat(fileRepository.findAllById(fixture.newIds())).extracting(FileMetadata::getStatus)
-                .containsOnly(FileUploadStatus.PENDING);
+                .containsOnly(FileUploadStatus.COMPLETED);
         assertRecipientUnchanged(fixture.noticeId());
     }
 

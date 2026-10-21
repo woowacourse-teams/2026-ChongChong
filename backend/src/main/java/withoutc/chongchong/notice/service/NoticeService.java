@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.file.entity.FileMetadata;
-import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
@@ -68,7 +67,6 @@ public class NoticeService {
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
         notice.addAttachments(attachmentFiles);
-        attachmentFiles.forEach(FileMetadata::completeUpload);
 
         noticeRepository.save(notice);
         notificationService.createNoticeCreatedEventNotifications(notice, members);
@@ -110,8 +108,6 @@ public class NoticeService {
         Set<Long> retainedIds = files.stream().map(FileMetadata::getId).collect(Collectors.toSet());
         notice.getAttachments().stream().map(NoticeAttachment::getFile)
                 .filter(file -> !retainedIds.contains(file.getId())).forEach(FileMetadata::markForDeletion);
-        files.stream().filter(file -> file.getStatus() == FileUploadStatus.PENDING)
-                .forEach(FileMetadata::completeUpload);
 
         notice.clearAttachments();
         noticeRepository.flush();

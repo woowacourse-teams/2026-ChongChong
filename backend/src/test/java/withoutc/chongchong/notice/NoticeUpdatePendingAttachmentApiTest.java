@@ -39,7 +39,7 @@ import withoutc.chongchong.user.repository.UserRepository;
         "notice.attachments.max-size-bytes=5242880",
         "notice.attachments.allowed-content-types=image/jpeg,image/png,image/webp"
 })
-class NoticeUpdateAttachmentUnavailableApiTest extends PostgresContainerTest {
+class NoticeUpdatePendingAttachmentApiTest extends PostgresContainerTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -105,15 +105,15 @@ class NoticeUpdateAttachmentUnavailableApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기는 기존 첨부를 유지하더라도 새 파일 추가를 503으로 차단하고 전체 수정을 롤백한다")
-    void rejectNewFileWithDefaultVerifier() {
+    @DisplayName("기존 첨부를 유지하더라도 미완료 파일 추가는 400으로 거부하고 전체 수정을 롤백한다")
+    void rejectPendingNewFile() {
         Response response = request(Map.of("title", "수정 제목", "content", "수정 내용",
                 "remindAts", List.of("2099-01-02T00:00:00"),
                 "attachmentFileIds", List.of(existingIds.getFirst(), newFileId)));
 
-        response.then().statusCode(503)
-                .body("code", equalTo("FILE_VERIFICATION_UNAVAILABLE"))
-                .body("message", equalTo("파일 업로드 확인 기능이 준비되지 않아 새 파일을 첨부할 수 없습니다."));
+        response.then().statusCode(400)
+                .body("code", equalTo("FILE_NOT_ATTACHABLE"))
+                .body("message", equalTo("파일을 첨부할 수 없습니다."));
         Notice found = noticeRepository.findById(noticeId).orElseThrow();
         assertThat(found.getTitle()).isEqualTo("기존 제목");
         assertThat(found.getContent()).isEqualTo("기존 내용");
@@ -129,7 +129,7 @@ class NoticeUpdateAttachmentUnavailableApiTest extends PostgresContainerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"{\"title\":\"수정 제목\"}", "{\"title\":\"수정 제목\",\"attachmentFileIds\":null}"})
-    @DisplayName("기본 검증기 상태에서도 첨부 생략·null로 기존 첨부를 유지하며 수정할 수 있다")
+    @DisplayName("미완료 파일과 무관하게 첨부 생략·null로 기존 첨부를 유지하며 수정할 수 있다")
     void preserveExistingAttachments(String body) {
         request(body).then().statusCode(204);
 
@@ -140,7 +140,7 @@ class NoticeUpdateAttachmentUnavailableApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기 상태에서도 이전 리더의 기존 첨부를 재정렬할 수 있다")
+    @DisplayName("미완료 파일과 무관하게 이전 리더의 기존 첨부를 재정렬할 수 있다")
     void reorderExistingAttachments() {
         request(Map.of("attachmentFileIds", existingIds.reversed())).then().statusCode(204);
 
@@ -151,7 +151,7 @@ class NoticeUpdateAttachmentUnavailableApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기 상태에서도 기존 첨부 일부를 제거하고 남은 파일은 유지할 수 있다")
+    @DisplayName("미완료 파일과 무관하게 기존 첨부 일부를 제거하고 남은 파일은 유지할 수 있다")
     void removeOneExistingAttachment() {
         request(Map.of("attachmentFileIds", List.of(existingIds.getFirst()))).then().statusCode(204);
 
@@ -162,7 +162,7 @@ class NoticeUpdateAttachmentUnavailableApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기 상태에서도 빈 목록으로 첨부를 모두 제거할 수 있다")
+    @DisplayName("미완료 파일과 무관하게 빈 목록으로 첨부를 모두 제거할 수 있다")
     void removeAllExistingAttachments() {
         request(Map.of("attachmentFileIds", List.of())).then().statusCode(204);
 

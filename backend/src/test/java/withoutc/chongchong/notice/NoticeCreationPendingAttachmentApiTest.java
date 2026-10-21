@@ -34,7 +34,7 @@ import withoutc.chongchong.user.repository.UserRepository;
         "notice.attachments.max-size-bytes=5242880",
         "notice.attachments.allowed-content-types=image/jpeg,image/png,image/webp"
 })
-class NoticeCreationAttachmentUnavailableApiTest extends PostgresContainerTest {
+class NoticeCreationPendingAttachmentApiTest extends PostgresContainerTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -86,14 +86,14 @@ class NoticeCreationAttachmentUnavailableApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기는 본인 소유의 정상 이미지도 503으로 차단하며 DB 변경을 남기지 않는다")
-    void rejectNewAttachmentWithDefaultVerifier() {
+    @DisplayName("미완료 이미지는 400으로 거부하며 공지와 알림을 저장하지 않는다")
+    void rejectPendingAttachment() {
         Response response = request(Map.of("title", "첨부 공지", "content", "공지 내용",
                 "remindAts", List.of("2099-01-01T00:00:00"), "attachmentFileIds", List.of(fileId)));
 
-        response.then().statusCode(503)
-                .body("code", equalTo("FILE_VERIFICATION_UNAVAILABLE"))
-                .body("message", equalTo("파일 업로드 확인 기능이 준비되지 않아 새 파일을 첨부할 수 없습니다."));
+        response.then().statusCode(400)
+                .body("code", equalTo("FILE_NOT_ATTACHABLE"))
+                .body("message", equalTo("파일을 첨부할 수 없습니다."));
         assertThat(countRows("notices")).isZero();
         assertThat(countRows("notice_attachments")).isZero();
         assertThat(countRows("notice_recipients")).isZero();
@@ -103,8 +103,8 @@ class NoticeCreationAttachmentUnavailableApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기가 미연결이어도 첨부 없는 기존 공지 생성은 201로 성공한다")
-    void createWithoutAttachmentsWithDefaultVerifier() {
+    @DisplayName("미완료 파일이 있어도 첨부 없는 공지 생성은 201로 성공한다")
+    void createWithoutAttachments() {
         Response response = request(Map.of("title", "첨부 없는 공지", "content", "공지 내용"));
 
         response.then().statusCode(201);

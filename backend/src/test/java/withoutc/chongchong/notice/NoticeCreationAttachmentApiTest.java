@@ -3,10 +3,6 @@ package withoutc.chongchong.notice;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
@@ -30,10 +26,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
-import withoutc.chongchong.file.exception.FileErrorCode;
-import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -73,7 +67,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
-    private UploadedFileVerifier uploadedFileVerifier;
+    private S3FileMetadataReader s3FileMetadataReader;
 
     @LocalServerPort
     private int port;
@@ -124,7 +118,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
         assertThat(countRows("notice_recipients")).isOne();
         assertThat(countRows("notice_reminders")).isOne();
         assertThat(countRows("notifications")).isOne();
-        verify(uploadedFileVerifier, times(2)).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @ParameterizedTest
@@ -141,8 +135,8 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
         assertThat(countRows("notice_attachments")).isZero();
         assertThat(countRows("notifications")).isOne();
         assertThat(fileRepository.findAll()).extracting(FileMetadata::getStatus)
-                .containsOnly(FileUploadStatus.PENDING);
-        verifyNoInteractions(uploadedFileVerifier);
+                .containsOnly(FileUploadStatus.COMPLETED);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -165,7 +159,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(request(leader.getId(), validBody(fileIds)), 400, "ATTACHMENT_LIMIT_EXCEEDED");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -175,7 +169,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(request(leader.getId(), body), 400, "INVALID_ATTACHMENT_IDS");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @ParameterizedTest
@@ -186,7 +180,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(request(leader.getId(), body), 400, "INVALID_INPUT_VALUE");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @ParameterizedTest
@@ -197,7 +191,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(request(leader.getId(), body), 400, "INVALID_REQUEST");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -205,7 +199,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     void rejectMissingFile() {
         assertRejected(request(leader.getId(), validBody(List.of(Long.MAX_VALUE))), 404, "FILE_NOT_FOUND");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -213,7 +207,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     void rejectOtherUsersFile() {
         assertRejected(request(leader.getId(), validBody(List.of(memberFile.getId()))), 403, "FILE_NOT_OWNED");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -229,7 +223,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
         assertThat(countRows("notifications")).isOne();
         assertThat(fileRepository.findById(firstFile.getId()).orElseThrow().getStatus())
                 .isEqualTo(FileUploadStatus.COMPLETED);
-        verify(uploadedFileVerifier).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -239,7 +233,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_TYPE");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @ParameterizedTest
@@ -250,7 +244,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_SIZE");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -258,7 +252,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     void rejectMemberCreation() {
         assertRejected(request(member.getId(), validBody(List.of(memberFile.getId()))), 403, "ACCESS_DENIED");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -266,7 +260,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     void rejectOutsiderCreation() {
         assertRejected(request(outsider.getId(), validBody(List.of(firstFile.getId()))), 403, "STUDY_ACCESS_DENIED");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -277,19 +271,18 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
 
         assertRejected(response, 401, "AUTHENTICATION_REQUIRED");
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
-    @DisplayName("일부 파일 검증 실패는 503을 반환하고 공지와 모든 파일 상태를 부분 반영하지 않는다")
-    void rejectWhenOneFileVerificationFails() {
-        doNothing().doThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE))
-                .when(uploadedFileVerifier).verify(any(FileMetadata.class));
+    @DisplayName("일부 이미지 정책 검증 실패는 400을 반환하고 공지를 저장하지 않으며 완료 상태를 유지한다")
+    void rejectWhenOneImagePolicyFails() {
+        jdbcTemplate.update("UPDATE file_metadata SET content_type = 'application/pdf' WHERE id = ?", secondFile.getId());
 
         assertRejected(request(leader.getId(), validBody(List.of(firstFile.getId(), secondFile.getId()))),
-                503, "FILE_VERIFICATION_UNAVAILABLE");
+                400, "INVALID_NOTICE_IMAGE_TYPE");
 
-        verify(uploadedFileVerifier, times(2)).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     private Response request(Long userId, Object body) {
@@ -303,9 +296,9 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     }
 
     private FileMetadata saveFile(User owner, String contentType, long size) {
-        return fileRepository.saveAndFlush(FileMetadata.create(
-                owner, "image.png", "uploads/" + UUID.randomUUID(), contentType, size
-        ));
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/" + UUID.randomUUID(), contentType, size);
+        file.completeUpload();
+        return fileRepository.saveAndFlush(file);
     }
 
     private void assertRejected(Response response, int status, String code) {
@@ -316,7 +309,7 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
         assertThat(countRows("notice_reminders")).isZero();
         assertThat(countRows("notifications")).isZero();
         assertThat(fileRepository.findAll()).extracting(FileMetadata::getStatus)
-                .containsOnly(FileUploadStatus.PENDING);
+                .containsOnly(FileUploadStatus.COMPLETED);
     }
 
     private Long countRows(String tableName) {
