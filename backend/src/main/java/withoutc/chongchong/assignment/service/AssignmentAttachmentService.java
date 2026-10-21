@@ -39,11 +39,15 @@ public class AssignmentAttachmentService {
         List<FileMetadata> files = new ArrayList<>();
         for (Long fileId : requestedIds) {
             FileMetadata file = getFile(locked, fileId);
+            boolean isExisting = existingIds.contains(file.getId());
+            if (!isExisting && !file.isOwnedBy(userId)) {
+                throw new FileException(FileErrorCode.FILE_NOT_OWNED);
+            }
             if (!file.isCompleted()) {
                 throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
             }
-            if (!existingIds.contains(file.getId())) {
-                validateNewFile(userId, file);
+            if (!isExisting) {
+                validateNewFile(file);
             }
             files.add(file);
         }
@@ -59,10 +63,7 @@ public class AssignmentAttachmentService {
         return file;
     }
 
-    private void validateNewFile(Long userId, FileMetadata file) {
-        if (!file.isOwnedBy(userId)) {
-            throw new FileException(FileErrorCode.FILE_NOT_OWNED);
-        }
+    private void validateNewFile(FileMetadata file) {
         Long fileId = file.getId();
         if (assignmentAttachmentRepository.existsByFileId(fileId)
                 || assignmentAttachmentRepository.existsSubmissionByFileId(fileId)
