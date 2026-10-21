@@ -7,15 +7,17 @@ public record AssignmentAttachmentResponse(
         String originalFileName,
         String contentType,
         long size,
-        int sortOrder
+        int sortOrder,
+        String imageUrl
 ) {
-    public static AssignmentAttachmentResponse of(FileMetadata file, int sortOrder) {
+    public static AssignmentAttachmentResponse of(FileMetadata file, int sortOrder, String imageUrl) {
         return new AssignmentAttachmentResponse(
                 file.getId(),
                 file.getOriginalFileName(),
                 file.getContentType(),
                 file.getSize(),
-                sortOrder
+                sortOrder,
+                imageUrl
         );
     }
 }

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +22,16 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import withoutc.chongchong.assignment.repository.AssignmentAttachmentRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
@@ -39,6 +48,7 @@ import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
+@Import(AssignmentAttachmentApiTest.SigningConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AssignmentAttachmentApiTest extends PostgresContainerTest {
 
@@ -314,6 +324,40 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .then().statusCode(201);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"image/jpeg", "image/png", "image/webp"})
+    @DisplayName("조회 권한이 있는 사용자에게만 이미지 URL을 반환하고 문서는 URL 없이 표시한다")
+    void returnsImageUrlsAfterAccessCheck(String contentType) {
+        Long image = file(leader, contentType, 1024, true);
+        Long document = file(leader, "application/pdf", 1024, true);
+        Long assignment = create(List.of(image, document));
+        Response detail = get(member, path(assignment));
+        detail.then().statusCode(200);
+        URI url = URI.create(detail.jsonPath().getString("attachments[0].imageUrl"));
+        assertThat(url.getScheme()).isEqualTo("https");
+        assertThat(url.getPath()).isEqualTo("/" + fileMetaDataRepository.findById(image).orElseThrow().getObjectKey());
+        assertThat(url.getQuery()).contains("X-Amz-Signature=", "X-Amz-Expires=", "response-content-disposition=inline",
+                "response-content-type=" + contentType);
+        assertThat(detail.jsonPath().getString("attachments[1].imageUrl")).isNull();
+        get(outsider, path(assignment)).then().statusCode(403);
+
+        Long submissionImage = file(member, contentType, 1024, true);
+        Response submitted = post(member, path(assignment) + "/submissions",
+                Map.of("attachmentFileIds", List.of(submissionImage)));
+        submitted.then().statusCode(201);
+        String submissionPath = path(assignment) + "/submissions/" + submitted.jsonPath().getLong("submissionId");
+        assertThat(get(member, path(assignment) + "/submissions/my").jsonPath()
+                .getString("attachments[0].imageUrl")).contains("X-Amz-Signature=");
+        assertThat(get(leader, submissionPath).jsonPath().getString("attachments[0].imageUrl"))
+                .contains("X-Amz-Signature=");
+        Response forbidden = get(other, submissionPath);
+        forbidden.then().statusCode(403);
+        assertThat(forbidden.asString()).doesNotContain("X-Amz-Signature");
+        patch(leader, path(assignment), Map.of("submissionVisibility", "ALL_STUDY_MEMBERS")).then().statusCode(204);
+        assertThat(get(other, submissionPath).jsonPath().getString("attachments[0].imageUrl"))
+                .contains("X-Amz-Signature=");
+    }
+
     private Long create(List<Long> attachments) {
         Response response = post(leader, "/studies/" + study.getId() + "/assignments", Map.of(
                 "title", "과제", "content", "안내", "submissionTarget", "MEMBERS_ONLY",
@@ -350,4 +394,19 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
     private void assertStatus(Long fileId, FileUploadStatus status) {
         assertThat(fileMetaDataRepository.findById(fileId).orElseThrow().getStatus()).isEqualTo(status);
     }
+
+    @TestConfiguration
+    static class SigningConfiguration {
+
+        @Bean
+        @Primary
+        S3Presigner testPresigner() {
+            return S3Presigner.builder()
+                    .region(Region.AP_NORTHEAST_2)
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create("test-access-key", "test-secret-key")))
+                    .build();
+        }
+    }
+
 }

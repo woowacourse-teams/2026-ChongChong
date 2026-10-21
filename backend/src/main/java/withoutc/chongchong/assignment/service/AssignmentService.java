@@ -29,6 +29,7 @@ import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.service.FileImageUrlGenerator;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notification.entity.ResourceType;
@@ -49,6 +50,7 @@ public class AssignmentService {
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
     private final AssignmentAttachmentService assignmentAttachmentService;
+    private final FileImageUrlGenerator fileImageUrlGenerator;
 
     private final Clock clock;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
@@ -132,7 +134,9 @@ public class AssignmentService {
         List<AssignmentAttachmentResponse> attachments = assignment.getAttachments().stream()
                 .map(attachment -> {
                     FileMetadata file = attachment.getFile();
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder());
+                    String imageUrl = fileImageUrlGenerator.generatePresignedUrl(
+                            file.getObjectKey(), file.getContentType());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl);
                 })
                 .toList();
         return AssignmentDetailResponse.from(assignment, attachments);
