@@ -146,7 +146,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
                 .body("attachments.sortOrder", contains(0, 1));
         assertStatus(firstNewFile.getId(), FileUploadStatus.COMPLETED);
         assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
-        assertStatus(existingIds.getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
         assertStatus(secondNewFile.getId(), FileUploadStatus.COMPLETED);
         assertThat(remindAt()).isEqualTo(REMIND_AT.plusDays(1));
         assertReadStateUnchanged();
@@ -172,8 +172,8 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         testAuthRequest.givenAuthenticatedUser(member.getId()).port(port)
                 .get("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
                 .then().statusCode(200).body("attachments", hasSize(0));
-        assertStatus(existingIds.getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(existingIds.getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
         assertReadStateUnchanged();
         verifyNoInteractions(s3FileMetadataReader);
     }

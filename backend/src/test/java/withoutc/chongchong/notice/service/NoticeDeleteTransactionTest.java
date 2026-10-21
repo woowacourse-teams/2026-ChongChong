@@ -192,7 +192,7 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("수정이 먼저 잠금을 획득하면 삭제는 최신 첨부를 조회하여 새 파일까지 삭제 대기로 전환한다")
+    @DisplayName("수정이 먼저 끝나면 제거된 파일은 완료 상태로 남고 삭제는 최신 첨부만 삭제 대기로 전환한다")
     void deleteAfterConcurrentUpdate() throws Exception {
         Fixture fixture = createFixture();
         CountDownLatch verifying = new CountDownLatch(1);
@@ -225,7 +225,10 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
             assertThat(executor.awaitTermination(10, SECONDS)).isTrue();
         }
 
-        assertDeleted(fixture, FileUploadStatus.DELETE_PENDING);
+        assertNoticeDataDeleted(fixture);
+        assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(fixture.fileIds().getLast(), FileUploadStatus.COMPLETED);
+        assertStatus(fixture.newFileId(), FileUploadStatus.DELETE_PENDING);
         verifyNoInteractions(s3FileMetadataReader);
     }
 
@@ -346,14 +349,18 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
     }
 
     private void assertDeleted(Fixture fixture, FileUploadStatus newFileStatus) {
+        assertNoticeDataDeleted(fixture);
+        assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(fixture.fileIds().getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(fixture.newFileId(), newFileStatus);
+    }
+
+    private void assertNoticeDataDeleted(Fixture fixture) {
         assertThat(noticeRepository.existsById(fixture.noticeId())).isFalse();
         assertThat(countNoticeRows("notice_attachments", fixture.noticeId())).isZero();
         assertThat(countNoticeRows("notice_reminders", fixture.noticeId())).isZero();
         assertThat(countNoticeRows("notice_recipients", fixture.noticeId())).isZero();
         assertThat(notificationCount(fixture.noticeId())).isZero();
-        assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.fileIds().getLast(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.newFileId(), newFileStatus);
         assertOtherNoticeUnchanged(fixture);
     }
 

@@ -157,7 +157,7 @@ class NoticeUpdatePendingAttachmentApiTest extends PostgresContainerTest {
 
         assertThat(attachmentFileIds()).containsExactly(existingIds.getFirst());
         assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
-        assertStatus(existingIds.getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
         assertStatus(newFileId, FileUploadStatus.PENDING);
     }
 
@@ -167,8 +167,8 @@ class NoticeUpdatePendingAttachmentApiTest extends PostgresContainerTest {
         request(Map.of("attachmentFileIds", List.of())).then().statusCode(204);
 
         assertThat(attachmentFileIds()).isEmpty();
-        assertStatus(existingIds.getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(existingIds.getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
         assertStatus(newFileId, FileUploadStatus.PENDING);
     }
 

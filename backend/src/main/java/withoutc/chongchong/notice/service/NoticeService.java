@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -21,7 +20,6 @@ import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.entity.NoticeAttachment;
 import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
@@ -105,10 +103,6 @@ public class NoticeService {
             return;
         }
         List<FileMetadata> files = noticeAttachmentService.prepareForUpdate(userId, notice, fileIds);
-        Set<Long> retainedIds = files.stream().map(FileMetadata::getId).collect(Collectors.toSet());
-        notice.getAttachments().stream().map(NoticeAttachment::getFile)
-                .filter(file -> !retainedIds.contains(file.getId())).forEach(FileMetadata::markForDeletion);
-
         notice.clearAttachments();
         noticeRepository.flush();
         notice.addAttachments(files);

@@ -91,12 +91,13 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("완료 파일을 공지에 연결하고 제거 파일의 기존 삭제 대기 처리를 함께 저장한다")
-    void replaceAttachmentsWithFileStatusChanges() {
+    @DisplayName("공지 첨부를 교체하면 유지·추가·제거 파일 모두 완료 상태로 남는다")
+    void replaceAttachmentsPreservingCompletedStatus() {
         Fixture fixture = createFixture();
         Long retainedId = fixture.existingIds().getFirst();
         Long removedId = fixture.existingIds().getLast();
         Long addedId = fixture.newIds().getFirst();
+        String removedObjectKey = fileRepository.findById(removedId).orElseThrow().getObjectKey();
         List<Long> finalIds = List.of(addedId, retainedId);
 
         noticeService.update(fixture.userId(), fixture.studyId(), fixture.noticeId(),
@@ -112,7 +113,8 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         assertThat(remindAt(fixture.noticeId())).isEqualTo(REMIND_AT.plusDays(1));
         assertStatus(retainedId, FileUploadStatus.COMPLETED);
         assertStatus(addedId, FileUploadStatus.COMPLETED);
-        assertStatus(removedId, FileUploadStatus.DELETE_PENDING);
+        assertStatus(removedId, FileUploadStatus.COMPLETED);
+        assertThat(fileRepository.findById(removedId).orElseThrow().getObjectKey()).isEqualTo(removedObjectKey);
         assertStatus(fixture.newIds().getLast(), FileUploadStatus.COMPLETED);
         assertRecipientUnchanged(fixture.noticeId());
         verifyNoInteractions(s3FileMetadataReader);
@@ -156,7 +158,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("빈 최종 목록은 실제 업로드 검증 없이 첨부를 모두 제거하고 기존 파일을 삭제 대기로 바꾼다")
+    @DisplayName("빈 최종 목록은 첨부 관계만 모두 제거하고 파일 메타데이터와 완료 상태를 유지한다")
     void removeAllAttachments() {
         Fixture fixture = createFixture();
 
@@ -164,8 +166,8 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
                 new NoticeUpdateRequest(null, null, null, List.of()));
 
         assertThat(attachmentFileIds(fixture.noticeId())).isEmpty();
-        assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.existingIds().getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(fixture.existingIds().getLast(), FileUploadStatus.COMPLETED);
         assertStatus(fixture.newIds().getFirst(), FileUploadStatus.COMPLETED);
         assertThat(remindAt(fixture.noticeId())).isEqualTo(REMIND_AT);
         assertRecipientUnchanged(fixture.noticeId());
@@ -191,14 +193,14 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("첨부 교체 SQL과 파일 상태 변경이 flush된 뒤 실패해도 모든 변경을 롤백한다")
+    @DisplayName("첨부 교체 SQL이 flush된 뒤 실패해도 공지·관계를 롤백하고 파일은 완료 상태로 유지한다")
     void rollbackAfterReplacementHasBeenFlushed() {
         Fixture fixture = createFixture();
         List<Long> originalAttachmentIds = attachmentIds(fixture.noticeId());
         doAnswer(invocation -> {
             entityManager.flush();
             assertThat(attachmentFileIds(fixture.noticeId())).containsExactlyElementsOf(fixture.newIds());
-            assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.DELETE_PENDING);
+            assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
             assertStatus(fixture.newIds().getFirst(), FileUploadStatus.COMPLETED);
             assertThat(remindAt(fixture.noticeId())).isEqualTo(REMIND_AT.plusDays(1));
             throw new IllegalStateException("첨부 교체 flush 이후 실패");
@@ -236,10 +238,10 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         Map<String, Long> fileIdByTitle = Map.of(
                 "첫 번째 수정", fixture.newIds().getFirst(), "두 번째 수정", fixture.newIds().getLast());
         assertThat(attachmentFileIds(fixture.noticeId())).containsExactly(fileIdByTitle.get(title));
-        assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.existingIds().getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(fixture.existingIds().getLast(), FileUploadStatus.COMPLETED);
         assertThat(fileRepository.findAllById(fixture.newIds())).extracting(FileMetadata::getStatus)
-                .containsExactlyInAnyOrder(FileUploadStatus.COMPLETED, FileUploadStatus.DELETE_PENDING);
+                .containsOnly(FileUploadStatus.COMPLETED);
     }
 
     @Test
@@ -290,8 +292,8 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
         if (firstSucceeded) {
             assertThat(attachmentFileIds(fixture.noticeId())).containsExactly(sharedFileId);
             assertThat(attachmentFileIds(otherNoticeId)).isEmpty();
-            assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.DELETE_PENDING);
-            assertStatus(fixture.existingIds().getLast(), FileUploadStatus.DELETE_PENDING);
+            assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
+            assertStatus(fixture.existingIds().getLast(), FileUploadStatus.COMPLETED);
             return;
         }
         assertThat(attachmentFileIds(fixture.noticeId())).containsExactlyElementsOf(fixture.existingIds());
