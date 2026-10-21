@@ -14,6 +14,7 @@ replace_upstream "$work/restore.conf"
 for attempt in {1..10}; do
     if verify_edge "$target" "$work"; then
         rm -f "$STATE/pending-upstream.conf"
+        prune_edge_deployments
         echo "Routing restored to $target; no application recreated"
         exit 0
     fi

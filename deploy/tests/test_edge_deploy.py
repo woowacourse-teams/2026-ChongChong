@@ -25,6 +25,7 @@ elif name == 'flock':
 elif name == 'docker':
     if failure == 'pull' and 'pull' in args: sys.exit(1)
     if failure == 'compose-config' and 'config' in args: sys.exit(1)
+    if failure == 'up' and 'up' in args: sys.exit(1)
     if args[0] == 'login': sys.stdin.buffer.read()
     if failure == 'draining' and args[0] == 'top': print('nginx: worker process is shutting down')
     if args[-1] == '-t':
@@ -50,7 +51,8 @@ elif name == 'curl':
 
 
 class EdgeDeployTest(unittest.TestCase):
-    def exercise(self, failure='', active='10.0.0.1', rollback=False, pending=False):
+    def exercise(self, failure='', active='10.0.0.1', rollback=False, pending=False,
+                 prepare=None, inspect_state=None):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
             shutil.copytree(DEPLOY, root / 'deploy')
@@ -69,6 +71,8 @@ class EdgeDeployTest(unittest.TestCase):
             if rollback or pending:
                 name = 'pending-upstream.conf' if pending else 'previous-upstream.conf'
                 (root / 'edge-state' / name).write_text('upstream chongchong_backend { server 10.0.0.2:8080; }\n')
+            if prepare:
+                prepare(root)
             binary = root / 'bin'
             binary.mkdir()
             for command in ('docker', 'ssh', 'curl', 'timeout', 'flock', 'sleep'):
@@ -82,7 +86,95 @@ class EdgeDeployTest(unittest.TestCase):
                                     env=env, capture_output=True, text=True)
             calls = [json.loads(line) for line in (root / 'calls').read_text().splitlines()]
             routing = (root / 'edge-routing/upstream.conf').read_text()
+            if inspect_state:
+                inspect_state(root)
             return result, calls, routing, original, (root / 'edge-state/pending-upstream.conf').exists()
+
+    def seed_snapshots(self, root):
+        state = root / 'edge-state'
+        for index in range(6):
+            snapshot = state / f'deployment.old{index}'
+            snapshot.mkdir()
+            (snapshot / 'backend.env').write_text('TEST_SECRET=old\n')
+            os.utime(snapshot, (index + 1, index + 1))
+        (state / 'last-successful-deployment').write_text(str(state / 'deployment.old0') + '\n')
+        with (root / 'config/edge.env').open('a') as config:
+            config.write('EDGE_DEPLOYMENT_RETENTION_COUNT=3\n')
+        (state / 'unrelated').mkdir()
+
+    def assert_retained_snapshots(self, root):
+        state = root / 'edge-state'
+        snapshots = [path for path in state.glob('deployment.*') if not path.is_symlink()]
+        self.assertEqual(len(snapshots), 3)
+        current = pathlib.Path((state / 'last-successful-deployment').read_text().strip())
+        self.assertIn(current, snapshots)
+        self.assertTrue((state / 'unrelated').is_dir())
+
+    def test_snapshots_are_bounded_after_success_and_pre_switch_failure(self):
+        for failure in ('', 'ssh', 'readiness', 'mismatch'):
+            with self.subTest(failure=failure):
+                result, _, _, _, _ = self.exercise(
+                    failure, prepare=self.seed_snapshots, inspect_state=self.assert_retained_snapshots)
+                self.assertEqual(result.returncode == 0, failure == '')
+
+    def test_retention_one_preserves_the_older_successful_snapshot(self):
+        def prepare(root):
+            self.seed_snapshots(root)
+            with (root / 'config/edge.env').open('a') as config:
+                config.write('EDGE_DEPLOYMENT_RETENTION_COUNT=1\n')
+
+        def inspect_state(root):
+            self.assertEqual(list((root / 'edge-state').glob('deployment.*')),
+                             [root / 'edge-state/deployment.old0'])
+
+        result, _, _, _, _ = self.exercise('ssh', prepare=prepare, inspect_state=inspect_state)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_cleanup_does_not_follow_symlinked_directories(self):
+        def prepare(root):
+            self.seed_snapshots(root)
+            outside = root / 'outside-snapshot'
+            outside.mkdir()
+            (outside / 'backend.env').write_text('TEST_SECRET=outside\n')
+            (root / 'edge-state/deployment.link').symlink_to(outside)
+
+        def inspect_state(root):
+            self.assert_retained_snapshots(root)
+            self.assertTrue((root / 'outside-snapshot/backend.env').is_file())
+            self.assertTrue((root / 'edge-state/deployment.link').is_symlink())
+
+        result, _, _, _, _ = self.exercise(prepare=prepare, inspect_state=inspect_state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_invalid_retention_is_rejected_before_deployment(self):
+        for count in ('0', '-1', 'invalid'):
+            with self.subTest(count=count):
+                def prepare(root):
+                    with (root / 'config/edge.env').open('a') as config:
+                        config.write(f'EDGE_DEPLOYMENT_RETENTION_COUNT={count}\n')
+
+                result, calls, routing, original, _ = self.exercise(prepare=prepare)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(routing, original)
+                self.assertFalse(any(call[0] == 'ssh' for call in calls))
+
+    def test_pending_recovery_preserves_every_snapshot(self):
+        def inspect_state(root):
+            self.assertEqual(len(list((root / 'edge-state').glob('deployment.*'))), 7)
+            for index in range(6):
+                self.assertTrue((root / f'edge-state/deployment.old{index}/backend.env').is_file())
+
+        result, _, _, _, pending = self.exercise(
+            'recovery', prepare=self.seed_snapshots, inspect_state=inspect_state)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(pending)
+
+    def test_successful_manual_recovery_prunes_old_snapshots(self):
+        result, _, _, _, pending = self.exercise(
+            rollback=True, pending=True, prepare=self.seed_snapshots,
+            inspect_state=self.assert_retained_snapshots)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(pending)
 
     def test_manual_rollback_validation_failure_restores_upstream_file(self):
         for failure in ('rollback-syntax', 'reload'):
@@ -150,9 +242,11 @@ class EdgeDeployTest(unittest.TestCase):
 
 
 class BackendReleaseTest(unittest.TestCase):
-    def exercise(self, failure=''):
+    def exercise(self, failure='', prepare=None, inspect_state=None):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
+            if prepare:
+                prepare(root)
             binary = root / 'bin'
             binary.mkdir()
             for command in ('docker', 'flock'):
@@ -180,7 +274,27 @@ class BackendReleaseTest(unittest.TestCase):
             self.assertNotIn('private-test-value', json.dumps(calls))
             for path in (root / 'releases').glob('*/backend.env'):
                 self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            if inspect_state:
+                inspect_state(root)
             return result, calls, (root / 'current-backend-release').is_symlink()
+
+    def test_failed_candidate_is_removed_without_removing_current_release(self):
+        def prepare(root):
+            current = root / 'releases/release.current'
+            current.mkdir(parents=True)
+            (current / 'backend.env').write_text('TEST_SECRET=current\n')
+            (current / 'backend.env').chmod(0o600)
+            (root / 'current-backend-release').symlink_to(current)
+
+        def inspect_state(root):
+            self.assertEqual(list((root / 'releases').glob('release.*')), [root / 'releases/release.current'])
+            self.assertTrue((root / 'current-backend-release/backend.env').is_file())
+
+        for failure in ('compose-config', 'pull', 'up'):
+            with self.subTest(failure=failure):
+                result, _, current = self.exercise(failure, prepare=prepare, inspect_state=inspect_state)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertTrue(current)
 
     def test_pull_or_config_failure_preserves_existing_container(self):
         for failure in ('pull', 'compose-config', 'locked'):

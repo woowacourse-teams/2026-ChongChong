@@ -9,6 +9,10 @@ edge_initialize() {
     exec 9>"$STATE/deploy.lock"
     flock -n 9 || { echo 'Another edge operation is running' >&2; return 1; }
     source "$ROOT/config/edge.env"
+    EDGE_DEPLOYMENT_RETENTION_COUNT="${EDGE_DEPLOYMENT_RETENTION_COUNT:-3}"
+    [[ "$EDGE_DEPLOYMENT_RETENTION_COUNT" =~ ^[1-9][0-9]*$ ]] || {
+        echo 'EDGE_DEPLOYMENT_RETENTION_COUNT must be a positive integer' >&2; return 1;
+    }
     for key in BACKEND_A_HOST BACKEND_B_HOST SSH_USER SSH_KEY SSH_KNOWN_HOSTS SERVER_NAME; do
         [[ -n "${!key:-}" ]] || { echo "Missing $key" >&2; return 1; }
     done
@@ -61,6 +65,32 @@ replace_upstream() {
         echo "URGENT: upstream restoration failed; original configuration remains at $backup" >&2
     fi
     return 1
+}
+
+prune_edge_deployments() {
+    python3 - "$STATE" "$EDGE_DEPLOYMENT_RETENTION_COUNT" <<'PY'
+import pathlib
+import shutil
+import sys
+
+state = pathlib.Path(sys.argv[1]).resolve()
+limit = int(sys.argv[2])
+if (state / 'pending-upstream.conf').exists():
+    sys.exit(0)
+marker = state / 'last-successful-deployment'
+current = pathlib.Path(marker.read_text().strip()).resolve() if marker.exists() else None
+snapshots = sorted(
+    (path for path in state.glob('deployment.*') if not path.is_symlink() and path.is_dir()),
+    key=lambda path: (path.stat().st_mtime_ns, path.name), reverse=True)
+retained = {current} if current in snapshots else set()
+for snapshot in snapshots:
+    if snapshot in retained:
+        continue
+    if len(retained) < limit:
+        retained.add(snapshot)
+    else:
+        shutil.rmtree(snapshot)
+PY
 }
 
 verify_edge_wait() {

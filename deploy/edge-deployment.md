@@ -31,8 +31,15 @@ Nginx 설정을 검사하고 reload한 다음 HTTPS 응답의 실제 대상까�
 
 새 모드에서 백엔드가 읽는 파일은 release의 `backend.env`다. 기존 `/opt/chongchong/.env`는
 새 모드의 기준 파일이 아니다. `current-backend-release` 심볼릭 링크로 현재 release를 찾을 수 있다.
-실패한 후보 release와 이전 release를 자동 삭제하지 않는다. 비밀값이 포함되므로 디렉터리의
-root 전용 권한을 유지하고, 롤백 대상이 아닌 오래된 사본을 운영자가 보존 정책에 따라 정리한다.
+edge의 `deployment.*` 스냅샷은 배포 종료 시 최근 항목부터 기본 3개를 보관한다.
+`edge.env`의 `EDGE_DEPLOYMENT_RETENTION_COUNT`에 양의 정수를 지정해 총 보관 개수를 바꿀 수 있다.
+`last-successful-deployment`가 가리키는 스냅샷은 이 개수에 포함해 항상 보존한다.
+`pending-upstream.conf`가 있으면 복구에 필요한 자료를 남기기 위해 모든 스냅샷 정리를 건너뛴다.
+수동 롤백 검증이 성공해 pending 상태가 해제되면 보관 개수에 맞춰 정리한다.
+
+백엔드는 설정 검사·pull·실행에 실패한 후보 release를 삭제하되, `current-backend-release`가
+가리키는 디렉터리는 보존한다. 성공한 이전 백엔드 release는 자동 삭제하지 않는다.
+비밀값이 포함되므로 root 전용 권한을 유지하고, 필요 없는 이전 release는 운영자가 정리한다.
 
 ## 최초 전환 전에 준비할 것
 

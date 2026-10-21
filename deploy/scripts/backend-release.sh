@@ -11,6 +11,17 @@ install -d -m 700 "$root/releases"
 exec 8>"$root/releases/deploy.lock"
 flock -n 8 || { echo 'Backend deployment already running' >&2; exit 1; }
 release="$(mktemp -d "$root/releases/release.XXXXXX")"
+cleanup_release() {
+    local status=$?
+    trap - EXIT
+    if [[ "$status" != 0 && ! "$root/current-backend-release" -ef "$release" ]]; then
+        rm -rf -- "$release"
+    fi
+    exit "$status"
+}
+trap cleanup_release EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 tar -xf - -C "$release" --no-same-owner --no-same-permissions
 chmod 600 "$release/backend.env" "$release/image.env"
 set -a

@@ -16,13 +16,6 @@ if grep -Fq 'worker process is shutting down' <<< "$workers"; then
     echo 'Previous Nginx workers are still draining; retry later' >&2; exit 1
 fi
 work="$(mktemp -d "$STATE/deployment.XXXXXX")"
-verify_edge "$current" "$work" || {
-    echo 'Live routing does not match upstream.conf or is unhealthy; neither backend changed' >&2; exit 1;
-}
-cp "$UPSTREAM" "$work/previous-upstream.conf"
-install -m 600 "$ROOT/config/backend.env" "$work/backend.env"
-install -m 600 "$DEPLOY/image.env" "$work/image.env"
-cp "$DEPLOY/docker-compose.yml" "$DEPLOY/docker-compose.backend.yml" "$work/"
 switched=false
 completed=false
 finish() {
@@ -36,11 +29,22 @@ finish() {
             echo 'URGENT: rollback verification failed; pending state retained for edge-rollback.sh' >&2
         fi
     fi
+    if ! prune_edge_deployments; then
+        echo 'Deployment snapshot cleanup failed' >&2
+        status=1
+    fi
     exit "$status"
 }
 trap finish EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+verify_edge "$current" "$work" || {
+    echo 'Live routing does not match upstream.conf or is unhealthy; neither backend changed' >&2; exit 1;
+}
+cp "$UPSTREAM" "$work/previous-upstream.conf"
+install -m 600 "$ROOT/config/backend.env" "$work/backend.env"
+install -m 600 "$DEPLOY/image.env" "$work/image.env"
+cp "$DEPLOY/docker-compose.yml" "$DEPLOY/docker-compose.backend.yml" "$work/"
 ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10
     -o ServerAliveInterval=15 -o ServerAliveCountMax=3
     -o "UserKnownHostsFile=$SSH_KNOWN_HOSTS" -i "$SSH_KEY")
