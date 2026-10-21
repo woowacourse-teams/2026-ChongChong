@@ -1,0 +1,24 @@
+services:
+  backend:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    ports:
+      - "${BACKEND_BIND_IP:?BACKEND_BIND_IP is required}:8080:8080"
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        ${BACKEND_JAVA_TOOL_OPTIONS:--Xmx320m}
+        -Dmanagement.endpoint.health.probes.enabled=true
+        -Dserver.shutdown=graceful
+        -Dspring.lifecycle.timeout-per-shutdown-phase=30s
+        -Dmanagement.metrics.distribution.percentiles-histogram.hikaricp.connections.acquire=true
+        -Dmanagement.metrics.distribution.percentiles-histogram.hikaricp.connections.creation=true
+        -Dmanagement.metrics.distribution.percentiles-histogram.hikaricp.connections.usage=true
+        -Dmanagement.metrics.distribution.percentiles-histogram.jvm.gc.pause=true
+        -Dmanagement.metrics.distribution.percentiles-histogram.jvm.gc.concurrent.phase.time=true
+    logging:
+      options:
+        awslogs-stream: "backend-${BACKEND_SLOT:?BACKEND_SLOT is required}"
+networks:
+  application:
+    name: chongchong-application
