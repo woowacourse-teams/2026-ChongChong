@@ -6,10 +6,14 @@ logging:
 
 spring:
   datasource:
-    url: jdbc:h2:mem:chongchong-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:chongchong-test-${random.uuid};MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 0
+      idle-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: create-drop

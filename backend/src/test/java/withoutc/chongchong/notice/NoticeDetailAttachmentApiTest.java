@@ -99,7 +99,7 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 S3 검증기가 미연결이어도 기존 첨부 메타데이터를 표시 순서로 반환한다")
+    @DisplayName("기존 첨부 메타데이터를 표시 순서로 반환한다")
     void getAttachmentsInDisplayOrder() {
         Response response = request(memberId);
 

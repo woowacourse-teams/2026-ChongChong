@@ -4,9 +4,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import jakarta.persistence.EntityManager;
@@ -34,7 +34,7 @@ import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
@@ -94,10 +94,13 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
     private PlatformTransactionManager transactionManager;
 
     @MockitoBean
-    private UploadedFileVerifier uploadedFileVerifier;
+    private S3FileMetadataReader s3FileMetadataReader;
 
     @MockitoSpyBean
     private NotificationService notificationService;
+
+    @MockitoSpyBean
+    private NoticeAttachmentService noticeAttachmentService;
 
     @BeforeEach
     void cleanBeforeTest() {
@@ -110,7 +113,7 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("이전 리더의 첨부도 삭제 대기로 전환하고 공지 관련 데이터를 삭제하며 다른 공지는 유지한다")
+    @DisplayName("공지 관련 데이터를 삭제해도 이전 리더의 파일은 완료 상태와 저장 키를 보존한다")
     void deleteNoticeWithAttachments() {
         Fixture fixture = createFixture();
         Map<Long, String> originalKeys = fileRepository.findAll().stream()
@@ -118,10 +121,10 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
 
         noticeService.delete(fixture.userId(), fixture.studyId(), fixture.noticeId());
 
-        assertDeleted(fixture, FileUploadStatus.PENDING);
+        assertDeleted(fixture);
         assertThat(fileRepository.findAll()).hasSize(4).allSatisfy(file ->
                 assertThat(file.getObjectKey()).isEqualTo(originalKeys.get(file.getId())));
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -135,18 +138,18 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
 
         assertThat(noticeRepository.existsById(emptyNoticeId)).isFalse();
         assertOriginalState(fixture);
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
-    @DisplayName("알림 삭제 SQL 실행 후 실패하면 파일 상태·공지·첨부·리마인더·수신자·알림을 롤백한다")
+    @DisplayName("알림 삭제 SQL 실행 후 실패하면 공지 관련 데이터를 롤백하고 파일 완료 상태를 유지한다")
     void rollbackWhenNotificationDeletionFails() {
         Fixture fixture = createFixture();
         doAnswer(invocation -> {
             invocation.callRealMethod();
             entityManager.flush();
             assertThat(notificationCount(fixture.noticeId())).isZero();
-            assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.DELETE_PENDING);
+            assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.COMPLETED);
             throw new IllegalStateException("알림 삭제 후 실패");
         }).when(notificationService).deleteNotificationsForResource(ResourceType.NOTICE, fixture.noticeId());
 
@@ -154,7 +157,7 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
                 .isInstanceOf(IllegalStateException.class).hasMessage("알림 삭제 후 실패");
 
         assertOriginalState(fixture);
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -166,12 +169,12 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
         assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
             noticeService.delete(fixture.userId(), fixture.studyId(), fixture.noticeId());
             entityManager.flush();
-            assertDeleted(fixture, FileUploadStatus.PENDING);
+            assertDeleted(fixture);
             throw new IllegalStateException("공지 삭제 flush 후 실패");
         })).isInstanceOf(IllegalStateException.class).hasMessage("공지 삭제 flush 후 실패");
 
         assertOriginalState(fixture);
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -185,21 +188,22 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
                 .isEqualTo(AuthErrorCode.ACCESS_DENIED);
 
         assertOriginalState(fixture);
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
-    @DisplayName("수정이 먼저 잠금을 획득하면 삭제는 최신 첨부를 조회하여 새 파일까지 삭제 대기로 전환한다")
+    @DisplayName("수정이 먼저 끝나면 삭제는 최신 첨부를 정리하고 모든 파일의 완료 상태를 유지한다")
     void deleteAfterConcurrentUpdate() throws Exception {
         Fixture fixture = createFixture();
         CountDownLatch verifying = new CountDownLatch(1);
         CountDownLatch releaseUpdate = new CountDownLatch(1);
         CountDownLatch deletionStarted = new CountDownLatch(1);
         doAnswer(invocation -> {
+            Object preparedFiles = invocation.callRealMethod();
             verifying.countDown();
             awaitLatch(releaseUpdate);
-            return null;
-        }).when(uploadedFileVerifier).verify(any(FileMetadata.class));
+            return preparedFiles;
+        }).when(noticeAttachmentService).prepareForUpdate(anyLong(), any(Notice.class), anyList());
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
         try {
@@ -221,12 +225,12 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
             assertThat(executor.awaitTermination(10, SECONDS)).isTrue();
         }
 
-        assertDeleted(fixture, FileUploadStatus.DELETE_PENDING);
-        verify(uploadedFileVerifier, times(1)).verify(any(FileMetadata.class));
+        assertDeleted(fixture);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
-    @DisplayName("삭제가 먼저 잠금을 획득하면 대기한 수정은 404로 실패하고 새 파일은 대기 상태로 남는다")
+    @DisplayName("삭제가 먼저 잠금을 획득하면 대기한 수정은 404로 실패하고 새 파일은 선행 완료 상태를 유지한다")
     void rejectUpdateAfterConcurrentDeletion() throws Exception {
         Fixture fixture = createFixture();
         CountDownLatch deleting = new CountDownLatch(1);
@@ -258,8 +262,8 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
             assertThat(executor.awaitTermination(10, SECONDS)).isTrue();
         }
 
-        assertDeleted(fixture, FileUploadStatus.PENDING);
-        verifyNoInteractions(uploadedFileVerifier);
+        assertDeleted(fixture);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     private NoticeErrorCode updateAfterDeletion(Fixture fixture) {
@@ -286,7 +290,7 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
                 StudyMember.create(study, memberUser, "스터디원", null, StudyMemberRole.MEMBER));
         FileMetadata first = saveFile(previousLeader, true);
         FileMetadata second = saveFile(previousLeader, true);
-        FileMetadata added = saveFile(leader, false);
+        FileMetadata added = saveFile(leader, true);
         FileMetadata otherFile = saveFile(previousLeader, true);
         Notice notice = Notice.create(study, "기존 제목", "기존 내용");
         notice.addAttachments(List.of(second, first));
@@ -341,15 +345,19 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
         assertThat(notificationCount(fixture.otherNoticeId())).isOne();
     }
 
-    private void assertDeleted(Fixture fixture, FileUploadStatus newFileStatus) {
+    private void assertDeleted(Fixture fixture) {
+        assertNoticeDataDeleted(fixture);
+        assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(fixture.fileIds().getLast(), FileUploadStatus.COMPLETED);
+        assertStatus(fixture.newFileId(), FileUploadStatus.COMPLETED);
+    }
+
+    private void assertNoticeDataDeleted(Fixture fixture) {
         assertThat(noticeRepository.existsById(fixture.noticeId())).isFalse();
         assertThat(countNoticeRows("notice_attachments", fixture.noticeId())).isZero();
         assertThat(countNoticeRows("notice_reminders", fixture.noticeId())).isZero();
         assertThat(countNoticeRows("notice_recipients", fixture.noticeId())).isZero();
         assertThat(notificationCount(fixture.noticeId())).isZero();
-        assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.fileIds().getLast(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fixture.newFileId(), newFileStatus);
         assertOtherNoticeUnchanged(fixture);
     }
 
@@ -364,7 +372,7 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
         assertThat(notificationCount(fixture.noticeId())).isEqualTo(2);
         assertStatus(fixture.fileIds().getFirst(), FileUploadStatus.COMPLETED);
         assertStatus(fixture.fileIds().getLast(), FileUploadStatus.COMPLETED);
-        assertStatus(fixture.newFileId(), FileUploadStatus.PENDING);
+        assertStatus(fixture.newFileId(), FileUploadStatus.COMPLETED);
         assertOtherNoticeUnchanged(fixture);
     }
 

@@ -19,12 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UnavailableUploadedFileVerifier;
+import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.Notification;
@@ -78,8 +78,8 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @MockitoSpyBean
-    private UnavailableUploadedFileVerifier uploadedFileVerifier;
+    @MockitoBean
+    private S3FileMetadataReader s3FileMetadataReader;
 
     @LocalServerPort
     private int port;
@@ -133,12 +133,12 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
 
     @AfterEach
     void cleanDatabase() {
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
         databaseCleaner.clean();
     }
 
     @Test
-    @DisplayName("현재 정책을 벗어난 이전 리더의 첨부도 S3 검증 없이 삭제하고 본문 없는 204를 반환한다")
+    @DisplayName("현재 정책을 벗어난 이전 리더 첨부의 관계만 삭제하고 완료 파일을 보존하며 204를 반환한다")
     void deleteAttachmentsWithoutStorageVerification() {
         Response response = request(leader.getId(), notice.getId());
 
@@ -153,7 +153,7 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기본 검증기 상태에서도 첨부 없는 공지 삭제는 다른 공지와 파일에 영향을 주지 않는다")
+    @DisplayName("첨부 없는 공지 삭제는 다른 공지와 파일에 영향을 주지 않는다")
     void deleteNoticeWithoutAttachments() {
         Notice emptyNotice = noticeRepository.saveAndFlush(Notice.create(study, "무첨부 공지", "내용"));
 
@@ -217,7 +217,7 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("이미 삭제한 공지를 다시 삭제하면 404를 반환하고 삭제 대기 파일 상태를 유지한다")
+    @DisplayName("이미 삭제한 공지를 다시 삭제하면 404를 반환하고 파일의 완료 상태를 유지한다")
     void rejectRepeatedDeletion() {
         request(leader.getId(), notice.getId()).then().statusCode(204);
 
@@ -277,8 +277,8 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM notifications WHERE resource_type = 'NOTICE' AND resource_id = ?",
                 Long.class, notice.getId())).isZero();
-        assertStatus(fileIds.getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(fileIds.getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(fileIds.getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(fileIds.getLast(), FileUploadStatus.COMPLETED);
         assertStatus(pendingFileId, FileUploadStatus.PENDING);
         assertOtherNoticeUnchanged();
     }

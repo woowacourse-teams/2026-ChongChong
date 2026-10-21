@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0055](0055-connect-completed-files-to-notices.md) | 공지 첨부는 업로드 완료 파일의 연결로 처리한다 |
 | [0054](0054-separate-upload-verification-from-database-transactions.md) | 업로드 검증의 S3 호출과 DB 트랜잭션을 분리한다 |
 | [0051](0051-allow-multiple-auth-sessions-per-user.md)                                    | 사용자당 여러 인증 세션을 허용한다 |
 | [0045](0045-delete-notifications-with-resources.md)                                    | 자원 삭제 시 관련 인앱 알림을 삭제한다 |

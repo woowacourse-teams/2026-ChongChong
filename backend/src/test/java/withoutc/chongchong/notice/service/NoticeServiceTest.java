@@ -137,18 +137,18 @@ class NoticeServiceTest {
     }
 
     @Test
-    @DisplayName("첨부 검증이 준비되지 않았으면 공지 저장과 알림 생성을 진행하지 않는다")
-    void rejectCreateWhenAttachmentVerificationUnavailableTest() {
+    @DisplayName("첨부 자격 검증에 실패하면 공지 저장과 알림 생성을 진행하지 않는다")
+    void rejectCreateWhenAttachmentNotAttachableTest() {
         StudyMember actor = mock(StudyMember.class);
         NoticeCreateRequest request = new NoticeCreateRequest("공지 제목", "공지 내용", null, List.of(1L));
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(actor);
         when(noticeAttachmentService.prepareForCreate(USER_ID, List.of(1L)))
-                .thenThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE));
+                .thenThrow(new FileException(FileErrorCode.FILE_NOT_ATTACHABLE));
 
         assertThatThrownBy(() -> noticeService.create(USER_ID, STUDY_ID, request))
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
-                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
         verify(noticeAccessPolicy).requireCanCreateNotice(actor);
         verifyNoInteractions(studyRepository, noticeRepository, notificationService);

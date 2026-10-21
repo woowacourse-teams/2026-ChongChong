@@ -6,9 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import jakarta.persistence.EntityManager;
@@ -33,7 +30,7 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.entity.Notice;
@@ -77,7 +74,7 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
-    private UploadedFileVerifier uploadedFileVerifier;
+    private S3FileMetadataReader s3FileMetadataReader;
 
     @MockitoSpyBean
     private NotificationService notificationService;
@@ -93,7 +90,7 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("검증된 파일을 요청 순서대로 공지에 연결하고 완료 상태와 알림을 함께 저장한다")
+    @DisplayName("완료된 파일을 요청 순서대로 공지에 연결하고 완료 상태를 유지하며 알림을 저장한다")
     void createNoticeWithCompletedAttachments() {
         Fixture fixture = createFixture();
         List<Long> requestedIds = fixture.fileIds().reversed();
@@ -114,30 +111,32 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
         assertThat(countRows("notice_recipients")).isOne();
         assertThat(countRows("notice_reminders")).isOne();
         assertThat(countRows("notifications")).isOne();
-        verify(uploadedFileVerifier, times(2)).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
-    @DisplayName("두 번째 파일의 업로드 검증이 실패하면 공지를 저장하지 않고 모든 파일을 대기 상태로 유지한다")
-    void rejectWhenOneFileVerificationFails() {
+    @DisplayName("두 번째 파일이 미완료이면 공지 저장을 거부하고 각 파일의 원래 상태를 유지한다")
+    void rejectWhenOneFileIsPending() {
         Fixture fixture = createFixture();
-        doNothing().doThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE))
-                .when(uploadedFileVerifier).verify(any(FileMetadata.class));
+        jdbcTemplate.update("UPDATE file_metadata SET status = 'PENDING' WHERE id = ?", fixture.fileIds().getLast());
 
         assertThatThrownBy(() -> noticeService.create(
                 fixture.userId(), fixture.studyId(), createRequest(fixture.fileIds())
         ))
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
-                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
         assertNoNoticeData();
-        assertFilesPending(fixture);
-        verify(uploadedFileVerifier, times(2)).verify(any(FileMetadata.class));
+        assertThat(fileRepository.findById(fixture.fileIds().getFirst()).orElseThrow().getStatus())
+                .isEqualTo(FileUploadStatus.COMPLETED);
+        assertThat(fileRepository.findById(fixture.fileIds().getLast()).orElseThrow().getStatus())
+                .isEqualTo(FileUploadStatus.PENDING);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
-    @DisplayName("알림 생성 후 실패하면 공지·첨부·파일 상태·수신자·리마인더·알림을 모두 롤백한다")
+    @DisplayName("알림 생성 후 실패하면 공지 변경을 롤백하고 선행 완료 파일은 완료 상태로 유지한다")
     void rollbackAfterNotificationCreationFails() {
         Fixture fixture = createFixture();
         doAnswer(invocation -> {
@@ -155,12 +154,12 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
                 .hasMessage("알림 생성 후 실패");
 
         assertNoNoticeData();
-        assertFilesPending(fixture);
+        assertFilesCompleted(fixture);
     }
 
     @ParameterizedTest
     @NullAndEmptySource
-    @DisplayName("첨부 목록이 null이거나 비어 있으면 검증기를 호출하지 않고 기존 공지를 생성한다")
+    @DisplayName("첨부 목록이 null이거나 비어 있으면 S3 조회 없이 공지를 생성하고 파일 상태를 유지한다")
     void createWithoutAttachments(List<Long> fileIds) {
         Fixture fixture = createFixture();
 
@@ -172,8 +171,8 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
         assertThat(countRows("notices")).isOne();
         assertThat(countRows("notice_attachments")).isZero();
         assertThat(countRows("notifications")).isOne();
-        assertFilesPending(fixture);
-        verifyNoInteractions(uploadedFileVerifier);
+        assertFilesCompleted(fixture);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -223,12 +222,11 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
         Study study = studyRepository.save(Study.create("첨부 트랜잭션 스터디", "설명"));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
-        FileMetadata first = fileRepository.save(FileMetadata.create(
-                leader, "first.png", "uploads/first.png", "image/png", 1024
-        ));
-        FileMetadata second = fileRepository.save(FileMetadata.create(
-                leader, "second.png", "uploads/second.png", "image/png", 2048
-        ));
+        FileMetadata first = FileMetadata.create(leader, "first.png", "uploads/first.png", "image/png", 1024);
+        FileMetadata second = FileMetadata.create(leader, "second.png", "uploads/second.png", "image/png", 2048);
+        first.completeUpload();
+        second.completeUpload();
+        fileRepository.saveAllAndFlush(List.of(first, second));
         return new Fixture(leader.getId(), study.getId(), List.of(first.getId(), second.getId()));
     }
 
@@ -245,11 +243,11 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
         assertThat(countRows("notification_deliveries")).isZero();
     }
 
-    private void assertFilesPending(Fixture fixture) {
+    private void assertFilesCompleted(Fixture fixture) {
         assertThat(fileRepository.findAllById(fixture.fileIds()))
                 .hasSize(2)
                 .extracting(FileMetadata::getStatus)
-                .containsOnly(FileUploadStatus.PENDING);
+                .containsOnly(FileUploadStatus.COMPLETED);
     }
 
     private Long countRows(String tableName) {

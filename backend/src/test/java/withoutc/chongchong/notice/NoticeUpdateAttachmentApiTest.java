@@ -5,10 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
@@ -35,10 +31,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
-import withoutc.chongchong.file.exception.FileErrorCode;
-import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -86,7 +80,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
-    private UploadedFileVerifier uploadedFileVerifier;
+    private S3FileMetadataReader s3FileMetadataReader;
 
     @LocalServerPort
     private int port;
@@ -152,11 +146,11 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
                 .body("attachments.sortOrder", contains(0, 1));
         assertStatus(firstNewFile.getId(), FileUploadStatus.COMPLETED);
         assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
-        assertStatus(existingIds.getLast(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(secondNewFile.getId(), FileUploadStatus.PENDING);
+        assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
+        assertStatus(secondNewFile.getId(), FileUploadStatus.COMPLETED);
         assertThat(remindAt()).isEqualTo(REMIND_AT.plusDays(1));
         assertReadStateUnchanged();
-        verify(uploadedFileVerifier).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @ParameterizedTest
@@ -167,7 +161,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
 
         assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle()).isEqualTo("수정 제목");
         assertAttachmentsUnchanged();
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -178,10 +172,10 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         testAuthRequest.givenAuthenticatedUser(member.getId()).port(port)
                 .get("/studies/{studyId}/notices/{noticeId}", study.getId(), notice.getId())
                 .then().statusCode(200).body("attachments", hasSize(0));
-        assertStatus(existingIds.getFirst(), FileUploadStatus.DELETE_PENDING);
-        assertStatus(existingIds.getLast(), FileUploadStatus.DELETE_PENDING);
+        assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
+        assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
         assertReadStateUnchanged();
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -196,7 +190,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         assertThat(attachmentFileIds()).containsExactlyElementsOf(finalIds);
         assertThat(fileRepository.findAllById(finalIds)).hasSize(10).extracting(FileMetadata::getStatus)
                 .containsOnly(FileUploadStatus.COMPLETED);
-        verify(uploadedFileVerifier, times(8)).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
@@ -245,12 +239,12 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = FileUploadStatus.class, names = {"COMPLETED", "DELETE_PENDING"})
-    @DisplayName("현재 공지에 없는 완료·삭제 대기 파일은 400 FILE_NOT_ATTACHABLE을 반환한다")
-    void rejectNonPendingNewFile(FileUploadStatus status) {
+    @EnumSource(value = FileUploadStatus.class, names = {"PENDING", "DELETE_PENDING"})
+    @DisplayName("미완료·삭제 대기 파일은 400 FILE_NOT_ATTACHABLE을 반환한다")
+    void rejectNonCompletedNewFile(FileUploadStatus status) {
         FileMetadata file = FileMetadata.create(leader, "used.png", "uploads/" + UUID.randomUUID(), "image/png", 1024);
-        file.completeUpload();
         if (status == FileUploadStatus.DELETE_PENDING) {
+            file.completeUpload();
             file.markForDeletion();
         }
         fileRepository.saveAndFlush(file);
@@ -314,16 +308,15 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("일부 업로드 검증 실패는 503을 반환하고 수정 내용을 부분 반영하지 않는다")
-    void rejectPartialVerificationFailure() {
-        doNothing().doThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE))
-                .when(uploadedFileVerifier).verify(any(FileMetadata.class));
+    @DisplayName("일부 이미지 정책 검증 실패는 400을 반환하고 수정 내용과 완료 상태를 유지한다")
+    void rejectPartialImagePolicyFailure() {
+        jdbcTemplate.update("UPDATE file_metadata SET content_type = 'application/pdf' WHERE id = ?", secondNewFile.getId());
 
         Response response = request(leader.getId(), validBody(List.of(firstNewFile.getId(), secondNewFile.getId())));
 
-        response.then().statusCode(503).body("code", equalTo("FILE_VERIFICATION_UNAVAILABLE"));
+        response.then().statusCode(400).body("code", equalTo("INVALID_NOTICE_IMAGE_TYPE"));
         assertOriginalState();
-        verify(uploadedFileVerifier, times(2)).verify(any(FileMetadata.class));
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     private Response request(Long userId, Object body) {
@@ -341,7 +334,9 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     }
 
     private FileMetadata saveFile(User owner, String type, long size) {
-        return fileRepository.saveAndFlush(FileMetadata.create(owner, "image.png", "uploads/" + UUID.randomUUID(), type, size));
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/" + UUID.randomUUID(), type, size);
+        file.completeUpload();
+        return fileRepository.saveAndFlush(file);
     }
 
     private FileMetadata saveCompletedFile() {
@@ -376,7 +371,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     private void assertRejected(Response response, int status, String code) {
         response.then().statusCode(status).body("code", equalTo(code));
         assertOriginalState();
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(s3FileMetadataReader);
     }
 
     private void assertOriginalState() {
@@ -393,9 +388,9 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         assertThat(remindAt()).isEqualTo(REMIND_AT);
         assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
         assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
-        assertStatus(firstNewFile.getId(), FileUploadStatus.PENDING);
-        assertStatus(secondNewFile.getId(), FileUploadStatus.PENDING);
-        assertStatus(memberFile.getId(), FileUploadStatus.PENDING);
+        assertStatus(firstNewFile.getId(), FileUploadStatus.COMPLETED);
+        assertStatus(secondNewFile.getId(), FileUploadStatus.COMPLETED);
+        assertStatus(memberFile.getId(), FileUploadStatus.COMPLETED);
         assertReadStateUnchanged();
     }
 

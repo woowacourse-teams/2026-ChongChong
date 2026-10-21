@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.file.entity.FileMetadata;
-import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
@@ -22,7 +20,6 @@ import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.entity.NoticeAttachment;
 import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
@@ -68,7 +65,6 @@ public class NoticeService {
         notice.addReminders(request.remindAts(), now);
         notice.addRecipients(members);
         notice.addAttachments(attachmentFiles);
-        attachmentFiles.forEach(FileMetadata::completeUpload);
 
         noticeRepository.save(notice);
         notificationService.createNoticeCreatedEventNotifications(notice, members);
@@ -82,8 +78,7 @@ public class NoticeService {
         noticeAccessPolicy.requireCanDeleteNotice(actor);
 
         Notice notice = noticeRepository.getByIdAndStudyIdForUpdateOrThrow(noticeId, studyId);
-        List<FileMetadata> files = noticeAttachmentService.prepareForDelete(notice);
-        files.forEach(FileMetadata::markForDeletion);
+        noticeAttachmentService.prepareForDelete(notice);
 
         notificationService.deleteNotificationsForResource(ResourceType.NOTICE, noticeId);
         noticeRepository.delete(notice);
@@ -107,12 +102,6 @@ public class NoticeService {
             return;
         }
         List<FileMetadata> files = noticeAttachmentService.prepareForUpdate(userId, notice, fileIds);
-        Set<Long> retainedIds = files.stream().map(FileMetadata::getId).collect(Collectors.toSet());
-        notice.getAttachments().stream().map(NoticeAttachment::getFile)
-                .filter(file -> !retainedIds.contains(file.getId())).forEach(FileMetadata::markForDeletion);
-        files.stream().filter(file -> file.getStatus() == FileUploadStatus.PENDING)
-                .forEach(FileMetadata::completeUpload);
-
         notice.clearAttachments();
         noticeRepository.flush();
         notice.addAttachments(files);

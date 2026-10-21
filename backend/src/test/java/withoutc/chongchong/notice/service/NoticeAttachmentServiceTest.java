@@ -2,10 +2,9 @@ package withoutc.chongchong.notice.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -28,8 +27,7 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.UnavailableUploadedFileVerifier;
-import withoutc.chongchong.file.service.UploadedFileVerifier;
+import withoutc.chongchong.notice.repository.NoticeAttachmentRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
@@ -46,7 +44,7 @@ class NoticeAttachmentServiceTest {
     private FileMetaDataRepository fileRepository;
 
     @Mock
-    private UploadedFileVerifier uploadedFileVerifier;
+    private NoticeAttachmentRepository attachmentRepository;
 
     private NoticeAttachmentService attachmentService;
     private NoticeAttachmentPolicy attachmentPolicy;
@@ -54,16 +52,16 @@ class NoticeAttachmentServiceTest {
     @BeforeEach
     void setUp() {
         attachmentPolicy = new NoticeAttachmentPolicy(10, 5242880, List.of("image/jpeg", "image/png", "image/webp"));
-        attachmentService = new NoticeAttachmentService(fileRepository, uploadedFileVerifier, attachmentPolicy);
+        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository, attachmentPolicy);
     }
 
     @Test
-    @DisplayName("첨부 목록이 null이거나 비어 있으면 DB 조회와 업로드 검증을 생략한다")
+    @DisplayName("첨부 목록이 null이거나 비어 있으면 DB 조회와 연결 검사을 생략한다")
     void prepareWithoutAttachments() {
         assertThat(attachmentService.prepareForCreate(USER_ID, null)).isEmpty();
         assertThat(attachmentService.prepareForCreate(USER_ID, List.of())).isEmpty();
 
-        verifyNoInteractions(fileRepository, uploadedFileVerifier);
+        verifyNoInteractions(fileRepository, attachmentRepository);
     }
 
     @Test
@@ -76,14 +74,15 @@ class NoticeAttachmentServiceTest {
         List<FileMetadata> files = attachmentService.prepareForCreate(USER_ID, List.of(31L, 7L));
 
         assertThat(files).containsExactly(second, first);
-        InOrder verificationOrder = inOrder(uploadedFileVerifier);
-        verificationOrder.verify(uploadedFileVerifier).verify(second);
-        verificationOrder.verify(uploadedFileVerifier).verify(first);
-        assertThat(files).allMatch(file -> file.getStatus() == FileUploadStatus.PENDING);
+        InOrder verificationOrder = inOrder(fileRepository, attachmentRepository);
+        verificationOrder.verify(fileRepository).findAllByIdForUpdate(List.of(7L, 31L));
+        verificationOrder.verify(attachmentRepository).existsAnyByFileId(31L);
+        verificationOrder.verify(attachmentRepository).existsAnyByFileId(7L);
+        assertThat(files).allMatch(file -> file.getStatus() == FileUploadStatus.COMPLETED);
     }
 
     @Test
-    @DisplayName("일부 파일이 존재하지 않으면 실제 업로드 검증 전에 거부한다")
+    @DisplayName("일부 파일이 존재하지 않으면 연결 여부 조회 전에 거부한다")
     void rejectMissingFile() {
         FileMetadata existing = createFile(7L, USER_ID);
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(existing));
@@ -93,7 +92,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_FOUND);
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(attachmentRepository);
     }
 
     @Test
@@ -107,13 +106,13 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_OWNED);
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(attachmentRepository);
     }
 
     @ParameterizedTest
-    @EnumSource(value = FileUploadStatus.class, names = {"COMPLETED", "DELETE_PENDING"})
-    @DisplayName("완료되었거나 삭제 대기 중인 파일은 새 공지에 첨부할 수 없다")
-    void rejectNonPendingFile(FileUploadStatus status) {
+    @EnumSource(value = FileUploadStatus.class, names = {"PENDING", "DELETE_PENDING"})
+    @DisplayName("미완료이거나 삭제 대기 중인 파일은 새 공지에 첨부할 수 없다")
+    void rejectNonCompletedFile(FileUploadStatus status) {
         FileMetadata file = createFile(7L, USER_ID);
         ReflectionTestUtils.setField(file, "status", status);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
@@ -123,12 +122,12 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(attachmentRepository);
     }
 
     @Test
-    @DisplayName("모든 파일의 소유권을 확인하기 전에는 실제 업로드 검증을 호출하지 않는다")
-    void rejectBeforeVerifyingAnyFile() {
+    @DisplayName("일부 파일의 소유권 검증에 실패해도 완료 상태를 변경하지 않는다")
+    void preserveCompletedFilesWhenOwnershipFails() {
         FileMetadata owned = createFile(7L, USER_ID);
         FileMetadata otherUsers = createFile(31L, 2L);
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(owned, otherUsers));
@@ -138,7 +137,8 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_OWNED);
 
-        verifyNoInteractions(uploadedFileVerifier);
+        assertThat(owned.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+        assertThat(otherUsers.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
     }
 
     @Test
@@ -170,11 +170,11 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.ATTACHMENT_LIMIT_EXCEEDED);
 
-        verifyNoInteractions(fileRepository, uploadedFileVerifier);
+        verifyNoInteractions(fileRepository, attachmentRepository);
     }
 
     @Test
-    @DisplayName("허용하지 않는 형식의 파일은 실제 업로드 검증 전에 거부한다")
+    @DisplayName("허용하지 않는 형식의 파일은 연결 여부 조회 전에 거부한다")
     void rejectUnsupportedImageType() {
         FileMetadata file = createFile(7L, USER_ID, "application/pdf", 1024);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
@@ -184,12 +184,12 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_TYPE);
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(attachmentRepository);
     }
 
     @ParameterizedTest
     @ValueSource(longs = {0L, 5242881L})
-    @DisplayName("빈 이미지나 용량을 초과한 이미지는 실제 업로드 검증 전에 거부한다")
+    @DisplayName("빈 이미지나 용량을 초과한 이미지는 연결 여부 조회 전에 거부한다")
     void rejectInvalidImageSize(long size) {
         FileMetadata file = createFile(7L, USER_ID, "image/png", size);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
@@ -199,43 +199,40 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_SIZE);
 
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(attachmentRepository);
     }
 
     @Test
-    @DisplayName("실제 업로드 검증에 실패해도 파일 상태를 변경하지 않는다")
-    void preserveStatusWhenVerificationFails() {
+    @DisplayName("일부 파일이 이미 연결되어 있으면 모든 파일의 완료 상태를 유지하고 거부한다")
+    void preserveStatusWhenAttachmentAlreadyExists() {
         FileMetadata first = createFile(7L, USER_ID);
         FileMetadata second = createFile(31L, USER_ID);
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(first, second));
-        doNothing().when(uploadedFileVerifier).verify(first);
-        doThrow(new FileException(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE))
-                .when(uploadedFileVerifier).verify(second);
+        when(attachmentRepository.existsAnyByFileId(7L)).thenReturn(false);
+        when(attachmentRepository.existsAnyByFileId(31L)).thenReturn(true);
 
         assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L, 31L)))
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
-                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        assertThat(first.getStatus()).isEqualTo(FileUploadStatus.PENDING);
-        assertThat(second.getStatus()).isEqualTo(FileUploadStatus.PENDING);
+        assertThat(first.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+        assertThat(second.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
     }
 
     @Test
-    @DisplayName("기본 업로드 검증기는 본인 소유의 대기 파일도 검증 불가로 거부한다")
-    void rejectWithDefaultVerifier() {
-        attachmentService = new NoticeAttachmentService(
-                fileRepository, new UnavailableUploadedFileVerifier(), attachmentPolicy
-        );
+    @DisplayName("본인 소유의 완료 파일도 이미 다른 곳에 연결되어 있으면 첨부할 수 없다")
+    void rejectAlreadyAttachedFile() {
         FileMetadata file = createFile(7L, USER_ID);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
+        when(attachmentRepository.existsAnyByFileId(7L)).thenReturn(true);
 
         assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L)))
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
-                .isEqualTo(FileErrorCode.FILE_VERIFICATION_UNAVAILABLE);
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.PENDING);
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
     }
 
     @Test
@@ -243,9 +240,9 @@ class NoticeAttachmentServiceTest {
     void prepareDeletionWithoutAttachments() {
         Notice notice = Notice.create(mock(Study.class), "공지 제목", "공지 내용");
 
-        assertThat(attachmentService.prepareForDelete(notice)).isEmpty();
+        attachmentService.prepareForDelete(notice);
 
-        verifyNoInteractions(fileRepository, uploadedFileVerifier);
+        verifyNoInteractions(fileRepository, attachmentRepository);
     }
 
     @Test
@@ -254,15 +251,15 @@ class NoticeAttachmentServiceTest {
         Notice notice = Notice.create(mock(Study.class), "공지 제목", "공지 내용");
         FileMetadata first = createFile(7L, 2L, "application/pdf", 0);
         FileMetadata second = createFile(31L, 2L, "application/pdf", 0);
-        first.completeUpload();
-        second.completeUpload();
         notice.addAttachments(List.of(second, first));
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(first, second));
-        attachmentService = new NoticeAttachmentService(fileRepository, new UnavailableUploadedFileVerifier(),
+        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository,
                 new NoticeAttachmentPolicy(1, 1, List.of("image/jpeg")));
 
-        assertThat(attachmentService.prepareForDelete(notice)).containsExactly(second, first);
+        attachmentService.prepareForDelete(notice);
 
+        verify(fileRepository).findAllByIdForUpdate(List.of(7L, 31L));
+        verifyNoInteractions(attachmentRepository);
         assertThat(notice.getAttachments()).hasSize(2);
         assertThat(List.of(first, second)).extracting(FileMetadata::getStatus)
                 .containsOnly(FileUploadStatus.COMPLETED);
@@ -284,7 +281,7 @@ class NoticeAttachmentServiceTest {
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
         assertThat(file.getStatus()).isEqualTo(status);
-        verifyNoInteractions(uploadedFileVerifier);
+        verifyNoInteractions(attachmentRepository);
     }
 
     private void assertInvalidIds(List<Long> fileIds) {
@@ -293,7 +290,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_ATTACHMENT_IDS);
 
-        verifyNoInteractions(fileRepository, uploadedFileVerifier);
+        verifyNoInteractions(fileRepository, attachmentRepository);
     }
 
     private FileMetadata createFile(Long fileId, Long ownerId) {
@@ -304,6 +301,7 @@ class NoticeAttachmentServiceTest {
         User owner = User.create("사용자", null);
         ReflectionTestUtils.setField(owner, "id", ownerId);
         FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/" + fileId, contentType, size);
+        file.completeUpload();
         ReflectionTestUtils.setField(file, "id", fileId);
         return file;
     }

@@ -21,8 +21,6 @@ public enum FileErrorCode implements ErrorCode {
     FILE_UPLOAD_NOT_PENDING(HttpStatus.CONFLICT, "FILE_UPLOAD_NOT_PENDING", "업로드를 완료할 수 없는 파일 상태입니다."),
     FILE_UPLOAD_BUSY(HttpStatus.SERVICE_UNAVAILABLE, "FILE_UPLOAD_BUSY", "파일 처리 중입니다. 잠시 후 다시 시도해 주세요."),
     FILE_NOT_ATTACHABLE(HttpStatus.BAD_REQUEST, "FILE_NOT_ATTACHABLE", "파일을 첨부할 수 없습니다."),
-    FILE_VERIFICATION_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "FILE_VERIFICATION_UNAVAILABLE",
-            "파일 업로드 확인 기능이 준비되지 않아 새 파일을 첨부할 수 없습니다."),
     FILE_LOOKUP_FAILED(HttpStatus.BAD_GATEWAY, "FILE_LOOKUP_FAILED", "파일 저장소 조회에 실패했습니다.");
 
     private final HttpStatus httpStatus;

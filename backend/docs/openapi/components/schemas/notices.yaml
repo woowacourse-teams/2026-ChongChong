@@ -10,7 +10,11 @@ NoticeCreateRequest:
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
     attachmentFileIds:
-      description: "첨부 식별자의 표시 순서 목록. 생략·null은 첨부 없음. 중복 불가. 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP(설정 가능). 새 파일 연결은 실제 검증 전까지 503으로 차단된다."
+      description: |
+        첨부 식별자의 표시 순서 목록. 생략·null·빈 배열은 첨부 없음. 중복 불가.
+        업로드 완료 API에 성공한 COMPLETED 상태·본인 소유·공지/과제/제출물에 미연결인 파일만 허용한다.
+        기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 빈 파일은 거부한다. 형식·용량·개수는 설정 가능하며
+        공통 업로드 용량 제한도 함께 적용된다.
       type: [array, 'null']
       uniqueItems: true
       items: { type: integer, format: int64, minimum: 1 }
@@ -25,7 +29,13 @@ NoticeUpdateRequest:
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
     attachmentFileIds:
-      description: "최종 첨부 목록과 표시 순서. 생략·null은 유지, 빈 배열은 전체 제거. 중복 불가. 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP(설정 가능). 새 파일 추가는 실제 검증 전까지 503이며 기존 첨부 유지·순서 변경·제거는 가능하다."
+      description: |
+        최종 첨부 목록과 표시 순서. 생략·null은 유지, 빈 배열은 전체 제거. 중복 불가.
+        새 파일은 업로드 완료 API에 성공한 COMPLETED 상태·본인 소유·공지/과제/제출물에 미연결이어야 한다.
+        기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 빈 파일은 거부한다. 형식·용량·개수는 설정 가능하며
+        공통 업로드 용량 제한도 함께 적용된다. 최종 개수는 전체 목록, 소유권·형식·크기는 새 파일에 적용한다.
+        이전 리더 소유의 기존 첨부도 유지·재정렬할 수 있다.
+        제거 파일은 연결만 해제하고 COMPLETED를 유지하며 미연결 상태에서 소유자가 다시 첨부할 수 있다.
       type: [array, 'null']
       uniqueItems: true
       items: { type: integer, format: int64, minimum: 1 }
