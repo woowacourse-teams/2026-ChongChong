@@ -22,7 +22,9 @@ LoginBadRequest:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/UnsupportedSocialProviderError' }] }
 NoticeWriteBadRequest:
-  description: 입력값·요청 형식·공지 필드·첨부 식별자·이미지 형식·용량·개수·파일 상태 규칙 위반
+  description: |
+    입력값·요청 형식·공지 필드·첨부 식별자·이미지 형식·용량·개수 규칙 위반.
+    신규 첨부가 PENDING·DELETE_PENDING이거나 이미 공지·과제·제출물에 연결된 경우 FILE_NOT_ATTACHABLE을 반환한다.
   content:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidTitleError' }, { $ref: './schemas/errors.yaml#/NoticeInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }, { $ref: './schemas/errors.yaml#/NoticeAttachmentBadRequestError' }] }
@@ -39,11 +41,6 @@ NoticeOrFileNotFound:
   content:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/NoticeNotFoundError' }, { $ref: './schemas/errors.yaml#/FileNotFoundError' }] }
-FileVerificationUnavailable:
-  description: 실제 업로드 검증이 준비되지 않아 새 첨부를 거부함. 공지·첨부·파일 상태·알림은 롤백된다. 무첨부와 기존 첨부 유지·순서 변경·제거에는 적용하지 않는다.
-  content:
-    application/json:
-      schema: { $ref: './schemas/errors.yaml#/FileVerificationUnavailableError' }
 AssignmentWriteBadRequest:
   description: 입력값 검증 실패, 요청 형식 오류 또는 과제 필드 도메인 규칙 위반
   content:

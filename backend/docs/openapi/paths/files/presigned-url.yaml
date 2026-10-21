@@ -4,10 +4,9 @@ post:
   x-frontend:
     status: needs-update
     description: |
-      기능 추가: 파일 선택, 업로드 URL 발급, S3 PUT 요청을 웹에 연결해야 한다.
-      공지 생성·수정 요청에는 업로드한 파일의 fileId를 attachmentFileIds로 전달한다.
-      현재 새 파일 첨부는 S3의 실제 업로드 결과를 확인하는 기능이 연결될 때까지 503으로 차단된다.
-      과제·제출물 첨부와 파일 접근 URL 발급은 별도 후속 작업이다.
+      기능 추가: 파일 선택, 업로드 URL 발급, 필수 헤더를 포함한 S3 PUT, 업로드 완료 API 호출을 웹에 연결해야 한다.
+      완료에 성공한 fileId를 공지·과제·제출물의 attachmentFileIds로 전달한다.
+      공지의 COMPLETED 파일 연결은 #554에서 구현 중이다. 공지 이미지 조회 URL 제공은 별도 후속 작업이다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
       - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
@@ -23,13 +22,13 @@ post:
     size는 클라이언트가 선언한 바이트 수이며 실제 업로드 결과는 별도로 검증해야 한다.
     공통 최대 크기는 기본 5MiB이며 FILE_UPLOAD_MAX_SIZE_BYTES로 변경할 수 있다.
     허용 MIME 유형 목록은 이 API에서 제한하지 않는다.
-    공지 생성·수정 API는 반환된 fileId를 attachmentFileIds로 받아 첨부 목록과 순서를 지정한다.
-    공지에 새로 첨부할 때는 파일 소유자·상태와 공지의 이미지 형식·크기·개수 정책을 검증한다.
-    이 검증을 통과하더라도 S3의 실제 파일 존재·크기 등을 확인하는 기능이 연결되기 전에는
-    새 파일을 포함한 공지 생성·수정 요청이 503 FILE_VERIFICATION_UNAVAILABLE로 실패하며 전체 변경이 롤백된다.
-    S3 PUT 성공 후 POST /api/files/{fileId}/complete로 업로드 완료를 요청한다.
-    공지의 기존 PENDING 첨부 흐름을 COMPLETED 파일 연결 방식으로 전환하는 것은 별도 후속 작업이다.
-    과제·제출물 첨부와 파일 접근 URL 발급은 후속 작업이다.
+    S3 PUT 성공 후 POST /api/files/{fileId}/complete로 실제 파일 존재·크기 검증과 COMPLETED 전환을 요청한다.
+    완료에 성공한 fileId를 공지·과제·제출물의 attachmentFileIds로 전달해 최종 첨부 목록과 순서를 지정한다.
+    연결하는 API는 소유권·완료 상태·기존 연결 여부와 도메인 파일 정책을 검증한다.
+    공지는 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 형식·용량·개수는 설정 가능하다.
+    공통 용량 제한과 공지 용량 제한이 함께 적용되므로 한쪽 설정만 변경하면 다른 제한이 남을 수 있다.
+    공지의 COMPLETED 파일 연결은 #554에서 구현 중이다. 과제·제출물은 완료 파일 연결을 지원한다.
+    공지 이미지 조회 URL 제공은 별도 후속 작업이다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
