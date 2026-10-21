@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.controller.dto;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,7 +30,17 @@ public record AssignmentCreateRequest(
                 @NotNull(message = "리마인드 시각은 필수 값입니다.")
                 @Future(message = "리마인드 시각은 현재보다 미래여야 합니다.")
                         LocalDateTime
-                > remindAts
+                > remindAts,
+        List<
+                @NotNull(message = "첨부파일 ID는 필수 값입니다.")
+                @Positive(message = "첨부파일 ID는 양수여야 합니다.")
+                        Long
+                > attachmentFileIds
 
 ) {
+    public AssignmentCreateRequest(String title, String content, String submissionMethod,
+                                   SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
+                                   LocalDateTime closeAt, List<LocalDateTime> remindAts) {
+        this(title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts, null);
+    }
 }

@@ -2,6 +2,7 @@ package withoutc.chongchong.assignment.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
+import java.util.List;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 
@@ -11,7 +12,8 @@ public record MySubmissionDetailResponse(
         SubmissionStatus submissionStatus,
         LocalDateTime createdAt,
         String content,
-        String link
+        String link,
+        List<AssignmentAttachmentResponse> attachments
 ) {
     public static MySubmissionDetailResponse notAssigned() {
         return new MySubmissionDetailResponse(
@@ -19,17 +21,20 @@ public record MySubmissionDetailResponse(
                 SubmissionStatus.NOT_ASSIGNED,
                 null,
                 null,
-                null
+                null,
+                List.of()
         );
     }
 
-    public static MySubmissionDetailResponse of(LocalDateTime now, AssignmentSubmission submission) {
+    public static MySubmissionDetailResponse of(LocalDateTime now, AssignmentSubmission submission,
+                                                List<AssignmentAttachmentResponse> attachments) {
         return new MySubmissionDetailResponse(
                 submission.getId(),
                 submission.submissionStatus(now),
                 submission.getSubmittedAt(),
                 submission.getContent(),
-                submission.getLink()
+                submission.getLink(),
+                attachments
         );
     }
 }

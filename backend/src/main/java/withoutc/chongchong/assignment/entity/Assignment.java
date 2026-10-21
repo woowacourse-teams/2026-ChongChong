@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -73,11 +75,25 @@ public class Assignment extends BaseEntity {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<AssignmentSubmission> submissions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private final List<AssignmentAttachment> attachments = new ArrayList<>();
+
     public static Assignment create(Study study, String title, String content, String submissionMethod,
                                     SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
                                     LocalDateTime closeAt, LocalDateTime now) {
         return new Assignment(study, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt,
                 now);
+    }
+
+    public void addAttachments(List<FileMetadata> files) {
+        for (int i = 0; i < files.size(); i++) {
+            attachments.add(AssignmentAttachment.create(this, files.get(i), i));
+        }
+    }
+
+    public void clearAttachments() {
+        attachments.clear();
     }
 
     private Assignment(Study study, String title, String content, String submissionMethod,

@@ -13,7 +13,7 @@ post:
     owner: frombunny
     description: |
       과제를 생성하고 submissionTarget에 따라 제출 대상을 정하며 submissionVisibility로 제출물 공개 범위를 저장한다.
-      후속 예정: 이미지·제출 형식(#296).
+      완료된 이미지·파일 첨부 연결을 지원한다.
   summary: 과제 생성
   description: 스터디 리더가 과제를 생성한다. submissionTarget과 submissionVisibility는 필수이며 공개 범위와 제출 대상은 서로 독립적이다. LEADER_ONLY는 리더·본인 상세 조회를 유지하고 ALL_STUDY_MEMBERS는 스터디원에게 제출 완료된 타인의 제출물 조회를 허용한다. 입력·형식 및 제목·내용·제출 방법·마감·리마인드 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -32,7 +32,7 @@ post:
           example: { assignmentId: 1 }
     '400': { $ref: '../../components/responses.yaml#/AssignmentWriteBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '403': { $ref: '../../components/responses.yaml#/AssignmentAttachmentForbidden' }
 get:
   tags: [Assignment]
   operationId: getAssignments
