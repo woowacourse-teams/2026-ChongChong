@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -50,15 +54,15 @@ import withoutc.chongchong.file.service.FileUploadUrlGenerator;
 import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
 import withoutc.chongchong.support.TestDatabaseCleaner;
+import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.datasource.url=jdbc:h2:mem:file-api-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({FileApiTest.SigningConfiguration.class, TestNotificationSenderConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class FileApiTest {
+class FileApiTest extends PostgresContainerTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -75,7 +79,68 @@ class FileApiTest {
     @LocalServerPort
     private int port;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private Long userId;
+
+    @Test
+    @DisplayName("파일 잠금을 3초 이상 기다리면 503을 반환하고 잠금 해제 후 재시도할 수 있다")
+    void timesOutWaitingForLockAndAllowsRetry() throws Exception {
+        Long fileId = createPendingFile(1024);
+        when(metadataReader.findSize(anyString())).thenReturn(OptionalLong.of(1024));
+        CountDownLatch acquired = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var holder = executor.submit(() -> new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+                fileRepository.findAllByIdForUpdate(java.util.List.of(fileId));
+                acquired.countDown();
+                try {
+                    if (!release.await(15, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("파일 잠금 해제 대기 시간이 초과되었습니다.");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }));
+            assertThat(acquired.await(5, TimeUnit.SECONDS)).isTrue();
+
+            long started = System.nanoTime();
+            Response response = complete(userId, fileId);
+            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+
+            response.then().statusCode(503);
+            assertThat(response.jsonPath().getString("code")).isEqualTo("FILE_UPLOAD_BUSY");
+            assertThat(elapsedMillis).isBetween(2800L, 8000L);
+            assertPending(fileId);
+
+            release.countDown();
+            holder.get(5, TimeUnit.SECONDS);
+            complete(userId, fileId).then().statusCode(204);
+            assertThat(fileRepository.findById(fileId).orElseThrow().getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("업로드 잠금 제한은 현재 트랜잭션에만 적용된다")
+    void appliesLockTimeoutOnlyWithinTransaction() {
+        Long fileId = createPendingFile(1024);
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.executeWithoutResult(status -> {
+            fileRepository.findByIdForUpdate(fileId).orElseThrow();
+            assertThat(jdbcTemplate.queryForObject("SHOW lock_timeout", String.class)).isEqualTo("3s");
+        });
+        transaction.executeWithoutResult(status ->
+                assertThat(jdbcTemplate.queryForObject("SHOW lock_timeout", String.class)).isEqualTo("0"));
+    }
 
     @BeforeEach
     void setUp() {

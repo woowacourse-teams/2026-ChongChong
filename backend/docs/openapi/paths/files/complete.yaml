@@ -17,6 +17,7 @@ post:
     0바이트 파일도 허용한다. 이미 COMPLETED인 파일은 소유권 확인 후 재조회 없이 204를 반환한다.
     검증 실패 시 PENDING을 유지하며 DELETE_PENDING 파일은 완료할 수 없다.
     S3 조회는 DB 트랜잭션 밖에서 수행하고, 완료 저장 시 파일 잠금과 상태 재검증으로 동시 요청을 처리한다.
+    완료 트랜잭션의 개별 잠금 획득 대기는 3초로 제한한다. 시간 초과 시 롤백 후 503을 반환하며 잠시 후 재요청할 수 있다.
     도메인 첨부 연결과 고아 파일 정리는 이 API의 범위가 아니다.
   security: [{ bearerAuth: [] }]
   parameters:
@@ -63,4 +64,14 @@ post:
             required: [code, message]
             properties:
               code: { type: string, const: FILE_LOOKUP_FAILED }
+              message: { type: string }
+    '503':
+      description: 파일 잠금 경합으로 완료하지 못함. 잠시 후 완료 요청을 다시 시도할 수 있다.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code: { type: string, const: FILE_UPLOAD_BUSY }
               message: { type: string }

@@ -96,17 +96,23 @@ projection 없이 구현할 수 있지만 동일 영속성 컨텍스트에서 �
 
 ## 미확정 사항
 
-- 실제 AWS S3 지연·실패 환경과 PostgreSQL에서의 경합 동작은 별도 통합 검증이 필요하다.
+- 실제 AWS S3 지연·실패 환경과 운영 DB의 부하 상황은 별도 검증이 필요하다.
 - 향후 고아 정리 작업은 동일한 행 잠금 아래 상태·첨부 여부를 재확인하고 삭제 대상으로 전환한 뒤
   S3를 삭제하도록 완료 처리와 계약을 맞춰야 한다.
 
 ## 후속 작업
 
 - 파일 API 테스트에서 확인한 S3 호출 중 트랜잭션 비활성, 동시 완료, 조회 중 삭제·상태 변경 사례를 유지한다.
-  현재 검증은 로컬 HTTP 서버와 H2 DB를 사용하며 S3 응답은 테스트용으로 대체한다.
+  현재 검증은 로컬 HTTP 서버와 PostgreSQL 컨테이너를 사용하며 S3 응답은 테스트용으로 대체한다.
 - 실제 환경의 잠금과 S3 접근 권한·조건부 업로드는 배포 전후 검증 항목으로 남긴다.
 
 ## 구현 및 검증 근거
+
+완료 시 잠금 조회는 동일 연결에서 `SET LOCAL lock_timeout = '3s'`를 적용한다.
+JPA 잠금 힌트에 의존하지 않고 PostgreSQL이 개별 잠금 대기를 제한하도록 한다.
+설정은 현재 트랜잭션에만 적용되며, 잠금 경합 예외는 쓰기 트랜잭션 롤백 후
+FileService에서 `503 FILE_UPLOAD_BUSY`로 변환한다. 자동 재시도는 하지 않는다.
+HTTP 테스트로 잠금 대기 시간 초과, PENDING 유지와 잠금 해제 후 재요청 성공을 확인한다.
 
 - [전체 완료 흐름](../../src/main/java/withoutc/chongchong/file/service/FileService.java)
 - [트랜잭션 경계와 최종 재검증](../../src/main/java/withoutc/chongchong/file/service/FileUploadTransactionService.java)

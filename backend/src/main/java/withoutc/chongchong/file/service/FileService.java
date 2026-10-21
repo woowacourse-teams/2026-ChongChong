@@ -3,6 +3,7 @@ package withoutc.chongchong.file.service;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,10 @@ public class FileService {
         filePolicy.validateSize(actualSize);
         filePolicy.validateActualSize(file.size(), actualSize);
 
-        fileUploadTransactionService.complete(userId, fileId, actualSize);
+        try {
+            fileUploadTransactionService.complete(userId, fileId, actualSize);
+        } catch (PessimisticLockingFailureException e) {
+            throw new FileException(FileErrorCode.FILE_UPLOAD_BUSY, e);
+        }
     }
 }

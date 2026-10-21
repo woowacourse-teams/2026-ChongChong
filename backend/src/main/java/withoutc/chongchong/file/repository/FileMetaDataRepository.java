@@ -12,7 +12,7 @@ import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.projection.FileUploadSnapshotProjection;
 
-public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long> {
+public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long>, FileUploadLockRepository {
 
     @Query("""
             SELECT new withoutc.chongchong.file.repository.projection.FileUploadSnapshotProjection(
@@ -30,10 +30,6 @@ public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long
         return findUploadSnapshotById(fileId)
                 .orElseThrow(() -> new FileException(FileErrorCode.FILE_NOT_FOUND));
     }
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT file FROM FileMetadata file WHERE file.id = :fileId")
-    Optional<FileMetadata> findByIdForUpdate(@Param("fileId") Long fileId);
 
     default FileMetadata getByIdForUpdateOrThrow(Long fileId) {
         return findByIdForUpdate(fileId)
