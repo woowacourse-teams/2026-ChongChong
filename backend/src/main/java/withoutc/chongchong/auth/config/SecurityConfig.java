@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/actuator/health/readiness").permitAll()
                         .requestMatchers(
                                 AUTH_PATH + "/login",
                                 AUTH_PATH + "/refresh",

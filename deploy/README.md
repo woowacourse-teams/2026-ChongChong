@@ -1,5 +1,8 @@
 # Backend deployment
 
+edge EC2와 백엔드 A/B 분리 배포는 [edge 배포 절차](edge-deployment.md)를 따른다.
+`DEPLOYMENT_MODE=edge`로 선택하며, 기본값은 아래의 기존 단일 서버 배포다.
+
 `dev` 또는 `prod`에 병합된 백엔드 변경을 환경별 CodePipeline이 CodeBuild와 CodeDeploy를 거쳐 대상 단일 EC2에
 배포하도록 구성한다. 이 문서는 저장소에 포함할 수 없는 AWS Resource와 EC2 최초 설정을 연결하는 절차다.
 

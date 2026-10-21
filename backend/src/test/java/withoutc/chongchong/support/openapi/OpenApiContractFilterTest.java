@@ -1,8 +1,12 @@
 package withoutc.chongchong.support.openapi;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator;
@@ -13,6 +17,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.FilterableResponseSpecification;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -93,6 +98,64 @@ class OpenApiContractFilterTest {
     Path tempDirectory;
 
     @Test
+    void 동일_명세의_검증기는_재사용하고_호출_기록은_필터별로_분리한다() throws Exception {
+        Path specPath = tempDirectory.resolve("openapi.yaml");
+        Files.writeString(specPath, SPEC);
+        Path firstCoverage = tempDirectory.resolve("first.txt");
+        Path secondCoverage = tempDirectory.resolve("second.txt");
+
+        try (var factory = mockStatic(OpenApiInteractionValidator.class, CALLS_REAL_METHODS)) {
+            OpenApiContractFilter first = new OpenApiContractFilter(specPath, firstCoverage);
+            OpenApiContractFilter second = new OpenApiContractFilter(
+                    tempDirectory.resolve(".").resolve("openapi.yaml"), secondCoverage
+            );
+
+            first.filter(
+                    request("GET", "http://localhost/api/results"),
+                    mock(FilterableResponseSpecification.class),
+                    contextReturning(response(200, "{\"id\":1}"))
+            );
+            second.filter(
+                    request("GET", "http://localhost/api/optional-result"),
+                    mock(FilterableResponseSpecification.class),
+                    contextReturning(response(200, "{}"))
+            );
+
+            assertThat(Files.readAllLines(firstCoverage)).containsExactly("GET /api/results");
+            assertThat(Files.readAllLines(secondCoverage)).containsExactly("GET /api/optional-result");
+            factory.verify(() -> OpenApiInteractionValidator.createFor(specPath.toString()), times(1));
+        }
+    }
+
+    @Test
+    void 서로_다른_명세의_검증_규칙을_섞지_않는다() throws Exception {
+        OpenApiContractFilter integerFilter = createFilter();
+        Path stringSpec = tempDirectory.resolve("string-api.yaml");
+        Files.writeString(stringSpec, SPEC.replace("type: integer", "type: string"));
+        OpenApiContractFilter stringFilter = new OpenApiContractFilter(
+                stringSpec, tempDirectory.resolve("string-coverage.txt")
+        );
+        var responseSpecification = mock(FilterableResponseSpecification.class);
+
+        assertThatCode(() -> integerFilter.filter(
+                request("GET", "http://localhost/api/results"), responseSpecification,
+                contextReturning(response(200, "{\"id\":1}"))
+        )).doesNotThrowAnyException();
+        assertThatThrownBy(() -> stringFilter.filter(
+                request("GET", "http://localhost/api/results"), responseSpecification,
+                contextReturning(response(200, "{\"id\":1}"))
+        )).isInstanceOf(AssertionError.class);
+        assertThatCode(() -> stringFilter.filter(
+                request("GET", "http://localhost/api/results"), responseSpecification,
+                contextReturning(response(200, "{\"id\":\"one\"}"))
+        )).doesNotThrowAnyException();
+        assertThatThrownBy(() -> integerFilter.filter(
+                request("GET", "http://localhost/api/results"), responseSpecification,
+                contextReturning(response(200, "{\"id\":\"one\"}"))
+        )).isInstanceOf(AssertionError.class);
+    }
+
+    @Test
     void 잘못된_요청도_응답만_명세와_비교한다() {
         OpenApiContractFilter filter = createFilter();
         FilterableRequestSpecification request = request("GET", "http://localhost/api/items");
@@ -169,12 +232,7 @@ class OpenApiContractFilterTest {
         } catch (java.io.IOException exception) {
             throw new IllegalStateException(exception);
         }
-        OpenApiInteractionValidator validator = OpenApiInteractionValidator.createFor(specPath.toString()).build();
-        return new OpenApiContractFilter(
-                validator,
-                OpenApiOperationCatalog.load(specPath),
-                tempDirectory.resolve("coverage.txt")
-        );
+        return new OpenApiContractFilter(specPath, tempDirectory.resolve("coverage.txt"));
     }
 
     private FilterableRequestSpecification request(String method, String uri) {

@@ -30,6 +30,12 @@ phases:
     commands:
       - docker push "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}"
       - printf 'BACKEND_IMAGE=%s\nBACKEND_IMAGE_TAG=%s\n' "${DOCKERHUB_REPOSITORY}" "${IMAGE_TAG}" > deploy/image.env
+      - |
+        case "${DEPLOYMENT_MODE:-legacy}" in
+          legacy) ;;
+          edge) cp appspec.edge.yml appspec.yml ;;
+          *) echo "Unsupported DEPLOYMENT_MODE" >&2; exit 1 ;;
+        esac
 
 cache:
   key: gradle-v1-$CODEBUILD_RESOLVED_SOURCE_VERSION

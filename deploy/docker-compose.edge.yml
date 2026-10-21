@@ -1,0 +1,48 @@
+services:
+  metrics-collector:
+    profiles: [metrics]
+    image: public.ecr.aws/aws-observability/aws-otel-collector:v0.49.0
+    container_name: chongchong-metrics-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      BACKEND_A_HOST: "${BACKEND_A_HOST:?BACKEND_A_HOST is required}"
+      BACKEND_B_HOST: "${BACKEND_B_HOST:?BACKEND_B_HOST is required}"
+      CLOUD_WATCH_AWS_REGION: "${CLOUD_WATCH_AWS_REGION:-ap-northeast-2}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV:-dev}"
+      METRICS_SCRAPE_INTERVAL: "${METRICS_SCRAPE_INTERVAL:-60s}"
+      METRICS_SCRAPE_TIMEOUT: "${METRICS_SCRAPE_TIMEOUT:-10s}"
+    volumes:
+      - /opt/chongchong/edge-runtime/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    mem_limit: 192m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: chongchong-nginx
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: "${SERVER_NAME:?SERVER_NAME is required}"
+      NGINX_API_LOG_FORMAT: "${NGINX_API_LOG_FORMAT:-main}"
+      NGINX_ENVSUBST_FILTER: '^(SERVER_NAME|NGINX_API_LOG_FORMAT)$$'
+    ports:
+      - "80:80"
+      - "443:443"
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
+    volumes:
+      - /opt/chongchong/edge-runtime/edge.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - /opt/chongchong/edge-runtime/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /opt/chongchong/edge-routing:/etc/nginx/upstreams:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
