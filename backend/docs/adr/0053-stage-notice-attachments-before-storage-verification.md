@@ -4,6 +4,7 @@
 - 관련 이슈: [#542](https://github.com/woowacourse-teams/2026-ChongChong/issues/542)
 - 원본 이슈: [#275](https://github.com/woowacourse-teams/2026-ChongChong/issues/275)
 - 선행 결정: [ADR-0052](0052-use-presigned-urls-for-file-uploads.md)
+- 부분 대체: 공지 검증기 호출·저장 시 완료 전환·제거 파일 재사용 금지는 [ADR-0055](0055-connect-completed-files-to-notices.md)에서 변경한다. 아래 본문은 1단계 당시 결정 기록이다.
 
 ## 배경
 

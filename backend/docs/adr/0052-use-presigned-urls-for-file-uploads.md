@@ -2,6 +2,7 @@
 
 - 날짜: 2026-09-11
 - 관련 이슈: [#295](https://github.com/woowacourse-teams/2026-ChongChong/issues/295)
+- 부분 대체: 공지 저장 시 실제 업로드 검증·완료 전환을 수행하는 결정은 [ADR-0055](0055-connect-completed-files-to-notices.md)에서 완료 API 선행 호출과 공지 연결 분리로 변경한다. 아래 본문은 당시 결정 기록이다.
 
 ## 배경
 
