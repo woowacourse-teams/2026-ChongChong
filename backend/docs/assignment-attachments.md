@@ -24,7 +24,9 @@ MIME은 저장된 메타데이터 기준이며 파일 내부 형식 검사나 �
 과제별 제출 형식 제한 없이 텍스트·링크·이미지·파일을 조합해서 제출한다.
 제출 방법 안내문 `submissionMethod`는 그대로 유지한다.
 제출·수정 결과에는 텍스트, 링크 또는 첨부파일이 하나 이상 있어야 한다.
-PATCH에서 content/link를 생략하면 유지하며 빈 문자열을 보내면 비운다.
+POST 재제출에서 content/link를 생략하거나 null로 보내면 기존 값을 null로 덮어쓴다.
+PATCH 수정에서 content/link를 생략하거나 null로 보내면 유지하며 빈 문자열을 보내면 비운다.
+POST에서 content/link를 생략하고 attachmentFileIds를 빈 배열로 보내면 EMPTY_SUBMISSION으로 거부한다.
 첨부를 모두 제거하는 경우에도 최종 결과에 텍스트나 링크가 남아야 한다.
 
 ## 조회와 삭제

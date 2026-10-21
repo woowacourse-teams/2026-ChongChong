@@ -21,7 +21,7 @@ post:
       - frontend/src/features/assignment/components/MyAssignmentSubmission.tsx
       - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
   summary: 과제 제출
-  description: 현재 사용자가 과제 답안 또는 링크를 제출한다. 마감 후에도 제출할 수 있으며 최초 제출 시각을 기준으로 정상·지각 제출을 구분한다. 재제출하면 내용·링크를 덮어쓰되 최초 제출 시각은 유지하며, 제출자를 제외한 리더 대상 알림은 최초 제출에만 생성한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제·제출 정보 없음(404)을 반환할 수 있다.
+  description: 현재 사용자가 과제 답안 또는 링크를 제출한다. 마감 후에도 제출할 수 있으며 최초 제출 시각을 기준으로 정상·지각 제출을 구분한다. 재제출에서 content·link를 생략하거나 null로 보내면 null로 덮어쓴다. attachmentFileIds는 생략·null이면 유지하고 빈 배열이면 제거한다. 최종 내용·링크·첨부가 모두 비어 있으면 EMPTY_SUBMISSION으로 거부한다. 최초 제출 시각은 유지하며, 제출자를 제외한 리더 대상 알림은 최초 제출에만 생성한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제·제출 정보 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
@@ -68,5 +68,5 @@ get:
           example: { submissions: [{ id: 1, name: 홍길동, profileImage: null, submissionStatus: SUBMITTED, createdAt: '2026-08-27T10:30:00' }, { id: 2, name: 김철수, profileImage: null, submissionStatus: LATE_SUBMITTED, createdAt: '2026-08-30T10:30:00' }] }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/AssignmentAttachmentForbidden' }
-    '404': { $ref: '../../components/responses.yaml#/AssignmentAttachmentNotFound' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }

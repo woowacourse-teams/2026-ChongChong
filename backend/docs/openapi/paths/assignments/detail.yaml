@@ -29,7 +29,7 @@ get:
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
-    '404': { $ref: '../../components/responses.yaml#/AssignmentAttachmentNotFound' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }
 patch:
   tags: [Assignment]
   operationId: updateAssignment
@@ -80,5 +80,5 @@ delete:
     '204': { description: 과제 삭제 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/AssignmentAttachmentForbidden' }
-    '404': { $ref: '../../components/responses.yaml#/AssignmentAttachmentNotFound' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }
