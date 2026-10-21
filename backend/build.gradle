@@ -54,6 +54,7 @@ dependencies {
 }
 
 tasks.withType(Test).configureEach {
+    systemProperty 'spring.test.context.cache.maxSize', '8'
     if (providers.gradleProperty('ci').isPresent()) {
         outputs.upToDateWhen { false }
         outputs.doNotCacheIf('CI에서는 테스트를 매번 실행한다') { true }
