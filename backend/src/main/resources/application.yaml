@@ -27,6 +27,10 @@ aws:
     upload-prefix: ${AWS_S3_UPLOAD_PREFIX}
     url-validity: ${AWS_URL_VALIDITY:10m}
 
+file:
+  upload:
+    max-size-bytes: ${FILE_UPLOAD_MAX_SIZE_BYTES:5242880}
+
 app:
   environment: ${CLOUD_WATCH_APP_ENV:local}
 

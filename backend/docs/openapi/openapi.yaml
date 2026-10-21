@@ -27,6 +27,8 @@ tags:
 paths:
   /api/files/presigned-url:
     $ref: './paths/files/presigned-url.yaml'
+  /api/files/{fileId}/complete:
+    $ref: './paths/files/complete.yaml'
   /api/auth/csrf:
     $ref: './paths/auth/csrf.yaml'
   /api/auth/login:

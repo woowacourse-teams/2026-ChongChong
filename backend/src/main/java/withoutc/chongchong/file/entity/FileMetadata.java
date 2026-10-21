@@ -71,6 +71,10 @@ public class FileMetadata extends BaseEntity {
         status = FileUploadStatus.COMPLETED;
     }
 
+    public boolean isCompleted() {
+        return status == FileUploadStatus.COMPLETED;
+    }
+
     public void markForDeletion() {
         if (status != FileUploadStatus.COMPLETED) {
             throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);

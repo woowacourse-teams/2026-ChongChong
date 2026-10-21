@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0054](0054-separate-upload-verification-from-database-transactions.md) | 업로드 검증의 S3 호출과 DB 트랜잭션을 분리한다 |
 | [0051](0051-allow-multiple-auth-sessions-per-user.md)                                    | 사용자당 여러 인증 세션을 허용한다 |
 | [0045](0045-delete-notifications-with-resources.md)                                    | 자원 삭제 시 관련 인앱 알림을 삭제한다 |
 | [0046](0046-separate-user-name-edit-limit-from-social-initialization.md)                 | 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다 |
