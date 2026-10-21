@@ -1,0 +1,77 @@
+post:
+  tags: [File]
+  operationId: completeFileUpload
+  summary: 파일 업로드 완료 확인
+  x-frontend:
+    status: needs-update
+    description: S3 PUT 성공 후 fileId로 완료 요청을 보내고 204 응답을 확인한다. objectKey는 보내지 않는다.
+    sources:
+      - frontend/src/features/notice/components/NoticeForm.tsx
+  x-backend:
+    status: done
+    owner: frombunny
+    description: 소유권과 S3 실제 크기를 검증한 뒤 파일을 COMPLETED로 전환한다.
+  description: |
+    인증된 소유자만 자신의 파일 업로드를 완료할 수 있다.
+    실제 파일이 존재하고 크기가 선언값과 일치하며 공통 제한(기본 5MiB) 이하이면 완료한다.
+    0바이트 파일도 허용한다. 이미 COMPLETED인 파일은 소유권 확인 후 재조회 없이 204를 반환한다.
+    검증 실패 시 PENDING을 유지하며 DELETE_PENDING 파일은 완료할 수 없다.
+    S3 조회는 DB 트랜잭션 밖에서 수행하고, 완료 저장 시 파일 잠금과 상태 재검증으로 동시 요청을 처리한다.
+    완료 트랜잭션의 개별 잠금 획득 대기는 3초로 제한한다. 시간 초과 시 롤백 후 503을 반환하며 잠시 후 재요청할 수 있다.
+    도메인 첨부 연결과 고아 파일 정리는 이 API의 범위가 아니다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - in: path
+      name: fileId
+      required: true
+      schema: { type: integer, format: int64 }
+  responses:
+    '204':
+      description: 업로드 검증 및 완료 처리 성공 또는 이미 완료된 파일
+    '400':
+      description: 크기 제한 초과, 선언 크기 불일치 또는 경로 형식 오류
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code: { type: string, enum: [INVALID_FILE_SIZE, FILE_SIZE_MISMATCH, INVALID_REQUEST, INVALID_REQUEST_PARAMETER] }
+              message: { type: string }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403':
+      description: 다른 사용자의 파일
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/errors.yaml#/FileNotOwnedError' }
+    '404': { $ref: '../../components/responses.yaml#/FileNotFound' }
+    '409':
+      description: S3 객체가 없거나 완료할 수 없는 파일 상태
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code: { type: string, enum: [FILE_UPLOAD_NOT_FOUND, FILE_UPLOAD_NOT_PENDING] }
+              message: { type: string }
+    '502':
+      description: S3 조회 장애. 권한 문제로 존재 여부를 판단할 수 없는 경우도 포함한다.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code: { type: string, const: FILE_LOOKUP_FAILED }
+              message: { type: string }
+    '503':
+      description: 파일 잠금 경합으로 완료하지 못함. 잠시 후 완료 요청을 다시 시도할 수 있다.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code: { type: string, const: FILE_UPLOAD_BUSY }
+              message: { type: string }

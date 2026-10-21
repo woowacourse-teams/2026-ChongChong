@@ -144,7 +144,7 @@ FileNotOwnedError:
     - { $ref: '#/ErrorResponseBase' }
     - properties:
         code: { const: FILE_NOT_OWNED }
-        message: { const: 본인이 업로드한 파일만 첨부할 수 있습니다. }
+        message: { const: 본인이 업로드한 파일만 처리할 수 있습니다. }
 FileNotFoundError:
   allOf:
     - { $ref: '#/ErrorResponseBase' }

@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import withoutc.chongchong.file.controller.dto.PresignedUrlCreateRequest;
 import withoutc.chongchong.file.controller.dto.PresignedUrlCreateResponse;
 import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.policy.FilePolicy;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
@@ -45,7 +46,11 @@ class FileServiceTest {
             FileUploadUrlGenerator generator = new FileUploadUrlGenerator(presigner);
             ReflectionTestUtils.setField(generator, "bucket", "test-upload-bucket");
             ReflectionTestUtils.setField(generator, "urlValidity", Duration.ofMinutes(3));
-            FileService service = new FileService(fileRepository, userRepository, generator);
+            FilePolicy filePolicy = new FilePolicy();
+            ReflectionTestUtils.setField(filePolicy, "maxSizeBytes", 5242880L);
+            FileService service = new FileService(fileRepository, userRepository, generator,
+                    mock(S3FileMetadataReader.class), mock(FileUploadTransactionService.class),
+                    filePolicy);
             ReflectionTestUtils.setField(service, "uploadPrefix", "chongchong/files/test/uploads/");
             Instant before = Instant.now();
 
@@ -68,6 +73,7 @@ class FileServiceTest {
             assertThat(signed.httpRequest().method().name()).isEqualTo("PUT");
             assertThat(signed.signedHeaders()).containsKey("content-type");
             assertThat(signed.signedHeaders().get("content-type")).containsExactly("application/pdf");
+            assertThat(signed.signedHeaders().get("if-none-match")).containsExactly("*");
         }
     }
 }

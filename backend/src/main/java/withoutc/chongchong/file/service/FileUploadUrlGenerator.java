@@ -26,6 +26,7 @@ public class FileUploadUrlGenerator {
                 .putObjectRequest(builder -> builder
                         .bucket(bucket)
                         .key(objectKey)
+                        .ifNoneMatch("*")
                         .contentType(contentType))
                 .build();
 
