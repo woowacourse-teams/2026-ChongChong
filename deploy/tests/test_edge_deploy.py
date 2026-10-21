@@ -27,7 +27,13 @@ elif name == 'docker':
     if failure == 'compose-config' and 'config' in args: sys.exit(1)
     if failure == 'up' and 'up' in args: sys.exit(1)
     if args[0] == 'login': sys.stdin.buffer.read()
-    if failure == 'draining' and args[0] == 'top': print('nginx: worker process is shutting down')
+    if args[0] == 'top':
+        columns = args[args.index('-eo') + 1].split(',')
+        if 'pid' not in columns:
+            print("Couldn't find PID field in ps output", file=sys.stderr)
+            sys.exit(1)
+        print('PID COMMAND')
+        if failure == 'draining': print('123 nginx: worker process is shutting down')
     if args[-1] == '-t':
         counter = root / 'syntax-count'
         n = int(counter.read_text()) + 1 if counter.exists() else 1

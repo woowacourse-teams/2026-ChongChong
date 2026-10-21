@@ -11,7 +11,7 @@ current="$(upstream_host "$UPSTREAM")"
 if [[ "$current" == "$BACKEND_A_HOST" ]]; then target="$BACKEND_B_HOST"; slot=b
 else target="$BACKEND_A_HOST"; slot=a; fi
 docker exec chongchong-nginx nginx -t
-workers="$(docker top chongchong-nginx -eo args)"
+workers="$(docker top chongchong-nginx -eo pid,args)"
 if grep -Fq 'worker process is shutting down' <<< "$workers"; then
     echo 'Previous Nginx workers are still draining; retry later' >&2; exit 1
 fi
