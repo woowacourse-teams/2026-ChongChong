@@ -14,7 +14,7 @@ get:
       - frontend/src/features/notice/api.ts
       - frontend/src/features/notice/responseSchemas.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       공지 상세를 조회하며 스터디 소속을 검증한다.
@@ -54,14 +54,14 @@ patch:
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       공지를 부분 수정하고 대기 중인 리마인더를 교체한다. 이미 발송된 기록은 유지한다.
       attachmentFileIds 생략·null은 유지, 빈 배열은 제거, 배열은 표시 순서까지 교체한다.
-      #554에서 신규 첨부를 COMPLETED 파일로 받고, 제거 파일은 상태를 유지한 채 관계만 정리하도록 전환한다.
+      #554에서 신규 첨부를 COMPLETED 파일로 받고, 제거 파일은 상태를 유지한 채 관계만 정리하도록 전환했다.
       소유권·이미지 정책·기존 연결 여부를 검증하며 S3 조회나 완료 전환은 수행하지 않는다.
-      아래 명세는 전환 후 계약이며 구현·통합 검증은 진행 중이다.
+      구현과 로컬 HTTP·PostgreSQL 검증을 마쳤으며 리뷰 대기 중이다.
   summary: 공지 수정
   description: |
     스터디 리더가 공지를 부분 수정한다. attachmentFileIds 생략·null은 유지, 빈 배열은 전체 제거,
@@ -97,11 +97,11 @@ delete:
     sources:
       - frontend/src/features/notice/api.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
-      #554에서 공지 삭제 시 첨부 관계와 알림을 정리하고 파일은 COMPLETED로 유지하도록 전환한다.
-      아래 명세는 전환 후 계약이며 구현·통합 검증은 진행 중이다. S3 물리 삭제는 후속 정리 작업의 책임이다.
+      #554에서 공지 삭제 시 첨부 관계와 알림을 정리하고 파일은 COMPLETED로 유지하도록 전환했다.
+      구현과 로컬 HTTP·PostgreSQL 검증을 마쳤으며 리뷰 대기 중이다. S3 물리 삭제는 후속 정리 작업의 책임이다.
   summary: 공지 삭제
   description: |
     스터디 리더가 공지를 삭제한다. 첨부 관계와 알림은 정리하고 파일 메타데이터와 COMPLETED 상태는 유지한다.

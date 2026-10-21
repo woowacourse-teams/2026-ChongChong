@@ -12,13 +12,13 @@ post:
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       공지를 생성하고 수신자와 리마인더를 초기화한다.
-      #554에서 업로드 완료 API를 통과한 COMPLETED 파일 연결로 전환한다.
+      #554에서 업로드 완료 API를 통과한 COMPLETED 파일 연결로 전환했다.
       공지는 소유권·이미지 정책·공지/과제/제출물의 기존 연결 여부를 검증하며 S3 조회나 완료 전환을 수행하지 않는다.
-      아래 명세는 전환 후 계약이며 구현·통합 검증은 진행 중이다. 첨부 정책은 서버 설정으로 변경할 수 있다.
+      구현과 로컬 HTTP·PostgreSQL 검증을 마쳤으며 리뷰 대기 중이다. 첨부 정책은 서버 설정으로 변경할 수 있다.
   summary: 공지 생성
   description: |
     스터디 리더가 공지를 생성한다. S3 업로드 후 POST /api/files/{fileId}/complete에 성공한 파일의
