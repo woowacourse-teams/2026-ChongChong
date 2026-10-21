@@ -1,5 +1,6 @@
 package withoutc.chongchong.assignment.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,15 +9,20 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.study.entity.StudyMember;
 
@@ -53,8 +59,22 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private final List<SubmissionAttachment> attachments = new ArrayList<>();
+
     public static AssignmentSubmission create(StudyMember member, Assignment assignment) {
         return new AssignmentSubmission(member, assignment, null, null, null);
+    }
+
+    public void addAttachments(List<FileMetadata> files) {
+        for (int i = 0; i < files.size(); i++) {
+            attachments.add(SubmissionAttachment.create(this, files.get(i), i));
+        }
+    }
+
+    public void clearAttachments() {
+        attachments.clear();
     }
 
     public void submit(String content, String link, LocalDateTime now) {
@@ -116,6 +136,12 @@ public class AssignmentSubmission extends BaseEntity {
         return ownerId != null && ownerId.equals(member.getId());
     }
 
+    public boolean isSubmit(LocalDateTime now) {
+        SubmissionStatus status = submissionStatus(now);
+
+        return status == SubmissionStatus.SUBMITTED || status == SubmissionStatus.LATE_SUBMITTED;
+    }
+
     private void validateContent(String content) {
         if (content != null && content.length() > 10000) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
@@ -126,11 +152,5 @@ public class AssignmentSubmission extends BaseEntity {
         if (link != null && link.length() > 10000) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_LINK);
         }
-    }
-
-    public boolean isSubmit(LocalDateTime now) {
-        SubmissionStatus status = submissionStatus(now);
-
-        return status == SubmissionStatus.SUBMITTED || status == SubmissionStatus.LATE_SUBMITTED;
     }
 }
