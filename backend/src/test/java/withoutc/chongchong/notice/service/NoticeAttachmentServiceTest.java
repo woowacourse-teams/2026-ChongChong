@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -239,7 +240,7 @@ class NoticeAttachmentServiceTest {
     void prepareDeletionWithoutAttachments() {
         Notice notice = Notice.create(mock(Study.class), "공지 제목", "공지 내용");
 
-        assertThat(attachmentService.prepareForDelete(notice)).isEmpty();
+        attachmentService.prepareForDelete(notice);
 
         verifyNoInteractions(fileRepository, attachmentRepository);
     }
@@ -255,8 +256,10 @@ class NoticeAttachmentServiceTest {
         attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository,
                 new NoticeAttachmentPolicy(1, 1, List.of("image/jpeg")));
 
-        assertThat(attachmentService.prepareForDelete(notice)).containsExactly(second, first);
+        attachmentService.prepareForDelete(notice);
 
+        verify(fileRepository).findAllByIdForUpdate(List.of(7L, 31L));
+        verifyNoInteractions(attachmentRepository);
         assertThat(notice.getAttachments()).hasSize(2);
         assertThat(List.of(first, second)).extracting(FileMetadata::getStatus)
                 .containsOnly(FileUploadStatus.COMPLETED);
