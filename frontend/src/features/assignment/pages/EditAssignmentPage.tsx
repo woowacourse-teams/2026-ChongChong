@@ -62,7 +62,7 @@ EditAssignmentPage.Content = function Content() {
 
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
 

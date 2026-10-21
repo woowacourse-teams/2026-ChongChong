@@ -3,7 +3,7 @@ import ErrorIcon from '../../assets/red-x.webp';
 import SuccessIcon from '../../assets/green-check.webp';
 import { tokens } from '../../../styles/global';
 
-type Status = 'Error' | 'Success';
+type Status = 'error' | 'success';
 
 interface Props {
   status: Status;
@@ -12,8 +12,8 @@ interface Props {
 
 export default function StatusToast({ status, message }: Props) {
   function decideStatusIcon(status: Status) {
-    if (status === 'Success') return SuccessIcon;
-    if (status === 'Error') return ErrorIcon;
+    if (status === 'success') return SuccessIcon;
+    if (status === 'error') return ErrorIcon;
     return SuccessIcon;
   }
   return (

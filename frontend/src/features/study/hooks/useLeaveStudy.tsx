@@ -22,7 +22,7 @@ export default function useLeaveStudy({ onError }: Params) {
     },
     onError: (error) => {
       onError();
-      toast.open(<StatusToast message={error.message} status="Error" />);
+      toast.open(<StatusToast message={error.message} status="error" />);
     },
   });
 
