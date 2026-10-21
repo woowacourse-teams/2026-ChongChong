@@ -32,6 +32,7 @@ elif name == 'docker':
         n = int(counter.read_text()) + 1 if counter.exists() else 1
         counter.write_text(str(n))
         if failure == 'syntax' and n == 2: sys.exit(1)
+        if failure == 'rollback-syntax' and n == 1: sys.exit(1)
     if args[-1] == 'reload':
         if failure == 'reload' and not (root / 'reload-failed').exists():
             (root / 'reload-failed').touch(); sys.exit(1)
@@ -82,6 +83,14 @@ class EdgeDeployTest(unittest.TestCase):
             calls = [json.loads(line) for line in (root / 'calls').read_text().splitlines()]
             routing = (root / 'edge-routing/upstream.conf').read_text()
             return result, calls, routing, original, (root / 'edge-state/pending-upstream.conf').exists()
+
+    def test_manual_rollback_validation_failure_restores_upstream_file(self):
+        for failure in ('rollback-syntax', 'reload'):
+            with self.subTest(failure=failure):
+                result, _, routing, original, pending = self.exercise(failure, rollback=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(routing, original)
+                self.assertTrue(pending)
 
     def test_only_inactive_backend_is_deployed(self):
         for active, target in [('10.0.0.1', '10.0.0.2'), ('10.0.0.2', '10.0.0.1')]:

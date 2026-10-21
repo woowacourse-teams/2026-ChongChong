@@ -114,6 +114,7 @@ sudo bash /opt/chongchong/deploy/scripts/edge-deploy.sh
    새 backend만 실행한다. backend 호스트에도 중복 실행 방지 잠금을 둔다.
 4. readiness를 최대 30회, 요청당 최대 3초와 재시도 간격 2초로 확인한다. 실패하면 라우팅은 유지한다.
 5. 전환 전 상태를 pending 파일에 기록한다. upstream을 원자적으로 교체하고 `nginx -t` 후 reload한다.
+   문법 검사나 reload 명령이 실패하면 교체 전 upstream 파일을 복원하고 실패를 반환한다.
 6. 실제 HTTPS 헬스와 upstream 주소를 최대 10회 확인한다. 실패하면 이전 upstream으로 복구하고
    복구 응답도 검증한다. 실패 결과는 CodeDeploy에 실패로 전달한다.
 7. 성공해도 이전 backend는 끄지 않는다. 기존 요청 처리와 즉시 롤백을 위해 다음 배포 전까지 유지한다.

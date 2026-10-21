@@ -8,7 +8,7 @@ cleanup() {
     docker network rm "$NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
-mkdir -p "$TEMP/certs/live/localhost" "$TEMP/routing"
+mkdir -p "$TEMP/certs/live/localhost" "$TEMP/edge-routing"
 openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=localhost \
     -keyout "$TEMP/certs/live/localhost/privkey.pem" \
     -out "$TEMP/certs/live/localhost/fullchain.pem" 2>/dev/null
@@ -26,14 +26,14 @@ ThreadingHTTPServer(("0.0.0.0",8080),Handler).serve_forever()' >/dev/null
 done
 address_a="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$NAME-a")"
 address_b="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$NAME-b")"
-printf 'upstream chongchong_backend { server %s:8080; }\n' "$address_a" > "$TEMP/routing/upstream.conf"
+printf 'upstream chongchong_backend { server %s:8080; }\n' "$address_a" > "$TEMP/edge-routing/upstream.conf"
 docker run -d --name "$NAME" --network "$NAME" -p 127.0.0.1::443 \
     --ulimit nofile=8192:8192 \
     -e SERVER_NAME=localhost -e NGINX_API_LOG_FORMAT=loadtest \
     -e 'NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$' \
     -v "$ROOT/nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro" \
     -v "$ROOT/nginx/edge.conf.template:/etc/nginx/templates/default.conf.template:ro" \
-    -v "$TEMP/routing:/etc/nginx/upstreams:ro" \
+    -v "$TEMP/edge-routing:/etc/nginx/upstreams:ro" \
     -v "$TEMP/certs:/etc/letsencrypt:ro" nginx:1.28-alpine >/dev/null
 port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
 verify() {
@@ -44,6 +44,23 @@ verify() {
     done
     return 1
 }
+verify "$address_a"
+replace_test_upstream() (
+    source "$ROOT/scripts/edge-runtime.sh"
+    ROOT="$TEMP"
+    UPSTREAM="$ROOT/edge-routing/upstream.conf"
+    docker() { command docker exec "$NAME" "${@:3}"; }
+    replace_upstream "$1"
+)
+cp "$TEMP/edge-routing/upstream.conf" "$TEMP/original-upstream.conf"
+printf 'invalid upstream;\n' > "$TEMP/invalid-upstream.conf"
+if replace_test_upstream "$TEMP/invalid-upstream.conf"; then
+    echo 'Invalid upstream unexpectedly accepted' >&2
+    exit 1
+fi
+cmp "$TEMP/original-upstream.conf" "$TEMP/edge-routing/upstream.conf"
+docker restart "$NAME" >/dev/null
+port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
 verify "$address_a"
 : > "$TEMP/slow-headers"
 curl -kfsS --max-time 15 -D "$TEMP/slow-headers" "https://127.0.0.1:$port/api/slow" > "$TEMP/slow-body" &
@@ -70,18 +87,14 @@ PY
 requests_pid=$!
 sleep 0.3
 kill -0 "$slow_pid"
-printf 'upstream chongchong_backend { server %s:8080; }\n' "$address_b" > "$TEMP/routing/upstream.next"
-mv "$TEMP/routing/upstream.next" "$TEMP/routing/upstream.conf"
-docker exec "$NAME" nginx -t
-docker exec "$NAME" nginx -s reload
+printf 'upstream chongchong_backend { server %s:8080; }\n' "$address_b" > "$TEMP/candidate-upstream.conf"
+replace_test_upstream "$TEMP/candidate-upstream.conf"
 verify "$address_b"
 wait "$slow_pid"
 python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["slot"] == "a"' "$TEMP/slow-body"
 wait "$requests_pid"
-printf 'upstream chongchong_backend { server %s:8080; }\n' "$address_a" > "$TEMP/routing/upstream.next"
-mv "$TEMP/routing/upstream.next" "$TEMP/routing/upstream.conf"
-docker exec "$NAME" nginx -t
-docker exec "$NAME" nginx -s reload
+printf 'upstream chongchong_backend { server %s:8080; }\n' "$address_a" > "$TEMP/candidate-upstream.conf"
+replace_test_upstream "$TEMP/candidate-upstream.conf"
 verify "$address_a"
 cat "$TEMP/requests.txt"
-echo "PASS: A -> B -> A, in-flight A request completed after switch ($TEMP)"
+echo "PASS: invalid upstream restored before restart; A -> B -> A, in-flight A request completed ($TEMP)"

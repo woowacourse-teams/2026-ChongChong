@@ -47,9 +47,20 @@ verify_edge() {
 }
 
 replace_upstream() {
-    cp "$1" "$ROOT/edge-routing/upstream.next" || return 1
-    mv "$ROOT/edge-routing/upstream.next" "$UPSTREAM" || return 1
-    docker exec chongchong-nginx nginx -t && docker exec chongchong-nginx nginx -s reload
+    local backup next="$ROOT/edge-routing/upstream.next"
+    backup="$(mktemp "$ROOT/edge-routing/upstream.backup.XXXXXX")" || return 1
+    if ! cp -p "$UPSTREAM" "$backup" || ! cp "$1" "$next" || ! mv "$next" "$UPSTREAM"; then
+        rm -f -- "$backup" "$next"
+        return 1
+    fi
+    if docker exec chongchong-nginx nginx -t && docker exec chongchong-nginx nginx -s reload; then
+        rm -f -- "$backup"
+        return 0
+    fi
+    if ! mv "$backup" "$UPSTREAM"; then
+        echo "URGENT: upstream restoration failed; original configuration remains at $backup" >&2
+    fi
+    return 1
 }
 
 verify_edge_wait() {
