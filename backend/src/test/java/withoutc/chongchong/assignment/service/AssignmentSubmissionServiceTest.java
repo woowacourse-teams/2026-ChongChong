@@ -6,6 +6,7 @@ import static org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -35,6 +36,7 @@ import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
+import withoutc.chongchong.assignment.policy.AssignmentAttachmentPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
@@ -81,6 +83,8 @@ class AssignmentSubmissionServiceTest {
                 assignmentSubmissionRepository,
                 studyMemberRepository,
                 notificationService,
+                mock(AssignmentAttachmentService.class),
+                new AssignmentAttachmentPolicy(),
                 assignmentAccessPolicy,
                 clock
         );

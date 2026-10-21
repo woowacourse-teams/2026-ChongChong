@@ -3,6 +3,7 @@ AssignmentCreateRequest:
   additionalProperties: false
   required: [title, content, submissionTarget, submissionVisibility, closeAt]
   properties:
+    attachmentFileIds: { $ref: './assignment-attachments.yaml#/AttachmentFileIds' }
     title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 제목.", type: string, minLength: 1, maxLength: 100, example: 1주 차 과제 }
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다.", type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
     submissionMethod: { description: "선택 입력인 제출 방법 안내문. 생략, null, 빈 문자열 또는 공백만 입력하면 빈 문자열로 저장한다. 실제 제출 형식은 제한하지 않는다.", type: [string, 'null'], maxLength: 10000, example: 링크 제출 }
@@ -17,6 +18,7 @@ AssignmentUpdateRequest:
   type: object
   additionalProperties: false
   properties:
+    attachmentFileIds: { $ref: './assignment-attachments.yaml#/AttachmentFileIds' }
     title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 제목. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 100, example: 수정된 과제 }
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 수정된 과제 내용입니다. }
     submissionMethod: { description: "선택 입력인 제출 방법 안내문. 생략하거나 null이면 기존 값을 유지하고, 빈 문자열이나 공백만 보내면 설명을 비운다.", type: [string, 'null'], maxLength: 10000, example: 링크 제출 }
@@ -40,6 +42,7 @@ AssignmentDetailResponse:
   additionalProperties: false
   required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt]
   properties:
+    attachments: { type: array, items: { $ref: './assignment-attachments.yaml#/Attachment' } }
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 1주 차 과제 }
     content: { type: string, example: 이번 주 과제를 제출해주세요. }
