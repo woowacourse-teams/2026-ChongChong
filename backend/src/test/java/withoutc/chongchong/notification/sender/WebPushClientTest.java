@@ -7,18 +7,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
 import java.security.Security;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
+import nl.martijndwars.webpush.Urgency;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import withoutc.chongchong.notification.exception.WebPushErrorCode;
 import withoutc.chongchong.notification.exception.WebPushException;
 
@@ -34,6 +37,26 @@ class WebPushClientTest {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
+    }
+
+    @Test
+    @DisplayName("발송 요청에 긴급도 high를 지정한다")
+    void sendsNotificationWithHighUrgency() throws Exception {
+        PushService pushService = mock(PushService.class);
+        HttpResponse response = mock(HttpResponse.class);
+        StatusLine statusLine = mock(StatusLine.class);
+        when(pushService.sendAsync(any(Notification.class)))
+                .thenReturn(CompletableFuture.completedFuture(response));
+        when(response.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(201);
+        WebPushClient client = new WebPushClient(pushService, Duration.ofSeconds(1));
+
+        WebPushClient.WebPushResponse result = client.send(ENDPOINT, P256DH, AUTH, "payload");
+
+        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
+        verify(pushService).sendAsync(notificationCaptor.capture());
+        assertThat(notificationCaptor.getValue().getUrgency()).isEqualTo(Urgency.HIGH);
+        assertThat(result.status()).isEqualTo(201);
     }
 
     @Test
