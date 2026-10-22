@@ -1,4 +1,4 @@
-import { CSSProperties, useLayoutEffect, useRef } from 'react';
+import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
@@ -7,6 +7,7 @@ import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
+import ImageField from '../../../shared/widgets/ImageField';
 import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
@@ -44,6 +45,7 @@ export default function NoticeForm({
   fieldErrors = {},
 }: NoticeFormProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [images, setImages] = useState<File[]>([]);
   const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
     if (value.length > NOTICE_TITLE.length) return prevValue;
     return value;
@@ -99,6 +101,15 @@ export default function NoticeForm({
         isRequired
         testId="notice-content-field"
         css={{ overflowY: 'hidden' }}
+      />
+
+      <ImageField
+        id="notice-images"
+        label="이미지 업로드"
+        images={images}
+        onChange={setImages}
+        helpText="본문을 설명할 이미지를 추가할 수 있어요"
+        testId="notice-image-field"
       />
 
       <Button
