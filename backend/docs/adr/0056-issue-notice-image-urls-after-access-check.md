@@ -2,7 +2,7 @@
 
 - 날짜: 2026-10-22
 - 관련 이슈: [#561](https://github.com/woowacourse-teams/2026-ChongChong/issues/561)
-- 적용 상태: 백엔드 구현·로컬 검증 완료, 병합 및 dev 실제 이미지 조회 검증 대기
+- 적용 상태: 백엔드 구현·로컬 검증·dev 병합 완료, dev 실제 이미지 조회 사용자 확인 완료
 - 후속 구체화: [ADR-0055](0055-connect-completed-files-to-notices.md)의 공지 이미지 조회 URL 제공
 - 관련 결정: [ADR-0052](0052-use-presigned-urls-for-file-uploads.md)의 클라이언트와 S3 간 직접 파일 전송
 
@@ -95,7 +95,12 @@ URL 생성 성공은 S3 객체의 현재 존재나 실제 파일 내용이 이�
 - 상세 재조회마다 URL을 생성하고 파일·첨부 관계·공지·읽음/미읽음 수신 상태를 보존하며 S3 검증기를 호출하지 않음을 확인했다.
 - 로컬 테스트는 테스트용 자격 증명으로 실제 AWS SDK 서명을 생성한다. 실제 S3 객체의 조회 가능 여부는 검증하지 않는다.
 
+## 병합 및 dev 확인
+
+- [#564](https://github.com/woowacourse-teams/2026-ChongChong/pull/564)로 dev에 병합됐으며 관련 CI가 통과했다.
+- 2026-10-22 사용자가 dev 배포 후 기존 이미지 첨부 공지의 상세를 조회하고, 반환된 imageUrl로 실제 이미지가 표시되는 것을 확인했다.
+- 이 확인 결과를 바탕으로 공지 상세 조회의 OpenAPI 백엔드 상태를 done으로 갱신한다.
+
 ## 후속 작업
 
-- 병합·dev 배포 후 공지 상세 응답의 imageUrl로 실제 이미지를 조회하고 브라우저 이미지 표시를 확인한다.
 - 프론트의 nullable imageUrl 처리와 만료 후 재조회는 #557의 연동 작업에서 반영한다.
