@@ -6,6 +6,7 @@
 - 부분 대체: [ADR-0052](0052-use-presigned-urls-for-file-uploads.md)의 공지 저장 시 업로드 검증·완료 전환
 - 부분 대체: [ADR-0053](0053-stage-notice-attachments-before-storage-verification.md)의 공지 검증기·상태 전환·제거 파일 재사용 금지
 - 관련 결정: [ADR-0054](0054-separate-upload-verification-from-database-transactions.md)
+- 후속 구체화: 별도 범위로 남긴 공지 이미지 조회 URL의 응답·권한·유효기간은 [ADR-0056](0056-issue-notice-image-urls-after-access-check.md)에서 정한다. 아래 본문은 당시 결정 기록이다.
 
 ## 배경
 
