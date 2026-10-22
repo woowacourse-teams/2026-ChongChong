@@ -37,7 +37,7 @@ function FileDetails({ file }: { file: Attachment }) {
       >
         <span css={{ ...typography.body, overflowWrap: 'anywhere' }}>{file.originalFileName}</span>
         <span css={{ ...typography.caption, color: tokens.text.muted }}>
-          {type} · {formatFileSize(file.size)}
+          {type} {formatFileSize(file.size)}
         </span>
       </span>
       {file.imageUrl ? (
