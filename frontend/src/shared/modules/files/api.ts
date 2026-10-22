@@ -1,5 +1,5 @@
-import api from '../../client';
-import { ApiError, handleError } from '../api/error';
+import api from '../../../client';
+import { ApiError, handleError } from '../../api/error';
 import { uploadUrlSchema } from './responseSchemas';
 import { getFileContentType } from './validation';
 

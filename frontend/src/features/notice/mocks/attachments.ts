@@ -1,4 +1,4 @@
-import { fileTable } from '../../../shared/files/mocks/db';
+import { fileTable } from '../../../shared/modules/files/mocks/db';
 import { invalidInputResponse } from '../../../mocks/errors';
 import { noticeTable } from './db';
 

@@ -1,5 +1,5 @@
 import z from 'zod';
-import { attachmentSchema } from '../../shared/files/responseSchemas';
+import { attachmentSchema } from '../../shared/modules/files/responseSchemas';
 import {
   CreateNoticeResponse,
   Notice,

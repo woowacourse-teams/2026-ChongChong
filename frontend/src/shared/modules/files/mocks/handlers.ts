@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { z } from 'zod';
-import { API_URL } from '../../../../config';
-import { findUserFromHeader } from '../../../mocks/auth';
+import { API_URL } from '../../../../../config';
+import { findUserFromHeader } from '../../../../mocks/auth';
 import { fileTable, MOCK_UPLOAD_ORIGIN } from './db';
 
 const uploadRequest = z.object({

@@ -7,7 +7,7 @@ import { memberTable } from './src/features/member/mocks/db';
 import { assignmentTable } from './src/features/assignment/mocks/db';
 import { submissionTable } from './src/features/assignment/mocks/db';
 import { noticeRecipientTable, noticeTable } from './src/features/notice/mocks/db';
-import { fileTable } from './src/shared/files/mocks/db';
+import { fileTable } from './src/shared/modules/files/mocks/db';
 
 // jest-fixed-jsdom의 Node fetch/Blob과 같은 File 구현을 사용해야 파일 바이트가 전송된다.
 Object.defineProperty(globalThis, 'File', { value: NodeFile, writable: true, configurable: true });

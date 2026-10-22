@@ -5,7 +5,7 @@ import { tokens, typography } from '../../styles/global';
 import imageIcon from '../assets/image-upload.svg';
 import deleteIcon from '../assets/image-upload-delete.svg';
 import addIcon from '../assets/add.svg';
-import type { AttachmentItem } from '../files/types';
+import type { AttachmentItem } from '../modules/files/types';
 
 interface AttachmentFieldProps {
   id: string;

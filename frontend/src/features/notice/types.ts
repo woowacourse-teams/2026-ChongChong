@@ -1,4 +1,4 @@
-import type { Attachment } from '../../shared/files/types';
+import type { Attachment } from '../../shared/modules/files/types';
 
 export interface NoticeFormValues {
   title: string;

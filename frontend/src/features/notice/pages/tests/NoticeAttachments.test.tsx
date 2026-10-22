@@ -6,7 +6,7 @@ import { API_URL } from '../../../../../config';
 import { server } from '../../../../mocks/msw-node';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { createWrapper, login, logout, setup } from '../../../../test/render';
-import { fileTable, MOCK_UPLOAD_ORIGIN } from '../../../../shared/files/mocks/db';
+import { fileTable, MOCK_UPLOAD_ORIGIN } from '../../../../shared/modules/files/mocks/db';
 import { userTable } from '../../../user/mocks/db';
 import { studyTable } from '../../../study/mocks/db';
 import { memberTable } from '../../../member/mocks/db';

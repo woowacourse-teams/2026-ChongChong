@@ -8,9 +8,9 @@ import { usePostHog } from '@posthog/react';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
 import AttachmentField from '../../../shared/widgets/AttachmentField';
-import { useAttachments } from '../../../shared/files/useAttachments';
-import { IMAGE_ACCEPT } from '../../../shared/files/validation';
-import type { Attachment } from '../../../shared/files/types';
+import { useAttachments } from '../../../shared/modules/files/useAttachments';
+import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
+import type { Attachment } from '../../../shared/modules/files/types';
 import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
