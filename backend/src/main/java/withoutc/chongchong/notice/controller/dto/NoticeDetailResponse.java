@@ -11,13 +11,13 @@ public record NoticeDetailResponse(
         LocalDateTime createdAt,
         List<NoticeAttachmentResponse> attachments
 ) {
-    public static NoticeDetailResponse from(Notice notice) {
+    public static NoticeDetailResponse from(Notice notice, List<NoticeAttachmentResponse> attachments) {
         return new NoticeDetailResponse(
                 notice.getId(),
                 notice.getTitle(),
                 notice.getContent(),
                 notice.getCreatedAt(),
-                notice.getAttachments().stream().map(NoticeAttachmentResponse::from).toList()
+                attachments
         );
     }
 }

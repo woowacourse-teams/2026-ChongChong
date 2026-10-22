@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
@@ -30,9 +31,11 @@ import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
+import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
+@Import(TestS3PresignerConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
 
@@ -99,7 +102,7 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("기존 첨부 메타데이터를 표시 순서로 반환한다")
+    @DisplayName("기존 첨부 메타데이터와 이미지 URL을 표시 순서로 반환한다")
     void getAttachmentsInDisplayOrder() {
         Response response = request(memberId);
 
@@ -111,8 +114,11 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
                 .body("attachments.size", contains(2048, 1024))
                 .body("attachments.sortOrder", contains(0, 1));
         List<Map<String, Object>> attachments = response.jsonPath().getList("attachments");
-        assertThat(attachments).allSatisfy(attachment -> assertThat(attachment)
-                .containsOnlyKeys("fileId", "originalFileName", "contentType", "size", "sortOrder"));
+        assertThat(attachments).allSatisfy(attachment -> {
+            assertThat(attachment)
+                    .containsOnlyKeys("fileId", "originalFileName", "contentType", "size", "sortOrder", "imageUrl");
+            assertThat((String) attachment.get("imageUrl")).startsWith("https://").contains("X-Amz-Signature=");
+        });
         assertThat(fileRepository.findById(firstFileId).orElseThrow().getStatus())
                 .isEqualTo(FileUploadStatus.COMPLETED);
         assertThat(fileRepository.findById(secondFileId).orElseThrow().getStatus())

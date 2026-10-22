@@ -11,8 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.service.FileImageUrlGenerator;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
+import withoutc.chongchong.notice.controller.dto.NoticeAttachmentResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
@@ -20,6 +22,7 @@ import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeAttachment;
 import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
@@ -42,6 +45,7 @@ public class NoticeService {
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
     private final NoticeAttachmentService noticeAttachmentService;
+    private final FileImageUrlGenerator fileImageUrlGenerator;
 
     private final NoticeAccessPolicy noticeAccessPolicy;
     private final Clock clock;
@@ -112,7 +116,16 @@ public class NoticeService {
 
         Notice notice = noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
 
-        return NoticeDetailResponse.from(notice);
+        List<NoticeAttachmentResponse> attachments = notice.getAttachments().stream()
+                .map(this::toAttachmentResponse)
+                .toList();
+        return NoticeDetailResponse.from(notice, attachments);
+    }
+
+    private NoticeAttachmentResponse toAttachmentResponse(NoticeAttachment attachment) {
+        FileMetadata file = attachment.getFile();
+        String imageUrl = fileImageUrlGenerator.generatePresignedUrl(file.getObjectKey(), file.getContentType());
+        return NoticeAttachmentResponse.from(attachment, imageUrl);
     }
 
     public NoticeListResponse getList(Long userId, Long studyId, Long cursor, int size) {

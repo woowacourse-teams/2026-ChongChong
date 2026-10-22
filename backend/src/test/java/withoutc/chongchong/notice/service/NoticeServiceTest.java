@@ -29,8 +29,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
+import withoutc.chongchong.file.service.FileImageUrlGenerator;
+import withoutc.chongchong.notice.controller.dto.NoticeAttachmentResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
@@ -53,6 +56,7 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
 class NoticeServiceTest {
@@ -84,6 +88,9 @@ class NoticeServiceTest {
     @Mock
     private NoticeAttachmentService noticeAttachmentService;
 
+    @Mock
+    private FileImageUrlGenerator fileImageUrlGenerator;
+
     private NoticeService noticeService;
 
     @BeforeEach
@@ -97,6 +104,7 @@ class NoticeServiceTest {
                 studyRepository,
                 notificationService,
                 noticeAttachmentService,
+                fileImageUrlGenerator,
                 noticeAccessPolicy,
                 clock
         );
@@ -321,6 +329,33 @@ class NoticeServiceTest {
         assertThat(response.id()).isEqualTo(NOTICE_ID);
         assertThat(response.title()).isEqualTo("공지 제목");
         assertThat(response.content()).isEqualTo("공지 내용");
+        assertThat(response.attachments()).isEmpty();
+        verifyNoInteractions(fileImageUrlGenerator);
+    }
+
+    @Test
+    @DisplayName("첨부 순서에 맞춰 공통 생성기의 이미지 URL과 null을 응답에 담는다")
+    void getDetailWithAttachmentUrls() {
+        StudyMember member = mock(StudyMember.class);
+        Notice notice = noticeWithId(NOTICE_ID);
+        User owner = User.create("기존 업로더", null);
+        FileMetadata image = FileMetadata.create(owner, "image.png", "uploads/image.png", "image/png", 1024);
+        FileMetadata document = FileMetadata.create(owner, "document.pdf", "uploads/document.pdf", "application/pdf", 2048);
+        notice.addAttachments(List.of(image, document));
+        String imageUrl = "https://example.com/image.png?signature=test";
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
+        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
+        when(fileImageUrlGenerator.generatePresignedUrl("uploads/image.png", "image/png")).thenReturn(imageUrl);
+        when(fileImageUrlGenerator.generatePresignedUrl("uploads/document.pdf", "application/pdf")).thenReturn(null);
+
+        NoticeDetailResponse response = noticeService.getDetail(USER_ID, STUDY_ID, NOTICE_ID);
+
+        assertThat(response.attachments()).extracting(NoticeAttachmentResponse::originalFileName)
+                .containsExactly("image.png", "document.pdf");
+        assertThat(response.attachments()).extracting(NoticeAttachmentResponse::imageUrl)
+                .containsExactly(imageUrl, null);
+        verify(fileImageUrlGenerator).generatePresignedUrl("uploads/image.png", "image/png");
+        verify(fileImageUrlGenerator).generatePresignedUrl("uploads/document.pdf", "application/pdf");
     }
 
     @Test
@@ -333,7 +368,7 @@ class NoticeServiceTest {
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
-        verifyNoInteractions(noticeRepository);
+        verifyNoInteractions(noticeRepository, fileImageUrlGenerator);
     }
 
     @Test
@@ -345,6 +380,7 @@ class NoticeServiceTest {
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeService.getDetail(USER_ID, STUDY_ID, NOTICE_ID));
+        verifyNoInteractions(fileImageUrlGenerator);
     }
 
     @Test
