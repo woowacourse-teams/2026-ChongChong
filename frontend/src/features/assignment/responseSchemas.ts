@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { attachmentSchema } from '../../shared/modules/files/responseSchemas';
 import type {
   AssignmentDetail,
   AssignmentListResponse,
@@ -75,6 +76,7 @@ const submissionListResponseSchema = z.object({
 }) satisfies z.ZodType<SubmissionListResponse>;
 
 const assignmentDetailSchema = z.object({
+  attachments: z.array(attachmentSchema).optional(),
   id: z.number(),
   title: z.string(),
   content: z.string(),

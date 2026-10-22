@@ -362,7 +362,7 @@ function SubmissionScreen() {
           meta={`${formatDateToString(assignment.closeAt)} 마감`}
         />
         <PreviewSubmitStatusCard status={submissionStatus} />
-        <AssignmentArticle assignment={assignment} />
+        <AssignmentArticle assignment={assignment} onReloadImages={async () => {}} />
       </Main>
       <ScreenTabs active="assignment" />
     </>

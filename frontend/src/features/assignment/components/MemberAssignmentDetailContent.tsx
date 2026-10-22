@@ -17,12 +17,13 @@ interface Props {
 
 export default function MemberAssignmentDetailContent({ studyId, userName }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
-  const [{ data: assignment }, { data: submission }] = useSuspenseQueries({
-    queries: [
-      assignmentQueries.detail(studyId, assignmentId),
-      assignmentQueries.mySubmission(studyId, assignmentId),
-    ],
-  });
+  const [{ data: assignment, refetch: refetchAssignment }, { data: submission }] =
+    useSuspenseQueries({
+      queries: [
+        assignmentQueries.detail(studyId, assignmentId),
+        assignmentQueries.mySubmission(studyId, assignmentId),
+      ],
+    });
   const canViewSubmissions = assignment.submissionVisibility === 'ALL_STUDY_MEMBERS';
   const { data: submissions } = useQuery({
     ...assignmentQueries.submissions(studyId, assignmentId),
@@ -54,7 +55,7 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
         }
         detail={
           <>
-            <AssignmentArticle assignment={assignment} />
+            <AssignmentArticle assignment={assignment} onReloadImages={refetchAssignment} />
             <MyAssignmentSubmission
               studyId={studyId}
               assignmentId={assignmentId}

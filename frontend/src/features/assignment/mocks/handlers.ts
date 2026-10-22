@@ -1,3 +1,5 @@
+import { fileAttachments } from '../../../shared/modules/files/mocks/attachments';
+import { validateAssignmentAttachments } from './attachments';
 import { http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
@@ -73,7 +75,9 @@ export const handlers = [
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
-    const body = (await request.json()) as AssignmentValue;
+    const body = (await request.json()) as AssignmentValue & {
+      attachmentFileIds?: number[] | null;
+    };
     const fieldErrors = validateAssignment(body);
     if (fieldErrors.length > 0) {
       return invalidInputResponse(fieldErrors);
@@ -85,6 +89,9 @@ export const handlers = [
 
     const { title, content, submissionMethod, closeAt, submissionTarget, submissionVisibility } =
       body;
+    const attachmentFileIds = body.attachmentFileIds ?? [];
+    const attachmentError = validateAssignmentAttachments(attachmentFileIds, user.id);
+    if (attachmentError) return attachmentError;
     const assignmentId = Date.now();
     await assignmentTable.create({
       id: assignmentId,
@@ -96,6 +103,7 @@ export const handlers = [
       submissionTarget,
       submissionVisibility,
       completeUserIds: [],
+      attachmentFileIds,
     });
     const submitters = memberTable
       .findMany((q) => q.where({ studyId }))
@@ -120,7 +128,9 @@ export const handlers = [
     async ({ request, params }) => {
       const user = findUserFromHeader(request.headers);
       if (!user) return new HttpResponse(null, { status: 401 });
-      const body = (await request.json()) as UpdateAssignmentValue;
+      const body = (await request.json()) as UpdateAssignmentValue & {
+        attachmentFileIds?: number[] | null;
+      };
       const fieldErrors = validateAssignment(body);
       if (fieldErrors.length > 0) {
         return invalidInputResponse(fieldErrors);
@@ -134,9 +144,17 @@ export const handlers = [
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
 
+      const attachmentFileIds = body.attachmentFileIds ?? assignment.attachmentFileIds ?? [];
+      const attachmentError = validateAssignmentAttachments(
+        attachmentFileIds,
+        user.id,
+        assignment.attachmentFileIds,
+      );
+      if (attachmentError) return attachmentError;
+
       await assignmentTable.update(assignment, {
         data(assignment) {
-          Object.assign(assignment, body);
+          Object.assign(assignment, body, { attachmentFileIds });
         },
       });
 
@@ -221,6 +239,7 @@ export const handlers = [
       submissionMethod: assignment.submissionMethod,
       submissionTarget: assignment.submissionTarget,
       submissionVisibility: assignment.submissionVisibility,
+      attachments: fileAttachments(assignment.attachmentFileIds),
     });
   }),
 

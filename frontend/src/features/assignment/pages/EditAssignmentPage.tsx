@@ -75,6 +75,7 @@ EditAssignmentPage.Content = function Content() {
       submitLabel="과제 수정하기"
       onSubmit={mutate}
       isSubmitting={isPending}
+      initialAttachments={assignment.attachments}
       initialValues={{
         title: assignment.title,
         content: assignment.content,
