@@ -41,9 +41,7 @@ function FileDetails({ file }: { file: Attachment }) {
         </span>
       </span>
       {file.imageUrl ? (
-        <span css={{ ...typography.caption, color: tokens.text.brand, flexShrink: 0 }}>
-          열기
-        </span>
+        <span css={{ ...typography.caption, color: tokens.text.brand, flexShrink: 0 }}>열기</span>
       ) : (
         <span css={{ ...typography.caption, color: tokens.text.placeholder, flexShrink: 0 }}>
           미리보기 없음
