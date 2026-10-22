@@ -6,7 +6,7 @@ post:
     description: |
       기능 추가: 파일 선택, 업로드 URL 발급, 필수 헤더를 포함한 S3 PUT, 업로드 완료 API 호출을 웹에 연결해야 한다.
       완료에 성공한 fileId를 공지·과제·제출물의 attachmentFileIds로 전달한다.
-      공지도 #554에서 COMPLETED 파일 연결을 지원하도록 변경했으며 리뷰 대기 중이다. 공지 이미지 조회 URL 제공은 별도 후속 작업이다.
+      공지의 COMPLETED 파일 연결은 #556으로 dev에 반영됐다. 공지 이미지 조회 URL 제공은 별도 후속 작업이다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
       - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
@@ -27,7 +27,7 @@ post:
     연결하는 API는 소유권·완료 상태·기존 연결 여부와 도메인 파일 정책을 검증한다.
     공지는 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 형식·용량·개수는 설정 가능하다.
     공통 용량 제한과 공지 용량 제한이 함께 적용되므로 한쪽 설정만 변경하면 다른 제한이 남을 수 있다.
-    공지도 #554에서 COMPLETED 파일 연결을 지원하도록 변경했으며 리뷰 대기 중이다. 과제·제출물은 완료 파일 연결을 지원한다.
+    공지의 COMPLETED 파일 연결은 #556으로 dev에 반영됐다. 과제·제출물도 완료 파일 연결을 지원한다.
     공지 이미지 조회 URL 제공은 별도 후속 작업이다.
   security: [{ bearerAuth: [] }]
   requestBody:
