@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
+import nl.martijndwars.webpush.Urgency;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jose4j.lang.JoseException;
@@ -46,7 +47,7 @@ public class WebPushClient {
     public WebPushResponse send(String endpoint, String p256dh, String auth, String payload) {
         Future<HttpResponse> responseFuture = null;
         try {
-            Notification notification = new Notification(endpoint, p256dh, auth, payload);
+            Notification notification = new Notification(endpoint, p256dh, auth, payload, Urgency.HIGH);
             responseFuture = pushService.sendAsync(notification);
             HttpResponse response = responseFuture.get(sendTimeout.toMillis(), TimeUnit.MILLISECONDS);
             int status = response.getStatusLine().getStatusCode();
