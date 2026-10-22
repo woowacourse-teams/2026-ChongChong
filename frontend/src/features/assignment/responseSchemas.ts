@@ -90,8 +90,9 @@ const submissionDetailSchema = z.object({
   id: z.number(),
   name: z.string(),
   profileImage: z.string().nullable(),
-  createdAt: z.string(),
-  content: z.string(),
+  createdAt: z.string().nullable(),
+  content: z.string().nullable(),
+  attachments: z.array(attachmentSchema).optional(),
   link: z.string().nullable(),
 }) satisfies z.ZodType<SubmissionDetail>;
 
@@ -118,6 +119,7 @@ const assignmentSubmitStatusSchema = z.object({
 const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submissionStatus', [
   z.object({
     submissionStatus: z.literal('SUBMITTED'),
+    attachments: z.array(attachmentSchema).optional(),
     submissionId: z.number(),
     createdAt: z.string(),
     content: z.string().optional(),
@@ -125,6 +127,7 @@ const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submissionStatus'
   }),
   z.object({
     submissionStatus: z.literal('LATE_SUBMITTED'),
+    attachments: z.array(attachmentSchema).optional(),
     submissionId: z.number(),
     createdAt: z.string(),
     content: z.string().optional(),

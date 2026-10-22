@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) {
-  const [{ data: notice, refetch }, { data: readStatus }] = useSuspenseQueries({
+  const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.readStatus(studyId, noticeId)],
   });
 
@@ -36,7 +36,7 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
             />
           </>
         }
-        detail={<NoticeArticle notice={notice} onReloadImages={refetch} />}
+        detail={<NoticeArticle notice={notice} />}
       />
     </>
   );

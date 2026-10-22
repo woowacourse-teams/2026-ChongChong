@@ -20,17 +20,14 @@ interface Props {
 export default function LeaderAssignmentDetailContent({ studyId, userName }: Props) {
   const { assignmentId } = useIntegerParams(['assignmentId']);
 
-  const [
-    { data: assignment, refetch: refetchAssignment },
-    { data: submitStatusResponse },
-    { data: submissions },
-  ] = useSuspenseQueries({
-    queries: [
-      assignmentQueries.detail(studyId, assignmentId),
-      assignmentQueries.submitStatus(studyId, assignmentId),
-      assignmentQueries.submissions(studyId, assignmentId),
-    ],
-  });
+  const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
+    useSuspenseQueries({
+      queries: [
+        assignmentQueries.detail(studyId, assignmentId),
+        assignmentQueries.submitStatus(studyId, assignmentId),
+        assignmentQueries.submissions(studyId, assignmentId),
+      ],
+    });
   const { data: mySubmission } = useQuery({
     ...assignmentQueries.mySubmission(studyId, assignmentId),
     enabled: assignment.submissionTarget === 'MEMBERS_AND_LEADER',
@@ -66,7 +63,7 @@ export default function LeaderAssignmentDetailContent({ studyId, userName }: Pro
         }
         detail={
           <>
-            <AssignmentArticle assignment={assignment} onReloadImages={refetchAssignment} />
+            <AssignmentArticle assignment={assignment} />
             {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && mySubmission ? (
               <MyAssignmentSubmission
                 studyId={studyId}

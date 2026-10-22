@@ -411,20 +411,13 @@ test('조회 URL이 null인 첨부는 이미지 표시를 생략한다', async (
   expect(within(article).queryByRole('region', { name: '첨부 이미지' })).not.toBeInTheDocument();
 });
 
-test('이미지 로딩 실패 후 다시 시도하면 공지 상세를 재조회한다', async () => {
+test('공지 이미지 로딩 실패 시 대체 이미지를 표시한다', async () => {
   await existingNotice([101]);
   const { user } = await setupEditPage();
   await user.click(await screen.findByRole('button', { name: '수정하기' }));
   const picture = await screen.findByRole('img', { name: '기존-101.png' });
   // jsdom은 이미지 네트워크 로딩을 실행하지 않아 오류 이벤트를 직접 발생시킨다.
   fireEvent.error(picture);
-  const file = fileTable.findFirst((q) => q.where({ id: 101 }))!;
-  await fileTable.update(file, {
-    data(record) {
-      record.originalFileName = '갱신된.png';
-    },
-  });
-  await user.click(screen.getByRole('button', { name: '이미지 다시 불러오기' }));
-  expect(await screen.findByRole('img', { name: '갱신된.png' })).toBeVisible();
-  expect(screen.queryByRole('button', { name: '다음 이미지' })).not.toBeInTheDocument();
+  expect(screen.getByRole('img', { name: '이미지를 불러오지 못했어요.' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: '이미지 다시 불러오기' })).not.toBeInTheDocument();
 });

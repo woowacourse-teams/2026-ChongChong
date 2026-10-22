@@ -7,7 +7,6 @@ import InfoCard from './InfoCard';
 
 interface Props {
   assignment: AssignmentDetail;
-  onReloadImages: () => Promise<unknown>;
 }
 
 const articleStyle = {
@@ -22,7 +21,7 @@ const detailsStyle = {
   gap: tokens.spacing[3],
 } satisfies CSSProperties;
 
-export default function AssignmentArticle({ assignment, onReloadImages }: Props) {
+export default function AssignmentArticle({ assignment }: Props) {
   return (
     <article css={articleStyle} aria-label="과제 상세">
       <div css={detailsStyle}>
@@ -30,7 +29,7 @@ export default function AssignmentArticle({ assignment, onReloadImages }: Props)
           {assignment.content}
         </InfoCard>
 
-        <ImageGallery attachments={assignment.attachments ?? []} onReload={onReloadImages} />
+        <ImageGallery attachments={assignment.attachments ?? []} />
 
         <InfoCard icon={assignmentIcon} title="제출 방법">
           {assignment.submissionMethod}

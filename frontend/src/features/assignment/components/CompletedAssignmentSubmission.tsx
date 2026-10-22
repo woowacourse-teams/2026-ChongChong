@@ -1,3 +1,4 @@
+import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -86,10 +87,20 @@ export default function CompletedAssignmentSubmission({
       updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
 
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
-        exact: true,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
+          exact: true,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: assignmentQueries.submissionDetail(
+            studyId,
+            assignmentId,
+            submission.submissionId,
+          ).queryKey,
+          exact: true,
+        }),
+      ]);
 
       setIsEditing(false);
     },
@@ -107,6 +118,7 @@ export default function CompletedAssignmentSubmission({
   return isEditing ? (
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
+      initialAttachments={submission.attachments}
       initialValues={{ content: submission.content ?? '', link: submission.link ?? '' }}
       isSubmitting={isPending}
       submitLabel="수정하기"
@@ -139,6 +151,11 @@ export default function CompletedAssignmentSubmission({
             <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
+          </InfoCard>
+        )}
+        {!!submission.attachments?.length && (
+          <InfoCard icon={linkIcon} title="첨부 파일">
+            <AttachmentList attachments={submission.attachments} />
           </InfoCard>
         )}
       </div>

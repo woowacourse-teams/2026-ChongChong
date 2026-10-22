@@ -202,19 +202,13 @@ test('업로드 실패 시 입력을 유지하고 실패 파일을 삭제하면 
   expect(await screen.findByRole('article', { name: '과제 상세' })).toBeVisible();
 });
 
-test('이미지 실패 후 다시 불러오면 과제 상세를 재조회한다', async () => {
+test('과제 이미지 로딩 실패 시 대체 이미지를 표시한다', async () => {
   await existingAssignment([101]);
   const { user } = await setupPage('edit');
   await user.click(await screen.findByRole('button', { name: '과제 수정하기' }));
   const picture = await screen.findByRole('img', { name: '기존-101.png' });
   // jsdom에서 실제 이미지 로딩은 실행되지 않아 실패 이벤트를 직접 발생시킨다.
   fireEvent.error(picture);
-  const file = fileTable.findFirst((q) => q.where({ id: 101 }))!;
-  await fileTable.update(file, {
-    data(record) {
-      record.originalFileName = '갱신.png';
-    },
-  });
-  await user.click(screen.getByRole('button', { name: '이미지 다시 불러오기' }));
-  expect(await screen.findByRole('img', { name: '갱신.png' })).toBeVisible();
+  expect(screen.getByRole('img', { name: '이미지를 불러오지 못했어요.' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: '이미지 다시 불러오기' })).not.toBeInTheDocument();
 });

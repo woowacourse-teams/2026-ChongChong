@@ -1,13 +1,13 @@
 import { useState } from 'react';
+import errorImage from '../assets/icons/image-load-error.webp';
 import type { Attachment } from '../modules/files/types';
 import { tokens } from '../../styles/global';
 
 interface Props {
   attachments: Attachment[];
-  onReload: () => Promise<unknown>;
 }
 
-export default function ImageGallery({ attachments, onReload }: Props) {
+export default function ImageGallery({ attachments }: Props) {
   const images = [...attachments]
     .filter((file): file is Attachment & { imageUrl: string } => file.imageUrl !== null)
     .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -32,7 +32,7 @@ export default function ImageGallery({ attachments, onReload }: Props) {
       >
         {images.map((file) => (
           <li key={file.fileId} css={{ flex: single ? '0 0 100%' : '0 0 200px', minWidth: 0 }}>
-            <GalleryImage key={file.imageUrl} file={file} onReload={onReload} single={single} />
+            <GalleryImage key={file.imageUrl} file={file} single={single} />
           </li>
         ))}
       </ul>
@@ -42,37 +42,28 @@ export default function ImageGallery({ attachments, onReload }: Props) {
 
 function GalleryImage({
   file,
-  onReload,
   single,
 }: {
   file: Attachment & { imageUrl: string };
-  onReload: () => Promise<unknown>;
   single: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const [retrying, setRetrying] = useState(false);
   return (
     <figure css={{ margin: 0 }}>
       {failed ? (
-        <div css={{ padding: tokens.spacing[4], textAlign: 'center' }}>
-          <p>이미지를 불러오지 못했어요.</p>
-          <button
-            type="button"
-            disabled={retrying}
-            onClick={async () => {
-              setRetrying(true);
-              try {
-                await onReload();
-                setFailed(false);
-              } catch {
-                /* 실패 안내를 유지하고 사용자가 다시 시도할 수 있게 한다. */
-              } finally {
-                setRetrying(false);
-              }
-            }}
-          >
-            이미지 다시 불러오기
-          </button>
+        <div
+          css={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            aspectRatio: single ? '350 / 375' : '1',
+            borderRadius: 12,
+          }}
+        >
+          <img src={errorImage} alt="이미지를 불러오지 못했어요." width={80} height={80} />
+          <p aria-hidden="true">이미지를 불러오지 못했어요.</p>
         </div>
       ) : (
         <img

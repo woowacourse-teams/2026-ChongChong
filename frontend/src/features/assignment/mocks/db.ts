@@ -194,6 +194,7 @@ export function createSeedAssignments() {
 }
 
 const submissionSchema = z.object({
+  attachmentFileIds: z.array(z.number()).optional(),
   id: z.number(),
   assignmentId: z.number(),
   userId: z.number(),

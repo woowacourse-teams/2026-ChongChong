@@ -5,7 +5,6 @@ import type { NoticeDetail } from '../types';
 
 interface Props {
   notice: NoticeDetail;
-  onReloadImages: () => Promise<unknown>;
 }
 
 const articleStyle = {
@@ -21,11 +20,11 @@ const contentStyle = {
   whiteSpace: 'pre-line',
 } satisfies CSSProperties;
 
-export default function NoticeArticle({ notice, onReloadImages }: Props) {
+export default function NoticeArticle({ notice }: Props) {
   return (
     <article css={articleStyle} aria-label="공지 상세">
       <p css={contentStyle}>{notice.content}</p>
-      <ImageGallery attachments={notice.attachments} onReload={onReloadImages} />
+      <ImageGallery attachments={notice.attachments} />
     </article>
   );
 }

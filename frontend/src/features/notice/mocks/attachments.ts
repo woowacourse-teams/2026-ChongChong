@@ -1,5 +1,5 @@
-import { validateImageAttachments } from '../../../shared/modules/files/mocks/attachments';
-import { assignmentTable } from '../../assignment/mocks/db';
+import { validateFileAttachments } from '../../../shared/modules/files/mocks/attachments';
+import { assignmentTable, submissionTable } from '../../assignment/mocks/db';
 import { noticeTable } from './db';
 export { fileAttachments as noticeAttachments } from '../../../shared/modules/files/mocks/attachments';
 
@@ -8,8 +8,10 @@ export function validateNoticeAttachments(
   userId: number,
   existingIds: number[] = [],
 ) {
-  const linkedIds = [...noticeTable.findMany(), ...assignmentTable.findMany()].flatMap(
-    (record) => record.attachmentFileIds ?? [],
-  );
-  return validateImageAttachments(ids, userId, existingIds, linkedIds);
+  const linkedIds = [
+    ...noticeTable.findMany(),
+    ...assignmentTable.findMany(),
+    ...submissionTable.findMany(),
+  ].flatMap((record) => record.attachmentFileIds ?? []);
+  return validateFileAttachments(ids, userId, existingIds, linkedIds);
 }

@@ -56,7 +56,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   const toast = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
   const contentBodyRef = useRef<HTMLDivElement>(null);
-  const [{ data: notice, refetch }, { data: readStatus }] = useSuspenseQueries({
+  const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.myRead(studyId, noticeId)],
   });
   const canMarkAsRead = readStatus.readStatus === 'UNREAD';
@@ -149,7 +149,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
             dateTime={notice.createdAt}
             meta={`${formatDateToString(notice.createdAt)} 작성`}
           />
-          <NoticeArticle notice={notice} onReloadImages={refetch} />
+          <NoticeArticle notice={notice} />
         </div>
       </div>
       {readStatus.readStatus !== 'NOT_ASSIGNED' && (

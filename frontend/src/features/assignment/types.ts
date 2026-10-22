@@ -85,13 +85,16 @@ export interface SubmissionListResponse {
   submissions: Submission[];
 }
 
-export interface SubmissionDetail extends SubmissionBase {
-  content: string;
+export interface SubmissionDetail extends Omit<SubmissionBase, 'createdAt'> {
+  createdAt: string | null;
+  attachments?: Attachment[];
+  content: string | null;
   link: string | null;
 }
 
 export interface AssignmentSubmissionValue {
-  content: string;
+  attachmentFileIds?: number[];
+  content?: string | null;
   link?: string;
 }
 
@@ -104,6 +107,7 @@ export interface CreateSubmissionResponse {
 }
 
 export interface SubmittedAssignment {
+  attachments?: Attachment[];
   submissionStatus: 'SUBMITTED';
   submissionId: number;
   createdAt: string;
@@ -112,6 +116,7 @@ export interface SubmittedAssignment {
 }
 
 export interface LateSubmittedAssignment {
+  attachments?: Attachment[];
   submissionStatus: 'LATE_SUBMITTED';
   submissionId: number;
   createdAt: string;

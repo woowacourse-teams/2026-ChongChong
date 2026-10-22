@@ -1,3 +1,7 @@
+import { useState } from 'react';
+import AttachmentField from '../../../shared/widgets/AttachmentField';
+import { useAttachments } from '../../../shared/modules/files/useAttachments';
+import type { Attachment } from '../../../shared/modules/files/types';
 import type { CSSProperties, SubmitEventHandler } from 'react';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
@@ -10,10 +14,11 @@ import { usePostHog } from '@posthog/react';
 
 interface Props {
   initialValues?: AssignmentSubmissionValue;
+  initialAttachments?: Attachment[];
   isSubmitting?: boolean;
   submitLabel?: string;
   onSubmit: (values: AssignmentSubmissionValue) => void;
-  fieldErrors?: Partial<Record<'content' | 'link', string>>;
+  fieldErrors?: Partial<Record<'content' | 'link' | 'attachmentFileIds', string>>;
 }
 
 const emptyValues: AssignmentSubmissionValue = {
@@ -45,13 +50,16 @@ const submitButtonStyle = {
 
 export default function AssignmentSubmissionForm({
   initialValues = emptyValues,
+  initialAttachments,
   isSubmitting = false,
   submitLabel = '제출하기',
   fieldErrors = {},
   onSubmit,
 }: Props) {
+  const attachments = useAttachments({ initialAttachments, kind: 'file' });
+  const [submissionError, setSubmissionError] = useState<string>();
   const [content, handleContentChange] = useInputState(
-    initialValues.content,
+    initialValues.content ?? '',
     (value, prevValue) => {
       if (value.length > ASSIGNMENT_SUBMISSION_CONTENT.length) return prevValue;
       return value;
@@ -65,7 +73,12 @@ export default function AssignmentSubmissionForm({
 
   const submitAssignment: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || !attachments.isReady) return;
+    if (!content.trim() && !link.trim() && !attachments.attachmentFileIds.length) {
+      setSubmissionError('내용, 링크, 파일 중 하나 이상을 입력해주세요.');
+      return;
+    }
+    setSubmissionError(undefined);
 
     posthog?.capture('assignment_submission_submitted', {
       location: 'assignment_submission_page',
@@ -73,6 +86,7 @@ export default function AssignmentSubmissionForm({
 
     onSubmit({
       content,
+      attachmentFileIds: attachments.attachmentFileIds,
       link: link.trim(),
     });
   };
@@ -94,7 +108,6 @@ export default function AssignmentSubmissionForm({
           placeholder="과제 내용을 입력해주세요"
           errorText={fieldErrors.content}
           testId="assignment-submission-content-field"
-          isRequired
         />
         <InputField
           id="assignment-submission-link"
@@ -108,11 +121,25 @@ export default function AssignmentSubmissionForm({
           errorText={fieldErrors.link}
         />
 
+        <AttachmentField
+          id="assignment-submission-files"
+          label="파일 업로드"
+          items={attachments.items}
+          onSelect={attachments.addFiles}
+          onRemove={attachments.removeFile}
+          disabled={isSubmitting}
+          errorText={attachments.error ?? fieldErrors.attachmentFileIds}
+        />
+        {submissionError && (
+          <p role="alert" css={{ color: tokens.text.critical }}>
+            {submissionError}
+          </p>
+        )}
         <Button
           type="submit"
           variant="brandSolid"
           size="large"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !attachments.isReady}
           css={submitButtonStyle}
         >
           {isSubmitting ? '저장 중...' : submitLabel}
