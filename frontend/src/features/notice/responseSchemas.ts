@@ -1,4 +1,5 @@
 import z from 'zod';
+import { attachmentSchema } from '../../shared/files/responseSchemas';
 import {
   CreateNoticeResponse,
   Notice,
@@ -52,6 +53,7 @@ const noticeDetailSchema = z.object({
   title: z.string(),
   content: z.string(),
   createdAt: z.string(),
+  attachments: z.array(attachmentSchema),
 }) satisfies z.ZodType<NoticeDetail>;
 
 const memberSchema = z.object({

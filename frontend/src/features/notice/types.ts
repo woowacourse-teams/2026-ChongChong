@@ -1,7 +1,10 @@
+import type { Attachment } from '../../shared/files/types';
+
 export interface NoticeFormValues {
   title: string;
   content: string;
   remindAts?: string[] | null;
+  attachmentFileIds?: number[];
 }
 
 export interface CreateNoticeResponse {
@@ -65,6 +68,7 @@ export interface NoticeDetail {
   title: string;
   content: string;
   createdAt: string;
+  attachments: Attachment[];
 }
 
 export type MemberReadStatus =

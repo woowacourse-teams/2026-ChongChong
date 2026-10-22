@@ -73,6 +73,7 @@ EditNoticePage.Content = function Content() {
       isSubmitting={isPending}
       fieldErrors={fieldErrors}
       onSubmit={mutate}
+      initialAttachments={notice.attachments}
       initialValues={{
         title: notice.title,
         content: notice.content,

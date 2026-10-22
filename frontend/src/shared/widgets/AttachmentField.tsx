@@ -5,12 +5,17 @@ import { tokens, typography } from '../../styles/global';
 import imageIcon from '../assets/image-upload.svg';
 import deleteIcon from '../assets/image-upload-delete.svg';
 import addIcon from '../assets/add.svg';
+import type { AttachmentItem } from '../files/types';
 
-interface ImageFieldProps {
+interface AttachmentFieldProps {
   id: string;
   label: string;
-  images: File[];
-  onChange: (images: File[]) => void;
+  items: AttachmentItem[];
+  onSelect: (files: File[]) => void;
+  onRemove: (id: string) => void;
+  accept?: string;
+  disabled?: boolean;
+  errorText?: string;
   helpText?: string;
   testId?: string;
 }
@@ -42,21 +47,23 @@ const addButtonStyle = {
   ...typography.body,
 } satisfies CSSProperties;
 
-export default function ImageField({
+export default function AttachmentField({
   id,
   label,
-  images,
-  onChange,
+  items,
+  onSelect,
+  onRemove,
+  accept,
+  disabled = false,
+  errorText,
   helpText,
   testId,
-}: ImageFieldProps) {
+}: AttachmentFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selectedImages = Array.from(event.target.files ?? []).filter((image) =>
-      image.type.startsWith('image/'),
-    );
-    if (selectedImages.length) onChange([...images, ...selectedImages]);
+    const selectedImages = Array.from(event.target.files ?? []);
+    if (!disabled && selectedImages.length) onSelect(selectedImages);
     event.target.value = '';
   };
 
@@ -67,31 +74,47 @@ export default function ImageField({
         ref={inputRef}
         id={id}
         type="file"
-        accept="image/*"
+        accept={accept}
+        disabled={disabled}
         multiple
         onChange={handleImageChange}
         css={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
       />
 
-      <div css={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing[2] }}>
-        {images.map((image, index) => (
-          <div key={`${image.name}-${index}`} css={imageStyle}>
+      <div
+        role="list"
+        aria-label="첨부 파일"
+        css={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing[2] }}
+      >
+        {items.map((image) => (
+          <div role="listitem" key={image.id} css={imageStyle}>
             <img src={imageIcon} alt="" width={24} height={24} />
-            <span
+            <div
               css={{
                 flex: 1,
                 minWidth: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                overflowWrap: 'anywhere',
               }}
             >
-              {image.name}
-            </span>
+              <div
+                title={image.name}
+                css={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              >
+                {image.name}
+              </div>
+              {image.status === 'error' ? (
+                <Field.ErrorText role="alert">{image.message}</Field.ErrorText>
+              ) : (
+                <div aria-live="polite" css={{ ...typography.footnote, color: tokens.text.muted }}>
+                  {image.status === 'uploading' ? '업로드 중...' : '업로드 완료'}
+                </div>
+              )}
+            </div>
             <button
               type="button"
               aria-label={`${image.name} 삭제`}
-              onClick={() => onChange(images.filter((_, imageIndex) => imageIndex !== index))}
+              disabled={disabled}
+              onClick={() => onRemove(image.id)}
               css={{
                 display: 'grid',
                 placeItems: 'center',
@@ -105,13 +128,17 @@ export default function ImageField({
             </button>
           </div>
         ))}
-
-        <button type="button" onClick={() => inputRef.current?.click()} css={addButtonStyle}>
-          <img src={addIcon} alt="" width={24} height={24} />
-          이미지 불러오기
-        </button>
       </div>
-      {helpText && <Field.HelpText>{helpText}</Field.HelpText>}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => inputRef.current?.click()}
+        css={addButtonStyle}
+      >
+        <img src={addIcon} alt="" width={24} height={24} />
+        파일 불러오기
+      </button>
+      <Field.SubText errorText={errorText} helpText={helpText} />
     </Field>
   );
 }

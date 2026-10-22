@@ -23,6 +23,18 @@ export default function NoticeArticle({ notice }: Props) {
   return (
     <article css={articleStyle} aria-label="공지 상세">
       <p css={contentStyle}>{notice.content}</p>
+      {notice.attachments.length > 0 && (
+        <ul
+          aria-label="첨부 이미지"
+          css={{ margin: 0, paddingLeft: tokens.spacing[5], overflowWrap: 'anywhere' }}
+        >
+          {[...notice.attachments]
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((file) => (
+              <li key={file.fileId}>{file.originalFileName}</li>
+            ))}
+        </ul>
+      )}
     </article>
   );
 }

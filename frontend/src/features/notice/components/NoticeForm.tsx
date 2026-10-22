@@ -1,4 +1,4 @@
-import { CSSProperties, useLayoutEffect, useRef, useState } from 'react';
+import { CSSProperties, useLayoutEffect, useRef } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
@@ -7,7 +7,10 @@ import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
-import ImageField from '../../../shared/widgets/ImageField';
+import AttachmentField from '../../../shared/widgets/AttachmentField';
+import { useAttachments } from '../../../shared/files/useAttachments';
+import { IMAGE_ACCEPT } from '../../../shared/files/validation';
+import type { Attachment } from '../../../shared/files/types';
 import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
@@ -19,10 +22,11 @@ const formStyle = {
 
 interface NoticeFormProps {
   initialValues?: NoticeFormValues;
+  initialAttachments?: Attachment[];
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: NoticeFormValues) => void;
-  fieldErrors?: Partial<Record<'title' | 'content', string>>;
+  fieldErrors?: Partial<Record<'title' | 'content' | 'attachmentFileIds', string>>;
 }
 
 const emptyValues: NoticeFormValues = {
@@ -39,13 +43,14 @@ function resizeTextArea(textArea: HTMLTextAreaElement | null) {
 
 export default function NoticeForm({
   initialValues = emptyValues,
+  initialAttachments,
   submitLabel,
   isSubmitting = false,
   onSubmit,
   fieldErrors = {},
 }: NoticeFormProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const [images, setImages] = useState<File[]>([]);
+  const attachments = useAttachments({ initialAttachments, kind: 'image' });
   const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
     if (value.length > NOTICE_TITLE.length) return prevValue;
     return value;
@@ -65,12 +70,13 @@ export default function NoticeForm({
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
+    if (isSubmitting || !attachments.isReady) return;
 
     posthog?.capture('notice_form_submitted', {
       location: 'notice_create_page',
     });
 
-    onSubmit({ title, content });
+    onSubmit({ title, content, attachmentFileIds: attachments.attachmentFileIds });
   };
 
   return (
@@ -103,11 +109,15 @@ export default function NoticeForm({
         css={{ overflowY: 'hidden' }}
       />
 
-      <ImageField
+      <AttachmentField
         id="notice-images"
         label="이미지 업로드"
-        images={images}
-        onChange={setImages}
+        items={attachments.items}
+        onSelect={attachments.addFiles}
+        onRemove={attachments.removeFile}
+        accept={IMAGE_ACCEPT}
+        disabled={isSubmitting}
+        errorText={attachments.error ?? fieldErrors.attachmentFileIds}
         helpText="본문을 설명할 이미지를 추가할 수 있어요"
         testId="notice-image-field"
       />
@@ -116,7 +126,7 @@ export default function NoticeForm({
         type="submit"
         variant="brandSolid"
         size="large"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !attachments.isReady}
         css={{ marginTop: tokens.spacing[8] }}
       >
         {submitLabel}

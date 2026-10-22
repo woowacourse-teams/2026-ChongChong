@@ -5,8 +5,10 @@ import { handlers as loginHandlers } from '../features/login/mocks/handlers';
 import { handlers as mypageHandlers } from '../features/user/mocks/handlers';
 import { handlers as noticeHandlers } from '../features/notice/mocks/handlers';
 import { handlers as notificationHandlers } from '../features/notification/mocks/handlers';
+import { handlers as fileHandlers } from '../shared/files/mocks/handlers';
 
 export const handlers = [
+  ...fileHandlers,
   ...studiesHandlers,
   ...noticeHandlers,
   ...assignmentsHandlers,
