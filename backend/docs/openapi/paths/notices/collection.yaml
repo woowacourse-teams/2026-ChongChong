@@ -12,13 +12,13 @@ post:
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       공지를 생성하고 수신자와 리마인더를 초기화한다.
       #554에서 업로드 완료 API를 통과한 COMPLETED 파일 연결로 전환했다.
       공지는 소유권·이미지 정책·공지/과제/제출물의 기존 연결 여부를 검증하며 S3 조회나 완료 전환을 수행하지 않는다.
-      구현과 로컬 HTTP·PostgreSQL 검증을 마쳤으며 리뷰 대기 중이다. 첨부 정책은 서버 설정으로 변경할 수 있다.
+      #556으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다. 첨부 정책은 서버 설정으로 변경할 수 있다.
   summary: 공지 생성
   description: |
     스터디 리더가 공지를 생성한다. S3 업로드 후 POST /api/files/{fileId}/complete에 성공한 파일의
@@ -32,10 +32,23 @@ post:
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
+    description: 예제의 첨부 ID는 업로드 완료 API에 성공한 본인 소유·미연결 파일의 실제 fileId로 대체한다.
     content:
       application/json:
         schema: { $ref: '../../components/schemas/notices.yaml#/NoticeCreateRequest' }
-        example: { title: 이번 주 공지, content: 이번 주 스터디 일정을 확인해주세요., remindAts: ['2026-08-28T10:00:00'] }
+        examples:
+          withAttachments:
+            summary: 이미지 두 장을 첨부한 공지 생성
+            value:
+              title: 이번 주 공지
+              content: 이번 주 스터디 일정을 확인해주세요.
+              remindAts: ['2099-12-30T10:00:00']
+              attachmentFileIds: [101, 102]
+          withoutAttachments:
+            summary: 첨부 없는 공지 생성
+            value:
+              title: 이번 주 공지
+              content: 이번 주 스터디 일정을 확인해주세요.
   responses:
     '201':
       description: 공지 생성 성공

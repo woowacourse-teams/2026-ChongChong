@@ -14,7 +14,7 @@ get:
       - frontend/src/features/notice/api.ts
       - frontend/src/features/notice/responseSchemas.ts
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       공지 상세를 조회하며 스터디 소속을 검증한다.
@@ -22,6 +22,7 @@ get:
       attachments에 순서대로 첨부 메타데이터를 반환한다. 첨부가 없으면 빈 배열이다.
       파일 접근 URL 발급은 후속 단계이며 object key나 업로드 URL은 노출하지 않는다.
       #542에서 상세 응답에 첨부 목록을 추가했다. #554는 기존 상세 응답 구조를 유지한다.
+      #556으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다.
   summary: 공지 상세 조회
   description: 스터디 공지의 상세 내용을 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 공지 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -31,7 +32,33 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/notices.yaml#/NoticeDetailResponse' }
-          example: { id: 1, title: 이번 주 공지, content: 이번 주 스터디 일정을 확인해주세요., createdAt: '2026-08-27T10:00:00', attachments: [] }
+          examples:
+            withAttachments:
+              summary: 이미지 두 장을 첨부한 공지
+              value:
+                id: 1
+                title: 이번 주 공지
+                content: 이번 주 스터디 일정을 확인해주세요.
+                createdAt: '2026-08-27T10:00:00'
+                attachments:
+                  - fileId: 101
+                    originalFileName: schedule.png
+                    contentType: image/png
+                    size: 1024
+                    sortOrder: 0
+                  - fileId: 102
+                    originalFileName: meeting.webp
+                    contentType: image/webp
+                    size: 2048
+                    sortOrder: 1
+            withoutAttachments:
+              summary: 첨부 없는 공지
+              value:
+                id: 1
+                title: 이번 주 공지
+                content: 이번 주 스터디 일정을 확인해주세요.
+                createdAt: '2026-08-27T10:00:00'
+                attachments: []
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
@@ -54,14 +81,14 @@ patch:
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       공지를 부분 수정하고 대기 중인 리마인더를 교체한다. 이미 발송된 기록은 유지한다.
       attachmentFileIds 생략·null은 유지, 빈 배열은 제거, 배열은 표시 순서까지 교체한다.
       #554에서 신규 첨부를 COMPLETED 파일로 받고, 제거 파일은 상태를 유지한 채 관계만 정리하도록 전환했다.
       소유권·이미지 정책·기존 연결 여부를 검증하며 S3 조회나 완료 전환은 수행하지 않는다.
-      구현과 로컬 HTTP·PostgreSQL 검증을 마쳤으며 리뷰 대기 중이다.
+      #556으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다.
   summary: 공지 수정
   description: |
     스터디 리더가 공지를 부분 수정한다. attachmentFileIds 생략·null은 유지, 빈 배열은 전체 제거,
@@ -78,10 +105,30 @@ patch:
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
+    description: |
+      예제의 첨부 ID는 실제 fileId로 대체한다. 새로 추가하는 ID는 업로드 완료 API에 성공한
+      본인 소유·미연결 파일이어야 하며, 유지하는 첨부는 해당 공지의 기존 fileId를 사용한다.
     content:
       application/json:
         schema: { $ref: '../../components/schemas/notices.yaml#/NoticeUpdateRequest' }
-        example: { title: 수정된 공지, content: 수정된 공지 내용입니다., remindAts: ['2099-12-30T10:00:00'] }
+        examples:
+          replaceAttachments:
+            summary: 첨부 목록과 표시 순서 교체
+            description: 기존 첨부가 101·102라면 101을 제거하고 102를 유지하며 완료된 새 파일 103을 추가한다.
+            value:
+              title: 수정된 공지
+              content: 수정된 공지 내용입니다.
+              remindAts: ['2099-12-30T10:00:00']
+              attachmentFileIds: [102, 103]
+          clearAttachments:
+            summary: 첨부 전체 제거
+            value:
+              attachmentFileIds: []
+          keepAttachments:
+            summary: 기존 첨부를 유지하고 제목만 수정
+            description: attachmentFileIds를 생략하면 기존 첨부 목록과 순서를 유지한다.
+            value:
+              title: 수정된 공지
   responses:
     '204': { description: 공지 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/NoticeWriteBadRequest' }
@@ -97,11 +144,11 @@ delete:
     sources:
       - frontend/src/features/notice/api.ts
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       #554에서 공지 삭제 시 첨부 관계와 알림을 정리하고 파일은 COMPLETED로 유지하도록 전환했다.
-      구현과 로컬 HTTP·PostgreSQL 검증을 마쳤으며 리뷰 대기 중이다. S3 물리 삭제는 후속 정리 작업의 책임이다.
+      #556으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다. S3 물리 삭제는 후속 정리 작업의 책임이다.
   summary: 공지 삭제
   description: |
     스터디 리더가 공지를 삭제한다. 첨부 관계와 알림은 정리하고 파일 메타데이터와 COMPLETED 상태는 유지한다.
