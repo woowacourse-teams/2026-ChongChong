@@ -4,7 +4,7 @@ export interface Attachment {
   contentType: string;
   size: number;
   sortOrder: number;
-  imageUrl?: string | null;
+  imageUrl: string | null;
 }
 
 export type AttachmentItem = { id: string; name: string } & (

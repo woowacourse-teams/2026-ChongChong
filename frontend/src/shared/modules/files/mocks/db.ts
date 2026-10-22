@@ -9,6 +9,11 @@ export const fileTable = new Collection({
     contentType: z.string(),
     size: z.number(),
     uploadedSize: z.number().nullable(),
+    body: z
+      .custom<ArrayBuffer>(
+        (value) => Object.prototype.toString.call(value) === '[object ArrayBuffer]',
+      )
+      .optional(),
     status: z.enum(['PENDING', 'COMPLETED']),
   }),
 });

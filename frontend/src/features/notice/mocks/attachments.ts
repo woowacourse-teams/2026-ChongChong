@@ -1,4 +1,4 @@
-import { fileTable } from '../../../shared/modules/files/mocks/db';
+import { fileTable, MOCK_UPLOAD_ORIGIN } from '../../../shared/modules/files/mocks/db';
 import { invalidInputResponse } from '../../../mocks/errors';
 import { noticeTable } from './db';
 
@@ -49,6 +49,9 @@ export function noticeAttachments(ids: number[] = []) {
             contentType: file.contentType,
             size: file.size,
             sortOrder,
+            imageUrl: ['image/jpeg', 'image/png', 'image/webp'].includes(file.contentType)
+              ? `${MOCK_UPLOAD_ORIGIN}/images/${fileId}?issuedAt=${Date.now()}`
+              : null,
           },
         ]
       : [];

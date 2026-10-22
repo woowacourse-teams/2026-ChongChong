@@ -12,6 +12,11 @@ const uploadRequest = z.object({
 let nextFileId = 1;
 
 export const handlers = [
+  http.get(`${MOCK_UPLOAD_ORIGIN}/images/:fileId`, ({ params }) => {
+    const file = fileTable.findFirst((q) => q.where({ id: Number(params.fileId) }));
+    if (!file?.body || file.status !== 'COMPLETED') return new HttpResponse(null, { status: 404 });
+    return new HttpResponse(file.body, { headers: { 'Content-Type': file.contentType } });
+  }),
   http.post(`${API_URL}/files/presigned-url`, async ({ request }) => {
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
@@ -52,10 +57,12 @@ export const handlers = [
       return new HttpResponse(null, { status: 403 });
     }
     if (file.uploadedSize !== null) return new HttpResponse(null, { status: 412 });
-    const size = (await request.arrayBuffer()).byteLength;
+    const body = await request.arrayBuffer();
+    const size = body.byteLength;
     await fileTable.update(file, {
       data(record) {
         record.uploadedSize = size;
+        record.body = body;
       },
     });
     return new HttpResponse(null, { status: 200 });

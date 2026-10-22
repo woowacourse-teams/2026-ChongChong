@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
@@ -110,7 +110,7 @@ test('완료한 이미지를 첨부해 공지를 생성한다', async () => {
   expect(await screen.findByText('업로드 완료')).toBeVisible();
   await user.click(screen.getByRole('button', { name: '공지 올리기' }));
   const article = await screen.findByRole('article', { name: '공지 상세' });
-  expect(within(article).getByText('자료.png')).toBeVisible();
+  expect(within(article).getByRole('img', { name: '자료.png' })).toBeVisible();
   expect(within(article).getByText('자료를 확인해주세요')).toBeVisible();
 });
 
@@ -158,8 +158,8 @@ test('나중에 선택한 이미지가 먼저 업로드되어도 선택 순서�
   const article = await screen.findByRole('article', { name: '공지 상세' });
   expect(
     within(article)
-      .getAllByRole('listitem')
-      .map((item) => item.textContent),
+      .getAllByRole('img')
+      .map((item) => item.getAttribute('alt')),
   ).toEqual(['첫째.png', '둘째.png']);
 });
 
@@ -215,9 +215,9 @@ test('일부 업로드가 실패해도 입력 내용과 성공한 이미지를 �
   await user.click(screen.getByRole('button', { name: '실패.png 삭제' }));
   await user.click(screen.getByRole('button', { name: '공지 올리기' }));
   const article = await screen.findByRole('article', { name: '공지 상세' });
-  expect(within(article).getByText('성공.png')).toBeVisible();
+  expect(within(article).getByRole('img', { name: '성공.png' })).toBeVisible();
   expect(within(article).getByText('유지할 내용')).toBeVisible();
-  expect(within(article).queryByText('실패.png')).not.toBeInTheDocument();
+  expect(within(article).queryByRole('img', { name: '실패.png' })).not.toBeInTheDocument();
 });
 
 test('완료 확인에 실패한 파일은 삭제 후 같은 파일을 다시 선택할 수 있다', async () => {
@@ -304,7 +304,9 @@ test('공지 저장 실패 후 입력과 완료된 첨부를 유지해 다시 �
   server.resetHandlers();
   await user.click(screen.getByRole('button', { name: '공지 올리기' }));
   expect(
-    within(await screen.findByRole('article', { name: '공지 상세' })).getByText('자료.png'),
+    within(await screen.findByRole('article', { name: '공지 상세' })).getByRole('img', {
+      name: '자료.png',
+    }),
   ).toBeVisible();
   expect(fileTable.findMany()).toHaveLength(1);
 });
@@ -335,7 +337,7 @@ test('본문만 수정하면 기존 이미지를 재업로드하지 않고 유�
   await user.type(screen.getByRole('textbox', { name: '내용' }), ' 추가 내용');
   await user.click(screen.getByRole('button', { name: '수정하기' }));
   const article = await screen.findByRole('article', { name: '공지 상세' });
-  expect(within(article).getByText('기존-101.png')).toBeVisible();
+  expect(within(article).getByRole('img', { name: '기존-101.png' })).toBeVisible();
   expect(within(article).getByText('기존 내용 추가 내용')).toBeVisible();
   expect(fileTable.findMany()).toHaveLength(1);
 });
@@ -350,8 +352,8 @@ test('기존 이미지 일부를 삭제하고 새 이미지를 뒤에 추가한�
   const article = await screen.findByRole('article', { name: '공지 상세' });
   expect(
     within(article)
-      .getAllByRole('listitem')
-      .map((item) => item.textContent),
+      .getAllByRole('img')
+      .map((item) => item.getAttribute('alt')),
   ).toEqual(['기존-102.png', '신규.png']);
 });
 
@@ -361,7 +363,7 @@ test('기존 이미지를 모두 삭제한 상태를 저장한다', async () => 
   await user.click(await screen.findByRole('button', { name: '기존-101.png 삭제' }));
   await user.click(screen.getByRole('button', { name: '수정하기' }));
   const article = await screen.findByRole('article', { name: '공지 상세' });
-  expect(within(article).queryByText('기존-101.png')).not.toBeInTheDocument();
+  expect(within(article).queryByRole('img', { name: '기존-101.png' })).not.toBeInTheDocument();
   expect(noticeTable.findFirst((q) => q.where({ id: 10 }))?.attachmentFileIds).toEqual([]);
 });
 
@@ -374,4 +376,55 @@ test('기존 이미지 9장이 있으면 새 이미지 2장 추가를 거부한�
   expect(screen.getByText('기존-109.png')).toBeVisible();
   expect(screen.queryByText('새1.png')).not.toBeInTheDocument();
   expect(fileTable.findMany()).toHaveLength(9);
+});
+
+test('상세에서 첨부 이미지를 순서대로 나란히 제공한다', async () => {
+  await existingNotice([101, 102]);
+  const { user } = await setupEditPage();
+  await user.click(await screen.findByRole('button', { name: '수정하기' }));
+  const gallery = await screen.findByRole('region', { name: '첨부 이미지' });
+  expect(
+    within(gallery)
+      .getAllByRole('img')
+      .map((image) => image.getAttribute('alt')),
+  ).toEqual(['기존-101.png', '기존-102.png']);
+  expect(within(gallery).getByRole('img', { name: '기존-101.png' })).toHaveAttribute(
+    'src',
+    expect.stringContaining(`${MOCK_UPLOAD_ORIGIN}/images/101?`),
+  );
+  expect(within(gallery).queryByRole('button', { name: '다음 이미지' })).not.toBeInTheDocument();
+  expect(within(gallery).queryByText('기존-101.png')).not.toBeInTheDocument();
+});
+
+test('조회 URL이 null인 첨부는 이미지 표시를 생략한다', async () => {
+  await existingNotice([101]);
+  const file = fileTable.findFirst((q) => q.where({ id: 101 }))!;
+  await fileTable.update(file, {
+    data(record) {
+      record.contentType = 'application/pdf';
+    },
+  });
+  const { user } = await setupEditPage();
+  await user.click(await screen.findByRole('button', { name: '수정하기' }));
+  const article = await screen.findByRole('article', { name: '공지 상세' });
+  expect(within(article).queryByRole('img')).not.toBeInTheDocument();
+  expect(within(article).queryByRole('region', { name: '첨부 이미지' })).not.toBeInTheDocument();
+});
+
+test('이미지 로딩 실패 후 다시 시도하면 공지 상세를 재조회한다', async () => {
+  await existingNotice([101]);
+  const { user } = await setupEditPage();
+  await user.click(await screen.findByRole('button', { name: '수정하기' }));
+  const picture = await screen.findByRole('img', { name: '기존-101.png' });
+  // jsdom은 이미지 네트워크 로딩을 실행하지 않아 오류 이벤트를 직접 발생시킨다.
+  fireEvent.error(picture);
+  const file = fileTable.findFirst((q) => q.where({ id: 101 }))!;
+  await fileTable.update(file, {
+    data(record) {
+      record.originalFileName = '갱신된.png';
+    },
+  });
+  await user.click(screen.getByRole('button', { name: '이미지 다시 불러오기' }));
+  expect(await screen.findByRole('img', { name: '갱신된.png' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: '다음 이미지' })).not.toBeInTheDocument();
 });
