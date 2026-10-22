@@ -9,20 +9,21 @@ get:
     description: |
       기능 추가: 상세 응답의 attachments를 처리하고 첨부 목록을 표시해야 한다.
       현재 웹은 제목·내용·생성 시각만 처리한다. 파일 식별자·이름·형식·크기·순서와 imageUrl을 처리해야 한다.
-      #561에서 imageUrl 응답 계약을 선행 반영했으며 백엔드 구현은 진행 중이다.
+      #561에서 imageUrl 응답을 구현하고 로컬 통합 검증을 마쳤다. 병합 및 dev 실제 이미지 조회 검증을 기다린다.
       imageUrl이 null이 아니면 이미지 src로 사용하고, 만료되면 공지 상세를 다시 조회해 URL을 갱신한다.
     sources:
       - frontend/src/features/notice/api.ts
       - frontend/src/features/notice/responseSchemas.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
       공지 상세를 조회하며 스터디 소속을 검증한다.
       현재 스터디 구성원은 가입 전 공지도 열람할 수 있다. 조회로 확인 대상에 추가되지 않는다.
       #556으로 첨부 메타데이터 조회가 dev에 반영됐다. 첨부가 없으면 빈 배열이다.
       #561에서 기존 FileImageUrlGenerator를 재사용해 조회 권한 확인 후 첨부별 imageUrl을 제공한다.
-      아래 스키마와 예제는 imageUrl 추가 후 계약을 먼저 반영한 것이며 구현·통합 검증은 진행 중이다.
+      imageUrl 응답과 권한·서명·유효기간·조회 상태 보존의 로컬 통합 검증을 완료했다.
+      병합 및 dev 실제 이미지 조회 검증은 아직 수행하지 않았다.
   summary: 공지 상세 조회
   description: |
     스터디 소속을 확인한 뒤 공지 상세와 표시 순서대로 정렬한 첨부 목록을 반환한다.
