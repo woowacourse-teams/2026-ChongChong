@@ -48,7 +48,7 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterS
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
-import withoutc.chongchong.file.service.FileImageUrlGenerator;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -97,7 +97,7 @@ class AssignmentServiceTest {
                 studyRepository,
                 notificationService,
                 mock(AssignmentAttachmentService.class),
-                mock(FileImageUrlGenerator.class),
+                mock(FileUrlGenerator.class),
                 clock,
                 assignmentAccessPolicy
         );

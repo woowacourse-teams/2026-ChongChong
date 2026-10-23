@@ -22,7 +22,7 @@ import withoutc.chongchong.assignment.policy.AssignmentAttachmentPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
-import withoutc.chongchong.file.service.FileImageUrlGenerator;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -38,7 +38,7 @@ public class AssignmentSubmissionService {
     private final StudyMemberRepository studyMemberRepository;
     private final NotificationService notificationService;
     private final AssignmentAttachmentService assignmentAttachmentService;
-    private final FileImageUrlGenerator fileImageUrlGenerator;
+    private final FileUrlGenerator fileUrlGenerator;
 
     private final AssignmentAttachmentPolicy assignmentAttachmentPolicy;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
@@ -106,9 +106,11 @@ public class AssignmentSubmissionService {
         List<AssignmentAttachmentResponse> attachments = submission.getAttachments().stream()
                 .map(attachment -> {
                     FileMetadata file = attachment.getFile();
-                    String imageUrl = fileImageUrlGenerator.generatePresignedUrl(
+                    String imageUrl = fileUrlGenerator.generateImageUrl(
                             file.getObjectKey(), file.getContentType());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl);
+                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
+                            file.getObjectKey(), file.getOriginalFileName());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
                 })
                 .toList();
         return MySubmissionDetailResponse.of(LocalDateTime.now(clock), submission, attachments);
@@ -126,9 +128,11 @@ public class AssignmentSubmissionService {
         List<AssignmentAttachmentResponse> attachments = submission.getAttachments().stream()
                 .map(attachment -> {
                     FileMetadata file = attachment.getFile();
-                    String imageUrl = fileImageUrlGenerator.generatePresignedUrl(
+                    String imageUrl = fileUrlGenerator.generateImageUrl(
                             file.getObjectKey(), file.getContentType());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl);
+                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
+                            file.getObjectKey(), file.getOriginalFileName());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
                 })
                 .toList();
         return SubmissionDetailResponse.of(submission, submission.getMember(), attachments);

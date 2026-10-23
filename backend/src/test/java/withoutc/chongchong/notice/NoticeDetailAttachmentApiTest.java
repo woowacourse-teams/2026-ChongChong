@@ -35,7 +35,7 @@ import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.FileImageUrlGenerator;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeRecipient;
@@ -84,7 +84,7 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
     private JdbcTemplate jdbcTemplate;
 
     @MockitoSpyBean
-    private FileImageUrlGenerator imageUrlGenerator;
+    private FileUrlGenerator imageUrlGenerator;
 
     @MockitoBean
     private S3FileMetadataReader metadataReader;
@@ -239,8 +239,8 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
                 .body("attachments.fileId", contains(secondFileId.intValue(), firstFileId.intValue()));
 
         assertThat(persistedState()).isEqualTo(before);
-        verify(imageUrlGenerator, times(2)).generatePresignedUrl("uploads/first.png", "image/png");
-        verify(imageUrlGenerator, times(2)).generatePresignedUrl("uploads/second.webp", "image/webp");
+        verify(imageUrlGenerator, times(2)).generateImageUrl("uploads/first.png", "image/png");
+        verify(imageUrlGenerator, times(2)).generateImageUrl("uploads/second.webp", "image/webp");
     }
 
     @Test
