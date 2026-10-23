@@ -17,6 +17,8 @@ import type {
   IncompleteMember,
 } from './types';
 
+const assignmentAttachmentSchema = attachmentSchema.extend({ downloadUrl: z.string().url() });
+
 const submissionStatusSchema = z.enum([
   'NOT_ASSIGNED',
   'NOT_SUBMITTED',
@@ -76,7 +78,7 @@ const submissionListResponseSchema = z.object({
 }) satisfies z.ZodType<SubmissionListResponse>;
 
 const assignmentDetailSchema = z.object({
-  attachments: z.array(attachmentSchema).optional(),
+  attachments: z.array(assignmentAttachmentSchema).optional(),
   id: z.number(),
   title: z.string(),
   content: z.string(),
@@ -92,7 +94,7 @@ const submissionDetailSchema = z.object({
   profileImage: z.string().nullable(),
   createdAt: z.string().nullable(),
   content: z.string().nullable(),
-  attachments: z.array(attachmentSchema).optional(),
+  attachments: z.array(assignmentAttachmentSchema).optional(),
   link: z.string().nullable(),
 }) satisfies z.ZodType<SubmissionDetail>;
 
@@ -119,7 +121,7 @@ const assignmentSubmitStatusSchema = z.object({
 const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submissionStatus', [
   z.object({
     submissionStatus: z.literal('SUBMITTED'),
-    attachments: z.array(attachmentSchema).optional(),
+    attachments: z.array(assignmentAttachmentSchema).optional(),
     submissionId: z.number(),
     createdAt: z.string(),
     content: z.string().optional(),
@@ -127,7 +129,7 @@ const userAssignmentSubmitDetailSchema = z.discriminatedUnion('submissionStatus'
   }),
   z.object({
     submissionStatus: z.literal('LATE_SUBMITTED'),
-    attachments: z.array(attachmentSchema).optional(),
+    attachments: z.array(assignmentAttachmentSchema).optional(),
     submissionId: z.number(),
     createdAt: z.string(),
     content: z.string().optional(),

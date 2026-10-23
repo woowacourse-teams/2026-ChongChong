@@ -40,11 +40,13 @@ function FileDetails({ file }: { file: Attachment }) {
           {type} {formatFileSize(file.size)}
         </span>
       </span>
-      {file.imageUrl ? (
-        <span css={{ ...typography.caption, color: tokens.text.brand, flexShrink: 0 }}>열기</span>
+      {file.downloadUrl ? (
+        <span css={{ ...typography.caption, color: tokens.text.brand, flexShrink: 0 }}>
+          다운로드
+        </span>
       ) : (
         <span css={{ ...typography.caption, color: tokens.text.placeholder, flexShrink: 0 }}>
-          미리보기 없음
+          다운로드 불가
         </span>
       )}
     </>
@@ -60,12 +62,13 @@ export default function AttachmentList({ attachments }: { attachments: Attachmen
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((file) => (
           <li key={file.fileId} css={{ '& + &': { borderTop: tokens.border.default } }}>
-            {file.imageUrl ? (
+            {file.downloadUrl ? (
               <a
-                href={file.imageUrl}
+                href={file.downloadUrl}
+                download={file.originalFileName}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`${file.originalFileName} 새 탭에서 열기`}
+                aria-label={`${file.originalFileName} 다운로드`}
                 css={{
                   ...rowStyle,
                   '&:hover': { opacity: 0.7 },
