@@ -34,7 +34,8 @@ POST에서 content/link를 생략하고 attachmentFileIds를 빈 배열로 보�
 과제 상세, 내 제출, 제출물 상세는 파일 ID·이름·MIME·크기·표시 순서를 반환한다.
 첨부 정보는 기존 상세 조회의 스터디 소속·공개·소유권 검사 이후 반환한다.
 JPEG·PNG·WebP 첨부는 `imageUrl`에 S3 GET 서명 URL을 반환한다. 프론트는 이 URL을 이미지 src로 사용한다.
-일반 문서는 `imageUrl`이 null이며 파일명·크기·contentType으로 파일 아이콘을 표시한다. 문서 다운로드는 포함하지 않는다.
+일반 문서는 `imageUrl`이 null이며 파일명·크기·contentType으로 파일 아이콘을 표시한다.
+모든 첨부는 `downloadUrl`을 반환한다. 프론트는 이 URL로 S3에서 직접 내려받으며, 응답은 application/octet-stream 및 Content-Disposition attachment로 원본 파일명(UTF-8)을 지정한다. 파일명의 제어 문자와 경로 구분자는 밑줄로 바꾼다.
 URL은 상세 조회 권한 확인 후 발급하며 `aws.s3.url-validity` 동안 유효하다. 만료되면 상세 조회로 갱신한다.
 이미 발급한 URL은 권한 변경 후에도 만료 전까지 사용할 수 있으므로 응답과 URL을 공개 캐시에 저장하지 않는다.
 운영 서명 주체에는 해당 객체의 s3:GetObject 권한이 필요하다. 버킷 공개 설정은 필요하지 않다.

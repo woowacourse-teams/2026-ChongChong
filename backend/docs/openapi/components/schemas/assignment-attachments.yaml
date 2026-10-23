@@ -7,7 +7,7 @@ AttachmentFileIds:
 Attachment:
   type: object
   additionalProperties: false
-  required: [fileId, originalFileName, contentType, size, sortOrder, imageUrl]
+  required: [fileId, originalFileName, contentType, size, sortOrder, imageUrl, downloadUrl]
   properties:
     fileId: { type: integer, format: int64 }
     originalFileName: { type: string }
@@ -18,6 +18,10 @@ Attachment:
       type: [string, 'null']
       format: uri
       description: JPEG·PNG·WebP 미리보기용 서명 URL. 일반 파일은 null. aws.s3.url-validity 이후 만료되며 상세 조회를 다시 호출해 갱신한다.
+    downloadUrl:
+      type: string
+      format: uri
+      description: 모든 첨부의 다운로드용 S3 서명 URL. 원본 파일명으로 저장하도록 attachment 응답을 지정한다. aws.s3.url-validity 이후 만료되며 상세 조회로 갱신한다.
 AttachmentBadRequest:
   type: object
   required: [code, message]
