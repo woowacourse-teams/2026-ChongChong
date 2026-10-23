@@ -22,7 +22,12 @@ const closeButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-function AlertDialogRoot({ title, description, onClose, closeButton }: AlertDialogProps) {
+export default function AlertDialog({
+  title,
+  description,
+  onClose,
+  closeButton,
+}: AlertDialogProps) {
   return (
     <Dialog
       role="alertdialog"
@@ -34,16 +39,13 @@ function AlertDialogRoot({ title, description, onClose, closeButton }: AlertDial
   );
 }
 
-function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
+AlertDialog.CloseButton = function CloseButton({
+  children,
+  ...props
+}: React.ComponentProps<'button'>) {
   return (
     <button type="button" css={closeButtonStyle} {...props}>
       {children}
     </button>
   );
-}
-
-const AlertDialog = Object.assign(AlertDialogRoot, {
-  CloseButton,
-});
-
-export default AlertDialog;
+};

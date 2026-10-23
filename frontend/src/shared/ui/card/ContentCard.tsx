@@ -1,6 +1,5 @@
 import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
-import Badge from '../Badge';
 
 type TitleSize = 'default' | 'large';
 type MetaTone = 'muted' | 'brand';
@@ -123,7 +122,7 @@ const metaTextStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-function ContentCardRoot({ children, onClick }: ContentCardProps) {
+export default function ContentCard({ children, onClick }: ContentCardProps) {
   return (
     <article css={baseStyle} onClick={onClick}>
       {children}
@@ -131,35 +130,35 @@ function ContentCardRoot({ children, onClick }: ContentCardProps) {
   );
 }
 
-function Badges({ children }: ChildrenProps) {
+ContentCard.Badges = function Badges({ children }: ChildrenProps) {
   return <div css={badgesStyle}>{children}</div>;
-}
+};
 
-function TitleRow({ children }: ChildrenProps) {
+ContentCard.TitleRow = function TitleRow({ children }: ChildrenProps) {
   return <div css={titleRowStyle}>{children}</div>;
-}
+};
 
-function Title({ size = 'default', children }: TitleProps) {
+ContentCard.Title = function Title({ size = 'default', children }: TitleProps) {
   return <h3 css={{ ...titleStyle, ...(size === 'large' ? largeTitleStyle : {}) }}>{children}</h3>;
-}
+};
 
-function Accessory({ children }: ChildrenProps) {
+ContentCard.Accessory = function Accessory({ children }: ChildrenProps) {
   return <span css={accessoryStyle}>{children}</span>;
-}
+};
 
-function Trailing({ children }: ChildrenProps) {
+ContentCard.Trailing = function Trailing({ children }: ChildrenProps) {
   return (
     <span css={trailingStyle} aria-hidden="true">
       {children}
     </span>
   );
-}
+};
 
-function Description({ children }: ChildrenProps) {
+ContentCard.Description = function Description({ children }: ChildrenProps) {
   return <p css={descriptionStyle}>{children}</p>;
-}
+};
 
-function Footer({ direction = 'row', children }: FooterProps) {
+ContentCard.Footer = function Footer({ direction = 'row', children }: FooterProps) {
   return (
     <footer
       css={{
@@ -171,27 +170,13 @@ function Footer({ direction = 'row', children }: FooterProps) {
       {children}
     </footer>
   );
-}
+};
 
-function Meta({ tone = 'muted', icon, children }: MetaProps) {
+ContentCard.Meta = function Meta({ tone = 'muted', icon, children }: MetaProps) {
   return (
     <span css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}>
       {icon && <>{icon}</>}
       <span css={metaTextStyle}>{children}</span>
     </span>
   );
-}
-
-const ContentCard = Object.assign(ContentCardRoot, {
-  Accessory,
-  Badge,
-  Badges,
-  Description,
-  Footer,
-  Meta,
-  Title,
-  TitleRow,
-  Trailing,
-});
-
-export default ContentCard;
+};

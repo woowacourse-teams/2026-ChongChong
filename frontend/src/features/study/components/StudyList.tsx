@@ -31,14 +31,14 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                 <ContentCard.Description>{study.description}</ContentCard.Description>
 
                 <ContentCard.Footer>
-                  <ContentCard.Badge variant="neutralSolid" size="small">
+                  <Badge variant="neutralSolid" size="small">
                     <img src={noticeIcon} alt="" css={{ width: '12px', height: '12px' }} />
                     공지 {study.noticeCount}
-                  </ContentCard.Badge>
-                  <ContentCard.Badge variant="neutralSolid" size="small">
+                  </Badge>
+                  <Badge variant="neutralSolid" size="small">
                     <img src={assignIcon} alt="" css={{ width: '12px', height: '12px' }} />
                     과제 {study.assignmentCount}
-                  </ContentCard.Badge>
+                  </Badge>
                 </ContentCard.Footer>
               </ContentCard>
             </Link>

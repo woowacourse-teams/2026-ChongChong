@@ -34,7 +34,7 @@ const confirmButtonStyle = {
   color: tokens.text.critical,
 } satisfies CSSProperties;
 
-function ConfirmDialogRoot({
+export default function ConfirmDialog({
   title,
   description,
   onClose,
@@ -57,25 +57,24 @@ function ConfirmDialogRoot({
   );
 }
 
-function CloseButton({ children, ...props }: React.ComponentProps<'button'>) {
+ConfirmDialog.CloseButton = function CloseButton({
+  children,
+  ...props
+}: React.ComponentProps<'button'>) {
   return (
     <button type="button" css={closeButtonStyle} {...props}>
       {children}
     </button>
   );
-}
+};
 
-function ConfirmButton({ children, ...props }: React.ComponentProps<'button'>) {
+ConfirmDialog.ConfirmButton = function ConfirmButton({
+  children,
+  ...props
+}: React.ComponentProps<'button'>) {
   return (
     <button type="button" css={confirmButtonStyle} {...props}>
       {children}
     </button>
   );
-}
-
-const ConfirmDialog = Object.assign(ConfirmDialogRoot, {
-  CloseButton,
-  ConfirmButton,
-});
-
-export default ConfirmDialog;
+};
