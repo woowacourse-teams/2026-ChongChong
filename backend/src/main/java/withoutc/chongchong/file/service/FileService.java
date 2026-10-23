@@ -26,7 +26,7 @@ public class FileService {
 
     private final FileMetaDataRepository fileMetaDataRepository;
     private final UserRepository userRepository;
-    private final FileUploadUrlGenerator fileUploadUrlGenerator;
+    private final FileUrlGenerator fileUrlGenerator;
     private final S3FileMetadataReader s3FileMetadataReader;
     private final FileUploadTransactionService fileUploadTransactionService;
 
@@ -46,7 +46,7 @@ public class FileService {
 
         fileMetaDataRepository.save(fileMetadata);
 
-        PresignedPutObjectRequest presignedRequest = fileUploadUrlGenerator.generatePresignedUrl(
+        PresignedPutObjectRequest presignedRequest = fileUrlGenerator.generateUploadUrl(
                 fileMetadata.getObjectKey(), fileMetadata.getContentType());
 
         return PresignedUrlCreateResponse.from(fileMetadata.getId(), presignedRequest);

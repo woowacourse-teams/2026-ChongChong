@@ -50,7 +50,7 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.FileUploadUrlGenerator;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notification.support.TestNotificationSenderConfiguration;
 import withoutc.chongchong.support.TestDatabaseCleaner;
@@ -73,7 +73,7 @@ class FileApiTest extends PostgresContainerTest {
     @Autowired
     private TestAuthRequest testAuthRequest;
     @MockitoSpyBean
-    private FileUploadUrlGenerator generator;
+    private FileUrlGenerator generator;
     @MockitoBean
     private S3FileMetadataReader metadataReader;
     @LocalServerPort
@@ -368,7 +368,7 @@ class FileApiTest extends PostgresContainerTest {
     @DisplayName("URL 발급에 실패하면 먼저 저장한 파일 메타데이터도 롤백한다")
     void rollBackOnSigningFailure() {
         doThrow(new IllegalStateException("테스트용 서명 실패"))
-                .when(generator).generatePresignedUrl(anyString(), anyString());
+                .when(generator).generateUploadUrl(anyString(), anyString());
 
         request(userId, validBody()).then().statusCode(500);
 

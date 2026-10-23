@@ -32,7 +32,7 @@ import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
-import withoutc.chongchong.file.service.FileImageUrlGenerator;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.notice.controller.dto.NoticeAttachmentResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateResponse;
@@ -89,7 +89,7 @@ class NoticeServiceTest {
     private NoticeAttachmentService noticeAttachmentService;
 
     @Mock
-    private FileImageUrlGenerator fileImageUrlGenerator;
+    private FileUrlGenerator fileUrlGenerator;
 
     private NoticeService noticeService;
 
@@ -104,7 +104,7 @@ class NoticeServiceTest {
                 studyRepository,
                 notificationService,
                 noticeAttachmentService,
-                fileImageUrlGenerator,
+                fileUrlGenerator,
                 noticeAccessPolicy,
                 clock
         );
@@ -330,7 +330,7 @@ class NoticeServiceTest {
         assertThat(response.title()).isEqualTo("공지 제목");
         assertThat(response.content()).isEqualTo("공지 내용");
         assertThat(response.attachments()).isEmpty();
-        verifyNoInteractions(fileImageUrlGenerator);
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test
@@ -345,8 +345,8 @@ class NoticeServiceTest {
         String imageUrl = "https://example.com/image.png?signature=test";
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
-        when(fileImageUrlGenerator.generatePresignedUrl("uploads/image.png", "image/png")).thenReturn(imageUrl);
-        when(fileImageUrlGenerator.generatePresignedUrl("uploads/document.pdf", "application/pdf")).thenReturn(null);
+        when(fileUrlGenerator.generateImageUrl("uploads/image.png", "image/png")).thenReturn(imageUrl);
+        when(fileUrlGenerator.generateImageUrl("uploads/document.pdf", "application/pdf")).thenReturn(null);
 
         NoticeDetailResponse response = noticeService.getDetail(USER_ID, STUDY_ID, NOTICE_ID);
 
@@ -354,8 +354,8 @@ class NoticeServiceTest {
                 .containsExactly("image.png", "document.pdf");
         assertThat(response.attachments()).extracting(NoticeAttachmentResponse::imageUrl)
                 .containsExactly(imageUrl, null);
-        verify(fileImageUrlGenerator).generatePresignedUrl("uploads/image.png", "image/png");
-        verify(fileImageUrlGenerator).generatePresignedUrl("uploads/document.pdf", "application/pdf");
+        verify(fileUrlGenerator).generateImageUrl("uploads/image.png", "image/png");
+        verify(fileUrlGenerator).generateImageUrl("uploads/document.pdf", "application/pdf");
     }
 
     @Test
@@ -368,7 +368,7 @@ class NoticeServiceTest {
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
-        verifyNoInteractions(noticeRepository, fileImageUrlGenerator);
+        verifyNoInteractions(noticeRepository, fileUrlGenerator);
     }
 
     @Test
@@ -380,7 +380,7 @@ class NoticeServiceTest {
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeService.getDetail(USER_ID, STUDY_ID, NOTICE_ID));
-        verifyNoInteractions(fileImageUrlGenerator);
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test

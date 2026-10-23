@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.file.entity.FileMetadata;
-import withoutc.chongchong.file.service.FileImageUrlGenerator;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeAttachmentResponse;
@@ -45,7 +45,7 @@ public class NoticeService {
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
     private final NoticeAttachmentService noticeAttachmentService;
-    private final FileImageUrlGenerator fileImageUrlGenerator;
+    private final FileUrlGenerator fileUrlGenerator;
 
     private final NoticeAccessPolicy noticeAccessPolicy;
     private final Clock clock;
@@ -124,7 +124,7 @@ public class NoticeService {
 
     private NoticeAttachmentResponse toAttachmentResponse(NoticeAttachment attachment) {
         FileMetadata file = attachment.getFile();
-        String imageUrl = fileImageUrlGenerator.generatePresignedUrl(file.getObjectKey(), file.getContentType());
+        String imageUrl = fileUrlGenerator.generateImageUrl(file.getObjectKey(), file.getContentType());
         return NoticeAttachmentResponse.from(attachment, imageUrl);
     }
 

@@ -43,7 +43,7 @@ class FileServiceTest {
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create("test-access-key", "test-secret-key")))
                 .build()) {
-            FileUploadUrlGenerator generator = new FileUploadUrlGenerator(presigner);
+            FileUrlGenerator generator = new FileUrlGenerator(presigner);
             ReflectionTestUtils.setField(generator, "bucket", "test-upload-bucket");
             ReflectionTestUtils.setField(generator, "urlValidity", Duration.ofMinutes(3));
             FilePolicy filePolicy = new FilePolicy();
@@ -69,7 +69,7 @@ class FileServiceTest {
             assertThat(uploadUri.getQuery()).contains("X-Amz-Expires=180", "X-Amz-Signature=");
             assertThat(response.expiresAt()).isBetween(before.plusSeconds(179), Instant.now().plusSeconds(181));
 
-            var signed = generator.generatePresignedUrl(saved.getObjectKey(), saved.getContentType());
+            var signed = generator.generateUploadUrl(saved.getObjectKey(), saved.getContentType());
             assertThat(signed.httpRequest().method().name()).isEqualTo("PUT");
             assertThat(signed.signedHeaders()).containsKey("content-type");
             assertThat(signed.signedHeaders().get("content-type")).containsExactly("application/pdf");
