@@ -1,4 +1,4 @@
-import { CSSProperties, useLayoutEffect, useRef } from 'react';
+import { CSSProperties } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
@@ -6,11 +6,11 @@ import { NOTICE_TITLE, NOTICE_CONTENT } from '../constants';
 import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
 import InputField from '../../../shared/widgets/InputField';
-import TextAreaField from '../../../shared/widgets/TextAreaField';
 import AttachmentField from '../../../shared/widgets/AttachmentField';
 import { useAttachments } from '../../../shared/modules/files/useAttachments';
 import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import type { Attachment } from '../../../shared/modules/files/types';
+import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
 
 const formStyle = {
@@ -34,13 +34,6 @@ const emptyValues: NoticeFormValues = {
   content: '',
 };
 
-function resizeTextArea(textArea: HTMLTextAreaElement | null) {
-  if (!textArea) return;
-
-  textArea.style.height = 'auto';
-  textArea.style.height = `${textArea.scrollHeight}px`;
-}
-
 export default function NoticeForm({
   initialValues = emptyValues,
   initialAttachments,
@@ -49,7 +42,6 @@ export default function NoticeForm({
   onSubmit,
   fieldErrors = {},
 }: NoticeFormProps) {
-  const contentRef = useRef<HTMLTextAreaElement>(null);
   const attachments = useAttachments({
     initialAttachments,
     kind: 'image',
@@ -68,10 +60,6 @@ export default function NoticeForm({
     },
   );
   const posthog = usePostHog();
-
-  useLayoutEffect(() => {
-    resizeTextArea(contentRef.current);
-  }, [content]);
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -99,8 +87,7 @@ export default function NoticeForm({
         testId="notice-title-field"
       />
 
-      <TextAreaField
-        ref={contentRef}
+      <AutoResizeTextAreaField
         id="notice-content"
         name="content"
         label="내용"
