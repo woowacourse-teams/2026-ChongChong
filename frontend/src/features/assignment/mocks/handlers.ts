@@ -239,7 +239,7 @@ export const handlers = [
       submissionMethod: assignment.submissionMethod,
       submissionTarget: assignment.submissionTarget,
       submissionVisibility: assignment.submissionVisibility,
-      attachments: fileAttachments(assignment.attachmentFileIds),
+      attachments: fileAttachments(assignment.attachmentFileIds, true),
     });
   }),
 
@@ -314,7 +314,7 @@ export const handlers = [
         createdAt: submission.createdAt,
         ...(submission.content === null ? {} : { content: submission.content }),
         ...(submission.link === null ? {} : { link: submission.link }),
-        attachments: fileAttachments(submission.attachmentFileIds),
+        attachments: fileAttachments(submission.attachmentFileIds, true),
       });
     },
   ),
@@ -350,7 +350,7 @@ export const handlers = [
         createdAt: submission.createdAt,
         content: submission.content,
         link: submission.link,
-        attachments: fileAttachments(submission.attachmentFileIds),
+        attachments: fileAttachments(submission.attachmentFileIds, true),
       });
     },
   ),

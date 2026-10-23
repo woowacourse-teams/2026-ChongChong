@@ -12,6 +12,19 @@ const uploadRequest = z.object({
 let nextFileId = 1;
 
 export const handlers = [
+  http.get(`${MOCK_UPLOAD_ORIGIN}/files/:fileId`, ({ params }) => {
+    const file = fileTable.findFirst((q) => q.where({ id: Number(params.fileId) }));
+    if (!file?.body || file.status !== 'COMPLETED') return new HttpResponse(null, { status: 404 });
+    const filename = encodeURIComponent(
+      file.originalFileName.replace(/[\p{Cc}\\/]/gu, '_'),
+    ).replace(/['()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+    return new HttpResponse(file.body, {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename*=UTF-8''${filename}`,
+      },
+    });
+  }),
   http.get(`${MOCK_UPLOAD_ORIGIN}/images/:fileId`, ({ params }) => {
     const file = fileTable.findFirst((q) => q.where({ id: Number(params.fileId) }));
     if (!file?.body || file.status !== 'COMPLETED') return new HttpResponse(null, { status: 404 });

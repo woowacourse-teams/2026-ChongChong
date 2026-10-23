@@ -162,7 +162,18 @@ export default function CompletedAssignmentSubmission({
         )}
         {!!submission.attachments?.length && (
           <InfoCard icon={linkIcon} title="첨부 파일">
-            <AttachmentList attachments={submission.attachments} />
+            <AttachmentList
+              attachments={submission.attachments}
+              onDownloadClick={(file) =>
+                posthog?.capture('attachment_download_clicked', {
+                  content_type: 'submission',
+                  location: 'my_submission',
+                  file_id: file.fileId,
+                  mime_type: file.contentType,
+                  file_size_bytes: file.size,
+                })
+              }
+            />
           </InfoCard>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
 import { CSSObject } from '@emotion/react';
@@ -69,6 +70,7 @@ const linkStyle = {
 } satisfies CSSObject;
 
 export default function AssignmentSubmissionDetailContent() {
+  const posthog = usePostHog();
   const { studyId, assignmentId, submissionId } = useIntegerParams([
     'studyId',
     'assignmentId',
@@ -112,7 +114,18 @@ export default function AssignmentSubmissionDetailContent() {
         )}
         {!!submission.attachments?.length && (
           <InfoCard icon={linkIcon} title="첨부 파일">
-            <AttachmentList attachments={submission.attachments} />
+            <AttachmentList
+              attachments={submission.attachments}
+              onDownloadClick={(file) =>
+                posthog?.capture('attachment_download_clicked', {
+                  content_type: 'submission',
+                  location: 'submission_detail',
+                  file_id: file.fileId,
+                  mime_type: file.contentType,
+                  file_size_bytes: file.size,
+                })
+              }
+            />
           </InfoCard>
         )}
       </div>

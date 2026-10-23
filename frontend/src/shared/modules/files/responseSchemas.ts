@@ -8,6 +8,7 @@ export const attachmentSchema = z.object({
   size: z.number().int().nonnegative(),
   sortOrder: z.number().int().nonnegative(),
   imageUrl: z.string().url().nullable(),
+  downloadUrl: z.string().url().optional(),
 }) satisfies z.ZodType<Attachment>;
 
 export const uploadUrlSchema = z.object({

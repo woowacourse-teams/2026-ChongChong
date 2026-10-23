@@ -2,22 +2,27 @@ import { fileTable, MOCK_UPLOAD_ORIGIN } from './db';
 import { invalidInputResponse } from '../../../../mocks/errors';
 
 let browserFilePreviews = false;
-const previewUrls = new Map<number, string>();
+const previewUrls = new Map<string, string>();
 
 export function enableBrowserFilePreviews() {
   browserFilePreviews = true;
 }
 
-function imageUrl(file: { id: number; contentType: string; body?: ArrayBuffer }) {
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.contentType)) return null;
-  if (!browserFilePreviews) return `${MOCK_UPLOAD_ORIGIN}/images/${file.id}?issuedAt=${Date.now()}`;
+function fileUrl(file: { id: number; contentType: string; body?: ArrayBuffer }, download = false) {
+  if (!download && !['image/jpeg', 'image/png', 'image/webp'].includes(file.contentType))
+    return null;
+  if (!browserFilePreviews)
+    return `${MOCK_UPLOAD_ORIGIN}/${download ? 'files' : 'images'}/${file.id}?issuedAt=${Date.now()}`;
   if (!file.body) return null;
 
   // MSW 가상 주소는 새 탭 탐색을 처리할 수 없으므로 브라우저 메모리의 파일 URL을 사용한다.
-  let url = previewUrls.get(file.id);
+  const key = `${download ? 'download' : 'image'}-${file.id}`;
+  let url = previewUrls.get(key);
   if (!url) {
-    url = URL.createObjectURL(new Blob([file.body], { type: file.contentType }));
-    previewUrls.set(file.id, url);
+    url = URL.createObjectURL(
+      new Blob([file.body], { type: download ? 'application/octet-stream' : file.contentType }),
+    );
+    previewUrls.set(key, url);
   }
   return url;
 }
@@ -69,7 +74,7 @@ export function validateFileAttachments(
     : null;
 }
 
-export function fileAttachments(ids: number[] = []) {
+export function fileAttachments(ids: number[] = [], withDownloadUrl = false) {
   return ids.flatMap((fileId, sortOrder) => {
     const file = fileTable.findFirst((q) => q.where({ id: fileId }));
     return file
@@ -80,7 +85,8 @@ export function fileAttachments(ids: number[] = []) {
             contentType: file.contentType,
             size: file.size,
             sortOrder,
-            imageUrl: imageUrl(file),
+            imageUrl: fileUrl(file),
+            ...(withDownloadUrl ? { downloadUrl: fileUrl(file, true) } : {}),
           },
         ]
       : [];

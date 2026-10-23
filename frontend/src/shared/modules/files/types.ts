@@ -5,6 +5,7 @@ export interface Attachment {
   size: number;
   sortOrder: number;
   imageUrl: string | null;
+  downloadUrl?: string;
 }
 
 export type AttachmentItem = { id: string; name: string } & (
