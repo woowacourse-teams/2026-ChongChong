@@ -28,7 +28,7 @@ export default function NoticeListPage() {
         )}
       >
         <Suspense fallback={<Loading />}>
-          <NoticeListPage.Content />
+          <Content />
         </Suspense>
       </ErrorBoundary>
       <BottomTab />
@@ -36,7 +36,7 @@ export default function NoticeListPage() {
   );
 }
 
-NoticeListPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { role, studyName, userName },
@@ -69,4 +69,4 @@ NoticeListPage.Content = function Content() {
       </Main>
     </>
   );
-};
+}
