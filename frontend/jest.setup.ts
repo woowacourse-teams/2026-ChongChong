@@ -6,6 +6,7 @@ import { memberTable } from './src/features/member/mocks/db';
 import { assignmentTable } from './src/features/assignment/mocks/db';
 import { submissionTable } from './src/features/assignment/mocks/db';
 import { noticeRecipientTable, noticeTable } from './src/features/notice/mocks/db';
+import { fileTable } from './src/shared/modules/files/mocks/db';
 
 // TODO: 이해하기 어려운 코드에는 주석을 추가합니다
 const nodeStructuredClone = globalThis.structuredClone;
@@ -41,6 +42,7 @@ afterEach(() => {
   submissionTable.clear();
   noticeTable.clear();
   noticeRecipientTable.clear();
+  fileTable.clear();
 });
 afterAll(() => server.close());
 

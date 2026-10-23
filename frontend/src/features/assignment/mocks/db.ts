@@ -12,6 +12,7 @@ const assignmentSchema = z.object({
   submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
   submissionVisibility: z.enum(['LEADER_ONLY', 'ALL_STUDY_MEMBERS']).default('LEADER_ONLY'),
   completeUserIds: z.array(z.number()),
+  attachmentFileIds: z.array(z.number()).optional(),
 });
 
 export const assignmentTable = new Collection({
@@ -193,6 +194,7 @@ export function createSeedAssignments() {
 }
 
 const submissionSchema = z.object({
+  attachmentFileIds: z.array(z.number()).optional(),
   id: z.number(),
   assignmentId: z.number(),
   userId: z.number(),

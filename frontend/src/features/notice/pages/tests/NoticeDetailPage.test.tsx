@@ -112,6 +112,7 @@ describe('리드 공지 상세', () => {
           title: '스터디 일정 안내',
           content: '이번 주 스터디는 토요일에 진행합니다.',
           createdAt: '2026-09-01T09:00:00',
+          attachments: [],
         }),
       ),
       http.get(`${NOTICE_DETAIL_URL}/status`, () =>
@@ -273,6 +274,7 @@ describe('리드 공지 읽음 현황 조회 실패', () => {
           title: '스터디 일정 안내',
           content: '이번 주 스터디는 토요일에 진행합니다.',
           createdAt: '2026-09-01T09:00:00',
+          attachments: [],
         }),
       ),
     );
@@ -326,6 +328,7 @@ describe('스터디원 내 공지 읽음 상태 조회 실패', () => {
           title: '스터디 일정 안내',
           content: '이번 주 스터디는 토요일에 진행합니다.',
           createdAt: '2026-09-01T09:00:00',
+          attachments: [],
         }),
       ),
     );

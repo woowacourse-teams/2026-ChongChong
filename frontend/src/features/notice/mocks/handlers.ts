@@ -7,6 +7,7 @@ import { memberTable } from '../../member/mocks/db';
 import type { NoticeFormValues, UpdateNoticeValue } from '../types';
 import { noticeRecipientTable, noticeTable, type NoticeSchemaType } from './db';
 import { validateNotice } from './validators';
+import { noticeAttachments, validateNoticeAttachments } from './attachments';
 
 function localDateTimeNow() {
   return new Date().toISOString();
@@ -88,9 +89,15 @@ export const handlers = [
     const member = findStudyMember(studyId, user.id);
     if (member?.role !== 'LEADER') return new HttpResponse(null, { status: 403 });
 
-    const body = (await request.json()) as NoticeFormValues;
+    const body = (await request.json()) as NoticeFormValues & {
+      attachmentFileIds?: number[] | null;
+    };
     const fieldErrors = validateNotice(body);
     if (fieldErrors.length > 0) return invalidInputResponse(fieldErrors);
+
+    const attachmentFileIds = body.attachmentFileIds ?? [];
+    const attachmentError = validateNoticeAttachments(attachmentFileIds, user.id);
+    if (attachmentError) return attachmentError;
 
     const notices = noticeTable.findMany();
     const noticeId = Math.max(0, ...notices.map(({ id }) => id)) + 1;
@@ -100,6 +107,7 @@ export const handlers = [
       title: body.title,
       content: body.content,
       createdAt: localDateTimeNow(),
+      attachmentFileIds,
     });
 
     const recipients = memberTable.findMany((query) => query.where({ studyId, role: 'MEMBER' }));
@@ -237,6 +245,7 @@ export const handlers = [
       title: notice.title,
       content: notice.content,
       createdAt: notice.createdAt,
+      attachments: noticeAttachments(notice.attachmentFileIds),
     });
   }),
 
@@ -251,9 +260,19 @@ export const handlers = [
     const notice = findNotice(studyId, noticeId);
     if (!notice) return notFound('NOTICE_NOT_FOUND', '존재하지 않는 공지입니다.');
 
-    const body = (await request.json()) as UpdateNoticeValue;
+    const body = (await request.json()) as UpdateNoticeValue & {
+      attachmentFileIds?: number[] | null;
+    };
     const fieldErrors = validateNotice(body, true);
     if (fieldErrors.length > 0) return invalidInputResponse(fieldErrors);
+
+    const attachmentFileIds = body.attachmentFileIds ?? notice.attachmentFileIds ?? [];
+    const attachmentError = validateNoticeAttachments(
+      attachmentFileIds,
+      user.id,
+      notice.attachmentFileIds,
+    );
+    if (attachmentError) return attachmentError;
 
     noticeTable.delete((query) => query.where({ id: notice.id, studyId }));
     await noticeTable.create({
@@ -262,6 +281,7 @@ export const handlers = [
       title: body.title ?? notice.title,
       content: body.content ?? notice.content,
       createdAt: notice.createdAt,
+      attachmentFileIds,
     });
 
     return new HttpResponse(null, { status: 204 });

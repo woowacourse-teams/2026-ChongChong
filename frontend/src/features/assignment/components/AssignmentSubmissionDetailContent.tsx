@@ -1,3 +1,4 @@
+import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
 import { CSSObject } from '@emotion/react';
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -89,15 +90,17 @@ export default function AssignmentSubmissionDetailContent() {
           <h2 id="submission-member-name" css={submitterNameStyle}>
             {submission.name}
           </h2>
-          <time css={submittedAtStyle} dateTime={submission.createdAt}>
-            {formatSubmittedAt(submission.createdAt)}
-          </time>
+          {submission.createdAt && (
+            <time css={submittedAtStyle} dateTime={submission.createdAt}>
+              {formatSubmittedAt(submission.createdAt)}
+            </time>
+          )}
         </div>
       </header>
 
       <div css={cardListStyle}>
         <InfoCard icon={assignmentIcon} title="내용">
-          {submission.content}
+          {submission.content ?? ''}
         </InfoCard>
 
         {submission.link && (
@@ -105,6 +108,11 @@ export default function AssignmentSubmissionDetailContent() {
             <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
+          </InfoCard>
+        )}
+        {!!submission.attachments?.length && (
+          <InfoCard icon={linkIcon} title="첨부 파일">
+            <AttachmentList attachments={submission.attachments} />
           </InfoCard>
         )}
       </div>
