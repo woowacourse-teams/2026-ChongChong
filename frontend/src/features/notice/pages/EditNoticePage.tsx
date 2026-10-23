@@ -28,7 +28,7 @@ export default function EditNoticePage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <EditNoticePage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -36,7 +36,7 @@ export default function EditNoticePage() {
   );
 }
 
-EditNoticePage.Content = function Content() {
+function Content() {
   const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
   const { data: notice } = useSuspenseQuery(noticeQueries.detail(studyId, noticeId));
   const navigate = useNavigate();
@@ -87,4 +87,4 @@ EditNoticePage.Content = function Content() {
       }}
     />
   );
-};
+}

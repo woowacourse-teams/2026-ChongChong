@@ -29,7 +29,7 @@ export default function EditAssignmentPage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <EditAssignmentPage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -38,7 +38,7 @@ export default function EditAssignmentPage() {
   );
 }
 
-EditAssignmentPage.Content = function Content() {
+function Content() {
   const { studyId, assignmentId } = useIntegerParams(['studyId', 'assignmentId']);
   const { data: assignment } = useSuspenseQuery(assignmentQueries.detail(studyId, assignmentId));
   const toast = useToast();
@@ -94,4 +94,4 @@ EditAssignmentPage.Content = function Content() {
       fieldErrors={fieldErrors}
     />
   );
-};
+}

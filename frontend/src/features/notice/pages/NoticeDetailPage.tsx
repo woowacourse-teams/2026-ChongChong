@@ -33,7 +33,7 @@ export default function NoticeDetailPage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <NoticeDetailPage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -42,7 +42,7 @@ export default function NoticeDetailPage() {
   );
 }
 
-NoticeDetailPage.Content = function Content() {
+function Content() {
   const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
 
   const {
@@ -58,7 +58,7 @@ NoticeDetailPage.Content = function Content() {
       noticeId={noticeId}
     />
   );
-};
+}
 
 NoticeDetailPage.HeaderActions = function HeaderActions() {
   const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
