@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import BottomTab from '../../../shared/widgets/BottomTab';
@@ -41,6 +42,7 @@ EditAssignmentPage.Content = function Content() {
   const { studyId, assignmentId } = useIntegerParams(['studyId', 'assignmentId']);
   const { data: assignment } = useSuspenseQuery(assignmentQueries.detail(studyId, assignmentId));
   const toast = useToast();
+  const posthog = usePostHog();
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -48,7 +50,12 @@ EditAssignmentPage.Content = function Content() {
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentValue) => updateAssignment(studyId, assignmentId, values),
 
-    onSuccess: () => {
+    onSuccess: (_data, values) => {
+      posthog?.capture('assignment_saved', {
+        content_type: 'assignment',
+        mode: 'edit',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(studyId),
       });

@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
@@ -41,11 +42,17 @@ EditNoticePage.Content = function Content() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: UpdateNoticeValue) => updateNotice(studyId, noticeId, values),
 
-    onSuccess: () => {
+    onSuccess: (_data, values) => {
+      posthog?.capture('notice_saved', {
+        content_type: 'notice',
+        mode: 'edit',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       queryClient.invalidateQueries({
         queryKey: noticeQueries.lists(studyId),
       });

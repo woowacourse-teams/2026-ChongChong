@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
@@ -79,6 +80,7 @@ export default function CompletedAssignmentSubmission({
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
+  const posthog = usePostHog();
 
   const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
 
@@ -86,7 +88,12 @@ export default function CompletedAssignmentSubmission({
     mutationFn: (values: AssignmentSubmissionValue) =>
       updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
 
-    onSuccess: async () => {
+    onSuccess: async (_data, values) => {
+      posthog?.capture('assignment_submission_saved', {
+        content_type: 'submission',
+        mode: 'edit',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,

@@ -61,7 +61,12 @@ export default function AssignmentForm({
   submitLabel,
   onSubmit,
 }: AssignmentFormProps) {
-  const attachments = useAttachments({ initialAttachments, kind: 'image' });
+  const attachments = useAttachments({
+    initialAttachments,
+    kind: 'image',
+    contentType: 'assignment',
+    mode: initialValues === emptyValues ? 'create' : 'edit',
+  });
   const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
     if (value.length > ASSIGNMENT_TITLE.length) return prevValue;
     return value;

@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import { useNavigate } from 'react-router';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
@@ -19,11 +20,17 @@ export default function CreateNoticePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: NoticeFormValues) => createNotice(studyId, values),
 
-    onSuccess: ({ noticeId }) => {
+    onSuccess: ({ noticeId }, values) => {
+      posthog?.capture('notice_saved', {
+        content_type: 'notice',
+        mode: 'create',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       queryClient.invalidateQueries({
         queryKey: noticeQueries.lists(studyId),
       });

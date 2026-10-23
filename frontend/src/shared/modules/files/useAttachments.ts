@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Attachment, AttachmentItem } from './types';
-import { uploadAttachment } from './api';
-import { validateAttachments } from './validation';
+import { usePostHog } from '@posthog/react';
+import { AttachmentUploadError, uploadAttachment } from './api';
+import { getFileContentType, validateAttachments } from './validation';
 
 interface Options {
   initialAttachments?: Attachment[];
   kind: 'image' | 'file';
+  contentType: 'notice' | 'assignment' | 'submission';
+  mode: 'create' | 'edit';
 }
 
-export function useAttachments({ initialAttachments = [], kind }: Options) {
+export function useAttachments({ initialAttachments = [], kind, contentType, mode }: Options) {
+  const posthog = usePostHog();
+  const context = { content_type: contentType, mode, attachment_kind: kind };
   const [items, setItems] = useState<AttachmentItem[]>(() =>
     [...initialAttachments]
       .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -46,8 +51,16 @@ export function useAttachments({ initialAttachments = [], kind }: Options) {
   function addFiles(files: File[]) {
     if (!files.length) return;
     const invalid = validateAttachments(files, currentItems.current.length, kind);
-    setError(invalid);
-    if (invalid) return;
+    setError(invalid?.message);
+    if (invalid) {
+      posthog?.capture('attachment_validation_failed', {
+        ...context,
+        reason: invalid.reason,
+        selected_count: files.length,
+        existing_count: currentItems.current.length,
+      });
+      return;
+    }
 
     const added = files.map((file): AttachmentItem => ({
       id: `new-${nextId.current++}`,
@@ -57,16 +70,35 @@ export function useAttachments({ initialAttachments = [], kind }: Options) {
     updateItems([...currentItems.current, ...added]);
     files.forEach((file, index) => {
       const item = added[index];
+      const startedAt = performance.now();
+      const properties = {
+        ...context,
+        upload_attempt_id: crypto.randomUUID(),
+        file_size_bytes: file.size,
+        mime_type: getFileContentType(file),
+      };
+      posthog?.capture('attachment_upload_started', properties);
       void uploadAttachment(file).then(
-        (fileId) =>
-          updateItem(item.id, { id: item.id, name: item.name, status: 'completed', fileId }),
-        (cause: unknown) =>
+        (fileId) => {
+          posthog?.capture('attachment_upload_completed', {
+            ...properties,
+            duration_ms: Math.round(performance.now() - startedAt),
+          });
+          updateItem(item.id, { id: item.id, name: item.name, status: 'completed', fileId });
+        },
+        (cause: unknown) => {
+          posthog?.capture('attachment_upload_failed', {
+            ...properties,
+            duration_ms: Math.round(performance.now() - startedAt),
+            failure_stage: cause instanceof AttachmentUploadError ? cause.stage : 'unknown',
+          });
           updateItem(item.id, {
             id: item.id,
             name: item.name,
             status: 'error',
             message: cause instanceof Error ? cause.message : '파일 업로드에 실패했어요.',
-          }),
+          });
+        },
       );
     });
   }

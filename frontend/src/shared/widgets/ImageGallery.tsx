@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import errorImage from '../assets/icons/image-load-error.webp';
 import type { Attachment } from '../modules/files/types';
 import { tokens } from '../../styles/global';
 
 interface Props {
   attachments: Attachment[];
+  onImageError?: (file: Attachment) => void;
 }
 
-export default function ImageGallery({ attachments }: Props) {
+export default function ImageGallery({ attachments, onImageError }: Props) {
   const images = [...attachments]
     .filter((file): file is Attachment & { imageUrl: string } => file.imageUrl !== null)
     .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -32,7 +33,12 @@ export default function ImageGallery({ attachments }: Props) {
       >
         {images.map((file) => (
           <li key={file.fileId} css={{ flex: single ? '0 0 100%' : '0 0 200px', minWidth: 0 }}>
-            <GalleryImage key={file.imageUrl} file={file} single={single} />
+            <GalleryImage
+              key={file.imageUrl}
+              file={file}
+              single={single}
+              onImageError={onImageError}
+            />
           </li>
         ))}
       </ul>
@@ -43,10 +49,13 @@ export default function ImageGallery({ attachments }: Props) {
 function GalleryImage({
   file,
   single,
+  onImageError,
 }: {
   file: Attachment & { imageUrl: string };
   single: boolean;
+  onImageError?: Props['onImageError'];
 }) {
+  const failureReported = useRef(false);
   const [failed, setFailed] = useState(false);
   return (
     <figure css={{ margin: 0 }}>
@@ -69,7 +78,12 @@ function GalleryImage({
         <img
           src={file.imageUrl}
           alt={file.originalFileName}
-          onError={() => setFailed(true)}
+          onError={() => {
+            setFailed(true);
+            if (failureReported.current) return;
+            failureReported.current = true;
+            onImageError?.(file);
+          }}
           css={{
             display: 'block',
             width: '100%',

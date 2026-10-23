@@ -56,7 +56,12 @@ export default function AssignmentSubmissionForm({
   fieldErrors = {},
   onSubmit,
 }: Props) {
-  const attachments = useAttachments({ initialAttachments, kind: 'file' });
+  const attachments = useAttachments({
+    initialAttachments,
+    kind: 'file',
+    contentType: 'submission',
+    mode: initialValues === emptyValues ? 'create' : 'edit',
+  });
   const [submissionError, setSubmissionError] = useState<string>();
   const [content, handleContentChange] = useInputState(
     initialValues.content ?? '',

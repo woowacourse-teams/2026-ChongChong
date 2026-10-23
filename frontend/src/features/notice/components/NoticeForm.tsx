@@ -50,7 +50,12 @@ export default function NoticeForm({
   fieldErrors = {},
 }: NoticeFormProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const attachments = useAttachments({ initialAttachments, kind: 'image' });
+  const attachments = useAttachments({
+    initialAttachments,
+    kind: 'image',
+    contentType: 'notice',
+    mode: initialValues === emptyValues ? 'create' : 'edit',
+  });
   const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
     if (value.length > NOTICE_TITLE.length) return prevValue;
     return value;
