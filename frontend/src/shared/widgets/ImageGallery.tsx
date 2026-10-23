@@ -88,7 +88,8 @@ function GalleryImage({
             display: 'block',
             width: '100%',
             aspectRatio: single ? '350 / 375' : '1',
-            objectFit: 'cover',
+            objectFit: 'contain',
+            backgroundColor: tokens.bg.subtle,
             borderRadius: 12,
           }}
         />
