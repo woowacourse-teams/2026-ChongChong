@@ -20,11 +20,16 @@ interface PrevButtonProps {
 
 export function PrevButton({ to }: PrevButtonProps = {}) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
   const parentPath = parseParentPath(pathname);
+  const returnTo = state?.returnTo;
 
   function goToPreviousPage() {
-    // fallback 필요
+    if (returnTo) {
+      navigate(returnTo, { replace: true });
+      return;
+    }
+
     navigate(to ?? parentPath);
   }
 
