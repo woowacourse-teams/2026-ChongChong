@@ -53,7 +53,12 @@ function FileDetails({ file }: { file: Attachment }) {
   );
 }
 
-export default function AttachmentList({ attachments }: { attachments: Attachment[] }) {
+interface Props {
+  attachments: Attachment[];
+  onDownloadClick?: (file: Attachment) => void;
+}
+
+export default function AttachmentList({ attachments, onDownloadClick }: Props) {
   if (!attachments.length) return null;
 
   return (
@@ -65,6 +70,7 @@ export default function AttachmentList({ attachments }: { attachments: Attachmen
             {file.downloadUrl ? (
               <a
                 href={file.downloadUrl}
+                onClick={() => onDownloadClick?.(file)}
                 download={file.originalFileName}
                 target="_blank"
                 rel="noopener noreferrer"
