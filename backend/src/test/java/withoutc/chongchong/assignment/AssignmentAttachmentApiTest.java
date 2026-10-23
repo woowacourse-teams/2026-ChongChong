@@ -358,6 +358,40 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .contains("X-Amz-Signature=");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"image/png", "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"})
+    @DisplayName("과제와 제출물의 다운로드 URL은 기존 조회 권한에 따라 반환한다")
+    void returnsDownloadUrlsAfterAccessCheck(String contentType) {
+        Long material = file(leader, contentType, 1024, true);
+        Long assignment = create(List.of(material));
+        Response detail = get(member, path(assignment));
+        detail.then().statusCode(200);
+        assertThat(detail.jsonPath().getString("attachments[0].downloadUrl"))
+                .contains("X-Amz-Signature=", "response-content-disposition=attachment");
+        get(outsider, path(assignment)).then().statusCode(403);
+
+        Long result = file(member, contentType, 1024, true);
+        Response submitted = post(member, path(assignment) + "/submissions",
+                Map.of("attachmentFileIds", List.of(result)));
+        submitted.then().statusCode(201);
+        String submissionPath = path(assignment) + "/submissions/" + submitted.jsonPath().getLong("submissionId");
+        for (User allowed : List.of(member, leader)) {
+            assertThat(get(allowed, submissionPath).jsonPath().getString("attachments[0].downloadUrl"))
+                    .contains("X-Amz-Signature=");
+        }
+        assertThat(get(member, path(assignment) + "/submissions/my").jsonPath()
+                .getString("attachments[0].downloadUrl")).contains("X-Amz-Signature=");
+        Response forbidden = get(other, submissionPath);
+        forbidden.then().statusCode(403);
+        assertThat(forbidden.asString()).doesNotContain("downloadUrl", "X-Amz-Signature");
+        patch(leader, path(assignment), Map.of("submissionVisibility", "ALL_STUDY_MEMBERS")).then().statusCode(204);
+        assertThat(get(other, submissionPath).jsonPath().getString("attachments[0].downloadUrl"))
+                .contains("X-Amz-Signature=");
+        get(outsider, submissionPath).then().statusCode(403);
+    }
+
     private Long create(List<Long> attachments) {
         Response response = post(leader, "/studies/" + study.getId() + "/assignments", Map.of(
                 "title", "과제", "content", "안내", "submissionTarget", "MEMBERS_ONLY",

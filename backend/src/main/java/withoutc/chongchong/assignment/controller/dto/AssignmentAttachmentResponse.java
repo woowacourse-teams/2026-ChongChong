@@ -8,16 +8,19 @@ public record AssignmentAttachmentResponse(
         String contentType,
         long size,
         int sortOrder,
-        String imageUrl
+        String imageUrl,
+        String downloadUrl
 ) {
-    public static AssignmentAttachmentResponse of(FileMetadata file, int sortOrder, String imageUrl) {
+    public static AssignmentAttachmentResponse of(FileMetadata file, int sortOrder, String imageUrl,
+                                                  String downloadUrl) {
         return new AssignmentAttachmentResponse(
                 file.getId(),
                 file.getOriginalFileName(),
                 file.getContentType(),
                 file.getSize(),
                 sortOrder,
-                imageUrl
+                imageUrl,
+                downloadUrl
         );
     }
 }

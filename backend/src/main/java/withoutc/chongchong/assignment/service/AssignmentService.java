@@ -131,14 +131,7 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
-        List<AssignmentAttachmentResponse> attachments = assignment.getAttachments().stream()
-                .map(attachment -> {
-                    FileMetadata file = attachment.getFile();
-                    String imageUrl = fileUrlGenerator.generateImageUrl(
-                            file.getObjectKey(), file.getContentType());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl);
-                })
-                .toList();
+        List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(assignment);
         return AssignmentDetailResponse.from(assignment, attachments);
     }
 
@@ -155,6 +148,19 @@ public class AssignmentService {
 
         List<AssignmentSummaryResponse> summaries = createAssignmentSummaries(member, assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
+    }
+
+    private List<AssignmentAttachmentResponse> createAttachmentResponses(Assignment assignment) {
+        return assignment.getAttachments().stream()
+                .map(attachment -> {
+                    FileMetadata file = attachment.getFile();
+                    String imageUrl = fileUrlGenerator.generateImageUrl(
+                            file.getObjectKey(), file.getContentType());
+                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
+                            file.getObjectKey(), file.getOriginalFileName());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
+                })
+                .toList();
     }
 
     private List<CompleteMember> toCompleteMembers(List<AssignmentSubmitterStatusProjection> statuses) {
