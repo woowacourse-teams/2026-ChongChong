@@ -1,6 +1,5 @@
 import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
-import Badge from '../Badge';
 
 type TitleSize = 'default' | 'large';
 type MetaTone = 'muted' | 'brand';
@@ -134,8 +133,6 @@ export default function ContentCard({ children, onClick }: ContentCardProps) {
 ContentCard.Badges = function Badges({ children }: ChildrenProps) {
   return <div css={badgesStyle}>{children}</div>;
 };
-
-ContentCard.Badge = Badge;
 
 ContentCard.TitleRow = function TitleRow({ children }: ChildrenProps) {
   return <div css={titleRowStyle}>{children}</div>;
