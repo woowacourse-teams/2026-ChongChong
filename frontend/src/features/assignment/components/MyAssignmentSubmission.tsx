@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
@@ -18,11 +19,17 @@ interface Props {
 export default function MyAssignmentSubmission({ studyId, assignmentId, submission }: Props) {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentSubmissionValue) =>
       createAssignmentSubmission(studyId, assignmentId, values),
-    onSuccess: async () => {
+    onSuccess: async (_data, values) => {
+      posthog?.capture('assignment_submission_saved', {
+        content_type: 'submission',
+        mode: 'create',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) }),
         queryClient.invalidateQueries({
@@ -32,7 +39,7 @@ export default function MyAssignmentSubmission({ studyId, assignmentId, submissi
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast message={error.message} status="Error" />);
+      toast.open(<StatusToast message={error.message} status="error" />);
     },
   });
 

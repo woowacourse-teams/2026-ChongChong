@@ -6,6 +6,9 @@ info:
     총총 서비스의 사전 설계 API 계약이다. 이 파일과 `paths/`, `components/`의 YAML 파일이 명세의 원본이며,
     구현 코드와 분리해 관리한다. 모든 응답 객체는 명시된 필드 외의 추가 필드를 허용하지 않는다.
 
+    2026-10-19 기준 커밋 c9884a248113b56b0db84adbea31d36d0a3a136e의 구현과 대조했다.
+    웹 미연동 기능과 입력·응답 제약 차이는 API별 프론트 안내에 표시한다. 구현 상태는 운영 배포 여부를 뜻하지 않는다.
+
     [백엔드 개발 보드](board.html)에서 API별 진행 상태, 담당자와 개발 설명을 확인할 수 있다.
 servers:
   - url: /
@@ -19,8 +22,13 @@ tags:
   - { name: Assignment Submission, description: 과제 제출물 API }
   - { name: Web Push, description: Web Push 구독 API }
   - { name: Notification, description: 알림 API }
+  - { name: File, description: 파일 업로드 API }
 
 paths:
+  /api/files/presigned-url:
+    $ref: './paths/files/presigned-url.yaml'
+  /api/files/{fileId}/complete:
+    $ref: './paths/files/complete.yaml'
   /api/auth/csrf:
     $ref: './paths/auth/csrf.yaml'
   /api/auth/login:
@@ -73,6 +81,8 @@ paths:
     $ref: './paths/assignment-submissions/detail.yaml'
   /api/web-push-subscriptions:
     $ref: './paths/web-push-subscriptions/collection.yaml'
+  /api/web-push-subscriptions/me:
+    $ref: './paths/web-push-subscriptions/my-status.yaml'
   /api/web-push-subscriptions/{subscriptionId}:
     $ref: './paths/web-push-subscriptions/detail.yaml'
   /api/web-push/config:

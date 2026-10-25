@@ -2,6 +2,7 @@
 
 - 날짜: 2026-08-19
 - 관련 이슈: [#65](https://github.com/woowacourse-teams/2026-ChongChong/issues/65)
+- 부분 대체: [0051. 사용자당 여러 인증 세션을 허용한다](0051-allow-multiple-auth-sessions-per-user.md)에서 사용자당 단일 활성 Session 및 재로그인 시 Session 교체 정책을 대체한다.
 
 ## 배경
 

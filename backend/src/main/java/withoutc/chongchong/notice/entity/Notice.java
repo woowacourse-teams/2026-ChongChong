@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
@@ -55,8 +57,22 @@ public class Notice extends BaseEntity {
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<NoticeRecipient> recipients = new ArrayList<>();
 
+    @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private final List<NoticeAttachment> attachments = new ArrayList<>();
+
     public static Notice create(Study study, String title, String content) {
         return new Notice(study, title, content);
+    }
+
+    public void addAttachments(List<FileMetadata> files) {
+        for (FileMetadata file : files) {
+            attachments.add(NoticeAttachment.create(this, file, attachments.size()));
+        }
+    }
+
+    public void clearAttachments() {
+        attachments.clear();
     }
 
     public void addRecipients(List<StudyMember> members) {

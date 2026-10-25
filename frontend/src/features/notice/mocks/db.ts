@@ -7,6 +7,7 @@ const noticeSchema = z.object({
   title: z.string(),
   content: z.string(),
   createdAt: z.string(),
+  attachmentFileIds: z.array(z.number()).optional(),
 });
 
 export const noticeTable = new Collection({ schema: noticeSchema });

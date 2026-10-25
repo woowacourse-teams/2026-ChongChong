@@ -1,242 +1,136 @@
-# Backend deployment
+# 총총 백엔드 배포 안내
 
-`dev` 또는 `prod`에 병합된 백엔드 변경을 환경별 CodePipeline이 CodeBuild와 CodeDeploy를 거쳐 대상 단일 EC2에
-배포하도록 구성한다. 이 문서는 저장소에 포함할 수 없는 AWS Resource와 EC2 최초 설정을 연결하는 절차다.
+dev는 **요청을 받는 edge 1대와 앱을 실행하는 backend A/B 2대**로 구성한다.
+새 버전을 대기 중인 백엔드에 띄우고 정상 응답을 확인한 뒤, edge가 요청을 보낼 대상을 바꾼다.
+팀원이 서버에 접속할 때는 AWS Systems Manager의 Session Manager(SSM)를 사용한다.
 
-## 1. 배포 전 확인
+> [!NOTE]
+> 이 안내는 Ubuntu ARM64 EC2와 기존 VPC·RDS를 사용해 A/B 배포를 구성하는 절차다.
+> EC2를 만든 다음 [서버 준비](docs/server-setup.md)부터 진행한다. VPC와 DB를 새로 만드는 과정은 포함하지 않는다.
 
-- 현재 `buildspec.yml`은 `linux/arm64` Docker 이미지를 생성하므로 배포 대상 EC2도 ARM64 환경이어야 한다.
-- CodeDeploy Agent는 Ubuntu 26.04와 Ruby 없는 실행을 지원하는 v2를 설치한다.
-- EC2 outbound HTTPS 443 통신을 허용한다.
-- EC2 inbound 80과 443을 인터넷에 허용하고 22는 기존 관리 IP로만 제한한다.
-- RDS 5432 inbound source가 EC2의 Security Group인지 확인한다.
-- EC2에 CodeDeploy용 Instance Profile을 연결한다.
-- Docker Hub에 백엔드 이미지 Repository와 push/pull Token을 준비한다.
-- EC2 공개 IP가 바뀌면 `SERVER_NAME`과 인증서도 바뀌므로 개발 기간 중 IP 변경 여부를 관리한다.
+## 처음 구성할 때 읽는 순서
 
-## 2. EC2를 한 번 준비한다
-
-허용된 위치에서 저장소의 `deploy` 디렉터리를 EC2로 복사한다. `deploy/.env.example`을 참고하여
-`/opt/chongchong/.env`를 생성하고 실제 값을 입력한다. 이 파일은 Git에 커밋하지 않는다.
-
-```bash
-sudo install -d -m 0755 /opt/chongchong
-sudo install -m 0600 deploy/.env.example /opt/chongchong/.env
-sudoedit /opt/chongchong/.env
-sudo deploy/scripts/bootstrap-ec2.sh
-```
-
-bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 설치한다. 최초 인증서는 80번 포트의
-임시 Nginx 컨테이너와 Certbot webroot 방식으로 발급한다. 이후 systemd timer가 매일 갱신 필요 여부를 확인하고 실제로
-갱신한 경우에만 Nginx를 reload한다.
-
-`/opt/chongchong/.env`에는 다음 범주의 값이 필요하다.
-
-- AWS Region, `nip.io` 서버 이름과 Certbot 이메일
-- Docker Hub 사용자명과 최소 pull 권한 Token
-- PostgreSQL JDBC URL, 사용자명과 비밀번호
-- Study Invite 및 인증 JWT 설정
-- 프론트엔드 기준 URL과 선택적인 CORS 허용 Origin 목록
-- Kakao REST API 키, Client Secret과 환경별 Redirect URI
-- Web Push VAPID 키와 푸시 클릭 토큰 서명 키
-
-`WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET`에는 `openssl rand -base64 32`로 생성한 값을 설정한다. 같은 환경의 모든 백엔드 인스턴스는 같은 값을 사용하고, dev와 prod는 서로 다른 값을 사용해도 된다. 실제 값은 `/opt/chongchong/.env`에만 저장한다.
-
-배포 스크립트가 이 파일을 읽으므로 각 줄은 Bash에서 읽을 수 있는 `KEY=VALUE` 형식으로 작성한다. 공백이나 `$`,
-따옴표처럼 Shell에서 의미가 있는 문자가 포함된 값은 작은따옴표로 감싼다.
-
-`FRONTEND_ALLOWED_ORIGINS`는 쉼표로 구분한 정확한 Origin 목록이며, 생략하면 `FRONTEND_BASE_URL`을 사용한다.
-로컬 프론트엔드도 허용할 때만 `https://chongchong.app,http://localhost:3005`처럼 추가하고 wildcard는 사용하지 않는다.
-
-Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
-
-| 변수 | 필수 여부 | 용도와 기본값 |
+| 순서 | 할 일 | 끝났을 때 확인할 결과 |
 | --- | --- | --- |
-| `AUTH_KAKAO_REST_API_KEY` | 필수 | Kakao Developers 애플리케이션의 REST API 키 |
-| `AUTH_KAKAO_CLIENT_SECRET` | 필수 | Kakao Developers에서 활성화한 Client Secret |
-| `AUTH_KAKAO_REDIRECT_URI` | 필수 | 환경별 웹 Callback URI |
+| 1 | [서버 준비](docs/server-setup.md): AWS 설정 → SSM → Docker·메모리 수집 → SSH → 앱·Nginx | edge의 HTTPS 응답이 `UP`, 응답 헤더에 A 주소 표시 |
+| 2 | [A/B 배포](docs/edge-deployment.md): 파이프라인 설정 → 첫 배포 → 전환 확인 | 배포 성공 후 응답 헤더가 B 주소로 변경 |
+| 3 | [모니터링](docs/monitoring.md): 앱 지표 → EC2 메모리 → 로그 확인 | A/B 지표가 각각 보이고 최근 시각까지 갱신 |
 
-`AUTH_KAKAO_REDIRECT_URI`는 Kakao Developers에 등록한 URI, 프론트엔드가 Authorization Code를 받는 URI와
-백엔드가 Token 교환에 사용하는 URI가 완전히 같아야 한다. 로컬은 `http://localhost:3005/auth/kakao/callback`,
-배포 환경은 같은 `/auth/kakao/callback` 경로를 사용하는 실제 프론트엔드 HTTPS 주소로 설정한다. REST API 키와
-Client Secret의 실제 값은 `/opt/chongchong/.env`에만 저장하고 저장소에는 커밋하지 않는다.
+각 명령 위에 실행 위치를 적었다. **AWS 콘솔**은 브라우저 화면, **edge·A·B 터미널**은 그 서버에 SSM으로 접속한 화면이다.
 
-## 3. CodeBuild Project를 구성한다
+## 이 문서에서 쓰는 AWS 용어
 
-| 설정 | 값 |
+| 용어 | 이 구성에서 하는 일 |
 | --- | --- |
-| Source | CodePipeline |
-| Artifacts | CodePipeline |
-| Environment | Managed image, x86_64, ARM64 cross-platform build 지원 |
-| Image | `aws/codebuild/amazonlinux-x86_64-standard:6.0` |
-| Compute | `BUILD_GENERAL1_SMALL` |
-| Privileged mode | 활성화 |
-| Buildspec | `buildspec.yml` |
+| EC2 / 인스턴스 | edge나 백엔드 프로그램을 실행하는 서버 |
+| VPC / 서브넷 | 서버들이 연결된 네트워크와 그 안의 구역 |
+| 보안 그룹 | 어느 서버가 어떤 포트로 접속할 수 있는지 정하는 규칙 |
+| IAM 역할 | EC2나 빌드 도구가 S3·CloudWatch 등에 접근할 때 쓰는 권한 묶음 |
+| SSM Session Manager | AWS 콘솔에서 서버 터미널을 여는 기능 |
+| RDS | A/B가 함께 사용하는 데이터베이스 |
+| CloudWatch | 서버 지표와 앱 로그를 확인하는 서비스 |
+| CodeBuild / CodeDeploy / CodePipeline | 각각 이미지 빌드 / 서버 배포 / 전체 실행 순서를 담당 |
 
-현재 x86_64 CodeBuild Project는 `docker build --platform linux/arm64`를 실행한다. Project를 다시 만들 때는 선택한
-Managed Image의 Docker Builder가 binfmt/QEMU를 통한 ARM64 cross-platform build를 지원하는지 먼저 검증한다. 이
-조건을 충족하지 못하면 native ARM64 CodeBuild 환경을 사용해야 한다.
+> [!IMPORTANT]
+> A/B 배포의 CodeBuild 환경변수는 `DEPLOYMENT_MODE=edge`다. 생략하면 기존 단일 서버 배포인 `legacy`가 선택된다.
 
-CodeBuild 환경에는 다음 변수를 설정한다.
+## 서버 세 대는 각각 무엇을 하나요?
 
-| 변수 | 용도 | 저장 방식 |
+아래 그림은 **A가 활성 서버인 예시**다. A와 B는 고정된 주 서버·보조 서버가 아니라, 배포할 때마다 역할을 바꾼다.
+
+```mermaid
+flowchart LR
+    Client[사용자 요청] -->|HTTPS| Edge["edge EC2<br/>Nginx"]
+    Edge -->|현재 요청| A["backend A<br/>Spring Boot"]
+    Edge -. 다음 전환 대상 .-> B["backend B<br/>Spring Boot"]
+    A --> DB[(공유 RDS)]
+    B --> DB
+```
+
+| 서버 | 실행하는 것 | 운영자가 알아야 할 점 |
 | --- | --- | --- |
-| `DOCKERHUB_USERNAME` | Docker Hub push 사용자 | Parameter Store `/chongchong/dev/dockerhub/username` |
-| `DOCKERHUB_REPOSITORY` | 예: `docker.io/team/chongchong-backend` | 일반 변수 가능 |
-| `DOCKERHUB_TOKEN` | Docker Hub push Token | Parameter Store `/chongchong/dev/dockerhub/token` |
+| edge | Nginx, 앱 메트릭 수집기(ADOT), CodeDeploy Agent | HTTPS와 인증서를 관리하고 A/B 배포·트래픽 전환을 수행한다. |
+| backend A | Spring Boot 컨테이너 | 활성일 때 사용자 요청을 처리하고, 대기일 때 다음 배포 대상이 된다. |
+| backend B | Spring Boot 컨테이너 | A와 같은 역할을 번갈아 맡는다. |
 
-CodeBuild Service Role에는 username과 Token 두 파라미터에 대한 `ssm:GetParameters` 권한만 부여한다.
-`DOCKERHUB_TOKEN`을
-plaintext 환경 변수나 저장소 파일에 넣지 않는다.
+대기 서버도 앱이 실행 중이다. HTTP 요청이 가지 않더라도 DB 연결과 스케줄러·알림 작업은 남을 수 있다.
+두 버전이 같은 DB를 사용하므로 스키마와 백그라운드 작업도 두 인스턴스가 함께 동작할 수 있어야 한다.
 
-CodeBuild는 Corretto 25로 `bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA 태그로만 push한다.
-CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`, Compose, Nginx, 스크립트와 확정된 `image.env`만
-포함한다.
+## 어떤 문서부터 읽으면 되나요?
 
-`dev`와 `prod` Pipeline은 같은 Docker Hub Repository와 push 자격 증명을 사용해도 되는 동일한 신뢰 경계에 있을
-때만 CodeBuild Project와 `buildspec.yml`을 공유한다. 환경별 write 권한 격리가 필요하면 CodeBuild Project, Service
-Role, Parameter Store 경로와 이미지 Repository를 분리한다. 현재 Parameter Store의 `/chongchong/dev/dockerhub/*`
-경로를 공용으로 사용하는 것은 전자의 조건을 전제로 한다.
+| 하려는 일 | 문서 |
+| --- | --- |
+| 서버를 새로 준비하거나 빠진 설정을 찾기 | [서버 준비와 역할별 검사](docs/server-setup.md) |
+| 새 버전 배포, 앱 설정 변경, 실패 복구 | [A/B 배포 운영 절차](docs/edge-deployment.md) |
+| A/B 메트릭과 로그 확인, 부하 테스트 분석 | [모니터링 확인](docs/monitoring.md) |
+| 기존 단일 서버 환경을 관리하기 | [legacy 배포 참고](docs/legacy-deployment.md) |
+| Nginx 연결 한도를 정한 배경 확인 | [과거 실험 기록](docs/nginx-limits-and-observability.md) |
 
-각 실행의 `CODEBUILD_RESOLVED_SOURCE_VERSION`을 commit SHA별 이미지 태그와 `image.env`에 기록하므로 정상적인
-Pipeline 실행끼리는 `dev`와 `prod` 이미지 태그가 충돌하지 않는다. Docker Hub 태그 자체는 덮어쓸 수 있으므로 이
-구성은 Registry 수준의 불변성을 보장하지 않는다. 더 강한 이미지 무결성이 필요하면 push 결과의 manifest digest를
-artifact에 기록하고 digest로 배포해야 한다. `dev`나 `prod` 같은 가변 태그는 생성하지 않는다.
+처음 구성할 때는 **서버 준비 → A/B 배포 → 모니터링 확인** 순서로 읽는다. 각 문서에 실행할 서버, 명령과 정상 결과를 적었다.
 
-## 4. CodeDeploy를 구성한다
+## 코드 변경이 서버에 도착하는 흐름
 
-1. EC2/On-Premises compute platform의 Application을 생성한다. `dev`와 `prod`가 같은 Application을 공유할 수 있다.
-2. 환경마다 EC2 tag로 대상 서버 한 대를 선택하는 Deployment Group을 생성한다. 개발 서버와 운영 서버가 다르면
-   Deployment Group도 분리한다.
-3. Deployment Type은 `In-place`, Configuration은 `CodeDeployDefault.AllAtOnce`를 사용한다.
-4. 배포 실패 시 자동 rollback을 활성화한다.
-5. CodeDeploy Service Role과 EC2 Instance Profile을 연결한다.
-
-EC2 Instance Profile은 Pipeline artifact S3 읽기에 필요한 최소 권한을 가져야 한다. 현재처럼 공개 CodeDeploy
-Endpoint를 사용하는 Agent에는 별도의 `codedeploy-commands-secure` 권한이 필요하지 않으며, 이 권한은 CodeDeploy용
-VPC Endpoint와 IAM 인증을 사용할 때만 추가한다. CodeDeploy Service Role은 대상 EC2 tag와 배포 상태를 관리하는 데
-필요한 권한을 가져야 한다. Pipeline Service Role도 해당 환경의 Deployment Group과 artifact 경로만 조작하도록
-권한을 제한한다.
-
-## 5. CodePipeline V2를 구성한다
-
-`dev`와 `prod` 환경마다 Pipeline을 하나씩 두고 `Source -> Build -> Deploy` 순서로 구성한다.
-
-### Source
-
-- Provider: GitHub via CodeStarSourceConnection
-- Repository: `woowacourse-teams/2026-ChongChong`
-- Output artifact format: CodePipeline default
-- Trigger event: Push
-- Include branch: Pipeline 환경과 같은 `dev` 또는 `prod`
-- Include file paths:
-  - `backend/**`
-  - `deploy/**`
-  - `buildspec.yml`
-  - `appspec.yml`
-
-### Build
-
-- Provider: CodeBuild
-- Input: Source artifact
-- Output: Build artifact
-- Project: 3단계에서 만든 공용 x86_64 CodeBuild Project
-
-### Deploy
-
-- Provider: CodeDeploy
-- Input: Build artifact
-- Application: 4단계에서 만든 공용 Application
-- Deployment Group: Pipeline 환경에 대응하는 Deployment Group
-
-프론트엔드 파일만 바뀐 `dev` 또는 `prod` push에서는 Pipeline을 실행하지 않는다. 위 배포 경로 중 하나가 바뀌면
-구현 단순성을 위해 JAR과 Docker 이미지를 모두 새로 만든다.
-
-## 6. 최초 배포를 확인한다
-
-Pipeline 성공 후 다음을 확인한다.
-
-```bash
-sudo systemctl status codedeploy-agent
-sudo docker compose \
-  --env-file /opt/chongchong/.env \
-  --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
-  ps
-sudo bash -c '
-  set -Eeuo pipefail
-  set -a
-  source /opt/chongchong/.env
-  set +a
-  status_code="$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
-    --resolve "${SERVER_NAME}:443:127.0.0.1" \
-    "https://${SERVER_NAME}/actuator/health")"
-  [[ "${status_code}" =~ ^2[0-9]{2}$ ]]
-'
+```mermaid
+flowchart LR
+    Source[환경 브랜치 변경] --> Pipeline[CodePipeline]
+    Pipeline --> Build["CodeBuild<br/>테스트·JAR·ARM64 이미지"]
+    Build --> Registry["Docker Hub<br/>commit SHA 태그"]
+    Build --> Artifact["배포 파일과 image.env"]
+    Artifact --> CD["CodeDeploy<br/>edge 한 대"]
+    CD --> Script[edge-deploy.sh]
+    Script -->|SSH로 설정과 파일 전달| Standby["대기 backend<br/>backend-release.sh"]
+    Registry -->|이미지 pull| Standby
+    Standby --> Check[readiness 확인]
+    Check --> Switch["Nginx reload<br/>실제 HTTPS 응답 검증"]
 ```
 
-배포 스크립트는 backend와 Nginx 컨테이너가 실행되고 Nginx에서 backend 8080 포트로 연결할 수 있는지 확인한 뒤,
-Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
-새 컨테이너 시작에 실패하면 직전 backend 이미지로 복구를 시도한다. 단일 EC2를 사용하므로 배포 중 짧은 중단은
-허용하며, 운영 전 무중단 전환은 별도 결정으로 다룬다.
+운영자는 SSM으로 접속한다. CodeDeploy는 edge에서 배포 스크립트를 실행하고, edge가 SSH로 대기 백엔드에 파일을 전달한다.
 
-## 7. CloudWatch HTTP 메트릭 수집기를 환경별로 활성화한다
+## 파일을 찾을 때
 
-[ADR-0044](../backend/docs/adr/0044-collect-http-metrics-with-adot-and-cloudwatch.md)에 따라 각 EC2의 ADOT
-수집기는 사설 Docker 네트워크에서 백엔드의 `/actuator/prometheus`를 읽고 CloudWatch의 OTLP 메트릭
-엔드포인트로 전송한다. AMP workspace나 추가 메트릭 서버는 만들지 않는다. `CLOUD_WATCH_AWS_REGION`과
-`CLOUD_WATCH_APP_ENV`는 기존 로그 설정값을 사용한다. dev에서는 `dev`, prod에서는 `prod`를 설정한다.
-컨테이너에 정적 AWS 키를 넣지 않고 EC2 Instance Profile의 임시 자격 증명을 사용한다. 메트릭용 inbound
-포트는 열지 않으며 CloudWatch `monitoring` 엔드포인트로 HTTPS 443 outbound가 가능해야 한다.
-
-EC2 역할에는 `cloudwatch:PutMetricData` 권한이 필요하다. dev의 `ec2-project` 역할에서는 CLI의 기본
-`PutMetricData` 호출이 성공했다. 이는 수집기의 OTLP 전송까지 확인한 것은 아니다. prod에서도 실제 역할과
-권한을 확인한다. 수집기에서 자격 증명을 읽지 못하면 EC2 IMDSv2 접근과 응답 hop limit을 확인한다. hop limit
-변경은 같은 호스트의 다른 컨테이너에도 역할 접근을 허용할 수 있으므로 적용 범위를 검토한다.
-
-수집기 활성화 전 `free -h`, `vmstat 1 5`, `df -h /`, `sudo docker stats --no-stream`으로 기준값을 확인한다.
-2026-09-29 측정 기준 prod `t4g.small`의 가용 메모리는 766MiB, dev `t4g.micro`는 209MiB였다. prod 루트
-파일시스템은 이후 확장했으므로 현재 여유 용량을 다시 확인한다. dev 백엔드는 약 305MiB를 사용했고 스왑
-337MiB가 사용 중이었다. 수집기의 192MB 제한은 최대치일 뿐 실제 사용량이나 안전한 여유를 보장하지 않는다.
-
-dev 단기 시험에서는 `/opt/chongchong/.env`에 `COMPOSE_PROFILES=metrics`를 아직 설정하지 않는다. 이미
-존재하는 `CLOUD_WATCH_AWS_REGION=ap-northeast-2`와 `CLOUD_WATCH_APP_ENV=dev`를 확인하고, 백엔드가 실행
-중일 때 아래 명령으로 수집기만 시작한다.
-
-```bash
-sudo docker compose \
-  --env-file /opt/chongchong/.env \
-  --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
-  --profile metrics up --detach --no-deps metrics-collector
-sudo docker logs --tail 100 chongchong-metrics-collector
-free -h
-vmstat 1 30
-sudo docker stats --no-stream
-sudo docker inspect --format '{{.State.OOMKilled}}' chongchong-metrics-collector
+```text
+deploy/
+├── README.md       # 전체 구조와 읽는 순서
+├── docs/           # 서버 준비·배포·복구·모니터링 문서
+├── config/         # Compose, 환경변수 예시, 메트릭 수집 설정
+│   ├── nginx/      # Nginx 설정과 템플릿
+│   └── systemd/    # 인증서 갱신 service·timer
+├── scripts/
+│   ├── edge/       # edge의 A/B 배포·트래픽 전환·롤백
+│   ├── backend/    # 대상 백엔드에서 앱 교체
+│   ├── setup/      # 서버 준비 검사·메모리 수집·인증서 갱신
+│   └── legacy/     # 기존 단일 서버 배포·초기 설치
+└── tests/          # 배포 회귀 테스트와 Docker smoke test
 ```
 
-Prometheus 출력의 누적 히스토그램에는 OTLP 시작 시각이 없어 수집기가 `cumulativetodelta`로 수집 간 증가분을
-만든다. 첫 관측값은 기준값으로만 사용하므로 최소 두 번의 60초 수집 이후 전송 결과를 확인한다. 수집기 로그에서
-`Partial success response`와 자격 증명·네트워크·OTLP 전송 오류가 없는지 확인한다. CloudWatch Query Studio에서 실제
-HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후 요청 수가 증가하는지 조회한다. 통제된 dev
-환경에서만 5xx 요청과 p95 계산을 검증한다. Prometheus 출력이 OTLP로 변환되므로 실제 이름과 쿼리를 확인한
-뒤 바니에게 전달한다. Query Studio 읽기 권한은 EC2의 쓰기 권한과 별개다. 공개 HTTPS에서
-`/actuator/prometheus`가 프록시되지 않는지도 확인한다.
+아래 경로는 `deploy/` 기준이다. 빌드에서 생성하는 `image.env`는 기존처럼 `deploy/` 바로 아래에 둔다.
+서버의 `config/backend.env`, `edge-runtime`, `edge-routing` 같은 운영 경로는 바뀌지 않는다.
+Compose의 기본 프로젝트 이름은 `deploy`로 유지하며, A/B 앱은 스크립트에서 `chongchong-backend`를 지정한다.
+legacy 복구는 폴더 정리 전후의 백업 구조를 모두 읽는다.
 
-`vmstat`의 첫 줄은 부팅 이후 평균이므로 그 뒤의 `si`·`so`를 본다. 지속적인 스왑 입출력, OOM, 백엔드
-응답 악화 또는 전송 실패가 보이면 아래 명령으로 수집기만 중지한다.
+| 파일 | 역할 |
+| --- | --- |
+| `../buildspec.yml`, `../appspec.edge.yml` | 이미지와 배포 파일을 만들고 edge에서 배포를 시작한다. |
+| `config/docker-compose.edge.yml` | edge의 Nginx·ADOT 컨테이너를 구성한다. |
+| `config/docker-compose.backend.yml` | 각 백엔드의 앱 컨테이너를 구성한다. `config/docker-compose.yml`의 backend 정의를 상속한다. |
+| `scripts/edge/edge-deploy.sh`, `scripts/edge/edge-runtime.sh` | 대기 서버 배포, 라우팅 검증·전환·실패 복구를 담당한다. |
+| `scripts/backend/backend-release.sh` | edge가 전달한 파일로 대상 백엔드의 앱만 교체한다. |
+| `scripts/edge/edge-rollback.sh` | 이전 백엔드로 라우팅을 되돌린다. |
+| `scripts/setup/check-server-setup.sh` | backend/edge 역할별 로컬 준비 상태를 읽기 전용으로 검사한다. |
+| `scripts/setup/setup-host-memory.sh`, `scripts/setup/host-monitoring.sh` | 서버 준비 때 호스트 메모리 수집을 설치·설정한다. |
+| `config/nginx/edge.conf.template`, `config/nginx/nginx.edge.conf`, `config/otel-collector.edge.yaml` | edge에 설치할 라우팅 템플릿·Nginx 한도·앱 수집 설정 원본이다. |
+| `config/edge.env.example`, `config/.env.example` | edge 주소·SSH 설정과 앱 환경변수의 예시다. |
+
+`scripts/legacy/`와 `config/docker-compose.dev.yml`은 기존 단일 서버 배포에서 사용한다.
+`config/docker-compose.yml`의 backend 정의는 A/B 배포에서도 공통으로 사용한다.
+
+## 변경한 뒤 확인할 것
 
 ```bash
-sudo docker compose \
-  --env-file /opt/chongchong/.env \
-  --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
-  --profile metrics stop metrics-collector
+python3 -m unittest discover -s deploy/tests -v
+bash deploy/tests/host-monitoring-test.sh
+for script in deploy/scripts/*/*.sh; do bash -n "$script" || exit 1; done
 ```
 
-dev 단기 시험에서 안정성을 확인한 뒤에만 `.env`에 `COMPOSE_PROFILES=metrics`를 추가해 이후 배포에서도
-수집기가 실행되게 한다. dev가 불안정하면 상시 실행하지 않고 인스턴스 증설 또는 수집 위치 변경을 결정한다.
-그 다음 prod에서도 권한·자원·실제 메트릭을 검증한다. 수집 중단 구간에는 데이터 공백이 생길 수 있지만
-백엔드의 요청 처리와 CloudWatch Logs 수집은 계속 동작한다. CloudWatch OpenTelemetry 메트릭은 수집
-데이터량에 따라 과금되므로 실제 수집량과 비용을 확인한다.
+Docker가 실행 중인 환경에서는 `deploy/tests/nginx-smoke.sh`와 `deploy/tests/edge-nginx-smoke.sh`도 실행한다.
+전체 CI 명령은 [deploy-ci.yml](../.github/workflows/deploy-ci.yml)에 있다. 서버 적용 후에는 배포 문서의 health 확인과 모니터링 문서의 지표 조회를 실행한다.

@@ -33,7 +33,7 @@ export default function NotificationListPage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <NotificationListPage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -41,7 +41,7 @@ export default function NotificationListPage() {
   );
 }
 
-NotificationListPage.Content = function Content() {
+function Content() {
   const { data: notifications } = useSuspenseQuery(notificationQueries.list());
   const { markAsRead } = useMarkNotificationAsRead();
   const posthog = usePostHog();
@@ -68,4 +68,4 @@ NotificationListPage.Content = function Content() {
       ))}
     </List>
   );
-};
+}

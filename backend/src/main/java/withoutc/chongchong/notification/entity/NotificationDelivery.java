@@ -72,6 +72,17 @@ public class NotificationDelivery extends BaseEntity {
         this.attemptCount++;
     }
 
+    public void releaseClaim() {
+        validateStatus(DeliveryStatus.PROCESSING);
+        this.status = DeliveryStatus.RETRY_WAIT;
+
+        if (nextRetryAt == null) {
+            this.status = DeliveryStatus.PENDING;
+        }
+        this.claimedAt = null;
+        this.attemptCount--;
+    }
+
     public void markSent(LocalDateTime now) {
         validateStatus(DeliveryStatus.PROCESSING);
         validateTime(now);

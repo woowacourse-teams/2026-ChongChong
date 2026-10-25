@@ -1,0 +1,30 @@
+AttachmentFileIds:
+  type: [array, 'null']
+  uniqueItems: true
+  maxItems: 10
+  items: { type: integer, format: int64, minimum: 1 }
+  description: 완료된 본인 파일 ID 목록. 생략 또는 null이면 기존 첨부 유지, 빈 배열이면 제거한다. 배열 순서로 표시하며 다른 게시물의 파일은 재사용할 수 없다.
+Attachment:
+  type: object
+  additionalProperties: false
+  required: [fileId, originalFileName, contentType, size, sortOrder, imageUrl, downloadUrl]
+  properties:
+    fileId: { type: integer, format: int64 }
+    originalFileName: { type: string }
+    contentType: { type: string }
+    size: { type: integer, format: int64, minimum: 0 }
+    sortOrder: { type: integer, minimum: 0 }
+    imageUrl:
+      type: [string, 'null']
+      format: uri
+      description: JPEG·PNG·WebP 미리보기용 서명 URL. 일반 파일은 null. aws.s3.url-validity 이후 만료되며 상세 조회를 다시 호출해 갱신한다.
+    downloadUrl:
+      type: string
+      format: uri
+      description: 모든 첨부의 다운로드용 S3 서명 URL. 원본 파일명으로 저장하도록 attachment 응답을 지정한다. aws.s3.url-validity 이후 만료되며 상세 조회로 갱신한다.
+AttachmentBadRequest:
+  type: object
+  required: [code, message]
+  properties:
+    code: { type: string, enum: [EMPTY_SUBMISSION, INVALID_ATTACHMENT_IDS, ATTACHMENT_LIMIT_EXCEEDED, INVALID_ATTACHMENT_TYPE, INVALID_ATTACHMENT_SIZE, FILE_NOT_ATTACHABLE] }
+    message: { type: string }

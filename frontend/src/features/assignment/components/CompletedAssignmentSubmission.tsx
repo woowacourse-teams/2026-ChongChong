@@ -1,3 +1,5 @@
+import { usePostHog } from '@posthog/react';
+import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -78,6 +80,7 @@ export default function CompletedAssignmentSubmission({
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
+  const posthog = usePostHog();
 
   const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
 
@@ -85,18 +88,33 @@ export default function CompletedAssignmentSubmission({
     mutationFn: (values: AssignmentSubmissionValue) =>
       updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
 
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
-        exact: true,
+    onSuccess: async (_data, values) => {
+      posthog?.capture('assignment_submission_saved', {
+        content_type: 'submission',
+        mode: 'edit',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
       });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
+          exact: true,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: assignmentQueries.submissionDetail(
+            studyId,
+            assignmentId,
+            submission.submissionId,
+          ).queryKey,
+          exact: true,
+        }),
+      ]);
 
       setIsEditing(false);
     },
 
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
 
@@ -107,6 +125,7 @@ export default function CompletedAssignmentSubmission({
   return isEditing ? (
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}-${submission.submissionId}`}
+      initialAttachments={submission.attachments}
       initialValues={{ content: submission.content ?? '', link: submission.link ?? '' }}
       isSubmitting={isPending}
       submitLabel="수정하기"
@@ -139,6 +158,22 @@ export default function CompletedAssignmentSubmission({
             <a css={linkStyle} href={href} target="_blank" rel="noreferrer">
               {submission.link}
             </a>
+          </InfoCard>
+        )}
+        {!!submission.attachments?.length && (
+          <InfoCard icon={linkIcon} title="첨부 파일">
+            <AttachmentList
+              attachments={submission.attachments}
+              onDownloadClick={(file) =>
+                posthog?.capture('attachment_download_clicked', {
+                  content_type: 'submission',
+                  location: 'my_submission',
+                  file_id: file.fileId,
+                  mime_type: file.contentType,
+                  file_size_bytes: file.size,
+                })
+              }
+            />
           </InfoCard>
         )}
       </div>

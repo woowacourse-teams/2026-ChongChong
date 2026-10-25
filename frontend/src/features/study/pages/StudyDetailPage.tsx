@@ -32,7 +32,7 @@ export default function StudyDetailPage() {
         )}
       >
         <Suspense fallback={<Loading />}>
-          <StudyDetailPage.Content />
+          <Content />
         </Suspense>
       </ErrorBoundary>
       <BottomTab />
@@ -40,7 +40,7 @@ export default function StudyDetailPage() {
   );
 }
 
-StudyDetailPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParam(['studyId']);
   const posthog = usePostHog();
   const {
@@ -81,4 +81,4 @@ StudyDetailPage.Content = function Content() {
       </Main>
     </>
   );
-};
+}

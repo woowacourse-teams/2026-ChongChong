@@ -7,11 +7,14 @@ get:
   operationId: getSubmissionDetail
   x-frontend:
     status: needs-update
-    description: "계약 수정: createdAt·content가 null인 정상 응답을 프론트 검증이 거부함. nullable 타입·검증·표시 처리 필요.\n기능 추가: 공개 과제의 제출 목록에서 다른 스터디원의 제출 상세로 이동."
+    description: |
+      계약 수정: GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}에 사용하는 submissionDetailSchema는 createdAt·content를 문자열로 요구하므로 null인 정상 응답을 거부한다. nullable 타입·검증·표시 처리가 필요하다.
+      내 제출 조회(/submissions/my)는 별도의 userAssignmentSubmitDetailSchema를 사용한다. NOT_SUBMITTED, MISSING, NOT_ASSIGNED에서는 두 필드를 요구하지 않으며 누락이나 null 때문에 검증이 실패하지 않는다.
+      공개 과제의 목록에서 다른 멤버의 상세 화면으로 이동하는 기능은 연결되어 있다.
     sources:
       - frontend/src/features/assignment/responseSchemas.ts
   x-backend:
-    status: review
+    status: done
     owner: frombunny
     description: |
       리더·본인은 제출물 상세를 조회할 수 있고 공개 과제의 다른 스터디원은 제출 완료된 내용만 조회할 수 있다.
@@ -34,17 +37,18 @@ patch:
   tags: [Assignment Submission]
   operationId: updateSubmission
   x-frontend:
-    status: integrated
-    description: "멤버와 리더의 본인 제출물 편집 흐름이 연결되어 있다."
+    status: needs-update
+    description: "본인 제출물 편집 흐름은 연결되어 있지만 공통 제출 폼이 content를 필수로 요구한다. 서버가 허용하는 내용 없는 제출물 수정에 맞춰 입력 제약을 완화해야 한다."
     sources:
       - frontend/src/features/assignment/components/CompletedAssignmentSubmission.tsx
+      - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
   x-backend:
     status: done
     owner: frombunny
     description: |
       본인 제출물을 수정하며 과제와 제출물의 소속을 검증한다. 미제출 행도 수정할 수 있지만 수정 요청만으로 제출 완료 상태가 되지는 않는다.
       리더도 본인의 제출물을 수정할 수 있다.
-      후속 예정: 이미지·파일 제출 검증(#296).
+      완료된 이미지·파일 첨부 연결을 지원한다.
   summary: 과제 제출 수정
   description: 현재 사용자가 자신의 제출 내용을 수정한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -58,5 +62,5 @@ patch:
     '204': { description: 과제 제출 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/SubmissionWriteBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
-    '404': { $ref: '../../components/responses.yaml#/AssignmentOrSubmissionNotFound' }
+    '403': { $ref: '../../components/responses.yaml#/AssignmentAttachmentForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentAttachmentNotFound' }

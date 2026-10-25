@@ -63,11 +63,21 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
-          cache: gradle
-          cache-dependency-path: |
-            backend/*.gradle
-            backend/gradle/wrapper/gradle-wrapper.properties
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
       - name: Check Docker
         run: docker info
       - name: Test and build executable JAR
-        run: ./gradlew test bootJar
+        run: ./gradlew test bootJar --build-cache --profile -Pci
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build-reports
+          path: |
+            backend/build/reports/profile/
+            backend/build/reports/tests/
+            backend/build/test-results/**/*.xml
+          retention-days: 7

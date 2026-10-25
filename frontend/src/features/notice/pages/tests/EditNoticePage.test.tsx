@@ -30,6 +30,7 @@ describe('공지 수정 폼', () => {
           profileImageUrl: null,
           content: '기존 내용',
           createdAt: '2026-09-02T00:00:00',
+          attachments: [],
         }),
       ),
     );

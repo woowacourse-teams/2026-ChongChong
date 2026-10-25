@@ -23,7 +23,19 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     ASSIGNMENT_SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_SUBMISSION_NOT_FOUND", "존재하지 않는 제출물입니다."),
 
-    ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "존재하지 않는 과제입니다.");
+    ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "존재하지 않는 과제입니다."),
+
+    EMPTY_SUBMISSION(HttpStatus.BAD_REQUEST, "EMPTY_SUBMISSION", "내용, 링크 또는 첨부파일을 제출해 주세요."),
+
+    INVALID_ATTACHMENT_IDS(HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_IDS", "첨부파일 식별자가 올바르지 않습니다."),
+
+    ATTACHMENT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "ATTACHMENT_LIMIT_EXCEEDED", "첨부파일 개수 제한을 초과했습니다."),
+
+    INVALID_ATTACHMENT_TYPE(HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_TYPE", "허용되지 않은 첨부파일 형식입니다."),
+
+    INVALID_ATTACHMENT_SIZE(HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_SIZE", "첨부파일 크기가 올바르지 않습니다."),
+
+    INVALID_ATTACHMENT(HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT", "첨부 대상과 파일 및 표시 순서가 올바르지 않습니다.");
 
 
     private final HttpStatus httpStatus;

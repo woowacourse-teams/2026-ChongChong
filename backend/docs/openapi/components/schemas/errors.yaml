@@ -54,6 +54,13 @@ ErrorResponse:
         - INVALID_SUBMISSION_METHOD
         - INVALID_CLOSE_AT
         - INVALID_REMIND_AT
+        - INVALID_ATTACHMENT_IDS
+        - ATTACHMENT_LIMIT_EXCEEDED
+        - INVALID_NOTICE_IMAGE_TYPE
+        - INVALID_NOTICE_IMAGE_SIZE
+        - FILE_NOT_FOUND
+        - FILE_NOT_OWNED
+        - FILE_NOT_ATTACHABLE
         - JOINED_STUDY_LIMIT_EXCEEDED
         - ALREADY_JOINED_STUDY
         - STUDY_MEMBER_LIMIT_EXCEEDED
@@ -123,3 +130,23 @@ StudyMemberLimitExceededError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { prop
 WebPushSubscriptionAlreadyRegisteredError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED }, message: { const: 다른 사용자에게 등록된 웹 푸시 구독입니다. } } }], examples: [{ code: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED, message: 다른 사용자에게 등록된 웹 푸시 구독입니다. }] }
 
 StudyInvalidNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_NAME }, message: { const: 스터디 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_NAME, message: 스터디 이름이 올바르지 않습니다. }] }
+
+NoticeAttachmentBadRequestError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code:
+          enum: [INVALID_ATTACHMENT_IDS, ATTACHMENT_LIMIT_EXCEEDED, INVALID_NOTICE_IMAGE_TYPE, INVALID_NOTICE_IMAGE_SIZE, FILE_NOT_ATTACHABLE]
+        message: { type: string }
+FileNotOwnedError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code: { const: FILE_NOT_OWNED }
+        message: { const: 본인이 업로드한 파일만 처리할 수 있습니다. }
+FileNotFoundError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code: { const: FILE_NOT_FOUND }
+        message: { const: 존재하지 않는 파일입니다. }

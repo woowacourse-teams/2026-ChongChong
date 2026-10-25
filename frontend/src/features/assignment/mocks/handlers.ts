@@ -1,3 +1,5 @@
+import { fileAttachments } from '../../../shared/modules/files/mocks/attachments';
+import { validateAssignmentAttachments } from './attachments';
 import { http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
@@ -73,7 +75,9 @@ export const handlers = [
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
-    const body = (await request.json()) as AssignmentValue;
+    const body = (await request.json()) as AssignmentValue & {
+      attachmentFileIds?: number[] | null;
+    };
     const fieldErrors = validateAssignment(body);
     if (fieldErrors.length > 0) {
       return invalidInputResponse(fieldErrors);
@@ -85,6 +89,9 @@ export const handlers = [
 
     const { title, content, submissionMethod, closeAt, submissionTarget, submissionVisibility } =
       body;
+    const attachmentFileIds = body.attachmentFileIds ?? [];
+    const attachmentError = validateAssignmentAttachments(attachmentFileIds, user.id);
+    if (attachmentError) return attachmentError;
     const assignmentId = Date.now();
     await assignmentTable.create({
       id: assignmentId,
@@ -96,6 +103,7 @@ export const handlers = [
       submissionTarget,
       submissionVisibility,
       completeUserIds: [],
+      attachmentFileIds,
     });
     const submitters = memberTable
       .findMany((q) => q.where({ studyId }))
@@ -120,7 +128,9 @@ export const handlers = [
     async ({ request, params }) => {
       const user = findUserFromHeader(request.headers);
       if (!user) return new HttpResponse(null, { status: 401 });
-      const body = (await request.json()) as UpdateAssignmentValue;
+      const body = (await request.json()) as UpdateAssignmentValue & {
+        attachmentFileIds?: number[] | null;
+      };
       const fieldErrors = validateAssignment(body);
       if (fieldErrors.length > 0) {
         return invalidInputResponse(fieldErrors);
@@ -134,9 +144,17 @@ export const handlers = [
       const assignment = assignmentTable.findFirst((q) => q.where({ id: assignmentId, studyId }));
       if (!assignment) return new HttpResponse(null, { status: 404 });
 
+      const attachmentFileIds = body.attachmentFileIds ?? assignment.attachmentFileIds ?? [];
+      const attachmentError = validateAssignmentAttachments(
+        attachmentFileIds,
+        user.id,
+        assignment.attachmentFileIds,
+      );
+      if (attachmentError) return attachmentError;
+
       await assignmentTable.update(assignment, {
         data(assignment) {
-          Object.assign(assignment, body);
+          Object.assign(assignment, body, { attachmentFileIds });
         },
       });
 
@@ -221,6 +239,7 @@ export const handlers = [
       submissionMethod: assignment.submissionMethod,
       submissionTarget: assignment.submissionTarget,
       submissionVisibility: assignment.submissionVisibility,
+      attachments: fileAttachments(assignment.attachmentFileIds, true),
     });
   }),
 
@@ -295,6 +314,7 @@ export const handlers = [
         createdAt: submission.createdAt,
         ...(submission.content === null ? {} : { content: submission.content }),
         ...(submission.link === null ? {} : { link: submission.link }),
+        attachments: fileAttachments(submission.attachmentFileIds, true),
       });
     },
   ),
@@ -330,6 +350,7 @@ export const handlers = [
         createdAt: submission.createdAt,
         content: submission.content,
         link: submission.link,
+        attachments: fileAttachments(submission.attachmentFileIds, true),
       });
     },
   ),
@@ -354,11 +375,27 @@ export const handlers = [
         q.where({ assignmentId, userId: user.id }),
       );
       if (!submission) return new HttpResponse(null, { status: 404 });
-      if (submission.submitted) return new HttpResponse(null, { status: 409 });
+      const body = (await request.json()) as AssignmentSubmissionValue & {
+        attachmentFileIds?: number[] | null;
+      };
+      const content = body.content ?? null;
+      const link = body.link ?? null;
+      const attachmentFileIds = body.attachmentFileIds ?? submission.attachmentFileIds ?? [];
+      const attachmentError = validateAssignmentAttachments(
+        attachmentFileIds,
+        user.id,
+        submission.attachmentFileIds,
+        'file',
+      );
+      if (attachmentError) return attachmentError;
+      if (!content?.trim() && !link?.trim() && !attachmentFileIds.length) {
+        return HttpResponse.json(
+          { code: 'EMPTY_SUBMISSION', message: '내용, 링크, 파일 중 하나 이상을 입력해주세요.' },
+          { status: 400 },
+        );
+      }
 
-      const { content, link } = (await request.json()) as AssignmentSubmissionValue;
-
-      const createdAt = new Date().toISOString();
+      const createdAt = submission.createdAt ?? new Date().toISOString();
       const submissionId = submission.id;
 
       submissionTable.delete((q) => q.where({ id: submission.id }));
@@ -366,14 +403,15 @@ export const handlers = [
         ...submission,
         submitted: true,
         content,
-        link: link ?? null,
+        link,
+        attachmentFileIds,
         createdAt,
       });
 
       assignmentTable.delete((q) => q.where({ id: assignmentId, studyId }));
       await assignmentTable.create({
         ...assignment,
-        completeUserIds: [...assignment.completeUserIds, user.id],
+        completeUserIds: [...new Set([...assignment.completeUserIds, user.id])],
       });
 
       return HttpResponse.json({ submissionId }, { status: 201 });
@@ -393,11 +431,31 @@ export const handlers = [
       if (!submission) return new HttpResponse(null, { status: 404 });
       if (submission.userId !== user.id) return new HttpResponse(null, { status: 403 });
 
-      const values = (await request.json()) as AssignmentSubmissionValue;
+      const values = (await request.json()) as AssignmentSubmissionValue & {
+        attachmentFileIds?: number[] | null;
+      };
+      const content = values.content ?? submission.content;
+      const link = values.link ?? submission.link;
+      const attachmentFileIds = values.attachmentFileIds ?? submission.attachmentFileIds ?? [];
+      const attachmentError = validateAssignmentAttachments(
+        attachmentFileIds,
+        user.id,
+        submission.attachmentFileIds,
+        'file',
+      );
+      if (attachmentError) return attachmentError;
+      if (!content?.trim() && !link?.trim() && !attachmentFileIds.length) {
+        return HttpResponse.json(
+          { code: 'EMPTY_SUBMISSION', message: '내용, 링크, 파일 중 하나 이상을 입력해주세요.' },
+          { status: 400 },
+        );
+      }
       submissionTable.delete((q) => q.where({ id: submission.id }));
       await submissionTable.create({
         ...submission,
-        ...values,
+        content,
+        link,
+        attachmentFileIds,
       });
 
       return new HttpResponse(null, { status: 204 });

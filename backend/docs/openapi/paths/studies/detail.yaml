@@ -39,10 +39,11 @@ patch:
   tags: [Study]
   operationId: updateStudy
   x-frontend:
-    status: needs-update
-    description: "기능 추가: 스터디 설정에서 이름·설명을 수정하고 저장하는 기능."
+    status: integrated
+    description: "리더가 스터디 관리에서 이름·설명을 수정하고 저장하는 화면이 연결되어 있다."
     sources:
       - frontend/src/features/study/api.ts
+      - frontend/src/features/study/pages/StudyEditPage.tsx
   x-backend:
     status: done
     owner: wontop02

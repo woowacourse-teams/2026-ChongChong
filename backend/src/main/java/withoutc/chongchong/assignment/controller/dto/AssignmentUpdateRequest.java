@@ -2,6 +2,7 @@ package withoutc.chongchong.assignment.controller.dto;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,9 +12,9 @@ import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 public record AssignmentUpdateRequest(
         @Size(max = 100, message = "제목은 {max}자 이내로 입력 가능합니다.")
         String title,
-        @Size(max = 10000, message = "내용은 10,000자 이내로 입력 가능합니다.")
+        @Size(max = 10000, message = "내용은 {max}자 이내로 입력 가능합니다.")
         String content,
-        @Size(max = 10000, message = "제출 방법은 10,000자 이내로 입력 가능합니다.")
+        @Size(max = 10000, message = "제출 방법은 {max}자 이내로 입력 가능합니다.")
         String submissionMethod,
         SubmissionTarget submissionTarget,
         SubmissionVisibility submissionVisibility,
@@ -23,6 +24,16 @@ public record AssignmentUpdateRequest(
                 @NotNull(message = "리마인드 시각은 필수 값입니다.")
                 @Future(message = "리마인드 시각은 현재보다 미래여야 합니다.")
                         LocalDateTime
-                > remindAts
+                > remindAts,
+        List<
+                @NotNull(message = "첨부파일 ID는 필수 값입니다.")
+                @Positive(message = "첨부파일 ID는 양수여야 합니다.")
+                        Long
+                > attachmentFileIds
 ) {
+    public AssignmentUpdateRequest(String title, String content, String submissionMethod,
+                                   SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
+                                   LocalDateTime closeAt, List<LocalDateTime> remindAts) {
+        this(title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts, null);
+    }
 }

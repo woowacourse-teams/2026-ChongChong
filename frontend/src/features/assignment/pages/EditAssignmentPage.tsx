@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import BottomTab from '../../../shared/widgets/BottomTab';
@@ -28,7 +29,7 @@ export default function EditAssignmentPage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <EditAssignmentPage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -37,10 +38,11 @@ export default function EditAssignmentPage() {
   );
 }
 
-EditAssignmentPage.Content = function Content() {
+function Content() {
   const { studyId, assignmentId } = useIntegerParams(['studyId', 'assignmentId']);
   const { data: assignment } = useSuspenseQuery(assignmentQueries.detail(studyId, assignmentId));
   const toast = useToast();
+  const posthog = usePostHog();
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -48,7 +50,12 @@ EditAssignmentPage.Content = function Content() {
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentValue) => updateAssignment(studyId, assignmentId, values),
 
-    onSuccess: () => {
+    onSuccess: (_data, values) => {
+      posthog?.capture('assignment_saved', {
+        content_type: 'assignment',
+        mode: 'edit',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(studyId),
       });
@@ -62,7 +69,7 @@ EditAssignmentPage.Content = function Content() {
 
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
 
@@ -75,6 +82,7 @@ EditAssignmentPage.Content = function Content() {
       submitLabel="과제 수정하기"
       onSubmit={mutate}
       isSubmitting={isPending}
+      initialAttachments={assignment.attachments}
       initialValues={{
         title: assignment.title,
         content: assignment.content,
@@ -86,4 +94,4 @@ EditAssignmentPage.Content = function Content() {
       fieldErrors={fieldErrors}
     />
   );
-};
+}

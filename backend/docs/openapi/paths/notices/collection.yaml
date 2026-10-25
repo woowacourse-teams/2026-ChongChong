@@ -5,24 +5,50 @@ post:
   operationId: createNotice
   x-frontend:
     status: needs-update
-    description: "기능 추가: 공지 작성 시 리마인드 날짜·시간을 선택하고 remindAts로 저장."
+    description: |
+      기능 추가: 공지 작성 시 리마인드 날짜·시간을 선택하고 remindAts로 저장해야 한다.
+      이미지 선택·S3 업로드 후 각 파일의 업로드 완료 API를 호출해야 한다.
+      완료에 성공한 fileId 목록을 표시 순서대로 attachmentFileIds에 전달하는 흐름은 미연동이다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
   x-backend:
     status: done
-    owner: frombunny
+    owner: JYL35
     description: |
       공지를 생성하고 수신자와 리마인더를 초기화한다.
-      후속 예정: 이미지 첨부(#275), 공지 서비스·권한 책임 분리(#256).
+      #554에서 업로드 완료 API를 통과한 COMPLETED 파일 연결로 전환했다.
+      공지는 소유권·이미지 정책·공지/과제/제출물의 기존 연결 여부를 검증하며 S3 조회나 완료 전환을 수행하지 않는다.
+      #556으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다. 첨부 정책은 서버 설정으로 변경할 수 있다.
   summary: 공지 생성
-  description: 스터디 리더가 공지를 생성한다. 입력·형식·도메인 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다. 리마인드 시각은 현재보다 미래여야 한다.
+  description: |
+    스터디 리더가 공지를 생성한다. S3 업로드 후 POST /api/files/{fileId}/complete에 성공한 파일의
+    식별자를 attachmentFileIds에 표시 순서대로 전달한다. 새 파일은 COMPLETED 상태·본인 소유이며
+    다른 공지·과제·제출물에 연결되지 않아야 한다. PENDING·DELETE_PENDING 또는 이미 연결된 파일은
+    400 FILE_NOT_ATTACHABLE로 거부한다. 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 빈 파일은 허용하지 않는다.
+    허용 형식·용량·개수는 서버 설정으로 변경할 수 있고, 공통 업로드 용량 제한도 함께 적용된다.
+    공지는 S3 조회나 완료 전환을 다시 수행하지 않는다. 공지 저장 실패 시 공지·첨부 관계·알림은 롤백되지만
+    선행 완료 API에서 확정한 파일의 COMPLETED 상태는 유지된다.
+    첨부 생략·null·빈 배열은 무첨부 생성과 같다. 리마인드 시각은 미래여야 한다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
+    description: 예제의 첨부 ID는 업로드 완료 API에 성공한 본인 소유·미연결 파일의 실제 fileId로 대체한다.
     content:
       application/json:
         schema: { $ref: '../../components/schemas/notices.yaml#/NoticeCreateRequest' }
-        example: { title: 이번 주 공지, content: 이번 주 스터디 일정을 확인해주세요., remindAts: ['2026-08-28T10:00:00'] }
+        examples:
+          withAttachments:
+            summary: 이미지 두 장을 첨부한 공지 생성
+            value:
+              title: 이번 주 공지
+              content: 이번 주 스터디 일정을 확인해주세요.
+              remindAts: ['2099-12-30T10:00:00']
+              attachmentFileIds: [101, 102]
+          withoutAttachments:
+            summary: 첨부 없는 공지 생성
+            value:
+              title: 이번 주 공지
+              content: 이번 주 스터디 일정을 확인해주세요.
   responses:
     '201':
       description: 공지 생성 성공
@@ -32,7 +58,8 @@ post:
           example: { noticeId: 1 }
     '400': { $ref: '../../components/responses.yaml#/NoticeWriteBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '403': { $ref: '../../components/responses.yaml#/NoticeWriteForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/FileNotFound' }
 get:
   tags: [Notice]
   operationId: getNotices
@@ -46,7 +73,6 @@ get:
     owner: frombunny
     description: |
       공지 목록을 커서 방식으로 조회하고 역할별 읽음 현황을 반환한다. 리더 집계와 멤버의 개인 읽음 상태를 구분한다.
-      후속 예정: 서비스·권한 책임 분리(#256).
   summary: 공지 목록 조회
   description: 가입 전 공지를 포함한 전체 공지를 커서 방식으로 조회한다. 리더에게는 집계와 isComplete를, 스터디원에게는 readStatus를 반환한다. 확인 대상이 아니면 NOT_ASSIGNED이며 조회로 수신자를 추가하지 않는다. 역할에 해당하지 않는 필드는 생략한다. 쿼리·형식 오류(400), 인증 실패(401), 접근 권한 없음(403)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]

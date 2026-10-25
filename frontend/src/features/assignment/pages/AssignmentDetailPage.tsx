@@ -23,7 +23,7 @@ export default function AssignmentDetailPage() {
         right={
           <ErrorBoundary fallback={null}>
             <Suspense fallback={null}>
-              <AssignmentDetailPage.HeaderActions />
+              <HeaderActions />
             </Suspense>
           </ErrorBoundary>
         }
@@ -33,7 +33,7 @@ export default function AssignmentDetailPage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <AssignmentDetailPage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -42,7 +42,7 @@ export default function AssignmentDetailPage() {
   );
 }
 
-AssignmentDetailPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const {
     data: { role, userName },
@@ -53,9 +53,9 @@ AssignmentDetailPage.Content = function Content() {
   ) : (
     <MemberAssignmentDetailContent studyId={studyId} userName={userName} />
   );
-};
+}
 
-AssignmentDetailPage.HeaderActions = function HeaderActions() {
+function HeaderActions() {
   const { studyId, assignmentId } = useIntegerParams(['studyId', 'assignmentId']);
   const {
     data: { role },
@@ -64,4 +64,4 @@ AssignmentDetailPage.HeaderActions = function HeaderActions() {
   return role === 'LEADER' ? (
     <ContentActionMenu studyId={studyId} id={assignmentId} content="assignment" />
   ) : null;
-};
+}

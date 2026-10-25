@@ -1,3 +1,5 @@
+import type { Attachment } from '../../shared/modules/files/types';
+
 export type SubmissionStatus =
   'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED' | 'LATE_SUBMITTED' | 'MISSING';
 
@@ -48,6 +50,7 @@ export interface AssignmentSubmitStatus {
 }
 
 export interface AssignmentDetail {
+  attachments?: Attachment[];
   id: number;
   title: string;
   content: string;
@@ -60,8 +63,9 @@ export interface AssignmentDetail {
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
 export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
-export type AssignmentValue = Omit<AssignmentDetail, 'id'> & {
+export type AssignmentValue = Omit<AssignmentDetail, 'id' | 'attachments'> & {
   remindAts?: string[] | null;
+  attachmentFileIds?: number[];
 };
 
 export type UpdateAssignmentValue = Partial<AssignmentValue>;
@@ -81,13 +85,16 @@ export interface SubmissionListResponse {
   submissions: Submission[];
 }
 
-export interface SubmissionDetail extends SubmissionBase {
-  content: string;
+export interface SubmissionDetail extends Omit<SubmissionBase, 'createdAt'> {
+  createdAt: string | null;
+  attachments?: Attachment[];
+  content: string | null;
   link: string | null;
 }
 
 export interface AssignmentSubmissionValue {
-  content: string;
+  attachmentFileIds?: number[];
+  content?: string | null;
   link?: string;
 }
 
@@ -100,6 +107,7 @@ export interface CreateSubmissionResponse {
 }
 
 export interface SubmittedAssignment {
+  attachments?: Attachment[];
   submissionStatus: 'SUBMITTED';
   submissionId: number;
   createdAt: string;
@@ -108,6 +116,7 @@ export interface SubmittedAssignment {
 }
 
 export interface LateSubmittedAssignment {
+  attachments?: Attachment[];
   submissionStatus: 'LATE_SUBMITTED';
   submissionId: number;
   createdAt: string;

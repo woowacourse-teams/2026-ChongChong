@@ -12,9 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
@@ -38,6 +40,14 @@ class WebPushSubscriptionRepositoryTest extends PostgresContainerTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private TestDatabaseCleaner databaseCleaner;
+
+    @BeforeTransaction
+    void cleanDatabase() {
+        databaseCleaner.clean();
+    }
 
     @Test
     @DisplayName("사용자와 Web Push 구독 정보를 저장하고 조회한다")

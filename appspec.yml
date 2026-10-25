@@ -7,7 +7,7 @@ files:
 file_exists_behavior: OVERWRITE
 
 permissions:
-  - object: /opt/chongchong/deploy/scripts
+  - object: /opt/chongchong/deploy/scripts/legacy
     pattern: "*.sh"
     owner: root
     group: root
@@ -17,14 +17,14 @@ permissions:
 
 hooks:
   BeforeInstall:
-    - location: deploy/scripts/prepare.sh
+    - location: deploy/scripts/legacy/prepare.sh
       timeout: 60
       runas: root
   ApplicationStart:
-    - location: deploy/scripts/deploy.sh
+    - location: deploy/scripts/legacy/deploy.sh
       timeout: 300
       runas: root
   ValidateService:
-    - location: deploy/scripts/validate.sh
+    - location: deploy/scripts/legacy/validate.sh
       timeout: 120
       runas: root

@@ -1,14 +1,31 @@
+logging:
+  level:
+    org.springframework.test.context.cache: DEBUG
+    org.testcontainers: INFO
+    tc: INFO
+
 spring:
   datasource:
-    url: jdbc:h2:mem:chongchong-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:chongchong-test-${random.uuid};MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 0
+      idle-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: create-drop
   flyway:
     enabled: false
+
+aws:
+  region: ap-northeast-2
+  s3:
+    bucket: test-upload-bucket
+    upload-prefix: chongchong/files/test/uploads/
+    url-validity: 3m
 
 jwt:
   study-invite-secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=

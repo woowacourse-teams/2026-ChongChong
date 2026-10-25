@@ -1,3 +1,5 @@
+import { usePostHog } from '@posthog/react';
+import ImageGallery from '../../../shared/widgets/ImageGallery';
 import type { CSSProperties } from 'react';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import { tokens } from '../../../styles/global';
@@ -21,11 +23,26 @@ const detailsStyle = {
 } satisfies CSSProperties;
 
 export default function AssignmentArticle({ assignment }: Props) {
+  const posthog = usePostHog();
   return (
     <article css={articleStyle} aria-label="과제 상세">
       <div css={detailsStyle}>
         <InfoCard icon={assignmentIcon} title="과제 내용">
-          {assignment.content}
+          <div css={detailsStyle}>
+            <div>{assignment.content}</div>
+            <ImageGallery
+              attachments={assignment.attachments ?? []}
+              onImageError={(file) =>
+                posthog?.capture('attachment_image_load_failed', {
+                  content_type: 'assignment',
+                  attachment_kind: 'image',
+                  file_id: file.fileId,
+                  mime_type: file.contentType,
+                  file_size_bytes: file.size,
+                })
+              }
+            />
+          </div>
         </InfoCard>
 
         <InfoCard icon={assignmentIcon} title="제출 방법">

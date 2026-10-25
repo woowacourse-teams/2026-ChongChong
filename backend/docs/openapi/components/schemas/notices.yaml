@@ -9,6 +9,15 @@ NoticeCreateRequest:
       description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다."
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
+    attachmentFileIds:
+      description: |
+        첨부 식별자의 표시 순서 목록. 생략·null·빈 배열은 첨부 없음. 중복 불가.
+        업로드 완료 API에 성공한 COMPLETED 상태·본인 소유·공지/과제/제출물에 미연결인 파일만 허용한다.
+        기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 빈 파일은 거부한다. 형식·용량·개수는 설정 가능하며
+        공통 업로드 용량 제한도 함께 적용된다.
+      type: [array, 'null']
+      uniqueItems: true
+      items: { type: integer, format: int64, minimum: 1 }
 NoticeUpdateRequest:
   type: object
   additionalProperties: false
@@ -19,6 +28,17 @@ NoticeUpdateRequest:
       description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 기존 예약을 유지하고 빈 배열이면 대기 중인 예약을 제거한다. 시각은 서버의 현재 시각보다 미래여야 한다."
       type: [array, 'null']
       items: { $ref: './common.yaml#/LocalDateTime' }
+    attachmentFileIds:
+      description: |
+        최종 첨부 목록과 표시 순서. 생략·null은 유지, 빈 배열은 전체 제거. 중복 불가.
+        새 파일은 업로드 완료 API에 성공한 COMPLETED 상태·본인 소유·공지/과제/제출물에 미연결이어야 한다.
+        기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 빈 파일은 거부한다. 형식·용량·개수는 설정 가능하며
+        공통 업로드 용량 제한도 함께 적용된다. 최종 개수는 전체 목록, 소유권·형식·크기는 새 파일에 적용한다.
+        이전 리더 소유의 기존 첨부도 유지·재정렬할 수 있다.
+        제거 파일은 연결만 해제하고 COMPLETED를 유지하며 미연결 상태에서 소유자가 다시 첨부할 수 있다.
+      type: [array, 'null']
+      uniqueItems: true
+      items: { type: integer, format: int64, minimum: 1 }
 NoticeCreateResponse:
   type: object
   additionalProperties: false
@@ -28,12 +48,38 @@ NoticeCreateResponse:
 NoticeDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, createdAt]
+  required: [id, title, content, createdAt, attachments]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 이번 주 공지 }
     content: { type: string, example: 이번 주 스터디 일정을 확인해주세요. }
     createdAt: { $ref: './common.yaml#/LocalDateTime' }
+    attachments:
+      description: |
+        표시 순서대로 정렬한 첨부 메타데이터와 조회용 imageUrl. 무첨부는 빈 배열이다.
+        objectKey와 업로드용 URL은 별도 필드로 반환하지 않는다.
+      type: array
+      items: { $ref: '#/NoticeAttachmentResponse' }
+NoticeAttachmentResponse:
+  type: object
+  additionalProperties: false
+  required: [fileId, originalFileName, contentType, size, sortOrder, imageUrl]
+  properties:
+    fileId: { type: integer, format: int64, minimum: 1 }
+    originalFileName: { type: string }
+    contentType: { type: string }
+    size: { type: integer, format: int64, minimum: 1, description: 파일 크기(바이트) }
+    sortOrder: { type: integer, minimum: 0, description: 0부터 시작하는 표시 순서 }
+    imageUrl:
+      type: [string, 'null']
+      format: uri
+      description: |
+        JPEG·PNG·WebP 첨부를 표시하는 S3 presigned GET URL. 필드는 항상 포함하며,
+        공통 URL 생성기가 지원하지 않는 contentType이면 null이다. null일 때는 이미지 표시를 생략한다.
+        스터디 소속·공지 조회 권한을 확인한 뒤 발급하며 파일 소유자와 조회자가 같을 필요는 없다.
+        aws.s3.url-validity(기본 10분, AWS_URL_VALIDITY로 변경)의 유효기간이 지나면 만료된다.
+        만료 시 공지 상세를 다시 조회해 URL을 발급받는다. 영구적인 파일 식별자로 저장하지 않는다.
+      example: 'https://example.com/notice-images/schedule.png?X-Amz-Expires=600&X-Amz-Signature=example'
 NoticeSummaryResponse:
   type: object
   additionalProperties: false

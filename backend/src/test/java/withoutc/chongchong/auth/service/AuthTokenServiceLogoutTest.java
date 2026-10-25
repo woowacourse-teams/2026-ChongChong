@@ -2,6 +2,7 @@ package withoutc.chongchong.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.entity.AuthSession;
+import withoutc.chongchong.auth.exception.AuthErrorCode;
+import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
 import withoutc.chongchong.auth.token.HashedRefreshToken;
 import withoutc.chongchong.auth.token.IssuedTokenPair;
@@ -49,7 +52,7 @@ class AuthTokenServiceLogoutTest {
 
         authTokenService.logout(tokenPair.refreshToken());
 
-        assertThat(authSessionRepository.findByUserId(user.getId())).isEmpty();
+        assertThat(authSessionRepository.findAllByUserId(user.getId())).isEmpty();
         assertThat(authSessionRepository.count()).isZero();
     }
 
@@ -70,25 +73,59 @@ class AuthTokenServiceLogoutTest {
     }
 
     @Test
+    @DisplayName("같은 사용자의 한 세션을 로그아웃해도 다른 세션은 보존되고 재발급할 수 있다")
+    void logoutWithoutChangingOtherSessionOfSameUser() {
+        User user = saveUser("총총이");
+        IssuedTokenPair first = authTokenService.issue(user.getId());
+        Long firstSessionId = findOnlySession(user.getId()).getId();
+        IssuedTokenPair second = authTokenService.issue(user.getId());
+        AuthSession secondSession = authSessionRepository.findAllByUserId(user.getId()).stream()
+                .filter(session -> !session.getId().equals(firstSessionId))
+                .findFirst().orElseThrow();
+
+        authTokenService.logout(first.refreshToken());
+        authTokenService.logout(first.refreshToken());
+
+        assertThat(authSessionRepository.existsById(firstSessionId)).isFalse();
+        AuthSession preservedSession = authSessionRepository.findById(secondSession.getId()).orElseThrow();
+        assertThat(preservedSession.getRefreshTokenHash()).isEqualTo(secondSession.getRefreshTokenHash());
+        assertThat(preservedSession.getExpiresAt()).isEqualTo(secondSession.getExpiresAt());
+        assertThat(authSessionRepository.count()).isOne();
+        assertThatThrownBy(() -> authTokenService.rotate(first.refreshToken()))
+                .isInstanceOf(AuthException.class)
+                .extracting(exception -> ((AuthException) exception).getErrorCode())
+                .isEqualTo(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        assertThat(authTokenService.rotate(second.refreshToken()).refreshToken())
+                .isNotEqualTo(second.refreshToken());
+    }
+
+    @Test
     @DisplayName("한 사용자의 로그아웃은 다른 사용자의 인증 세션에 영향을 주지 않는다")
     void keepOtherUserSession() {
         User firstUser = saveUser("첫 번째 사용자");
         User secondUser = saveUser("두 번째 사용자");
         IssuedTokenPair firstTokenPair = authTokenService.issue(firstUser.getId());
         authTokenService.issue(secondUser.getId());
-        AuthSession secondSession = authSessionRepository.findByUserId(secondUser.getId()).orElseThrow();
+        AuthSession secondSession = findOnlySession(secondUser.getId());
         HashedRefreshToken secondRefreshTokenHash = secondSession.getRefreshTokenHash();
 
         authTokenService.logout(firstTokenPair.refreshToken());
 
-        assertThat(authSessionRepository.findByUserId(firstUser.getId())).isEmpty();
-        assertThat(authSessionRepository.findByUserId(secondUser.getId()))
-                .hasValueSatisfying(session -> assertThat(session.getRefreshTokenHash())
+        assertThat(authSessionRepository.findAllByUserId(firstUser.getId())).isEmpty();
+        assertThat(authSessionRepository.findAllByUserId(secondUser.getId()))
+                .singleElement()
+                .satisfies(session -> assertThat(session.getRefreshTokenHash())
                         .isEqualTo(secondRefreshTokenHash));
         assertThat(authSessionRepository.count()).isOne();
     }
 
     private User saveUser(String name) {
         return userRepository.saveAndFlush(User.create(name, null));
+    }
+
+    private AuthSession findOnlySession(Long userId) {
+        var sessions = authSessionRepository.findAllByUserId(userId);
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 }

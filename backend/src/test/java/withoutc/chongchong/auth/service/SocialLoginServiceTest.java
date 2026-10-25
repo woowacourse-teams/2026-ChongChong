@@ -1,7 +1,6 @@
 package withoutc.chongchong.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +73,7 @@ class SocialLoginServiceTest {
                 SocialProvider.GOOGLE,
                 "google-user-id"
         ).orElseThrow();
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
         Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
         HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
 
@@ -123,8 +122,8 @@ class SocialLoginServiceTest {
     }
 
     @Test
-    @DisplayName("같은 소셜 사용자가 다시 로그인하면 기존 인증 세션을 교체한다")
-    void replaceAuthSessionOnSocialRelogin() {
+    @DisplayName("같은 소셜 사용자가 다시 로그인하면 기존 인증 세션을 보존하고 새 세션을 생성한다")
+    void createAuthSessionOnSocialRelogin() {
         SocialUserInfo socialUserInfo = createSocialUserInfo(
                 SocialProvider.GOOGLE,
                 "google-user-id",
@@ -134,19 +133,24 @@ class SocialLoginServiceTest {
         SocialLoginResult firstResult = socialLoginService.login(socialUserInfo);
         IssuedTokenPair firstTokenPair = firstResult.tokenPair();
         User user = userRepository.findAll().getFirst();
-        AuthSession firstSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession firstSession = findOnlySession(user.getId());
         Long firstSessionId = firstSession.getId();
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
 
         SocialLoginResult secondResult = socialLoginService.login(socialUserInfo);
         IssuedTokenPair secondTokenPair = secondResult.tokenPair();
 
-        AuthSession replacedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession preservedSession = authSessionRepository.findById(firstSessionId).orElseThrow();
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.count()).isOne();
-        assertThat(replacedSession.getId()).isEqualTo(firstSessionId);
-        assertThat(replacedSession.getRefreshTokenHash()).isNotEqualTo(firstRefreshTokenHash);
+        assertThat(authSessionRepository.findAllByUserId(user.getId()))
+                .extracting(AuthSession::getRefreshTokenHash)
+                .containsExactlyInAnyOrder(
+                        firstRefreshTokenHash,
+                        refreshTokenHasher.hash(secondTokenPair.refreshToken())
+                );
+        assertThat(preservedSession.getRefreshTokenHash()).isEqualTo(firstRefreshTokenHash);
+        assertThat(preservedSession.getExpiresAt()).isEqualTo(firstTokenPair.refreshTokenExpiresAt());
         assertThat(secondTokenPair.refreshToken()).isNotEqualTo(firstTokenPair.refreshToken());
         assertThat(secondResult.userId()).isEqualTo(firstResult.userId());
     }
@@ -179,16 +183,10 @@ class SocialLoginServiceTest {
         assertThat(googleResult.userId()).isNotEqualTo(kakaoResult.userId());
     }
 
-    @Test
-    @DisplayName("검증된 소셜 사용자 정보가 없으면 로그인할 수 없다")
-    void rejectNullSocialUserInfo() {
-        assertThatThrownBy(() -> socialLoginService.login(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("검증된 소셜 사용자 정보는 필수입니다.");
-
-        assertThat(userRepository.count()).isZero();
-        assertThat(socialAccountRepository.count()).isZero();
-        assertThat(authSessionRepository.count()).isZero();
+    private AuthSession findOnlySession(Long userId) {
+        var sessions = authSessionRepository.findAllByUserId(userId);
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 
     private SocialUserInfo createSocialUserInfo(

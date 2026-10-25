@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -32,26 +34,30 @@ final class OpenApiContractFilter implements Filter {
     private static final String TEST_API_PREFIX = "/api/test/";
     private static final String TEST_API_WITHOUT_GLOBAL_PREFIX = "/test/";
     private static final Object COVERAGE_FILE_LOCK = new Object();
+    private static final Map<Path, Contract> CONTRACTS_BY_SPEC = new ConcurrentHashMap<>();
 
     private final OpenApiInteractionValidator validator;
     private final OpenApiOperationCatalog catalog;
     private final Path coveragePath;
 
     OpenApiContractFilter() {
-        Path specPath = Path.of(System.getProperty("openapi.spec.path"));
-        this.validator = OpenApiInteractionValidator.createFor(specPath.toString()).build();
-        this.catalog = OpenApiOperationCatalog.load(specPath);
-        this.coveragePath = Path.of(System.getProperty("openapi.coverage.path"));
+        this(
+                Path.of(System.getProperty("openapi.spec.path")),
+                Path.of(System.getProperty("openapi.coverage.path"))
+        );
         installAsOnlyContractFilter();
     }
 
-    OpenApiContractFilter(
-            OpenApiInteractionValidator validator,
-            OpenApiOperationCatalog catalog,
-            Path coveragePath
-    ) {
-        this.validator = validator;
-        this.catalog = catalog;
+    OpenApiContractFilter(Path specPath, Path coveragePath) {
+        Contract contract = CONTRACTS_BY_SPEC.computeIfAbsent(
+                specPath.toAbsolutePath().normalize(),
+                path -> new Contract(
+                        OpenApiInteractionValidator.createFor(path.toString()).build(),
+                        OpenApiOperationCatalog.load(path)
+                )
+        );
+        this.validator = contract.validator();
+        this.catalog = contract.catalog();
         this.coveragePath = coveragePath;
     }
 
@@ -131,5 +137,8 @@ final class OpenApiContractFilter implements Filter {
                 throw new IllegalStateException("OpenAPI 성공 호출 기록에 실패했습니다: " + coveragePath, exception);
             }
         }
+    }
+
+    private record Contract(OpenApiInteractionValidator validator, OpenApiOperationCatalog catalog) {
     }
 }

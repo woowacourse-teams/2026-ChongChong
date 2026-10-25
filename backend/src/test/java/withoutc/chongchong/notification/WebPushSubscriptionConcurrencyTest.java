@@ -67,6 +67,9 @@ class WebPushSubscriptionConcurrencyTest extends PostgresContainerTest {
             }
         } finally {
             executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, SECONDS))
+                    .as("푸시 구독 등록 작업이 종료되어야 한다")
+                    .isTrue();
         }
 
         WebPushSubscriptionRow saved = findSubscription();
@@ -114,6 +117,9 @@ class WebPushSubscriptionConcurrencyTest extends PostgresContainerTest {
             }
         } finally {
             executor.shutdownNow();
+            assertThat(executor.awaitTermination(5, SECONDS))
+                    .as("푸시 구독 등록 작업이 종료되어야 한다")
+                    .isTrue();
         }
 
         assertThat(jdbcTemplate.queryForObject(

@@ -1,0 +1,29 @@
+package withoutc.chongchong.file.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import withoutc.chongchong.global.exception.code.ErrorCode;
+
+@Getter
+@RequiredArgsConstructor
+public enum FileErrorCode implements ErrorCode {
+
+    INVALID_FILE_OWNER(HttpStatus.BAD_REQUEST, "INVALID_FILE_OWNER", "파일 소유자가 올바르지 않습니다."),
+    INVALID_ORIGINAL_FILE_NAME(HttpStatus.BAD_REQUEST, "INVALID_ORIGINAL_FILE_NAME", "원본 파일명이 올바르지 않습니다."),
+    INVALID_OBJECT_KEY(HttpStatus.BAD_REQUEST, "INVALID_OBJECT_KEY", "파일 저장 키가 올바르지 않습니다."),
+    INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "INVALID_CONTENT_TYPE", "파일 유형이 올바르지 않습니다."),
+    INVALID_FILE_SIZE(HttpStatus.BAD_REQUEST, "INVALID_FILE_SIZE", "파일 크기가 올바르지 않습니다."),
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE_NOT_FOUND", "존재하지 않는 파일입니다."),
+    FILE_NOT_OWNED(HttpStatus.FORBIDDEN, "FILE_NOT_OWNED", "본인이 업로드한 파일만 처리할 수 있습니다."),
+    FILE_UPLOAD_NOT_FOUND(HttpStatus.CONFLICT, "FILE_UPLOAD_NOT_FOUND", "업로드된 파일을 찾을 수 없습니다."),
+    FILE_SIZE_MISMATCH(HttpStatus.BAD_REQUEST, "FILE_SIZE_MISMATCH", "실제 파일 크기가 요청한 크기와 다릅니다."),
+    FILE_UPLOAD_NOT_PENDING(HttpStatus.CONFLICT, "FILE_UPLOAD_NOT_PENDING", "업로드를 완료할 수 없는 파일 상태입니다."),
+    FILE_UPLOAD_BUSY(HttpStatus.SERVICE_UNAVAILABLE, "FILE_UPLOAD_BUSY", "파일 처리 중입니다. 잠시 후 다시 시도해 주세요."),
+    FILE_NOT_ATTACHABLE(HttpStatus.BAD_REQUEST, "FILE_NOT_ATTACHABLE", "파일을 첨부할 수 없습니다."),
+    FILE_LOOKUP_FAILED(HttpStatus.BAD_GATEWAY, "FILE_LOOKUP_FAILED", "파일 저장소 조회에 실패했습니다.");
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+}

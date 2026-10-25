@@ -30,4 +30,7 @@
 리더에게는 대상 멤버가 모두 완료했는지를 기준으로 남은 활동 수를 보여준다. 일반 멤버에게는 본인이 해야 하는 활동 중 아직 완료하지 않은 수를 보여준다.
 과제는 마감 전에 제출했든 늦게 제출했든 완료한 것으로 센다.
 
+리더 홈에서 스터디 인원이 한 명이면 멤버 초대 배너를 표시하고 멤버 화면으로 안내한다.
+근거: [홈 콘텐츠](../../../frontend/src/features/study/components/StudyDetailContent.tsx).
+
 근거: [스터디 서비스](../../../backend/src/main/java/withoutc/chongchong/study/service/StudyService.java), [참여 서비스](../../../backend/src/main/java/withoutc/chongchong/study/service/StudyMemberService.java), [스터디 모델](../../../backend/src/main/java/withoutc/chongchong/study/entity/Study.java), [초대 토큰](../../../backend/src/main/java/withoutc/chongchong/study/token/StudyInviteTokenProvider.java), [웹 입력 폼](../../../frontend/src/features/study/components/StudyForm.tsx), [홈](../../../frontend/src/features/study/pages/StudyDetailPage.tsx).

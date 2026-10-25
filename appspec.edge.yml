@@ -1,0 +1,19 @@
+version: 0.0
+os: linux
+files:
+  - source: deploy
+    destination: /opt/chongchong/deploy
+file_exists_behavior: OVERWRITE
+permissions:
+  - object: /opt/chongchong/deploy/scripts/edge
+    pattern: "*.sh"
+    owner: root
+    group: root
+    mode: 755
+    type:
+      - file
+hooks:
+  ApplicationStart:
+    - location: deploy/scripts/edge/edge-deploy.sh
+      timeout: 600
+      runas: root

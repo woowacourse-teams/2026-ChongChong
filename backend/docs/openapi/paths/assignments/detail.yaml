@@ -5,16 +5,17 @@ get:
   tags: [Assignment]
   operationId: getAssignmentDetail
   x-frontend:
-    status: needs-update
-    description: "기능 추가: submissionVisibility를 읽어 과제의 공개·비공개 상태를 표시."
+    status: integrated
+    description: "submissionVisibility를 검증하고 공개 과제의 제출 목록 조회와 수정 폼의 공개 범위 초기값에 사용한다."
     sources:
       - frontend/src/features/assignment/responseSchemas.ts
+      - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
   x-backend:
-    status: review
+    status: done
     owner: frombunny
     description: |
       과제 상세의 submissionTarget·submissionVisibility를 반환하며 스터디 소속을 검증한다.
-      후속 예정: 이미지·제출 형식(#296).
+      완료된 이미지·파일 첨부 연결을 지원한다.
   summary: 과제 상세 조회
   description: 스터디 과제 상세를 조회한다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -34,15 +35,15 @@ patch:
   operationId: updateAssignment
   x-frontend:
     status: needs-update
-    description: "기능 추가: 기존 공개 범위를 초기값으로 표시하고 변경값 저장. 리마인드 예약 추가·변경·취소."
+    description: "공개 범위 초기값과 수정 저장은 연결되어 있다. 남은 작업: 제출 방법의 선택 입력과 리마인드 예약 추가·변경·취소 UI."
     sources:
       - frontend/src/features/assignment/components/AssignmentForm.tsx
   x-backend:
-    status: review
+    status: done
     owner: frombunny
     description: |
       과제를 부분 수정하고 대기 중인 리마인더를 교체한다. 리더 미포함으로 변경하면 리더의 기존 제출물도 삭제한다.
-      후속 예정: 이미지·제출 형식(#296).
+      완료된 이미지·파일 첨부 연결을 지원한다.
   summary: 과제 수정
   description: 스터디 리더가 과제를 부분 수정한다. submissionVisibility를 생략하거나 null로 보내면 기존 값을 유지한다. 공개·비공개 전환은 이후 제출물 조회 권한에 즉시 반영되며 타인의 제출물 수정 권한을 부여하지 않는다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
@@ -56,8 +57,8 @@ patch:
     '204': { description: 과제 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/AssignmentWriteBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
-    '404': { $ref: '../../components/responses.yaml#/AssignmentNotFound' }
+    '403': { $ref: '../../components/responses.yaml#/AssignmentAttachmentForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentAttachmentNotFound' }
 delete:
   tags: [Assignment]
   operationId: deleteAssignment

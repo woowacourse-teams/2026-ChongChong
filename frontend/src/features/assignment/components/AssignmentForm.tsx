@@ -1,3 +1,7 @@
+import AttachmentField from '../../../shared/widgets/AttachmentField';
+import { useAttachments } from '../../../shared/modules/files/useAttachments';
+import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
+import type { Attachment } from '../../../shared/modules/files/types';
 import { CSSProperties, useState } from 'react';
 import Button from '../../../shared/ui/Button';
 import { Field } from '../../../shared/ui/inputs/Field';
@@ -22,11 +26,13 @@ const formStyle = {
 
 interface AssignmentFormProps {
   initialValues?: AssignmentValue;
+  initialAttachments?: Attachment[];
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: AssignmentValue) => void;
   fieldErrors?: Partial<
     Record<
+      | 'attachmentFileIds'
       | 'title'
       | 'content'
       | 'submissionMethod'
@@ -49,11 +55,18 @@ const emptyValues = {
 
 export default function AssignmentForm({
   initialValues = emptyValues,
+  initialAttachments,
   isSubmitting = false,
   fieldErrors = {},
   submitLabel,
   onSubmit,
 }: AssignmentFormProps) {
+  const attachments = useAttachments({
+    initialAttachments,
+    kind: 'image',
+    contentType: 'assignment',
+    mode: initialValues === emptyValues ? 'create' : 'edit',
+  });
   const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
     if (value.length > ASSIGNMENT_TITLE.length) return prevValue;
     return value;
@@ -82,13 +95,14 @@ export default function AssignmentForm({
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (isSubmitting) return;
+    if (isSubmitting || !attachments.isReady) return;
 
     posthog?.capture('assignment_form_submitted', {
       location: 'assignment_create_page',
     });
 
     onSubmit({
+      attachmentFileIds: attachments.attachmentFileIds,
       title,
       content,
       submissionMethod,
@@ -124,6 +138,17 @@ export default function AssignmentForm({
         errorText={fieldErrors.content}
         isRequired
         testId="assignment-content-field"
+      />
+      <AttachmentField
+        id="assignment-images"
+        label="이미지 업로드"
+        items={attachments.items}
+        onSelect={attachments.addFiles}
+        onRemove={attachments.removeFile}
+        accept={IMAGE_ACCEPT}
+        disabled={isSubmitting}
+        errorText={attachments.error ?? fieldErrors.attachmentFileIds}
+        helpText="본문을 설명할 이미지를 추가할 수 있어요"
       />
       <InputField
         id="submit-method"
@@ -183,7 +208,7 @@ export default function AssignmentForm({
         type="submit"
         variant="brandSolid"
         size="large"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !attachments.isReady}
         css={{ marginTop: tokens.spacing[8] }}
       >
         {submitLabel}

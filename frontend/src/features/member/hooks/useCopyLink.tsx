@@ -18,7 +18,7 @@ export default function useCopyLink() {
       showCopySuccess();
       copySuccessToHide();
     } catch {
-      toast.open(<StatusToast status="Error" message={'링크를 복사하지 못했어요'} />);
+      toast.open(<StatusToast status="error" message={'링크를 복사하지 못했어요'} />);
     }
   }
 

@@ -10,22 +10,26 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.assignment.controller.dto.AssignmentAttachmentResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
-import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse.CompleteMember;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse.IncompleteMember;
+import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.AssignmentAttachment;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
+import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notification.entity.ResourceType;
@@ -45,6 +49,8 @@ public class AssignmentService {
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
     private final NotificationService notificationService;
+    private final AssignmentAttachmentService assignmentAttachmentService;
+    private final FileUrlGenerator fileUrlGenerator;
 
     private final Clock clock;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
@@ -62,6 +68,7 @@ public class AssignmentService {
         Assignment assignment = Assignment.create(study, request.title(), request.content(), request.submissionMethod(),
                 request.submissionTarget(), request.submissionVisibility(), request.closeAt(), now);
         assignment.addReminders(request.remindAts(), now);
+        assignment.addAttachments(assignmentAttachmentService.prepare(userId, List.of(), request.attachmentFileIds()));
 
         assignment.initializeSubmissions(submitters);
 
@@ -78,6 +85,15 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
+        if (request.attachmentFileIds() != null) {
+            List<FileMetadata> files = assignmentAttachmentService.prepare(userId,
+                    assignment.getAttachments().stream().map(AssignmentAttachment::getFile).toList(),
+                    request.attachmentFileIds());
+            assignment.clearAttachments();
+            assignmentRepository.flush();
+            assignment.addAttachments(files);
+        }
+
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(actor, request.title(), request.content(), request.submissionMethod(),
                 request.submissionTarget(), request.submissionVisibility(), request.closeAt(), request.remindAts(),
@@ -92,7 +108,6 @@ public class AssignmentService {
         assignmentAccessPolicy.requireCanDeleteAssignment(actor);
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
-
         notificationService.deleteNotificationsForResource(ResourceType.ASSIGNMENT, assignmentId);
         assignmentRepository.delete(assignment);
     }
@@ -116,7 +131,8 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
-        return AssignmentDetailResponse.from(assignment);
+        List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(assignment);
+        return AssignmentDetailResponse.from(assignment, attachments);
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {
@@ -132,6 +148,19 @@ public class AssignmentService {
 
         List<AssignmentSummaryResponse> summaries = createAssignmentSummaries(member, assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
+    }
+
+    private List<AssignmentAttachmentResponse> createAttachmentResponses(Assignment assignment) {
+        return assignment.getAttachments().stream()
+                .map(attachment -> {
+                    FileMetadata file = attachment.getFile();
+                    String imageUrl = fileUrlGenerator.generateImageUrl(
+                            file.getObjectKey(), file.getContentType());
+                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
+                            file.getObjectKey(), file.getOriginalFileName());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
+                })
+                .toList();
     }
 
     private List<CompleteMember> toCompleteMembers(List<AssignmentSubmitterStatusProjection> statuses) {

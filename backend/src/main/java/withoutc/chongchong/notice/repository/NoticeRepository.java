@@ -1,9 +1,11 @@
 package withoutc.chongchong.notice.repository;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.notice.entity.Notice;
@@ -33,6 +35,15 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 
     default Notice getByIdAndStudyIdOrThrow(Long noticeId, Long studyId) {
         return findByIdAndStudyId(noticeId, studyId)
+                .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT n FROM Notice n WHERE n.id = :noticeId AND n.study.id = :studyId")
+    Optional<Notice> findByIdAndStudyIdForUpdate(@Param("noticeId") Long noticeId, @Param("studyId") Long studyId);
+
+    default Notice getByIdAndStudyIdForUpdateOrThrow(Long noticeId, Long studyId) {
+        return findByIdAndStudyIdForUpdate(noticeId, studyId)
                 .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 

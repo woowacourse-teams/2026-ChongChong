@@ -2,11 +2,13 @@ package withoutc.chongchong.notification.service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionRegisterRequest;
 import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionRegisterResponse;
+import withoutc.chongchong.notification.controller.dto.WebPushSubscriptionStatusResponse;
 import withoutc.chongchong.notification.entity.WebPushSubscription;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.user.entity.User;
@@ -66,5 +68,14 @@ public class WebPushSubscriptionService {
                 userId,
                 LocalDateTime.now(clock)
         );
+    }
+
+    public WebPushSubscriptionStatusResponse getStatus(Long userId, String installationId) {
+        Optional<WebPushSubscription> webPushSubscription = webPushSubscriptionRepository.findByUserIdAndInstallationId(
+                userId, installationId);
+        return webPushSubscription.map(
+                        pushSubscription -> new WebPushSubscriptionStatusResponse(pushSubscription.isActive(),
+                                pushSubscription.getId()))
+                .orElseGet(() -> new WebPushSubscriptionStatusResponse(false, null));
     }
 }

@@ -1,0 +1,99 @@
+name: deploy
+
+services:
+  backend:
+    image: "${BACKEND_IMAGE}:${BACKEND_IMAGE_TAG}"
+    container_name: chongchong-backend
+    restart: unless-stopped
+    stop_grace_period: "${BACKEND_STOP_TIMEOUT_SECONDS:-60}s"
+    environment:
+      AWS_REGION: "${AWS_REGION}"
+      AWS_S3_BUCKET: "${AWS_S3_BUCKET}"
+      AWS_S3_UPLOAD_PREFIX: "${AWS_S3_UPLOAD_PREFIX}"
+      AWS_URL_VALIDITY: "${AWS_URL_VALIDITY:-10m}"
+      SPRING_PROFILES_ACTIVE: "${SPRING_PROFILES_ACTIVE:-}"
+      WEB_PUSH_SENDER_MODE: "${WEB_PUSH_SENDER_MODE:-real}"
+      WEB_PUSH_SENDER_SIMULATED_DELAY_MS: "${WEB_PUSH_SENDER_SIMULATED_DELAY_MS:-500}"
+      WEB_PUSH_DELIVERY_CONCURRENCY: "${WEB_PUSH_DELIVERY_CONCURRENCY:-1}"
+      WEB_PUSH_DELIVERY_SEND_TIMEOUT: "${WEB_PUSH_DELIVERY_SEND_TIMEOUT:-5s}"
+      WEB_PUSH_DELIVERY_SHUTDOWN_TIMEOUT: "${WEB_PUSH_DELIVERY_SHUTDOWN_TIMEOUT:-8s}"
+      DB_URL: "${DB_URL}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      STUDY_INVITE_JWT_SECRET: "${STUDY_INVITE_JWT_SECRET}"
+      FRONTEND_BASE_URL: "${FRONTEND_BASE_URL}"
+      FRONTEND_ALLOWED_ORIGINS: "${FRONTEND_ALLOWED_ORIGINS:-${FRONTEND_BASE_URL}}"
+      AUTH_JWT_ISSUER: "${AUTH_JWT_ISSUER}"
+      AUTH_JWT_AUDIENCE: "${AUTH_JWT_AUDIENCE}"
+      AUTH_JWT_SECRET_BASE64: "${AUTH_JWT_SECRET_BASE64}"
+      AUTH_JWT_ACCESS_TOKEN_VALIDITY: "${AUTH_JWT_ACCESS_TOKEN_VALIDITY:-30m}"
+      AUTH_REFRESH_TOKEN_VALIDITY: "${AUTH_REFRESH_TOKEN_VALIDITY:-30d}"
+      AUTH_KAKAO_REST_API_KEY: "${AUTH_KAKAO_REST_API_KEY}"
+      AUTH_KAKAO_CLIENT_SECRET: "${AUTH_KAKAO_CLIENT_SECRET}"
+      AUTH_KAKAO_REDIRECT_URI: "${AUTH_KAKAO_REDIRECT_URI}"
+      WEB_PUSH_VAPID_PUBLIC_KEY: "${WEB_PUSH_VAPID_PUBLIC_KEY}"
+      WEB_PUSH_VAPID_PRIVATE_KEY: "${WEB_PUSH_VAPID_PRIVATE_KEY}"
+      WEB_PUSH_VAPID_SUBJECT: "${WEB_PUSH_VAPID_SUBJECT}"
+      WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET: "${WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV}"
+    expose:
+      - "8080"
+    networks:
+      - application
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "${CLOUD_WATCH_AWS_REGION}"
+        awslogs-group: "/chongchong/${CLOUD_WATCH_APP_ENV}/backend"
+        awslogs-stream: "backend"
+        awslogs-create-group: "false"
+
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: chongchong-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      SERVER_NAME: "${SERVER_NAME}"
+      NGINX_API_LOG_FORMAT: main
+      NGINX_ENVSUBST_FILTER: '^(SERVER_NAME|NGINX_API_LOG_FORMAT)$$'
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    networks:
+      - application
+
+  metrics-collector:
+    profiles:
+      - metrics
+    image: public.ecr.aws/aws-observability/aws-otel-collector:v0.49.0
+    container_name: chongchong-metrics-collector
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command:
+      - --config=/etc/otelcol/config.yaml
+    environment:
+      CLOUD_WATCH_AWS_REGION: "${CLOUD_WATCH_AWS_REGION:-}"
+      CLOUD_WATCH_APP_ENV: "${CLOUD_WATCH_APP_ENV:-}"
+      METRICS_SCRAPE_INTERVAL: "${METRICS_SCRAPE_INTERVAL:-60s}"
+      METRICS_SCRAPE_TIMEOUT: "${METRICS_SCRAPE_TIMEOUT:-10s}"
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    networks:
+      - application
+    mem_limit: 192m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+networks:
+  application:
+    name: chongchong-application

@@ -1,5 +1,7 @@
 # Architecture Decision Records
 
+[← 프로젝트 소개와 문서 목록](../../../README.md)
+
 Architecture Decision Record(ADR)는 백엔드에 영향을 주는 중요한 기술적 결정을 배경 및 근거와 함께 기록한다.
 ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대안을 검토했고 왜 현재 방식을 선택했는지 남기는 것을 목적으로 한다.
 
@@ -19,6 +21,10 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0056](0056-issue-notice-image-urls-after-access-check.md) | 공지 첨부 조회 URL은 조회 권한 확인 후 발급한다 |
+| [0055](0055-connect-completed-files-to-notices.md) | 공지 첨부는 업로드 완료 파일의 연결로 처리한다 |
+| [0054](0054-separate-upload-verification-from-database-transactions.md) | 업로드 검증의 S3 호출과 DB 트랜잭션을 분리한다 |
+| [0051](0051-allow-multiple-auth-sessions-per-user.md)                                    | 사용자당 여러 인증 세션을 허용한다 |
 | [0045](0045-delete-notifications-with-resources.md)                                    | 자원 삭제 시 관련 인앱 알림을 삭제한다 |
 | [0046](0046-separate-user-name-edit-limit-from-social-initialization.md)                 | 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다 |
 | [0047](0047-sync-home-name-to-current-study-memberships.md)                               | 홈 이름 변경을 현재 참여 스터디의 멤버 이름에 동기화한다 |
@@ -73,3 +79,5 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0042](0042-expose-backend-http-metrics-for-prometheus.md)                              | 백엔드 HTTP 메트릭을 Prometheus 형식으로 노출한다 |
 | [0043](0043-collect-http-metrics-with-adot-and-amp.md)                                  | ADOT으로 HTTP 메트릭을 수집해 AMP에 저장한다 |
 | [0044](0044-collect-http-metrics-with-adot-and-cloudwatch.md)                           | ADOT으로 HTTP 메트릭을 수집해 CloudWatch에 저장한다 |
+| [0052](0052-use-presigned-urls-for-file-uploads.md)                             | 첨부파일 업로드에 S3 Presigned URL을 사용한다 |
+| [0053](0053-stage-notice-attachments-before-storage-verification.md) | 공지 첨부를 실제 업로드 검증과 분리해 단계적으로 구현한다 |

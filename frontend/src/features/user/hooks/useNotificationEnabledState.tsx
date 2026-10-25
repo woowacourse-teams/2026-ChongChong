@@ -48,7 +48,7 @@ export default function useNotificationEnabledState() {
               ? error.message
               : '알림 설정을 변경하지 못했어요. 다시 시도해 주세요.'
           }
-          status="Error"
+          status="error"
         />,
       );
     } finally {

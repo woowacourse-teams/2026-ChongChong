@@ -21,7 +21,7 @@ export default function useUpdateProfileName({ onSuccess }: Params) {
     },
     onError: (error) => {
       if (error instanceof ApiError && error.code === 'INVALID_USER_NAME') return;
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
 

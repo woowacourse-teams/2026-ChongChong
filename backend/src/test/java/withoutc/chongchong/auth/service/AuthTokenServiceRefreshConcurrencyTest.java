@@ -88,7 +88,9 @@ class AuthTokenServiceRefreshConcurrencyTest {
             assertThat(successes).hasSize(1);
             assertThat(failures).containsExactly(AuthErrorCode.INVALID_REFRESH_TOKEN);
 
-            AuthSession currentSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+            var sessions = authSessionRepository.findAllByUserId(user.getId());
+            assertThat(sessions).hasSize(1);
+            AuthSession currentSession = sessions.getFirst();
             HashedRefreshToken successfulHash = refreshTokenHasher.hash(
                     successes.getFirst().tokenPair().refreshToken()
             );
@@ -100,7 +102,9 @@ class AuthTokenServiceRefreshConcurrencyTest {
         } finally {
             start.countDown();
             executorService.shutdownNow();
-            executorService.awaitTermination(5, SECONDS);
+            assertThat(executorService.awaitTermination(5, SECONDS))
+                    .as("인증 토큰 갱신 작업이 종료되어야 한다")
+                    .isTrue();
         }
     }
 

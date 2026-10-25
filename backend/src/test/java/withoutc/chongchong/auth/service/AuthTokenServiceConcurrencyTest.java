@@ -49,8 +49,8 @@ class AuthTokenServiceConcurrencyTest {
     }
 
     @Test
-    @DisplayName("같은 사용자가 동시에 Token을 발급받아도 활성 인증 세션은 하나다")
-    void keepSingleSessionOnConcurrentIssue() throws Exception {
+    @DisplayName("같은 사용자가 동시에 Token을 발급받으면 각각 독립적인 인증 세션을 생성한다")
+    void createIndependentSessionsOnConcurrentIssue() throws Exception {
         User user = userRepository.saveAndFlush(User.create("총총이", null));
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         CountDownLatch ready = new CountDownLatch(2);
@@ -71,15 +71,20 @@ class AuthTokenServiceConcurrencyTest {
             IssuedTokenPair second = secondFuture.get(10, SECONDS);
             HashedRefreshToken firstHash = refreshTokenHasher.hash(first.refreshToken());
             HashedRefreshToken secondHash = refreshTokenHasher.hash(second.refreshToken());
-            AuthSession currentSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
-
             assertThat(first.refreshToken()).isNotEqualTo(second.refreshToken());
-            assertThat(authSessionRepository.count()).isOne();
-            assertThat(currentSession.getRefreshTokenHash()).isIn(firstHash, secondHash);
+            assertThat(authSessionRepository.findAll())
+                    .extracting(AuthSession::getRefreshTokenHash)
+                    .containsExactlyInAnyOrder(firstHash, secondHash);
+            assertThat(authTokenService.rotate(first.refreshToken()).refreshToken())
+                    .isNotEqualTo(first.refreshToken());
+            assertThat(authTokenService.rotate(second.refreshToken()).refreshToken())
+                    .isNotEqualTo(second.refreshToken());
         } finally {
             start.countDown();
             executorService.shutdownNow();
-            executorService.awaitTermination(5, SECONDS);
+            assertThat(executorService.awaitTermination(5, SECONDS))
+                    .as("인증 토큰 발급 작업이 종료되어야 한다")
+                    .isTrue();
         }
     }
 

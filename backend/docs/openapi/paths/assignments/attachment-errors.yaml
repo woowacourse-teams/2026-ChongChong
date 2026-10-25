@@ -1,0 +1,19 @@
+Forbidden:
+  description: 스터디 접근·작업 권한이 없거나 다른 사용자의 파일임
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: '../../components/schemas/errors.yaml#/StudyAccessDeniedError' }
+          - { $ref: '../../components/schemas/errors.yaml#/AccessDeniedError' }
+          - { $ref: '../../components/schemas/errors.yaml#/FileNotOwnedError' }
+NotFound:
+  description: 과제·제출물 또는 파일이 존재하지 않음
+  content:
+    application/json:
+      schema:
+        type: object
+        required: [code, message]
+        properties:
+          code: { type: string, enum: [ASSIGNMENT_NOT_FOUND, ASSIGNMENT_SUBMISSION_NOT_FOUND, FILE_NOT_FOUND] }
+          message: { type: string }

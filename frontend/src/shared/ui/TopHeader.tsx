@@ -60,15 +60,7 @@ const subtitleStyle = {
   margin: 0,
 } satisfies CSSProperties;
 
-function Title({ children }: { children: React.ReactNode }) {
-  return <h1 css={titleStyle}>{children}</h1>;
-}
-
-function Subtitle({ children }: { children: React.ReactNode }) {
-  return <p css={subtitleStyle}>{children}</p>;
-}
-
-function TopHeaderRoot({ left, middle, right }: TopHeaderProps) {
+export default function TopHeader({ left, middle, right }: TopHeaderProps) {
   return (
     <header css={topHeaderStyle}>
       <div css={leftStyle}>{left}</div>
@@ -78,9 +70,10 @@ function TopHeaderRoot({ left, middle, right }: TopHeaderProps) {
   );
 }
 
-const TopHeader = Object.assign(TopHeaderRoot, {
-  Title,
-  Subtitle,
-});
+TopHeader.Title = function Title({ children }: { children: React.ReactNode }) {
+  return <h1 css={titleStyle}>{children}</h1>;
+};
 
-export default TopHeader;
+TopHeader.Subtitle = function Subtitle({ children }: { children: React.ReactNode }) {
+  return <p css={subtitleStyle}>{children}</p>;
+};

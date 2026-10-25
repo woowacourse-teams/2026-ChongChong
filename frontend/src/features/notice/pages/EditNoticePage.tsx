@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
@@ -27,7 +28,7 @@ export default function EditNoticePage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <EditNoticePage.Content />
+            <Content />
           </Suspense>
         </ErrorBoundary>
       </Main>
@@ -35,17 +36,23 @@ export default function EditNoticePage() {
   );
 }
 
-EditNoticePage.Content = function Content() {
+function Content() {
   const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
   const { data: notice } = useSuspenseQuery(noticeQueries.detail(studyId, noticeId));
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: UpdateNoticeValue) => updateNotice(studyId, noticeId, values),
 
-    onSuccess: () => {
+    onSuccess: (_data, values) => {
+      posthog?.capture('notice_saved', {
+        content_type: 'notice',
+        mode: 'edit',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       queryClient.invalidateQueries({
         queryKey: noticeQueries.lists(studyId),
       });
@@ -59,7 +66,7 @@ EditNoticePage.Content = function Content() {
 
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast status="Error" message={error.message} />);
+      toast.open(<StatusToast status="error" message={error.message} />);
     },
   });
 
@@ -73,10 +80,11 @@ EditNoticePage.Content = function Content() {
       isSubmitting={isPending}
       fieldErrors={fieldErrors}
       onSubmit={mutate}
+      initialAttachments={notice.attachments}
       initialValues={{
         title: notice.title,
         content: notice.content,
       }}
     />
   );
-};
+}

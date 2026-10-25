@@ -28,7 +28,7 @@ export default function AssignmentListPage() {
         )}
       >
         <Suspense fallback={<Loading />}>
-          <AssignmentListPage.Content />
+          <Content />
         </Suspense>
       </ErrorBoundary>
       <BottomTab />
@@ -36,7 +36,7 @@ export default function AssignmentListPage() {
   );
 }
 
-AssignmentListPage.Content = function Content() {
+function Content() {
   const { studyId } = useIntegerParams(['studyId']);
 
   const {
@@ -70,4 +70,4 @@ AssignmentListPage.Content = function Content() {
       </Main>
     </>
   );
-};
+}

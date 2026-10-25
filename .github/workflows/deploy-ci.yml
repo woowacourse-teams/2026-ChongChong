@@ -1,0 +1,25 @@
+name: Deployment configuration CI
+on:
+  pull_request:
+    paths: ['deploy/**', 'appspec*.yml', 'buildspec.yml', '.github/workflows/deploy-ci.yml']
+  push:
+    branches: [dev, prod, main]
+    paths: ['deploy/**', 'appspec*.yml', 'buildspec.yml', '.github/workflows/deploy-ci.yml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: for script in deploy/scripts/*/*.sh deploy/tests/*smoke.sh; do bash -n "$script" || exit 1; done
+      - run: python3 -m unittest discover -s deploy/tests -v
+      - run: bash deploy/tests/host-monitoring-test.sh
+      - run: docker compose --env-file deploy/config/.env.example -f deploy/config/docker-compose.yml config --quiet
+      - run: docker compose --env-file deploy/config/.env.example -f deploy/config/docker-compose.yml -f deploy/config/docker-compose.dev.yml config --quiet
+      - run: bash deploy/tests/nginx-smoke.sh
+      - run: BACKEND_BIND_IP=10.0.0.189 BACKEND_SLOT=a docker compose --env-file deploy/config/.env.example -f deploy/config/docker-compose.backend.yml config --quiet
+      - run: docker compose --env-file deploy/config/edge.env.example --profile metrics -f deploy/config/docker-compose.edge.yml config --quiet
+      - run: bash deploy/tests/edge-nginx-smoke.sh

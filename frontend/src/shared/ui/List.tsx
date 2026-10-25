@@ -14,7 +14,7 @@ const listStyle = {
   listStyle: 'none',
 } satisfies CSSProperties;
 
-function ListRoot({ children, ...props }: ListProps) {
+export default function List({ children, ...props }: ListProps) {
   return (
     <ul css={listStyle} {...props}>
       {children}
@@ -22,12 +22,6 @@ function ListRoot({ children, ...props }: ListProps) {
   );
 }
 
-function Item({ children, ...props }: ListItemProps) {
+List.Item = function Item({ children, ...props }: ListItemProps) {
   return <li {...props}>{children}</li>;
-}
-
-const List = Object.assign(ListRoot, {
-  Item,
-});
-
-export default List;
+};

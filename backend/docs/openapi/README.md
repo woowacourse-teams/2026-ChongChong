@@ -1,5 +1,7 @@
 # API 명세
 
+[← 프로젝트 소개와 문서 목록](../../../README.md) · [게시된 API 명세서](https://woowacourse-teams.github.io/2026-ChongChong/board)
+
 명세 원본은 `openapi.yaml`(목차), `paths/`(URL별 API), `components/`(공유 정의)로 나눈다.
 API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·응답·예시를 수정한다. 같은 URL의 여러 HTTP 메서드는 한 파일에서 관리한다.
 요청·응답 필드가 참조 스키마에 있으면 해당 `$ref` 파일도 함께 수정한다. API를 추가할 때는 Path Item 파일을 만들고
@@ -9,10 +11,13 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 
 | API | 메서드와 URL | 수정 파일 |
 | --- | --- | --- |
+| 파일 업로드 URL 발급 | `POST /api/files/presigned-url` | [paths/files/presigned-url.yaml](paths/files/presigned-url.yaml) |
 | CSRF 토큰 조회 | `GET /api/auth/csrf` | [paths/auth/csrf.yaml](paths/auth/csrf.yaml) |
 | 소셜 로그인 | `POST /api/auth/login` | [paths/auth/login.yaml](paths/auth/login.yaml) |
 | 액세스 토큰 갱신 | `POST /api/auth/refresh` | [paths/auth/refresh.yaml](paths/auth/refresh.yaml) |
 | 로그아웃 | `POST /api/auth/logout` | [paths/auth/logout.yaml](paths/auth/logout.yaml) |
+| 내 정보 조회 | `GET /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
+| 내 이름 수정 | `PATCH /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
 | 사용자 탈퇴 | `DELETE /api/users/me` | [paths/users/me.yaml](paths/users/me.yaml) |
 | 스터디 생성 | `POST /api/studies` | [paths/studies/collection.yaml](paths/studies/collection.yaml) |
 | 스터디 상세 조회 | `GET /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
@@ -46,6 +51,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 과제 제출 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}` | [paths/assignment-submissions/detail.yaml](paths/assignment-submissions/detail.yaml) |
 | Web Push VAPID 공개키 조회 | `GET /api/web-push/config` | [paths/web-push/config.yaml](paths/web-push/config.yaml) |
 | Web Push 구독 등록 | `POST /api/web-push-subscriptions` | [paths/web-push-subscriptions/collection.yaml](paths/web-push-subscriptions/collection.yaml) |
+| 내 Web Push 구독 상태 조회 | `GET /api/web-push-subscriptions/me` | [paths/web-push-subscriptions/my-status.yaml](paths/web-push-subscriptions/my-status.yaml) |
 | Web Push 구독 비활성화 | `DELETE /api/web-push-subscriptions/{subscriptionId}` | [paths/web-push-subscriptions/detail.yaml](paths/web-push-subscriptions/detail.yaml) |
 | 내 알림 목록 조회 | `GET /api/notifications` | [paths/notifications/collection.yaml](paths/notifications/collection.yaml) |
 | 알림 읽음 처리 | `PATCH /api/notifications/{notificationId}` | [paths/notifications/detail.yaml](paths/notifications/detail.yaml) |
@@ -105,14 +111,17 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 내 제출 조회는 제출 대상이 아니어도 `submissionStatus: NOT_ASSIGNED`를 포함한 JSON 객체를 반환하며 빈 본문을 허용하지 않는다.
 개별 `./gradlew test --tests ...` 실행은 빠른 개발 확인용이며 전체 operation coverage 게이트를 생략한다. PR과 배포 전에는
 반드시 전체 `./gradlew test`를 실행한다.
+테스트 JVM에서는 정규화한 명세 파일 경로별로 검증기와 카탈로그를 한 번 생성해 Spring 컨텍스트 사이에서 공유한다.
+호출 기록 파일은 필터별로 유지한다. 실행 중 명세 파일의 변경을 다시 읽지는 않으므로, 명세를 수정하면 Gradle 테스트를 새로 실행한다.
 따라서 명세의 설명 문장만으로 서버 시간 기록, 권한 판단, 저장 동작 같은 업무 의미가 자동으로 증명되지는 않는다.
 그런 동작을 바꿀 때는 해당 HTTP 시나리오 테스트도 같은 PR에서 수정하거나 추가한다.
 
 ## 백엔드 개발 진행 정보
 
-### 프론트 요청·응답 계약 확인 (2026-10-01)
+### 프론트 요청·응답 계약 확인 (2026-10-19)
 
-현재 frontend의 실제 호출 40개를 서버의 41개 API와 대조했다. URL·HTTP 메서드·필수 요청 값·응답 형태를 기준으로 한다.
+기준 커밋은 `c9884a248113b56b0db84adbea31d36d0a3a136e`이며 현재 명세에는 44개 API가 있다.
+웹의 호출·폼·응답 검증과 서버 구현을 URL·HTTP 메서드·필수 요청 값·응답 형태를 기준으로 대조했다.
 계약 불일치와 PRD에 명시된 기능 중 아직 웹에 연결되지 않은 작업을 구분한다. API 사용법만으로 수정 과제를 만들지 않는다.
 실제 배포 서버의 HTTP 요청을 실행한 결과는 아니다.
 
@@ -121,15 +130,19 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 `description`에는 구체적인 불일치와 영향을, `sources`에는 확인한 코드 경로를 기록한다.
 메타데이터가 없다는 이유로 수정 필요 또는 연동 완료로 추정하지 않는다.
 
-계약 불일치는 두 API다.
+현재 남아 있는 차이와 미연동 기능은 다음과 같다.
 
-- 과제 생성: 필수 `submissionVisibility`가 웹 요청에 없어 400 오류가 발생한다.
-- 제출 상세: 서버가 허용하는 `createdAt·content=null`을 웹 응답 검증이 거부한다.
+- 과제 생성·수정: 공개 범위와 리더 참여 설정은 연결되어 있다. 제출 방법은 서버에서는 선택 값이지만 웹 폼에서는 필수다.
+- 과제 제출·수정: 서버는 내용과 링크를 각각 선택 값으로 받지만 웹 폼은 내용을 필수로 요구한다.
+- 제출물 상세(`/submissions/{submissionId}`): `submissionDetailSchema`가 서버에서 허용하는 `createdAt·content=null`을 거부한다. 내 제출 조회(`/submissions/my`)는 별도 스키마를 사용하며, `NOT_SUBMITTED`, `MISSING`, `NOT_ASSIGNED` 상태에서는 두 필드의 누락이나 null 때문에 검증이 실패하지 않는다.
+- 공지·과제 생성·수정: 서버의 리마인드 예약 API에 대응하는 웹 입력이 없다.
+- 공지 이미지 첨부: [#542](https://github.com/woowacourse-teams/2026-ChongChong/issues/542)에서 추가한 요청·응답 구조를 바탕으로 [#554](https://github.com/woowacourse-teams/2026-ChongChong/issues/554)의 완료 파일 연결 구현이 [#556](https://github.com/woowacourse-teams/2026-ChongChong/pull/556)으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다. 생성·수정은 `attachmentFileIds`로 최종 목록과 순서를 지정하며, 신규 첨부는 업로드 완료 API에 성공한 본인 소유·미연결 COMPLETED 파일만 허용한다. 공지는 이미지 정책과 실제 연결 여부를 검증하고 S3 조회나 완료 상태 전환을 수행하지 않는다. 수정 생략·null은 유지, 빈 배열은 전체 제거다. 첨부 제거·공지 삭제는 관계만 정리하고 COMPLETED 상태를 유지해 소유자의 재첨부를 허용한다. 공지 저장 실패도 선행 완료 API의 COMPLETED 상태를 되돌리지 않는다. 상세 `attachments`의 기존 메타데이터에 `imageUrl`을 추가한 [#561](https://github.com/woowacourse-teams/2026-ChongChong/issues/561)은 [#564](https://github.com/woowacourse-teams/2026-ChongChong/pull/564)로 dev에 병합됐으며 CI를 통과했다. 2026-10-22 사용자가 dev의 이미지 첨부 공지를 조회하고 반환된 URL로 실제 이미지가 표시되는 것을 확인했다. 상세 조회의 백엔드 상태는 `done`이다. 조회 권한 확인 후 공통 `FileImageUrlGenerator`로 JPEG·PNG·WebP의 presigned GET URL을 발급하고, 미지원 형식은 `null`을 반환한다. URL은 `aws.s3.url-validity`(기본 10분, `AWS_URL_VALIDITY`로 변경)를 따르며 만료 시 공지 상세를 다시 조회해 갱신한다. 웹의 첨부 입력·표시는 아직 연결되지 않았다.
+- 파일 업로드: `URL 발급 → 필수 헤더를 포함한 S3 PUT → POST /api/files/{fileId}/complete → 공지·과제·제출물 저장` 순서다. PUT에는 발급 시의 `Content-Type`과 `If-None-Match: *`가 필요하며 버킷 CORS에서도 허용해야 한다. 완료 API는 실제 S3 파일 존재·크기를 검증해 COMPLETED로 전환하고, 과제·제출물은 완료 파일 연결을 지원한다. 공지의 완료 파일 연결도 #556으로 dev에 반영됐다. 기본 공통 최대 용량과 공지의 장당 최대 용량은 각각 5MiB이며 두 설정이 함께 적용된다. 이 명세의 공지 API에서 업로드 검증 실패 응답을 제거하고, S3 관련 오류는 선행 완료 API에서 처리한다.
 
-기능 추가는 스터디 정보 수정, 공지·과제 리마인드 예약, 제출물 공개 범위 선택·변경·표시, 일반 멤버의 공개 제출물 목록·상세 조회다.
-같은 API의 계약 수정과 기능 추가는 한 토글에 함께 표시하며, 총 8개 API에 남은 작업이 있다.
+위 항목은 총 9개 API에 `needs-update`로 표시한다. 웹 입력 제약을 서버보다 엄격하게 둔 경우와 서버의 정상 응답을 거부하는 경우를 구분해 설명했다.
 
-제목 100자, 읽음·제출 상태 구분, 로그아웃·Web Push, 리더 제출처럼 이미 반영된 항목에는 수정 안내를 표시하지 않는다.
+스터디 정보 수정, 공개 범위 설정·조회, 공개 제출물 목록·상세 이동, 다섯 제출 상태와 지각 배지, 푸시 클릭 기록은 웹에 반영되어 있다.
+로그인·갱신·로그아웃 명세는 다중 세션과 현재 세션만 갱신·종료하는 서버 동작을 설명한다.
 보드와 Redoc은 같은 메타데이터에서 안내를 생성한다. 수정 후 해당 계약을 다시 확인해 상태를 갱신한다.
 
 각 operation(`get`, `post` 등)에 `x-backend`를 작성한다. 같은 URL에서도 메서드마다 담당자와 상태가 다를 수 있다.

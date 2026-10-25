@@ -1,3 +1,4 @@
+import { usePostHog } from '@posthog/react';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import BottomTab from '../../../shared/widgets/BottomTab';
@@ -20,11 +21,17 @@ export default function CreateAssignmentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: AssignmentValue) => createAssignment(studyId, values),
 
-    onSuccess: ({ assignmentId }) => {
+    onSuccess: ({ assignmentId }, values) => {
+      posthog?.capture('assignment_saved', {
+        content_type: 'assignment',
+        mode: 'create',
+        attachment_count: values.attachmentFileIds?.length ?? 0,
+      });
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(studyId),
       });
@@ -34,7 +41,7 @@ export default function CreateAssignmentPage() {
 
     onError: (error) => {
       if (error instanceof ValidationError) return;
-      toast.open(<StatusToast status={'Error'} message={error.message} />);
+      toast.open(<StatusToast status={'error'} message={error.message} />);
     },
   });
 

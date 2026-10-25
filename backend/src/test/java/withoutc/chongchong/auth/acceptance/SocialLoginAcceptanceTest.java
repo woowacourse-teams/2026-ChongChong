@@ -14,6 +14,8 @@ import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.AfterEach;
@@ -108,10 +110,13 @@ class SocialLoginAcceptanceTest {
                 "https://example.com/profile.png"
         ));
 
+        Instant requestStartedAt = Instant.now();
         Response response = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        Instant responseReceivedAt = Instant.now();
 
         response.then()
                 .statusCode(200)
+                .contentType(ContentType.JSON)
                 .body("userId", notNullValue())
                 .body("tokenType", equalTo("Bearer"))
                 .body("accessToken", notNullValue())
@@ -139,7 +144,13 @@ class SocialLoginAcceptanceTest {
                 SocialProvider.KAKAO,
                 PROVIDER_USER_ID
         ).orElseThrow();
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
+        assertThat(response.asString()).doesNotContain(refreshToken, KAKAO_AUTHORIZATION_CODE);
+        assertThat(response.getDetailedCookie("refresh_token").getMaxAge())
+                .isBetween(
+                        Duration.between(responseReceivedAt, authSession.getExpiresAt()).getSeconds(),
+                        Duration.between(requestStartedAt, authSession.getExpiresAt()).getSeconds()
+                );
         HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(
                 new RawRefreshToken(refreshToken)
         );
@@ -167,8 +178,8 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
-    @DisplayName("같은 소셜 사용자가 다시 로그인하면 사용자와 계정을 재사용하고 인증 세션을 교체한다")
-    void reuseSocialUserAndReplaceAuthSessionOnRelogin() {
+    @DisplayName("같은 소셜 사용자가 다시 로그인하면 사용자와 계정을 재사용하고 독립적인 인증 세션을 추가한다")
+    void reuseSocialUserAndCreateAuthSessionOnRelogin() {
         fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
                 SocialProvider.KAKAO,
                 PROVIDER_USER_ID,
@@ -178,7 +189,7 @@ class SocialLoginAcceptanceTest {
         Response firstResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
         firstResponse.then().statusCode(200);
         User firstUser = userRepository.findAll().getFirst();
-        AuthSession firstSession = authSessionRepository.findByUserId(firstUser.getId()).orElseThrow();
+        AuthSession firstSession = findOnlySession(firstUser.getId());
         Long firstSessionId = firstSession.getId();
         HashedRefreshToken firstRefreshTokenHash = firstSession.getRefreshTokenHash();
         String firstRefreshToken = firstResponse.getCookie("refresh_token");
@@ -193,7 +204,7 @@ class SocialLoginAcceptanceTest {
 
         secondResponse.then().statusCode(200);
         User reusedUser = userRepository.findAll().getFirst();
-        AuthSession replacedSession = authSessionRepository.findByUserId(reusedUser.getId()).orElseThrow();
+        AuthSession preservedSession = authSessionRepository.findById(firstSessionId).orElseThrow();
         String secondAccessToken = secondResponse.jsonPath().getString("accessToken");
         String secondRefreshToken = secondResponse.getCookie("refresh_token");
         Long firstUserId = firstResponse.jsonPath().getLong("userId");
@@ -201,12 +212,17 @@ class SocialLoginAcceptanceTest {
 
         assertThat(userRepository.count()).isOne();
         assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.count()).isOne();
+        assertThat(authSessionRepository.findAllByUserId(reusedUser.getId()))
+                .extracting(AuthSession::getRefreshTokenHash)
+                .containsExactlyInAnyOrder(
+                        firstRefreshTokenHash,
+                        refreshTokenHasher.hash(new RawRefreshToken(secondRefreshToken))
+                );
         assertThat(reusedUser.getId()).isEqualTo(firstUser.getId());
         assertThat(reusedUser.getName()).isEqualTo("처음 이름");
         assertThat(reusedUser.getProfileImageUrl()).isEqualTo("https://example.com/first-profile.png");
-        assertThat(replacedSession.getId()).isEqualTo(firstSessionId);
-        assertThat(replacedSession.getRefreshTokenHash()).isNotEqualTo(firstRefreshTokenHash);
+        assertThat(preservedSession.getRefreshTokenHash()).isEqualTo(firstRefreshTokenHash);
+        assertThat(preservedSession.getExpiresAt()).isEqualTo(firstSession.getExpiresAt());
         assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
         assertThat(jwtDecoder.decode(secondAccessToken).getSubject())
                 .isEqualTo(firstUser.getId().toString());
@@ -238,7 +254,7 @@ class SocialLoginAcceptanceTest {
         User user = userRepository.findAll().getFirst();
         assertProtectedApiAccessible(originalAccessToken, user.getId());
 
-        AuthSession originalSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession originalSession = findOnlySession(user.getId());
         Long sessionId = originalSession.getId();
         HashedRefreshToken originalHash = originalSession.getRefreshTokenHash();
 
@@ -263,7 +279,7 @@ class SocialLoginAcceptanceTest {
         HashedRefreshToken rotatedHash = refreshTokenHasher.hash(
                 new RawRefreshToken(rotatedRefreshToken)
         );
-        AuthSession rotatedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession rotatedSession = authSessionRepository.findById(sessionId).orElseThrow();
 
         assertThat(rotatedRefreshToken).isNotEqualTo(originalRefreshToken);
         assertThat(rotatedAccessToken).isNotEqualTo(originalAccessToken);
@@ -291,7 +307,7 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
                 .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"));
         assertThat(logoutResponse.asString()).isEmpty();
-        assertThat(authSessionRepository.findByUserId(user.getId())).isEmpty();
+        assertThat(authSessionRepository.findAllByUserId(user.getId())).isEmpty();
 
         Response refreshAfterLogoutResponse = requestRefresh(rotatedRefreshToken);
         refreshAfterLogoutResponse.then()
@@ -357,7 +373,7 @@ class SocialLoginAcceptanceTest {
         Response loginResponse = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
         String refreshToken = loginResponse.getCookie("refresh_token");
         User user = userRepository.findAll().getFirst();
-        AuthSession authSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession authSession = findOnlySession(user.getId());
         HashedRefreshToken refreshTokenHash = authSession.getRefreshTokenHash();
         Instant expiredAt = Instant.now().minusSeconds(1).truncatedTo(ChronoUnit.MICROS);
         authSession.replaceRefreshToken(refreshTokenHash, expiredAt);
@@ -369,7 +385,7 @@ class SocialLoginAcceptanceTest {
                 .statusCode(401)
                 .body("code", equalTo("INVALID_REFRESH_TOKEN"))
                 .header(HttpHeaders.SET_COOKIE, nullValue());
-        AuthSession unchangedSession = authSessionRepository.findByUserId(user.getId()).orElseThrow();
+        AuthSession unchangedSession = authSessionRepository.findById(authSession.getId()).orElseThrow();
         assertThat(unchangedSession.getRefreshTokenHash()).isEqualTo(refreshTokenHash);
         assertThat(unchangedSession.getExpiresAt()).isEqualTo(expiredAt);
     }
@@ -439,6 +455,44 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
+    @DisplayName("같은 사용자의 한 브라우저가 로그아웃해도 다른 브라우저는 재발급하고 보호 API를 사용할 수 있다")
+    void logoutWithoutChangingOtherBrowserSessionOfSameUser() {
+        fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
+                SocialProvider.KAKAO,
+                PROVIDER_USER_ID,
+                "총총이",
+                null
+        ));
+        Response firstLogin = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        firstLogin.then().statusCode(200);
+        Response secondLogin = requestLogin("KAKAO", KAKAO_AUTHORIZATION_CODE);
+        secondLogin.then().statusCode(200);
+        String firstRefreshToken = firstLogin.getCookie("refresh_token");
+        String secondRefreshToken = secondLogin.getCookie("refresh_token");
+        Long userId = firstLogin.jsonPath().getLong("userId");
+        assertThat(secondLogin.jsonPath().getLong("userId")).isEqualTo(userId);
+        assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
+
+        requestLogout(firstRefreshToken).then()
+                .statusCode(204)
+                .header(HttpHeaders.SET_COOKIE, containsString("Max-Age=0"))
+                .header(HttpHeaders.SET_COOKIE, containsString("Path=/api/auth"));
+        requestLogout(firstRefreshToken).then().statusCode(204);
+
+        assertThat(authSessionRepository.count()).isOne();
+        assertThat(findOnlySession(userId).getRefreshTokenHash())
+                .isEqualTo(refreshTokenHasher.hash(new RawRefreshToken(secondRefreshToken)));
+        requestRefresh(firstRefreshToken).then()
+                .statusCode(401)
+                .body("code", equalTo("INVALID_REFRESH_TOKEN"));
+
+        Response refreshedSecond = requestRefresh(secondRefreshToken);
+        refreshedSecond.then().statusCode(200);
+        assertThat(refreshedSecond.getCookie("refresh_token")).isNotEqualTo(secondRefreshToken);
+        assertProtectedApiAccessible(refreshedSecond.jsonPath().getString("accessToken"), userId);
+    }
+
+    @Test
     @DisplayName("한 사용자의 로그아웃은 다른 사용자의 Session에 영향을 주지 않는다")
     void logoutWithoutChangingOtherUserSession() {
         fakeSocialLoginClient.willSucceed(KAKAO_AUTHORIZATION_CODE, new SocialUserInfo(
@@ -467,17 +521,16 @@ class SocialLoginAcceptanceTest {
         ).orElseThrow();
         Long firstUserId = firstSocialAccount.getUser().getId();
         Long secondUserId = secondSocialAccount.getUser().getId();
-        HashedRefreshToken secondSessionHash = authSessionRepository.findByUserId(secondUserId)
-                .orElseThrow()
-                .getRefreshTokenHash();
+        HashedRefreshToken secondSessionHash = findOnlySession(secondUserId).getRefreshTokenHash();
 
         requestLogout(firstRefreshToken)
                 .then()
                 .statusCode(204);
 
-        assertThat(authSessionRepository.findByUserId(firstUserId)).isEmpty();
-        assertThat(authSessionRepository.findByUserId(secondUserId))
-                .hasValueSatisfying(session -> assertThat(session.getRefreshTokenHash())
+        assertThat(authSessionRepository.findAllByUserId(firstUserId)).isEmpty();
+        assertThat(authSessionRepository.findAllByUserId(secondUserId))
+                .singleElement()
+                .satisfies(session -> assertThat(session.getRefreshTokenHash())
                         .isEqualTo(secondSessionHash));
         assertThat(authSessionRepository.count()).isOne();
 
@@ -548,6 +601,27 @@ class SocialLoginAcceptanceTest {
     }
 
     @Test
+    @DisplayName("authorizationCode가 누락되면 공통 입력 오류로 거부한다")
+    void rejectMissingAuthorizationCode() {
+        Response response = requestLoginBody("""
+                {"provider": "KAKAO"}
+                """);
+
+        response.then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"))
+                .body("message", equalTo("입력값이 올바르지 않습니다."))
+                .body("errors.field", hasItem("authorizationCode"))
+                .body("$", not(hasKey("accessToken")))
+                .body("$", not(hasKey("refreshToken")))
+                .header(HttpHeaders.SET_COOKIE, nullValue());
+
+        assertThat(new String(response.asByteArray(), StandardCharsets.UTF_8))
+                .contains("입력값이 올바르지 않습니다.");
+        assertDatabaseEmpty();
+    }
+
+    @Test
     @DisplayName("Kakao 인가 코드가 공백이면 공통 입력 오류로 거부한다")
     void rejectBlankAuthorizationCode() {
         Response response = requestLogin("KAKAO", " ");
@@ -597,6 +671,12 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, nullValue());
 
         assertDatabaseEmpty();
+    }
+
+    private AuthSession findOnlySession(Long userId) {
+        var sessions = authSessionRepository.findAllByUserId(userId);
+        assertThat(sessions).hasSize(1);
+        return sessions.getFirst();
     }
 
     private Response requestLogin(

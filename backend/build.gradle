@@ -34,6 +34,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-flyway'
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 
+    implementation platform('software.amazon.awssdk:bom:2.54.17')
+    implementation 'software.amazon.awssdk:s3'
+
     implementation 'nl.martijndwars:web-push:5.1.1'
     implementation 'org.apache.httpcomponents:httpasyncclient:4.1.5'
     implementation 'org.bouncycastle:bcprov-jdk18on:1.86'
@@ -48,6 +51,14 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-postgresql:2.0.5'
     testRuntimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(Test).configureEach {
+    systemProperty 'spring.test.context.cache.maxSize', '8'
+    if (providers.gradleProperty('ci').isPresent()) {
+        outputs.upToDateWhen { false }
+        outputs.doNotCacheIf('CI에서는 테스트를 매번 실행한다') { true }
+    }
 }
 
 tasks.named('test') {
