@@ -1,9 +1,7 @@
 # Nginx 연결 한도를 정한 실험과 기존 단일 서버 적용 기록
 
-이 문서는 2026-10-16 실험과 **legacy 배포 경로**의 변경 기록이다.
-연결 한도를 정한 근거는 참고할 수 있지만, 아래 `runtime.sh`·`.env`·dev override 명령은
-현재 dev edge/A/B 운영 절차가 아니다. 현재 운영은 [배포 안내](../README.md)와
-[모니터링 확인](monitoring.md)을 따른다. 아래 검증 결과와 미확인 항목은 기록 당시 기준이다.
+2026-10-16의 Nginx 연결 한도 실험과 legacy 배포 변경 기록이다. 측정값과 검증 상태는 그날 기준이다.
+현재 A/B 환경의 작업 순서는 [배포 안내](../README.md)와 [모니터링 확인](monitoring.md)에 있다.
 
 ## 적용값과 로컬 근거
 
@@ -26,7 +24,7 @@
 
 프록시는 클라이언트와 upstream 연결을 모두 사용한다. 요청 1,050건이 한 워커에 겹치면 단순 계산으로도 약 2,100개의 연결 슬롯이 필요하다. 4,096은 이 조건에 여유를 둔 값이고, 8,192는 소켓 외 파일·로그 등을 포함한 FD 여유를 둔 운영 시작값이다. 8,192가 최소 필요값임을 증명한 실험은 아니다.
 
-이 시험은 TLS·CloudFront·실제 Java/DB·dev CPU 크레딧을 재현하지 않았다. 연결 종료를 실제 서비스의 CloudFront 502와 동일시하지 않는다. dev의 500 5건과 미확정 502 4건은 재시험에서 따로 추적해야 한다. 응답 p95 목표 달성도 별도다.
+이 시험은 TLS·CloudFront·실제 Java/DB·dev CPU 크레딧을 재현하지 않았다. 실제 서비스의 CloudFront 502 원인은 이 실험에서 확인하지 못했다. dev의 500 5건과 미확정 502 4건은 재시험에서 따로 추적해야 한다. 응답 p95 목표 달성도 별도다.
 
 원본: `/Users/limhyejeong/Study/test/experiments/523-nginx-limits-20261016/`. `verified-results.json`은 Alpine의 FD 오류 문구를 반영해 로그에서 재집계한 결과다. 각 조건 폴더에 요청별 결과, 접근·오류 로그, 실제 한도가 있다. `experiment.py`, `upstream.py`, `summarize.py`를 함께 보관했다.
 
@@ -43,15 +41,15 @@
 1. BeforeInstall에서 기존 배포 디렉터리를 `deploy-backups/before-install.*/deploy`에 보관한다.
 2. Compose 검증과 이미지 pull을 수행한다.
 3. 임시 Nginx 컨테이너에서 템플릿을 생성하고 `nginx -t`를 실행한다. 이 임시 컨테이너에서만 `backend`를 loopback으로 해석하게 해 최초 배포에도 문법 검사가 가능하게 한다. 실제 upstream 연결 검사는 이후 애플리케이션 확인 단계가 맡는다.
-4. backend·nginx만 재생성하고 기동 및 실제 워커 한도를 확인한다. 실패하면 저장한 이전 배포 Compose와 이전 백엔드 이미지로 복구를 시도한다. 백업이 없으면 자동 복구 성공을 주장하지 않고 실패한다.
+4. backend·nginx만 재생성하고 기동 및 실제 워커 한도를 확인한다. 실패하면 저장한 이전 배포 Compose와 이전 백엔드 이미지로 복구를 시도한다. 백업이 없으면 복구를 중단하고 오류를 출력한다.
 5. dev에서는 metrics 프로필 여부와 무관하게 수집기만 별도로 pull·재생성한다. prod는 명시적 metrics 프로필을 유지한다. 수집기 실패는 배포 실패로 보고하지만 정상 기동한 애플리케이션을 다시 재시작하지 않는다.
 6. 수집기의 실행·재시작·OOM 여부와 수집 환경변수 일치를 검사한다. 기본 수집 주기는 60초, timeout은 10초, 메모리 제한은 기존 192MiB다.
 
-수집기 재생성 중 지표 공백과 누적값 기준점 초기화가 생길 수 있다. 수집기가 켜졌다는 것만으로 CloudWatch 전송 성공을 보장하지 않는다. 고빈도 수집 설정은 CPU·메모리 부담을 늘릴 수 있으므로 부하 시험 후 기본값으로 돌린다.
+수집기 재생성 중 지표 공백과 누적값 기준점 초기화가 생길 수 있다. 수집기를 시작한 뒤 CloudWatch에서 최근 지표를 조회한다. 고빈도 수집 설정은 CPU·메모리 부담을 늘릴 수 있으므로 부하 시험 후 기본값으로 돌린다.
 
 ## dev 반영 전 보존할 것
 
-배포 디렉터리 백업에는 실행 컨테이너 로그와 `/tmp`의 JFR이 포함되지 않는다. backend 재생성 전에 필요한 JFR을 호스트로 `docker cp`하고, Nginx·백엔드 진단 로그와 k6 원본을 보존한다. 다른 사람이 부하 시험 중인지 확인한다. 이번 작업에서는 dev에 배포하거나 기존 컨테이너를 재생성하지 않았다.
+배포 디렉터리 백업에는 실행 컨테이너 로그와 `/tmp`의 JFR이 포함되지 않는다. backend 재생성 전에 필요한 JFR을 호스트로 `docker cp`하고, Nginx·백엔드 진단 로그와 k6 원본을 보존한다. 컨테이너 재생성 시간은 진행 중인 부하 시험과 겹치지 않게 정한다.
 
 ## 배포 후 검증
 
@@ -67,7 +65,7 @@ sudo docker logs --since 3m chongchong-metrics-collector
 sudo docker stats --no-stream
 ```
 
-미인증 요청의 401은 로그 검증용으로 정상이다. 요청 ID·최종 상태·upstream 상태 및 시간이 JSON으로 남는지 확인한다. 최소 두 수집 주기 이후 CloudWatch에서 새 데이터가 들어오는지 확인하고, 배포 대상 EC2 인스턴스 ID·이미지·시각과 해당 호스트 수집기 로그를 함께 기록한다. `environment=dev`만으로 어느 EC2의 데이터인지 판정하지 않는다. 수집기 로그의 인증·OTLP 오류와 `Partial success response`도 확인한다.
+미인증 요청의 401은 로그 검증용으로 정상이다. 요청 ID·최종 상태·upstream 상태 및 시간이 JSON으로 남는지 확인한다. 최소 두 수집 주기 이후 CloudWatch에서 새 데이터가 들어오는지 확인하고, 배포 대상 EC2 인스턴스 ID·이미지·시각과 해당 호스트 수집기 로그를 함께 기록한다. 서버 구분에는 원본 지표의 인스턴스 라벨도 함께 사용한다. 수집기 로그의 인증·OTLP 오류와 `Partial success response`도 확인한다.
 
 새 미제출 데이터·유효 토큰으로 1초 1,050건을 다시 전송한다. k6 실제 전송 수, 시작 분포, dropped iterations, 201·500·502, p95·최대 시간과 Nginx 오류를 대조한다. CPU·Hikari 대기·수집 누락도 함께 기록한다. 재생성으로 한도가 적용된 것과 실제 서비스 오류가 해결된 것을 구분한다.
 
@@ -91,4 +89,4 @@ sudo docker compose --env-file /opt/chongchong/.env \
 - 실제 Nginx Docker 컨테이너: `nginx -t`, 워커 FD 8,192, API JSON 로그·upstream 404, 민감 헤더·쿼리 제외, 템플릿 변수 보존, 두 번의 컨테이너 생성 검증 통과.
 - 기본 Compose 및 dev override 구성 검증, 셸 문법 검사 통과.
 - `.github/workflows/deploy-ci.yml`에 위 검증을 추가했다. GitHub 원격 CI는 아직 실행하지 않았다.
-- 실제 ADOT 기동·CloudWatch 전송, EC2 CodeDeploy 복구와 dev 1초 재부하는 아직 확인하지 않았다. 이 확인 전에는 #513·#523을 완료 처리하지 않는다.
+- 실제 ADOT 기동·CloudWatch 전송, EC2 CodeDeploy 복구와 dev 1초 재부하는 아직 확인하지 않았다. 관련 이슈: #513, #523.

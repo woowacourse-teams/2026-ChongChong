@@ -1,14 +1,8 @@
 # 기존 단일 서버 배포 참고
 
-이 문서는 backend와 Nginx를 같은 EC2에서 재생성하는 **legacy 경로**를 설명한다.
-현재 dev의 edge + backend A/B 운영은 [배포 안내](../README.md)에서 시작한다.
-아래 dev 수집기 자동 재생성, `.env`, `config/docker-compose.dev.yml` 설명도 legacy 경로에만 해당한다.
-과거 측정값과 당시 검증 기록은 현재 서버 상태를 보장하지 않는다.
+backend와 Nginx를 같은 EC2에 배포하는 legacy 운영 절차다. A/B 환경은 [서버 준비](server-setup.md)와 [A/B 배포](edge-deployment.md)를 사용한다.
 
-A/B 분리 환경의 서버별 필수 설정과 메모리 수집은 [서버 준비와 누락 검사](server-setup.md)를 따른다.
-
-edge EC2와 백엔드 A/B 분리 배포는 [edge 배포 절차](edge-deployment.md)를 따른다.
-`DEPLOYMENT_MODE=edge`로 선택하며, 기본값은 아래의 기존 단일 서버 배포다.
+legacy는 `DEPLOYMENT_MODE=legacy`로 선택하며 기본값도 legacy다. 아래 서버 명령은 단일 서버의 SSM 터미널에서 실행한다.
 
 `dev` 또는 `prod`에 병합된 백엔드 변경을 환경별 CodePipeline이 CodeBuild와 CodeDeploy를 거쳐 대상 단일 EC2에
 배포하도록 구성한다. 이 문서는 저장소에 포함할 수 없는 AWS Resource와 EC2 최초 설정을 연결하는 절차다.
@@ -26,10 +20,10 @@ edge EC2와 백엔드 A/B 분리 배포는 [edge 배포 절차](edge-deployment.
 
 ## 2. EC2를 한 번 준비한다
 
-허용된 위치에서 저장소의 `deploy` 디렉터리를 EC2로 복사한다. `deploy/config/.env.example`을 참고하여
-`/opt/chongchong/.env`를 생성하고 실제 값을 입력한다. 이 파일은 Git에 커밋하지 않는다.
+[서버 준비 2번](server-setup.md)의 방법으로 파일을 가져온 뒤 `/opt/chongchong`에서 실행한다. `.env`에 이 서버의 앱 설정을 입력한다.
 
 ```bash
+cd /opt/chongchong
 sudo install -d -m 0755 /opt/chongchong
 sudo install -m 0600 deploy/config/.env.example /opt/chongchong/.env
 sudoedit /opt/chongchong/.env
@@ -56,7 +50,7 @@ bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 
 따옴표처럼 Shell에서 의미가 있는 문자가 포함된 값은 작은따옴표로 감싼다.
 
 `FRONTEND_ALLOWED_ORIGINS`는 쉼표로 구분한 정확한 Origin 목록이며, 생략하면 `FRONTEND_BASE_URL`을 사용한다.
-로컬 프론트엔드도 허용할 때만 `https://chongchong.app,http://localhost:3005`처럼 추가하고 wildcard는 사용하지 않는다.
+로컬 프론트엔드도 허용하려면 `https://chongchong.app,http://localhost:3005`처럼 출처를 추가한다.
 
 Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
 
@@ -69,7 +63,7 @@ Kakao Authorization Code 로그인에는 다음 설정을 사용한다.
 `AUTH_KAKAO_REDIRECT_URI`는 Kakao Developers에 등록한 URI, 프론트엔드가 Authorization Code를 받는 URI와
 백엔드가 Token 교환에 사용하는 URI가 완전히 같아야 한다. 로컬은 `http://localhost:3005/auth/kakao/callback`,
 배포 환경은 같은 `/auth/kakao/callback` 경로를 사용하는 실제 프론트엔드 HTTPS 주소로 설정한다. REST API 키와
-Client Secret의 실제 값은 `/opt/chongchong/.env`에만 저장하고 저장소에는 커밋하지 않는다.
+Client Secret은 `/opt/chongchong/.env`에 설정한다.
 
 ### dev 알림 부하 테스트 sender 설정
 
@@ -137,23 +131,12 @@ CodeBuild 환경에는 다음 변수를 설정한다.
 | `DOCKERHUB_REPOSITORY` | 예: `docker.io/team/chongchong-backend` | 일반 변수 가능 |
 | `DOCKERHUB_TOKEN` | Docker Hub push Token | Parameter Store `/chongchong/dev/dockerhub/token` |
 
-CodeBuild Service Role에는 username과 Token 두 파라미터에 대한 `ssm:GetParameters` 권한만 부여한다.
-`DOCKERHUB_TOKEN`을
-plaintext 환경 변수나 저장소 파일에 넣지 않는다.
+CodeBuild Service Role에 위 두 파라미터를 읽을 `ssm:GetParameters` 권한을 부여한다.
 
 CodeBuild는 Corretto 25로 `bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA 태그로만 push한다.
-CodeDeploy artifact에는 애플리케이션 소스나 JAR 대신 `appspec.yml`, Compose, Nginx, 스크립트와 확정된 `image.env`만
-포함한다.
+CodeDeploy는 artifact에 포함된 `appspec.yml`, deploy 디렉터리와 `image.env`로 배포한다.
 
-`dev`와 `prod` Pipeline은 같은 Docker Hub Repository와 push 자격 증명을 사용해도 되는 동일한 신뢰 경계에 있을
-때만 CodeBuild Project와 `buildspec.yml`을 공유한다. 환경별 write 권한 격리가 필요하면 CodeBuild Project, Service
-Role, Parameter Store 경로와 이미지 Repository를 분리한다. 현재 Parameter Store의 `/chongchong/dev/dockerhub/*`
-경로를 공용으로 사용하는 것은 전자의 조건을 전제로 한다.
-
-각 실행의 `CODEBUILD_RESOLVED_SOURCE_VERSION`을 commit SHA별 이미지 태그와 `image.env`에 기록하므로 정상적인
-Pipeline 실행끼리는 `dev`와 `prod` 이미지 태그가 충돌하지 않는다. Docker Hub 태그 자체는 덮어쓸 수 있으므로 이
-구성은 Registry 수준의 불변성을 보장하지 않는다. 더 강한 이미지 무결성이 필요하면 push 결과의 manifest digest를
-artifact에 기록하고 digest로 배포해야 한다. `dev`나 `prod` 같은 가변 태그는 생성하지 않는다.
+파이프라인은 환경별로 구성한다. 각 빌드의 commit SHA를 이미지 태그와 `image.env`에 기록한다.
 
 ## 4. CodeDeploy를 구성한다
 
@@ -236,20 +219,17 @@ Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
 
 [ADR-0044](../../backend/docs/adr/0044-collect-http-metrics-with-adot-and-cloudwatch.md)에 따라 각 EC2의 ADOT
 수집기는 사설 Docker 네트워크에서 백엔드의 `/actuator/prometheus`를 읽고 CloudWatch의 OTLP 메트릭
-엔드포인트로 전송한다. AMP workspace나 추가 메트릭 서버는 만들지 않는다. `CLOUD_WATCH_AWS_REGION`과
+엔드포인트로 전송한다. `CLOUD_WATCH_AWS_REGION`과
 `CLOUD_WATCH_APP_ENV`는 기존 로그 설정값을 사용한다. dev에서는 `dev`, prod에서는 `prod`를 설정한다.
 컨테이너에 정적 AWS 키를 넣지 않고 EC2 Instance Profile의 임시 자격 증명을 사용한다. 메트릭용 inbound
 포트는 열지 않으며 CloudWatch `monitoring` 엔드포인트로 HTTPS 443 outbound가 가능해야 한다.
 
-EC2 역할에는 `cloudwatch:PutMetricData` 권한이 필요하다. dev의 `ec2-project` 역할에서는 CLI의 기본
-`PutMetricData` 호출이 성공했다. 이는 수집기의 OTLP 전송까지 확인한 것은 아니다. prod에서도 실제 역할과
-권한을 확인한다. 수집기에서 자격 증명을 읽지 못하면 EC2 IMDSv2 접근과 응답 hop limit을 확인한다. hop limit
-변경은 같은 호스트의 다른 컨테이너에도 역할 접근을 허용할 수 있으므로 적용 범위를 검토한다.
+EC2 역할에는 `cloudwatch:PutMetricData` 권한이 필요하다. 수집기에 자격 증명 오류가 나오면 EC2 IAM 역할과 IMDSv2 응답 hop limit을 확인한다.
 
 수집기 활성화 전 `free -h`, `vmstat 1 5`, `df -h /`, `sudo docker stats --no-stream`으로 기준값을 확인한다.
 2026-09-29 측정 기준 prod `t4g.small`의 가용 메모리는 766MiB, dev `t4g.micro`는 209MiB였다. prod 루트
 파일시스템은 이후 확장했으므로 현재 여유 용량을 다시 확인한다. dev 백엔드는 약 305MiB를 사용했고 스왑
-337MiB가 사용 중이었다. 수집기의 192MB 제한은 최대치일 뿐 실제 사용량이나 안전한 여유를 보장하지 않는다.
+337MiB가 사용 중이었다. 수집기의 메모리 상한은 192MiB다. 현재 사용량은 `docker stats --no-stream`으로 확인한다.
 
 `CLOUD_WATCH_APP_ENV=dev`이면 배포 스크립트가 애플리케이션 기동 확인 후 수집기를 별도로 pull·재생성한다.
 dev에서는 `COMPOSE_PROFILES=metrics`가 없어도 반영된다. prod는 기존처럼 명시적 프로필 활성화가 필요하다.
@@ -272,9 +252,7 @@ sudo docker inspect --format '{{.State.OOMKilled}}' chongchong-metrics-collector
 Prometheus 출력의 누적 히스토그램에는 OTLP 시작 시각이 없어 수집기가 `cumulativetodelta`로 수집 간 증가분을
 만든다. 첫 관측값은 기준값으로만 사용하므로 최소 두 번의 수집(기본 주기 60초) 이후 전송 결과를 확인한다. 수집기 로그에서
 `Partial success response`와 자격 증명·네트워크·OTLP 전송 오류가 없는지 확인한다. CloudWatch Query Studio에서 실제
-HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후 요청 수가 증가하는지 조회한다. 통제된 dev
-환경에서만 5xx 요청과 p95 계산을 검증한다. Prometheus 출력이 OTLP로 변환되므로 실제 이름과 쿼리를 확인한
-뒤 바니에게 전달한다. Query Studio 읽기 권한은 EC2의 쓰기 권한과 별개다. 공개 HTTPS에서
+HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후 요청 수가 증가하는지 조회한다. dev 부하 테스트에서는 요청 수·5xx·p95가 부하 도구의 결과와 맞는지 비교한다. Query Studio 읽기 권한은 EC2의 쓰기 권한과 별개다. 공개 HTTPS에서
 `/actuator/prometheus`가 프록시되지 않는지도 확인한다.
 
 `vmstat`의 첫 줄은 부팅 이후 평균이므로 그 뒤의 `si`·`so`를 본다. 지속적인 스왑 입출력, OOM, 백엔드
@@ -332,4 +310,4 @@ sudo docker exec chongchong-nginx \
 
 위 출력은 백엔드 노출 여부만 확인한다. 실제 CloudWatch 전송은 Query Studio에서 변환된 지표 이름, dev 환경·서비스·인스턴스·pool 라벨을 확인한다. 조회 step을 줄여도 원래 수집 간격보다 세밀한 자료가 생기지는 않는다. batch 전송 주기 10초는 그대로이며 수집 시각과 화면에 도착하는 시각을 구분한다.
 
-`acquire`와 `usage`의 count·sum 증가분으로 구간 평균을 비교한다. 버킷이 없으면 p95를 계산할 수 없고 max는 전체 실행의 최대값을 보장하지 않는다. pending 상승과 active가 max에 도달하는 시점, 획득 시간 증가가 함께 관측되는지 확인한다. 이것만으로 근본 원인을 확정하지 말고 SQL·잠금·트랜잭션 점유 시간과 연결한다.
+`acquire`와 `usage`의 count·sum 증가분으로 구간 평균을 비교한다. p95 계산에는 히스토그램 버킷이 필요하고, 타이머의 max는 집계 창에 따라 초기화될 수 있다. pending 상승, active가 상한에 도달하는 시점, 연결 획득 시간 증가를 같은 시간대로 비교한다. 같은 시각의 SQL·잠금·트랜잭션 점유 시간을 함께 확인한다.

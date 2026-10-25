@@ -4,9 +4,35 @@ dev는 **요청을 받는 edge 1대와 앱을 실행하는 backend A/B 2대**로
 새 버전을 대기 중인 백엔드에 띄우고 정상 응답을 확인한 뒤, edge가 요청을 보낼 대상을 바꾼다.
 팀원이 서버에 접속할 때는 AWS Systems Manager의 Session Manager(SSM)를 사용한다.
 
-이 문서는 현재 dev 구조를 기준으로 한다. prod의 A/B 전환은 별도 작업이며 완료된 것으로 가정하지 않는다.
-저장소에는 기존 단일 서버 방식도 남아 있다. `buildspec.yml`은 `DEPLOYMENT_MODE=edge`일 때만
-edge용 AppSpec을 선택하고, 값을 지정하지 않으면 `legacy`를 사용한다.
+> [!NOTE]
+> 이 안내는 Ubuntu ARM64 EC2와 기존 VPC·RDS를 사용해 A/B 배포를 구성하는 절차다.
+> EC2를 만든 다음 [서버 준비](docs/server-setup.md)부터 진행한다. VPC와 DB를 새로 만드는 과정은 포함하지 않는다.
+
+## 처음 구성할 때 읽는 순서
+
+| 순서 | 할 일 | 끝났을 때 확인할 결과 |
+| --- | --- | --- |
+| 1 | [서버 준비](docs/server-setup.md): AWS 설정 → SSM → Docker·메모리 수집 → SSH → 앱·Nginx | edge의 HTTPS 응답이 `UP`, 응답 헤더에 A 주소 표시 |
+| 2 | [A/B 배포](docs/edge-deployment.md): 파이프라인 설정 → 첫 배포 → 전환 확인 | 배포 성공 후 응답 헤더가 B 주소로 변경 |
+| 3 | [모니터링](docs/monitoring.md): 앱 지표 → EC2 메모리 → 로그 확인 | A/B 지표가 각각 보이고 최근 시각까지 갱신 |
+
+각 명령 위에 실행 위치를 적었다. **AWS 콘솔**은 브라우저 화면, **edge·A·B 터미널**은 그 서버에 SSM으로 접속한 화면이다.
+
+## 이 문서에서 쓰는 AWS 용어
+
+| 용어 | 이 구성에서 하는 일 |
+| --- | --- |
+| EC2 / 인스턴스 | edge나 백엔드 프로그램을 실행하는 서버 |
+| VPC / 서브넷 | 서버들이 연결된 네트워크와 그 안의 구역 |
+| 보안 그룹 | 어느 서버가 어떤 포트로 접속할 수 있는지 정하는 규칙 |
+| IAM 역할 | EC2나 빌드 도구가 S3·CloudWatch 등에 접근할 때 쓰는 권한 묶음 |
+| SSM Session Manager | AWS 콘솔에서 서버 터미널을 여는 기능 |
+| RDS | A/B가 함께 사용하는 데이터베이스 |
+| CloudWatch | 서버 지표와 앱 로그를 확인하는 서비스 |
+| CodeBuild / CodeDeploy / CodePipeline | 각각 이미지 빌드 / 서버 배포 / 전체 실행 순서를 담당 |
+
+> [!IMPORTANT]
+> A/B 배포의 CodeBuild 환경변수는 `DEPLOYMENT_MODE=edge`다. 생략하면 기존 단일 서버 배포인 `legacy`가 선택된다.
 
 ## 서버 세 대는 각각 무엇을 하나요?
 
@@ -40,8 +66,7 @@ flowchart LR
 | 기존 단일 서버 환경을 관리하기 | [legacy 배포 참고](docs/legacy-deployment.md) |
 | Nginx 연결 한도를 정한 배경 확인 | [과거 실험 기록](docs/nginx-limits-and-observability.md) |
 
-처음 읽는 팀원은 이 문서에서 서버 역할을 확인하고, `edge-deployment.md`에서 배포 흐름과 복구 범위를 읽는다.
-실제 설정값과 현재 활성 서버는 문서의 예시가 아니라 해당 환경의 edge에서 확인한다.
+처음 구성할 때는 **서버 준비 → A/B 배포 → 모니터링 확인** 순서로 읽는다. 각 문서에 실행할 서버, 명령과 정상 결과를 적었다.
 
 ## 코드 변경이 서버에 도착하는 흐름
 
@@ -59,8 +84,7 @@ flowchart LR
     Check --> Switch["Nginx reload<br/>실제 HTTPS 응답 검증"]
 ```
 
-SSM은 사람이 접속하는 경로다. 배포 스크립트는 edge에서 A/B로 **배포 전용 SSH**를 사용한다.
-CodeDeploy가 A/B에 직접 배포하는 구조가 아니므로 배포 그룹에는 해당 환경의 edge 한 대만 지정한다.
+운영자는 SSM으로 접속한다. CodeDeploy는 edge에서 배포 스크립트를 실행하고, edge가 SSH로 대기 백엔드에 파일을 전달한다.
 
 ## 파일을 찾을 때
 
@@ -95,11 +119,10 @@ legacy 복구는 폴더 정리 전후의 백업 구조를 모두 읽는다.
 | `scripts/setup/check-server-setup.sh` | backend/edge 역할별 로컬 준비 상태를 읽기 전용으로 검사한다. |
 | `scripts/setup/setup-host-memory.sh`, `scripts/setup/host-monitoring.sh` | 서버 준비 때 호스트 메모리 수집을 설치·설정한다. |
 | `config/nginx/edge.conf.template`, `config/nginx/nginx.edge.conf`, `config/otel-collector.edge.yaml` | edge에 설치할 라우팅 템플릿·Nginx 한도·앱 수집 설정 원본이다. |
-| `config/edge.env.example`, `config/.env.example` | edge 설정과 앱 설정을 준비할 때 참고한다. 실제 비밀값은 저장소에 넣지 않는다. |
+| `config/edge.env.example`, `config/.env.example` | edge 주소·SSH 설정과 앱 환경변수의 예시다. |
 
-`scripts/legacy/`의 스크립트와
-`config/docker-compose.dev.yml`은 legacy 실행 경로다. A/B 서버 준비나 edge 배포에 실행하지 않는다.
-다만 `config/docker-compose.yml`은 A/B 백엔드도 상속하는 공통 정의이므로 오래된 파일이라고 삭제하면 안 된다.
+`scripts/legacy/`와 `config/docker-compose.dev.yml`은 기존 단일 서버 배포에서 사용한다.
+`config/docker-compose.yml`의 backend 정의는 A/B 배포에서도 공통으로 사용한다.
 
 ## 변경한 뒤 확인할 것
 
@@ -110,5 +133,4 @@ for script in deploy/scripts/*/*.sh; do bash -n "$script" || exit 1; done
 ```
 
 Docker가 실행 중인 환경에서는 `deploy/tests/nginx-smoke.sh`와 `deploy/tests/edge-nginx-smoke.sh`도 실행한다.
-전체 CI 명령은 [deploy-ci.yml](../.github/workflows/deploy-ci.yml)에 있다. 로컬 테스트 통과는 실제 AWS 배포·지표
-전송 성공을 뜻하지 않는다. 서버 적용 후에는 해당 운영 문서의 실제 응답·로그·메트릭 검증을 이어서 수행한다.
+전체 CI 명령은 [deploy-ci.yml](../.github/workflows/deploy-ci.yml)에 있다. 서버 적용 후에는 배포 문서의 health 확인과 모니터링 문서의 지표 조회를 실행한다.
