@@ -42,7 +42,7 @@ check 'Docker Compose 플러그인' docker compose version
 check 'SSM 실행 및 부팅 자동 시작' ssm_ready
 check 'CloudWatch Agent 실행 및 부팅 자동 시작' service_ready amazon-cloudwatch-agent
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-check '호스트 메모리 수집 설정' cmp -s "$script_dir/../cloudwatch-agent-memory.json" \
+check '호스트 메모리 수집 설정' cmp -s "$script_dir/../../config/cloudwatch-agent-memory.json" \
     /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.d/file_cloudwatch-agent-memory.json
 
 if [[ "$role" == edge ]]; then
@@ -72,7 +72,7 @@ if [[ "$role" == edge ]]; then
         check 'HTTPS 인증서' test -s "/etc/letsencrypt/live/${SERVER_NAME:-}/fullchain.pem"
         check 'HTTPS 개인키' test -s "/etc/letsencrypt/live/${SERVER_NAME:-}/privkey.pem"
         check 'edge Compose 환경 설정' docker compose --env-file "$root/config/edge.env" \
-            -f "$script_dir/../docker-compose.edge.yml" --profile metrics config --quiet
+            -f "$script_dir/../../config/docker-compose.edge.yml" --profile metrics config --quiet
     fi
 fi
 echo '로컬 준비 검사입니다. IAM·보안 그룹·SSH/sudo 연결·RDS·실제 메트릭 수신은 서버 준비 문서에 따라 별도 검증하세요.'

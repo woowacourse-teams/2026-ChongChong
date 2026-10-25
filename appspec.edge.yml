@@ -5,7 +5,7 @@ files:
     destination: /opt/chongchong/deploy
 file_exists_behavior: OVERWRITE
 permissions:
-  - object: /opt/chongchong/deploy/scripts
+  - object: /opt/chongchong/deploy/scripts/edge
     pattern: "*.sh"
     owner: root
     group: root
@@ -14,6 +14,6 @@ permissions:
       - file
 hooks:
   ApplicationStart:
-    - location: deploy/scripts/edge-deploy.sh
+    - location: deploy/scripts/edge/edge-deploy.sh
       timeout: 600
       runas: root

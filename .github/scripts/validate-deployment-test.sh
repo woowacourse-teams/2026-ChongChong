@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
-readonly VALIDATOR="${PROJECT_ROOT}/deploy/scripts/validate.sh"
+readonly VALIDATOR="${PROJECT_ROOT}/deploy/scripts/legacy/validate.sh"
 
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/chongchong-deploy-test.XXXXXX")"
 readonly TEST_ROOT
@@ -31,6 +31,7 @@ AUTH_JWT_SECRET_BASE64=dGVzdC1zZWNyZXQ=
 AUTH_KAKAO_REST_API_KEY=test-rest-api-key
 AUTH_KAKAO_CLIENT_SECRET=test-client-secret
 AUTH_KAKAO_REDIRECT_URI=https://chongchong.example.com/auth/kakao/callback
+WEB_PUSH_NOTIFICATION_CLICK_TOKEN_SECRET=test-click-token-secret
 EOF
 
 cat >"${APP_ROOT}/deploy/image.env" <<'EOF'

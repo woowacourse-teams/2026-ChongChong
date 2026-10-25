@@ -23,19 +23,19 @@
 
 ## edge에 어떤 파일을 설치하나요?
 
-`/opt/chongchong/config/edge.env`는 `edge.env.example`을 바탕으로 환경에 맞게 작성한다.
-`config/backend.env`는 `.env.example`의 앱·DB·인증·Docker Hub·로그 설정을 참고해 작성한다.
+`/opt/chongchong/config/edge.env`는 `config/edge.env.example`을 바탕으로 환경에 맞게 작성한다.
+`config/backend.env`는 `config/.env.example`의 앱·DB·인증·Docker Hub·로그 설정을 참고해 작성한다.
 `BACKEND_IMAGE`와 태그는 빌드가 생성한 `image.env`에서 전달한다.
 두 원본 파일은 root:600, config 디렉터리는 root:700으로 관리한다. 필수값의 빈칸을 예시 비밀값으로 채우지 않는다.
 
 | 저장소의 원본 | edge에 설치할 위치 |
 | --- | --- |
-| `nginx/edge.conf.template` | `/opt/chongchong/edge-runtime/edge.conf.template` |
-| `nginx/nginx.edge.conf` | `/opt/chongchong/edge-runtime/nginx.conf` |
-| `otel-collector.edge.yaml` | `/opt/chongchong/edge-runtime/otel-collector.yaml` |
-| `scripts/renew-certificate.sh` | `/usr/local/sbin/chongchong-renew-certificate` |
-| `systemd/chongchong-certbot-renew.service` | `/etc/systemd/system/chongchong-certbot-renew.service` |
-| `systemd/chongchong-certbot-renew.timer` | `/etc/systemd/system/chongchong-certbot-renew.timer` |
+| `config/nginx/edge.conf.template` | `/opt/chongchong/edge-runtime/edge.conf.template` |
+| `config/nginx/nginx.edge.conf` | `/opt/chongchong/edge-runtime/nginx.conf` |
+| `config/otel-collector.edge.yaml` | `/opt/chongchong/edge-runtime/otel-collector.yaml` |
+| `scripts/setup/renew-certificate.sh` | `/usr/local/sbin/chongchong-renew-certificate` |
+| `config/systemd/chongchong-certbot-renew.service` | `/etc/systemd/system/chongchong-certbot-renew.service` |
+| `config/systemd/chongchong-certbot-renew.timer` | `/etc/systemd/system/chongchong-certbot-renew.timer` |
 
 인증서 갱신 실행 파일에는 실행 권한이 필요하다. unit 설치 후 daemon-reload와 timer 활성화를 수행한다.
 인증서 최초 발급은 실제 도메인과 80번 포트의 현재 사용 상태를 확인한 별도 작업이다.
@@ -51,7 +51,7 @@ upstream chongchong_backend { server 10.0.0.189:8080; }
 
 ```bash
 sudo docker compose --env-file /opt/chongchong/config/edge.env \
-  -f /opt/chongchong/deploy/docker-compose.edge.yml --profile metrics config --quiet
+  -f /opt/chongchong/deploy/config/docker-compose.edge.yml --profile metrics config --quiet
 ```
 
 첫 실행은 기존 컨테이너의 이름과 Compose 프로젝트, 인증서, 복구 경로를 확인한 후 수행한다.
@@ -59,7 +59,7 @@ sudo docker compose --env-file /opt/chongchong/config/edge.env \
 
 ```bash
 sudo docker compose --env-file /opt/chongchong/config/edge.env \
-  -f /opt/chongchong/deploy/docker-compose.edge.yml --profile metrics up -d
+  -f /opt/chongchong/deploy/config/docker-compose.edge.yml --profile metrics up -d
 ```
 
 Nginx가 현재 백엔드로 보내는 HTTPS 응답을 확인한 뒤 [배포 운영 절차](edge-deployment.md)의
@@ -84,9 +84,9 @@ Nginx가 현재 백엔드로 보내는 HTTPS 응답을 확인한 뒤 [배포 운
 | 현재 라우팅 | 불필요 | edge-routing/upstream.conf | 파일 존재; 실제 응답은 아래 별도 검증 |
 
 ```bash
-sudo bash deploy/scripts/check-server-setup.sh backend
+sudo bash deploy/scripts/setup/check-server-setup.sh backend
 # edge에서는 다음 역할로 실행한다.
-sudo bash deploy/scripts/check-server-setup.sh edge
+sudo bash deploy/scripts/setup/check-server-setup.sh edge
 ```
 
 검사는 패키지를 설치하거나 서비스를 시작하지 않는다. 준비 중인 서버에서도 모든 누락을 한 번에 보여준다.
@@ -95,7 +95,7 @@ Docker·SSM 등의 설치는 승인된 Ubuntu 이미지와 기존 팀 운영 절
 
 ## 호스트 메모리 수집 적용
 
-B에서 확인한 설정을 `cloudwatch-agent-memory.json`으로 보관한다. `ChongChong/Host`의
+B에서 확인한 설정을 `config/cloudwatch-agent-memory.json`으로 보관한다. `ChongChong/Host`의
 `mem_available`, `mem_available_percent`, `mem_total`을 10초마다 수집하며 InstanceId를 자동 식별한다.
 리전은 현재 환경과 같은 서울이다. 다른 리전에는 설정 검토 후 적용한다.
 
@@ -103,8 +103,8 @@ B에서 확인한 설정을 `cloudwatch-agent-memory.json`으로 보관한다. `
 저장소의 deploy 디렉터리가 대상 서버에 있어야 하며 앱 배포 hook에서는 이 명령을 호출하지 않는다.
 
 ```bash
-sudo bash deploy/scripts/setup-host-memory.sh
-sudo bash deploy/scripts/check-server-setup.sh backend
+sudo bash deploy/scripts/setup/setup-host-memory.sh
+sudo bash deploy/scripts/setup/check-server-setup.sh backend
 sudo journalctl -u amazon-cloudwatch-agent --since '10 minutes ago' --no-pager
 sudo tail -n 50 /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
 ```

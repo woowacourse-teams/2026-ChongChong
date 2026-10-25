@@ -23,11 +23,11 @@ FAKE_DOCKER = '\n'.join([
 
 
 class DeployTest(unittest.TestCase):
-    def exercise(self, environment='dev', failure=''):
+    def exercise(self, environment='dev', failure='', backup_layout='legacy'):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
             shutil.copytree(DEPLOY, root / 'deploy')
-            (root / '.env').write_text((DEPLOY / '.env.example').read_text().replace(
+            (root / '.env').write_text((DEPLOY / 'config/.env.example').read_text().replace(
                 'CLOUD_WATCH_APP_ENV=prod', f'CLOUD_WATCH_APP_ENV={environment}'))
             (root / 'deploy/image.env').write_text('BACKEND_IMAGE=new\nBACKEND_IMAGE_TAG=version\n')
             certs = root / 'certs/live/203-0-113-10.nip.io'
@@ -36,7 +36,9 @@ class DeployTest(unittest.TestCase):
             (certs / 'privkey.pem').touch()
             backup = root / 'deploy-backups/previous/deploy'
             backup.mkdir(parents=True)
-            shutil.copy(DEPLOY / 'docker-compose.yml', backup)
+            backup_config = backup / 'config' if backup_layout == 'config' else backup
+            backup_config.mkdir(exist_ok=True)
+            shutil.copy(DEPLOY / 'config/docker-compose.yml', backup_config)
             (root / 'previous-deploy-dir').write_text(str(backup))
             binary = root / 'bin'
             binary.mkdir()
@@ -47,7 +49,7 @@ class DeployTest(unittest.TestCase):
             env = {**os.environ, 'PATH': f'{binary}:{os.environ["PATH"]}',
                    'CHONGCHONG_APP_ROOT': str(root), 'CHONGCHONG_LETSENCRYPT_ROOT': str(root / 'certs'),
                    'CALL_LOG': str(root / 'calls'), 'FAIL_AT': failure, 'COMPOSE_PROFILES': ''}
-            result = subprocess.run(['bash', str(root / 'deploy/scripts/deploy.sh')], env=env,
+            result = subprocess.run(['bash', str(root / 'deploy/scripts/legacy/deploy.sh')], env=env,
                                     capture_output=True, text=True)
             calls = [json.loads(line) for line in (root / 'calls').read_text().splitlines()]
             return result, calls
@@ -81,6 +83,14 @@ class DeployTest(unittest.TestCase):
         result, calls = self.exercise(failure='collector')
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(sum('up' in args and 'backend' in args for args in calls), 1)
+
+    def test_app_failure_uses_reorganized_configuration_backup(self):
+        result, calls = self.exercise(failure='app', backup_layout='config')
+        self.assertNotEqual(result.returncode, 0)
+        recreation = [args for args in calls if 'up' in args]
+        self.assertEqual(len(recreation), 2)
+        self.assertTrue(any(arg.endswith('/deploy/config/docker-compose.yml')
+                            and 'deploy-backups' in arg for arg in recreation[1]))
 
 
 if __name__ == '__main__':

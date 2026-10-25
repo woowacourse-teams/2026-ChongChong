@@ -7,7 +7,7 @@ readonly APP_ROOT="${CHONGCHONG_APP_ROOT:-/opt/chongchong}"
 readonly APP_ENV="${APP_ROOT}/.env"
 readonly DEPLOY_ROOT="${APP_ROOT}/deploy"
 readonly IMAGE_ENV="${DEPLOY_ROOT}/image.env"
-readonly COMPOSE_FILE="${DEPLOY_ROOT}/docker-compose.yml"
+readonly COMPOSE_FILE="${DEPLOY_ROOT}/config/docker-compose.yml"
 
 load_deployment_environment() {
     if [[ ! -f "${APP_ENV}" ]]; then
@@ -75,7 +75,7 @@ load_deployment_environment() {
 compose() {
     local compose_args=(--env-file "${APP_ENV}" --env-file "${IMAGE_ENV}" --file "${COMPOSE_FILE}")
     if [[ "${CLOUD_WATCH_APP_ENV:-}" == "dev" ]]; then
-        compose_args+=(--file "${DEPLOY_ROOT}/docker-compose.dev.yml")
+        compose_args+=(--file "${DEPLOY_ROOT}/config/docker-compose.dev.yml")
     fi
     docker compose "${compose_args[@]}" "$@"
 }

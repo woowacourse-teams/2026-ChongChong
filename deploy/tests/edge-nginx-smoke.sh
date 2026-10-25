@@ -31,8 +31,8 @@ docker run -d --name "$NAME" --network "$NAME" -p 127.0.0.1::443 \
     --ulimit nofile=8192:8192 \
     -e SERVER_NAME=localhost -e NGINX_API_LOG_FORMAT=loadtest \
     -e 'NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$' \
-    -v "$ROOT/nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro" \
-    -v "$ROOT/nginx/edge.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+    -v "$ROOT/config/nginx/nginx.edge.conf:/etc/nginx/nginx.conf:ro" \
+    -v "$ROOT/config/nginx/edge.conf.template:/etc/nginx/templates/default.conf.template:ro" \
     -v "$TEMP/edge-routing:/etc/nginx/upstreams:ro" \
     -v "$TEMP/certs:/etc/letsencrypt:ro" nginx:1.28-alpine >/dev/null
 port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
@@ -46,7 +46,7 @@ verify() {
 }
 verify "$address_a"
 replace_test_upstream() (
-    source "$ROOT/scripts/edge-runtime.sh"
+    source "$ROOT/scripts/edge/edge-runtime.sh"
     ROOT="$TEMP"
     UPSTREAM="$ROOT/edge-routing/upstream.conf"
     docker() { command docker exec "$NAME" "${@:3}"; }

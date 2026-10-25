@@ -32,13 +32,15 @@ rollback() {
     if [[ -f "${APP_ROOT}/previous-deploy-dir" ]]; then
         backup="$(cat "${APP_ROOT}/previous-deploy-dir")"
     fi
-    if [[ "$backup" != "${APP_ROOT}/deploy-backups/"* ]] || [[ ! -f "$backup/docker-compose.yml" ]]; then
+    local backup_config="$backup/config"
+    [[ -f "$backup_config/docker-compose.yml" ]] || backup_config="$backup"
+    if [[ "$backup" != "${APP_ROOT}/deploy-backups/"* ]] || [[ ! -f "$backup_config/docker-compose.yml" ]]; then
         echo "No configuration backup available; restore the previous deployment artifact manually." >&2
         return 1
     fi
-    local rollback_files=(--file "$backup/docker-compose.yml")
-    if [[ "${CLOUD_WATCH_APP_ENV:-}" == "dev" ]] && [[ -f "$backup/docker-compose.dev.yml" ]]; then
-        rollback_files+=(--file "$backup/docker-compose.dev.yml")
+    local rollback_files=(--file "$backup_config/docker-compose.yml")
+    if [[ "${CLOUD_WATCH_APP_ENV:-}" == "dev" ]] && [[ -f "$backup_config/docker-compose.dev.yml" ]]; then
+        rollback_files+=(--file "$backup_config/docker-compose.dev.yml")
     fi
     docker compose --env-file "$APP_ENV" --env-file "$IMAGE_ENV" \
         "${rollback_files[@]}" up --detach --force-recreate --timeout "${BACKEND_STOP_TIMEOUT_SECONDS:-60}" backend nginx

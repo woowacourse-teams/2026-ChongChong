@@ -1,8 +1,8 @@
 # 기존 단일 서버 배포 참고
 
 이 문서는 backend와 Nginx를 같은 EC2에서 재생성하는 **legacy 경로**를 설명한다.
-현재 dev의 edge + backend A/B 운영은 [배포 안내](README.md)에서 시작한다.
-아래 dev 수집기 자동 재생성, `.env`, `docker-compose.dev.yml` 설명도 legacy 경로에만 해당한다.
+현재 dev의 edge + backend A/B 운영은 [배포 안내](../README.md)에서 시작한다.
+아래 dev 수집기 자동 재생성, `.env`, `config/docker-compose.dev.yml` 설명도 legacy 경로에만 해당한다.
 과거 측정값과 당시 검증 기록은 현재 서버 상태를 보장하지 않는다.
 
 A/B 분리 환경의 서버별 필수 설정과 메모리 수집은 [서버 준비와 누락 검사](server-setup.md)를 따른다.
@@ -26,14 +26,14 @@ edge EC2와 백엔드 A/B 분리 배포는 [edge 배포 절차](edge-deployment.
 
 ## 2. EC2를 한 번 준비한다
 
-허용된 위치에서 저장소의 `deploy` 디렉터리를 EC2로 복사한다. `deploy/.env.example`을 참고하여
+허용된 위치에서 저장소의 `deploy` 디렉터리를 EC2로 복사한다. `deploy/config/.env.example`을 참고하여
 `/opt/chongchong/.env`를 생성하고 실제 값을 입력한다. 이 파일은 Git에 커밋하지 않는다.
 
 ```bash
 sudo install -d -m 0755 /opt/chongchong
-sudo install -m 0600 deploy/.env.example /opt/chongchong/.env
+sudo install -m 0600 deploy/config/.env.example /opt/chongchong/.env
 sudoedit /opt/chongchong/.env
-sudo deploy/scripts/bootstrap-ec2.sh
+sudo deploy/scripts/legacy/bootstrap-ec2.sh
 ```
 
 bootstrap은 Docker Engine과 Compose Plugin, Host Certbot, CodeDeploy Agent를 설치한다. 최초 인증서는 80번 포트의
@@ -93,7 +93,7 @@ WEB_PUSH_SENDER_SIMULATED_DELAY_MS=500
 
 테스트를 시작하기 전에 backend 컨테이너의 위 환경 변수와 시뮬레이터 시작 로그를 확인한다.
 종료 시 테스트 Delivery와 합성 구독을 정리한 뒤 `load-test`를 제거하고 모드를 `real`로 복원해 재배포한다.
-데이터 준비와 20건 예행시험은 [알림 부하 테스트 sender](../backend/docs/load-test-sender.md)를 따른다.
+데이터 준비와 20건 예행시험은 [알림 부하 테스트 sender](../../backend/docs/load-test-sender.md)를 따른다.
 
 ### 알림 발송 및 종료 설정
 
@@ -213,7 +213,7 @@ sudo systemctl status codedeploy-agent
 sudo docker compose \
   --env-file /opt/chongchong/.env \
   --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
+  --file /opt/chongchong/deploy/config/docker-compose.yml \
   ps
 sudo bash -c '
   set -Eeuo pipefail
@@ -234,7 +234,7 @@ Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
 
 ## 7. CloudWatch HTTP·Hikari·JVM 메트릭 수집기를 환경별로 활성화한다
 
-[ADR-0044](../backend/docs/adr/0044-collect-http-metrics-with-adot-and-cloudwatch.md)에 따라 각 EC2의 ADOT
+[ADR-0044](../../backend/docs/adr/0044-collect-http-metrics-with-adot-and-cloudwatch.md)에 따라 각 EC2의 ADOT
 수집기는 사설 Docker 네트워크에서 백엔드의 `/actuator/prometheus`를 읽고 CloudWatch의 OTLP 메트릭
 엔드포인트로 전송한다. AMP workspace나 추가 메트릭 서버는 만들지 않는다. `CLOUD_WATCH_AWS_REGION`과
 `CLOUD_WATCH_APP_ENV`는 기존 로그 설정값을 사용한다. dev에서는 `dev`, prod에서는 `prod`를 설정한다.
@@ -260,7 +260,7 @@ dev에서는 `COMPOSE_PROFILES=metrics`가 없어도 반영된다. prod는 기�
 sudo docker compose \
   --env-file /opt/chongchong/.env \
   --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
+  --file /opt/chongchong/deploy/config/docker-compose.yml \
   --profile metrics up --detach --no-deps metrics-collector
 sudo docker logs --tail 100 chongchong-metrics-collector
 free -h
@@ -284,7 +284,7 @@ HTTP 메트릭 이름과 `environment` 속성을 확인하고, API 요청 전후
 sudo docker compose \
   --env-file /opt/chongchong/.env \
   --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
+  --file /opt/chongchong/deploy/config/docker-compose.yml \
   --profile metrics stop metrics-collector
 ```
 
@@ -322,7 +322,7 @@ YAML과 Compose 파일을 배포 위치에 함께 반영한 뒤 수집기만 재
 sudo docker compose \
   --env-file /opt/chongchong/.env \
   --env-file /opt/chongchong/deploy/image.env \
-  --file /opt/chongchong/deploy/docker-compose.yml \
+  --file /opt/chongchong/deploy/config/docker-compose.yml \
   --profile metrics up --detach --no-deps --force-recreate metrics-collector
 sudo docker logs --tail 100 chongchong-metrics-collector
 sudo docker exec chongchong-nginx \

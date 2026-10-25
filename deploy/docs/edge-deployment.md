@@ -1,6 +1,6 @@
 # A/B 배포와 복구 운영 절차
 
-[전체 구조](README.md)를 먼저 읽으면 edge와 A/B의 역할을 파악할 수 있다.
+[전체 구조](../README.md)를 먼저 읽으면 edge와 A/B의 역할을 파악할 수 있다.
 여기서는 서버 준비가 끝난 환경에서 앱을 배포하고 복구하는 과정을 설명한다.
 최초 서버 구성과 단일 서버에서의 전환은 [서버 준비 절차](server-setup.md)를 따른다.
 
@@ -93,14 +93,14 @@ sequenceDiagram
 edge에서 다음을 실행한다. 이 명령은 새 이미지를 빌드하지 않고 현재 `deploy/image.env`의 이미지를 사용한다.
 
 ```bash
-sudo bash /opt/chongchong/deploy/scripts/edge-deploy.sh
+sudo bash /opt/chongchong/deploy/scripts/edge/edge-deploy.sh
 ```
 
 앱 설정을 바꿀 때는 edge의 `config/backend.env`를 수정한 뒤 배포한다.
 한 번 실행하면 대기 슬롯 하나에만 반영된다. 양쪽에 같은 설정을 반영하려면 첫 전환을 검증하고 기존 연결이
 종료된 뒤 다시 배포한다. 원본 수정이나 컨테이너의 단순 restart만으로 새 환경변수가 전달되지는 않는다.
 
-앱 배포는 Nginx·ADOT 컨테이너를 재생성하지 않는다. `deploy/nginx`나 `otel-collector.edge.yaml`을
+앱 배포는 Nginx·ADOT 컨테이너를 재생성하지 않는다. `deploy/config/nginx`나 `config/otel-collector.edge.yaml`을
 수정해 커밋해도 이미 설치된 `edge-runtime`은 자동으로 바뀌지 않는다.
 해당 설정 변경은 백업·검증·적용 시간을 정한 별도 edge 운영 작업으로 수행한다.
 
@@ -116,7 +116,7 @@ sudo bash /opt/chongchong/deploy/scripts/edge-deploy.sh
 직전 백엔드가 살아 있고 롤백 대상 기록이 남아 있을 때 edge에서 실행한다.
 
 ```bash
-sudo bash /opt/chongchong/deploy/scripts/edge-rollback.sh
+sudo bash /opt/chongchong/deploy/scripts/edge/edge-rollback.sh
 ```
 
 이 명령은 이전 백엔드의 readiness를 확인하고 **라우팅만** 되돌린다.

@@ -34,11 +34,11 @@ flowchart LR
 
 | 하려는 일 | 문서 |
 | --- | --- |
-| 서버를 새로 준비하거나 빠진 설정을 찾기 | [서버 준비와 역할별 검사](server-setup.md) |
-| 새 버전 배포, 앱 설정 변경, 실패 복구 | [A/B 배포 운영 절차](edge-deployment.md) |
-| A/B 메트릭과 로그 확인, 부하 테스트 분석 | [모니터링 확인](monitoring.md) |
-| 기존 단일 서버 환경을 관리하기 | [legacy 배포 참고](legacy-deployment.md) |
-| Nginx 연결 한도를 정한 배경 확인 | [과거 실험 기록](nginx-limits-and-observability.md) |
+| 서버를 새로 준비하거나 빠진 설정을 찾기 | [서버 준비와 역할별 검사](docs/server-setup.md) |
+| 새 버전 배포, 앱 설정 변경, 실패 복구 | [A/B 배포 운영 절차](docs/edge-deployment.md) |
+| A/B 메트릭과 로그 확인, 부하 테스트 분석 | [모니터링 확인](docs/monitoring.md) |
+| 기존 단일 서버 환경을 관리하기 | [legacy 배포 참고](docs/legacy-deployment.md) |
+| Nginx 연결 한도를 정한 배경 확인 | [과거 실험 기록](docs/nginx-limits-and-observability.md) |
 
 처음 읽는 팀원은 이 문서에서 서버 역할을 확인하고, `edge-deployment.md`에서 배포 흐름과 복구 범위를 읽는다.
 실제 설정값과 현재 활성 서버는 문서의 예시가 아니라 해당 환경의 edge에서 확인한다.
@@ -64,29 +64,49 @@ CodeDeploy가 A/B에 직접 배포하는 구조가 아니므로 배포 그룹에
 
 ## 파일을 찾을 때
 
+```text
+deploy/
+├── README.md       # 전체 구조와 읽는 순서
+├── docs/           # 서버 준비·배포·복구·모니터링 문서
+├── config/         # Compose, 환경변수 예시, 메트릭 수집 설정
+│   ├── nginx/      # Nginx 설정과 템플릿
+│   └── systemd/    # 인증서 갱신 service·timer
+├── scripts/
+│   ├── edge/       # edge의 A/B 배포·트래픽 전환·롤백
+│   ├── backend/    # 대상 백엔드에서 앱 교체
+│   ├── setup/      # 서버 준비 검사·메모리 수집·인증서 갱신
+│   └── legacy/     # 기존 단일 서버 배포·초기 설치
+└── tests/          # 배포 회귀 테스트와 Docker smoke test
+```
+
+아래 경로는 `deploy/` 기준이다. 빌드에서 생성하는 `image.env`는 기존처럼 `deploy/` 바로 아래에 둔다.
+서버의 `config/backend.env`, `edge-runtime`, `edge-routing` 같은 운영 경로는 바뀌지 않는다.
+Compose의 기본 프로젝트 이름은 `deploy`로 유지하며, A/B 앱은 스크립트에서 `chongchong-backend`를 지정한다.
+legacy 복구는 폴더 정리 전후의 백업 구조를 모두 읽는다.
+
 | 파일 | 역할 |
 | --- | --- |
 | `../buildspec.yml`, `../appspec.edge.yml` | 이미지와 배포 파일을 만들고 edge에서 배포를 시작한다. |
-| `docker-compose.edge.yml` | edge의 Nginx·ADOT 컨테이너를 구성한다. |
-| `docker-compose.backend.yml` | 각 백엔드의 앱 컨테이너를 구성한다. `docker-compose.yml`의 backend 정의를 상속한다. |
-| `scripts/edge-deploy.sh`, `scripts/edge-runtime.sh` | 대기 서버 배포, 라우팅 검증·전환·실패 복구를 담당한다. |
-| `scripts/backend-release.sh` | edge가 전달한 파일로 대상 백엔드의 앱만 교체한다. |
-| `scripts/edge-rollback.sh` | 이전 백엔드로 라우팅을 되돌린다. |
-| `scripts/check-server-setup.sh` | backend/edge 역할별 로컬 준비 상태를 읽기 전용으로 검사한다. |
-| `scripts/setup-host-memory.sh`, `scripts/host-monitoring.sh` | 서버 준비 때 호스트 메모리 수집을 설치·설정한다. |
-| `nginx/edge.conf.template`, `nginx/nginx.edge.conf`, `otel-collector.edge.yaml` | edge에 설치할 라우팅 템플릿·Nginx 한도·앱 수집 설정 원본이다. |
-| `edge.env.example`, `.env.example` | edge 설정과 앱 설정을 준비할 때 참고한다. 실제 비밀값은 저장소에 넣지 않는다. |
+| `config/docker-compose.edge.yml` | edge의 Nginx·ADOT 컨테이너를 구성한다. |
+| `config/docker-compose.backend.yml` | 각 백엔드의 앱 컨테이너를 구성한다. `config/docker-compose.yml`의 backend 정의를 상속한다. |
+| `scripts/edge/edge-deploy.sh`, `scripts/edge/edge-runtime.sh` | 대기 서버 배포, 라우팅 검증·전환·실패 복구를 담당한다. |
+| `scripts/backend/backend-release.sh` | edge가 전달한 파일로 대상 백엔드의 앱만 교체한다. |
+| `scripts/edge/edge-rollback.sh` | 이전 백엔드로 라우팅을 되돌린다. |
+| `scripts/setup/check-server-setup.sh` | backend/edge 역할별 로컬 준비 상태를 읽기 전용으로 검사한다. |
+| `scripts/setup/setup-host-memory.sh`, `scripts/setup/host-monitoring.sh` | 서버 준비 때 호스트 메모리 수집을 설치·설정한다. |
+| `config/nginx/edge.conf.template`, `config/nginx/nginx.edge.conf`, `config/otel-collector.edge.yaml` | edge에 설치할 라우팅 템플릿·Nginx 한도·앱 수집 설정 원본이다. |
+| `config/edge.env.example`, `config/.env.example` | edge 설정과 앱 설정을 준비할 때 참고한다. 실제 비밀값은 저장소에 넣지 않는다. |
 
-`scripts/bootstrap-ec2.sh`, `prepare.sh`, `deploy.sh`, `validate.sh`, `runtime.sh`와
-`docker-compose.dev.yml`은 legacy 실행 경로다. A/B 서버 준비나 edge 배포에 실행하지 않는다.
-다만 `docker-compose.yml`은 A/B 백엔드도 상속하는 공통 정의이므로 오래된 파일이라고 삭제하면 안 된다.
+`scripts/legacy/`의 스크립트와
+`config/docker-compose.dev.yml`은 legacy 실행 경로다. A/B 서버 준비나 edge 배포에 실행하지 않는다.
+다만 `config/docker-compose.yml`은 A/B 백엔드도 상속하는 공통 정의이므로 오래된 파일이라고 삭제하면 안 된다.
 
 ## 변경한 뒤 확인할 것
 
 ```bash
 python3 -m unittest discover -s deploy/tests -v
 bash deploy/tests/host-monitoring-test.sh
-for script in deploy/scripts/*.sh; do bash -n "$script" || exit 1; done
+for script in deploy/scripts/*/*.sh; do bash -n "$script" || exit 1; done
 ```
 
 Docker가 실행 중인 환경에서는 `deploy/tests/nginx-smoke.sh`와 `deploy/tests/edge-nginx-smoke.sh`도 실행한다.

@@ -2,7 +2,7 @@
 
 이 문서는 2026-10-16 실험과 **legacy 배포 경로**의 변경 기록이다.
 연결 한도를 정한 근거는 참고할 수 있지만, 아래 `runtime.sh`·`.env`·dev override 명령은
-현재 dev edge/A/B 운영 절차가 아니다. 현재 운영은 [배포 안내](README.md)와
+현재 dev edge/A/B 운영 절차가 아니다. 현재 운영은 [배포 안내](../README.md)와
 [모니터링 확인](monitoring.md)을 따른다. 아래 검증 결과와 미확인 항목은 기록 당시 기준이다.
 
 ## 적용값과 로컬 근거
@@ -34,7 +34,7 @@
 
 ## 저장소 설정과 배포 순서
 
-`CLOUD_WATCH_APP_ENV=dev`일 때 `runtime.sh`의 `compose`가 `docker-compose.dev.yml`을 추가한다. 이 파일은 Nginx 메인 설정과 FD 한도를 적용한다. prod는 이 override를 사용하지 않는다. 라우팅은 두 환경 모두 `default.conf.template` 하나로 관리한다. API 로그 형식은 기본 Compose에서 `NGINX_API_LOG_FORMAT=main`, dev override에서 `loadtest`로 지정한다. JSON 로그 형식은 dev 메인 설정에서만 정의한다.
+`CLOUD_WATCH_APP_ENV=dev`일 때 `runtime.sh`의 `compose`가 `config/docker-compose.dev.yml`을 추가한다. 이 파일은 Nginx 메인 설정과 FD 한도를 적용한다. prod는 이 override를 사용하지 않는다. 라우팅은 두 환경 모두 `default.conf.template` 하나로 관리한다. API 로그 형식은 기본 Compose에서 `NGINX_API_LOG_FORMAT=main`, dev override에서 `loadtest`로 지정한다. JSON 로그 형식은 dev 메인 설정에서만 정의한다.
 
 `NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$`로 치환 대상을 제한한다. Compose 파일에서는 끝의 `$`를 `$$`로 이스케이프한다. dev API 로그에는 요청 ID 두 종류, CloudFront ID, 연결 번호, URI, 상태, 전체·upstream 시간을 기록한다. 시간 단위는 초다. 인증 헤더·쿠키·본문·쿼리 문자열은 기록하지 않는다. dev API 로그가 기존 combined 형식에서 JSON으로 바뀌므로 외부 파서가 있다면 JSON 파서를 사용해야 한다. prod API 로그는 기존 main 형식을 유지한다.
 
@@ -56,7 +56,7 @@
 ## 배포 후 검증
 
 ```bash
-sudo bash -c 'source /opt/chongchong/deploy/scripts/runtime.sh; load_deployment_environment; verify_nginx_limits; verify_metrics_collector'
+sudo bash -c 'source /opt/chongchong/deploy/scripts/legacy/runtime.sh; load_deployment_environment; verify_nginx_limits; verify_metrics_collector'
 
 CHECK_ID="nginx-check-$(date +%s)"
 curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
@@ -73,15 +73,15 @@ sudo docker stats --no-stream
 
 ## 복구 범위
 
-애플리케이션 자동 복구는 이전 배포 디렉터리의 설정을 마운트한다. 복구에 사용 중인 백업은 삭제하지 않는다. 수집기 설정 실패는 이전 `otel-collector.yaml`을 복구하고 metrics 서비스만 다시 생성한다. 이전 배포 산출물로 재배포하면 Nginx 설정과 수집기 자동 적용 코드도 함께 되돌릴 수 있다. 이미 자동 복구를 수행했다면 다음 배포 전에 실행 중인 컨테이너의 마운트가 어느 디렉터리를 가리키는지 확인한다. 백업의 자동 삭제 정책은 추가하지 않았다.
+애플리케이션 자동 복구는 이전 배포 디렉터리의 설정을 마운트한다. 복구에 사용 중인 백업은 삭제하지 않는다. 수집기 설정 실패는 이전 `config/otel-collector.yaml`을 복구하고 metrics 서비스만 다시 생성한다. 이전 배포 산출물로 재배포하면 Nginx 설정과 수집기 자동 적용 코드도 함께 되돌릴 수 있다. 이미 자동 복구를 수행했다면 다음 배포 전에 실행 중인 컨테이너의 마운트가 어느 디렉터리를 가리키는지 확인한다. 백업의 자동 삭제 정책은 추가하지 않았다.
 
 `ulimits`는 컨테이너 생성 옵션이므로 Nginx reload만으로 적용하지 못한다. 수동 Compose 실행도 dev override를 포함해야 한다.
 
 ```bash
 sudo docker compose --env-file /opt/chongchong/.env \
   --env-file /opt/chongchong/deploy/image.env \
-  -f /opt/chongchong/deploy/docker-compose.yml \
-  -f /opt/chongchong/deploy/docker-compose.dev.yml \
+  -f /opt/chongchong/deploy/config/docker-compose.yml \
+  -f /opt/chongchong/deploy/config/docker-compose.dev.yml \
   up -d --no-deps --force-recreate nginx
 ```
 

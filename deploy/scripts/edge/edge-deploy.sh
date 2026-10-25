@@ -2,8 +2,8 @@
 # edge의 CodeDeploy 진입점. 대기 백엔드만 교체하고 실제 응답을 검증한 뒤 전환을 확정한다.
 set -Eeuo pipefail
 umask 077
-DEPLOY="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$DEPLOY/scripts/edge-runtime.sh"
+DEPLOY="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$DEPLOY/scripts/edge/edge-runtime.sh"
 edge_initialize
 # 미완료 전환은 새 배포로 덮지 않고 이전 라우팅부터 복구한다.
 [[ ! -e "$STATE/pending-upstream.conf" ]] || {
@@ -49,13 +49,13 @@ cp "$UPSTREAM" "$work/previous-upstream.conf"
 # 같은 배포에서는 원본 설정이 아니라 이 사본을 끝까지 사용한다.
 install -m 600 "$ROOT/config/backend.env" "$work/backend.env"
 install -m 600 "$DEPLOY/image.env" "$work/image.env"
-cp "$DEPLOY/docker-compose.yml" "$DEPLOY/docker-compose.backend.yml" "$work/"
+cp "$DEPLOY/config/docker-compose.yml" "$DEPLOY/config/docker-compose.backend.yml" "$work/"
 ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10
     -o ServerAliveInterval=15 -o ServerAliveCountMax=3
     -o "UserKnownHostsFile=$SSH_KNOWN_HOSTS" -i "$SSH_KEY")
 remote="$SSH_USER@$target"
 ssh "${ssh_args[@]}" "$remote" 'sudo -n install -d -m 700 /opt/chongchong/deploy-control'
-ssh "${ssh_args[@]}" "$remote" 'sudo -n tee /opt/chongchong/deploy-control/backend-release.sh >/dev/null' < "$DEPLOY/scripts/backend-release.sh"
+ssh "${ssh_args[@]}" "$remote" 'sudo -n tee /opt/chongchong/deploy-control/backend-release.sh >/dev/null' < "$DEPLOY/scripts/backend/backend-release.sh"
 # 대기 슬롯을 덮어쓰기 전에 그 슬롯을 직전 버전으로 간주한 롤백 기록을 무효화한다.
 rm -f "$STATE/previous-upstream.conf"
 tar -C "$work" -cf - backend.env image.env docker-compose.yml docker-compose.backend.yml |

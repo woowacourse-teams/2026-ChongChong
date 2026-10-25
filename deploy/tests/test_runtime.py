@@ -2,7 +2,7 @@ import pathlib
 import subprocess
 import unittest
 
-RUNTIME = pathlib.Path(__file__).resolve().parents[1] / 'scripts/runtime.sh'
+RUNTIME = pathlib.Path(__file__).resolve().parents[1] / 'scripts/legacy/runtime.sh'
 
 
 class RuntimeTest(unittest.TestCase):

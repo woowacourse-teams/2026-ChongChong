@@ -2,14 +2,14 @@
 set -Eeuo pipefail
 
 deploy="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$deploy/scripts/host-monitoring.sh"
+source "$deploy/scripts/setup/host-monitoring.sh"
 sandbox="$(mktemp -d)"
 trap 'rm -rf -- "$sandbox"' EXIT
 export TEST_AGENT_ROOT="$sandbox/agent" TEST_EVENTS="$sandbox/events" TEST_ACTIVE="$sandbox/active"
 mkdir -p "$TEST_AGENT_ROOT/bin" "$TEST_AGENT_ROOT/etc/amazon-cloudwatch-agent.d"
 cp "$deploy/tests/fixtures/cloudwatch-agent-ctl.sh" "$TEST_AGENT_ROOT/bin/amazon-cloudwatch-agent-ctl"
 chmod +x "$TEST_AGENT_ROOT/bin/amazon-cloudwatch-agent-ctl"
-config="$deploy/cloudwatch-agent-memory.json"
+config="$deploy/config/cloudwatch-agent-memory.json"
 state="$sandbox/state"
 systemctl() {
     printf '%s\n' "$*" >> "$TEST_EVENTS"

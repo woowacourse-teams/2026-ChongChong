@@ -65,7 +65,7 @@ sudo bash -c '
 
 | 바꿀 내용 | 위치 | 반영 방법 |
 | --- | --- | --- |
-| 앱 지표 종류 | edge의 `edge-runtime/otel-collector.yaml` | 원본은 `otel-collector.edge.yaml`. 백업 후 수집기만 별도 재생성하고 전송을 확인한다. |
+| 앱 지표 종류 | edge의 `edge-runtime/otel-collector.yaml` | 원본은 `config/otel-collector.edge.yaml`. 백업 후 수집기만 별도 재생성하고 전송을 확인한다. |
 | 앱 수집 간격 | edge의 `config/edge.env` | `METRICS_SCRAPE_INTERVAL`·`METRICS_SCRAPE_TIMEOUT` 설정 후 수집기를 재생성한다. |
 | 호스트 메모리 | 각 서버의 CloudWatch Agent | [서버 준비 절차](server-setup.md)의 설정 스크립트를 사용한다. |
 | 앱 로그 환경 | edge의 `config/backend.env` | 앱 배포를 거쳐 A/B에 순차 반영한다. |

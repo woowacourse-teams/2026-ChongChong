@@ -24,6 +24,6 @@ if [[ ! -x "$agent_root/bin/amazon-cloudwatch-agent-ctl" ]]; then
     dpkg --install "$package_dir/amazon-cloudwatch-agent.deb"
 fi
 
-configure_host_memory "$script_dir/../cloudwatch-agent-memory.json" "$agent_root" \
+configure_host_memory "$script_dir/../../config/cloudwatch-agent-memory.json" "$agent_root" \
     /opt/chongchong/observability-resources
 echo '호스트 메모리 수집 설정을 적용했습니다. 실제 CloudWatch 수신은 별도로 확인하세요.'
