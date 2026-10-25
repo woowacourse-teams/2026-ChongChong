@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# edge 배포·롤백에서 공유하는 잠금, 라우팅 검증, Nginx 교체와 사본 정리 함수.
 set -Eeuo pipefail
 
 edge_initialize() {
@@ -7,6 +8,7 @@ edge_initialize() {
     UPSTREAM="$ROOT/edge-routing/upstream.conf"
     install -d -m 700 "$STATE"
     exec 9>"$STATE/deploy.lock"
+    # 배포와 수동 롤백이 같은 잠금을 쓴다. CodeDeploy 파일 복사는 이 잠금의 범위 밖이다.
     flock -n 9 || { echo 'Another edge operation is running' >&2; return 1; }
     source "$ROOT/config/edge.env"
     EDGE_DEPLOYMENT_RETENTION_COUNT="${EDGE_DEPLOYMENT_RETENTION_COUNT:-3}"
@@ -42,6 +44,7 @@ ready() {
 }
 
 verify_edge() {
+    # upstream 파일뿐 아니라 Nginx가 실제로 연결한 주소와 앱 상태를 함께 검증한다.
     local address="$1" directory="$2"
     curl -fsS --connect-timeout 2 --max-time 5 -D "$directory/headers" \
         --resolve "$SERVER_NAME:443:127.0.0.1" \
@@ -51,6 +54,7 @@ verify_edge() {
 }
 
 replace_upstream() {
+    # rename을 반영하려면 Nginx에 파일 하나가 아닌 edge-routing 디렉터리를 마운트해야 한다.
     local backup next="$ROOT/edge-routing/upstream.next"
     backup="$(mktemp "$ROOT/edge-routing/upstream.backup.XXXXXX")" || return 1
     if ! cp -p "$UPSTREAM" "$backup" || ! cp "$1" "$next" || ! mv "$next" "$UPSTREAM"; then
@@ -68,6 +72,7 @@ replace_upstream() {
 }
 
 prune_edge_deployments() {
+    # pending 중에는 모든 복구 자료를 남긴다. 마지막 성공 사본은 보관 개수에 포함해 보호한다.
     python3 - "$STATE" "$EDGE_DEPLOYMENT_RETENTION_COUNT" <<'PY'
 import pathlib
 import shutil

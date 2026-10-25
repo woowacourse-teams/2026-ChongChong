@@ -16,15 +16,15 @@ docker network create "$NAME" >/dev/null
 docker run --detach --name "${NAME}-backend" --network "$NAME" --network-alias backend \
     python:3.13-alpine python -m http.server 8080 >/dev/null
 
-source "$ROOT/scripts/runtime.sh"
+source "$ROOT/scripts/legacy/runtime.sh"
 export CLOUD_WATCH_APP_ENV=dev
 for attempt in 1 2; do
     docker run --detach --name "$NAME" --network "$NAME" \
         --ulimit nofile=8192:8192 -p 127.0.0.1::443 \
         -e SERVER_NAME=localhost -e NGINX_API_LOG_FORMAT=loadtest \
         -e 'NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$' \
-        -v "$ROOT/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro" \
-        -v "$ROOT/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+        -v "$ROOT/config/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro" \
+        -v "$ROOT/config/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
         -v "$TEMP/certs:/etc/letsencrypt:ro" nginx:1.28-alpine >/dev/null
     port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
     ready=false
@@ -65,7 +65,7 @@ done
 docker run --detach --name "$NAME" --network "$NAME" \
     -p 127.0.0.1::443 -e SERVER_NAME=localhost -e NGINX_API_LOG_FORMAT=main \
     -e 'NGINX_ENVSUBST_FILTER=^(SERVER_NAME|NGINX_API_LOG_FORMAT)$' \
-    -v "$ROOT/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+    -v "$ROOT/config/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro" \
     -v "$TEMP/certs:/etc/letsencrypt:ro" nginx:1.28-alpine >/dev/null
 port="$(docker port "$NAME" 443/tcp | cut -d: -f2)"
 ready=false

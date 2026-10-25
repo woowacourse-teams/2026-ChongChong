@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# legacy AppSpec의 ValidateService. edge AppSpec은 이 스크립트를 호출하지 않는다.
 
 set -Eeuo pipefail
 

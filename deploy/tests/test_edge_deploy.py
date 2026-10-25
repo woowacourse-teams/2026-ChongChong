@@ -88,7 +88,7 @@ class EdgeDeployTest(unittest.TestCase):
             env = {**os.environ, 'CHONGCHONG_APP_ROOT': str(root), 'FAIL_AT': failure,
                    'PATH': f'{binary}:{os.environ["PATH"]}'}
             script = 'edge-rollback.sh' if rollback else 'edge-deploy.sh'
-            result = subprocess.run(['bash', str(root / 'deploy/scripts' / script)],
+            result = subprocess.run(['bash', str(root / 'deploy/scripts/edge' / script)],
                                     env=env, capture_output=True, text=True)
             calls = [json.loads(line) for line in (root / 'calls').read_text().splitlines()]
             routing = (root / 'edge-routing/upstream.conf').read_text()
@@ -262,8 +262,8 @@ class BackendReleaseTest(unittest.TestCase):
             files = {
                 'backend.env': 'DOCKERHUB_USERNAME=test\nDOCKERHUB_TOKEN=private-test-value\nDB_URL=test\nDB_USERNAME=test\nDB_PASSWORD=private-test-value\n',
                 'image.env': 'BACKEND_IMAGE=test/app\nBACKEND_IMAGE_TAG=test\n',
-                'docker-compose.yml': (DEPLOY / 'docker-compose.yml').read_text(),
-                'docker-compose.backend.yml': (DEPLOY / 'docker-compose.backend.yml').read_text(),
+                'docker-compose.yml': (DEPLOY / 'config/docker-compose.yml').read_text(),
+                'docker-compose.backend.yml': (DEPLOY / 'config/docker-compose.backend.yml').read_text(),
             }
             with tarfile.open(fileobj=bundle, mode='w') as archive:
                 for name, contents in files.items():
@@ -271,7 +271,7 @@ class BackendReleaseTest(unittest.TestCase):
                     info = tarfile.TarInfo(name)
                     info.size = len(data)
                     archive.addfile(info, io.BytesIO(data))
-            result = subprocess.run(['bash', str(DEPLOY / 'scripts/backend-release.sh'), 'b', '10.0.0.2'],
+            result = subprocess.run(['bash', str(DEPLOY / 'scripts/backend/backend-release.sh'), 'b', '10.0.0.2'],
                                     input=bundle.getvalue(), capture_output=True,
                                     env={**os.environ, 'CHONGCHONG_APP_ROOT': str(root), 'FAIL_AT': failure,
                                          'PATH': f'{binary}:{os.environ["PATH"]}'})

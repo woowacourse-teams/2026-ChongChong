@@ -14,11 +14,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - run: for script in deploy/scripts/*.sh deploy/tests/*smoke.sh; do bash -n "$script" || exit 1; done
+      - run: for script in deploy/scripts/*/*.sh deploy/tests/*smoke.sh; do bash -n "$script" || exit 1; done
       - run: python3 -m unittest discover -s deploy/tests -v
-      - run: docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
-      - run: docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml config --quiet
+      - run: bash deploy/tests/host-monitoring-test.sh
+      - run: docker compose --env-file deploy/config/.env.example -f deploy/config/docker-compose.yml config --quiet
+      - run: docker compose --env-file deploy/config/.env.example -f deploy/config/docker-compose.yml -f deploy/config/docker-compose.dev.yml config --quiet
       - run: bash deploy/tests/nginx-smoke.sh
-      - run: BACKEND_BIND_IP=10.0.0.189 BACKEND_SLOT=a docker compose --env-file deploy/.env.example -f deploy/docker-compose.backend.yml config --quiet
-      - run: docker compose --env-file deploy/edge.env.example --profile metrics -f deploy/docker-compose.edge.yml config --quiet
+      - run: BACKEND_BIND_IP=10.0.0.189 BACKEND_SLOT=a docker compose --env-file deploy/config/.env.example -f deploy/config/docker-compose.backend.yml config --quiet
+      - run: docker compose --env-file deploy/config/edge.env.example --profile metrics -f deploy/config/docker-compose.edge.yml config --quiet
       - run: bash deploy/tests/edge-nginx-smoke.sh

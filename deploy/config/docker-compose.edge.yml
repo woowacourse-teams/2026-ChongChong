@@ -1,3 +1,5 @@
+name: deploy
+
 services:
   metrics-collector:
     profiles: [metrics]

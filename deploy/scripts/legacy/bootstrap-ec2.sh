@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 기존 단일 서버 전용 bootstrap. edge/A/B에서는 docs/server-setup.md의 역할별 준비 절차를 따른다.
 
 set -Eeuo pipefail
 
@@ -8,12 +9,12 @@ if [[ "${EUID}" -ne 0 ]]; then
 fi
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly DEPLOY_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+readonly DEPLOY_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 readonly APP_ROOT="/opt/chongchong"
 readonly APP_ENV="${APP_ROOT}/.env"
 
 if [[ ! -f "${APP_ENV}" ]]; then
-    echo "Copy deploy/.env.example to ${APP_ENV} and fill it before bootstrap" >&2
+    echo "Copy deploy/config/.env.example to ${APP_ENV} and fill it before bootstrap" >&2
     exit 1
 fi
 
@@ -89,9 +90,9 @@ if [[ ! -r "/etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem" ]]; then
     trap - EXIT
 fi
 
-install -m 0755 "${SCRIPT_DIR}/renew-certificate.sh" /usr/local/sbin/chongchong-renew-certificate
-install -m 0644 "${DEPLOY_ROOT}/systemd/chongchong-certbot-renew.service" /etc/systemd/system/
-install -m 0644 "${DEPLOY_ROOT}/systemd/chongchong-certbot-renew.timer" /etc/systemd/system/
+install -m 0755 "${SCRIPT_DIR}/../setup/renew-certificate.sh" /usr/local/sbin/chongchong-renew-certificate
+install -m 0644 "${DEPLOY_ROOT}/config/systemd/chongchong-certbot-renew.service" /etc/systemd/system/
+install -m 0644 "${DEPLOY_ROOT}/config/systemd/chongchong-certbot-renew.timer" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now chongchong-certbot-renew.timer
 

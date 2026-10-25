@@ -1,3 +1,5 @@
+name: deploy
+
 services:
   backend:
     image: "${BACKEND_IMAGE}:${BACKEND_IMAGE_TAG}"

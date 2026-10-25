@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# legacy AppSpec의 BeforeInstall. 덮어쓰기 전에 이전 배포 파일을 복구용으로 보관한다.
 
 set -Eeuo pipefail
 
@@ -14,7 +15,7 @@ fi
 chown root:root "${APP_ROOT}/.env"
 chmod 0600 "${APP_ROOT}/.env"
 
-if [[ -f "${APP_ROOT}/deploy/docker-compose.yml" ]]; then
+if [[ -f "${APP_ROOT}/deploy/config/docker-compose.yml" || -f "${APP_ROOT}/deploy/docker-compose.yml" ]]; then
     install -d -m 0700 "${APP_ROOT}/deploy-backups"
     backup="$(mktemp -d "${APP_ROOT}/deploy-backups/before-install.XXXXXX")"
     cp -a "${APP_ROOT}/deploy" "${backup}/deploy"
