@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# legacy 단일 서버용 배포. backend와 Nginx를 재생성하므로 A/B 무중단 배포에서는 사용하지 않는다.
 
 set -Eeuo pipefail
 

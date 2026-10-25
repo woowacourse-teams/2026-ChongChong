@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 기존 단일 서버 전용 bootstrap. edge/A/B에서는 server-setup.md의 역할별 준비 절차를 따른다.
 
 set -Eeuo pipefail
 

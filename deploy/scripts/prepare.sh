@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# legacy AppSpec의 BeforeInstall. 덮어쓰기 전에 이전 배포 파일을 복구용으로 보관한다.
 
 set -Eeuo pipefail
 

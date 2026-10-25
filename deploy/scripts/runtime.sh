@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# legacy 단일 서버용 환경 로딩·Compose·검증 함수. edge 경로는 edge-runtime.sh를 사용한다.
 
 set -Eeuo pipefail
 
