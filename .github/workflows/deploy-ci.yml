@@ -16,6 +16,7 @@ jobs:
           persist-credentials: false
       - run: for script in deploy/scripts/*.sh deploy/tests/*smoke.sh; do bash -n "$script" || exit 1; done
       - run: python3 -m unittest discover -s deploy/tests -v
+      - run: bash deploy/tests/host-monitoring-test.sh
       - run: docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
       - run: docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml config --quiet
       - run: bash deploy/tests/nginx-smoke.sh

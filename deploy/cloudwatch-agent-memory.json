@@ -1,0 +1,19 @@
+{
+  "agent": {
+    "metrics_collection_interval": 10,
+    "region": "ap-northeast-2"
+  },
+  "metrics": {
+    "namespace": "ChongChong/Host",
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    },
+    "force_flush_interval": 5,
+    "metrics_collected": {
+      "mem": {
+        "measurement": ["available", "available_percent", "total"],
+        "metrics_collection_interval": 10
+      }
+    }
+  }
+}
