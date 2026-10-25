@@ -31,16 +31,28 @@ public class Study extends BaseEntity {
 
     private String description;
 
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
+
     public static Study create(
             String name,
             String description
     ) {
-        return new Study(name, description);
+        return create(name, description, false);
+    }
+
+    public static Study create(
+            String name,
+            String description,
+            boolean isPublic
+    ) {
+        return new Study(name, description, isPublic);
     }
 
     public void update(
             String name,
-            String description
+            String description,
+            Boolean isPublic
     ) {
         if (name != null) {
             validateName(name);
@@ -50,11 +62,15 @@ public class Study extends BaseEntity {
             validateDescription(description);
             this.description = description;
         }
+        if (isPublic != null) {
+            this.isPublic = isPublic;
+        }
     }
 
     private Study(
             String name,
-            String description
+            String description,
+            boolean isPublic
     ) {
         validateName(name);
         this.name = name;
@@ -62,6 +78,7 @@ public class Study extends BaseEntity {
             validateDescription(description);
             this.description = description;
         }
+        this.isPublic = isPublic;
     }
 
     private void validateName(String name) {

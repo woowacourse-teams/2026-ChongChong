@@ -1,16 +1,18 @@
 StudyCreateRequest:
   type: object
   additionalProperties: false
-  required: [name]
+  required: [name, isPublic]
   properties:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 생성할 스터디 이름.", type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
     description: { description: "스터디의 목적이나 진행 방식을 소개하는 짧은 설명.", type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
+    isPublic: { description: "스터디 공개 여부. 반드시 true 또는 false를 전송한다.", type: boolean, example: true }
 StudyUpdateRequest:
   type: object
   additionalProperties: false
   properties:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 변경할 스터디 이름. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 15, example: 수정된 스터디 }
     description: { description: "변경할 스터디 소개. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 30, example: 매주 화요일에 진행한다. }
+    isPublic: { description: "변경할 공개 여부. 생략하거나 null이면 기존 값을 유지한다.", type: [boolean, 'null'], example: true }
 StudyCreateResponse:
   type: object
   additionalProperties: false
@@ -38,12 +40,13 @@ StudyInviteLinkResponse:
 StudyInfoResponse:
   type: object
   additionalProperties: false
-  required: [studyName, description, role, userName]
+  required: [studyName, description, role, userName, isPublic]
   properties:
     studyName: { type: string, example: 자바 스터디 }
     description: { type: [string, 'null'], example: 매주 월요일에 진행한다. }
     role: { type: string, enum: [LEADER, MEMBER], example: LEADER }
     userName: { type: string, example: 홍길동 }
+    isPublic: { type: boolean, example: false }
 StudyMemberResponse:
   type: object
   additionalProperties: false

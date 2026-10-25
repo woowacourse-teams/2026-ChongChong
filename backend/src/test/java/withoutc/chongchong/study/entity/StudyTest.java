@@ -47,7 +47,7 @@ class StudyTest {
     void updateWithNullDescriptionTest() {
         Study study = Study.create("기존 스터디", "기존 설명");
 
-        study.update(null, null);
+        study.update(null, null, null);
 
         assertThat(study.getName()).isEqualTo("기존 스터디");
         assertThat(study.getDescription()).isEqualTo("기존 설명");

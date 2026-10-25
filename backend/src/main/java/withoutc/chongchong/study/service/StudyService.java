@@ -66,7 +66,8 @@ public class StudyService {
         User user = userRepository.getByIdForUpdateOrThrow(userId);
         validateStudyCountLimit(userId);
 
-        Study study = studyRepository.save(Study.create(request.name(), request.description()));
+        Study study = studyRepository.save(Study.create(
+                request.name(), request.description(), request.isPublic()));
 
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.LEADER);
@@ -83,7 +84,7 @@ public class StudyService {
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         validateLeaderRole(studyMember);
 
-        study.update(request.name(), request.description());
+        study.update(request.name(), request.description(), request.isPublic());
     }
 
     @Transactional
@@ -103,7 +104,8 @@ public class StudyService {
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
-        return new StudyInfoResponse(study.getName(), study.getDescription(), studyMember.getRole(), studyMember.getName());
+        return new StudyInfoResponse(study.getName(), study.getDescription(), studyMember.getRole(),
+                studyMember.getName(), study.isPublic());
     }
 
     public StudyDetailResponse getStudyDetail(Long userId, Long studyId) {

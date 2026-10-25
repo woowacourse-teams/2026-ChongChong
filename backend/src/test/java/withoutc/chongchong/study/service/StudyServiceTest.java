@@ -140,7 +140,7 @@ class StudyServiceTest {
     @DisplayName("스터디를 생성하고 생성자를 리더로 등록한다")
     void createStudyTest() {
         Long userId = 1L;
-        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "매주 월요일에 진행한다.");
+        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "매주 월요일에 진행한다.", true);
         User user = User.create("사용자", "profile-image-url");
         ArgumentCaptor<Study> studyCaptor = ArgumentCaptor.forClass(Study.class);
         ArgumentCaptor<StudyMember> studyMemberCaptor = ArgumentCaptor.forClass(StudyMember.class);
@@ -155,6 +155,7 @@ class StudyServiceTest {
         Study study = studyCaptor.getValue();
         assertThat(study.getName()).isEqualTo("자바 스터디");
         assertThat(study.getDescription()).isEqualTo("매주 월요일에 진행한다.");
+        assertThat(study.isPublic()).isTrue();
 
         StudyMember studyMember = studyMemberCaptor.getValue();
         assertThat(studyMember.getStudy()).isSameAs(study);
@@ -168,7 +169,7 @@ class StudyServiceTest {
     @DisplayName("가입한 스터디가 50개 이상이면 스터디를 생성할 수 없다")
     void createStudyStudyWhenJoinedStudyCountLimitExceededTest() {
         Long userId = 1L;
-        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "설명");
+        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "설명", false);
         User user = User.create("사용자", "profile-image-url");
         when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
@@ -192,7 +193,7 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
         );
-        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명", true);
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
@@ -201,6 +202,7 @@ class StudyServiceTest {
 
         assertThat(study.getName()).isEqualTo("수정 스터디");
         assertThat(study.getDescription()).isEqualTo("수정 설명");
+        assertThat(study.isPublic()).isTrue();
     }
 
     @Test
@@ -208,7 +210,7 @@ class StudyServiceTest {
     void updateStudyForMissingStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명", null);
         when(studyRepository.getByIdOrThrow(studyId))
                 .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
@@ -226,7 +228,7 @@ class StudyServiceTest {
         Long userId = 1L;
         Long studyId = 1L;
         Study study = Study.create("기존 스터디", "기존 설명");
-        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명", null);
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
@@ -250,7 +252,7 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
         );
-        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명");
+        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명", null);
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);

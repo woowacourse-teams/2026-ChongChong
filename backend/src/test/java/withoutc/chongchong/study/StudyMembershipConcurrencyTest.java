@@ -104,10 +104,10 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
         List<ConcurrentResult<StudyCreateResponse>> results = runConcurrently(
                 () -> studyService.createStudy(
-                        user.getId(), new StudyCreateRequest("첫 번째 스터디", "설명")
+                        user.getId(), new StudyCreateRequest("첫 번째 스터디", "설명", false)
                 ),
                 () -> studyService.createStudy(
-                        user.getId(), new StudyCreateRequest("두 번째 스터디", "설명")
+                        user.getId(), new StudyCreateRequest("두 번째 스터디", "설명", false)
                 )
         );
 
@@ -199,7 +199,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
                     return true;
                 },
                 () -> {
-                    studyService.createStudy(user.getId(), new StudyCreateRequest("새 스터디", null));
+                    studyService.createStudy(user.getId(), new StudyCreateRequest("새 스터디", null, false));
                     return true;
                 }
         );

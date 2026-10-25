@@ -124,7 +124,8 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "자바 스터디",
-                          "description": "매주 월요일에 진행한다."
+                          "description": "매주 월요일에 진행한다.",
+                          "isPublic": true
                         }
                         """)
                 .when()
@@ -134,8 +135,8 @@ class StudyAcceptanceTest {
                 .body("studyId", notNullValue());
 
         assertThat(studyRepository.findAll())
-                .extracting(Study::getName, Study::getDescription)
-                .contains(tuple("자바 스터디", "매주 월요일에 진행한다."));
+                .extracting(Study::getName, Study::getDescription, Study::isPublic)
+                .contains(tuple("자바 스터디", "매주 월요일에 진행한다.", true));
 
         assertThat(studyMemberRepository.findAll())
                 .hasSize(1)
@@ -159,7 +160,8 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "자바 스터디",
-                          "description": null
+                          "description": null,
+                          "isPublic": false
                         }
                         """)
                 .when()
@@ -170,7 +172,38 @@ class StudyAcceptanceTest {
 
         assertThat(studyRepository.findAll())
                 .singleElement()
-                .satisfies(study -> assertThat(study.getDescription()).isNull());
+                .satisfies(study -> {
+                    assertThat(study.getDescription()).isNull();
+                    assertThat(study.isPublic()).isFalse();
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 생성 요청의 공개 여부가 없거나 null이면 검증 오류를 반환한다")
+    void createStudyWithoutVisibilityTest() {
+        User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
+
+        for (String requestBody : List.of(
+                """
+                        { "name": "자바 스터디" }
+                        """,
+                """
+                        { "name": "자바 스터디", "isPublic": null }
+                        """)) {
+            testAuthRequest.givenAuthenticatedUser(user.getId())
+                    .port(port)
+                    .contentType(ContentType.JSON)
+                    .body(requestBody)
+                    .when()
+                    .post("/studies")
+                    .then()
+                    .statusCode(400)
+                    .body("code", equalTo("INVALID_INPUT_VALUE"))
+                    .body("errors.field", containsInAnyOrder("isPublic"))
+                    .body("errors.reason", containsInAnyOrder("스터디 공개 여부는 필수입니다."));
+        }
+
+        assertThat(studyRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -184,7 +217,8 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "",
-                          "description": "1234567890123456789012345678901"
+                          "description": "1234567890123456789012345678901",
+                          "isPublic": false
                         }
                         """)
                 .when()
@@ -215,7 +249,8 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "수정 스터디",
-                          "description": "수정 설명"
+                          "description": "수정 설명",
+                          "isPublic": true
                         }
                         """)
                 .when()
@@ -228,6 +263,39 @@ class StudyAcceptanceTest {
                 .satisfies(updatedStudy -> {
                     assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
                     assertThat(updatedStudy.getDescription()).isEqualTo("수정 설명");
+                    assertThat(updatedStudy.isPublic()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("스터디 리더가 공개 여부만 false로 수정하면 이름과 설명은 유지한다")
+    void updateStudyVisibilityOnlyTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명", true));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
+                        StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "isPublic": false
+                        }
+                        """)
+                .when()
+                .patch("/studies/{studyId}", study.getId())
+                .then()
+                .statusCode(204);
+
+        assertThat(studyRepository.findById(study.getId()))
+                .get()
+                .satisfies(updatedStudy -> {
+                    assertThat(updatedStudy.getName()).isEqualTo("기존 스터디");
+                    assertThat(updatedStudy.getDescription()).isEqualTo("기존 설명");
+                    assertThat(updatedStudy.isPublic()).isFalse();
                 });
     }
 
@@ -235,7 +303,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 수정 요청에서 설명이 null이면 기존 설명을 유지한다")
     void updateStudyWithNullDescriptionTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명", true));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -247,7 +315,8 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "수정 스터디",
-                          "description": null
+                          "description": null,
+                          "isPublic": null
                         }
                         """)
                 .when()
@@ -260,6 +329,7 @@ class StudyAcceptanceTest {
                 .satisfies(updatedStudy -> {
                     assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
                     assertThat(updatedStudy.getDescription()).isEqualTo("기존 설명");
+                    assertThat(updatedStudy.isPublic()).isTrue();
                 });
     }
 
@@ -445,7 +515,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 정보 조회 요청을 보내면 스터디명·설명과 내 역할·이름을 반환한다")
     void getStudyInfoTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", true));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, user, "스터디 내 이름", user.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
@@ -459,7 +529,8 @@ class StudyAcceptanceTest {
                 .body("studyName", equalTo("자바 스터디"))
                 .body("description", equalTo("설명"))
                 .body("role", equalTo("MEMBER"))
-                .body("userName", equalTo("스터디 내 이름"));
+                .body("userName", equalTo("스터디 내 이름"))
+                .body("isPublic", equalTo(true));
     }
 
     @Test
@@ -478,7 +549,8 @@ class StudyAcceptanceTest {
                 .then()
                 .statusCode(200)
                 .body("$", hasKey("description"))
-                .body("description", nullValue());
+                .body("description", nullValue())
+                .body("isPublic", equalTo(false));
     }
 
     @Test

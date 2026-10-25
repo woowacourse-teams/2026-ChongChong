@@ -1,6 +1,7 @@
 package withoutc.chongchong.study.controller.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record StudyCreateRequest(
@@ -9,6 +10,9 @@ public record StudyCreateRequest(
         String name,
 
         @Size(max = 30, message = "스터디 설명은 {max}자 이내여야 합니다.")
-        String description
+        String description,
+
+        @NotNull(message = "스터디 공개 여부는 필수입니다.")
+        Boolean isPublic
 ) {
 }
