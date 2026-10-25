@@ -9,7 +9,8 @@ export TEST_AGENT_ROOT="$sandbox/agent" TEST_EVENTS="$sandbox/events" TEST_ACTIV
 mkdir -p "$TEST_AGENT_ROOT/bin" "$TEST_AGENT_ROOT/etc/amazon-cloudwatch-agent.d"
 cp "$deploy/tests/fixtures/cloudwatch-agent-ctl.sh" "$TEST_AGENT_ROOT/bin/amazon-cloudwatch-agent-ctl"
 chmod +x "$TEST_AGENT_ROOT/bin/amazon-cloudwatch-agent-ctl"
-config="$deploy/config/cloudwatch-agent-memory.json"
+config="$sandbox/source.json"
+cp "$deploy/config/cloudwatch-agent-memory.json" "$config"
 state="$sandbox/state"
 systemctl() {
     printf '%s\n' "$*" >> "$TEST_EVENTS"
@@ -35,7 +36,7 @@ configure_host_memory "$config" "$TEST_AGENT_ROOT" "$state"
 [[ "$(count_applies)" == 1 && -f "$TEST_ACTIVE" ]]
 echo 'PASS: 설정이 같고 중지된 서비스만 시작'
 
-printf '\n' >> "$state/memory-config.verified"
+printf '\n' >> "$config"
 printf '{"logs":{}}\n' > "$TEST_AGENT_ROOT/etc/amazon-cloudwatch-agent.d/file_logs.json"
 configure_host_memory "$config" "$TEST_AGENT_ROOT" "$state"
 [[ "$(count_applies)" == 2 ]]
@@ -55,7 +56,7 @@ if configure_host_memory "$config" "$TEST_AGENT_ROOT" "$state"; then exit 1; fi
 rm "$TEST_AGENT_ROOT/etc/amazon-cloudwatch-agent.d/file_other.json"
 echo 'PASS: 다른 메트릭 설정과 충돌 시 적용 전 중단'
 
-printf '\n' >> "$state/memory-config.verified"
+printf '\n' >> "$config"
 cp "$state/memory-config.verified" "$sandbox/previous-verified"
 export TEST_APPLY_FAIL=1
 if configure_host_memory "$config" "$TEST_AGENT_ROOT" "$state"; then exit 1; fi
@@ -65,7 +66,7 @@ configure_host_memory "$config" "$TEST_AGENT_ROOT" "$state"
 [[ "$(count_applies)" == 6 ]]
 echo 'PASS: 적용 실패를 성공으로 기록하지 않고 다음 실행에서 재시도'
 
-printf '\n' >> "$state/memory-config.verified"
+printf '\n' >> "$config"
 cp "$state/memory-config.verified" "$sandbox/previous-verified"
 export TEST_NO_START=1
 rm "$TEST_ACTIVE"

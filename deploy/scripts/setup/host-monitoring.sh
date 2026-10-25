@@ -9,6 +9,14 @@ configure_host_memory() {
     local verified="$state_dir/memory-config.verified"
     local fragment
 
+    if [[ -e "$applied" || -L "$applied" ]]; then
+        if [[ ! -f "$verified" || -L "$verified" || ! -f "$applied" || -L "$applied" ]] \
+            || ! cmp -s "$applied" "$verified"; then
+            echo "기존 메모리 설정의 관리 이력이 없거나 내용이 변경되었습니다. 병합 검토가 필요합니다: $applied" >&2
+            return 1
+        fi
+    fi
+
     # namespace는 메트릭 조각 사이에서 공유되므로 다른 지표의 저장 위치를 묵시적으로 바꾸지 않는다.
     for fragment in "$agent_root"/etc/amazon-cloudwatch-agent.d/*; do
         [[ -f "$fragment" && "$fragment" != "$applied" ]] || continue
