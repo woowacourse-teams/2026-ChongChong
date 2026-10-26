@@ -113,11 +113,16 @@ const navigationButtonStyle = {
   width: 48,
   height: 48,
   padding: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid rgba(255, 255, 255, 0.4)',
+  borderRadius: '50%',
+  background: 'rgba(0, 0, 0, 0.35)',
   color: '#fff',
   fontSize: 24,
   cursor: 'pointer',
-  '&:disabled': { opacity: 0.35, cursor: 'default' },
-} satisfies CSSObject;
+} satisfies CSSProperties;
 
 const previousButtonStyle = {
   ...navigationButtonStyle,
@@ -168,7 +173,6 @@ export default function ImageGallery({ attachments, onImageError }: Props) {
           file={images[expandedIndex] ?? expandedImage}
           previousFile={images[expandedIndex - 1]}
           nextFile={images[expandedIndex + 1]}
-          showNavigation={!single}
           onNavigate={setExpandedImage}
           onClose={() => {
             setExpandedImage(null);
@@ -225,18 +229,35 @@ function GalleryImage({
   );
 }
 
+function NavigationArrow({ direction }: { direction: 'previous' | 'next' }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={direction === 'previous' ? 'M19 12H5m6-6-6 6 6 6' : 'M5 12h14m-6-6 6 6-6 6'} />
+    </svg>
+  );
+}
+
 function ExpandedImage({
   file,
   previousFile,
   nextFile,
-  showNavigation,
   onNavigate,
   onClose,
 }: {
   file: Attachment & { imageUrl: string };
   previousFile?: Attachment & { imageUrl: string };
   nextFile?: Attachment & { imageUrl: string };
-  showNavigation: boolean;
   onNavigate: (file: Attachment & { imageUrl: string }) => void;
   onClose: () => void;
 }) {
@@ -267,27 +288,25 @@ function ExpandedImage({
         ✕
       </button>
       <img src={file.imageUrl} alt={file.originalFileName} css={expandedImageStyle} />
-      {showNavigation && (
-        <>
-          <button
-            type="button"
-            aria-label="이전 이미지"
-            disabled={!previousFile}
-            onClick={() => previousFile && onNavigate(previousFile)}
-            css={previousButtonStyle}
-          >
-            {'<'}
-          </button>
-          <button
-            type="button"
-            aria-label="다음 이미지"
-            disabled={!nextFile}
-            onClick={() => nextFile && onNavigate(nextFile)}
-            css={nextButtonStyle}
-          >
-            {'>'}
-          </button>
-        </>
+      {previousFile && (
+        <button
+          type="button"
+          aria-label="이전 이미지"
+          onClick={() => onNavigate(previousFile)}
+          css={previousButtonStyle}
+        >
+          <NavigationArrow direction="previous" />
+        </button>
+      )}
+      {nextFile && (
+        <button
+          type="button"
+          aria-label="다음 이미지"
+          onClick={() => onNavigate(nextFile)}
+          css={nextButtonStyle}
+        >
+          <NavigationArrow direction="next" />
+        </button>
       )}
     </dialog>
   );
