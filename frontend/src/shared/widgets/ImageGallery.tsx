@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import errorImage from '../assets/icons/image-load-error.webp';
 import type { Attachment } from '../modules/files/types';
 import { tokens } from '../../styles/global';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import type { CSSObject } from '@emotion/react';
+import ExpandedImage, { type ExpandableImage } from './ExpandedImage';
 
 interface Props {
   attachments: Attachment[];
+  navigationAttachments?: Attachment[];
   onImageError?: (file: Attachment) => void;
 }
 
@@ -63,90 +64,27 @@ const galleryImageStyle = (single: boolean) =>
     borderRadius: 12,
   }) satisfies CSSProperties;
 
-const expandedDialogStyle = {
-  boxSizing: 'border-box',
-  position: 'fixed',
-  inset: 0,
-  width: '100vw',
-  height: '100dvh',
-  maxWidth: 'none',
-  maxHeight: 'none',
-  margin: 0,
-  padding: 0,
-  border: 0,
-  background: 'transparent',
-  overflow: 'hidden',
-  '&::backdrop': { background: 'rgba(0, 0, 0, 0.8)' },
-} satisfies CSSObject;
-
-const expandedCloseButtonStyle = {
-  position: 'absolute',
-  top: 24,
-  right: 24,
-  zIndex: 1,
-  width: 48,
-  height: 48,
-  padding: 0,
-  color: '#fff',
-  fontSize: 24,
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
-const expandedImageStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  display: 'block',
-  width: 'auto',
-  height: 'auto',
-  maxWidth: 'min(80vw, 1240px)',
-  maxHeight: 'calc(100dvh - 80px)',
-  objectFit: 'contain',
-  '@media (max-width: 600px)': { maxWidth: 'calc(100vw - 24px)' },
-} satisfies CSSObject;
-
-const navigationButtonStyle = {
-  position: 'absolute',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  width: 48,
-  height: 48,
-  padding: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: '1px solid rgba(255, 255, 255, 0.4)',
-  borderRadius: '50%',
-  background: 'rgba(0, 0, 0, 0.35)',
-  color: '#fff',
-  fontSize: 24,
-  cursor: 'pointer',
-} satisfies CSSProperties;
-
-const previousButtonStyle = {
-  ...navigationButtonStyle,
-  left: 24,
-  '@media (max-width: 600px)': { left: 8 },
-} satisfies CSSObject;
-
-const nextButtonStyle = {
-  ...navigationButtonStyle,
-  right: 24,
-  '@media (max-width: 600px)': { right: 8 },
-} satisfies CSSObject;
-
-export default function ImageGallery({ attachments, onImageError }: Props) {
-  const [expandedImage, setExpandedImage] = useState<(Attachment & { imageUrl: string }) | null>(
-    null,
-  );
+export default function ImageGallery({
+  attachments,
+  navigationAttachments = attachments,
+  onImageError,
+}: Props) {
+  const [expandedImage, setExpandedImage] = useState<ExpandableImage | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const images = [...attachments]
     .filter((file): file is Attachment & { imageUrl: string } => file.imageUrl !== null)
     .sort((a, b) => a.sortOrder - b.sortOrder);
   if (!images.length) return null;
+  const expandableImages = [...navigationAttachments]
+    .filter((file): file is Attachment & { imageUrl: string } => file.imageUrl !== null)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((file) => ({
+      id: String(file.fileId),
+      src: file.imageUrl,
+      name: file.originalFileName,
+    }));
   const single = images.length === 1;
-  const expandedIndex = images.findIndex((file) => file.fileId === expandedImage?.fileId);
+  const expandedIndex = expandableImages.findIndex((image) => image.id === expandedImage?.id);
 
   return (
     <>
@@ -161,18 +99,22 @@ export default function ImageGallery({ attachments, onImageError }: Props) {
                 onImageError={onImageError}
                 onOpen={(button) => {
                   triggerRef.current = button;
-                  setExpandedImage(file);
+                  setExpandedImage({
+                    id: String(file.fileId),
+                    src: file.imageUrl,
+                    name: file.originalFileName,
+                  });
                 }}
               />
             </li>
           ))}
         </ul>
       </section>
-      {expandedImage && (
+      {expandedImage && expandedIndex !== -1 && (
         <ExpandedImage
-          file={images[expandedIndex] ?? expandedImage}
-          previousFile={images[expandedIndex - 1]}
-          nextFile={images[expandedIndex + 1]}
+          image={expandableImages[expandedIndex]}
+          previousImage={expandableImages[expandedIndex - 1]}
+          nextImage={expandableImages[expandedIndex + 1]}
           onNavigate={setExpandedImage}
           onClose={() => {
             setExpandedImage(null);
@@ -226,85 +168,5 @@ function GalleryImage({
         </button>
       )}
     </figure>
-  );
-}
-
-function ExpandedImage({
-  file,
-  previousFile,
-  nextFile,
-  onNavigate,
-  onClose,
-}: {
-  file: Attachment & { imageUrl: string };
-  previousFile?: Attachment & { imageUrl: string };
-  nextFile?: Attachment & { imageUrl: string };
-  onNavigate: (file: Attachment & { imageUrl: string }) => void;
-  onClose: () => void;
-}) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    dialogRef.current?.showModal();
-  }, []);
-
-  useBodyScrollLock();
-
-  return (
-    <dialog
-      ref={dialogRef}
-      aria-label={`${file.originalFileName} 크게 보기`}
-      onClose={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) dialogRef.current?.close();
-      }}
-      css={expandedDialogStyle}
-    >
-      <button
-        type="button"
-        aria-label="확대 이미지 닫기"
-        onClick={() => dialogRef.current?.close()}
-        css={expandedCloseButtonStyle}
-      >
-        ✕
-      </button>
-      <img src={file.imageUrl} alt={file.originalFileName} css={expandedImageStyle} />
-      {previousFile && (
-        <NavigationArrow direction="previous" onClick={() => onNavigate(previousFile)} />
-      )}
-      {nextFile && <NavigationArrow direction="next" onClick={() => onNavigate(nextFile)} />}
-    </dialog>
-  );
-}
-
-function NavigationArrow({
-  direction,
-  onClick,
-}: {
-  direction: 'previous' | 'next';
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={direction === 'previous' ? '이전 이미지' : '다음 이미지'}
-      onClick={onClick}
-      css={direction === 'previous' ? previousButtonStyle : nextButtonStyle}
-    >
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d={direction === 'previous' ? 'M19 12H5m6-6-6 6 6 6' : 'M5 12h14m-6-6 6 6-6 6'} />
-      </svg>
-    </button>
   );
 }

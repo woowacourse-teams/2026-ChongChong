@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties } from 'react';
 import { Field } from '../ui/inputs/Field';
 import { tokens, typography } from '../../styles/global';
@@ -6,6 +6,8 @@ import imageIcon from '../assets/image-upload.svg';
 import deleteIcon from '../assets/image-upload-delete.svg';
 import addIcon from '../assets/add.svg';
 import type { AttachmentItem } from '../modules/files/types';
+import { usePreviewUrls } from '../hooks/usePreviewUrls';
+import ExpandedImage, { type ExpandableImage } from './ExpandedImage';
 
 interface AttachmentFieldProps {
   id: string;
@@ -62,6 +64,19 @@ export default function AttachmentField({
   showImagePreviews = false,
 }: AttachmentFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const previewUrls = usePreviewUrls(items);
+  const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
+  const [failedImageIds, setFailedImageIds] = useState<string[]>([]);
+  const images: ExpandableImage[] = showImagePreviews
+    ? items.flatMap((item) => {
+        const src = previewUrls[item.id] ?? item.imageUrl;
+        return src && !failedImageIds.includes(item.id)
+          ? [{ id: item.id, src, name: item.name }]
+          : [];
+      })
+    : [];
+  const expandedIndex = images.findIndex((image) => image.id === expandedImageId);
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedImages = Array.from(event.target.files ?? []);
@@ -90,8 +105,16 @@ export default function AttachmentField({
       >
         {items.map((image) => (
           <div role="listitem" key={image.id} css={imageStyle}>
-            {showImagePreviews && (image.previewFile || image.imageUrl) ? (
-              <AttachmentPreview item={image} />
+            {showImagePreviews && (previewUrls[image.id] || image.imageUrl) ? (
+              <AttachmentPreview
+                item={image}
+                src={previewUrls[image.id] ?? image.imageUrl}
+                onOpen={(button) => {
+                  triggerRef.current = button;
+                  setExpandedImageId(image.id);
+                }}
+                onError={() => setFailedImageIds((ids) => [...ids, image.id])}
+              />
             ) : (
               <img src={imageIcon} alt="" width={24} height={24} />
             )}
@@ -145,40 +168,65 @@ export default function AttachmentField({
         파일 불러오기
       </button>
       <Field.SubText errorText={errorText} helpText={helpText} />
+      {expandedIndex !== -1 && (
+        <ExpandedImage
+          image={images[expandedIndex]}
+          previousImage={images[expandedIndex - 1]}
+          nextImage={images[expandedIndex + 1]}
+          onNavigate={(image) => setExpandedImageId(image.id)}
+          onClose={() => {
+            setExpandedImageId(null);
+            triggerRef.current?.focus();
+          }}
+        />
+      )}
     </Field>
   );
 }
 
-function AttachmentPreview({ item }: { item: AttachmentItem }) {
-  const imageRef = useRef<HTMLImageElement>(null);
+function AttachmentPreview({
+  item,
+  src,
+  onOpen,
+  onError,
+}: {
+  item: AttachmentItem;
+  src?: string;
+  onOpen: (button: HTMLButtonElement) => void;
+  onError: () => void;
+}) {
   const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (!item.previewFile || !imageRef.current) return;
-    const url = URL.createObjectURL(item.previewFile);
-    imageRef.current.src = url;
-    return () => URL.revokeObjectURL(url);
-  }, [item.previewFile]);
 
   return failed ? (
     <span css={{ ...typography.footnote, width: 80, flexShrink: 0 }}>
       이미지를 불러오지 못했어요.
     </span>
   ) : (
-    <img
-      ref={imageRef}
-      src={item.imageUrl}
-      alt={`${item.name} 미리보기`}
-      onError={() => setFailed(true)}
-      css={{
-        width: 80,
-        height: 80,
-        objectFit: 'contain',
-        flexShrink: 0,
-        margin: `${tokens.spacing[2]} 0`,
-        borderRadius: tokens.radius.sm,
-        background: tokens.bg.subtle,
-      }}
-    />
+    <button
+      type="button"
+      aria-label={`${item.name} 크게 보기`}
+      aria-haspopup="dialog"
+      disabled={!src}
+      onClick={(event) => onOpen(event.currentTarget)}
+      css={{ flexShrink: 0, padding: 0, border: 0, background: 'none', cursor: 'pointer' }}
+    >
+      <img
+        src={src}
+        alt={`${item.name} 미리보기`}
+        onError={() => {
+          setFailed(true);
+          onError();
+        }}
+        css={{
+          display: 'block',
+          width: 80,
+          height: 80,
+          objectFit: 'contain',
+          margin: `${tokens.spacing[2]} 0`,
+          borderRadius: tokens.radius.sm,
+          background: tokens.bg.subtle,
+        }}
+      />
+    </button>
   );
 }
