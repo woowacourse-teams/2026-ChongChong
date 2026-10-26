@@ -6,6 +6,7 @@ StudyCreateRequest:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 생성할 스터디 이름.", type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
     description: { description: "스터디의 목적이나 진행 방식을 소개하는 짧은 설명.", type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
     isPublic: { description: "스터디 공개 여부. 반드시 true 또는 false를 전송한다.", type: boolean, example: true }
+    imageFileId: { description: "업로드를 완료한 본인 소유·미연결 이미지 파일 ID. 기본 허용 형식은 JPEG·PNG·WebP, 최대 크기는 5 MiB이다. 생략하거나 null이면 이미지 없이 생성한다.", type: [integer, 'null'], format: int64, minimum: 1, example: 101 }
 StudyUpdateRequest:
   type: object
   additionalProperties: false
@@ -13,6 +14,7 @@ StudyUpdateRequest:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 변경할 스터디 이름. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 15, example: 수정된 스터디 }
     description: { description: "변경할 스터디 소개. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 30, example: 매주 화요일에 진행한다. }
     isPublic: { description: "변경할 공개 여부. 생략하거나 null이면 기존 값을 유지한다.", type: [boolean, 'null'], example: true }
+    imageFileId: { description: "교체할 이미지 파일 ID. 새 파일은 업로드 완료·본인 소유·미연결 상태여야 하며, 기본 허용 형식은 JPEG·PNG·WebP, 최대 크기는 5 MiB이다. 생략하거나 null이면 기존 이미지를 유지한다.", type: [integer, 'null'], format: int64, minimum: 1, example: 102 }
 StudyCreateResponse:
   type: object
   additionalProperties: false
@@ -69,7 +71,7 @@ StudyMembersResponse:
 MyStudyResponse:
   type: object
   additionalProperties: false
-  required: [id, role, name, description, memberCount, noticeCount, assignmentCount]
+  required: [id, role, name, description, memberCount, noticeCount, assignmentCount, imageUrl]
   properties:
     id: { type: integer, format: int64, example: 1 }
     role: { type: string, enum: [LEADER, MEMBER], example: MEMBER }
@@ -78,6 +80,7 @@ MyStudyResponse:
     memberCount: { description: 현재 리더를 포함한 전체 스터디 인원 수, type: integer, example: 5 }
     noticeCount: { description: 리더는 전체 확인이 끝나지 않은 공지 수이고 멤버는 본인이 확인 대상인 미확인 공지 수, type: integer, example: 3 }
     assignmentCount: { description: 리더는 전체 제출이 끝나지 않은 과제 수이고 멤버는 본인이 제출 대상인 미제출 과제 수, type: integer, example: 4 }
+    imageUrl: { description: 스터디 이미지 조회 URL. 이미지가 없으면 null이다., type: [string, 'null'], format: uri, example: 'https://example.com/study.png' }
 MyStudyListResponse:
   type: object
   additionalProperties: false

@@ -3,6 +3,11 @@ InvalidInputAndRequest:
   content:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }] }
+StudyCreateBadRequest:
+  description: 입력값·요청 형식 오류 또는 스터디 이미지 형식·용량·연결 상태 위반
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/StudyImageBadRequestError' }] }
 InvalidParameterAndRequest:
   description: 경로·쿼리 파라미터 검증에 실패했거나 요청 형식이 잘못됨
   content:
@@ -36,6 +41,19 @@ NoticeWriteForbidden:
 FileNotFound:
   description: 첨부할 파일 메타데이터가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/FileNotFoundError' } } }
+FileNotOwned:
+  description: 첨부할 파일이 본인 소유가 아님
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/FileNotOwnedError' } } }
+UserOrFileNotFound:
+  description: 사용자 또는 첨부할 파일 메타데이터가 존재하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/UserNotFoundError' }, { $ref: './schemas/errors.yaml#/FileNotFoundError' }] }
+StudyOrFileNotFound:
+  description: 스터디 또는 첨부할 파일 메타데이터가 존재하지 않음
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyNotFoundError' }, { $ref: './schemas/errors.yaml#/FileNotFoundError' }] }
 NoticeOrFileNotFound:
   description: 공지 또는 첨부할 파일 메타데이터가 존재하지 않음
   content:
@@ -186,10 +204,15 @@ WebPushSubscriptionAlreadyRegistered:
       schema: { $ref: './schemas/errors.yaml#/WebPushSubscriptionAlreadyRegisteredError' }
 
 StudyUpdateBadRequest:
-  description: 경로·입력 검증 또는 요청 형식 오류, 빈 문자열·공백으로 된 스터디 이름
+  description: 경로·입력 검증 또는 요청 형식 오류, 스터디 이름·이미지 형식·용량·연결 상태 위반
   content:
     application/json:
-      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/StudyInvalidNameError' }] }
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }, { $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/StudyInvalidNameError' }, { $ref: './schemas/errors.yaml#/StudyImageBadRequestError' }] }
+StudyUpdateForbidden:
+  description: 스터디 접근·리더 권한이 없거나 첨부할 파일이 본인 소유가 아님
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/StudyAccessDeniedError' }, { $ref: './schemas/errors.yaml#/NotStudyLeaderError' }, { $ref: './schemas/errors.yaml#/FileNotOwnedError' }] }
 
 AssignmentAttachmentForbidden:
   $ref: '../paths/assignments/attachment-errors.yaml#/Forbidden'

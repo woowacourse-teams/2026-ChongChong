@@ -32,7 +32,6 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import withoutc.chongchong.assignment.repository.AssignmentAttachmentRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
@@ -65,9 +64,6 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
     private FileMetaDataRepository fileMetaDataRepository;
 
     @Autowired
-    private AssignmentAttachmentRepository assignmentAttachmentRepository;
-
-    @Autowired
     private TestDatabaseCleaner databaseCleaner;
 
     @Autowired
@@ -92,7 +88,7 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
         member = userRepository.save(User.create("제출자", null));
         other = userRepository.save(User.create("다른 멤버", null));
         outsider = userRepository.save(User.create("외부인", null));
-        study = studyRepository.save(Study.create("파일 과제", "설명"));
+        study = studyRepository.save(Study.create("파일 과제", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "제출자", null, StudyMemberRole.MEMBER));
         studyMemberRepository.save(StudyMember.create(study, other, "다른 멤버", null, StudyMemberRole.MEMBER));
@@ -121,8 +117,8 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .containsExactly(second, first);
         testAuthRequest.givenAuthenticatedUser(leader.getId()).port(port).delete(path(assignment)).then().statusCode(204);
         assertStatus(second, FileUploadStatus.COMPLETED);
-        assertThat(assignmentAttachmentRepository.existsByFileId(first)).isFalse();
-        assertThat(assignmentAttachmentRepository.existsByFileId(second)).isFalse();
+        assertThat(fileMetaDataRepository.existsAssignmentAttachmentByFileId(first)).isFalse();
+        assertThat(fileMetaDataRepository.existsAssignmentAttachmentByFileId(second)).isFalse();
     }
 
     @Test
@@ -256,7 +252,7 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .then().statusCode(201);
         testAuthRequest.givenAuthenticatedUser(leader.getId()).port(port).delete(path(assignment)).then().statusCode(204);
         assertStatus(image, FileUploadStatus.COMPLETED);
-        assertThat(assignmentAttachmentRepository.existsSubmissionByFileId(image)).isFalse();
+        assertThat(fileMetaDataRepository.existsSubmissionAttachmentByFileId(image)).isFalse();
     }
 
     @Test
@@ -305,7 +301,7 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .then().statusCode(201);
         patch(leader, path(assignment), Map.of("submissionTarget", "MEMBERS_ONLY")).then().statusCode(204);
         assertStatus(fileId, FileUploadStatus.COMPLETED);
-        assertThat(assignmentAttachmentRepository.existsSubmissionByFileId(fileId)).isFalse();
+        assertThat(fileMetaDataRepository.existsSubmissionAttachmentByFileId(fileId)).isFalse();
     }
 
     @ParameterizedTest

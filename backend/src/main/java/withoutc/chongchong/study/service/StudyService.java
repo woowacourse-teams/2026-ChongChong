@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
+import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
@@ -50,6 +52,9 @@ public class StudyService {
     static final int MAX_JOINED_STUDY_COUNT = 50;
 
     private final StudyRepository studyRepository;
+    private final StudyImageService studyImageService;
+    private final FileUrlGenerator fileUrlGenerator;
+
     private final UserRepository userRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
@@ -66,8 +71,11 @@ public class StudyService {
         User user = userRepository.getByIdForUpdateOrThrow(userId);
         validateStudyCountLimit(userId);
 
-        Study study = studyRepository.save(Study.create(
-                request.name(), request.description(), request.isPublic()));
+        FileMetadata file = studyImageService.prepareForCreate(userId, request.imageFileId());
+
+        Study study = Study.create(request.name(), request.description(), request.isPublic());
+        study.changeImage(file);
+        study = studyRepository.save(study);
 
         StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                 StudyMemberRole.LEADER);
@@ -79,22 +87,27 @@ public class StudyService {
 
     @Transactional
     public void updateStudy(Long userId, Long studyId, StudyUpdateRequest request) {
-        Study study = studyRepository.getByIdOrThrow(studyId);
+        Study study = studyRepository.getByIdForUpdateOrThrow(studyId);
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         validateLeaderRole(studyMember);
 
+        FileMetadata file = studyImageService.prepareForUpdate(userId, study, request.imageFileId());
+
         study.update(request.name(), request.description(), request.isPublic());
+        study.changeImage(file);
     }
 
     @Transactional
     public void deleteStudy(Long userId, Long studyId) {
-        Study study = studyRepository.getByIdOrThrow(studyId);
+        Study study = studyRepository.getByIdForUpdateOrThrow(studyId);
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         validateLeaderRole(studyMember);
 
         entityManager.clear();
+
+        studyImageService.prepareForDelete(study);
         notificationService.deleteNotificationsForStudy(studyId);
         studyRepository.delete(study);
     }
@@ -125,13 +138,19 @@ public class StudyService {
         List<MyStudyResponse> responses = new ArrayList<>();
         for (StudyMember studyMember : studyMembers) {
             Study study = studyMember.getStudy();
+            FileMetadata imageFile = study.getImageFile();
+
+            String imageUrl = null;
+            if (imageFile != null) {
+                imageUrl = fileUrlGenerator.generateImageUrl(imageFile.getObjectKey(), imageFile.getContentType());
+            }
 
             int memberCount = studyMemberRepository.countByStudyId(study.getId());
             int noticeCount = unReadNoticeCount(studyMember, study.getId());
             int assignmentCount = unFinishedAssignmentCount(studyMember, study.getId());
 
-            responses.add(
-                    MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount));
+            responses.add(MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount,
+                    imageUrl));
         }
 
         return new MyStudyListResponse(responses.size(), responses);

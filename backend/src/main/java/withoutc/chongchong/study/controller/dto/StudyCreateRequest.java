@@ -2,6 +2,7 @@ package withoutc.chongchong.study.controller.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record StudyCreateRequest(
@@ -13,6 +14,9 @@ public record StudyCreateRequest(
         String description,
 
         @NotNull(message = "스터디 공개 여부는 필수입니다.")
-        Boolean isPublic
+        Boolean isPublic,
+
+        @Positive(message = "스터디 이미지 파일 ID는 양수여야 합니다.")
+        Long imageFileId
 ) {
 }

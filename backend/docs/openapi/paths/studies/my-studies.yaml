@@ -23,5 +23,5 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/studies.yaml#/MyStudyListResponse' }
-          example: { studyCount: 1, studies: [{ id: 1, role: MEMBER, name: 자바 스터디, description: 매주 월요일에 진행한다., memberCount: 5, noticeCount: 3, assignmentCount: 4 }] }
+          example: { studyCount: 1, studies: [{ id: 1, role: MEMBER, name: 자바 스터디, description: 매주 월요일에 진행한다., memberCount: 5, noticeCount: 3, assignmentCount: 4, imageUrl: 'https://example.com/study.png' }] }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

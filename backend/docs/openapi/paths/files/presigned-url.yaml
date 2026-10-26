@@ -23,6 +23,8 @@ post:
     size는 클라이언트가 선언한 바이트 수이며 실제 업로드 결과는 별도로 검증해야 한다.
     공통 최대 크기는 기본 5MiB이며 FILE_UPLOAD_MAX_SIZE_BYTES로 변경할 수 있다.
     허용 MIME 유형 목록은 이 API에서 제한하지 않는다.
+    uploadPurpose를 지정하면 서버가 용도에 맞는 하위 경로를 선택한다. 생략하거나 null이면 기존 공통 경로를 사용한다.
+    용도는 저장 경로 선택에만 사용하며 파일 연결 시의 소유권·상태·도메인 정책 검증은 별도로 수행한다.
     S3 PUT 성공 후 POST /api/files/{fileId}/complete로 실제 파일 존재·크기 검증과 COMPLETED 전환을 요청한다.
     완료에 성공한 fileId를 공지·과제·제출물의 attachmentFileIds로 전달해 최종 첨부 목록과 순서를 지정한다.
     연결하는 API는 소유권·완료 상태·기존 연결 여부와 도메인 파일 정책을 검증한다.
@@ -44,6 +46,15 @@ post:
             originalFileName: { type: string, minLength: 1, maxLength: 255, description: 원본 파일명. 공백만 있는 값은 허용하지 않는다. }
             contentType: { type: string, minLength: 1, maxLength: 255, description: PUT 요청에도 사용할 Content-Type. 공백만 있는 값은 허용하지 않는다. }
             size: { type: integer, format: int64, minimum: 0 }
+            uploadPurpose:
+              type: [string, 'null']
+              enum: [STUDY_IMAGE, NOTICE_ATTACHMENT, ASSIGNMENT_ATTACHMENT, SUBMISSION_ATTACHMENT, null]
+              description: |
+                업로드 용도. 생략하거나 null이면 공통 업로드 경로를 사용한다.
+                STUDY_IMAGE는 study-images/, NOTICE_ATTACHMENT는 notice-attachments/,
+                ASSIGNMENT_ATTACHMENT는 assignment-attachments/, SUBMISSION_ATTACHMENT는 submission-attachments/ 아래에 저장한다.
+              example: STUDY_IMAGE
+        example: { originalFileName: study.png, contentType: image/png, size: 1024, uploadPurpose: STUDY_IMAGE }
   responses:
     '201':
       description: 업로드 대기 파일 생성 및 URL 발급 성공

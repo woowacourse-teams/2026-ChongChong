@@ -3,6 +3,7 @@ package withoutc.chongchong.study;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.notNullValue;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.entity.SubmissionVisibility;
@@ -28,6 +30,8 @@ import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.auth.support.TestAuthRequest;
+import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
@@ -41,11 +45,13 @@ import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.support.TestDatabaseCleaner;
+import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestS3PresignerConfiguration.class)
 class StudyAcceptanceTest {
 
     private static final LocalDateTime NOTICE_NOW = LocalDateTime.of(2026, 8, 19, 0, 0);
@@ -53,6 +59,9 @@ class StudyAcceptanceTest {
 
     @Autowired
     private StudyRepository studyRepository;
+
+    @Autowired
+    private FileMetaDataRepository fileRepository;
 
     @Autowired
     private StudyMemberRepository studyMemberRepository;
@@ -237,7 +246,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 리더가 수정 요청을 보내면 스터디 이름과 설명을 변경하고 204를 반환한다")
     void updateStudyTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -338,7 +347,7 @@ class StudyAcceptanceTest {
     void updateStudyForNonMemberTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -371,7 +380,7 @@ class StudyAcceptanceTest {
     void updateStudyForNonLeaderTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -427,7 +436,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 수정 요청의 이름과 설명이 최대 길이를 초과하면 검증 오류를 반환한다")
     void updateStudyWithInvalidRequestTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", "기존 설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -465,8 +474,13 @@ class StudyAcceptanceTest {
     void getMyStudiesTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
         User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", "other-profile-image-url"));
-        Study olderStudy = studyRepository.saveAndFlush(Study.create("이전 스터디", "이전 스터디 설명"));
-        Study newerStudy = studyRepository.saveAndFlush(Study.create("최근 스터디", "최근 스터디 설명"));
+        Study olderStudy = studyRepository.saveAndFlush(Study.create("이전 스터디", "이전 스터디 설명", false));
+        FileMetadata image = FileMetadata.create(user, "study.png", "study-profiles/study.png", "image/png", 1024);
+        image.completeUpload();
+        fileRepository.saveAndFlush(image);
+        Study newerStudy = Study.create("최근 스터디", "최근 스터디 설명", false);
+        newerStudy.changeImage(image);
+        newerStudy = studyRepository.saveAndFlush(newerStudy);
 
         StudyMember olderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(olderStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER)
@@ -506,9 +520,11 @@ class StudyAcceptanceTest {
                 .body("studies[0].id", equalTo(newerStudy.getId().intValue()))
                 .body("studies[0].role", equalTo("LEADER"))
                 .body("studies[0].memberCount", equalTo(2))
+                .body("studies[0].imageUrl", containsString("study-profiles/study.png"))
                 .body("studies[1].id", equalTo(olderStudy.getId().intValue()))
                 .body("studies[1].role", equalTo("MEMBER"))
-                .body("studies[1].memberCount", equalTo(2));
+                .body("studies[1].memberCount", equalTo(2))
+                .body("studies[1].imageUrl", nullValue());
     }
 
     @Test
@@ -537,7 +553,7 @@ class StudyAcceptanceTest {
     @DisplayName("설명이 없는 스터디 정보 조회에서도 description 필드를 null로 반환한다")
     void getStudyInfoWithoutDescriptionTest() {
         User user = userRepository.saveAndFlush(User.create("스터디 리더", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", null));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", null, false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER)
         );
@@ -571,7 +587,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 멤버가 아니면 스터디 정보 조회 시 403을 반환한다")
     void getStudyInfoForNonMemberTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
@@ -588,7 +604,7 @@ class StudyAcceptanceTest {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User firstMember = userRepository.saveAndFlush(User.create("첫 번째 멤버", null));
         User secondMember = userRepository.saveAndFlush(User.create("두 번째 멤버", null));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         StudyMember leaderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -642,7 +658,7 @@ class StudyAcceptanceTest {
     void getStudyDetailForMemberTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         StudyMember leaderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -686,7 +702,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 멤버가 아니면 스터디 상세 조회 시 403을 반환한다")
     void getStudyDetailForNonMemberTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
@@ -701,7 +717,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 초대 링크 조회 요청을 보내면 초대 링크를 반환한다")
     void getInviteLinkTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
@@ -723,7 +739,7 @@ class StudyAcceptanceTest {
     @DisplayName("스터디 멤버가 아닌 사용자가 초대 링크를 조회하면 403을 반환한다")
     void getInviteLinkForNonMemberTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
@@ -739,7 +755,7 @@ class StudyAcceptanceTest {
     void deleteStudyTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         StudyMember leaderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
         );
@@ -774,7 +790,7 @@ class StudyAcceptanceTest {
                         submissionId)
         ));
 
-        Study otherStudy = studyRepository.saveAndFlush(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.saveAndFlush(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.saveAndFlush(
                 StudyMember.create(otherStudy, member, member.getName(), member.getProfileImageUrl(),
                         StudyMemberRole.LEADER)
@@ -813,7 +829,7 @@ class StudyAcceptanceTest {
     void deleteStudyForNonMemberTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User user = userRepository.saveAndFlush(User.create("사용자", "profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
         );
@@ -834,7 +850,7 @@ class StudyAcceptanceTest {
     void deleteStudyForNonLeaderTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
         User member = userRepository.saveAndFlush(User.create("멤버", "member-profile-image-url"));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(), StudyMemberRole.LEADER)
         );

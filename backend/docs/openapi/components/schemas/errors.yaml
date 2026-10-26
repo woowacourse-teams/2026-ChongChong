@@ -58,6 +58,9 @@ ErrorResponse:
         - ATTACHMENT_LIMIT_EXCEEDED
         - INVALID_NOTICE_IMAGE_TYPE
         - INVALID_NOTICE_IMAGE_SIZE
+        - INVALID_IMAGE_ID
+        - INVALID_IMAGE_TYPE
+        - INVALID_IMAGE_SIZE
         - FILE_NOT_FOUND
         - FILE_NOT_OWNED
         - FILE_NOT_ATTACHABLE
@@ -130,6 +133,13 @@ StudyMemberLimitExceededError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { prop
 WebPushSubscriptionAlreadyRegisteredError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED }, message: { const: 다른 사용자에게 등록된 웹 푸시 구독입니다. } } }], examples: [{ code: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED, message: 다른 사용자에게 등록된 웹 푸시 구독입니다. }] }
 
 StudyInvalidNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_NAME }, message: { const: 스터디 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_NAME, message: 스터디 이름이 올바르지 않습니다. }] }
+StudyImageBadRequestError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code:
+          enum: [INVALID_IMAGE_ID, INVALID_IMAGE_TYPE, INVALID_IMAGE_SIZE, FILE_NOT_ATTACHABLE]
+        message: { type: string }
 
 NoticeAttachmentBadRequestError:
   allOf:

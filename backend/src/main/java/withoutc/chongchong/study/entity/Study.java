@@ -2,13 +2,17 @@ package withoutc.chongchong.study.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
@@ -34,18 +38,11 @@ public class Study extends BaseEntity {
     @Column(name = "is_public", nullable = false)
     private boolean isPublic;
 
-    public static Study create(
-            String name,
-            String description
-    ) {
-        return create(name, description, false);
-    }
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_file_id", unique = true)
+    private FileMetadata imageFile;
 
-    public static Study create(
-            String name,
-            String description,
-            boolean isPublic
-    ) {
+    public static Study create(String name, String description, boolean isPublic) {
         return new Study(name, description, isPublic);
     }
 
@@ -64,6 +61,12 @@ public class Study extends BaseEntity {
         }
         if (isPublic != null) {
             this.isPublic = isPublic;
+        }
+    }
+
+    public void changeImage(FileMetadata file) {
+        if (file != null) {
+            this.imageFile = file;
         }
     }
 

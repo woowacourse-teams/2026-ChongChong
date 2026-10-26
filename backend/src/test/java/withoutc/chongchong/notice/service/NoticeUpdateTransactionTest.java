@@ -306,7 +306,7 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     private Fixture createFixture() {
         User leader = userRepository.save(User.create("리더", null));
         User memberUser = userRepository.save(User.create("스터디원", null));
-        Study study = studyRepository.save(Study.create("공지 수정 스터디", "설명"));
+        Study study = studyRepository.save(Study.create("공지 수정 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember member = studyMemberRepository.save(
                 StudyMember.create(study, memberUser, "스터디원", null, StudyMemberRole.MEMBER));

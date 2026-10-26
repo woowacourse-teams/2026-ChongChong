@@ -104,10 +104,10 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
         List<ConcurrentResult<StudyCreateResponse>> results = runConcurrently(
                 () -> studyService.createStudy(
-                        user.getId(), new StudyCreateRequest("첫 번째 스터디", "설명", false)
+                        user.getId(), new StudyCreateRequest("첫 번째 스터디", "설명", false, null)
                 ),
                 () -> studyService.createStudy(
-                        user.getId(), new StudyCreateRequest("두 번째 스터디", "설명", false)
+                        user.getId(), new StudyCreateRequest("두 번째 스터디", "설명", false, null)
                 )
         );
 
@@ -188,7 +188,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
     @DisplayName("홈 이름 수정과 스터디 생성이 동시에 일어나도 모든 멤버십에 최신 이름이 저장된다")
     void syncsNameWhenUpdatingProfileAndCreatingStudyConcurrently() throws Exception {
         User user = saveUser("기존이름");
-        Study existingStudy = studyRepository.saveAndFlush(Study.create("기존 스터디", null));
+        Study existingStudy = studyRepository.saveAndFlush(Study.create("기존 스터디", null, false));
         studyMemberRepository.saveAndFlush(StudyMember.create(
                 existingStudy, user, user.getName(), null, StudyMemberRole.LEADER
         ));
@@ -199,7 +199,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
                     return true;
                 },
                 () -> {
-                    studyService.createStudy(user.getId(), new StudyCreateRequest("새 스터디", null, false));
+                    studyService.createStudy(user.getId(), new StudyCreateRequest("새 스터디", null, false, null));
                     return true;
                 }
         );
@@ -212,7 +212,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
     }
 
     private Study createStudyWithMembers(int memberCount) {
-        Study study = studyRepository.saveAndFlush(Study.create("정원 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("정원 스터디", "설명", false));
         for (int i = 0; i < memberCount; i++) {
             User user = saveUser("스터디 멤버 " + i);
             studyMemberRepository.saveAndFlush(
@@ -225,7 +225,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
     private void createStudiesForUser(User user, int studyCount) {
         for (int i = 0; i < studyCount; i++) {
-            Study study = studyRepository.saveAndFlush(Study.create("기존 스터디 " + i, "설명"));
+            Study study = studyRepository.saveAndFlush(Study.create("기존 스터디 " + i, "설명", false));
             studyMemberRepository.saveAndFlush(
                     StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
                             StudyMemberRole.LEADER)
@@ -234,7 +234,7 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
     }
 
     private Study createStudyWithLeader(String name) {
-        Study study = studyRepository.saveAndFlush(Study.create(name, "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create(name, "설명", false));
         User leader = saveUser(name + " 리더");
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leader, leader.getName(), leader.getProfileImageUrl(),

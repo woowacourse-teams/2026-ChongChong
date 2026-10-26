@@ -40,7 +40,11 @@ public class FileService {
         User user = userRepository.getByIdOrThrow(userId);
         filePolicy.validateSize(request.size());
 
-        String objectKey = uploadPrefix + UUID.randomUUID();
+        String purposePrefix = "";
+        if (request.uploadPurpose() != null) {
+            purposePrefix = request.uploadPurpose().getPrefix();
+        }
+        String objectKey = uploadPrefix + purposePrefix + UUID.randomUUID();
         FileMetadata fileMetadata = FileMetadata.create(user, request.originalFileName(), objectKey,
                 request.contentType(), request.size());
 
