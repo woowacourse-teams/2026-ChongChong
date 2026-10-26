@@ -1,0 +1,72 @@
+get:
+  tags: [Study]
+  operationId: getStudyJoinInfo
+  x-backend:
+    status: review
+    owner: wontop02
+    description: |
+      공개 탐색과 초대 링크에서 사용할 참여 전 정보를 조회한다. 초대 토큰 검증 후 현재 인원수를 포함한 기본 정보를 반환한다.
+  summary: 스터디 참여 전 정보 조회
+  description: |
+    인증된 사용자가 참여 전 스터디의 이름·설명·현재 인원수·이미지 조회 URL을 조회한다.
+    요청 본문은 사용하지 않는다. 설명과 imageUrl은 null일 수 있다.
+
+    공개 탐색에서는 studyId만 전달하고, 초대 링크에서는 token만 전달할 수 있다. 둘 중 하나 이상을 전달해야 한다.
+    token이 전달되면 공개 여부와 관계없이 형식·서명·3일 유효기간을 검증한다. studyId도 전달했다면 토큰의 스터디 ID와 일치해야 한다.
+    token을 생략하면 공개 스터디만 조회할 수 있고, 비공개 스터디는 STUDY_NOT_PUBLIC(403)을 반환한다.
+    token을 전달했지만 비어 있거나 유효하지 않거나 다른 스터디의 토큰이면 INVALID_INVITE_TOKEN(400)을 반환한다.
+    studyId와 token이 모두 없으면 INVALID_STUDY_ID(400), 스터디가 존재하지 않으면 STUDY_NOT_FOUND(404)를 반환한다.
+    정원이 가득 찬 스터디도 조회할 수 있으며 memberCount로 현재 인원수를 반환한다. 정원 제한은 실제 가입 요청에서 검증한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - name: studyId
+      in: query
+      required: false
+      description: 공개 탐색에서 선택한 스터디 ID. token을 전달하면 생략할 수 있다.
+      schema: { type: integer, format: int64, minimum: 1 }
+      example: 21
+    - name: token
+      in: query
+      required: false
+      description: 발급 후 3일 동안 유효한 초대 토큰. 공개 스터디를 studyId로 조회할 때는 생략할 수 있다.
+      schema: { type: string, minLength: 27, maxLength: 27, pattern: '^[A-Za-z0-9_-]{27}$' }
+      example: Ab3xY7kLm2Qp9VtR4Nc8ZdAaBcD
+  responses:
+    '200':
+      description: 스터디 참여 전 정보 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/studies.yaml#/StudySummaryResponse' }
+          example: { studyId: 21, studyName: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
+    '400':
+      description: 쿼리 형식·검증 오류, 조회 식별자 누락 또는 초대 토큰이 유효하지 않음
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - { $ref: '../../components/schemas/errors.yaml#/InvalidRequestParameterError' }
+              - { $ref: '../../components/schemas/errors.yaml#/InvalidRequestError' }
+              - { $ref: '../../components/schemas/errors.yaml#/InvalidStudyIdError' }
+              - { $ref: '../../components/schemas/errors.yaml#/InvalidInviteTokenError' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403':
+      description: 초대 토큰 없이 비공개 스터디 조회를 요청함
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/errors.yaml#/StudyNotPublicError' }
+          example: { code: STUDY_NOT_PUBLIC, message: 공개 스터디가 아닙니다. }
+    '404':
+      description: 사용자 또는 스터디가 존재하지 않음
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - { $ref: '../../components/schemas/errors.yaml#/UserNotFoundError' }
+              - { $ref: '../../components/schemas/errors.yaml#/StudyNotFoundError' }
+          examples:
+            studyNotFound:
+              summary: 스터디가 존재하지 않음
+              value: { code: STUDY_NOT_FOUND, message: 존재하지 않는 스터디입니다. }
+            userNotFound:
+              summary: 사용자가 존재하지 않음
+              value: { code: USER_NOT_FOUND, message: 해당 사용자를 찾을 수 없습니다. }

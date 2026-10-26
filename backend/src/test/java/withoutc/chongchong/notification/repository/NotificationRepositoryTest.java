@@ -53,7 +53,7 @@ class NotificationRepositoryTest {
     @Test
     @DisplayName("사용자가 받은 알림만 모두 삭제한다")
     void deleteAllByRecipientIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        Study study = studyRepository.save(Study.create("스터디", "설명", false));
         StudyMember target = createMember(study, "삭제 대상");
         StudyMember otherMember = createMember(study, "다른 스터디원");
         saveNotification(study, target, 1L);
@@ -70,7 +70,7 @@ class NotificationRepositoryTest {
     @Test
     @DisplayName("스터디원에게 속한 제출물 알림만 모두 삭제한다")
     void deleteAllByMemberIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        Study study = studyRepository.save(Study.create("스터디", "설명", false));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);

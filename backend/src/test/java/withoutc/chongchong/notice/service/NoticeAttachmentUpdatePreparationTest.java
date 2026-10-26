@@ -2,10 +2,11 @@ package withoutc.chongchong.notice.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -28,7 +29,6 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.notice.repository.NoticeAttachmentRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
@@ -45,9 +45,6 @@ class NoticeAttachmentUpdatePreparationTest {
     @Mock
     private FileMetaDataRepository fileRepository;
 
-    @Mock
-    private NoticeAttachmentRepository attachmentRepository;
-
     private NoticeAttachmentService attachmentService;
     private NoticeAttachmentPolicy attachmentPolicy;
     private Notice notice;
@@ -55,7 +52,7 @@ class NoticeAttachmentUpdatePreparationTest {
     @BeforeEach
     void setUp() {
         attachmentPolicy = new NoticeAttachmentPolicy(10, 5242880, List.of("image/jpeg", "image/png", "image/webp"));
-        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository, attachmentPolicy);
+        attachmentService = new NoticeAttachmentService(fileRepository, attachmentPolicy);
         notice = Notice.create(mock(Study.class), "기존 공지", "기존 내용");
     }
 
@@ -65,12 +62,12 @@ class NoticeAttachmentUpdatePreparationTest {
         FileMetadata first = completedFile(7L);
         FileMetadata second = completedFile(31L);
         notice.addAttachments(List.of(first, second));
-        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository,
+        attachmentService = new NoticeAttachmentService(fileRepository,
                 new NoticeAttachmentPolicy(1, 1, List.of("image/jpeg")));
 
         assertThat(attachmentService.prepareForUpdate(USER_ID, notice, null)).containsExactly(first, second);
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     @Test
@@ -83,7 +80,7 @@ class NoticeAttachmentUpdatePreparationTest {
         assertThat(attachmentService.prepareForUpdate(USER_ID, notice, List.of())).isEmpty();
 
         verify(fileRepository).findAllByIdForUpdate(List.of(7L));
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
         assertThat(notice.getAttachments()).hasSize(1);
         assertThat(file.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
     }
@@ -93,7 +90,7 @@ class NoticeAttachmentUpdatePreparationTest {
     void prepareEmptyAttachments() {
         assertThat(attachmentService.prepareForUpdate(USER_ID, notice, List.of())).isEmpty();
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     @Test
@@ -103,7 +100,7 @@ class NoticeAttachmentUpdatePreparationTest {
         FileMetadata second = completedFile(31L);
         notice.addAttachments(List.of(first, second));
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(first, second));
-        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository,
+        attachmentService = new NoticeAttachmentService(fileRepository,
                 new NoticeAttachmentPolicy(2, 1, List.of("image/jpeg")));
 
         assertThat(attachmentService.prepareForUpdate(USER_ID, notice, List.of(31L, 7L)))
@@ -126,9 +123,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .containsExactly(added, retained);
 
         verify(fileRepository).findAllByIdForUpdate(List.of(7L, 19L, 31L));
-        verifyNoMoreInteractions(fileRepository);
-        verify(attachmentRepository).existsAnyByFileId(added.getId());
-        verifyNoMoreInteractions(attachmentRepository);
+        verify(fileRepository).existsAnyUsageByFileId(added.getId());
         assertThat(notice.getAttachments()).extracting(attachment -> attachment.getFile().getId())
                 .containsExactly(7L, 19L);
         assertThat(retained.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
@@ -145,7 +140,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_ATTACHMENT_IDS);
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     static Stream<List<Long>> invalidIds() {
@@ -163,7 +158,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.ATTACHMENT_LIMIT_EXCEEDED);
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     @Test
@@ -176,7 +171,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_FOUND);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @Test
@@ -190,7 +185,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_OWNED);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @ParameterizedTest
@@ -206,7 +201,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @ParameterizedTest
@@ -223,7 +218,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @Test
@@ -237,7 +232,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_TYPE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @ParameterizedTest
@@ -252,7 +247,7 @@ class NoticeAttachmentUpdatePreparationTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_SIZE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @Test
@@ -280,15 +275,15 @@ class NoticeAttachmentUpdatePreparationTest {
         notice.addAttachments(List.of(existing));
         when(fileRepository.findAllByIdForUpdate(List.of(3L, 7L, 31L)))
                 .thenReturn(List.of(existing, first, second));
-        when(attachmentRepository.existsAnyByFileId(7L)).thenReturn(false);
-        when(attachmentRepository.existsAnyByFileId(31L)).thenReturn(true);
+        when(fileRepository.existsAnyUsageByFileId(7L)).thenReturn(false);
+        when(fileRepository.existsAnyUsageByFileId(31L)).thenReturn(true);
 
         assertThatThrownBy(() -> attachmentService.prepareForUpdate(USER_ID, notice, List.of(7L, 31L)))
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        verify(attachmentRepository).existsAnyByFileId(7L);
+        verify(fileRepository).existsAnyUsageByFileId(7L);
         assertThat(notice.getAttachments()).extracting(attachment -> attachment.getFile().getId())
                 .containsExactly(3L);
         assertThat(List.of(existing, first, second)).allMatch(FileMetadata::isCompleted);
@@ -305,8 +300,7 @@ class NoticeAttachmentUpdatePreparationTest {
         assertThat(attachmentService.prepareForUpdate(USER_ID, notice, List.of(31L, 7L)))
                 .containsExactly(added, existing);
 
-        verify(attachmentRepository).existsAnyByFileId(31L);
-        verifyNoMoreInteractions(attachmentRepository);
+        verify(fileRepository).existsAnyUsageByFileId(31L);
         assertThat(existing.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
         assertThat(added.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
         assertThat(notice.getAttachments()).hasSize(1);

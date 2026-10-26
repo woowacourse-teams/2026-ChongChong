@@ -3,7 +3,8 @@ package withoutc.chongchong.assignment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -13,7 +14,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.policy.AssignmentAttachmentPolicy;
-import withoutc.chongchong.assignment.repository.AssignmentAttachmentRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
@@ -24,9 +24,8 @@ import withoutc.chongchong.user.entity.User;
 class AssignmentAttachmentServiceTest {
 
     private final FileMetaDataRepository fileMetaDataRepository = mock(FileMetaDataRepository.class);
-    private final AssignmentAttachmentRepository assignmentAttachmentRepository = mock(AssignmentAttachmentRepository.class);
     private final AssignmentAttachmentService service = new AssignmentAttachmentService(
-            fileMetaDataRepository, assignmentAttachmentRepository, mock(AssignmentAttachmentPolicy.class));
+            fileMetaDataRepository, mock(AssignmentAttachmentPolicy.class));
 
     @ParameterizedTest
     @EnumSource(FileUploadStatus.class)
@@ -39,7 +38,7 @@ class AssignmentAttachmentServiceTest {
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_OWNED);
-        verifyNoInteractions(assignmentAttachmentRepository);
+        verify(fileMetaDataRepository, never()).existsAnyUsageByFileId(10L);
     }
 
     @Test
@@ -61,7 +60,20 @@ class AssignmentAttachmentServiceTest {
         when(fileMetaDataRepository.findAllByIdForUpdate(List.of(10L))).thenReturn(List.of(file));
 
         assertThat(service.prepare(1L, List.of(file), List.of(10L))).containsExactly(file);
-        verifyNoInteractions(assignmentAttachmentRepository);
+        verify(fileMetaDataRepository, never()).existsAnyUsageByFileId(10L);
+    }
+
+    @Test
+    @DisplayName("스터디 이미지로 사용 중인 파일은 새 과제 첨부로 거부한다")
+    void rejectsStudyImageAsNewAttachment() {
+        FileMetadata file = file(1L, FileUploadStatus.COMPLETED);
+        when(fileMetaDataRepository.findAllByIdForUpdate(List.of(10L))).thenReturn(List.of(file));
+        when(fileMetaDataRepository.existsAnyUsageByFileId(10L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.prepare(1L, List.of(), List.of(10L)))
+                .isInstanceOf(FileException.class)
+                .extracting(exception -> ((FileException) exception).getErrorCode())
+                .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
     }
 
     private FileMetadata file(Long ownerId, FileUploadStatus status) {

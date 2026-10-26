@@ -1,4 +1,4 @@
-package withoutc.chongchong.notice.repository;
+package withoutc.chongchong.file.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,12 +26,12 @@ import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.user.entity.User;
 
 @Transactional
-class NoticeAttachmentRepositoryTest extends PostgresContainerTest {
+class FileMetaDataUsageRepositoryTest extends PostgresContainerTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 10, 21, 12, 0);
 
     @Autowired
-    private NoticeAttachmentRepository attachmentRepository;
+    private FileMetaDataRepository fileRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -43,13 +43,13 @@ class NoticeAttachmentRepositoryTest extends PostgresContainerTest {
         FileMetadata file = saveFile(status);
         entityManager.flush();
 
-        assertThat(attachmentRepository.existsAnyByFileId(file.getId())).isFalse();
+        assertThat(fileRepository.existsAnyUsageByFileId(file.getId())).isFalse();
     }
 
     @Test
     @DisplayName("존재하지 않는 파일은 첨부 관계가 없는 것으로 조회한다")
     void findMissingFileAsUnlinked() {
-        assertThat(attachmentRepository.existsAnyByFileId(Long.MAX_VALUE)).isFalse();
+        assertThat(fileRepository.existsAnyUsageByFileId(Long.MAX_VALUE)).isFalse();
     }
 
     @Test
@@ -100,12 +100,36 @@ class NoticeAttachmentRepositoryTest extends PostgresContainerTest {
         assertUnlinkedAfterFlush(file);
     }
 
+    @Test
+    @DisplayName("스터디 이미지에 연결된 파일은 공지와 과제 첨부에 재사용할 수 없다")
+    void findCurrentStudyImage() {
+        FileMetadata file = saveFile(FileUploadStatus.COMPLETED);
+        Study study = saveStudy();
+        entityManager.flush();
+        entityManager.createNativeQuery("UPDATE studies SET image_file_id = :fileId WHERE id = :studyId")
+                .setParameter("fileId", file.getId())
+                .setParameter("studyId", study.getId())
+                .executeUpdate();
+        entityManager.clear();
+
+        assertThat(fileRepository.existsAnyUsageByFileId(file.getId())).isTrue();
+        assertThat(fileRepository.existsStudyImageByFileId(file.getId())).isTrue();
+
+        entityManager.createNativeQuery("UPDATE studies SET image_file_id = NULL WHERE id = :studyId")
+                .setParameter("studyId", study.getId())
+                .executeUpdate();
+        entityManager.clear();
+
+        assertThat(fileRepository.existsAnyUsageByFileId(file.getId())).isFalse();
+        assertThat(fileRepository.existsStudyImageByFileId(file.getId())).isFalse();
+    }
+
     private void assertOnlyRequestedFileLinked(FileMetadata linkedFile) {
         FileMetadata unlinkedFile = saveFile(FileUploadStatus.COMPLETED);
         entityManager.flush();
 
-        assertThat(attachmentRepository.existsAnyByFileId(linkedFile.getId())).isTrue();
-        assertThat(attachmentRepository.existsAnyByFileId(unlinkedFile.getId())).isFalse();
+        assertThat(fileRepository.existsAnyUsageByFileId(linkedFile.getId())).isTrue();
+        assertThat(fileRepository.existsAnyUsageByFileId(unlinkedFile.getId())).isFalse();
     }
 
     private void assertUnlinkedAfterFlush(FileMetadata file) {
@@ -113,7 +137,7 @@ class NoticeAttachmentRepositoryTest extends PostgresContainerTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(attachmentRepository.existsAnyByFileId(fileId)).isFalse();
+        assertThat(fileRepository.existsAnyUsageByFileId(fileId)).isFalse();
         assertThat(entityManager.find(FileMetadata.class, fileId).getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
     }
 
@@ -137,7 +161,7 @@ class NoticeAttachmentRepositoryTest extends PostgresContainerTest {
     }
 
     private Study saveStudy() {
-        Study study = Study.create("첨부 연결 조회 스터디", "설명");
+        Study study = Study.create("첨부 연결 조회 스터디", "설명", false);
         entityManager.persist(study);
         return study;
     }

@@ -34,7 +34,7 @@ class JpaAuditingConfigTest {
     @Test
     @DisplayName("JPA Auditing 생성 시각은 애플리케이션 Clock을 사용한다")
     void createAuditingTimestampUsingApplicationClock() {
-        Study study = studyRepository.saveAndFlush(Study.create("스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("스터디", "설명", false));
 
         assertThat(study.getCreatedAt())
                 .isEqualTo(LocalDateTime.ofInstant(NOW, ZONE_ID));
