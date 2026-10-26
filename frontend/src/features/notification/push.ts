@@ -1,21 +1,10 @@
 import {
   getWebPushPublicKey,
+  getWebPushSubscriptionStatus,
   registerWebPushSubscription,
   deactivateWebPushSubscription,
 } from './api';
-import { clearLocalPushSubscription, PUSH_SUBSCRIPTION_ID_KEY } from './localPush';
-
-function getOrCreateInstallationId() {
-  const key = 'installationId';
-  let id = localStorage.getItem(key);
-
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(key, id);
-  }
-
-  return id;
-}
+import { clearLocalPushSubscription, getOrCreateInstallationId } from './localPush';
 
 export async function enablePush() {
   if (
@@ -58,7 +47,7 @@ export async function enablePush() {
       throw new Error('푸시 구독 정보를 확인하지 못했어요.');
     }
 
-    const subscriptionId = await registerWebPushSubscription({
+    await registerWebPushSubscription({
       installationId: getOrCreateInstallationId(),
       endpoint: endpoint,
       keys: {
@@ -66,8 +55,6 @@ export async function enablePush() {
         auth: keys.auth,
       },
     });
-
-    localStorage.setItem(PUSH_SUBSCRIPTION_ID_KEY, String(subscriptionId));
   } catch (error) {
     await subscription.unsubscribe().catch(console.error);
     throw error;
@@ -77,10 +64,10 @@ export async function enablePush() {
 }
 
 export async function disablePush() {
-  const subscriptionId = localStorage.getItem(PUSH_SUBSCRIPTION_ID_KEY);
+  const { subscriptionId } = await getWebPushSubscriptionStatus(getOrCreateInstallationId());
 
-  if (subscriptionId) {
-    await deactivateWebPushSubscription(Number(subscriptionId));
+  if (subscriptionId !== null) {
+    await deactivateWebPushSubscription(subscriptionId);
   }
 
   await clearLocalPushSubscription();

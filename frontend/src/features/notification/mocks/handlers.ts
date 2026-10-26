@@ -1,7 +1,7 @@
 import { http, HttpResponse, passthrough } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
-import { notificationTable } from './db';
+import { notificationTable, webPushSubscriptionTable } from './db';
 
 export const handlers = [
   http.get(`${API_URL}/notifications`, async ({ request }) => {
@@ -33,19 +33,56 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
   http.get(`${API_URL}/web-push/config`, () => passthrough()),
-  http.post(`${API_URL}/web-push-subscriptions`, ({ request }) => {
-    if (!findUserFromHeader(request.headers)) {
-      return new HttpResponse(null, { status: 401 });
-    }
-
-    return HttpResponse.json({ subscriptionId: 1 });
+  http.get(`${API_URL}/web-push-subscriptions/me`, ({ request }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const installationId = new URL(request.url).searchParams.get('installationId');
+    if (!installationId?.trim()) return new HttpResponse(null, { status: 400 });
+    const subscription = webPushSubscriptionTable.findFirst((q) =>
+      q.where({ userId: user.id, installationId }),
+    );
+    return HttpResponse.json({
+      isActive: subscription?.isActive ?? false,
+      subscriptionId: subscription?.subscriptionId ?? null,
+    });
   }),
-
-  http.delete(`${API_URL}/web-push-subscriptions/:subscriptionId`, ({ request }) => {
-    if (!findUserFromHeader(request.headers)) {
-      return new HttpResponse(null, { status: 401 });
+  http.post(`${API_URL}/web-push-subscriptions`, async ({ request }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const { installationId } = (await request.json()) as { installationId: string };
+    if (!installationId?.trim()) return new HttpResponse(null, { status: 400 });
+    const existing = webPushSubscriptionTable.findFirst((q) =>
+      q.where({ userId: user.id, installationId }),
+    );
+    if (existing) {
+      webPushSubscriptionTable.update(existing, {
+        data(subscription) {
+          subscription.isActive = true;
+        },
+      });
+      return HttpResponse.json({ subscriptionId: existing.subscriptionId });
     }
-
+    const subscriptionId = webPushSubscriptionTable.findMany().length + 1;
+    await webPushSubscriptionTable.create({
+      subscriptionId,
+      userId: user.id,
+      installationId,
+      isActive: true,
+    });
+    return HttpResponse.json({ subscriptionId });
+  }),
+  http.delete(`${API_URL}/web-push-subscriptions/:subscriptionId`, ({ request, params }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+    const subscription = webPushSubscriptionTable.findFirst((q) =>
+      q.where({ userId: user.id, subscriptionId: Number(params.subscriptionId) }),
+    );
+    if (subscription)
+      webPushSubscriptionTable.update(subscription, {
+        data(subscription) {
+          subscription.isActive = false;
+        },
+      });
     return new HttpResponse(null, { status: 204 });
   }),
 ];

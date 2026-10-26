@@ -76,3 +76,12 @@ export function createSeedNotification() {
     notificationTable.create(mockNotification);
   }
 }
+
+export const webPushSubscriptionTable = new Collection({
+  schema: z.object({
+    subscriptionId: z.number(),
+    userId: z.number(),
+    installationId: z.string(),
+    isActive: z.boolean(),
+  }),
+});

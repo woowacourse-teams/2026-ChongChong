@@ -49,12 +49,15 @@ export default function AccountMenuSection() {
   });
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawAccount();
 
-  const [
-    isNotificationEnabled,
-    notificationEnabledChanging,
+  const {
+    isEnabled: isNotificationEnabled,
+    changing: notificationEnabledChanging,
+    isLoading: isNotificationStatusLoading,
+    isError: isNotificationStatusError,
+    refetch: refetchNotificationStatus,
     handleToggleNotificationEnabled,
     disableNotifications,
-  ] = useNotificationEnabledState();
+  } = useNotificationEnabledState();
 
   const posthog = usePostHog();
 
@@ -95,11 +98,25 @@ export default function AccountMenuSection() {
               <label htmlFor="notification-enabled-state">푸시 알림</label>
               <Switch
                 checked={isNotificationEnabled}
-                disabled={isAccountActionPending}
+                disabled={
+                  isAccountActionPending || isNotificationStatusLoading || isNotificationStatusError
+                }
                 onChange={handleToggleNotificationEnabled}
                 id="notification-enabled-state"
               />
             </div>
+            {isNotificationStatusError && (
+              <div role="alert">
+                알림 설정을 불러오지 못했어요.
+                <button
+                  type="button"
+                  onClick={() => void refetchNotificationStatus()}
+                  disabled={isNotificationStatusLoading}
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
           </List.Item>
           <List.Item>
             <button

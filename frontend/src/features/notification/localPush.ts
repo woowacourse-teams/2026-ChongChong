@@ -1,5 +1,17 @@
-export const PUSH_SUBSCRIPTION_ID_KEY = 'chongchong:push-subscription-id';
-export const PUSH_ENABLED_KEY = 'chongchong:push-enabled';
+export function getOrCreateInstallationId() {
+  const key = 'installationId';
+  let id = localStorage.getItem(key);
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+
+  return id;
+}
+
+const PUSH_SUBSCRIPTION_ID_KEY = 'chongchong:push-subscription-id';
+const PUSH_ENABLED_KEY = 'chongchong:push-enabled';
 
 export async function clearLocalPushSubscription() {
   if ('serviceWorker' in navigator) {
