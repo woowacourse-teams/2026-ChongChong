@@ -127,6 +127,7 @@ export default function AssignmentSubmissionForm({
         />
 
         <AttachmentField
+          showImagePreviews
           id="assignment-submission-files"
           label="파일 업로드"
           items={attachments.items}

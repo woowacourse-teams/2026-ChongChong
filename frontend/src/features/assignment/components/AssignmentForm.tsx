@@ -140,6 +140,7 @@ export default function AssignmentForm({
         testId="assignment-content-field"
       />
       <AttachmentField
+        showImagePreviews
         id="assignment-images"
         label="이미지 업로드"
         items={attachments.items}

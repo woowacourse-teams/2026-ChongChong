@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties } from 'react';
 import { Field } from '../ui/inputs/Field';
 import { tokens, typography } from '../../styles/global';
@@ -18,6 +18,7 @@ interface AttachmentFieldProps {
   errorText?: string;
   helpText?: string;
   testId?: string;
+  showImagePreviews?: boolean;
 }
 
 const imageStyle = {
@@ -58,6 +59,7 @@ export default function AttachmentField({
   errorText,
   helpText,
   testId,
+  showImagePreviews = false,
 }: AttachmentFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -88,7 +90,11 @@ export default function AttachmentField({
       >
         {items.map((image) => (
           <div role="listitem" key={image.id} css={imageStyle}>
-            <img src={imageIcon} alt="" width={24} height={24} />
+            {showImagePreviews && (image.previewFile || image.imageUrl) ? (
+              <AttachmentPreview item={image} />
+            ) : (
+              <img src={imageIcon} alt="" width={24} height={24} />
+            )}
             <div
               css={{
                 flex: 1,
@@ -140,5 +146,39 @@ export default function AttachmentField({
       </button>
       <Field.SubText errorText={errorText} helpText={helpText} />
     </Field>
+  );
+}
+
+function AttachmentPreview({ item }: { item: AttachmentItem }) {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!item.previewFile || !imageRef.current) return;
+    const url = URL.createObjectURL(item.previewFile);
+    imageRef.current.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [item.previewFile]);
+
+  return failed ? (
+    <span css={{ ...typography.footnote, width: 80, flexShrink: 0 }}>
+      이미지를 불러오지 못했어요.
+    </span>
+  ) : (
+    <img
+      ref={imageRef}
+      src={item.imageUrl}
+      alt={`${item.name} 미리보기`}
+      onError={() => setFailed(true)}
+      css={{
+        width: 80,
+        height: 80,
+        objectFit: 'contain',
+        flexShrink: 0,
+        margin: `${tokens.spacing[2]} 0`,
+        borderRadius: tokens.radius.sm,
+        background: tokens.bg.subtle,
+      }}
+    />
   );
 }

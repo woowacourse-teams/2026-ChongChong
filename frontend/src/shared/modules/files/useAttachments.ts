@@ -20,6 +20,7 @@ export function useAttachments({ initialAttachments = [], kind, contentType, mod
       .map((file) => ({
         id: `existing-${file.fileId}`,
         name: file.originalFileName,
+        imageUrl: file.imageUrl ?? undefined,
         fileId: file.fileId,
         status: 'completed',
       })),
@@ -65,6 +66,9 @@ export function useAttachments({ initialAttachments = [], kind, contentType, mod
     const added = files.map((file): AttachmentItem => ({
       id: `new-${nextId.current++}`,
       name: file.name,
+      previewFile: ['image/jpeg', 'image/png', 'image/webp'].includes(getFileContentType(file))
+        ? file
+        : undefined,
       status: 'uploading',
     }));
     updateItems([...currentItems.current, ...added]);
@@ -84,7 +88,7 @@ export function useAttachments({ initialAttachments = [], kind, contentType, mod
             ...properties,
             duration_ms: Math.round(performance.now() - startedAt),
           });
-          updateItem(item.id, { id: item.id, name: item.name, status: 'completed', fileId });
+          updateItem(item.id, { ...item, status: 'completed', fileId });
         },
         (cause: unknown) => {
           posthog?.capture('attachment_upload_failed', {
@@ -93,8 +97,7 @@ export function useAttachments({ initialAttachments = [], kind, contentType, mod
             failure_stage: cause instanceof AttachmentUploadError ? cause.stage : 'unknown',
           });
           updateItem(item.id, {
-            id: item.id,
-            name: item.name,
+            ...item,
             status: 'error',
             message: cause instanceof Error ? cause.message : '파일 업로드에 실패했어요.',
           });

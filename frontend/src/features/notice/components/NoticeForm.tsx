@@ -115,6 +115,7 @@ export default function NoticeForm({
       />
 
       <AttachmentField
+        showImagePreviews
         id="notice-images"
         label="이미지 업로드"
         items={attachments.items}
