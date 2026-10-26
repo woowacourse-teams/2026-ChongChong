@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
-import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -77,10 +77,10 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
         List<ConcurrentResult<StudyMemberJoinResponse>> results = runConcurrently(
                 () -> studyMemberService.join(
-                        firstUser.getId(), new StudyInviteTokenRequest(inviteToken)
+                        firstUser.getId(), new StudyJoinRequest(null, inviteToken)
                 ),
                 () -> studyMemberService.join(
-                        secondUser.getId(), new StudyInviteTokenRequest(inviteToken)
+                        secondUser.getId(), new StudyJoinRequest(null, inviteToken)
                 )
         );
 
@@ -136,10 +136,10 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
         List<ConcurrentResult<StudyMemberJoinResponse>> results = runConcurrently(
                 () -> studyMemberService.join(
-                        user.getId(), new StudyInviteTokenRequest(firstInviteToken)
+                        user.getId(), new StudyJoinRequest(null, firstInviteToken)
                 ),
                 () -> studyMemberService.join(
-                        user.getId(), new StudyInviteTokenRequest(secondInviteToken)
+                        user.getId(), new StudyJoinRequest(null, secondInviteToken)
                 )
         );
 
@@ -164,10 +164,10 @@ class StudyMembershipConcurrencyTest extends PostgresContainerTest {
 
         List<ConcurrentResult<StudyMemberJoinResponse>> results = runConcurrently(
                 () -> studyMemberService.join(
-                        user.getId(), new StudyInviteTokenRequest(inviteToken)
+                        user.getId(), new StudyJoinRequest(null, inviteToken)
                 ),
                 () -> studyMemberService.join(
-                        user.getId(), new StudyInviteTokenRequest(inviteToken)
+                        user.getId(), new StudyJoinRequest(null, inviteToken)
                 )
         );
 

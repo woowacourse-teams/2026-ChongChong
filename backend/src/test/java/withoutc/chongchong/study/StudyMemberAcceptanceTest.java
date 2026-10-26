@@ -101,6 +101,128 @@ class StudyMemberAcceptanceTest {
     }
 
     @Test
+    @DisplayName("공개 스터디는 ID만으로 참여하면 201을 반환한다")
+    void joinPublicStudyByIdTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", null));
+        User user = userRepository.saveAndFlush(User.create("참여자", null));
+        Study study = studyRepository.saveAndFlush(Study.create("공개 스터디", "설명", true));
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), null, StudyMemberRole.LEADER)
+        );
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"studyId": %d}
+                        """.formatted(study.getId()))
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(201)
+                .body("studyId", equalTo(study.getId().intValue()));
+
+        assertThat(studyMemberRepository.findByStudyIdAndUserId(study.getId(), user.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("비공개 스터디는 ID만으로 참여할 수 없다")
+    void joinPrivateStudyByIdTest() {
+        User user = userRepository.saveAndFlush(User.create("참여자", null));
+        Study study = studyRepository.saveAndFlush(Study.create("비공개 스터디", null, false));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"studyId": %d}
+                        """.formatted(study.getId()))
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(403)
+                .body("code", equalTo("STUDY_NOT_PUBLIC"));
+
+        assertThat(studyMemberRepository.findByStudyIdAndUserId(study.getId(), user.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("공개 스터디도 다른 스터디의 초대 토큰을 함께 전달하면 참여할 수 없다")
+    void joinPublicStudyWithMismatchedTokenTest() {
+        User user = userRepository.saveAndFlush(User.create("참여자", null));
+        Study target = studyRepository.saveAndFlush(Study.create("공개 스터디", null, true));
+        Study other = studyRepository.saveAndFlush(Study.create("다른 스터디", null, false));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"studyId": %d, "token": "%s"}
+                        """.formatted(target.getId(), studyInviteTokenProvider.generate(other.getId())))
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INVITE_TOKEN"));
+
+        assertThat(studyMemberRepository.findByStudyIdAndUserId(target.getId(), user.getId())).isEmpty();
+        assertThat(studyMemberRepository.findByStudyIdAndUserId(other.getId(), user.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("비공개 스터디의 ID와 일치하는 초대 토큰으로 참여한다")
+    void joinPrivateStudyWithIdAndTokenTest() {
+        User user = userRepository.saveAndFlush(User.create("참여자", null));
+        Study study = studyRepository.saveAndFlush(Study.create("비공개 스터디", null, false));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"studyId": %d, "token": "%s"}
+                        """.formatted(study.getId(), studyInviteTokenProvider.generate(study.getId())))
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(201)
+                .body("studyId", equalTo(study.getId().intValue()));
+
+        assertThat(studyMemberRepository.findByStudyIdAndUserId(study.getId(), user.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("양수가 아닌 스터디 ID로 참여하면 400을 반환한다")
+    void joinStudyWithInvalidIdTest() {
+        User user = userRepository.saveAndFlush(User.create("참여자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("{\"studyId\": 0}")
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_INPUT_VALUE"));
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰을 모두 생략하면 400을 반환한다")
+    void joinStudyWithoutIdentifierTest() {
+        User user = userRepository.saveAndFlush(User.create("참여자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("{}")
+                .when()
+                .post("/studies/join")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_STUDY_ID"));
+    }
+
+    @Test
     @DisplayName("신규 가입자는 기존 과제를 미해당 상태로 조회하며 제출 정보는 생성되지 않는다")
     void joinStudyWithExistingAssignmentTest() {
         User leader = userRepository.saveAndFlush(User.create("리더", "leader-profile-image-url"));
@@ -153,7 +275,7 @@ class StudyMemberAcceptanceTest {
     }
 
     @Test
-    @DisplayName("스터디 참여 요청의 토큰 검증에 실패하면 한글 검증 사유를 반환한다")
+    @DisplayName("빈 초대 토큰을 전달하면 400을 반환한다")
     void joinStudyWithInvalidRequestTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
 
@@ -167,9 +289,7 @@ class StudyMemberAcceptanceTest {
                 .post("/studies/join")
                 .then()
                 .statusCode(400)
-                .body("code", equalTo("INVALID_INPUT_VALUE"))
-                .body("errors[0].field", equalTo("token"))
-                .body("errors[0].reason", equalTo("초대 토큰은 필수입니다."));
+                .body("code", equalTo("INVALID_INVITE_TOKEN"));
     }
 
     @Test

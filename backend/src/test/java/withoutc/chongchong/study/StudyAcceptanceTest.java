@@ -48,7 +48,7 @@ import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationType;
 import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.repository.NotificationRepository;
-import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
@@ -681,7 +681,7 @@ class StudyAcceptanceTest {
         testAuthRequest.givenAuthenticatedUser(viewer.getId())
                 .port(port)
                 .contentType(ContentType.JSON)
-                .body(new StudyInviteTokenRequest(token))
+                .body(new StudyJoinRequest(null, token))
                 .when()
                 .post("/studies/join")
                 .then()

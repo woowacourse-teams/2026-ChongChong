@@ -70,10 +70,10 @@ SubmissionWriteBadRequest:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/assignment-attachments.yaml#/AttachmentBadRequest' }, { $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidLinkError' }] }
 JoinBadRequest:
-  description: 입력값 검증 실패, 요청 형식 오류 또는 초대 토큰이 유효하지 않음
+  description: 입력값 검증 실패, 요청 형식·스터디 ID 오류 또는 초대 토큰이 유효하지 않음
   content:
     application/json:
-      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/InvalidInviteTokenError' }] }
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/InvalidStudyIdError' }, { $ref: './schemas/errors.yaml#/InvalidInviteTokenError' }] }
 AuthenticationRequired:
   description: Bearer 인증 정보가 없거나 유효하지 않음
   headers:
@@ -163,10 +163,10 @@ JoinedStudyLimitExceeded:
   description: 사용자가 가입할 수 있는 스터디 수 상한을 초과함
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/JoinedStudyLimitExceededError' } } }
 JoinConflict:
-  description: 이미 참여한 스터디이거나 스터디 정원이 가득 참
+  description: 이미 참여한 스터디이거나 스터디 정원·사용자별 가입 상한을 초과함
   content:
     application/json:
-      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/AlreadyJoinedStudyError' }, { $ref: './schemas/errors.yaml#/StudyMemberLimitExceededError' }] }
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/AlreadyJoinedStudyError' }, { $ref: './schemas/errors.yaml#/StudyMemberLimitExceededError' }, { $ref: './schemas/errors.yaml#/JoinedStudyLimitExceededError' }] }
 BadRequest:
   description: 요청 본문·경로·쿼리 형식 또는 도메인 입력값이 올바르지 않음
   content:

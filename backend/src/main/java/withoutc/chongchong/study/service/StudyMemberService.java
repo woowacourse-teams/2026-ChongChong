@@ -7,12 +7,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.notification.service.NotificationService;
-import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
+import withoutc.chongchong.study.exception.StudyErrorCode;
+import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -34,13 +36,15 @@ public class StudyMemberService {
     private final StudyInviteTokenProvider studyInviteTokenProvider;
 
     @Transactional
-    public StudyMemberJoinResponse join(Long userId, StudyInviteTokenRequest request) {
+    public StudyMemberJoinResponse join(Long userId, StudyJoinRequest request) {
         User user = userRepository.getByIdForUpdateOrThrow(userId);
         validateStudyCountLimit(userId);
 
-        Long studyId = studyInviteTokenProvider.verifyAndExtractStudyId(request.token());
-
+        Long studyId = resolveStudyId(request);
         Study study = studyRepository.getByIdForUpdateOrThrow(studyId);
+        if (!study.isPublic() && request.token() == null) {
+            throw new StudyException(StudyErrorCode.STUDY_NOT_PUBLIC);
+        }
 
         validateJoin(study.getId(), user.getId());
 
@@ -48,6 +52,21 @@ public class StudyMemberService {
                 StudyMemberRole.MEMBER);
 
         return StudyMemberJoinResponse.from(studyMemberRepository.save(studyMember));
+    }
+
+    private Long resolveStudyId(StudyJoinRequest request) {
+        if (request.token() == null) {
+            if (request.studyId() == null) {
+                throw new StudyException(StudyErrorCode.INVALID_STUDY_ID);
+            }
+            return request.studyId();
+        }
+
+        Long invitedStudyId = studyInviteTokenProvider.verifyAndExtractStudyId(request.token());
+        if (request.studyId() != null && !request.studyId().equals(invitedStudyId)) {
+            throw new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN);
+        }
+        return invitedStudyId;
     }
 
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
