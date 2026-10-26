@@ -2,6 +2,7 @@ import { type CSSProperties } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { logout } from '../../login/api';
+import { clearLocalPushSubscription } from '../../notification/localPush';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import { tokens, typography } from '../../../styles/global';
 import List from '../../../shared/ui/List';
@@ -42,7 +43,12 @@ export default function AccountMenuSection() {
 
   const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({
     mutationFn: async () => {
-      await disableNotifications();
+      try {
+        await disableNotifications();
+      } catch (error) {
+        console.error(error);
+        await clearLocalPushSubscription().catch(console.error);
+      }
       await logout();
     },
     onSuccess: () => posthog.reset(),
