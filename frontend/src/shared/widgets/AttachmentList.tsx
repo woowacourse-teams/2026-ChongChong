@@ -1,6 +1,7 @@
 import type { Attachment } from '../modules/files/types';
 import { tokens, typography } from '../../styles/global';
 import type { CSSObject } from '@emotion/react';
+import ImageGallery from './ImageGallery';
 
 const rowStyle = {
   display: 'flex',
@@ -67,6 +68,11 @@ export default function AttachmentList({ attachments, onDownloadClick }: Props) 
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((file) => (
           <li key={file.fileId} css={{ '& + &': { borderTop: tokens.border.default } }}>
+            {file.imageUrl && (
+              <div css={{ paddingTop: tokens.spacing[3] }}>
+                <ImageGallery attachments={[file]} />
+              </div>
+            )}
             {file.downloadUrl ? (
               <a
                 href={file.downloadUrl}
