@@ -625,7 +625,7 @@ class StudyAcceptanceTest {
                 .queryParam("keyword", " 자바 ")
                 .queryParam("size", 1)
                 .when()
-                .get("/studies/public/search")
+                .get("/studies/public")
                 .then()
                 .statusCode(200)
                 .body("studies.studyId", contains(newer.getId().intValue()))
@@ -643,7 +643,7 @@ class StudyAcceptanceTest {
                 .queryParam("cursor", nextCursor)
                 .queryParam("size", 1)
                 .when()
-                .get("/studies/public/search")
+                .get("/studies/public")
                 .then()
                 .statusCode(200)
                 .body("studies.studyId", contains(older.getId().intValue()))
@@ -652,7 +652,7 @@ class StudyAcceptanceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "   ", "1234567890123456"})
+    @ValueSource(strings = {"", "   ", "\t", "\n", "\u2003", "\u3000", "1234567890123456"})
     @DisplayName("검색어가 비었거나 공백만이거나 15자를 넘으면 거절한다")
     void rejectInvalidPublicStudySearchKeywordTest(String keyword) {
         User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
@@ -661,28 +661,44 @@ class StudyAcceptanceTest {
                 .port(port)
                 .queryParam("keyword", keyword)
                 .when()
-                .get("/studies/public/search")
+                .get("/studies/public")
                 .then()
                 .statusCode(400);
     }
 
     @Test
-    @DisplayName("검색어가 없으면 거절하고 15자 검색어는 허용한다")
+    @DisplayName("검색어를 생략하면 전체 목록을 반환하고 15자 검색어도 같은 API에서 조회한다")
     void publicStudySearchKeywordBoundaryTest() {
         User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+        Study matched = studyRepository.saveAndFlush(Study.create("123456789012345", null, true));
+        Study other = studyRepository.saveAndFlush(Study.create("다른 스터디", null, true));
 
         testAuthRequest.givenAuthenticatedUser(viewer.getId())
                 .port(port)
                 .when()
-                .get("/studies/public/search")
+                .get("/studies/public")
                 .then()
-                .statusCode(400);
+                .statusCode(200)
+                .body("studies.studyId", containsInAnyOrder(matched.getId().intValue(), other.getId().intValue()))
+                .body("hasNext", equalTo(false))
+                .body("nextCursor", nullValue());
 
         testAuthRequest.givenAuthenticatedUser(viewer.getId())
                 .port(port)
                 .queryParam("keyword", "123456789012345")
                 .when()
-                .get("/studies/public/search")
+                .get("/studies/public")
+                .then()
+                .statusCode(200)
+                .body("studies.studyId", contains(matched.getId().intValue()))
+                .body("hasNext", equalTo(false))
+                .body("nextCursor", nullValue());
+
+        testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("keyword", "없는 이름")
+                .when()
+                .get("/studies/public")
                 .then()
                 .statusCode(200)
                 .body("studies.size()", equalTo(0))

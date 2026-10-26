@@ -170,15 +170,7 @@ public class StudyService {
         return new MyStudyListResponse(responses.size(), responses);
     }
 
-    public StudyListResponse getPublicStudies(Long userId, Long cursor, int size) {
-        return getPublicStudyPage(userId, null, cursor, size);
-    }
-
-    public StudyListResponse searchPublicStudies(Long userId, String keyword, Long cursor, int size) {
-        return getPublicStudyPage(userId, keyword, cursor, size);
-    }
-
-    private StudyListResponse getPublicStudyPage(Long userId, String keyword, Long cursor, int size) {
+    public StudyListResponse getPublicStudies(Long userId, String keyword, Long cursor, int size) {
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
         userRepository.getByIdOrThrow(userId);
 

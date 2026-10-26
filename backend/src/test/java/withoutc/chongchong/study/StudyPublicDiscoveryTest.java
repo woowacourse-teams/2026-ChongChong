@@ -82,7 +82,7 @@ class StudyPublicDiscoveryTest {
         entityManager.flush();
         entityManager.clear();
 
-        StudyListResponse firstPage = studyService.getPublicStudies(user.getId(), null, 1);
+        StudyListResponse firstPage = studyService.getPublicStudies(user.getId(), null, null, 1);
 
         assertPage(firstPage, sameTimeHigherId.getId(), true);
         StudySummaryResponse summary = firstPage.studies().getFirst();
@@ -91,14 +91,14 @@ class StudyPublicDiscoveryTest {
         assertThat(summary.memberCount()).isEqualTo(1);
         assertThat(summary.imageUrl()).contains("study-images/cover.png", "X-Amz-Signature=");
 
-        StudyListResponse secondPage = studyService.getPublicStudies(user.getId(), firstPage.nextCursor(), 1);
+        StudyListResponse secondPage = studyService.getPublicStudies(user.getId(), null, firstPage.nextCursor(), 1);
         assertPage(secondPage, sameTimeLowerId.getId(), true);
         assertThat(secondPage.studies().getFirst().imageUrl()).isNull();
 
-        StudyListResponse thirdPage = studyService.getPublicStudies(user.getId(), secondPage.nextCursor(), 1);
+        StudyListResponse thirdPage = studyService.getPublicStudies(user.getId(), null, secondPage.nextCursor(), 1);
         assertPage(thirdPage, olderHigherId.getId(), true);
 
-        StudyListResponse lastPage = studyService.getPublicStudies(user.getId(), thirdPage.nextCursor(), 1);
+        StudyListResponse lastPage = studyService.getPublicStudies(user.getId(), null, thirdPage.nextCursor(), 1);
         assertPage(lastPage, oldest.getId(), false);
     }
 
@@ -117,12 +117,12 @@ class StudyPublicDiscoveryTest {
         entityManager.flush();
         entityManager.clear();
 
-        StudyListResponse firstPage = studyService.getPublicStudies(viewer.getId(), null, 1);
+        StudyListResponse firstPage = studyService.getPublicStudies(viewer.getId(), null, null, 1);
 
         assertPage(firstPage, available.getId(), true);
         assertThat(firstPage.studies().getFirst().memberCount()).isEqualTo(49);
 
-        StudyListResponse lastPage = studyService.getPublicStudies(viewer.getId(), firstPage.nextCursor(), 1);
+        StudyListResponse lastPage = studyService.getPublicStudies(viewer.getId(), null, firstPage.nextCursor(), 1);
 
         assertPage(lastPage, older.getId(), false);
     }
@@ -134,7 +134,7 @@ class StudyPublicDiscoveryTest {
         saveStudy("비공개 스터디", false, CREATED_AT);
         entityManager.clear();
 
-        StudyListResponse response = studyService.getPublicStudies(user.getId(), null, 10);
+        StudyListResponse response = studyService.getPublicStudies(user.getId(), null, null, 10);
 
         assertThat(response.studies()).isEmpty();
         assertThat(response.hasNext()).isFalse();
@@ -146,7 +146,7 @@ class StudyPublicDiscoveryTest {
     void rejectMissingCursorStudy() {
         User user = userRepository.saveAndFlush(User.create("사용자", null));
 
-        assertThatThrownBy(() -> studyService.getPublicStudies(user.getId(), Long.MAX_VALUE, 10))
+        assertThatThrownBy(() -> studyService.getPublicStudies(user.getId(), null, Long.MAX_VALUE, 10))
                 .isInstanceOfSatisfying(StudyException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.STUDY_NOT_FOUND));
     }
@@ -165,13 +165,13 @@ class StudyPublicDiscoveryTest {
         entityManager.flush();
         entityManager.clear();
 
-        StudyListResponse firstPage = studyService.searchPublicStudies(viewer.getId(), "자바", null, 1);
+        StudyListResponse firstPage = studyService.getPublicStudies(viewer.getId(), "자바", null, 1);
         assertPage(firstPage, sameTimeHigherId.getId(), true);
 
-        StudyListResponse secondPage = studyService.searchPublicStudies(viewer.getId(), "자바", firstPage.nextCursor(), 1);
+        StudyListResponse secondPage = studyService.getPublicStudies(viewer.getId(), "자바", firstPage.nextCursor(), 1);
         assertPage(secondPage, sameTimeLowerId.getId(), true);
 
-        StudyListResponse lastPage = studyService.searchPublicStudies(viewer.getId(), "자바", secondPage.nextCursor(), 1);
+        StudyListResponse lastPage = studyService.getPublicStudies(viewer.getId(), "자바", secondPage.nextCursor(), 1);
         assertPage(lastPage, older.getId(), false);
     }
 
@@ -184,11 +184,11 @@ class StudyPublicDiscoveryTest {
         Study general = saveStudy("Java 일반", true, CREATED_AT.plusHours(1));
         entityManager.clear();
 
-        assertThat(studyService.searchPublicStudies(viewer.getId(), "%", null, 10).studies())
+        assertThat(studyService.getPublicStudies(viewer.getId(), "%", null, 10).studies())
                 .extracting(StudySummaryResponse::studyId).containsExactly(percent.getId());
-        assertThat(studyService.searchPublicStudies(viewer.getId(), "_", null, 10).studies())
+        assertThat(studyService.getPublicStudies(viewer.getId(), "_", null, 10).studies())
                 .extracting(StudySummaryResponse::studyId).containsExactly(underscore.getId());
-        assertThat(studyService.searchPublicStudies(viewer.getId(), "java", null, 10).studies())
+        assertThat(studyService.getPublicStudies(viewer.getId(), "java", null, 10).studies())
                 .extracting(StudySummaryResponse::studyId)
                 .containsExactly(general.getId(), percent.getId(), underscore.getId());
     }

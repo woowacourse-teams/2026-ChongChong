@@ -5,19 +5,31 @@ get:
     status: review
     owner: wontop02
     description: |
-      공개 스터디의 최신순 커서 조회와 요약 응답을 구현했다. HTTP 인수 테스트로 공개 조건·정렬·커서 페이징과 JSON 응답 계약을 검증한다.
-  summary: 공개 스터디 목록 조회
+      공개 스터디의 최신순 커서 조회와 선택 검색어에 따른 이름 검색을 구현했다. HTTP 인수 테스트로 필터·정렬·검색어 검증·커서 페이징과 응답 계약을 검증한다.
+  summary: 공개 스터디 목록 조회 및 이름 검색
   description: |
     인증된 사용자가 isPublic=true인 스터디를 생성 시각 내림차순으로 조회한다. 생성 시각이 같으면 스터디 ID 내림차순으로 정렬한다.
     리더를 포함한 현재 인원이 정원인 50명 이상인 스터디는 목록에서 제외한다.
     현재 구현은 사용자의 가입 여부로 목록을 필터링하지 않는다. 요청 본문은 사용하지 않는다.
 
+    keyword를 생략하면 전체 공개 목록을 반환하고, 전달하면 스터디 이름에 검색어가 포함된 결과만 반환한다.
+    영문 대소문자는 구분하지 않고 검색어 앞뒤 공백은 제거한다. %와 _는 일반 문자로 취급한다.
+    keyword를 전달할 때 입력 길이는 1~15자이며, 빈 문자열·공백만 있는 값·15자 초과는 400을 반환한다.
+    검색 결과도 동일한 최신 생성순을 사용하며 정렬 선택 파라미터는 제공하지 않는다.
+
     첫 요청에서는 cursor를 생략하고, 다음 요청에는 직전 응답의 nextCursor를 전달한다.
+    검색 중에는 같은 keyword를 유지하고, 검색어를 바꾸거나 검색을 해제하면 cursor 없이 첫 페이지부터 조회한다.
     커서는 스터디 ID이며 서버는 해당 스터디의 생성 시각과 ID를 기준으로 다음 목록을 조회한다.
     hasNext=false이면 마지막 페이지이며 nextCursor는 null이다. 조회 결과가 없으면 studies는 빈 배열이다.
     cursor가 가리키는 스터디가 삭제되었거나 존재하지 않으면 STUDY_NOT_FOUND(404)를 반환한다.
   security: [{ bearerAuth: [] }]
   parameters:
+    - name: keyword
+      in: query
+      required: false
+      description: 생략하면 전체 공개 목록을 반환한다. 전달하면 앞뒤 공백을 제거한 이름 부분 일치 검색을 하며, 공백만 있는 값은 허용하지 않는다.
+      schema: { type: string, minLength: 1, maxLength: 15 }
+      example: 자바
     - $ref: '../../components/parameters.yaml#/Cursor'
       description: 직전 응답의 nextCursor인 스터디 ID. 첫 요청에서는 생략한다.
     - { $ref: '../../components/parameters.yaml#/Size' }
@@ -46,6 +58,13 @@ get:
             empty:
               summary: 조회할 공개 스터디가 없는 경우
               value: { nextCursor: null, hasNext: false, studies: [] }
+            search:
+              summary: keyword=자바에 일치하는 마지막 페이지
+              value:
+                nextCursor: null
+                hasNext: false
+                studies:
+                  - { studyId: 21, studyName: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
     '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '404':
