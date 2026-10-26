@@ -229,25 +229,6 @@ function GalleryImage({
   );
 }
 
-function NavigationArrow({ direction }: { direction: 'previous' | 'next' }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d={direction === 'previous' ? 'M19 12H5m6-6-6 6 6 6' : 'M5 12h14m-6-6 6 6-6 6'} />
-    </svg>
-  );
-}
-
 function ExpandedImage({
   file,
   previousFile,
@@ -289,25 +270,41 @@ function ExpandedImage({
       </button>
       <img src={file.imageUrl} alt={file.originalFileName} css={expandedImageStyle} />
       {previousFile && (
-        <button
-          type="button"
-          aria-label="이전 이미지"
-          onClick={() => onNavigate(previousFile)}
-          css={previousButtonStyle}
-        >
-          <NavigationArrow direction="previous" />
-        </button>
+        <NavigationArrow direction="previous" onClick={() => onNavigate(previousFile)} />
       )}
-      {nextFile && (
-        <button
-          type="button"
-          aria-label="다음 이미지"
-          onClick={() => onNavigate(nextFile)}
-          css={nextButtonStyle}
-        >
-          <NavigationArrow direction="next" />
-        </button>
-      )}
+      {nextFile && <NavigationArrow direction="next" onClick={() => onNavigate(nextFile)} />}
     </dialog>
+  );
+}
+
+function NavigationArrow({
+  direction,
+  onClick,
+}: {
+  direction: 'previous' | 'next';
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={direction === 'previous' ? '이전 이미지' : '다음 이미지'}
+      onClick={onClick}
+      css={direction === 'previous' ? previousButtonStyle : nextButtonStyle}
+    >
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d={direction === 'previous' ? 'M19 12H5m6-6-6 6 6 6' : 'M5 12h14m-6-6 6 6-6 6'} />
+      </svg>
+    </button>
   );
 }
