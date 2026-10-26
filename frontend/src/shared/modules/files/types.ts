@@ -8,7 +8,7 @@ export interface Attachment {
   downloadUrl?: string;
 }
 
-export type AttachmentItem = { id: string; name: string } & (
+export type AttachmentItem = { id: string; name: string; previewFile?: File; imageUrl?: string } & (
   | { status: 'uploading' }
   | { status: 'completed'; fileId: number }
   | { status: 'error'; message: string }
