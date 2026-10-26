@@ -45,13 +45,14 @@ StudyInviteLinkResponse:
 StudyInfoResponse:
   type: object
   additionalProperties: false
-  required: [studyName, description, role, userName, isPublic]
+  required: [studyName, description, role, userName, isPublic, imageUrl]
   properties:
     studyName: { type: string, example: 자바 스터디 }
     description: { type: [string, 'null'], example: 매주 월요일에 진행한다. }
     role: { type: string, enum: [LEADER, MEMBER], example: LEADER }
     userName: { type: string, example: 홍길동 }
     isPublic: { type: boolean, example: false }
+    imageUrl: { description: "현재 스터디 이미지의 S3 서명 조회 URL. 이미지가 없으면 null이다. aws.s3.url-validity 이후 만료되면 기본 정보를 다시 조회한다.", type: [string, 'null'], format: uri, example: 'https://example.com/study.png' }
 StudyMemberResponse:
   type: object
   additionalProperties: false

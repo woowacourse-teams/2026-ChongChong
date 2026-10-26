@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
@@ -37,6 +39,38 @@ class StudyImageServiceTest {
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
+    }
+
+    @Test
+    @DisplayName("타인이 업로드한 파일은 스터디 생성과 이미지 교체에 사용할 수 없다")
+    void rejectsFileOwnedByAnotherUser() {
+        FileMetadata file = file(2L);
+        Study study = Study.create("스터디", "설명", false);
+        when(fileRepository.getByIdForUpdateOrThrow(10L)).thenReturn(file);
+
+        assertThatThrownBy(() -> service.prepareForCreate(1L, 10L))
+                .isInstanceOfSatisfying(FileException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(FileErrorCode.FILE_NOT_OWNED));
+        assertThatThrownBy(() -> service.prepareForUpdate(1L, study, 10L))
+                .isInstanceOfSatisfying(FileException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(FileErrorCode.FILE_NOT_OWNED));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = FileUploadStatus.class, names = {"PENDING", "DELETE_PENDING"})
+    @DisplayName("업로드 미완료 또는 삭제 대기 파일은 생성과 교체에 사용할 수 없다")
+    void rejectsFileThatIsNotCompleted(FileUploadStatus status) {
+        FileMetadata file = file(1L);
+        ReflectionTestUtils.setField(file, "status", status);
+        Study study = Study.create("스터디", "설명", false);
+        when(fileRepository.getByIdForUpdateOrThrow(10L)).thenReturn(file);
+
+        assertThatThrownBy(() -> service.prepareForCreate(1L, 10L))
+                .isInstanceOfSatisfying(FileException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE));
+        assertThatThrownBy(() -> service.prepareForUpdate(1L, study, 10L))
+                .isInstanceOfSatisfying(FileException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE));
     }
 
     @Test

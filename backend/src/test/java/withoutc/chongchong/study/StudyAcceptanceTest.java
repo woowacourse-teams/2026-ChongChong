@@ -608,6 +608,88 @@ class StudyAcceptanceTest {
                 .body("nextCursor", nullValue());
     }
 
+    @Test
+    @DisplayName("공개 스터디를 이름 부분 일치로 검색하고 최신순 커서로 다음 페이지를 조회한다")
+    void searchPublicStudiesWithCursorTest() {
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+        Study older = studyRepository.saveAndFlush(Study.create("자바 입문", "입문 과정", true));
+        Study newer = studyRepository.saveAndFlush(Study.create("실전 자바", "실전 과정", true));
+        studyRepository.saveAndFlush(Study.create("자바 비공개", null, false));
+        studyRepository.saveAndFlush(Study.create("파이썬 입문", null, true));
+        LocalDateTime createdAt = LocalDateTime.of(2026, 10, 26, 12, 0);
+        setStudyCreatedAt(older.getId(), createdAt.minusHours(1));
+        setStudyCreatedAt(newer.getId(), createdAt);
+
+        Long nextCursor = testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("keyword", " 자바 ")
+                .queryParam("size", 1)
+                .when()
+                .get("/studies/public/search")
+                .then()
+                .statusCode(200)
+                .body("studies.studyId", contains(newer.getId().intValue()))
+                .body("studies[0].studyName", equalTo("실전 자바"))
+                .body("studies[0].description", equalTo("실전 과정"))
+                .body("studies[0].memberCount", equalTo(0))
+                .body("studies[0].imageUrl", nullValue())
+                .body("hasNext", equalTo(true))
+                .body("nextCursor", equalTo(newer.getId().intValue()))
+                .extract().jsonPath().getLong("nextCursor");
+
+        testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("keyword", "자바")
+                .queryParam("cursor", nextCursor)
+                .queryParam("size", 1)
+                .when()
+                .get("/studies/public/search")
+                .then()
+                .statusCode(200)
+                .body("studies.studyId", contains(older.getId().intValue()))
+                .body("hasNext", equalTo(false))
+                .body("nextCursor", nullValue());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   ", "1234567890123456"})
+    @DisplayName("검색어가 비었거나 공백만이거나 15자를 넘으면 거절한다")
+    void rejectInvalidPublicStudySearchKeywordTest(String keyword) {
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("keyword", keyword)
+                .when()
+                .get("/studies/public/search")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @DisplayName("검색어가 없으면 거절하고 15자 검색어는 허용한다")
+    void publicStudySearchKeywordBoundaryTest() {
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .when()
+                .get("/studies/public/search")
+                .then()
+                .statusCode(400);
+
+        testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("keyword", "123456789012345")
+                .when()
+                .get("/studies/public/search")
+                .then()
+                .statusCode(200)
+                .body("studies.size()", equalTo(0))
+                .body("hasNext", equalTo(false))
+                .body("nextCursor", nullValue());
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     @DisplayName("스터디원이 아닌 인증 사용자가 공개 스터디의 기본 정보를 조회한다")
@@ -878,7 +960,32 @@ class StudyAcceptanceTest {
                 .body("description", equalTo("설명"))
                 .body("role", equalTo("MEMBER"))
                 .body("userName", equalTo("스터디 내 이름"))
-                .body("isPublic", equalTo(true));
+                .body("isPublic", equalTo(true))
+                .body("$", hasKey("imageUrl"))
+                .body("imageUrl", nullValue());
+    }
+
+    @Test
+    @DisplayName("스터디 기본 정보에 현재 이미지의 서명된 조회 URL을 반환한다")
+    void getStudyInfoWithImageTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", null));
+        FileMetadata image = FileMetadata.create(leader, "current.png", "study-images/current.png", "image/png", 1024);
+        image.completeUpload();
+        fileRepository.saveAndFlush(image);
+        Study study = Study.create("자바 스터디", "설명", false);
+        study.changeImage(image);
+        study = studyRepository.saveAndFlush(study);
+        studyMemberRepository.saveAndFlush(
+                StudyMember.create(study, leader, leader.getName(), null, StudyMemberRole.LEADER));
+
+        testAuthRequest.givenAuthenticatedUser(leader.getId())
+                .port(port)
+                .when()
+                .get("/studies/{studyId}/info", study.getId())
+                .then()
+                .statusCode(200)
+                .body("imageUrl", containsString("study-images/current.png"))
+                .body("imageUrl", containsString("X-Amz-Signature="));
     }
 
     @Test

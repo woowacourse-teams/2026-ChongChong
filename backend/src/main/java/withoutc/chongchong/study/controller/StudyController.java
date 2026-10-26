@@ -2,7 +2,9 @@ package withoutc.chongchong.study.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -123,6 +125,25 @@ public class StudyController {
             int size
     ) {
         StudyListResponse response = studyService.getPublicStudies(user.id(), cursor, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/public/search")
+    public ResponseEntity<StudyListResponse> searchPublicStudies(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam
+            @NotBlank(message = "검색어는 필수입니다.")
+            @Size(min = 1, max = 15, message = "검색어는 1자 이상 15자 이하여야 합니다.")
+            String keyword,
+            @RequestParam(required = false)
+            @Positive(message = "cursor는 양수여야 합니다.")
+            Long cursor,
+            @RequestParam(defaultValue = "10")
+            @Positive(message = "size는 양수여야 합니다.")
+            @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
+            int size
+    ) {
+        StudyListResponse response = studyService.searchPublicStudies(user.id(), keyword.strip(), cursor, size);
         return ResponseEntity.ok(response);
     }
 

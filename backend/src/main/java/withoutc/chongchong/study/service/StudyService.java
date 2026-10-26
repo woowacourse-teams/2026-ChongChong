@@ -130,8 +130,14 @@ public class StudyService {
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
+        FileMetadata imageFile = study.getImageFile();
+        String imageUrl = null;
+        if (imageFile != null) {
+            imageUrl = fileUrlGenerator.generateImageUrl(imageFile.getObjectKey(), imageFile.getContentType());
+        }
+
         return new StudyInfoResponse(study.getName(), study.getDescription(), studyMember.getRole(),
-                studyMember.getName(), study.isPublic());
+                studyMember.getName(), study.isPublic(), imageUrl);
     }
 
     public StudyDetailResponse getStudyDetail(Long userId, Long studyId) {
@@ -165,6 +171,14 @@ public class StudyService {
     }
 
     public StudyListResponse getPublicStudies(Long userId, Long cursor, int size) {
+        return getPublicStudyPage(userId, null, cursor, size);
+    }
+
+    public StudyListResponse searchPublicStudies(Long userId, String keyword, Long cursor, int size) {
+        return getPublicStudyPage(userId, keyword, cursor, size);
+    }
+
+    private StudyListResponse getPublicStudyPage(Long userId, String keyword, Long cursor, int size) {
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
         userRepository.getByIdOrThrow(userId);
 
@@ -176,8 +190,15 @@ public class StudyService {
             cursorCreatedAt = cursorStudy.getCreatedAt();
         }
 
-        List<Study> studies = studyRepository.findByCursor(
-                pageRequest.cursor(), cursorCreatedAt, MAX_STUDY_MEMBER_COUNT, pageable);
+        List<Study> studies;
+
+        if (keyword == null) {
+            studies = studyRepository.findByCursor(
+                    pageRequest.cursor(), cursorCreatedAt, MAX_STUDY_MEMBER_COUNT, pageable);
+        } else {
+            studies = studyRepository.searchByNameAndCursor(
+                    keyword, pageRequest.cursor(), cursorCreatedAt, MAX_STUDY_MEMBER_COUNT, pageable);
+        }
 
         CursorPageResponse<Study> studyPage = CursorPageResponse.of(studies, pageRequest, Study::getId);
         List<StudySummaryResponse> studySummaries = createStudySummaries(studyPage.content());
@@ -196,6 +217,14 @@ public class StudyService {
         int memberCount = studyMemberRepository.countByStudyId(resolvedStudyId);
 
         return createStudySummary(study, memberCount);
+    }
+
+    public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
+        studyRepository.getByIdOrThrow(studyId);
+
+        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+
+        return new StudyInviteLinkResponse(studyInviteLinkGenerator.generate(studyId));
     }
 
     private Long resolveStudyIdForJoinInfo(Long studyId, String token) {
@@ -226,14 +255,6 @@ public class StudyService {
         String imageUrl = getImageUrl(study);
 
         return new StudySummaryResponse(study.getId(), study.getName(), study.getDescription(), imageUrl, memberCount);
-    }
-
-    public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
-        studyRepository.getByIdOrThrow(studyId);
-
-        studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        return new StudyInviteLinkResponse(studyInviteLinkGenerator.generate(studyId));
     }
 
     private void validateStudyCountLimit(Long userId) {

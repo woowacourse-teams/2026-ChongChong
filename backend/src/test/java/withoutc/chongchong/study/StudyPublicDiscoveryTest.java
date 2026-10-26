@@ -151,6 +151,48 @@ class StudyPublicDiscoveryTest {
                         assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.STUDY_NOT_FOUND));
     }
 
+    @Test
+    @DisplayName("이름이 포함된 공개 스터디만 정원과 생성 시각 및 ID 기준으로 검색한다")
+    void searchAvailablePublicStudiesByName() {
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+        Study sameTimeLowerId = saveStudy("자바 기초", true, CREATED_AT);
+        Study older = saveStudy("심화 자바", true, CREATED_AT.minusHours(1));
+        saveStudy("자바 비공개", false, CREATED_AT.plusHours(2));
+        Study full = saveStudy("자바 정원", true, CREATED_AT.plusHours(1));
+        addStudyMembers(full, 50);
+        Study sameTimeHigherId = saveStudy("자바 실전", true, CREATED_AT);
+        saveStudy("파이썬", true, CREATED_AT.plusHours(3));
+        entityManager.flush();
+        entityManager.clear();
+
+        StudyListResponse firstPage = studyService.searchPublicStudies(viewer.getId(), "자바", null, 1);
+        assertPage(firstPage, sameTimeHigherId.getId(), true);
+
+        StudyListResponse secondPage = studyService.searchPublicStudies(viewer.getId(), "자바", firstPage.nextCursor(), 1);
+        assertPage(secondPage, sameTimeLowerId.getId(), true);
+
+        StudyListResponse lastPage = studyService.searchPublicStudies(viewer.getId(), "자바", secondPage.nextCursor(), 1);
+        assertPage(lastPage, older.getId(), false);
+    }
+
+    @Test
+    @DisplayName("검색어의 와일드카드는 문자 그대로 취급하고 영문 대소문자는 구분하지 않는다")
+    void searchTreatsWildcardsLiterally() {
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+        Study percent = saveStudy("Java% 모임", true, CREATED_AT);
+        Study underscore = saveStudy("Java_ 모임", true, CREATED_AT.minusHours(1));
+        Study general = saveStudy("Java 일반", true, CREATED_AT.plusHours(1));
+        entityManager.clear();
+
+        assertThat(studyService.searchPublicStudies(viewer.getId(), "%", null, 10).studies())
+                .extracting(StudySummaryResponse::studyId).containsExactly(percent.getId());
+        assertThat(studyService.searchPublicStudies(viewer.getId(), "_", null, 10).studies())
+                .extracting(StudySummaryResponse::studyId).containsExactly(underscore.getId());
+        assertThat(studyService.searchPublicStudies(viewer.getId(), "java", null, 10).studies())
+                .extracting(StudySummaryResponse::studyId)
+                .containsExactly(general.getId(), percent.getId(), underscore.getId());
+    }
+
     private void addStudyMembers(Study study, int count) {
         for (int i = 0; i < count; i++) {
             User member = userRepository.save(User.create("멤버" + i, null));

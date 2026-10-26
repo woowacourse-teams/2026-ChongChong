@@ -549,6 +549,30 @@ class StudyServiceTest {
         assertThat(response.description()).isEqualTo("설명");
         assertThat(response.role()).isEqualTo(StudyMemberRole.MEMBER);
         assertThat(response.userName()).isEqualTo("스터디 내 이름");
+        assertThat(response.imageUrl()).isNull();
+        verifyNoInteractions(fileUrlGenerator);
+    }
+
+    @Test
+    @DisplayName("스터디 정보 조회 시 현재 이미지의 조회 URL을 반환한다")
+    void getStudyInfoWithImage() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("자바 스터디", "설명", false);
+        User user = User.create("리더", null);
+        StudyMember leader = StudyMember.create(study, user, user.getName(), null, StudyMemberRole.LEADER);
+        FileMetadata image = mock(FileMetadata.class);
+        study.changeImage(image);
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
+        when(image.getObjectKey()).thenReturn("study-images/current.png");
+        when(image.getContentType()).thenReturn("image/png");
+        when(fileUrlGenerator.generateImageUrl("study-images/current.png", "image/png"))
+                .thenReturn("https://example.com/current.png");
+
+        StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
+
+        assertThat(response.imageUrl()).isEqualTo("https://example.com/current.png");
     }
 
     @Test
@@ -581,6 +605,8 @@ class StudyServiceTest {
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test

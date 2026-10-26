@@ -1,0 +1,65 @@
+get:
+  tags: [Study]
+  operationId: searchPublicStudies
+  x-backend:
+    status: done
+    owner: wontop02
+    description: |
+      공개 스터디 이름 부분 일치 검색을 구현했다. HTTP 인수 테스트로 검색어 검증과 응답 계약을 검증한다.
+  summary: 공개 스터디 이름 검색
+  description: |
+    인증된 사용자가 스터디 이름에 검색어가 포함된 공개 스터디를 조회한다. 영문 대소문자는 구분하지 않고 검색어 앞뒤 공백은 제거한다.
+    검색어의 %와 _는 일반 문자로 취급한다. 검색어는 필수이며 공백만으로 구성될 수 없고 입력 길이는 1~15자이다.
+    생성 시각 내림차순으로 정렬하며, 생성 시각이 같으면 스터디 ID 내림차순으로 정렬한다.
+    리더를 포함한 현재 인원이 정원인 50명 이상인 스터디는 검색 결과에서 제외한다. 가입 여부로 필터링하지 않는다.
+
+    첫 요청에서는 cursor를 생략하고, 다음 요청에는 같은 keyword와 직전 응답의 nextCursor를 전달한다.
+    커서는 스터디 ID이며 서버는 해당 스터디의 생성 시각과 ID를 기준으로 다음 결과를 조회한다.
+    hasNext=false이면 마지막 페이지이며 nextCursor는 null이다. 검색 결과가 없으면 studies는 빈 배열이다.
+    cursor가 가리키는 스터디가 삭제되었거나 존재하지 않으면 STUDY_NOT_FOUND(404)를 반환한다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - name: keyword
+      in: query
+      required: true
+      description: 앞뒤 공백을 제거한 뒤 스터디 이름에서 검색할 문자열
+      schema: { type: string, minLength: 1, maxLength: 15, pattern: '\S' }
+      example: 자바
+    - $ref: '../../components/parameters.yaml#/Cursor'
+      description: 직전 응답의 nextCursor인 스터디 ID. 첫 요청에서는 생략한다.
+    - { $ref: '../../components/parameters.yaml#/Size' }
+  responses:
+    '200':
+      description: 공개 스터디 이름 검색 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/studies.yaml#/StudyListResponse' }
+          examples:
+            matches:
+              summary: 검색 결과에 다음 페이지가 있는 경우
+              value:
+                nextCursor: 17
+                hasNext: true
+                studies:
+                  - { studyId: 21, studyName: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
+                  - { studyId: 17, studyName: 자바 알고리즘, description: 함께 문제를 풉니다., imageUrl: null, memberCount: 3 }
+            empty:
+              summary: 일치하는 공개 스터디가 없는 경우
+              value: { nextCursor: null, hasNext: false, studies: [] }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '404':
+      description: 사용자 또는 cursor가 가리키는 스터디가 존재하지 않음
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - { $ref: '../../components/schemas/errors.yaml#/UserNotFoundError' }
+              - { $ref: '../../components/schemas/errors.yaml#/StudyNotFoundError' }
+          examples:
+            cursorStudyNotFound:
+              summary: 커서 스터디가 존재하지 않음
+              value: { code: STUDY_NOT_FOUND, message: 존재하지 않는 스터디입니다. }
+            userNotFound:
+              summary: 사용자가 존재하지 않음
+              value: { code: USER_NOT_FOUND, message: 해당 사용자를 찾을 수 없습니다. }

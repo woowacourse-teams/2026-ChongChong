@@ -250,7 +250,7 @@ class UserProfileAcceptanceTest {
         Response createResponse = testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
                 .contentType(ContentType.JSON)
-                .body("{\"name\":\"새 스터디\"}")
+                .body("{\"name\":\"새 스터디\",\"isPublic\":false}")
                 .when()
                 .post("/studies");
 
