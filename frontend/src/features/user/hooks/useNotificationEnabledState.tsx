@@ -1,30 +1,32 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import notificationQueries from '../../notification/queries';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import { enablePush, disablePush } from '../../notification/push';
-import { PUSH_ENABLED_KEY, PUSH_SUBSCRIPTION_ID_KEY } from '../../notification/localPush';
+import { getOrCreateInstallationId } from '../../notification/localPush';
 
-// TODO: Storage 저장공간을 훅이 모르게 분리
 export default function useNotificationEnabledState() {
   const toast = useToast();
-  const [isEnabled, enabled, disabled] = useBooleanState(
-    () =>
-      'Notification' in window &&
-      Notification.permission === 'granted' &&
-      localStorage.getItem(PUSH_ENABLED_KEY) === 'true' &&
-      localStorage.getItem(PUSH_SUBSCRIPTION_ID_KEY) !== null,
-  );
-
+  const queryClient = useQueryClient();
+  const [installationId] = useState(getOrCreateInstallationId);
+  const statusQuery = notificationQueries.pushStatus(installationId);
+  const { data, isPending, isError, isFetching, refetch } = useQuery(statusQuery);
+  const isEnabled =
+    data?.isActive === true && 'Notification' in window && Notification.permission === 'granted';
   const [changing, startChanging, endChanging] = useBooleanState();
 
   async function disableNotifications() {
-    await disablePush();
-    localStorage.setItem(PUSH_ENABLED_KEY, 'false');
-    disabled();
+    try {
+      await disablePush();
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: statusQuery.queryKey });
+    }
   }
 
   async function handleToggleNotificationEnabled() {
-    if (changing) return;
+    if (changing || isPending || isError || isFetching) return;
 
     startChanging();
 
@@ -33,13 +35,10 @@ export default function useNotificationEnabledState() {
 
       if (nextEnabledState) {
         if (!(await enablePush())) return;
-        localStorage.setItem(PUSH_ENABLED_KEY, 'true');
-        enabled();
+        await queryClient.invalidateQueries({ queryKey: statusQuery.queryKey });
       } else {
         await disableNotifications();
       }
-
-      localStorage.setItem(PUSH_ENABLED_KEY, String(nextEnabledState));
     } catch (error) {
       toast.open(
         <StatusToast
@@ -56,5 +55,13 @@ export default function useNotificationEnabledState() {
     }
   }
 
-  return [isEnabled, changing, handleToggleNotificationEnabled, disableNotifications] as const;
+  return {
+    isEnabled,
+    changing,
+    isLoading: isPending || isFetching,
+    isError,
+    refetch,
+    handleToggleNotificationEnabled,
+    disableNotifications,
+  };
 }
