@@ -2,9 +2,12 @@ package withoutc.chongchong.study.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -12,6 +15,8 @@ import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.service.FileUrlGenerator;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
+import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
@@ -33,6 +38,8 @@ import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
 import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
 import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.StudyListResponse;
+import withoutc.chongchong.study.controller.dto.StudySummaryResponse;
 import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -138,12 +145,7 @@ public class StudyService {
         List<MyStudyResponse> responses = new ArrayList<>();
         for (StudyMember studyMember : studyMembers) {
             Study study = studyMember.getStudy();
-            FileMetadata imageFile = study.getImageFile();
-
-            String imageUrl = null;
-            if (imageFile != null) {
-                imageUrl = fileUrlGenerator.generateImageUrl(imageFile.getObjectKey(), imageFile.getContentType());
-            }
+            String imageUrl = getImageUrl(study);
 
             int memberCount = studyMemberRepository.countByStudyId(study.getId());
             int noticeCount = unReadNoticeCount(studyMember, study.getId());
@@ -154,6 +156,38 @@ public class StudyService {
         }
 
         return new MyStudyListResponse(responses.size(), responses);
+    }
+
+    public StudyListResponse getPublicStudies(Long userId, Long cursor, int size) {
+        CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
+        userRepository.getByIdOrThrow(userId);
+
+        Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
+
+        LocalDateTime cursorCreatedAt = null;
+        if (pageRequest.cursor() != null) {
+            Study cursorStudy = studyRepository.getByIdOrThrow(pageRequest.cursor());
+            cursorCreatedAt = cursorStudy.getCreatedAt();
+        }
+
+        List<Study> studies = studyRepository.findByCursor(pageRequest.cursor(), cursorCreatedAt, pageable);
+
+        CursorPageResponse<Study> studyPage = CursorPageResponse.of(studies, pageRequest, Study::getId);
+        List<StudySummaryResponse> studySummaries = createStudySummaries(studyPage.content());
+
+        return new StudyListResponse(studyPage.nextCursor(), studyPage.hasNext(), studySummaries);
+    }
+
+    private List<StudySummaryResponse> createStudySummaries(List<Study> studies) {
+        List<StudySummaryResponse> response = new ArrayList<>();
+        for (Study study : studies) {
+            String imageUrl = getImageUrl(study);
+            int memberCount = studyMemberRepository.countByStudyId(study.getId());
+
+            response.add(new StudySummaryResponse(study.getId(), study.getName(), study.getDescription(), imageUrl,
+                    memberCount));
+        }
+        return response;
     }
 
     public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {
@@ -239,5 +273,15 @@ public class StudyService {
             return (int) assignmentRepository.countIncompleteAssignmentByStudyId(studyId);
         }
         return (int) assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(studyId, studyMember.getId());
+    }
+
+    private String getImageUrl(Study study) {
+        FileMetadata imageFile = study.getImageFile();
+
+        String imageUrl = null;
+        if (imageFile != null) {
+            imageUrl = fileUrlGenerator.generateImageUrl(imageFile.getObjectKey(), imageFile.getContentType());
+        }
+        return imageUrl;
     }
 }

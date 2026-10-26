@@ -1,7 +1,10 @@
 package withoutc.chongchong.study.repository;
 
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -29,4 +32,19 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
     default Study getByIdForUpdateOrThrow(Long studyId) {
         return findByIdForUpdate(studyId).orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
     }
+
+    @Query("""
+            SELECT s
+            FROM Study s
+            WHERE s.isPublic = true
+              AND (:cursor IS NULL
+                   OR s.createdAt < :cursorCreatedAt
+                   OR (s.createdAt = :cursorCreatedAt AND s.id < :cursor))
+            ORDER BY s.createdAt DESC, s.id DESC
+            """)
+    List<Study> findByCursor(
+            @Param("cursor") Long cursor,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            Pageable pageable
+    );
 }

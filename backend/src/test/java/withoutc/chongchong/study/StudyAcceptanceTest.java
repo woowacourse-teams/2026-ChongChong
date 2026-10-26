@@ -2,6 +2,7 @@ package withoutc.chongchong.study;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -528,6 +529,67 @@ class StudyAcceptanceTest {
     }
 
     @Test
+    @DisplayName("공개 스터디 목록을 최신순으로 조회하고 응답 커서로 다음 페이지를 조회한다")
+    void getPublicStudiesWithCursorTest() {
+        User leader = userRepository.saveAndFlush(User.create("리더", null));
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+        Study sameTimeLowerId = studyRepository.saveAndFlush(Study.create("같은 시각 작은 ID", null, true));
+        Study privateNewer = studyRepository.saveAndFlush(Study.create("최신 비공개 스터디", "비공개 설명", false));
+
+        FileMetadata image = FileMetadata.create(leader, "cover.png", "study-images/cover.png", "image/png", 1024);
+        image.completeUpload();
+        fileRepository.saveAndFlush(image);
+        Study sameTimeHigherId = Study.create("같은 시각 큰 ID", "공개 스터디 설명", true);
+        sameTimeHigherId.changeImage(image);
+        sameTimeHigherId = studyRepository.saveAndFlush(sameTimeHigherId);
+        Study olderHigherId = studyRepository.saveAndFlush(Study.create("이전 시각 큰 ID", "이전 스터디 설명", true));
+        Study privateOlder = studyRepository.saveAndFlush(Study.create("이전 비공개 스터디", null, false));
+        for (Study study : List.of(sameTimeLowerId, sameTimeHigherId, olderHigherId)) {
+            studyMemberRepository.saveAndFlush(
+                    StudyMember.create(study, leader, leader.getName(), null, StudyMemberRole.LEADER));
+        }
+
+        LocalDateTime createdAt = LocalDateTime.of(2026, 10, 26, 12, 0);
+        setStudyCreatedAt(sameTimeLowerId.getId(), createdAt);
+        setStudyCreatedAt(sameTimeHigherId.getId(), createdAt);
+        setStudyCreatedAt(privateNewer.getId(), createdAt.plusHours(1));
+        setStudyCreatedAt(olderHigherId.getId(), createdAt.minusHours(1));
+        setStudyCreatedAt(privateOlder.getId(), createdAt.minusHours(2));
+
+        Long nextCursor = testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("size", 2)
+                .when()
+                .get("/studies/public")
+                .then()
+                .statusCode(200)
+                .body("studies.studyId",
+                        contains(sameTimeHigherId.getId().intValue(), sameTimeLowerId.getId().intValue()))
+                .body("studies[0].studyName", equalTo("같은 시각 큰 ID"))
+                .body("studies[0].description", equalTo("공개 스터디 설명"))
+                .body("studies[0].memberCount", equalTo(1))
+                .body("studies[0].imageUrl", containsString("study-images/cover.png"))
+                .body("studies[0].imageUrl", containsString("X-Amz-Signature="))
+                .body("studies[1].description", nullValue())
+                .body("studies[1].imageUrl", nullValue())
+                .body("hasNext", equalTo(true))
+                .body("nextCursor", equalTo(sameTimeLowerId.getId().intValue()))
+                .extract().jsonPath().getLong("nextCursor");
+
+        testAuthRequest.givenAuthenticatedUser(viewer.getId())
+                .port(port)
+                .queryParam("cursor", nextCursor)
+                .queryParam("size", 2)
+                .when()
+                .get("/studies/public")
+                .then()
+                .statusCode(200)
+                .body("studies.studyId", contains(olderHigherId.getId().intValue()))
+                .body("hasNext", equalTo(false))
+                .body("nextCursor", nullValue());
+    }
+
+    @Test
     @DisplayName("스터디 정보 조회 요청을 보내면 스터디명·설명과 내 역할·이름을 반환한다")
     void getStudyInfoTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
@@ -881,6 +943,14 @@ class StudyAcceptanceTest {
                 .then()
                 .statusCode(404)
                 .body("code", equalTo("STUDY_NOT_FOUND"));
+    }
+
+    private void setStudyCreatedAt(Long studyId, LocalDateTime createdAt) {
+        jdbcTemplate.update(
+                "UPDATE studies SET created_at = ? WHERE id = ?",
+                Timestamp.valueOf(createdAt),
+                studyId
+        );
     }
 
     private void setCreatedAt(Long studyMemberId, LocalDateTime createdAt) {
