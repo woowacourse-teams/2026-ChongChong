@@ -15,6 +15,8 @@ public enum StudyErrorCode implements ErrorCode {
 
     STUDY_NOT_FOUND(HttpStatus.NOT_FOUND, "STUDY_NOT_FOUND", "존재하지 않는 스터디입니다."),
 
+    STUDY_NOT_PUBLIC(HttpStatus.FORBIDDEN, "STUDY_NOT_PUBLIC", "공개 스터디가 아닙니다."),
+
     INVALID_STUDY_ID(HttpStatus.BAD_REQUEST, "INVALID_STUDY_ID", "유효하지 않은 스터디 ID입니다."),
 
     INVALID_IMAGE_ID(HttpStatus.BAD_REQUEST, "INVALID_IMAGE_ID", "첨부 파일 ID가 올바르지 않습니다."),

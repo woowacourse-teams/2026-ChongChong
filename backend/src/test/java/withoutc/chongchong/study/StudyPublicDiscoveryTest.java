@@ -103,6 +103,31 @@ class StudyPublicDiscoveryTest {
     }
 
     @Test
+    @DisplayName("49명인 공개 스터디는 노출하고 50명 이상은 페이징 전에 제외한다")
+    void excludeFullStudiesBeforeCursorPaging() {
+        User viewer = userRepository.saveAndFlush(User.create("조회 사용자", null));
+        Study full = saveStudy("정원이 찬 스터디", true, CREATED_AT.plusHours(1));
+        Study available = saveStudy("49명 스터디", true, CREATED_AT);
+        Study overfilled = saveStudy("정원 초과 스터디", true, CREATED_AT.minusMinutes(30));
+        Study older = saveStudy("이전 스터디", true, CREATED_AT.minusHours(1));
+        addStudyMembers(full, 50);
+        addStudyMembers(available, 49);
+        addStudyMembers(overfilled, 51);
+        addStudyMembers(older, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        StudyListResponse firstPage = studyService.getPublicStudies(viewer.getId(), null, 1);
+
+        assertPage(firstPage, available.getId(), true);
+        assertThat(firstPage.studies().getFirst().memberCount()).isEqualTo(49);
+
+        StudyListResponse lastPage = studyService.getPublicStudies(viewer.getId(), firstPage.nextCursor(), 1);
+
+        assertPage(lastPage, older.getId(), false);
+    }
+
+    @Test
     @DisplayName("공개 스터디가 없으면 빈 목록과 마지막 페이지 정보를 반환한다")
     void returnEmptyPageWhenOnlyPrivateStudiesExist() {
         User user = userRepository.saveAndFlush(User.create("사용자", null));
@@ -124,6 +149,15 @@ class StudyPublicDiscoveryTest {
         assertThatThrownBy(() -> studyService.getPublicStudies(user.getId(), Long.MAX_VALUE, 10))
                 .isInstanceOfSatisfying(StudyException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.STUDY_NOT_FOUND));
+    }
+
+    private void addStudyMembers(Study study, int count) {
+        for (int i = 0; i < count; i++) {
+            User member = userRepository.save(User.create("멤버" + i, null));
+            StudyMemberRole role = i == 0 ? StudyMemberRole.LEADER : StudyMemberRole.MEMBER;
+            studyMemberRepository.save(StudyMember.create(study, member, member.getName(), null, role));
+        }
+        studyMemberRepository.flush();
     }
 
     private Study saveStudy(String name, boolean isPublic, LocalDateTime createdAt) {

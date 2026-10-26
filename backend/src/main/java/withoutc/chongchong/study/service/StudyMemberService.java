@@ -1,5 +1,6 @@
 package withoutc.chongchong.study.service;
 
+import static withoutc.chongchong.study.entity.Study.MAX_STUDY_MEMBER_COUNT;
 import static withoutc.chongchong.study.service.StudyService.MAX_JOINED_STUDY_COUNT;
 
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,6 @@ import withoutc.chongchong.user.repository.UserRepository;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StudyMemberService {
-
-    private static final int MAX_STUDY_MEMBER_COUNT = 50;
 
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;

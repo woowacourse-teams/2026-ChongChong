@@ -37,6 +37,7 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
             SELECT s
             FROM Study s
             WHERE s.isPublic = true
+              AND (SELECT COUNT(member) FROM StudyMember member WHERE member.study.id = s.id) < :maxMemberCount
               AND (:cursor IS NULL
                    OR s.createdAt < :cursorCreatedAt
                    OR (s.createdAt = :cursorCreatedAt AND s.id < :cursor))
@@ -45,6 +46,7 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
     List<Study> findByCursor(
             @Param("cursor") Long cursor,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("maxMemberCount") int maxMemberCount,
             Pageable pageable
     );
 }

@@ -1,5 +1,7 @@
 package withoutc.chongchong.study.service;
 
+import static withoutc.chongchong.study.entity.Study.MAX_STUDY_MEMBER_COUNT;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
@@ -44,10 +46,13 @@ import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
+import withoutc.chongchong.study.exception.StudyErrorCode;
+import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
@@ -69,6 +74,7 @@ public class StudyService {
     private final NotificationService notificationService;
 
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
+    private final StudyInviteTokenProvider studyInviteTokenProvider;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -170,7 +176,8 @@ public class StudyService {
             cursorCreatedAt = cursorStudy.getCreatedAt();
         }
 
-        List<Study> studies = studyRepository.findByCursor(pageRequest.cursor(), cursorCreatedAt, pageable);
+        List<Study> studies = studyRepository.findByCursor(
+                pageRequest.cursor(), cursorCreatedAt, MAX_STUDY_MEMBER_COUNT, pageable);
 
         CursorPageResponse<Study> studyPage = CursorPageResponse.of(studies, pageRequest, Study::getId);
         List<StudySummaryResponse> studySummaries = createStudySummaries(studyPage.content());
@@ -178,16 +185,47 @@ public class StudyService {
         return new StudyListResponse(studyPage.nextCursor(), studyPage.hasNext(), studySummaries);
     }
 
+    public StudySummaryResponse getStudyJoinInfo(Long userId, Long studyId, String token) {
+        userRepository.getByIdOrThrow(userId);
+        Long resolvedStudyId = resolveStudyIdForJoinInfo(studyId, token);
+        Study study = studyRepository.getByIdOrThrow(resolvedStudyId);
+        if (!study.isPublic() && token == null) {
+            throw new StudyException(StudyErrorCode.STUDY_NOT_PUBLIC);
+        }
+
+        int memberCount = studyMemberRepository.countByStudyId(resolvedStudyId);
+
+        return createStudySummary(study, memberCount);
+    }
+
+    private Long resolveStudyIdForJoinInfo(Long studyId, String token) {
+        if (token == null) {
+            if (studyId == null) {
+                throw new StudyException(StudyErrorCode.INVALID_STUDY_ID);
+            }
+            return studyId;
+        }
+
+        Long invitedStudyId = studyInviteTokenProvider.verifyAndExtractStudyId(token);
+        if (studyId != null && !studyId.equals(invitedStudyId)) {
+            throw new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN);
+        }
+        return invitedStudyId;
+    }
+
     private List<StudySummaryResponse> createStudySummaries(List<Study> studies) {
         List<StudySummaryResponse> response = new ArrayList<>();
         for (Study study : studies) {
-            String imageUrl = getImageUrl(study);
             int memberCount = studyMemberRepository.countByStudyId(study.getId());
-
-            response.add(new StudySummaryResponse(study.getId(), study.getName(), study.getDescription(), imageUrl,
-                    memberCount));
+            response.add(createStudySummary(study, memberCount));
         }
         return response;
+    }
+
+    private StudySummaryResponse createStudySummary(Study study, int memberCount) {
+        String imageUrl = getImageUrl(study);
+
+        return new StudySummaryResponse(study.getId(), study.getName(), study.getDescription(), imageUrl, memberCount);
     }
 
     public StudyInviteLinkResponse getInviteLink(Long userId, Long studyId) {

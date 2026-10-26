@@ -17,6 +17,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
@@ -40,6 +43,7 @@ import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
 import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.StudySummaryResponse;
 import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -50,6 +54,7 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
@@ -79,6 +84,9 @@ class StudyServiceTest {
 
     @Mock
     private StudyInviteLinkGenerator studyInviteLinkGenerator;
+
+    @Mock
+    private StudyInviteTokenProvider studyInviteTokenProvider;
 
     @Mock
     private EntityManager entityManager;
@@ -150,6 +158,127 @@ class StudyServiceTest {
                 );
         verify(studyMemberRepository).countByStudyId(1L);
         verify(studyMemberRepository).countByStudyId(2L);
+    }
+
+    @Test
+    @DisplayName("공개 스터디의 기본 정보와 현재 인원수 및 이미지 조회 URL을 반환한다")
+    void getStudyJoinInfoForPublicStudyTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        Study study = Study.create("자바 스터디", "공개 스터디 설명", true);
+        ReflectionTestUtils.setField(study, "id", studyId);
+        FileMetadata image = mock(FileMetadata.class);
+        study.changeImage(image);
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(49);
+        when(image.getObjectKey()).thenReturn("study-images/cover.png");
+        when(image.getContentType()).thenReturn("image/png");
+        when(fileUrlGenerator.generateImageUrl("study-images/cover.png", "image/png"))
+                .thenReturn("https://example.com/cover.png");
+
+        StudySummaryResponse response = studyService.getStudyJoinInfo(userId, studyId, null);
+
+        assertThat(response).isEqualTo(new StudySummaryResponse(
+                studyId, "자바 스터디", "공개 스터디 설명", "https://example.com/cover.png", 49));
+        verify(userRepository).getByIdOrThrow(userId);
+        verifyNoInteractions(studyInviteTokenProvider);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {50, 51})
+    @DisplayName("정원 이상의 공개 스터디도 참여 전 정보를 조회하고 현재 인원수를 반환한다")
+    void getStudyJoinInfoForFullStudyTest(int memberCount) {
+        Long studyId = 2L;
+        Study study = Study.create("정원이 찬 스터디", "공개 스터디 설명", true);
+        ReflectionTestUtils.setField(study, "id", studyId);
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(memberCount);
+
+        StudySummaryResponse response = studyService.getStudyJoinInfo(1L, studyId, null);
+
+        assertThat(response.studyId()).isEqualTo(studyId);
+        assertThat(response.memberCount()).isEqualTo(memberCount);
+        verifyNoInteractions(fileUrlGenerator);
+    }
+
+    @Test
+    @DisplayName("비공개 스터디이면 이미지 URL 발급과 인원수 조회 전에 비공개 스터디 예외를 반환한다")
+    void getStudyJoinInfoForPrivateStudyWithoutTokenTest() {
+        Long studyId = 2L;
+        Study study = Study.create("비공개 스터디", "비공개 설명", false);
+        study.changeImage(mock(FileMetadata.class));
+        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+
+        assertThatThrownBy(() -> studyService.getStudyJoinInfo(1L, studyId, null))
+                .isInstanceOfSatisfying(StudyException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.STUDY_NOT_PUBLIC));
+
+        verifyNoInteractions(fileUrlGenerator, studyMemberRepository);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 스터디이면 이미지 URL 발급과 인원수 조회를 수행하지 않는다")
+    void getStudyJoinInfoForMissingStudyTest() {
+        Long studyId = 2L;
+        when(studyRepository.getByIdOrThrow(studyId))
+                .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+
+        assertThatThrownBy(() -> studyService.getStudyJoinInfo(1L, studyId, null))
+                .isInstanceOfSatisfying(StudyException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.STUDY_NOT_FOUND));
+
+        verifyNoInteractions(fileUrlGenerator, studyMemberRepository);
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(longs = {2L})
+    @DisplayName("유효한 초대 토큰으로 비공개 스터디의 참여 전 정보를 조회한다")
+    void getStudyJoinInfoForPrivateStudyWithTokenTest(Long requestedStudyId) {
+        Study study = Study.create("비공개 스터디", "초대 설명", false);
+        ReflectionTestUtils.setField(study, "id", 2L);
+        when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(2L);
+        when(studyRepository.getByIdOrThrow(2L)).thenReturn(study);
+        when(studyMemberRepository.countByStudyId(2L)).thenReturn(1);
+
+        StudySummaryResponse response = studyService.getStudyJoinInfo(1L, requestedStudyId, "invite-token");
+
+        assertThat(response).isEqualTo(new StudySummaryResponse(2L, "비공개 스터디", "초대 설명", null, 1));
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰의 스터디가 다르면 스터디 조회 전에 거절한다")
+    void getStudyJoinInfoWithMismatchedTokenTest() {
+        when(studyInviteTokenProvider.verifyAndExtractStudyId("other-study-token")).thenReturn(3L);
+
+        assertThatThrownBy(() -> studyService.getStudyJoinInfo(1L, 2L, "other-study-token"))
+                .isInstanceOfSatisfying(StudyException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN));
+
+        verifyNoInteractions(studyRepository, studyMemberRepository, fileUrlGenerator);
+    }
+
+    @Test
+    @DisplayName("토큰이 전달되면 검증 실패를 공개 조회로 우회하지 않는다")
+    void getStudyJoinInfoWithInvalidTokenTest() {
+        when(studyInviteTokenProvider.verifyAndExtractStudyId("invalid-token"))
+                .thenThrow(new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN));
+
+        assertThatThrownBy(() -> studyService.getStudyJoinInfo(1L, 2L, "invalid-token"))
+                .isInstanceOfSatisfying(StudyException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN));
+
+        verifyNoInteractions(studyRepository, studyMemberRepository, fileUrlGenerator);
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰이 모두 없으면 조회 전에 거절한다")
+    void getStudyJoinInfoWithoutIdentifierTest() {
+        assertThatThrownBy(() -> studyService.getStudyJoinInfo(1L, null, null))
+                .isInstanceOfSatisfying(StudyException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(StudyErrorCode.INVALID_STUDY_ID));
+
+        verifyNoInteractions(studyRepository, studyMemberRepository, fileUrlGenerator, studyInviteTokenProvider);
     }
 
     @Test
