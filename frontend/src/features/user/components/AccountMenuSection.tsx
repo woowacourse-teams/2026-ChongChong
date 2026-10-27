@@ -2,6 +2,7 @@ import { type CSSProperties } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { logout } from '../../login/api';
+import { clearLocalPushSubscription } from '../../notification/localPush';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import { tokens, typography } from '../../../styles/global';
 import List from '../../../shared/ui/List';
@@ -42,19 +43,27 @@ export default function AccountMenuSection() {
 
   const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({
     mutationFn: async () => {
-      await disableNotifications();
+      try {
+        await disableNotifications();
+      } catch (error) {
+        console.error(error);
+        await clearLocalPushSubscription().catch(console.error);
+      }
       await logout();
     },
     onSuccess: () => posthog.reset(),
   });
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawAccount();
 
-  const [
-    isNotificationEnabled,
-    notificationEnabledChanging,
+  const {
+    isEnabled: isNotificationEnabled,
+    changing: notificationEnabledChanging,
+    isLoading: isNotificationStatusLoading,
+    isError: isNotificationStatusError,
+    refetch: refetchNotificationStatus,
     handleToggleNotificationEnabled,
     disableNotifications,
-  ] = useNotificationEnabledState();
+  } = useNotificationEnabledState();
 
   const posthog = usePostHog();
 
@@ -95,11 +104,25 @@ export default function AccountMenuSection() {
               <label htmlFor="notification-enabled-state">푸시 알림</label>
               <Switch
                 checked={isNotificationEnabled}
-                disabled={isAccountActionPending}
+                disabled={
+                  isAccountActionPending || isNotificationStatusLoading || isNotificationStatusError
+                }
                 onChange={handleToggleNotificationEnabled}
                 id="notification-enabled-state"
               />
             </div>
+            {isNotificationStatusError && (
+              <div role="alert">
+                알림 설정을 불러오지 못했어요.
+                <button
+                  type="button"
+                  onClick={() => void refetchNotificationStatus()}
+                  disabled={isNotificationStatusLoading}
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
           </List.Item>
           <List.Item>
             <button

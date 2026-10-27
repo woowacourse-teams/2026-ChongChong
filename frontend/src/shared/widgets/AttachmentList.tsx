@@ -1,6 +1,7 @@
 import type { Attachment } from '../modules/files/types';
 import { tokens, typography } from '../../styles/global';
 import type { CSSObject } from '@emotion/react';
+import ImageGallery from './ImageGallery';
 
 const rowStyle = {
   display: 'flex',
@@ -60,6 +61,7 @@ interface Props {
 
 export default function AttachmentList({ attachments, onDownloadClick }: Props) {
   if (!attachments.length) return null;
+  const imageAttachments = attachments.filter((file) => file.imageUrl !== null);
 
   return (
     <ul aria-label="첨부 파일" css={{ margin: 0, padding: 0, listStyle: 'none' }}>
@@ -67,6 +69,11 @@ export default function AttachmentList({ attachments, onDownloadClick }: Props) 
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((file) => (
           <li key={file.fileId} css={{ '& + &': { borderTop: tokens.border.default } }}>
+            {file.imageUrl && (
+              <div css={{ paddingTop: tokens.spacing[3] }}>
+                <ImageGallery attachments={[file]} navigationAttachments={imageAttachments} />
+              </div>
+            )}
             {file.downloadUrl ? (
               <a
                 href={file.downloadUrl}

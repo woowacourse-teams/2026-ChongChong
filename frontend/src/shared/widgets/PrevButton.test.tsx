@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Routes, Route, useLocation } from 'react-router';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
 import { createWrapper } from '../../test/render';
 import { PrevButton } from './PrevButton';
 
@@ -53,6 +53,24 @@ function clickPrevButton(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('이전 버튼 이동 테스트', () => {
+  test('알림에서 진입한 공지 상세에서 클릭하면 알림 목록으로 돌아간다', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: '/studies/1/notices/10', state: { returnTo: '/notifications' } },
+        ]}
+      >
+        <SomeRoutes />
+      </MemoryRouter>,
+    );
+
+    await clickPrevButton(user);
+
+    expect(screen.getByRole('heading', { name: '알림 목록' })).toBeInTheDocument();
+    expect(screen.getByTestId('pathname')).toHaveTextContent('/notifications');
+  });
+
   test('알림 목록에서 지정한 스터디 목록 경로로 이동한다', async () => {
     const user = renderPrevButton('/notifications');
 

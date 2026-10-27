@@ -69,3 +69,17 @@ export async function recordNotificationDeliveryClick(deliveryId: number, clickT
     json: { clickToken },
   });
 }
+
+export interface WebPushSubscriptionStatus {
+  isActive: boolean;
+  subscriptionId: number | null;
+}
+
+export async function getWebPushSubscriptionStatus(installationId: string) {
+  return api
+    .get('/web-push-subscriptions/me', {
+      searchParams: { installationId },
+      cache: 'no-store',
+    })
+    .json<WebPushSubscriptionStatus>();
+}

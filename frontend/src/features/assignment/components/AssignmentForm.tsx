@@ -7,7 +7,7 @@ import Button from '../../../shared/ui/Button';
 import { Field } from '../../../shared/ui/inputs/Field';
 import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
 import InputField from '../../../shared/widgets/InputField';
-import TextAreaField from '../../../shared/widgets/TextAreaField';
+import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaField';
 import CheckField from '../../../shared/widgets/CheckField';
 import RadioField from '../../../shared/widgets/RadioField';
 import { tokens } from '../../../styles/global';
@@ -127,7 +127,7 @@ export default function AssignmentForm({
         isRequired
         testId="assignment-title-field"
       />
-      <TextAreaField
+      <AutoResizeTextAreaField
         id="assignment-content"
         name="content"
         label="내용"
@@ -140,6 +140,7 @@ export default function AssignmentForm({
         testId="assignment-content-field"
       />
       <AttachmentField
+        showImagePreviews
         id="assignment-images"
         label="이미지 업로드"
         items={attachments.items}

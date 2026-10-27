@@ -2,7 +2,7 @@ import type { ComponentPropsWithRef } from 'react';
 import { Field } from '../ui/inputs/Field';
 import TextArea from '../ui/inputs/TextArea';
 
-interface TextAreaFieldProps extends Omit<
+export interface TextAreaFieldProps extends Omit<
   ComponentPropsWithRef<typeof TextArea>,
   'id' | 'required' | 'value' | 'maxLength'
 > {
