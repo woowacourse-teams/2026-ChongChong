@@ -33,7 +33,7 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
                 .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
     }
 
-    @EntityGraph(attributePaths = {"study", "study.imageFile"})
+    @EntityGraph(attributePaths = "study")
     List<StudyMember> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<StudyMember> findAllByUserId(Long userId);

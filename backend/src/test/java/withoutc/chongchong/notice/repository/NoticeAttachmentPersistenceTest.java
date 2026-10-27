@@ -253,7 +253,7 @@ class NoticeAttachmentPersistenceTest extends PostgresContainerTest {
     }
 
     private Notice saveNotice() {
-        Study study = studyRepository.save(Study.create("첨부 테스트 스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("첨부 테스트 스터디", "설명"));
         return noticeRepository.saveAndFlush(Notice.create(study, "공지 제목", "공지 내용"));
     }
 

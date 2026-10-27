@@ -11,28 +11,17 @@ post:
     status: done
     owner: wontop02
     description: |
-      공개 스터디 ID 또는 초대 토큰으로 스터디에 참여하고 studyId를 반환한다. 동시 요청에도 정원과 사용자별 가입 상한을 검증한다.
+      초대 토큰으로 스터디에 참여하고 studyId를 반환한다. 동시 요청에도 정원과 사용자별 가입 상한을 검증한다.
       후속 예정: token 대신 전체 inviteLink를 받는 요청 계약(#274). 현재는 token 요청을 사용한다.
   summary: 스터디 참여
-  description: |
-    공개 탐색에서는 studyId만, 초대 링크에서는 발급 후 3일 동안 유효한 token만 전달할 수 있다. 둘 중 하나 이상을 전달해야 한다.
-    token이 전달되면 공개 여부와 관계없이 검증하고, studyId도 전달했다면 토큰의 스터디 ID와 일치해야 한다.
-    token을 생략하면 공개 스터디에만 참여할 수 있으며 비공개 스터디는 STUDY_NOT_PUBLIC(403)을 반환한다.
-    가입 시 사용자 행을 먼저 잠그고 가입 상한을 확인한 뒤 스터디 행을 잠근다. 이어서 공개 여부, 중복 가입, 정원을 검증한다.
-    입력·초대 토큰 오류(400), 인증 실패(401), 사용자·스터디 없음(404), 이미 참여·정원·가입 상한 충돌(409)을 반환할 수 있다.
+  description: 발급 후 3일 동안 유효한 초대 토큰으로 스터디에 참여한다. 입력·초대 토큰 오류(400), 인증 실패(401), 사용자·스터디 없음(404), 이미 참여·정원·가입 상한 충돌(409)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
     content:
       application/json:
-        schema: { $ref: '../../components/schemas/studies.yaml#/StudyJoinRequest' }
-        examples:
-          publicStudy:
-            summary: 공개 스터디 탐색에서 참여
-            value: { studyId: 21 }
-          inviteLink:
-            summary: 초대 링크에서 참여
-            value: { token: Ab3xY7kLm2Qp9VtR4Nc8ZdAaBcD }
+        schema: { $ref: '../../components/schemas/studies.yaml#/StudyInviteTokenRequest' }
+        example: { token: Ab3xY7kLm2Qp9VtR4Nc8ZdAaBcD }
   responses:
     '201':
       description: 스터디 참여 성공
@@ -42,11 +31,6 @@ post:
           example: { studyId: 1 }
     '400': { $ref: '../../components/responses.yaml#/JoinBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403':
-      description: 초대 토큰 없이 비공개 스터디 참여를 요청함
-      content:
-        application/json:
-          schema: { $ref: '../../components/schemas/errors.yaml#/StudyNotPublicError' }
     '404':
       description: 사용자 또는 스터디가 존재하지 않음
       content:

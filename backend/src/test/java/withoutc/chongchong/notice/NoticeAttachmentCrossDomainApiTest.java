@@ -95,7 +95,7 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
         databaseCleaner.clean();
         leader = userRepository.save(User.create("리더", null));
         User member = userRepository.save(User.create("스터디원", null));
-        Study study = studyRepository.save(Study.create("교차 도메인 첨부 스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("교차 도메인 첨부 스터디", "설명"));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
         studyId = study.getId();

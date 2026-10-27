@@ -14,10 +14,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.net.URI;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalLong;
-import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -26,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -311,7 +308,6 @@ class FileApiTest extends PostgresContainerTest {
         Long fileId = response.jsonPath().getLong("fileId");
         FileMetadata saved = fileRepository.findById(fileId).orElseThrow();
         assertThat(saved.getObjectKey()).startsWith("chongchong/files/test/uploads/");
-        UUID.fromString(saved.getObjectKey().substring("chongchong/files/test/uploads/".length()));
         assertThat(saved.getOwner().getId()).isEqualTo(userId);
         assertThat(saved.getOriginalFileName()).isEqualTo("과제.pdf");
         assertThat(saved.getContentType()).isEqualTo("application/pdf");
@@ -321,58 +317,6 @@ class FileApiTest extends PostgresContainerTest {
         assertThat(url.getPath()).isEqualTo("/" + saved.getObjectKey());
         assertThat(url.getQuery()).contains("X-Amz-Signature=", "X-Amz-Expires=180");
         assertThat(Instant.parse(response.jsonPath().getString("expiresAt"))).isAfter(Instant.now());
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "STUDY_IMAGE, study-images/",
-            "NOTICE_ATTACHMENT, notice-attachments/",
-            "ASSIGNMENT_ATTACHMENT, assignment-attachments/",
-            "SUBMISSION_ATTACHMENT, submission-attachments/"
-    })
-    @DisplayName("업로드 용도별 경로를 저장하고 같은 경로의 업로드 URL을 반환한다")
-    void issueUploadUrlByPurpose(String uploadPurpose, String purposePrefix) {
-        Map<String, Object> body = new HashMap<>(validBody());
-        body.put("uploadPurpose", uploadPurpose);
-
-        Response response = request(userId, body);
-
-        response.then().statusCode(201);
-        FileMetadata saved = fileRepository.findById(response.jsonPath().getLong("fileId")).orElseThrow();
-        String expectedPrefix = "chongchong/files/test/uploads/" + purposePrefix;
-        assertThat(saved.getObjectKey()).startsWith(expectedPrefix);
-        UUID.fromString(saved.getObjectKey().substring(expectedPrefix.length()));
-        assertThat(URI.create(response.jsonPath().getString("uploadUrl")).getPath())
-                .isEqualTo("/" + saved.getObjectKey());
-    }
-
-    @Test
-    @DisplayName("업로드 용도가 null이면 기존 공통 경로를 사용한다")
-    void issueUploadUrlWithNullPurpose() {
-        Map<String, Object> body = new HashMap<>(validBody());
-        body.put("uploadPurpose", null);
-
-        Response response = request(userId, body);
-
-        response.then().statusCode(201);
-        FileMetadata saved = fileRepository.findById(response.jsonPath().getLong("fileId")).orElseThrow();
-        UUID.fromString(saved.getObjectKey().substring("chongchong/files/test/uploads/".length()));
-        assertThat(saved.getObjectKey()).startsWith("chongchong/files/test/uploads/");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"\"UNKNOWN\"", "\"study-images/\"", "0", "{}"})
-    @DisplayName("지원하지 않는 업로드 용도와 잘못된 자료형은 파일 저장 전에 거부한다")
-    void rejectInvalidUploadPurpose(String uploadPurpose) {
-        String body = """
-                {"originalFileName":"a.png","contentType":"image/png","size":1024,"uploadPurpose":%s}
-                """.formatted(uploadPurpose);
-
-        Response response = request(userId, body);
-
-        response.then().statusCode(400);
-        assertThat(response.jsonPath().getString("code")).isEqualTo("INVALID_REQUEST");
-        assertThat(fileRepository.count()).isZero();
     }
 
     @Test

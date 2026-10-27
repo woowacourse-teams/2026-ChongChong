@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
-import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
+import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.service.StudyMemberService;
@@ -29,7 +29,7 @@ public class StudyMemberController {
     @PostMapping("/join")
     public ResponseEntity<StudyMemberJoinResponse> join(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @RequestBody @Valid StudyJoinRequest request
+            @RequestBody @Valid StudyInviteTokenRequest request
     ) {
         StudyMemberJoinResponse response = studyMemberService.join(user.id(), request);
 

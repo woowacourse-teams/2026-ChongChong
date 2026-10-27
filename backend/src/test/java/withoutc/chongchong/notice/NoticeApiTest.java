@@ -97,7 +97,7 @@ class NoticeApiTest {
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
         User secondMemberUser = userRepository.save(User.create("두 번째 스터디원", null));
-        study = studyRepository.save(Study.create("자바 스터디", "설명", false));
+        study = studyRepository.save(Study.create("자바 스터디", "설명"));
         leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, "리더", "https://example.com/leader.png", StudyMemberRole.LEADER)
         );
@@ -402,7 +402,7 @@ class NoticeApiTest {
     @Test
     @DisplayName("다른 스터디의 공지 상세 조회 요청은 존재하지 않는 공지로 응답한다")
     void getNoticeDetailFromOtherStudyTest() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
         );
@@ -785,7 +785,7 @@ class NoticeApiTest {
     @CsvSource({"GET,''", "PATCH,''", "DELETE,''", "GET,/status", "GET,/status/me", "PATCH,/read"})
     @DisplayName("다른 스터디의 공지는 단건 API에서 찾을 수 없고 공지와 읽음 상태가 유지된다")
     void rejectNoticeFromOtherStudyTest(String method, String suffix) {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
         );

@@ -13,7 +13,7 @@ public final class AssignmentTestFixture {
     }
 
     public static Assignment assignmentWithId(Long assignmentId, Long studyId, LocalDateTime now) {
-        Study study = Study.create("자바 스터디", "설명", false);
+        Study study = Study.create("자바 스터디", "설명");
         ReflectionTestUtils.setField(study, "id", studyId);
         Assignment assignment = Assignment.create(
                 study, "과제 제목", "과제 내용", "링크 제출", SubmissionTarget.MEMBERS_ONLY,

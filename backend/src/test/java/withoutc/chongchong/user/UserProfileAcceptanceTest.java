@@ -155,7 +155,7 @@ class UserProfileAcceptanceTest {
     @DisplayName("유효하지 않은 이름은 거부하고 홈과 스터디의 기존 이름을 유지한다")
     void rejectInvalidProfileNameUpdate(String requestBody) {
         User user = userRepository.saveAndFlush(User.create("기존이름", null));
-        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", null, false));
+        Study study = studyRepository.saveAndFlush(Study.create("기존 스터디", null));
         StudyMember member = studyMemberRepository.saveAndFlush(StudyMember.create(
                 study, user, user.getName(), null, StudyMemberRole.MEMBER
         ));
@@ -204,8 +204,8 @@ class UserProfileAcceptanceTest {
                 "기존이름", "https://cdn.example.com/profiles/user.webp"
         ));
         User otherUser = userRepository.saveAndFlush(User.create("다른이름", null));
-        Study leaderStudy = studyRepository.saveAndFlush(Study.create("리더 스터디", null, false));
-        Study memberStudy = studyRepository.saveAndFlush(Study.create("멤버 스터디", null, false));
+        Study leaderStudy = studyRepository.saveAndFlush(Study.create("리더 스터디", null));
+        Study memberStudy = studyRepository.saveAndFlush(Study.create("멤버 스터디", null));
         StudyMember leader = studyMemberRepository.saveAndFlush(StudyMember.create(
                 leaderStudy, user, user.getName(), "https://cdn.example.com/profiles/leader.webp",
                 StudyMemberRole.LEADER
@@ -250,7 +250,7 @@ class UserProfileAcceptanceTest {
         Response createResponse = testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
                 .contentType(ContentType.JSON)
-                .body("{\"name\":\"새 스터디\",\"isPublic\":false}")
+                .body("{\"name\":\"새 스터디\"}")
                 .when()
                 .post("/studies");
 

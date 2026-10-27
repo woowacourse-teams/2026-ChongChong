@@ -2,17 +2,13 @@ package withoutc.chongchong.study.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
@@ -22,8 +18,6 @@ import withoutc.chongchong.study.exception.StudyException;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Study extends BaseEntity {
-
-    public static final int MAX_STUDY_MEMBER_COUNT = 50;
 
     private static final int MAX_STUDY_NAME_SIZE = 15;
     private static final int MAX_STUDY_DESCRIPTION_SIZE = 30;
@@ -37,21 +31,16 @@ public class Study extends BaseEntity {
 
     private String description;
 
-    @Column(name = "is_public", nullable = false)
-    private boolean isPublic;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_file_id", unique = true)
-    private FileMetadata imageFile;
-
-    public static Study create(String name, String description, boolean isPublic) {
-        return new Study(name, description, isPublic);
+    public static Study create(
+            String name,
+            String description
+    ) {
+        return new Study(name, description);
     }
 
     public void update(
             String name,
-            String description,
-            Boolean isPublic
+            String description
     ) {
         if (name != null) {
             validateName(name);
@@ -61,21 +50,11 @@ public class Study extends BaseEntity {
             validateDescription(description);
             this.description = description;
         }
-        if (isPublic != null) {
-            this.isPublic = isPublic;
-        }
-    }
-
-    public void changeImage(FileMetadata file) {
-        if (file != null) {
-            this.imageFile = file;
-        }
     }
 
     private Study(
             String name,
-            String description,
-            boolean isPublic
+            String description
     ) {
         validateName(name);
         this.name = name;
@@ -83,7 +62,6 @@ public class Study extends BaseEntity {
             validateDescription(description);
             this.description = description;
         }
-        this.isPublic = isPublic;
     }
 
     private void validateName(String name) {

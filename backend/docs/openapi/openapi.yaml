@@ -47,10 +47,6 @@ paths:
     $ref: './paths/studies/info.yaml'
   /api/studies/me:
     $ref: './paths/studies/my-studies.yaml'
-  /api/studies/public:
-    $ref: './paths/studies/public.yaml'
-  /api/studies/join-info:
-    $ref: './paths/studies/join-info.yaml'
   /api/studies/{studyId}/invite-link:
     $ref: './paths/studies/invite-link.yaml'
   /api/studies/join:

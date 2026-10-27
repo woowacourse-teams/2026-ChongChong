@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import withoutc.chongchong.file.entity.UploadPurpose;
 
 public record PresignedUrlCreateRequest(
         @NotBlank(message = "원본 파일명은 필수 값입니다.")
@@ -15,7 +14,6 @@ public record PresignedUrlCreateRequest(
         String contentType,
         @NotNull(message = "파일 크기는 필수 값입니다.")
         @PositiveOrZero(message = "파일 크기는 0바이트 이상이어야 합니다.")
-        Long size,
-        UploadPurpose uploadPurpose
+        Long size
 ) {
 }

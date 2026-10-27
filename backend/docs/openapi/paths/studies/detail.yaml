@@ -48,25 +48,22 @@ patch:
     status: done
     owner: wontop02
     description: |
-      리더가 스터디 이름·설명·공개 여부를 수정하며 입력값의 제약 조건을 검증한다. 응답은 본문 없는 204이다.
+      리더가 스터디 이름과 설명을 수정하며 입력값의 제약 조건을 검증한다. 응답은 본문 없는 204이다.
   summary: 스터디 수정
-  description: |
-    스터디 리더가 이름·설명·공개 여부와 이미지를 부분 수정한다. isPublic과 imageFileId를 생략하거나 null로 보내면
-    기존 값을 유지한다. 새 imageFileId를 전달하면 업로드 완료된 이미지로 교체한다. 입력·경로·이미지 정책 오류는 400,
-    스터디 접근·리더 권한 또는 파일 소유권 오류는 403, 스터디 또는 파일이 없으면 404를 반환할 수 있다.
+  description: 스터디 리더가 이름과 설명을 부분 수정한다. 입력·경로 오류(400), 인증 실패(401), 접근 또는 리더 권한 없음(403), 스터디 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
     content:
       application/json:
         schema: { $ref: '../../components/schemas/studies.yaml#/StudyUpdateRequest' }
-        example: { name: 수정된 스터디, description: 매주 화요일에 진행한다., isPublic: false, imageFileId: 102 }
+        example: { name: 수정된 스터디, description: 매주 화요일에 진행한다. }
   responses:
     '204': { description: 스터디 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/StudyUpdateBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
-    '403': { $ref: '../../components/responses.yaml#/StudyUpdateForbidden' }
-    '404': { $ref: '../../components/responses.yaml#/StudyOrFileNotFound' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrLeaderDenied' }
+    '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }
 delete:
   tags: [Study]
   operationId: deleteStudy

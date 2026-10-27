@@ -16,6 +16,7 @@ import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.entity.NoticeAttachment;
 import withoutc.chongchong.notice.policy.NoticeAttachmentPolicy;
+import withoutc.chongchong.notice.repository.NoticeAttachmentRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ import withoutc.chongchong.notice.policy.NoticeAttachmentPolicy;
 public class NoticeAttachmentService {
 
     private final FileMetaDataRepository fileRepository;
+    private final NoticeAttachmentRepository attachmentRepository;
     private final NoticeAttachmentPolicy attachmentPolicy;
 
     public List<FileMetadata> prepareForCreate(Long userId, List<Long> fileIds) {
@@ -93,7 +95,7 @@ public class NoticeAttachmentService {
         }
         validateCompletedFile(file);
         attachmentPolicy.validateImage(file);
-        if (fileRepository.existsAnyUsageByFileId(file.getId())) {
+        if (attachmentRepository.existsAnyByFileId(file.getId())) {
             throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
         }
     }

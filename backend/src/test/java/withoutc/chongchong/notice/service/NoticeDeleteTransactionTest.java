@@ -284,7 +284,7 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
         User leader = userRepository.save(User.create("현재 리더", null));
         User previousLeader = userRepository.save(User.create("이전 리더", null));
         User memberUser = userRepository.save(User.create("스터디원", null));
-        Study study = studyRepository.save(Study.create("공지 삭제 스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("공지 삭제 스터디", "설명"));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember member = studyMemberRepository.save(
                 StudyMember.create(study, memberUser, "스터디원", null, StudyMemberRole.MEMBER));
