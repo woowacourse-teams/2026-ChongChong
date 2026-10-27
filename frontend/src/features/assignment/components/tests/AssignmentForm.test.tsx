@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AssignmentValue } from '../../types';
+import type { AssignmentFormValues } from '../../types';
 import AssignmentForm from '../AssignmentForm';
 
 const initialValues = {
@@ -10,7 +10,7 @@ const initialValues = {
   closeAt: '2999-12-31T23:59:59',
   submissionTarget: 'MEMBERS_AND_LEADER',
   submissionVisibility: 'LEADER_ONLY',
-} satisfies AssignmentValue;
+} satisfies AssignmentFormValues;
 
 describe('AssignmentForm 테스트', () => {
   test.each([

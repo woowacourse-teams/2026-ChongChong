@@ -8,7 +8,7 @@ import Main from '../../../shared/ui/Main';
 import { useNavigate } from 'react-router';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import assignmentQueries from '../queries';
-import { AssignmentValue } from '../types';
+import { AssignmentFormValues } from '../types';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { updateAssignment } from '../api';
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -48,7 +48,7 @@ function Content() {
   const queryClient = useQueryClient();
 
   const { mutate, isPending, error } = useMutation({
-    mutationFn: (values: AssignmentValue) => updateAssignment(studyId, assignmentId, values),
+    mutationFn: (values: AssignmentFormValues) => updateAssignment(studyId, assignmentId, values),
 
     onSuccess: (_data, values) => {
       posthog?.capture('assignment_saved', {

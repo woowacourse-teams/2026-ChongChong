@@ -5,7 +5,7 @@ import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { paginateByCursor } from '../../../mocks/pagination';
 import { memberTable } from '../../member/mocks/db';
-import { AssignmentSubmissionValue, AssignmentValue, UpdateAssignmentValue } from '../types';
+import { AssignmentSubmissionValue, AssignmentFormValues, UpdateAssignmentValue } from '../types';
 import { assignmentTable, AssignmentSchemaType, submissionTable } from './db';
 import { validateAssignment } from './validators';
 import { invalidInputResponse } from '../../../mocks/errors';
@@ -75,7 +75,7 @@ export const handlers = [
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
-    const body = (await request.json()) as AssignmentValue & {
+    const body = (await request.json()) as AssignmentFormValues & {
       attachmentFileIds?: number[] | null;
     };
     const fieldErrors = validateAssignment(body);
