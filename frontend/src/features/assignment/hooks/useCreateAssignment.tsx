@@ -9,11 +9,11 @@ import { usePostHog } from '@posthog/react';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import assignmentQueries from '../queries';
 
-interface Props {
+interface Params {
   studyId: number;
 }
 
-export default function useCreateAssignment({ studyId }: Props) {
+export default function useCreateAssignment({ studyId }: Params) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
