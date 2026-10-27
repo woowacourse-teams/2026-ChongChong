@@ -11,7 +11,7 @@ import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaF
 import CheckField from '../../../shared/widgets/CheckField';
 import RadioField from '../../../shared/widgets/RadioField';
 import { tokens } from '../../../styles/global';
-import { AssignmentValue } from '../types';
+import { AssignmentFormValues } from '../types';
 import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, visibilityOptions } from '../constants';
 import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
@@ -25,11 +25,11 @@ const formStyle = {
 } satisfies CSSProperties;
 
 interface AssignmentFormProps {
-  initialValues?: AssignmentValue;
+  initialValues?: AssignmentFormValues;
   initialAttachments?: Attachment[];
   submitLabel: string;
   isSubmitting?: boolean;
-  onSubmit: (values: AssignmentValue) => void;
+  onSubmit: (values: AssignmentFormValues) => void;
   fieldErrors?: Partial<
     Record<
       | 'attachmentFileIds'
@@ -51,7 +51,7 @@ const emptyValues = {
   closeAt: '',
   submissionTarget: 'MEMBERS_AND_LEADER',
   submissionVisibility: 'ALL_STUDY_MEMBERS',
-} satisfies AssignmentValue;
+} satisfies AssignmentFormValues;
 
 export default function AssignmentForm({
   initialValues = emptyValues,
