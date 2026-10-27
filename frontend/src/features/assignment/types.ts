@@ -68,7 +68,7 @@ export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments'> 
   attachmentFileIds?: number[];
 };
 
-export type UpdateAssignmentValue = Partial<AssignmentFormValues>;
+export type UpdateAssignmentFormValues = Partial<AssignmentFormValues>;
 
 interface SubmissionBase {
   id: number;
