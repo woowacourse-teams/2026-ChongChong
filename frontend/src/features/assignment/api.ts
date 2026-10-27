@@ -1,5 +1,9 @@
 import api from '../../client';
-import { AssignmentFormValues, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
+import {
+  AssignmentFormValues,
+  UpdateAssignmentFormValues,
+  AssignmentSubmissionValue,
+} from './types';
 import { ValidationError, handleError, ApiError } from '../../shared/api/error';
 import {
   isAssignmentListResponse,
@@ -178,7 +182,7 @@ export async function createAssignment(studyId: number, body: AssignmentFormValu
 export async function updateAssignment(
   studyId: number,
   assignmentId: number,
-  values: UpdateAssignmentValue,
+  values: UpdateAssignmentFormValues,
 ) {
   try {
     await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {
