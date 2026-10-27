@@ -58,7 +58,7 @@ class NoticeRecipientRepositoryTest {
     @Test
     @DisplayName("공지와 멤버가 모두 일치하는 수신자만 조회한다")
     void getByNoticeIdAndMemberIdOrThrowTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember firstMember = createMember(study, "첫 번째 멤버", StudyMemberRole.MEMBER);
         StudyMember secondMember = createMember(study, "두 번째 멤버", StudyMemberRole.MEMBER);
         Notice firstNotice = Notice.create(study, "첫 번째 공지", "내용");
@@ -82,7 +82,7 @@ class NoticeRecipientRepositoryTest {
     @Test
     @DisplayName("여러 공지의 읽음 상태를 StudyMember id로 한 번에 조회한다")
     void findMyReadStatusesByNoticeIdsAndMemberIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember recipient = createMemberWithIdDifferentFromUserId(study);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
@@ -118,7 +118,7 @@ class NoticeRecipientRepositoryTest {
         LocalDateTime earlierRemindAt = LocalDateTime.of(2026, 8, 20, 11, 0);
         LocalDateTime latestRemindAt = LocalDateTime.of(2026, 8, 20, 12, 0);
         LocalDateTime irrelevantNotificationAt = LocalDateTime.of(2026, 8, 20, 13, 0);
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember readMember = createMember(study, "읽은 스터디원", StudyMemberRole.MEMBER);
         StudyMember unreadMember = createMember(study, "리마인드 받은 스터디원", StudyMemberRole.MEMBER);
@@ -158,7 +158,7 @@ class NoticeRecipientRepositoryTest {
     @Test
     @DisplayName("같은 공지와 스터디원으로 수신자를 중복 저장할 수 없다")
     void rejectDuplicateNoticeRecipientTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember recipient = createMember(study, "스터디원", StudyMemberRole.MEMBER);
         Notice notice = noticeRepository.saveAndFlush(
@@ -174,7 +174,7 @@ class NoticeRecipientRepositoryTest {
     @Test
     @DisplayName("멤버의 공지 수신 정보만 모두 삭제한다")
     void deleteAllByMemberIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);

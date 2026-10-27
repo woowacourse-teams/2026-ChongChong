@@ -140,7 +140,7 @@ class StudyMemberRemovalAcceptanceTest {
     @Test
     @DisplayName("탈퇴한 사용자는 같은 초대 토큰으로 스터디에 다시 가입할 수 있다")
     void leaveAndRejoinStudyTest() {
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
         createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember member = createMember(study, "재가입 멤버", StudyMemberRole.MEMBER);
         Long removedMemberId = member.getId();
@@ -174,7 +174,7 @@ class StudyMemberRemovalAcceptanceTest {
     }
 
     private RemovalFixture createRemovalFixture() {
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 멤버", StudyMemberRole.MEMBER);

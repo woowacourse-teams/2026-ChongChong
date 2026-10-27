@@ -64,7 +64,7 @@ class AssignmentSubmissionRepositoryTest {
     @Test
     @DisplayName("여러 과제의 제출 상태를 StudyMember id로 한 번에 조회한다")
     void findAllByAssignmentIdInAndMemberIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember member = createMemberWithIdDifferentFromUserId(study);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);
@@ -96,7 +96,7 @@ class AssignmentSubmissionRepositoryTest {
     @Test
     @DisplayName("같은 과제와 스터디원으로 제출 정보를 중복 저장할 수 없다")
     void rejectDuplicateAssignmentSubmissionTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
         Assignment assignment = createAssignment(study, "과제");
@@ -110,7 +110,7 @@ class AssignmentSubmissionRepositoryTest {
     @Test
     @DisplayName("미제출 상태인 스터디원만 과제별로 조회한다")
     void findUnsubmittedMembersByAssignmentIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
         StudyMember unsubmittedMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
         Assignment assignment = createAssignment(study, "과제");
@@ -130,7 +130,7 @@ class AssignmentSubmissionRepositoryTest {
     @Test
     @DisplayName("과제 제출 정보를 비관적 쓰기 잠금으로 조회한다")
     void findAssignmentSubmissionForUpdateTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember member = createMember(study, "스터디원", StudyMemberRole.MEMBER);
         Assignment assignment = createAssignment(study, "과제");
         AssignmentSubmission submission = assignmentSubmissionRepository.saveAndFlush(
@@ -148,7 +148,7 @@ class AssignmentSubmissionRepositoryTest {
     @Test
     @DisplayName("과제 제출 현황은 제출 여부와 해당 과제의 최근 리마인드 시각을 조회한다")
     void findAllSubmitterStatusesByAssignmentIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember submittedMember = createMember(study, "제출자", StudyMemberRole.MEMBER);
         StudyMember incompleteMember = createMember(study, "미제출자", StudyMemberRole.MEMBER);
@@ -186,7 +186,7 @@ class AssignmentSubmissionRepositoryTest {
     @Test
     @DisplayName("멤버의 과제 제출 정보만 모두 삭제한다")
     void deleteAllByMemberIdTest() {
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("스터디", "설명"));
         StudyMember leader = createMember(study, "리더", StudyMemberRole.LEADER);
         StudyMember target = createMember(study, "삭제 대상", StudyMemberRole.MEMBER);
         StudyMember otherMember = createMember(study, "다른 스터디원", StudyMemberRole.MEMBER);

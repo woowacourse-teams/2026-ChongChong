@@ -191,7 +191,7 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
     }
 
     private SubmissionFixture createFixture() {
-        Study study = studyRepository.saveAndFlush(Study.create("동시성 스터디", "설명", false));
+        Study study = studyRepository.saveAndFlush(Study.create("동시성 스터디", "설명"));
 
         User leaderUser = userRepository.saveAndFlush(User.create("리더", null));
         StudyMember leader = studyMemberRepository.saveAndFlush(

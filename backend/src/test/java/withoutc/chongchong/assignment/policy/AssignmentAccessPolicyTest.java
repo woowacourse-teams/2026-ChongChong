@@ -100,7 +100,7 @@ class AssignmentAccessPolicyTest {
     void readSubmissionPermissions(SubmissionVisibility visibility, boolean submitted, String actorType,
                                    boolean allowed) {
         LocalDateTime now = LocalDateTime.of(2026, 9, 30, 10, 0);
-        Study study = Study.create("스터디", "설명", false);
+        Study study = Study.create("스터디", "설명");
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
                 visibility, now.plusDays(1), now);
         StudyMember owner = member(study, 1L, StudyMemberRole.MEMBER);
@@ -135,7 +135,7 @@ class AssignmentAccessPolicyTest {
     @DisplayName("공개 과제 목록은 일반 멤버도 조회하고 비공개 목록은 리더만 조회한다")
     void readSubmissionListPermissions(SubmissionVisibility visibility, StudyMemberRole role, boolean allowed) {
         LocalDateTime now = LocalDateTime.of(2026, 9, 30, 10, 0);
-        Study study = Study.create("스터디", "설명", false);
+        Study study = Study.create("스터디", "설명");
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
                 visibility, now.plusDays(1), now);
         StudyMember actor = member(study, 1L, role);
@@ -153,7 +153,7 @@ class AssignmentAccessPolicyTest {
     @DisplayName("지각 제출물도 공개 범위에 따라 일반 멤버의 상세 조회 권한을 적용한다")
     void readLateSubmissionPermissions(SubmissionVisibility visibility, boolean allowed) {
         LocalDateTime now = LocalDateTime.of(2026, 10, 3, 10, 0);
-        Study study = Study.create("스터디", "설명", false);
+        Study study = Study.create("스터디", "설명");
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
                 visibility, now.plusDays(1), now);
         AssignmentSubmission submission = AssignmentSubmission.create(

@@ -104,7 +104,7 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
         databaseCleaner.clean();
         User leader = userRepository.save(User.create("현재 리더", null));
         User formerMember = userRepository.save(User.create("기존 첨부 업로더", null));
-        Study study = studyRepository.save(Study.create("공지 상세 스터디", "설명", false));
+        Study study = studyRepository.save(Study.create("공지 상세 스터디", "설명"));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         FileMetadata firstFile = saveCompletedFile(formerMember, "first.png", "image/png", 1024);
         FileMetadata secondFile = saveCompletedFile(formerMember, "second.webp", "image/webp", 2048);
@@ -252,7 +252,7 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
     @Test
     @DisplayName("다른 스터디의 공지 경로에서는 이미지 URL을 생성하지 않는다")
     void rejectNoticeFromAnotherStudy() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
         User member = userRepository.findById(memberId).orElseThrow();
         studyMemberRepository.save(StudyMember.create(otherStudy, member, "스터디원", null, StudyMemberRole.MEMBER));
 

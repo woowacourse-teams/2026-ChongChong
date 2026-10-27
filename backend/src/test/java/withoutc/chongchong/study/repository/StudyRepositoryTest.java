@@ -20,7 +20,7 @@ class StudyRepositoryTest {
     @Test
     @DisplayName("스터디 조회에 성공하면 해당 스터디를 반환한다")
     void getByIdOrThrowTest() {
-        Study study = Study.create("스터디", "설명", false);
+        Study study = Study.create("스터디", "설명");
         when(studyRepository.findById(1L)).thenReturn(Optional.of(study));
 
         Study found = studyRepository.getByIdOrThrow(1L);

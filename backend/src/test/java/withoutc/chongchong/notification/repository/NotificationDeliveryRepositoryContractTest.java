@@ -122,7 +122,7 @@ abstract class NotificationDeliveryRepositoryContractTest {
     protected DeliveryFixture saveFixture() {
         String endpoint = "https://push.example.com/notification-delivery-" + UUID.randomUUID();
         User user = userRepository.saveAndFlush(User.create("알림 수신자", null));
-        Study study = studyRepository.saveAndFlush(Study.create("알림 테스트 스터디", "설명", false));
+        Study study = studyRepository.saveAndFlush(Study.create("알림 테스트 스터디", "설명"));
         StudyMember recipient = studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, user, user.getName(), null, StudyMemberRole.MEMBER)
         );

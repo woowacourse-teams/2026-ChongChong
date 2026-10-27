@@ -143,7 +143,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
     }
 
     private NoticeReminder saveNoticeReminder(LocalDateTime remindAt) {
-        Study study = studyRepository.saveAndFlush(Study.create("공지 테스트", "설명", false));
+        Study study = studyRepository.saveAndFlush(Study.create("공지 테스트", "설명"));
         Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         notice.addReminders(List.of(remindAt), CREATION_TIME);
         noticeRepository.saveAndFlush(notice);
@@ -151,7 +151,7 @@ class ReminderClaimPostgresRepositoryTest extends PostgresContainerTest {
     }
 
     private AssignmentReminder saveAssignmentReminder(LocalDateTime remindAt) {
-        Study study = studyRepository.saveAndFlush(Study.create("과제 테스트", "설명", false));
+        Study study = studyRepository.saveAndFlush(Study.create("과제 테스트", "설명"));
         Assignment assignment = Assignment.create(
                 study,
                 "과제 제목",

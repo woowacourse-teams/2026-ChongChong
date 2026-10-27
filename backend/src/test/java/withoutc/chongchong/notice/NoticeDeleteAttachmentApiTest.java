@@ -102,7 +102,7 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
         leader = userRepository.save(User.create("현재 리더", null));
         member = userRepository.save(User.create("스터디원", null));
         previousLeader = userRepository.save(User.create("이전 리더", null));
-        study = studyRepository.save(Study.create("공지 삭제 HTTP", "설명", false));
+        study = studyRepository.save(Study.create("공지 삭제 HTTP", "설명"));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember studyMember = studyMemberRepository.save(
                 StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
@@ -193,7 +193,7 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
     @Test
     @DisplayName("다른 스터디의 공지 삭제는 404 NOTICE_NOT_FOUND를 반환한다")
     void rejectNoticeFromOtherStudy() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
         Notice foreignNotice = noticeRepository.saveAndFlush(Notice.create(otherStudy, "다른 제목", "다른 내용"));
 
         assertRejected(request(leader.getId(), foreignNotice.getId()), 404, "NOTICE_NOT_FOUND");
