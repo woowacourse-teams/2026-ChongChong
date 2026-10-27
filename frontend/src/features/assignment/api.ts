@@ -2,7 +2,7 @@ import api from '../../client';
 import {
   AssignmentFormValues,
   UpdateAssignmentFormValues,
-  AssignmentSubmissionValue,
+  AssignmentSubmissionFormValues,
 } from './types';
 import { ValidationError, handleError, ApiError } from '../../shared/api/error';
 import {
@@ -121,7 +121,7 @@ export async function fetchAssignmentSubmissionDetail(
 export async function createAssignmentSubmission(
   studyId: number,
   assignmentId: number,
-  values: AssignmentSubmissionValue,
+  values: AssignmentSubmissionFormValues,
 ) {
   try {
     const response = await api.post(`/studies/${studyId}/assignments/${assignmentId}/submissions`, {
@@ -147,7 +147,7 @@ export async function updateAssignmentSubmission(
   studyId: number,
   assignmentId: number,
   submissionId: number,
-  values: AssignmentSubmissionValue,
+  values: AssignmentSubmissionFormValues,
 ) {
   try {
     await api.patch(`/studies/${studyId}/assignments/${assignmentId}/submissions/${submissionId}`, {

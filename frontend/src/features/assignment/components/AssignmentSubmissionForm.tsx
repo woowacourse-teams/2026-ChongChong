@@ -9,19 +9,19 @@ import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
 import { tokens, typography } from '../../../styles/global';
 import { ASSIGNMENT_SUBMISSION_CONTENT, ASSIGNMENT_SUBMISSION_LINK } from '../constants';
-import type { AssignmentSubmissionValue } from '../types';
+import type { AssignmentSubmissionFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
 
 interface Props {
-  initialValues?: AssignmentSubmissionValue;
+  initialValues?: AssignmentSubmissionFormValues;
   initialAttachments?: Attachment[];
   isSubmitting?: boolean;
   submitLabel?: string;
-  onSubmit: (values: AssignmentSubmissionValue) => void;
+  onSubmit: (values: AssignmentSubmissionFormValues) => void;
   fieldErrors?: Partial<Record<'content' | 'link' | 'attachmentFileIds', string>>;
 }
 
-const emptyValues: AssignmentSubmissionValue = {
+const emptyValues: AssignmentSubmissionFormValues = {
   content: '',
   link: '',
 };

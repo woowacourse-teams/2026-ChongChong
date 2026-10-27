@@ -11,7 +11,7 @@ import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { updateAssignmentSubmission } from '../api';
 import assignmentQueries from '../queries';
-import type { AssignmentSubmissionValue, CompletedAssignment } from '../types';
+import type { AssignmentSubmissionFormValues, CompletedAssignment } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import InfoCard from './InfoCard';
 import { ValidationError } from '../../../shared/api/error';
@@ -85,7 +85,7 @@ export default function CompletedAssignmentSubmission({
   const href = submission.link?.startsWith('http') ? submission.link : `https://${submission.link}`;
 
   const { mutate, isPending, error } = useMutation({
-    mutationFn: (values: AssignmentSubmissionValue) =>
+    mutationFn: (values: AssignmentSubmissionFormValues) =>
       updateAssignmentSubmission(studyId, assignmentId, submission.submissionId, values),
 
     onSuccess: async (_data, values) => {
