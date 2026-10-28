@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, matchRoutes, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
@@ -75,6 +75,15 @@ async function restoreSession() {
 }
 
 async function bootstrap() {
+  const initialRoute = matchRoutes(appRoutes, window.location)?.at(-1)?.route;
+
+  if (typeof initialRoute?.lazy === 'function') {
+    // 현재 경로의 청크를 세션 복구와 병렬로 내려받습니다.
+    void initialRoute.lazy().catch(() => {
+      // 선요청 실패는 라우터의 정식 로드에 맡깁니다.
+    });
+  }
+
   await enableMocking();
   const shouldResetIdentity = await restoreSession();
   const rootElement = document.getElementById('root');
