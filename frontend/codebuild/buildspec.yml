@@ -66,7 +66,7 @@ phases:
         case "${DEPLOY_ENV:-}" in
           dev)
             BUILD_SCRIPT="build:development"
-            BUILD_ENV="production"
+            BUILD_ENV="development"
             SITE_PATH="s3://techcourse-project-2026/chongchong/uploads/dev"
             DISTRIBUTION_ID="E3QKIZ08X8L5CD"
             ASSET_CACHE_CONTROL="no-cache"
