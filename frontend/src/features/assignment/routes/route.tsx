@@ -1,29 +1,34 @@
 import type { RouteObject } from 'react-router';
-import AssignmentListPage from '../pages/AssignmentListPage';
-import AssignmentDetailPage from '../pages/AssignmentDetailPage';
-import AssignmentSubmissionDetailPage from '../pages/AssignmentSubmissionDetailPage';
-import CreateAssignmentPage from '../pages/CreateAssignmentPage';
-import EditAssignmentPage from '../pages/EditAssignmentPage';
 
 export const routes: RouteObject[] = [
   {
     path: 'studies/:studyId/assignments',
-    element: <AssignmentListPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/AssignmentListPage')).default,
+    }),
   },
   {
     path: 'studies/:studyId/assignments/:assignmentId',
-    element: <AssignmentDetailPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/AssignmentDetailPage')).default,
+    }),
   },
   {
     path: 'studies/:studyId/assignments/:assignmentId/submissions/:submissionId',
-    element: <AssignmentSubmissionDetailPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/AssignmentSubmissionDetailPage')).default,
+    }),
   },
   {
     path: 'studies/:studyId/assignments/create',
-    element: <CreateAssignmentPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/CreateAssignmentPage')).default,
+    }),
   },
   {
     path: 'studies/:studyId/assignments/:assignmentId/edit',
-    element: <EditAssignmentPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/EditAssignmentPage')).default,
+    }),
   },
 ];

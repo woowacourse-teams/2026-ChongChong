@@ -1,24 +1,28 @@
 import type { RouteObject } from 'react-router';
-import CreateNoticePage from '../pages/CreateNoticePage';
-import EditNoticePage from '../pages/EditNoticePage';
-import NoticeDetailPage from '../pages/NoticeDetailPage';
-import NoticeListPage from '../pages/NoticeListPage';
 
 export const routes: RouteObject[] = [
   {
     path: '/studies/:studyId/notices',
-    element: <NoticeListPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/NoticeListPage')).default,
+    }),
   },
   {
     path: '/studies/:studyId/notices/create',
-    element: <CreateNoticePage />,
+    lazy: async () => ({
+      Component: (await import('../pages/CreateNoticePage')).default,
+    }),
   },
   {
     path: '/studies/:studyId/notices/:noticeId',
-    element: <NoticeDetailPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/NoticeDetailPage')).default,
+    }),
   },
   {
     path: '/studies/:studyId/notices/:noticeId/edit',
-    element: <EditNoticePage />,
+    lazy: async () => ({
+      Component: (await import('../pages/EditNoticePage')).default,
+    }),
   },
 ];
