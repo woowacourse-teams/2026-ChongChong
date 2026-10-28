@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
-import App from './src/features/landing/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
@@ -21,7 +20,9 @@ import Loading from './src/shared/ui/Loading';
 const appRoutes = [
   {
     path: '/',
-    element: <App />,
+    lazy: async () => ({
+      Component: (await import('./src/features/landing/App')).default,
+    }),
   },
   ...studiesRoutes,
   ...noticeRoutes,
