@@ -9,7 +9,7 @@ import ErrorContent from '../../../shared/ui/ErrorContent';
 import StudyForm from '../components/StudyForm';
 import useEditStudy from '../hooks/useEditStudy';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
-import headerIcon from '../../../shared/assets/icons/header-icon.svg';
+import headerIcon from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
 import studyQueries from '../queries';
 
 export default function StudyEditPage() {

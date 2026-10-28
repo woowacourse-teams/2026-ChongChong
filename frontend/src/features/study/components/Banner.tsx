@@ -2,8 +2,8 @@ import { CSSProperties, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
 import { Link } from 'react-router';
 import { tokens, typography } from '../../../styles/global';
-import LaptopLogo from '../../../shared/assets/icons/laptop-icon.svg';
-import CheckLogo from '../../../shared/assets/icons/check-icon.svg';
+import LaptopLogo from '../../../shared/assets/icons/laptop-icon.svg?width=360&as=webp';
+import CheckLogo from '../../../shared/assets/icons/check-icon.svg?width=360&as=webp';
 import InviteLogo from '../../../shared/assets/icons/invite-icon.svg';
 import { usePostHog } from '@posthog/react';
 
