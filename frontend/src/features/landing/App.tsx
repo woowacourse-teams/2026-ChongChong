@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import chongchongLogo from './assets/chongchong-logo.png';
 import FeatureCarousel from './components/FeatureCarousel';
 import InstallAppButton from './components/InstallAppButton';
+import UploadUpdateModal from './components/UploadUpdateModal';
 import { TRANSITION_DURATION, useFeaturePreview } from './useFeaturePreview';
 import { previewFeatures } from './previewFeatures';
 import { usePostHog } from '@posthog/react';
@@ -42,6 +43,7 @@ export default function App() {
             </span>
             <span>총총</span>
           </Link>
+          <UploadUpdateModal />
         </header>
 
         <main className="cc-hero" aria-labelledby="cc-hero-title">
