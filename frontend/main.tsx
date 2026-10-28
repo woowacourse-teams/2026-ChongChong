@@ -15,7 +15,7 @@ import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
-import Loading from './src/shared/ui/Loading';
+import RouteLoading from './src/shared/ui/RouteLoading';
 
 const appRoutes = [
   {
@@ -93,7 +93,7 @@ async function bootstrap() {
   }
 
   const router = createBrowserRouter(
-    appRoutes.map((route) => ({ ...route, HydrateFallback: Loading })),
+    appRoutes.map((route) => ({ ...route, HydrateFallback: RouteLoading })),
   );
 
   if ('serviceWorker' in navigator) {
