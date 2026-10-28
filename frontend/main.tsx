@@ -15,6 +15,7 @@ import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
+import RouteLoading from './src/shared/ui/RouteLoading';
 
 const appRoutes = [
   {
@@ -91,7 +92,9 @@ async function bootstrap() {
     throw new Error('Root element "#root" was not found.');
   }
 
-  const router = createBrowserRouter(appRoutes);
+  const router = createBrowserRouter(
+    appRoutes.map((route) => ({ ...route, HydrateFallback: RouteLoading })),
+  );
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
