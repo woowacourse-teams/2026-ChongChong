@@ -1,13 +1,15 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { Route, Routes } from 'react-router';
+import { createMemoryRouter, Route, RouterProvider, Routes } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { API_URL } from '../../../../../config';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { server } from '../../../../mocks/msw-node';
 import { createTextWithLength, insertTextInMiddle } from '../../../../test/input';
 import { createWrapper } from '../../../../test/render';
 import CreateNoticePage from '../CreateNoticePage';
+import { ToastProvider } from '../../../../shared/providers/ToastProvider';
 
 describe('공지 생성 폼', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -158,5 +160,52 @@ describe('공지 생성 폼', () => {
     expect(toast).toHaveTextContent('공지 생성에 실패했습니다.');
     expect(toast).toBeVisible();
     expect(screen.getByRole('textbox', { name: '제목' })).toHaveValue('스터디 일정 안내');
+  });
+
+  test('상세 페이지를 불러오는 동안 제출 버튼을 비활성화한다', async () => {
+    const createRequest = jest.fn();
+    server.use(
+      http.post(`${API_URL}/studies/:studyId/notices`, () => {
+        createRequest();
+        return HttpResponse.json({ noticeId: 999 }, { status: 201 });
+      }),
+    );
+
+    let finishDetailLoad: () => void = () => {};
+    const detailLoaded = new Promise<void>((resolve) => {
+      finishDetailLoad = resolve;
+    });
+    const loadDetail = jest.fn(async () => {
+      await detailLoaded;
+      return { Component: () => <div>공지 상세</div> };
+    });
+    const router = createMemoryRouter(
+      [
+        { path: '/studies/:studyId/notices/create', element: <CreateNoticePage /> },
+        { path: '/studies/:studyId/notices/:noticeId', lazy: loadDetail },
+      ],
+      { initialEntries: ['/studies/1/notices/create'] },
+    );
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </QueryClientProvider>,
+    );
+
+    await user.type(screen.getByRole('textbox', { name: '제목' }), '공지 제목');
+    await user.type(screen.getByRole('textbox', { name: '내용' }), '공지 내용');
+    const submitButton = screen.getByRole('button', { name: '공지 올리기' });
+    await user.click(submitButton);
+
+    await waitFor(() => expect(loadDetail).toHaveBeenCalled());
+    expect(submitButton).toBeDisabled();
+    await user.click(submitButton);
+    expect(createRequest).toHaveBeenCalledTimes(1);
+
+    finishDetailLoad();
+    expect(await screen.findByText('공지 상세')).toBeInTheDocument();
   });
 });

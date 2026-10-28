@@ -21,7 +21,7 @@ export default function useCreateAssignment({ studyId }: Params) {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: (body: AssignmentFormValues) => createAssignment(studyId, body),
-    onSuccess: ({ assignmentId }, body) => {
+    onSuccess: async ({ assignmentId }, body) => {
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(studyId),
       });
@@ -31,7 +31,7 @@ export default function useCreateAssignment({ studyId }: Params) {
         attachment_count: body.attachmentFileIds?.length ?? 0,
       });
 
-      navigate(`/studies/${studyId}/assignments/${assignmentId}`);
+      await navigate(`/studies/${studyId}/assignments/${assignmentId}`);
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;
