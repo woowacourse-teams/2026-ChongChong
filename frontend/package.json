@@ -13,8 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "jest",
-    "test:images": "node --test scripts/images.test.mjs"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
