@@ -17,7 +17,7 @@ if (!sentryAuthToken) {
 }
 
 export default merge(commonConfig, {
-  mode: 'development',
+  mode: 'production',
   devtool: 'source-map',
 
   output: {
