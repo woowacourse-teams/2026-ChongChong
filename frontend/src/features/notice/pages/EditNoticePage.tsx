@@ -47,7 +47,7 @@ function Content() {
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: UpdateNoticeValue) => updateNotice(studyId, noticeId, values),
 
-    onSuccess: (_data, values) => {
+    onSuccess: async (_data, values) => {
       posthog?.capture('notice_saved', {
         content_type: 'notice',
         mode: 'edit',
@@ -61,7 +61,7 @@ function Content() {
         queryKey: noticeQueries.detail(studyId, noticeId).queryKey,
       });
 
-      navigate(`/studies/${studyId}/notices/${noticeId}`);
+      await navigate(`/studies/${studyId}/notices/${noticeId}`);
     },
 
     onError: (error) => {

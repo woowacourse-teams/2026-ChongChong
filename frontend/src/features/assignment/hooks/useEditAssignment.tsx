@@ -22,7 +22,7 @@ export default function useEditAssignment({ studyId, assignmentId }: Params) {
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: UpdateAssignmentFormValues) =>
       updateAssignment(studyId, assignmentId, values),
-    onSuccess: (_data, values) => {
+    onSuccess: async (_data, values) => {
       posthog?.capture('assignment_saved', {
         content_type: 'assignment',
         mode: 'edit',
@@ -36,7 +36,7 @@ export default function useEditAssignment({ studyId, assignmentId }: Params) {
         queryKey: assignmentQueries.detail(studyId, assignmentId).queryKey,
       });
 
-      navigate(`/studies/${studyId}/assignments/${assignmentId}`);
+      await navigate(`/studies/${studyId}/assignments/${assignmentId}`);
     },
 
     onError: (error) => {

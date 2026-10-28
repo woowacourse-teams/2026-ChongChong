@@ -9,7 +9,7 @@ import noticeIcon from '../../../shared/assets/notice.webp';
 import noticeGreenIcon from '../../../shared/assets/notice-green.webp';
 import userIcon from '../../../shared/assets/user.webp';
 import userGreenIcon from '../../../shared/assets/user-green.webp';
-import studyArt from '../../../shared/assets/icons/header-icon.svg';
+import studyArt from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
 import Button from '../../../shared/ui/Button';
 import { Field } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';

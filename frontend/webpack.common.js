@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { sentryWebpackPlugin } from '@sentry/webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import webpack from 'webpack';
+import { createImagePlugin } from './scripts/images.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -67,6 +68,7 @@ export function createCommonConfig({ envFile, environment, assetFilename }) {
     },
 
     plugins: [
+      createImagePlugin({ minimize: environment !== 'local' }),
       new HtmlWebpackPlugin({
         template: './index.html',
         filename: 'index.html',

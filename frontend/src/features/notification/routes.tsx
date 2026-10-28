@@ -1,9 +1,10 @@
-import { RouteObject } from 'react-router';
-import NotificationListPage from './pages/NotificationListPage';
+import type { RouteObject } from 'react-router';
 
 export const routes: RouteObject[] = [
   {
     path: '/notifications',
-    element: <NotificationListPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/NotificationListPage')).default,
+    }),
   },
 ];

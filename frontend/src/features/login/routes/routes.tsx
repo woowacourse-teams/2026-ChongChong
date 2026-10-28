@@ -1,14 +1,16 @@
 import type { RouteObject } from 'react-router';
-import KakaoCallbackPage from '../pages/KakaoCallbackPage';
-import LoginPage from '../pages/LoginPage';
 
 export const routes: RouteObject[] = [
   {
     path: '/login',
-    element: <LoginPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/LoginPage')).default,
+    }),
   },
   {
     path: '/auth/kakao/callback',
-    element: <KakaoCallbackPage />,
+    lazy: async () => ({
+      Component: (await import('../pages/KakaoCallbackPage')).default,
+    }),
   },
 ];
