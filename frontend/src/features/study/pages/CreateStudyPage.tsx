@@ -3,7 +3,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Page from '../../../shared/ui/Page';
-import headerIcon from '../../../shared/assets/icons/header-icon.svg';
+import headerIcon from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
 import useCreateStudy from '../hooks/useCreateStudy';
 
 import StudyForm from '../components/StudyForm';

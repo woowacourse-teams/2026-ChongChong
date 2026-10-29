@@ -1,34 +1,40 @@
-import { RouteObject } from 'react-router';
-import MyStudiesPage from './pages/MyStudiesPage';
-import CreateStudyPage from './pages/CreateStudyPage';
-import StudyDetailPage from './pages/StudyDetailPage';
-import StudyJoinPage from './pages/StudyJoinPage';
-import StudyManagementPage from './pages/StudyManagementPage';
-import StudyEditPage from './pages/StudyEditPage';
+import type { RouteObject } from 'react-router';
 
 export const routes: RouteObject[] = [
   {
     path: '/studies',
-    element: <MyStudiesPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/MyStudiesPage')).default,
+    }),
   },
   {
     path: '/studies/new',
-    element: <CreateStudyPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/CreateStudyPage')).default,
+    }),
   },
   {
     path: '/studies/:studyId',
-    element: <StudyDetailPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/StudyDetailPage')).default,
+    }),
   },
   {
     path: '/studies/join',
-    element: <StudyJoinPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/StudyJoinPage')).default,
+    }),
   },
   {
     path: '/studies/:studyId/management',
-    element: <StudyManagementPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/StudyManagementPage')).default,
+    }),
   },
   {
     path: '/studies/:studyId/edit',
-    element: <StudyEditPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/StudyEditPage')).default,
+    }),
   },
 ];

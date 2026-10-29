@@ -1,9 +1,10 @@
-import { RouteObject } from 'react-router';
-import MyPage from './pages/MyPage';
+import type { RouteObject } from 'react-router';
 
 export const routes: RouteObject[] = [
   {
     path: '/studies/mypage',
-    element: <MyPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/MyPage')).default,
+    }),
   },
 ];

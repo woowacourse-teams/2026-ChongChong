@@ -3,7 +3,7 @@ import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { Link } from 'react-router';
-import logo from '../../../shared/assets/icons/header-icon.svg';
+import logo from '../../../shared/assets/icons/header-icon.svg?width=120&as=webp';
 import MyStudies from '../components/MyStudies';
 import Main from '../../../shared/ui/Main';
 import { tokens } from '../../../styles/global';

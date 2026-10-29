@@ -1,10 +1,9 @@
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, matchRoutes, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
-import App from './src/features/landing/App';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/study/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
@@ -16,11 +15,14 @@ import { refreshAccessToken } from './src/features/login/api';
 import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
+import RouteLoading from './src/shared/ui/RouteLoading';
 
 const appRoutes = [
   {
     path: '/',
-    element: <App />,
+    lazy: async () => ({
+      Component: (await import('./src/features/landing/App')).default,
+    }),
   },
   ...studiesRoutes,
   ...noticeRoutes,
@@ -73,6 +75,15 @@ async function restoreSession() {
 }
 
 async function bootstrap() {
+  const initialRoute = matchRoutes(appRoutes, window.location)?.at(-1)?.route;
+
+  if (typeof initialRoute?.lazy === 'function') {
+    // 현재 경로의 청크를 세션 복구와 병렬로 내려받습니다.
+    initialRoute.lazy().catch(() => {
+      // 선요청 실패는 라우터의 정식 로드에 맡깁니다.
+    });
+  }
+
   await enableMocking();
   const shouldResetIdentity = await restoreSession();
   const rootElement = document.getElementById('root');
@@ -81,7 +92,9 @@ async function bootstrap() {
     throw new Error('Root element "#root" was not found.');
   }
 
-  const router = createBrowserRouter(appRoutes);
+  const router = createBrowserRouter(
+    appRoutes.map((route) => ({ ...route, HydrateFallback: RouteLoading })),
+  );
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker

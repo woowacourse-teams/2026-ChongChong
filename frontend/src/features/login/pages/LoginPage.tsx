@@ -1,6 +1,6 @@
 import type { CSSObject } from '@emotion/react';
 import Page from '../../../shared/ui/Page';
-import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg';
+import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg?width=360&as=webp';
 import { tokens, typography } from '../../../styles/global';
 import KakaoLoginButton from '../components/KakaoLoginButton';
 import { startKakaoLogin } from '../kakaoOAuth';

@@ -1,9 +1,10 @@
-import { RouteObject } from 'react-router';
-import MemberListPage from './pages/MemberListPage';
+import type { RouteObject } from 'react-router';
 
 export const routes: RouteObject[] = [
   {
     path: '/studies/:studyId/members',
-    element: <MemberListPage />,
+    lazy: async () => ({
+      Component: (await import('./pages/MemberListPage')).default,
+    }),
   },
 ];

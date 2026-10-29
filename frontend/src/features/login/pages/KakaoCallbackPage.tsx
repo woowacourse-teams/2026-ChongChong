@@ -1,7 +1,7 @@
 import { keyframes, type CSSObject } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg';
+import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg?width=360&as=webp';
 import Page from '../../../shared/ui/Page';
 import { tokens, typography } from '../../../styles/global';
 import { loginWithKakaoCode } from '../api';

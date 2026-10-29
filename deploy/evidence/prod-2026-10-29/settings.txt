@@ -1,0 +1,5 @@
+URL=https://origin.chongchong.kr/actuator/health
+요청수=1500
+발사 간격=0.2초 sleep + 로컬 실행 오버헤드
+타임아웃=2초
+성공=HTTP 200 및 JSON status UP

@@ -1,0 +1,22 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+
+> Task :compileTestJava
+Note: /Users/limhyejeong/.codex/worktrees/530-prod-deployment-verification/2026-ChongChong/backend/src/test/java/withoutc/chongchong/notification/repository/NotificationDeliveryPostgresRepositoryTest.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :processTestResources UP-TO-DATE
+> Task :testClasses
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+{"timestamp":"2026-10-29T15:24:14.354998+09:00","message":"Closing JPA EntityManagerFactory for persistence unit 'default'","level":"INFO","tags":["COMMONS-LOGGING"]}
+{"timestamp":"2026-10-29T15:24:14.35542+09:00","message":"HikariPool-2 - Shutdown initiated...","level":"INFO"}
+{"timestamp":"2026-10-29T15:24:14.355731+09:00","message":"HikariPool-2 - Shutdown completed.","level":"INFO"}
+> Task :test
+> Task :verifyOpenApiCoverage SKIPPED
+
+[Incubating] Problems report is available at: file:///Users/limhyejeong/.codex/worktrees/530-prod-deployment-verification/2026-ChongChong/backend/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 17s
+5 actionable tasks: 2 executed, 3 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html

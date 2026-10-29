@@ -1,6 +1,7 @@
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { Route } from 'react-router';
+import { createMemoryRouter, Route, RouterProvider } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CreateAssignmentPage from '../CreateAssignmentPage';
 import { createWrapper, login, logout, setup } from '../../../../test/render';
 import { createTextWithLength, insertTextInMiddle } from '../../../../test/input';
@@ -10,6 +11,7 @@ import { API_URL } from '../../../../../config';
 import { userTable } from '../../../user/mocks/db';
 import { studyTable } from '../../../study/mocks/db';
 import { memberTable } from '../../../member/mocks/db';
+import { ToastProvider } from '../../../../shared/providers/ToastProvider';
 
 const ASSIGNMENT_CREATE_URL = `${API_URL}/studies/:studyId/assignments`;
 
@@ -275,5 +277,52 @@ describe('과제 생성 페이지 테스트', () => {
       expect(toast).toBeVisible();
       expect(getTitleInput()).toHaveValue('객체지향 설계 과제');
     });
+  });
+
+  test('상세 페이지를 불러오는 동안 제출 버튼을 비활성화한다', async () => {
+    const createRequest = jest.fn();
+    server.use(
+      http.post(ASSIGNMENT_CREATE_URL, () => {
+        createRequest();
+        return HttpResponse.json({ assignmentId: 999 }, { status: 201 });
+      }),
+    );
+
+    let finishDetailLoad: () => void = () => {};
+    const detailLoaded = new Promise<void>((resolve) => {
+      finishDetailLoad = resolve;
+    });
+    const loadDetail = jest.fn(async () => {
+      await detailLoaded;
+      return { Component: () => <div>과제 상세</div> };
+    });
+    const router = createMemoryRouter(
+      [
+        { path: '/studies/:studyId/assignments/create', element: <CreateAssignmentPage /> },
+        { path: '/studies/:studyId/assignments/:assignmentId', lazy: loadDetail },
+      ],
+      { initialEntries: ['/studies/1/assignments/create'] },
+    );
+    const { user } = setup(
+      <QueryClientProvider client={new QueryClient()}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </QueryClientProvider>,
+    );
+
+    await user.type(getTitleInput(), '객체지향 설계 과제');
+    await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+    const submitButton = getSubmitButton();
+    await user.click(submitButton);
+
+    await waitFor(() => expect(loadDetail).toHaveBeenCalled());
+    expect(submitButton).toBeDisabled();
+    await user.click(submitButton);
+    expect(createRequest).toHaveBeenCalledTimes(1);
+
+    finishDetailLoad();
+    expect(await screen.findByText('과제 상세')).toBeInTheDocument();
   });
 });

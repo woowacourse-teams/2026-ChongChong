@@ -5,7 +5,7 @@ import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import StudyIcon from '../../../shared/assets/icons/header-icon.svg';
+import StudyIcon from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
 import { tokens, typography } from '../../../styles/global';
 import studyQueries from '../queries';
 import { StudyLeaderManagementList, StudyMemberManagementList } from '../components/ManagementList';

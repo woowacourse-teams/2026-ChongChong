@@ -25,7 +25,7 @@ export default function CreateNoticePage() {
   const { mutate, isPending, error } = useMutation({
     mutationFn: (values: NoticeFormValues) => createNotice(studyId, values),
 
-    onSuccess: ({ noticeId }, values) => {
+    onSuccess: async ({ noticeId }, values) => {
       posthog?.capture('notice_saved', {
         content_type: 'notice',
         mode: 'create',
@@ -35,7 +35,7 @@ export default function CreateNoticePage() {
         queryKey: noticeQueries.lists(studyId),
       });
 
-      navigate(`/studies/${studyId}/notices/${noticeId}`);
+      await navigate(`/studies/${studyId}/notices/${noticeId}`);
     },
 
     onError: (error) => {

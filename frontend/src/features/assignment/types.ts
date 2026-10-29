@@ -63,12 +63,12 @@ export interface AssignmentDetail {
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
 export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
-export type AssignmentValue = Omit<AssignmentDetail, 'id' | 'attachments'> & {
+export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments'> & {
   remindAts?: string[] | null;
   attachmentFileIds?: number[];
 };
 
-export type UpdateAssignmentValue = Partial<AssignmentValue>;
+export type UpdateAssignmentFormValues = Partial<AssignmentFormValues>;
 
 interface SubmissionBase {
   id: number;

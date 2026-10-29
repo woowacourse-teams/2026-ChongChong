@@ -1,5 +1,9 @@
 import api from '../../client';
-import { AssignmentValue, UpdateAssignmentValue, AssignmentSubmissionValue } from './types';
+import {
+  AssignmentFormValues,
+  UpdateAssignmentFormValues,
+  AssignmentSubmissionValue,
+} from './types';
 import { ValidationError, handleError, ApiError } from '../../shared/api/error';
 import {
   isAssignmentListResponse,
@@ -157,9 +161,9 @@ export async function updateAssignmentSubmission(
   }
 }
 
-export async function createAssignment(studyId: number, values: AssignmentValue) {
+export async function createAssignment(studyId: number, body: AssignmentFormValues) {
   try {
-    const response = await api.post(`/studies/${studyId}/assignments`, { json: values });
+    const response = await api.post(`/studies/${studyId}/assignments`, { json: body });
     const data: unknown = await response.json();
 
     if (!isCreateAssignmentResponse(data)) {
@@ -178,7 +182,7 @@ export async function createAssignment(studyId: number, values: AssignmentValue)
 export async function updateAssignment(
   studyId: number,
   assignmentId: number,
-  values: UpdateAssignmentValue,
+  values: UpdateAssignmentFormValues,
 ) {
   try {
     await api.patch(`/studies/${studyId}/assignments/${assignmentId}`, {

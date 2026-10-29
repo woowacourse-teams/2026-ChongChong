@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { sentryWebpackPlugin } from '@sentry/webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import webpack from 'webpack';
+import ImageMinimizerPlugin from 'image-minimizer-webpack-plugin';
+import { minimizePng, minimizeSvg, generateWebp } from './scripts/images.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -19,6 +21,32 @@ export function createSentryPlugin(authToken) {
     sourcemaps: {
       assets: './dist/**/*.{js,map}',
     },
+  });
+}
+
+export function createImagePlugin({ minimize }) {
+  return new ImageMinimizerPlugin({
+    concurrency: 2,
+    minimizer: minimize
+      ? [
+          {
+            filter: (_source, filename) => /\.png$/i.test(filename),
+            implementation: minimizePng,
+            options: { encodeOptions: { png: { compressionLevel: 9, adaptiveFiltering: true } } },
+          },
+          {
+            filter: (_source, filename) => /\.svg$/i.test(filename),
+            implementation: minimizeSvg,
+          },
+        ]
+      : undefined,
+    generator: [
+      {
+        preset: 'webp',
+        implementation: generateWebp,
+        options: { encodeOptions: { webp: { quality: 85, alphaQuality: 100, effort: 6 } } },
+      },
+    ],
   });
 }
 
@@ -67,6 +95,7 @@ export function createCommonConfig({ envFile, environment, assetFilename }) {
     },
 
     plugins: [
+      createImagePlugin({ minimize: environment !== 'local' }),
       new HtmlWebpackPlugin({
         template: './index.html',
         filename: 'index.html',
