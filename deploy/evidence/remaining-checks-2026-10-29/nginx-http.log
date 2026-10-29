@@ -1,0 +1,12 @@
+curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to 127.0.0.1:63672 
+2026/10/29 06:22:26 [emerg] 46#46: unknown directive "invalid" in /etc/nginx/upstreams/upstream.conf:1
+nginx: [emerg] unknown directive "invalid" in /etc/nginx/upstreams/upstream.conf:1
+nginx: configuration file /etc/nginx/nginx.conf test failed
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+2026/10/29 06:22:26 [notice] 51#51: signal process started
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+2026/10/29 06:22:33 [notice] 73#73: signal process started
+PASS: 150 requests, 0 failures, both slots observed
+PASS: invalid upstream restored before restart; A -> B -> A, in-flight A request completed (/var/folders/p8/n69ygp1s59n5ts4x2bck9k1m0000gn/T/tmp.zUs166qzyX)

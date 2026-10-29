@@ -1,0 +1,27 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+> Task :compileJava
+Note: /Users/limhyejeong/.codex/worktrees/530-prod-deployment-verification/2026-ChongChong/backend/src/main/java/withoutc/chongchong/notification/sender/WebPushClient.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :processResources
+> Task :classes
+
+> Task :compileTestJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :processTestResources
+> Task :testClasses
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+{"timestamp":"2026-10-29T15:22:59.318546+09:00","message":"Closing JPA EntityManagerFactory for persistence unit 'default'","level":"INFO","tags":["COMMONS-LOGGING"]}
+{"timestamp":"2026-10-29T15:22:59.319578+09:00","message":"HikariPool-2 - Shutdown initiated...","level":"INFO"}
+{"timestamp":"2026-10-29T15:22:59.320025+09:00","message":"HikariPool-2 - Shutdown completed.","level":"INFO"}
+> Task :test
+> Task :verifyOpenApiCoverage SKIPPED
+
+[Incubating] Problems report is available at: file:///Users/limhyejeong/.codex/worktrees/530-prod-deployment-verification/2026-ChongChong/backend/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 33s
+5 actionable tasks: 5 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
