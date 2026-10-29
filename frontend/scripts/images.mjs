@@ -2,7 +2,6 @@ import ImageMinimizerPlugin from 'image-minimizer-webpack-plugin';
 import { Buffer } from 'node:buffer';
 
 export async function minimizePng(original, options) {
-  const { default: ImageMinimizerPlugin } = await import('image-minimizer-webpack-plugin');
   const result = await ImageMinimizerPlugin.sharpMinify(original, options);
   if (result && result.data.length > original.data.length) {
     return { ...result, data: original.data };
@@ -75,30 +74,4 @@ export async function generateWebp(original, options) {
   }
 
   return ImageMinimizerPlugin.sharpGenerate(original, options);
-}
-
-export function createImagePlugin({ minimize }) {
-  return new ImageMinimizerPlugin({
-    concurrency: 2,
-    minimizer: minimize
-      ? [
-          {
-            filter: (_source, filename) => /\.png$/i.test(filename),
-            implementation: minimizePng,
-            options: { encodeOptions: { png: { compressionLevel: 9, adaptiveFiltering: true } } },
-          },
-          {
-            filter: (_source, filename) => /\.svg$/i.test(filename),
-            implementation: minimizeSvg,
-          },
-        ]
-      : undefined,
-    generator: [
-      {
-        preset: 'webp',
-        implementation: generateWebp,
-        options: { encodeOptions: { webp: { quality: 85, alphaQuality: 100, effort: 6 } } },
-      },
-    ],
-  });
 }
