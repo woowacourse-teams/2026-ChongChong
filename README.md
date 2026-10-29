@@ -26,6 +26,7 @@
 | 커밋 메시지와 PR 제목 | [커밋 컨벤션](docs/COMMIT_CONVENTION.md) |
 | 프론트엔드 실행과 개발 | [프론트엔드 README](frontend/README.md) |
 | 배포와 운영 | [배포 가이드](deploy/README.md) |
+| 무중단 배포와 롤백 검증 | [prod 측정 결과와 실제 롤백 기록](deploy/docs/prod-deployment-verification.md) |
 | 과거 기능 기록 | [v1 PRD](docs/common/v1/README.md) |
 
 ## 🛠️ Tech Stack

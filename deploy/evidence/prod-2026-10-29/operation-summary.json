@@ -1,0 +1,31 @@
+{
+  "unique_requests": 868,
+  "rollback": {
+    "requests": 13,
+    "failed": 0
+  },
+  "deployment": {
+    "requests": 212,
+    "failed": 0
+  },
+  "interval_seconds": {
+    "mean": 0.20793228248411397,
+    "max": 0.3511390686035156
+  },
+  "measurement_duration_seconds": 180.33129906654358,
+  "observed_downtime_seconds": 0,
+  "transitions": [
+    {
+      "started": 1793254327.688199,
+      "backend": "10.0.0.219:8080"
+    },
+    {
+      "started": 1793254367.559580,
+      "backend": "10.0.0.155:8080"
+    },
+    {
+      "started": 1793254414.968624,
+      "backend": "10.0.0.219:8080"
+    }
+  ]
+}
