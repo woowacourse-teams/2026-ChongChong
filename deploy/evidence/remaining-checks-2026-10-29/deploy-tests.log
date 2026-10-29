@@ -1,0 +1,35 @@
+test_app_failure_uses_configuration_backup (test_deploy.DeployTest) ... ok
+test_app_failure_uses_reorganized_configuration_backup (test_deploy.DeployTest) ... ok
+test_collector_failure_does_not_restart_application_again (test_deploy.DeployTest) ... ok
+test_dev_recreates_collector_separately (test_deploy.DeployTest) ... ok
+test_invalid_nginx_never_recreates_application (test_deploy.DeployTest) ... ok
+test_prod_does_not_start_collector (test_deploy.DeployTest) ... ok
+test_failed_candidate_is_removed_without_removing_current_release (test_edge_deploy.BackendReleaseTest) ... ok
+test_pull_or_config_failure_preserves_existing_container (test_edge_deploy.BackendReleaseTest) ... ok
+test_starts_only_backend_and_records_release (test_edge_deploy.BackendReleaseTest) ... ok
+test_cleanup_does_not_follow_symlinked_directories (test_edge_deploy.EdgeDeployTest) ... ok
+test_failures_before_switch_preserve_routing (test_edge_deploy.EdgeDeployTest) ... ok
+test_interrupted_switch_blocks_new_deployment (test_edge_deploy.EdgeDeployTest) ... ok
+test_invalid_retention_is_rejected_before_deployment (test_edge_deploy.EdgeDeployTest) ... ok
+test_manual_rollback_does_not_recreate_application (test_edge_deploy.EdgeDeployTest) ... ok
+test_manual_rollback_validation_failure_restores_upstream_file (test_edge_deploy.EdgeDeployTest) ... ok
+test_only_inactive_backend_is_deployed (test_edge_deploy.EdgeDeployTest) ... ok
+test_pending_recovery_preserves_every_snapshot (test_edge_deploy.EdgeDeployTest) ... ok
+test_retention_one_preserves_the_older_successful_snapshot (test_edge_deploy.EdgeDeployTest) ... ok
+test_snapshots_are_bounded_after_success_and_pre_switch_failure (test_edge_deploy.EdgeDeployTest) ... ok
+test_successful_manual_recovery_prunes_old_snapshots (test_edge_deploy.EdgeDeployTest) ... ok
+test_switch_failures_restore_previous_routing (test_edge_deploy.EdgeDeployTest) ... ok
+test_unhealthy_previous_backend_is_not_selected (test_edge_deploy.EdgeDeployTest) ... ok
+test_unverified_recovery_keeps_pending_marker (test_edge_deploy.EdgeDeployTest) ... ok
+test_collector_is_required_for_dev_without_profile (test_runtime.RuntimeTest) ... ok
+test_dev_uses_overlay (test_runtime.RuntimeTest) ... ok
+test_healthy_collector_default_environment (test_runtime.RuntimeTest) ... ok
+test_old_collector_environment_fails (test_runtime.RuntimeTest) ... ok
+test_prod_collector_is_opt_in (test_runtime.RuntimeTest) ... ok
+test_prod_does_not_use_overlay (test_runtime.RuntimeTest) ... ok
+test_restarting_collector_fails (test_runtime.RuntimeTest) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 38.873s
+
+OK

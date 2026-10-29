@@ -1,0 +1,8 @@
+verified_at=2026-10-29T06:14:03.702186432Z
+upstream chongchong_backend { server 10.0.0.219:8080; }
+backend=10.0.0.155
+chongchong-backend frombunny/chongchong-backend:3741e37f51d498f7b30e86154b5cad7ab8633e9d Up 43 hours
+{"status":"UP"}
+backend=10.0.0.219
+chongchong-backend frombunny/chongchong-backend:39a7fb50c034b06a4f340211cf1c7b7e428db06e Up 50 seconds
+{"status":"UP"}

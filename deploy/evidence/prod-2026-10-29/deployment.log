@@ -1,0 +1,29 @@
+deployment_started_at=2026-10-29T06:13:08.335049299Z
+deployment_started_epoch=1793254388.338583342
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+Login Succeeded
+ Image frombunny/chongchong-backend:39a7fb50c034b06a4f340211cf1c7b7e428db06e Pulling 
+ Image frombunny/chongchong-backend:39a7fb50c034b06a4f340211cf1c7b7e428db06e Pulled 
+ Container chongchong-backend Creating 
+ Container chongchong-backend Created 
+ Container chongchong-backend Starting 
+ Container chongchong-backend Started 
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+curl: (7) Failed to connect to 10.0.0.219 port 8080 after 0 ms: Could not connect to server
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+2026/10/29 06:13:34 [notice] 117#117: signal process started
+Deployment verified on backend b; previous backend retained
+deployment_success_observed_at=2026-10-29T06:13:52.355703993Z
+deployment_success_observed_epoch=1793254432.359137325
+upstream chongchong_backend { server 10.0.0.219:8080; }
+pending_clear=true

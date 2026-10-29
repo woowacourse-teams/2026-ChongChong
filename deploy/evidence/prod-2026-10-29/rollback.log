@@ -1,0 +1,10 @@
+rollback_started_at=2026-10-29T06:12:47.113764634Z
+rollback_started_epoch=1793254367.117523656
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+2026/10/29 06:12:47 [notice] 97#97: signal process started
+Routing restored to 10.0.0.155; no application recreated
+rollback_finished_at=2026-10-29T06:12:49.719555230Z
+rollback_finished_epoch=1793254369.723192791
+exit_code=0
+upstream chongchong_backend { server 10.0.0.155:8080; }
