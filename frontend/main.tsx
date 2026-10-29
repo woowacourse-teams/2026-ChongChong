@@ -79,7 +79,7 @@ async function bootstrap() {
 
   if (typeof initialRoute?.lazy === 'function') {
     // 현재 경로의 청크를 세션 복구와 병렬로 내려받습니다.
-    void initialRoute.lazy().catch(() => {
+    initialRoute.lazy().catch(() => {
       // 선요청 실패는 라우터의 정식 로드에 맡깁니다.
     });
   }
