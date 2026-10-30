@@ -450,7 +450,7 @@ class NoticeServiceTest {
     }
 
     private Notice noticeWithId(Long noticeId, Long studyId) {
-        Study study = Study.create("자바 스터디", "설명");
+        Study study = Study.create("자바 스터디", "설명", false);
         ReflectionTestUtils.setField(study, "id", studyId);
         Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         ReflectionTestUtils.setField(notice, "id", noticeId);

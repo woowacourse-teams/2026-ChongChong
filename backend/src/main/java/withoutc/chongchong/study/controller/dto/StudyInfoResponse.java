@@ -6,6 +6,8 @@ public record StudyInfoResponse(
         String studyName,
         String description,
         StudyMemberRole role,
-        String userName
+        String userName,
+        boolean isPublic,
+        String imageUrl
 ) {
 }
