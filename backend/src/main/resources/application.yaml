@@ -40,6 +40,11 @@ notice:
     max-size-bytes: ${NOTICE_ATTACHMENT_MAX_SIZE_BYTES:5242880}
     allowed-content-types: ${NOTICE_ATTACHMENT_ALLOWED_CONTENT_TYPES:image/jpeg,image/png,image/webp}
 
+study:
+  image:
+    max-size-bytes: ${STUDY_ATTACHMENT_MAX_SIZE_BYTES:5242880}
+    allowed-content-types: ${STUDY_ATTACHMENT_ALLOWED_CONTENT_TYPES:image/jpeg,image/png,image/webp}
+
 management:
   endpoints:
     web:

@@ -1,7 +1,10 @@
 package withoutc.chongchong.study.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +16,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
 import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
 import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
+import withoutc.chongchong.study.controller.dto.StudyListResponse;
+import withoutc.chongchong.study.controller.dto.StudySummaryResponse;
 import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.service.StudyService;
 
@@ -104,6 +111,41 @@ public class StudyController {
 
         return ResponseEntity
                 .ok(response);
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<StudyListResponse> getPublicStudies(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false)
+            @Pattern(regexp = "(?s).*\\P{javaWhitespace}.*", message = "검색어는 공백만 입력할 수 없습니다.")
+            @Size(min = 1, max = 15, message = "검색어는 1자 이상 15자 이하여야 합니다.")
+            String keyword,
+            @RequestParam(required = false)
+            @Positive(message = "cursor는 양수여야 합니다.")
+            Long cursor,
+            @RequestParam(defaultValue = "10")
+            @Positive(message = "size는 양수여야 합니다.")
+            @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
+            int size
+    ) {
+        String searchKeyword = null;
+        if (keyword != null) {
+            searchKeyword = keyword.strip();
+        }
+        StudyListResponse response = studyService.getPublicStudies(user.id(), searchKeyword, cursor, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/join-info")
+    public ResponseEntity<StudySummaryResponse> getStudyJoinInfo(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false)
+            @Positive(message = "스터디 ID는 양수여야 합니다.")
+            Long studyId,
+            @RequestParam(required = false) String token
+    ) {
+        StudySummaryResponse response = studyService.getStudyJoinInfo(user.id(), studyId, token);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{studyId}/invite-link")

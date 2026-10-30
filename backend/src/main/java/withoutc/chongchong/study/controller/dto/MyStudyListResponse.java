@@ -16,11 +16,12 @@ public record MyStudyListResponse(
             String description,
             int memberCount,
             int noticeCount,
-            int assignmentCount
+            int assignmentCount,
+            String imageUrl
     ) {
 
         public static MyStudyResponse from(Study study, StudyMemberRole role, int memberCount, int noticeCount,
-                                           int assignmentCount) {
+                                           int assignmentCount, String imageUrl) {
             return new MyStudyResponse(
                     study.getId(),
                     role,
@@ -28,7 +29,8 @@ public record MyStudyListResponse(
                     study.getDescription(),
                     memberCount,
                     noticeCount,
-                    assignmentCount
+                    assignmentCount,
+                    imageUrl
             );
         }
     }
