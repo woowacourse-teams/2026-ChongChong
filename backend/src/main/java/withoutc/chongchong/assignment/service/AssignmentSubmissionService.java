@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,8 @@ import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.user.repository.UserRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -39,6 +42,7 @@ public class AssignmentSubmissionService {
     private final NotificationService notificationService;
     private final AssignmentAttachmentService assignmentAttachmentService;
     private final FileUrlGenerator fileUrlGenerator;
+    private final UserRepository userRepository;
 
     private final AssignmentAttachmentPolicy assignmentAttachmentPolicy;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
@@ -47,9 +51,12 @@ public class AssignmentSubmissionService {
     @Transactional
     public AssignmentSubmitResponse submit(Long userId, Long studyId, Long assignmentId,
                                            AssignmentSubmitRequest request) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
+        List<StudyMemberIdentityProjection> candidates = studyMemberRepository.findIdentitiesByStudyId(studyId);
+        userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
+                .map(StudyMemberIdentityProjection::userId)).distinct().sorted().toList());
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
@@ -65,6 +72,7 @@ public class AssignmentSubmissionService {
         if (isFirstSubmit) {
             List<StudyMember> leaders = studyMemberRepository.findAllByStudyIdAndRole(studyId, StudyMemberRole.LEADER)
                     .stream()
+                    .filter(member -> candidates.stream().anyMatch(candidate -> candidate.matches(member)))
                     .filter(leader -> !leader.getId().equals(actor.getId()))
                     .toList();
             notificationService.createAssignmentSubmissionSubmittedEventNotifications(submission, leaders);
@@ -76,11 +84,11 @@ public class AssignmentSubmissionService {
     @Transactional
     public void updateSubmission(Long userId, Long studyId, Long assignmentId, Long submissionId,
                                  AssignmentSubmitRequest request) {
+        userRepository.getByIdForShareOrThrow(userId);
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
 
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
-
-        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(submissionId,
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdForUpdateOrThrow(submissionId,
                 assignmentId);
         assignmentAccessPolicy.requireCanUpdateSubmission(actor, submission);
 

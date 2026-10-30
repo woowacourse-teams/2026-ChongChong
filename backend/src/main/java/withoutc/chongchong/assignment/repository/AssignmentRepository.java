@@ -1,9 +1,11 @@
 package withoutc.chongchong.assignment.repository;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -14,6 +16,62 @@ import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSumm
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     Optional<Assignment> findByIdAndStudyId(Long id, Long studyId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT assignment FROM Assignment assignment
+            WHERE assignment.id = :id AND assignment.study.id = :studyId
+            """)
+    Optional<Assignment> findByIdAndStudyIdForUpdate(@Param("id") Long id, @Param("studyId") Long studyId);
+
+    default Assignment getByIdAndStudyIdForUpdateOrThrow(Long id, Long studyId) {
+        return findByIdAndStudyIdForUpdate(id, studyId)
+                .orElseThrow(() -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT assignment FROM Assignment assignment
+            WHERE assignment.study.id = :studyId
+            ORDER BY assignment.id
+            """)
+    List<Assignment> findAllByStudyIdForUpdate(@Param("studyId") Long studyId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT assignment FROM Assignment assignment WHERE EXISTS (
+                SELECT submission.id FROM AssignmentSubmission submission
+                WHERE submission.assignment = assignment AND submission.member.id = :memberId
+            ) OR EXISTS (
+                SELECT comment.id FROM Comment comment
+                WHERE comment.authorMember.id = :memberId AND (
+                    (comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.ASSIGNMENT
+                     AND comment.resourceId = assignment.id)
+                    OR (comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.ASSIGNMENT_SUBMISSION
+                        AND EXISTS (SELECT submission.id FROM AssignmentSubmission submission
+                            WHERE submission.assignment = assignment AND submission.id = comment.resourceId))
+                )
+            ) ORDER BY assignment.id
+            """)
+    List<Assignment> findAllAffectedByMemberIdForUpdate(@Param("memberId") Long memberId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT assignment FROM Assignment assignment WHERE EXISTS (
+                SELECT submission.id FROM AssignmentSubmission submission
+                WHERE submission.assignment = assignment AND submission.member.user.id = :userId
+            ) OR EXISTS (
+                SELECT comment.id FROM Comment comment
+                WHERE comment.authorUser.id = :userId AND (
+                    (comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.ASSIGNMENT
+                     AND comment.resourceId = assignment.id)
+                    OR (comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.ASSIGNMENT_SUBMISSION
+                        AND EXISTS (SELECT submission.id FROM AssignmentSubmission submission
+                            WHERE submission.assignment = assignment AND submission.id = comment.resourceId))
+                )
+            ) ORDER BY assignment.id
+            """)
+    List<Assignment> findAllAffectedByUserIdForUpdate(@Param("userId") Long userId);
 
     @Query("""
             SELECT n

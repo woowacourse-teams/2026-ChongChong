@@ -47,6 +47,8 @@ import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,6 +59,9 @@ class AssignmentSubmissionServiceTest {
     private static final Long ASSIGNMENT_ID = 100L;
     private static final Long MEMBER_ID = 20L;
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
@@ -86,6 +91,7 @@ class AssignmentSubmissionServiceTest {
                 notificationService,
                 mock(AssignmentAttachmentService.class),
                 mock(FileUrlGenerator.class),
+                userRepository,
                 new AssignmentAttachmentPolicy(),
                 assignmentAccessPolicy,
                 clock
@@ -98,10 +104,13 @@ class AssignmentSubmissionServiceTest {
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         StudyMember leader = studyMember(assignment, 30L, StudyMemberRole.LEADER, "리더");
         StudyMember member = studyMember(assignment, MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
+        when(studyMemberRepository.findIdentitiesByStudyId(STUDY_ID)).thenReturn(List.of(
+                new StudyMemberIdentityProjection(leader.getId(), leader.getUser().getId()),
+                new StudyMemberIdentityProjection(member.getId(), member.getUser().getId())));
         AssignmentSubmission submission = submissionWithId(300L, member, assignment);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("제출 내용", "https://example.com");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
         when(studyMemberRepository.findAllByStudyIdAndRole(STUDY_ID, StudyMemberRole.LEADER))
@@ -115,7 +124,7 @@ class AssignmentSubmissionServiceTest {
         assertThat(submission.getContent()).isEqualTo("제출 내용");
         assertThat(submission.getLink()).isEqualTo("https://example.com");
         assertThat(submission.getSubmittedAt()).isEqualTo(NOW);
-        verify(assignmentRepository).getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID);
+        verify(assignmentRepository).getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID);
         verify(assignmentSubmissionRepository).getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID);
         verify(notificationService).createAssignmentSubmissionSubmittedEventNotifications(submission, List.of(leader));
     }
@@ -129,7 +138,7 @@ class AssignmentSubmissionServiceTest {
         submission.submit("기존 내용", "https://old.example.com", NOW);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("수정 내용", "https://new.example.com");
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
 
@@ -151,7 +160,7 @@ class AssignmentSubmissionServiceTest {
         AssignmentSubmission submission = submissionWithId(300L, member, assignment);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("a".repeat(10_001), null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(ASSIGNMENT_ID, MEMBER_ID))
                 .thenReturn(submission);
 
@@ -170,7 +179,7 @@ class AssignmentSubmissionServiceTest {
         StudyMember member = studyMember(assignmentWithId(200L), MEMBER_ID, StudyMemberRole.MEMBER, "스터디원");
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("제출 내용", null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID))
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID))
                 .thenThrow(new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
 
         assertAssignmentNotFound(
@@ -189,8 +198,8 @@ class AssignmentSubmissionServiceTest {
         submission.submit("기존 내용", "https://old.example.com", NOW);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("수정 내용", null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID))
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.getByIdAndAssignmentIdForUpdateOrThrow(300L, ASSIGNMENT_ID))
                 .thenReturn(submission);
 
         assignmentSubmissionService.updateSubmission(USER_ID, STUDY_ID, ASSIGNMENT_ID, 300L, request);
@@ -198,7 +207,7 @@ class AssignmentSubmissionServiceTest {
         assertThat(submission.getContent()).isEqualTo("수정 내용");
         assertThat(submission.getLink()).isEqualTo("https://old.example.com");
         verify(assignmentAccessPolicy).requireCanUpdateSubmission(member, submission);
-        verify(assignmentSubmissionRepository).getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID);
+        verify(assignmentSubmissionRepository).getByIdAndAssignmentIdForUpdateOrThrow(300L, ASSIGNMENT_ID);
         verify(assignmentSubmissionRepository).save(submission);
     }
 
@@ -212,8 +221,8 @@ class AssignmentSubmissionServiceTest {
         submission.submit("기존 내용", "https://old.example.com", NOW);
         AssignmentSubmitRequest request = new AssignmentSubmitRequest("수정 내용", null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(actor);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID))
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentSubmissionRepository.getByIdAndAssignmentIdForUpdateOrThrow(300L, ASSIGNMENT_ID))
                 .thenReturn(submission);
         doThrow(new AuthException(AuthErrorCode.ACCESS_DENIED))
                 .when(assignmentAccessPolicy).requireCanUpdateSubmission(actor, submission);
@@ -374,7 +383,9 @@ class AssignmentSubmissionServiceTest {
     }
 
     private StudyMember studyMember(Assignment assignment, Long memberId, StudyMemberRole role, String name) {
-        StudyMember member = StudyMember.create(assignment.getStudy(), User.create(name, null), name, null, role);
+        User user = User.create(name, null);
+        ReflectionTestUtils.setField(user, "id", memberId);
+        StudyMember member = StudyMember.create(assignment.getStudy(), user, name, null, role);
         ReflectionTestUtils.setField(member, "id", memberId);
         return member;
     }

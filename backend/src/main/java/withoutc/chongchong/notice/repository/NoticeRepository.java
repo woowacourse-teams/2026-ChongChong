@@ -47,6 +47,30 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
                 .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT notice FROM Notice notice WHERE notice.study.id = :studyId ORDER BY notice.id")
+    List<Notice> findAllByStudyIdForUpdate(@Param("studyId") Long studyId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT notice FROM Notice notice WHERE EXISTS (
+                SELECT comment.id FROM Comment comment
+                WHERE comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.NOTICE
+                  AND comment.resourceId = notice.id AND comment.authorMember.id = :memberId
+            ) ORDER BY notice.id
+            """)
+    List<Notice> findAllByCommentAuthorMemberIdForUpdate(@Param("memberId") Long memberId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT notice FROM Notice notice WHERE EXISTS (
+                SELECT comment.id FROM Comment comment
+                WHERE comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.NOTICE
+                  AND comment.resourceId = notice.id AND comment.authorUser.id = :userId
+            ) ORDER BY notice.id
+            """)
+    List<Notice> findAllByCommentAuthorUserIdForUpdate(@Param("userId") Long userId);
+
     // 리더용
     @Query("""
             SELECT new withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection(

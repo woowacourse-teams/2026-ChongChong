@@ -11,10 +11,19 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 
 @Repository
 public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> {
+    boolean existsByStudyIdAndUserId(Long studyId, Long userId);
+
+    default void requireExistsByStudyIdAndUserId(Long studyId, Long userId) {
+        if (!existsByStudyIdAndUserId(studyId, userId)) {
+            throw new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+        }
+    }
+
     Optional<StudyMember> findByStudyIdAndUserId(Long studyId, Long userId);
 
     Optional<StudyMember> findByStudyIdAndId(Long studyId, Long memberId);
@@ -22,6 +31,37 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
     List<StudyMember> findAllByStudyId(Long studyId);
 
     List<StudyMember> findAllByStudyIdAndRole(Long studyId, StudyMemberRole role);
+
+    @Query("""
+            SELECT new withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection(
+                member.id, member.user.id)
+            FROM StudyMember member
+            WHERE member.study.id = :studyId
+            ORDER BY member.id
+            """)
+    List<StudyMemberIdentityProjection> findIdentitiesByStudyId(@Param("studyId") Long studyId);
+
+    @Query("""
+            SELECT member.id FROM StudyMember member
+            WHERE member.study.id = :studyId AND member.user.id = :userId
+            """)
+    Optional<Long> findIdByStudyIdAndUserId(@Param("studyId") Long studyId, @Param("userId") Long userId);
+
+    default Long getIdByStudyIdAndUserIdOrThrow(Long studyId, Long userId) {
+        return findIdByStudyIdAndUserId(studyId, userId)
+                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
+    }
+
+    @Query("""
+            SELECT member.user.id FROM StudyMember member
+            WHERE member.study.id = :studyId AND member.id = :memberId
+            """)
+    Optional<Long> findUserIdByStudyIdAndId(@Param("studyId") Long studyId, @Param("memberId") Long memberId);
+
+    default Long getUserIdByStudyIdAndIdOrThrow(Long studyId, Long memberId) {
+        return findUserIdByStudyIdAndId(studyId, memberId)
+                .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
+    }
 
     default StudyMember getByStudyIdAndUserIdOrThrow(Long studyId, Long userId) {
         return findByStudyIdAndUserId(studyId, userId)

@@ -15,10 +15,12 @@ import io.restassured.response.Response;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,6 +91,7 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
     private Long studyId;
     private Long noticeId;
     private Long assignmentId;
+    private Long assignmentStudyId;
 
     @BeforeEach
     void setUp() {
@@ -99,6 +102,7 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
         studyId = study.getId();
+        assignmentStudyId = studyId;
         Response notice = post("/studies/" + studyId + "/notices", Map.of("title", "기존 제목", "content", "기존 내용"));
         notice.then().statusCode(201);
         noticeId = notice.jsonPath().getLong("noticeId");
@@ -173,13 +177,65 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
 
     @ParameterizedTest
     @EnumSource(OtherDomain.class)
-    @DisplayName("공지 수정과 과제·제출물이 같은 파일을 동시에 연결하면 하나만 성공한다")
+    @DisplayName("같은 스터디의 공지 수정과 과제·제출물 첨부는 파일 잠금 뒤 하나만 성공한다")
     void preventConcurrentCrossDomainAttachment(OtherDomain domain) throws Exception {
         FileMetadata file = saveCompletedFile();
         List<Long> fileIds = List.of(file.getId());
-        CyclicBarrier beforeFileLock = new CyclicBarrier(2);
+        CountDownLatch noticeHoldsFile = new CountDownLatch(1);
+        CountDownLatch releaseNotice = new CountDownLatch(1);
+        AtomicInteger noticePid = new AtomicInteger();
         // 테스트 설정·검증에서 MANDATORY 프록시를 호출하지 않도록 내부 spy를 가져온다.
         // 실제 HTTP 요청은 원래 서비스 프록시와 DB 잠금을 그대로 거친다.
+        NoticeAttachmentService noticeTarget = AopTestUtils.getUltimateTargetObject(noticeAttachmentService);
+        AssignmentAttachmentService assignmentTarget = AopTestUtils.getUltimateTargetObject(assignmentAttachmentService);
+        Answer<Object> holdNotice = invocation -> {
+            Object result = invocation.callRealMethod();
+            noticePid.set(jdbcTemplate.queryForObject("SELECT pg_backend_pid()", Integer.class));
+            noticeHoldsFile.countDown();
+            assertThat(releaseNotice.await(10, SECONDS)).as("공지 첨부 트랜잭션 해제 대기").isTrue();
+            return result;
+        };
+        doAnswer(holdNotice).when(noticeTarget)
+                .prepareForUpdate(anyLong(), any(Notice.class), eq(fileIds));
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Response noticeResponse;
+        Response otherResponse;
+
+        try {
+            Future<Response> notice = executor.submit(() -> patchNotice(fileIds));
+            assertThat(noticeHoldsFile.await(10, SECONDS)).as("공지의 파일 잠금 획득 대기").isTrue();
+            Future<Response> other = executor.submit(() -> attachToOtherDomain(domain, fileIds));
+            awaitFileLockWait(noticePid.get());
+            assertThat(other.isDone()).isFalse();
+            releaseNotice.countDown();
+            noticeResponse = notice.get(15, SECONDS);
+            otherResponse = other.get(15, SECONDS);
+        } finally {
+            releaseNotice.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(10, SECONDS)).isTrue();
+        }
+
+        assertConcurrentOutcome(file, domain, noticeResponse, otherResponse);
+        verify(noticeTarget).prepareForUpdate(anyLong(), any(Notice.class), eq(fileIds));
+        verify(assignmentTarget).prepare(anyLong(), anyList(), eq(fileIds));
+    }
+
+    @ParameterizedTest
+    @EnumSource(OtherDomain.class)
+    @DisplayName("다른 스터디의 공지 수정과 과제·제출물이 같은 파일을 연결해도 하나만 성공한다")
+    void preventConcurrentCrossStudyAttachment(OtherDomain domain) throws Exception {
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        studyMemberRepository.save(StudyMember.create(otherStudy, leader, "리더", null, StudyMemberRole.LEADER));
+        assignmentStudyId = otherStudy.getId();
+        Response assignment = post("/studies/" + assignmentStudyId + "/assignments", Map.of(
+                "title", "과제 제목", "content", "과제 내용", "submissionTarget", "MEMBERS_AND_LEADER",
+                "submissionVisibility", "LEADER_ONLY", "closeAt", "2099-12-31T23:59:00"));
+        assignment.then().statusCode(201);
+        assignmentId = assignment.jsonPath().getLong("assignmentId");
+        FileMetadata file = saveCompletedFile();
+        List<Long> fileIds = List.of(file.getId());
+        CyclicBarrier beforeFileLock = new CyclicBarrier(2);
         NoticeAttachmentService noticeTarget = AopTestUtils.getUltimateTargetObject(noticeAttachmentService);
         AssignmentAttachmentService assignmentTarget = AopTestUtils.getUltimateTargetObject(assignmentAttachmentService);
         Answer<Object> awaitBothRequests = invocation -> {
@@ -207,6 +263,27 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
         assertConcurrentOutcome(file, domain, noticeResponse, otherResponse);
         verify(noticeTarget).prepareForUpdate(anyLong(), any(Notice.class), eq(fileIds));
         verify(assignmentTarget).prepare(anyLong(), anyList(), eq(fileIds));
+    }
+
+    private void awaitFileLockWait(int noticePid) throws InterruptedException {
+        long deadline = System.nanoTime() + SECONDS.toNanos(5);
+        while (!hasFileLockWaiter(noticePid) && System.nanoTime() < deadline) {
+            Thread.sleep(20);
+        }
+        assertThat(hasFileLockWaiter(noticePid))
+                .as("다른 첨부 요청이 공지 트랜잭션의 파일 행 잠금을 기다려야 한다").isTrue();
+    }
+
+    private boolean hasFileLockWaiter(int noticePid) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND wait_event_type = 'Lock'
+                      AND ? = ANY(pg_blocking_pids(pid))
+                      AND query ILIKE '%file_metadata%'
+                )
+                """, Boolean.class, noticePid));
     }
 
     private void assertConcurrentOutcome(FileMetadata file, OtherDomain domain, Response notice, Response other) {
@@ -250,7 +327,7 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
     }
 
     private String assignmentPath() {
-        return "/studies/" + studyId + "/assignments/" + assignmentId;
+        return "/studies/" + assignmentStudyId + "/assignments/" + assignmentId;
     }
 
     private Response post(String path, Map<String, Object> body) {

@@ -9,23 +9,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 import withoutc.chongchong.notification.service.NotificationService;
-import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryListResponse;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderNoticeSummaryListResponse;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse.LeaderNoticeSummaryResponse;
-import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
+import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberAssignmentSummaryListResponse;
 import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberAssignmentSummaryResponse;
 import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberNoticeSummaryListResponse;
 import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse.MemberNoticeSummaryResponse;
-import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
+import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse.MyStudyResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyCreateResponse;
 import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
@@ -54,7 +56,9 @@ public class StudyService {
     private final StudyMemberRepository studyMemberRepository;
     private final NoticeRepository noticeRepository;
     private final AssignmentRepository assignmentRepository;
+    private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final NotificationService notificationService;
+    private final CommentRepository commentRepository;
 
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
 
@@ -88,12 +92,16 @@ public class StudyService {
 
     @Transactional
     public void deleteStudy(Long userId, Long studyId) {
-        Study study = studyRepository.getByIdOrThrow(studyId);
+        Study study = studyRepository.getByIdForDeleteOrThrow(studyId);
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         validateLeaderRole(studyMember);
 
+        noticeRepository.findAllByStudyIdForUpdate(studyId);
+        assignmentRepository.findAllByStudyIdForUpdate(studyId);
+        assignmentSubmissionRepository.findAllByStudyIdForUpdate(studyId);
         entityManager.clear();
+        commentRepository.deleteAllByStudyId(studyId);
         notificationService.deleteNotificationsForStudy(studyId);
         studyRepository.delete(study);
     }

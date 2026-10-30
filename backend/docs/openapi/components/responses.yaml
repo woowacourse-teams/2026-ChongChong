@@ -1,12 +1,11 @@
 CommentListBadRequest:
-  description: 경로·쿼리 형식 오류, 잘못된 댓글 커서 또는 cursor와 focusCommentId 동시 지정
+  description: 경로·쿼리 형식 오류, 양수가 아닌 ID 또는 cursor와 focusCommentId 동시 지정
   content:
     application/json:
       schema:
         oneOf:
           - { $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }
           - { $ref: './schemas/errors.yaml#/InvalidRequestError' }
-          - { $ref: './schemas/comments.yaml#/CommentInvalidCursorError' }
           - { $ref: './schemas/comments.yaml#/CommentInvalidPageRequestError' }
 CommentWriteBadRequest:
   description: 경로·요청 형식 오류, 필수 본문 누락 또는 정규화 후 본문 길이·공백 규칙 위반

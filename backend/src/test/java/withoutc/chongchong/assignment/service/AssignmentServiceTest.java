@@ -48,6 +48,7 @@ import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterS
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
@@ -56,6 +57,9 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
 class AssignmentServiceTest {
@@ -65,6 +69,12 @@ class AssignmentServiceTest {
     private static final Long ASSIGNMENT_ID = 100L;
     private static final Long MEMBER_ID = 20L;
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
@@ -98,6 +108,8 @@ class AssignmentServiceTest {
                 notificationService,
                 mock(AssignmentAttachmentService.class),
                 mock(FileUrlGenerator.class),
+                userRepository,
+                commentRepository,
                 clock,
                 assignmentAccessPolicy
         );
@@ -118,7 +130,13 @@ class AssignmentServiceTest {
         ArgumentCaptor<Assignment> assignmentCaptor = ArgumentCaptor.forClass(Assignment.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
-        when(studyRepository.getByIdOrThrow(STUDY_ID)).thenReturn(study);
+        when(studyRepository.getByIdForShareOrThrow(STUDY_ID)).thenReturn(study);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(USER_ID);
+        when(member.getUser()).thenReturn(user);
+        when(studyMemberRepository.findIdentitiesByStudyId(STUDY_ID)).thenReturn(List.of(
+                new StudyMemberIdentityProjection(USER_ID, USER_ID),
+                new StudyMemberIdentityProjection(MEMBER_ID, USER_ID)));
         when(studyMemberRepository.findAllByStudyId(STUDY_ID)).thenReturn(List.of(leader, member));
         when(member.isLeader()).thenReturn(false);
         when(member.getId()).thenReturn(MEMBER_ID);
@@ -198,7 +216,7 @@ class AssignmentServiceTest {
                 "수정 제목", "수정 내용", "파일 제출", null, null, closeAt, List.of(NOW.plusDays(2))
         );
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
 
         assignmentService.update(USER_ID, STUDY_ID, ASSIGNMENT_ID, request);
 
@@ -217,7 +235,7 @@ class AssignmentServiceTest {
         StudyMember leader = mock(StudyMember.class);
         AssignmentUpdateRequest request = new AssignmentUpdateRequest("수정 제목", null, null, null, null, null, null);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID))
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID))
                 .thenThrow(new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
 
         assertAssignmentNotFound(() -> assignmentService.update(USER_ID, STUDY_ID, ASSIGNMENT_ID, request));
@@ -232,7 +250,7 @@ class AssignmentServiceTest {
         StudyMember leader = mock(StudyMember.class);
         Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
 
         assignmentService.delete(USER_ID, STUDY_ID, ASSIGNMENT_ID);
 
@@ -245,7 +263,7 @@ class AssignmentServiceTest {
     void deleteWhenAssignmentNotFoundInStudyTest() {
         StudyMember leader = mock(StudyMember.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID))
+        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID))
                 .thenThrow(new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
 
         assertAssignmentNotFound(() -> assignmentService.delete(USER_ID, STUDY_ID, ASSIGNMENT_ID));

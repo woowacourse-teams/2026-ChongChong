@@ -1,7 +1,7 @@
 # 0057. 댓글 원문을 resourceType과 resourceId로 참조한다
 
 - 날짜: 2026-10-30
-- 상태: 채택, 구현 전
+- 상태: 채택
 - 관련 이슈: 없음
 - 관련 정책: [댓글 정책](../comment-policy.md)
 - 관련 ADR: [0024. 하드 삭제 시 데이터베이스 외래 키 CASCADE로 종속 데이터를 삭제한다](0024-use-database-cascades-for-hard-delete.md),

@@ -2,7 +2,7 @@
 
 - 작성일: 2026-10-30
 - 기준: [댓글 정책](comment-policy.md), [ADR 0057](adr/0057-reference-comment-resources-by-type-and-id.md)
-- 상태: 1단계 계약·매핑·삭제·잠금 설계. 제품 코드와 DB 마이그레이션은 미구현이다.
+- 상태: 공지 댓글과 공통 저장·잠금·삭제 흐름을 구현하고 관련 로컬 검증을 통과했다. 과제·제출물 댓글 CRUD는 후속 단계다.
 
 ## 적용 범위와 interface
 
@@ -20,12 +20,13 @@
 
 원문 참조는 공지 ID, 과제 ID, 또는 과제 ID와 제출물 ID의 조합이다.
 HTTP 경로는 각 원문의 기존 상세 경로 아래 `/comments`와 `/comments/{commentId}`를 사용한다.
-OpenAPI의 댓글 operation 12개는 `x-backend.status: todo`, `owner: null`로 등록한다.
-실제 구현·HTTP 인수 테스트가 준비되기 전에는 완료 상태로 바꾸지 않는다.
+OpenAPI에 댓글 operation 12개를 선등록한다. 공지 4개는 실제 구현·검증 진행 상태를 표시하고,
+과제·제출물 8개는 `x-backend.status: todo`, `owner: null`로 유지한다. 병합 전에는 done으로 바꾸지 않는다.
 
 `CommentService`는 트랜잭션과 유스케이스 순서를 조율한다.
-`CommentTargetResolver` 하나가 세 종류의 원문을 범위에 맞게 조회하고 필요한 기존 정책을 연결한다.
-대상별 조회·수신자 선정에 실제 차이가 있는 부분만 분기하며 별도 전략 interface나 대상별 댓글 구현을 복제하지 않는다.
+현재 구현 대상은 공지 하나이므로 CommentService가 해당 원문을 직접 범위 조회한다.
+과제·제출물 구현 때 실제 대상 차이가 생기면 CommentTargetResolver로 기존 정책을 연결한다.
+별도 전략 interface나 대상별 댓글 구현은 미리 복제하지 않는다.
 `CommentAccessPolicy`는 전달받은 작성자·요청자·현재 역할로 수정·삭제를 판정하며 Repository를 호출하지 않는다.
 원문 삭제 경로는 댓글 정리 진입점을 호출하고, 정리 구현은 원문 조건을 사용하는 bulk query로 범위를 찾는다.
 
@@ -49,8 +50,10 @@ OpenAPI의 댓글 operation 12개는 `x-backend.status: todo`, `owner: null`로 
 이때도 원문·댓글의 경로 소속을 검증하고 수정·삭제 성공 응답으로 내용을 반환하지 않는다.
 회원 탈퇴로 `author_user_id`가 null이 된 댓글은 어떤 사용자도 본인 댓글로 판정하지 않는다.
 
-본문은 Unicode White_Space에 해당하는 앞뒤 공백만 제거한다.
-정규화한 문자열의 Unicode 코드 포인트 수가 1~1,000이어야 하며 내부 공백·줄바꿈은 유지한다.
+본문은 `String.trim()`으로 앞뒤 공백을 제거하며, 정리한 문자열이 `String.isBlank()`이면 거부한다.
+NBSP 등 trim 대상이 아닌 문자는 별도로 제거하지 않는다.
+정규화한 문자열은 공지·과제와 동일하게 `String.length()` 기준 1~1,000자여야 한다.
+보조 평면의 이모지 등은 UTF-16 코드 단위 두 개로 계산하며 내부 공백·줄바꿈은 유지한다.
 요청 DTO의 raw 문자열에 `maxLength: 1000`이나 같은 크기의 Size 검증을 적용하지 않는다.
 앞뒤 공백을 포함한 긴 입력도 정규화 후 유효할 수 있기 때문이다.
 생성·수정이 같은 도메인 정규화·검증을 사용하며, 요청 스키마는 이 의미 규칙 전체를 대신하지 않는다.
@@ -58,7 +61,7 @@ OpenAPI의 댓글 operation 12개는 `x-backend.status: todo`, `owner: null`로 
 
 ## 저장 매핑
 
-새 Flyway migration은 구현 단계에서 추가한다. 이 문서는 DDL 적용 완료를 의미하지 않는다.
+`V26__create_comments.sql`이 아래 매핑을 관리한다. 실제 환경에는 해당 migration을 적용해야 한다.
 
 | comments 컬럼 | 제약·책임 |
 | --- | --- |
@@ -67,7 +70,7 @@ OpenAPI의 댓글 operation 12개는 `x-backend.status: todo`, `owner: null`로 
 | resource_id | NOT NULL, 양수, 원문 FK 없음 |
 | author_user_id | nullable users FK, ON DELETE SET NULL, 소유권 판별 |
 | author_member_id | nullable study_members FK, ON DELETE SET NULL, 표시용 멤버십 |
-| content | NOT NULL TEXT, 정규화 후 1~1,000 코드 포인트 |
+| content | NOT NULL TEXT, 애플리케이션에서 정규화 후 String.length() 기준 1~1,000자 |
 | created_at, updated_at | 기존 BaseEntity·Clock 사용, 작성 시각은 불변 |
 | edited_at | nullable TIMESTAMP(6), 실제 본문 수정 시각 |
 
@@ -79,7 +82,7 @@ OpenAPI의 댓글 operation 12개는 `x-backend.status: todo`, `owner: null`로 
 null 이미지는 기본 이미지 표시를 뜻하며 탈퇴한 작성자의 User 프로필로 대체하지 않는다.
 재가입해도 과거 댓글을 새 멤버십에 연결하지 않는다.
 
-기본 인덱스는 `(resource_type, resource_id, created_at, id)`다.
+기본 인덱스는 `(resource_type, resource_id, id)`다.
 SET NULL 처리에 필요한 author_user_id·author_member_id 인덱스도 둔다.
 원문 종류·ID의 유효값과 content 길이의 DB 제약은 도메인 검증을 보완한다.
 작성자 연결 해제는 본문 수정으로 취급하지 않으며 `edited_at`에 영향을 주지 않는다.
@@ -150,85 +153,71 @@ JPA 삭제 콜백만으로 DB CASCADE에 따른 제출물 삭제를 감지하려
 
 ## 잠금 대상과 획득 순서
 
-초기에는 같은 스터디의 댓글 쓰기와 원문 수명·권한 변경을 Study 행의 `PESSIMISTIC_WRITE`로 직렬화한다.
-외래 키가 없는 원문 종류마다 별도 잠금 규칙을 만들지 않고 스터디 행을 공통 잠금 대상으로 사용한다.
-같은 스터디의 댓글 쓰기 처리량을 제한하는 비용을 감수한다. 순수 댓글 조회와 외부 Push 전송은 이 잠금에 포함하지 않는다.
-기존 코드에 Transaction 선언이 있다는 것만으로 이 규칙이 적용됐다고 보지 않는다.
+댓글 쓰기와 원문 삭제는 원문 Repository의 `PESSIMISTIC_WRITE` 조회로 직렬화한다.
+공지 댓글은 공지 행을 잠그며 같은 스터디의 다른 공지 댓글은 동시에 등록할 수 있다.
+잠금 획득과 트랜잭션 안의 권한·수신자 재검사는 각 유스케이스 Service가 수행한다.
+별도의 `StudyWriteLockService`나 `LockedStudy` 전달 객체는 두지 않는다.
+순수 댓글 조회와 외부 Push 전송은 이 잠금에 포함하지 않는다.
 
-명시적 잠금은 `User ID 오름차순 → Study ID 오름차순 → 기존 원문·리마인더·댓글 잠금` 순서다.
-User 잠금이 필요한 경로는 Study 잠금 뒤에 User 잠금을 새로 얻거나 공유 잠금을 쓰기 잠금으로 올리지 않는다.
-같은 트랜잭션에서 스터디 잠금 뒤 다른 스터디 잠금을 얻어야 한다면 전체 대상을 먼저 모아 오름차순으로 잠근다.
+잠금 순서는 `User ID 오름차순 → 필요한 경우 부모 Study → Notice ID 오름차순 → Assignment ID 오름차순
+→ AssignmentSubmission ID 오름차순 → 해당 리마인더·댓글·첨부`다.
+단일 원문 작업은 그 원문과 필요한 부모만 잠근다. 원문 잠금 뒤 User 잠금을 새로 얻거나 공유 잠금을 쓰기 잠금으로 올리지 않는다.
+제출물 변경은 부모 과제를 먼저 잠가 과제 삭제·제출 대상 변경과 같은 순서를 사용한다.
 
 | 경로 | 잠금과 재검사 |
 | --- | --- |
-| 댓글 생성 | 요청자와 알림 후보 User에 PESSIMISTIC_READ를 ID순으로 획득, Study에 PESSIMISTIC_WRITE, 원문·멤버십·권한·제출 여부·실제 수신 후보 재조회 |
-| 댓글 수정·삭제 | 요청자 User에 PESSIMISTIC_READ, Study에 PESSIMISTIC_WRITE, 경로·댓글·작성자/리더 권한 재검사 |
-| 기존 공지·과제 생성 | 요청자와 기존 정책의 수신/제출 대상 User 공유 잠금, Study 쓰기 잠금, 대상 멤버십 재검사 후 최초 원문 save·flush와 알림 저장 |
-| 기존 최초 제출 | 요청자와 기존 제출 알림 후보 리더 User 공유 잠금, Study 쓰기 잠금, 제출물 쓰기 잠금·최초 제출 여부 재검사 후 기존 알림 저장 |
-| 리마인더 한 건 | 사전 탐색한 수신 후보 User 공유 잠금, Study 쓰기 잠금, 그 reminder ID만 SKIP LOCKED로 선점·상태/시각/수신자 재검사, 알림 저장과 SENT 전환 |
-| 공지·과제 삭제, 멤버 탈퇴·방출 | Study에 PESSIMISTIC_WRITE, 현재 역할·원문/대상 멤버 재조회, 기존 원문·리마인더 잠금, 댓글·알림·원문 삭제 |
-| 과제 제출 대상·공개 범위 수정 | Study에 PESSIMISTIC_WRITE를 기존 과제 조회·수정·첨부 flush보다 먼저 획득, 변경 권한과 삭제 범위 재검사 |
-| 스터디 삭제 | Study에 PESSIMISTIC_WRITE, 리더 재검사, 하위 댓글·알림 정리 후 Study 삭제 |
-| 회원 탈퇴 | 기존 User PESSIMISTIC_WRITE와 리더 차단 검사, 멤버십의 Study ID를 Projection으로 수집, 해당 Study를 ID순으로 PESSIMISTIC_WRITE, 제출물 댓글 정리 후 User 삭제 |
+| 공지 댓글 생성 | 요청자와 사전 멤버 후보 User 공유 잠금, 해당 공지 쓰기 잠금, 원문·현재 멤버십·실제 리더 수신 후보 재검사 |
+| 공지 댓글 수정·삭제 | 요청자 User 공유 잠금, 해당 공지 쓰기 잠금, 댓글·작성자/현재 리더 권한 재검사 |
+| 기존 공지·과제 생성 | 요청자와 사전 수신/제출 후보 User 공유 잠금, 부모 Study 공유 잠금, 최초 원문 save·flush와 알림 저장 |
+| 기존 최초 제출 | 요청자와 사전 알림 후보 User 공유 잠금, 과제·해당 제출물 쓰기 잠금, 최초 제출 여부 재검사 후 알림 저장 |
+| 리마인더 한 건 | 사전 멤버 후보 User 공유 잠금, 해당 원문 쓰기 잠금, 그 reminder ID만 SKIP LOCKED로 선점·상태/시각/수신자 재검사 |
+| 공지·과제 삭제·수정 | 해당 공지 또는 과제 쓰기 잠금, 과제 삭제·제출 대상 축소 시 하위 제출물도 ID순 잠금, 댓글·알림 정리 후 원문 변경 |
+| 스터디 탈퇴·방출 | 제거 대상 User 쓰기 잠금, 작성 댓글의 원문과 삭제될 제출물의 부모 과제를 모아 종류·ID순 잠금, 멤버 재조회 후 정리·삭제 |
+| 스터디 삭제 | Study에 실제 FOR UPDATE, 하위 공지·과제·제출물을 종류·ID순 잠금, 댓글·알림 정리 후 Study 삭제 |
+| 회원 탈퇴 | 기존 User 쓰기 잠금과 리더 차단 검사, 작성 댓글의 원문과 삭제될 제출물의 부모 과제를 종류·ID순 잠금, 댓글 정리 후 User 삭제 |
 
-User 공유 잠금은 기존 FK 삽입의 KEY SHARE 잠금과 호환되는 PostgreSQL `FOR SHARE` 의미로 검증한다.
-댓글 트랜잭션은 User를 수정하지 않는다. 불필요한 User 쓰기 잠금으로 기존 원문 생성의 FK 삽입을 막지 않는다.
-알림 수신자의 User FK 삽입이 회원 탈퇴의 User 잠금과 역순으로 대기하지 않도록 수신 후보도 먼저 공유 잠근다.
+새 원문은 아직 자신의 행이 없으므로 생성 시에만 부모 Study를 공유 잠근다.
+스터디 자체 삭제는 native `FOR UPDATE`를 사용한다. FK의 KEY SHARE와 호환되는 FOR NO KEY UPDATE에 의존하지 않는다.
+따라서 삭제가 하위 원문 집합을 모은 뒤 새 원문이 추가되거나, 멤버를 먼저 붙잡은 생성자가 부모 삭제와 교착하는 일을 막는다.
+기존 가입 인원 제한을 위한 Study 쓰기 잠금은 유지하며 댓글의 공통 잠금으로 사용하지 않는다.
 
-이 규약은 댓글 생성자에만 적용하지 않는다.
-현재 공지·과제 생성은 원문 INSERT에서 Study FK KEY SHARE를 얻은 뒤 수신자 User FK를 삽입한다.
-리마인더는 reminder 행을 먼저 잠근 뒤 User FK를 삽입한다.
-이를 그대로 두면 User 쓰기 잠금을 가진 회원 탈퇴와 새 Study 잠금을 추가한 삭제 경로 사이에 교착이 생길 수 있다.
-따라서 기존 알림 생산자의 User 공유 잠금은 NotificationService 호출 직전이 아니라
-최초 원문 save·flush 또는 제출물 잠금보다 먼저 획득한다.
-회원 탈퇴에 Study 잠금을 추가하는 구현과 이 기존 생산자 변경은 같은 검증 범위에 포함한다.
+User 공유 잠금은 PostgreSQL `FOR SHARE` 의미로 검증하며 ID순으로 획득한다.
+사용자·멤버 삭제는 대상 User 쓰기 잠금을 먼저 획득하므로 원문 저장 중 작성자나 수신 멤버가 사라지지 않는다.
+방출 대상 userId는 scalar로 탐색하고, 잠금 뒤 같은 memberId·studyId의 현재 멤버를 처음 로드해 재검사한다.
+User 이름 변경도 기존 User 쓰기 잠금을 사용한다. 잠금 전 관리 엔티티를 권한 판정에 재사용하지 않는다.
 
-기존 공지·과제 생성 및 제출 알림의 수신 후보는 기존 정책상 선정 시점의 ID snapshot을 사용한다.
-snapshot은 memberId와 userId 쌍으로 보존하며, 탈퇴 후 재가입한 같은 사용자의 새 멤버십으로 대체하지 않는다.
-공지 수신자·과제 제출 대상 초기화에도 같은 snapshot을 사용한다.
-Study 잠금 후에는 그 후보의 현재 멤버십·권한을 재검사하여 더 이상 유효하지 않은 대상을 제외한다.
-탐색 후 가입한 사용자를 snapshot에 뒤늦게 추가하거나 User 잠금을 Study 뒤에서 획득하지 않는다.
-이는 기존 후보 선정 후 저장하는 흐름을 유지하기 위한 규칙이며 댓글 전용 409를 기존 HTTP 응답에 추가하지 않는다.
-후보 User가 이미 삭제됐다면 그 후보를 제외하고, 요청자의 현재 멤버십·원문 유효성 실패는 기존 오류로 처리한다.
+탈퇴 시 작성자 연결의 SET NULL도 댓글 행을 변경한다. 제출물 삭제가 지우는 댓글뿐 아니라
+탈퇴자의 작성 댓글이 속한 원문도 함께 잠가 두 사람의 댓글 DELETE와 SET NULL이 서로를 기다리는 교착을 막는다.
+이 원문 집합은 User 쓰기 잠금 뒤 수집하므로 새 작성 댓글이나 멤버십으로 뒤늦게 확대되지 않는다.
+회원 탈퇴는 이미 스터디를 떠난 뒤에도 authorUser 연결이 남은 댓글의 원문까지 포함한다.
 
-리마인더는 공지 batch와 과제 batch를 하나의 쓰기 트랜잭션에서 차례로 처리하지 않는다.
-기존 batch 크기 범위에서 두 종류의 reminder ID·스터디 ID·수신 후보를 비잠금 Projection으로 탐색하고,
-한 건씩 독립된 쓰기 트랜잭션으로 위 순서를 적용한다. 자기 호출로 Transaction 프록시를 우회하지 않는다.
-선점 쿼리는 사전 탐색한 그 reminder ID와 현재 PENDING·시각 조건에 한정하고 FOR UPDATE SKIP LOCKED를 유지한다.
-이미 삭제·처리됐거나 다른 worker가 선점한 건은 건너뛴다.
-잠그지 않은 새 수신자가 필요한 건도 PROCESSING으로 바꾸지 않고 건너뛰어 다음 탐색에서 다시 평가한다.
-각 reminder의 알림·Delivery 저장과 SENT 전환은 여전히 하나의 트랜잭션이다.
-따라서 공지 reminder에서 Study를 잠근 뒤 과제 reminder의 User를 새로 잠그는 순서는 발생하지 않는다.
+기존 공지·과제 생성 및 제출 알림의 후보는 사전 탐색한 memberId와 userId 쌍으로 보존한다.
+원문 잠금 후 현재 멤버십·권한을 처음 조회해 후보와 비교하고, 탈퇴 후 재가입한 같은 사용자의 새 멤버십으로 대체하지 않는다.
+공지 수신자·과제 제출 대상 초기화에도 같은 후보를 사용하며 탐색 후 가입한 사용자를 뒤늦게 추가하지 않는다.
+후보가 사라지면 제외하고, 요청자 멤버십·원문 유효성 실패는 기존 오류로 처리한다.
+댓글의 현재 리더 후보가 사전 후보 밖이면 아무 댓글도 저장하지 않고 `409 COMMENT_STATE_CHANGED`로 끝낸다.
 
-댓글 생성의 최초 원문·수신자 탐색은 ID Projection으로만 수행한다.
-잠금 전 조회한 관리 엔티티를 잠금 후 권한 판정에 재사용하지 않는다.
-Study 잠금 후 후보가 줄었다면 현재 허용 후보만 사용한다.
-새 후보가 생겨 아직 공유 잠그지 않은 User가 필요하면 새 잠금을 뒤늦게 얻지 않고
-아무 댓글도 저장하지 않은 채 `409 COMMENT_STATE_CHANGED`로 전체 트랜잭션을 끝낸다.
-사용자가 재요청하면 처음부터 현재 후보로 검사한다. 서버가 커밋 성공 여부가 불명확한 요청을 자동 재실행하지 않는다.
-
-회원 탈퇴 중 수집한 스터디가 잠금 전에 이미 삭제됐다면 그 스터디는 건너뛴다.
-User 쓰기 잠금은 유지되므로 해당 사용자의 새 멤버십 생성은 기존 가입 규칙에 따라 대기한다.
-멤버십 엔티티 전체를 로드해 삭제된 User를 다시 flush하는 방식은 사용하지 않는다.
+리마인더는 비잠금 Projection으로 후보를 탐색하고 한 건씩 독립된 쓰기 트랜잭션에서 처리한다.
+원문을 먼저 잠근 뒤 사전 탐색한 reminder ID와 현재 PENDING·시각 조건에 한정해 FOR UPDATE SKIP LOCKED로 선점한다.
+원문이나 리마인더가 삭제·처리됐거나 다른 worker가 선점했다면 건너뛴다.
+사전 후보에 없는 새 수신자가 필요한 건도 PROCESSING으로 바꾸지 않고 다음 탐색으로 넘긴다.
+알림·Delivery 저장과 SENT 전환은 같은 트랜잭션이며 자기 호출로 Transaction 프록시를 우회하지 않는다.
 
 현재 상태를 재검사해 이미 삭제된 원문·댓글은 해당 404, 없어진 조회·작성 권한은 기존 403으로 반환한다.
 알려진 잠금 시간 초과·교착으로 댓글 쓰기가 취소되면 롤백 후 `409 COMMENT_STATE_CHANGED`로 변환한다.
-그 밖의 DB 제약·프로그래밍 오류를 이 코드로 일괄 변환하지 않는다.
-원문 삭제와 생성 중 어느 쪽이 먼저 잠금을 얻어도 고아 댓글·알림이 남지 않는지 실제 PostgreSQL로 증명한다.
+그 밖의 DB 제약·프로그래밍 오류를 이 코드로 일괄 변환하지 않는다. 서버가 등록 요청을 자동 재실행하지 않는다.
+동일 공지 직렬화, 다른 공지 병렬 등록, 생성·삭제와 동시 탈퇴의 결과를 실제 PostgreSQL로 검증한다.
 
 ## 목록과 특정 댓글 위치
 
-정렬은 `created_at ASC, id ASC`다. size는 기본 10, 1~100이며 size+1개로 hasNext를 계산한다.
-기존 Long 기반 CursorPageRequest·Response는 변경하지 않고 댓글 전용 cursor 문자열을 사용한다.
-cursor는 Base64URL(패딩 없음)로 인코딩한 UTF-8 JSON이며 다음 값을 담는다.
-
-`{"v":1,"resourceType":"NOTICE","resourceId":1,"createdAt":"2026-10-30T10:00:00.000000","id":11}`
-
-DB에 저장된 마이크로초 정밀도를 사용하고, cursor의 버전·시각·양수 ID·원문 종류·ID를 검증한다.
-길이는 1~512자, 문자는 Base64URL 범위이며 잘못되거나 다른 원문의 cursor는 `400 COMMENT_INVALID_CURSOR`다.
-다음 페이지는 `(created_at, id)`가 cursor보다 큰 댓글을 조회한다.
-cursor의 댓글이 삭제되어도 다음 조회에 그 행을 다시 찾을 필요가 없다.
-cursor는 조회 위치일 뿐 권한 증명이 아니며 모든 요청에서 원문 조회 권한을 검사한다.
+정렬은 `id ASC`다. size는 기본 10, 1~100이며 size+1개로 hasNext를 계산한다.
+페이지 크기 검증, size+1 조회 개수, 반환 목록 분할과 hasNext·nextCursor 계산은
+기존 Long 기반 CursorPageRequest와 CursorPageResponse를 공유한다. 댓글 전용 pagination 타입은 두지 않는다.
+cursor는 생략하거나 양수 Long으로 전달하며 nextCursor는 마지막으로 반환한 댓글 ID다.
+같은 원문에서 `id > cursor`인 댓글을 조회하므로 기준 댓글이 삭제되어도 이어서 조회할 수 있다.
+cursor는 숫자로 된 조회 경계이며 기준 댓글의 존재나 원문 소속을 별도로 조회하지 않는다.
+모든 조회는 요청한 원문 종류·ID로 제한하고 원문 조회 권한은 요청마다 검사한다.
+동시 등록에서는 ID 발급 순서와 작성 시각 순서가 다를 수 있으며, 정확한 작성 시각순 정렬은 후속 검토로 남긴다.
 
 focusCommentId는 같은 원문에 속한 댓글인지 확인한 뒤 그 댓글을 포함하여 이후 size개를 조회한다.
 cursor와 동시에 지정하면 `400 COMMENT_INVALID_PAGE_REQUEST`다.
@@ -240,15 +229,14 @@ cursor와 동시에 지정하면 `400 COMMENT_INVALID_PAGE_REQUEST`다.
 ## 오류와 검증 기준
 
 기존 인증·파라미터·원문 없음·권한 거부 형식을 재사용한다.
-새 오류는 COMMENT_INVALID_CONTENT(400), COMMENT_INVALID_CURSOR(400),
-COMMENT_INVALID_PAGE_REQUEST(400), COMMENT_NOT_FOUND(404),
+새 오류는 COMMENT_INVALID_CONTENT(400), COMMENT_INVALID_PAGE_REQUEST(400), COMMENT_NOT_FOUND(404),
 COMMENT_TARGET_NOT_READY(409), COMMENT_STATE_CHANGED(409)다.
 수정·삭제는 실패하더라도 새로운 알림을 만들지 않는다.
 
 1단계에서는 OpenAPI lint·bundle·build, 예제 스키마·미구현 메타데이터와 문서 링크를 검증한다.
 아래 실행 검증은 후속 구현 단계의 완료 조건이며, 이번 문서 작성으로 통과한 것으로 간주하지 않는다.
 
-- 도메인·Policy: 본문 경계와 Unicode 공백·줄바꿈, 수정 시각, 작성자/리더 권한.
+- 도메인·Policy: 본문 경계와 trim·isBlank 기준 공백·줄바꿈, 수정 시각, 작성자/리더 권한.
 - HTTP: 세 대상 CRUD, 원문 소속 혼합 거부, 제출물 공개 범위·미제출 제한, 페이지와 focus 조회.
 - PostgreSQL: 두 작성자 SET NULL, 알림 CASCADE·유일 제약, 탈퇴 후 보존·재가입, 모든 삭제 경로와 롤백.
 - 별도 트랜잭션 경합: 작성↔원문/스터디 삭제, 작성↔멤버 탈퇴·방출/회원 탈퇴,

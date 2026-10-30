@@ -46,7 +46,7 @@ class NotificationResourceDeletionConcurrencyTest extends PostgresContainerTest 
     private static final ZoneId ZONE_ID = ZoneId.of("Asia/Seoul");
 
     @Autowired
-    private NotificationService notificationService;
+    private NotificationReminderService notificationReminderService;
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -117,7 +117,7 @@ class NotificationResourceDeletionConcurrencyTest extends PostgresContainerTest 
             Future<?> scheduler = executor.submit(() -> {
                 try {
                     new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-                        notificationService.createScheduledRemindNotifications();
+                        notificationReminderService.findCandidates().forEach(notificationReminderService::process);
                         createdNotificationCount.complete(notificationRepository.findAll().size());
                         await(releaseScheduler);
                     });

@@ -16,10 +16,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
@@ -34,6 +35,9 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
@@ -44,6 +48,16 @@ class StudyMemberServiceTest {
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
+
+    @Mock
+    private NoticeRepository noticeRepository;
+    @Mock
+    private AssignmentRepository assignmentRepository;
+    @Mock
+    private AssignmentSubmissionRepository assignmentSubmissionRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private StudyRepository studyRepository;
@@ -255,6 +269,7 @@ class StudyMemberServiceTest {
         Long userId = 1L;
         Long studyId = 2L;
         Long memberId = 3L;
+        Long targetUserId = 4L;
         StudyMember leader = mock(StudyMember.class);
         StudyMember target = mock(StudyMember.class);
         when(leader.isLeader()).thenReturn(true);
@@ -262,9 +277,18 @@ class StudyMemberServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
         when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(target);
 
+        when(studyMemberRepository.getUserIdByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(targetUserId);
+
         studyMemberService.expel(userId, studyId, memberId);
 
-        InOrder inOrder = inOrder(notificationService, studyMemberRepository);
+        InOrder inOrder = inOrder(userRepository, noticeRepository, assignmentRepository,
+                assignmentSubmissionRepository, commentRepository, notificationService, studyMemberRepository);
+        inOrder.verify(userRepository).getByIdForUpdateOrThrow(targetUserId);
+        inOrder.verify(noticeRepository).findAllByCommentAuthorMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentRepository).findAllAffectedByMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentSubmissionRepository).findAllByMemberIdForUpdate(memberId);
+        inOrder.verify(studyMemberRepository).getByStudyIdAndIdOrThrow(studyId, memberId);
+        inOrder.verify(commentRepository).deleteAllForMemberSubmissions(memberId);
         inOrder.verify(notificationService).deleteNotificationsForStudyMember(memberId);
         inOrder.verify(studyMemberRepository).delete(target);
     }
@@ -358,9 +382,17 @@ class StudyMemberServiceTest {
         when(member.isLeader()).thenReturn(false);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(member);
 
+        when(studyMemberRepository.getIdByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(memberId);
+
         studyMemberService.leave(userId, studyId);
 
-        InOrder inOrder = inOrder(notificationService, studyMemberRepository);
+        InOrder inOrder = inOrder(userRepository, noticeRepository, assignmentRepository,
+                assignmentSubmissionRepository, commentRepository, notificationService, studyMemberRepository);
+        inOrder.verify(userRepository).getByIdForUpdateOrThrow(userId);
+        inOrder.verify(noticeRepository).findAllByCommentAuthorMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentRepository).findAllAffectedByMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentSubmissionRepository).findAllByMemberIdForUpdate(memberId);
+        inOrder.verify(commentRepository).deleteAllForMemberSubmissions(memberId);
         inOrder.verify(notificationService).deleteNotificationsForStudyMember(memberId);
         inOrder.verify(studyMemberRepository).delete(member);
     }

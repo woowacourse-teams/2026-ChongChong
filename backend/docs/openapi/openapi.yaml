@@ -20,7 +20,7 @@ tags:
   - { name: Notice, description: 공지 API }
   - { name: Assignment, description: 과제 API }
   - { name: Assignment Submission, description: 과제 제출물 API }
-  - { name: Comment, description: 공지·과제·제출물 댓글 API. 계약 선등록이며 구현 전이다. }
+  - { name: Comment, description: 공지·과제·제출물 댓글 API. 대상별 구현 상태는 각 operation의 x-backend를 따른다. }
   - { name: Web Push, description: Web Push 구독 API }
   - { name: Notification, description: 알림 API }
   - { name: File, description: 파일 업로드 API }

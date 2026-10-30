@@ -29,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
 import withoutc.chongchong.auth.exception.AuthException;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
@@ -40,8 +41,8 @@ import withoutc.chongchong.notice.controller.dto.NoticeDetailResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeListResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeSummaryResponse;
 import withoutc.chongchong.notice.controller.dto.NoticeUpdateRequest;
-import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.entity.Notice;
+import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
@@ -56,6 +57,8 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +69,12 @@ class NoticeServiceTest {
     private static final Long NOTICE_ID = 100L;
     private static final Long MEMBER_ID = 20L;
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
@@ -105,6 +114,8 @@ class NoticeServiceTest {
                 notificationService,
                 noticeAttachmentService,
                 fileUrlGenerator,
+                userRepository,
+                commentRepository,
                 noticeAccessPolicy,
                 clock
         );
@@ -121,7 +132,15 @@ class NoticeServiceTest {
         ArgumentCaptor<Notice> noticeCaptor = ArgumentCaptor.forClass(Notice.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
-        when(studyRepository.getByIdOrThrow(STUDY_ID)).thenReturn(study);
+        when(studyRepository.getByIdForShareOrThrow(STUDY_ID)).thenReturn(study);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(USER_ID);
+        when(leader.getId()).thenReturn(USER_ID);
+        when(leader.getUser()).thenReturn(user);
+        when(member.getUser()).thenReturn(user);
+        when(studyMemberRepository.findIdentitiesByStudyId(STUDY_ID)).thenReturn(List.of(
+                new StudyMemberIdentityProjection(USER_ID, USER_ID),
+                new StudyMemberIdentityProjection(MEMBER_ID, USER_ID)));
         when(studyMemberRepository.findAllByStudyId(STUDY_ID)).thenReturn(List.of(leader, member));
         when(member.isLeader()).thenReturn(false);
         when(member.getId()).thenReturn(MEMBER_ID);
@@ -159,7 +178,7 @@ class NoticeServiceTest {
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
         verify(noticeAccessPolicy).requireCanCreateNotice(actor);
-        verifyNoInteractions(studyRepository, noticeRepository, notificationService);
+        verifyNoInteractions(noticeRepository, notificationService);
     }
 
     @Test

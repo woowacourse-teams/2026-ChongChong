@@ -13,6 +13,21 @@ import withoutc.chongchong.notification.exception.NotificationException;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
+    @Modifying
+    @Query(value = """
+            DELETE FROM notifications
+            WHERE resource_type = 'ASSIGNMENT_SUBMISSION'
+              AND EXISTS (
+                  SELECT 1
+                  FROM assignment_submissions AS submissions
+                  JOIN study_members AS members ON members.id = submissions.member_id
+                  WHERE submissions.id = notifications.resource_id
+                    AND submissions.assignment_id = :assignmentId
+                    AND members.role = 'LEADER'
+              )
+            """, nativeQuery = true)
+    void deleteAllForLeaderSubmissions(@Param("assignmentId") Long assignmentId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Notification notification WHERE notification.recipient.id = :userId")
     int deleteAllByRecipientId(@Param("userId") Long userId);

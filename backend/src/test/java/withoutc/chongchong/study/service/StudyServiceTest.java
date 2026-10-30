@@ -25,15 +25,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
-import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse.MyStudyResponse;
+import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
 import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
@@ -53,6 +55,12 @@ import withoutc.chongchong.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class StudyServiceTest {
+
+    @Mock
+    private AssignmentSubmissionRepository assignmentSubmissionRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private StudyRepository studyRepository;
@@ -274,7 +282,7 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
         );
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyRepository.getByIdForDeleteOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
 
@@ -291,7 +299,7 @@ class StudyServiceTest {
     void deleteStudyForMissingStudyTest() {
         Long userId = 1L;
         Long studyId = 1L;
-        when(studyRepository.getByIdOrThrow(studyId))
+        when(studyRepository.getByIdForDeleteOrThrow(studyId))
                 .thenThrow(new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
 
         assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
@@ -308,7 +316,7 @@ class StudyServiceTest {
         Long userId = 1L;
         Long studyId = 1L;
         Study study = Study.create("자바 스터디", "설명");
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyRepository.getByIdForDeleteOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
 
@@ -331,7 +339,7 @@ class StudyServiceTest {
         StudyMember studyMember = StudyMember.create(
                 study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER
         );
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
+        when(studyRepository.getByIdForDeleteOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
 
