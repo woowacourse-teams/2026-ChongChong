@@ -2,7 +2,7 @@
 
 - 작성일: 2026-10-30
 - 기준: [댓글 정책](comment-policy.md), [ADR 0057](adr/0057-reference-comment-resources-by-type-and-id.md)
-- 상태: 공지 댓글과 공통 저장·잠금·삭제 흐름을 구현하고 관련 로컬 검증을 통과했다. 과제·제출물 댓글 CRUD는 후속 단계다.
+- 상태: 공지·과제·제출물 댓글 CRUD를 공통 저장·잠금·삭제 흐름으로 구현하고 관련 로컬 검증을 통과했다.
 
 ## 적용 범위와 interface
 
@@ -20,13 +20,13 @@
 
 원문 참조는 공지 ID, 과제 ID, 또는 과제 ID와 제출물 ID의 조합이다.
 HTTP 경로는 각 원문의 기존 상세 경로 아래 `/comments`와 `/comments/{commentId}`를 사용한다.
-OpenAPI에 댓글 operation 12개를 선등록한다. 공지 4개는 실제 구현·검증 진행 상태를 표시하고,
-과제·제출물 8개는 `x-backend.status: todo`, `owner: null`로 유지한다. 병합 전에는 done으로 바꾸지 않는다.
+OpenAPI의 댓글 operation 12개는 구현 후 `x-backend.status: review`, `owner: wontop02`로 표시한다.
+병합 전에는 done으로 바꾸지 않는다.
 
 `CommentService`는 트랜잭션과 유스케이스 순서를 조율한다.
-현재 구현 대상은 공지 하나이므로 CommentService가 해당 원문을 직접 범위 조회한다.
-과제·제출물 구현 때 실제 대상 차이가 생기면 CommentTargetResolver로 기존 정책을 연결한다.
-별도 전략 interface나 대상별 댓글 구현은 미리 복제하지 않는다.
+각 Controller는 경로에서 CommentTarget을 생성하며, 클라이언트 본문에서 원문 종류를 받지 않는다.
+CommentTargetResolver가 원문 종류별 범위 조회·잠금과 제출물 조회 권한·실제 제출 여부를 연결한다.
+제출물 쓰기는 부모 과제와 제출물을 차례로 잠근다. 대상별 CRUD나 별도 전략 interface는 복제하지 않는다.
 `CommentAccessPolicy`는 전달받은 작성자·요청자·현재 역할로 수정·삭제를 판정하며 Repository를 호출하지 않는다.
 원문 삭제 경로는 댓글 정리 진입점을 호출하고, 정리 구현은 원문 조건을 사용하는 bulk query로 범위를 찾는다.
 
@@ -61,7 +61,8 @@ NBSP 등 trim 대상이 아닌 문자는 별도로 제거하지 않는다.
 
 ## 저장 매핑
 
-`V26__create_comments.sql`이 아래 매핑을 관리한다. 실제 환경에는 해당 migration을 적용해야 한다.
+`V28__create_comments.sql`이 아래 매핑을 관리한다. 실제 환경에는 해당 migration을 적용해야 한다.
+스터디 공개 탐색·이미지 복구 PR #610의 V26·V27과 번호가 겹치지 않도록 V28을 사용한다.
 
 | comments 컬럼 | 제약·책임 |
 | --- | --- |
@@ -166,8 +167,8 @@ JPA 삭제 콜백만으로 DB CASCADE에 따른 제출물 삭제를 감지하려
 
 | 경로 | 잠금과 재검사 |
 | --- | --- |
-| 공지 댓글 생성 | 요청자와 사전 멤버 후보 User 공유 잠금, 해당 공지 쓰기 잠금, 원문·현재 멤버십·실제 리더 수신 후보 재검사 |
-| 공지 댓글 수정·삭제 | 요청자 User 공유 잠금, 해당 공지 쓰기 잠금, 댓글·작성자/현재 리더 권한 재검사 |
+| 댓글 생성 | 요청자와 사전 멤버 후보 User 공유 잠금, 공지 또는 과제·제출물 쓰기 잠금, 원문·현재 멤버십·조회 권한·실제 제출 여부·수신 후보 재검사 |
+| 댓글 수정·삭제 | 요청자 User 공유 잠금, 공지 또는 과제·제출물 쓰기 잠금, 댓글 소속·작성자/현재 리더 권한 재검사 |
 | 기존 공지·과제 생성 | 요청자와 사전 수신/제출 후보 User 공유 잠금, 부모 Study 공유 잠금, 최초 원문 save·flush와 알림 저장 |
 | 기존 최초 제출 | 요청자와 사전 알림 후보 User 공유 잠금, 과제·해당 제출물 쓰기 잠금, 최초 제출 여부 재검사 후 알림 저장 |
 | 리마인더 한 건 | 사전 멤버 후보 User 공유 잠금, 해당 원문 쓰기 잠금, 그 reminder ID만 SKIP LOCKED로 선점·상태/시각/수신자 재검사 |
@@ -233,8 +234,8 @@ cursor와 동시에 지정하면 `400 COMMENT_INVALID_PAGE_REQUEST`다.
 COMMENT_TARGET_NOT_READY(409), COMMENT_STATE_CHANGED(409)다.
 수정·삭제는 실패하더라도 새로운 알림을 만들지 않는다.
 
-1단계에서는 OpenAPI lint·bundle·build, 예제 스키마·미구현 메타데이터와 문서 링크를 검증한다.
-아래 실행 검증은 후속 구현 단계의 완료 조건이며, 이번 문서 작성으로 통과한 것으로 간주하지 않는다.
+문서·계약은 OpenAPI lint·bundle과 메타데이터·문서 링크로 검증한다.
+실행 검증은 ADR 0003과 ADR 0031에 따라 다음 범위를 포함한다.
 
 - 도메인·Policy: 본문 경계와 trim·isBlank 기준 공백·줄바꿈, 수정 시각, 작성자/리더 권한.
 - HTTP: 세 대상 CRUD, 원문 소속 혼합 거부, 제출물 공개 범위·미제출 제한, 페이지와 focus 조회.

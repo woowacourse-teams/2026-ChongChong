@@ -36,6 +36,7 @@ import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.comment.controller.dto.CommentWriteRequest;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.comment.service.CommentService;
+import withoutc.chongchong.comment.service.CommentTarget;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.entity.ResourceType;
@@ -314,7 +315,7 @@ class NoticeCommentApiTest {
     @DisplayName("알려진 댓글 잠금 실패는 저장 없이 409 응답으로 변환한다")
     void translateKnownLockFailure() {
         doThrow(new CannotAcquireLockException("lock timeout"))
-                .when(commentService).create(anyLong(), anyLong(), anyLong(), any(CommentWriteRequest.class));
+                .when(commentService).create(anyLong(), anyLong(), any(CommentTarget.class), any(CommentWriteRequest.class));
         request(author).body(Map.of("content", "충돌")).post(PATH, study.getId(), notice.getId())
                 .then().statusCode(409).body("code", equalTo("COMMENT_STATE_CHANGED"));
         assertThat(commentRepository.count()).isZero();

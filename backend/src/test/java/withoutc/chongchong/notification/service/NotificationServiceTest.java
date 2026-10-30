@@ -93,7 +93,7 @@ class NotificationServiceTest {
         when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(OTHER_USER_ID))
                 .thenReturn(List.of(subscription));
 
-        notificationService.createNoticeCommentCreatedEventNotifications(comment, notice, author,
+        notificationService.createCommentCreatedEventNotifications(comment, notice.getStudy(), author,
                 List.of(author, leader, leader));
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);

@@ -30,6 +30,7 @@ import withoutc.chongchong.user.entity.User;
 public class Comment extends BaseEntity {
 
     private static final int MAX_CONTENT_LENGTH = 1000;
+    private static final long MIN_RESOURCE_ID = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,7 +62,7 @@ public class Comment extends BaseEntity {
     }
 
     private Comment(ResourceType resourceType, Long resourceId, StudyMember author, String content) {
-        if (resourceType == null || resourceId == null || resourceId < 1
+        if (resourceType == null || resourceId == null || resourceId < MIN_RESOURCE_ID
                 || author == null || author.getUser() == null) {
             throw new CommentException(CommentErrorCode.INVALID_COMMENT);
         }

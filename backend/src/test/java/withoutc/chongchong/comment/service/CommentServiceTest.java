@@ -20,6 +20,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.comment.controller.dto.CommentWriteRequest;
 import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.comment.exception.CommentErrorCode;
@@ -34,8 +37,8 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
-import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.user.entity.User;
+import withoutc.chongchong.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
@@ -61,7 +64,9 @@ class CommentServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CommentService(comments, notices, members, users, notifications,
+        CommentTargetResolver resolver = new CommentTargetResolver(notices, mock(AssignmentRepository.class),
+                mock(AssignmentSubmissionRepository.class), new AssignmentAccessPolicy());
+        service = new CommentService(comments, resolver, members, users, notifications,
                 new CommentAccessPolicy(), Clock.systemUTC());
         author = member(1L);
         notice = mock(Notice.class);
@@ -80,12 +85,12 @@ class CommentServiceTest {
             return comment;
         });
 
-        assertThat(service.create(1L, 10L, 20L, new CommentWriteRequest(" 내용 ")).commentId()).isEqualTo(42L);
+        assertThat(service.create(1L, 10L, CommentTarget.notice(20L), new CommentWriteRequest(" 내용 ")).commentId()).isEqualTo(42L);
 
         ArgumentCaptor<Comment> saved = ArgumentCaptor.forClass(Comment.class);
         verify(comments).save(saved.capture());
         assertThat(saved.getValue().getContent()).isEqualTo("내용");
-        verify(notifications).createNoticeCommentCreatedEventNotifications(saved.getValue(), notice, author,
+        verify(notifications).createCommentCreatedEventNotifications(saved.getValue(), notice.getStudy(), author,
                 List.of(leader));
     }
 
@@ -95,7 +100,7 @@ class CommentServiceTest {
         locked(Set.of(1L));
         when(members.findAllByStudyIdAndRole(10L, StudyMemberRole.LEADER)).thenReturn(List.of(member(2L)));
 
-        assertThatThrownBy(() -> service.create(1L, 10L, 20L, new CommentWriteRequest("내용")))
+        assertThatThrownBy(() -> service.create(1L, 10L, CommentTarget.notice(20L), new CommentWriteRequest("내용")))
                 .isInstanceOf(CommentException.class)
                 .extracting(exception -> ((CommentException) exception).getErrorCode())
                 .isEqualTo(CommentErrorCode.STATE_CHANGED);
@@ -110,11 +115,11 @@ class CommentServiceTest {
         when(members.findAllByStudyIdAndRole(10L, StudyMemberRole.LEADER)).thenReturn(List.of());
         when(comments.save(any(Comment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.create(1L, 10L, 20L, new CommentWriteRequest("내용"));
+        service.create(1L, 10L, CommentTarget.notice(20L), new CommentWriteRequest("내용"));
 
         ArgumentCaptor<Comment> saved = ArgumentCaptor.forClass(Comment.class);
         verify(comments).save(saved.capture());
-        verify(notifications).createNoticeCommentCreatedEventNotifications(saved.getValue(), notice, author, List.of());
+        verify(notifications).createCommentCreatedEventNotifications(saved.getValue(), notice.getStudy(), author, List.of());
     }
 
     private void locked(Set<Long> userIds) {

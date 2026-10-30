@@ -31,6 +31,7 @@ import withoutc.chongchong.comment.controller.dto.CommentWriteRequest;
 import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.comment.service.CommentService;
+import withoutc.chongchong.comment.service.CommentTarget;
 import withoutc.chongchong.global.exception.BusinessException;
 import withoutc.chongchong.notice.controller.dto.NoticeCreateRequest;
 import withoutc.chongchong.notice.entity.Notice;
@@ -230,7 +231,7 @@ class NoticeCommentConcurrencyTest extends PostgresContainerTest {
         try {
             Future<?> first = executor.submit(() -> holding(() -> create(f), held, release));
             held.get(TIMEOUT, SECONDS);
-            Future<Long> second = executor.submit(() -> commentService.create(f.authorId(), f.studyId(), other.getId(),
+            Future<Long> second = executor.submit(() -> commentService.create(f.authorId(), f.studyId(), CommentTarget.notice(other.getId()),
                     new CommentWriteRequest("동시에 등록")).commentId());
             assertThat(second.get(PARALLEL_COMPLETION_TIMEOUT, SECONDS)).isPositive();
             assertThat(first.isDone()).isFalse();
@@ -430,7 +431,7 @@ class NoticeCommentConcurrencyTest extends PostgresContainerTest {
     }
 
     private long create(Fixture f) {
-        return commentService.create(f.authorId(), f.studyId(), f.noticeId(),
+        return commentService.create(f.authorId(), f.studyId(), CommentTarget.notice(f.noticeId()),
                 new CommentWriteRequest("댓글")).commentId();
     }
 

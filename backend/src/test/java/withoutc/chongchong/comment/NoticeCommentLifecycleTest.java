@@ -24,6 +24,7 @@ import withoutc.chongchong.comment.controller.dto.CommentWriteRequest;
 import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.comment.service.CommentService;
+import withoutc.chongchong.comment.service.CommentTarget;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.service.NoticeService;
@@ -122,7 +123,7 @@ class NoticeCommentLifecycleTest extends PostgresContainerTest {
         assertThat(notifications.count()).isEqualTo(1);
         assertThat(deliveries.count()).isEqualTo(1);
 
-        commentService.update(f.author().getId(), f.study().getId(), f.notice().getId(), id,
+        commentService.update(f.author().getId(), f.study().getId(), CommentTarget.notice(f.notice().getId()), id,
                 new CommentWriteRequest("탈퇴 후 본인 수정"));
         StudyMember rejoined = members.saveAndFlush(StudyMember.create(f.study(), f.author(),
                 "재가입 이름", "https://example.com/new.png", StudyMemberRole.MEMBER));
@@ -193,7 +194,7 @@ class NoticeCommentLifecycleTest extends PostgresContainerTest {
         create(f, f.author(), "첫 댓글");
         create(f, f.otherMember().getUser(), "다른 작성자");
         Notice otherNotice = notices.saveAndFlush(Notice.create(f.study(), "다른 공지", "내용"));
-        long remaining = commentService.create(f.author().getId(), f.study().getId(), otherNotice.getId(),
+        long remaining = commentService.create(f.author().getId(), f.study().getId(), CommentTarget.notice(otherNotice.getId()),
                 new CommentWriteRequest("다른 원문 댓글")).commentId();
 
         noticeService.delete(f.leader().getId(), f.study().getId(), f.notice().getId());
@@ -297,12 +298,12 @@ class NoticeCommentLifecycleTest extends PostgresContainerTest {
     }
 
     private long create(Fixture f, User author, String content) {
-        return commentService.create(author.getId(), f.study().getId(), f.notice().getId(),
+        return commentService.create(author.getId(), f.study().getId(), CommentTarget.notice(f.notice().getId()),
                 new CommentWriteRequest(content)).commentId();
     }
 
     private CommentResponse view(Fixture f, long id) {
-        return commentService.getList(f.leader().getId(), f.study().getId(), f.notice().getId(),
+        return commentService.getList(f.leader().getId(), f.study().getId(), CommentTarget.notice(f.notice().getId()),
                 null, id, 10).comments().getFirst();
     }
 

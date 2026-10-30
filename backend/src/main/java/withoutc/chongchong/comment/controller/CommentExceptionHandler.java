@@ -14,7 +14,8 @@ import withoutc.chongchong.global.exception.response.ErrorResponse;
 import withoutc.chongchong.global.logging.RequestLoggingContext;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = NoticeCommentController.class)
+@RestControllerAdvice(assignableTypes = {NoticeCommentController.class, AssignmentCommentController.class,
+        SubmissionCommentController.class})
 public class CommentExceptionHandler {
 
     @ExceptionHandler({PessimisticLockingFailureException.class, LockTimeoutException.class,

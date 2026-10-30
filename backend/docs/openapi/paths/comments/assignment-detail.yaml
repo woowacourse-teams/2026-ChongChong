@@ -6,9 +6,9 @@ patch:
   tags: [Comment]
   operationId: updateAssignmentComment
   x-backend:
-    status: todo
-    owner: null
-    description: 계약 선등록. 작성자 소유권·본문 수정·수정 시각과 HTTP 인수 테스트는 구현 전이다.
+    status: review
+    owner: wontop02
+    description: 작성자 소유권·원문 소속·본문 수정·수정 시각을 공통 댓글 흐름으로 검증한다.
   summary: 과제 댓글 수정
   description: |
     인증된 작성자 본인만 경로의 원문에 속한 댓글을 수정한다. 리더도 타인 본문은 수정할 수 없다.
@@ -36,9 +36,9 @@ delete:
   tags: [Comment]
   operationId: deleteAssignmentComment
   x-backend:
-    status: todo
-    owner: null
-    description: 계약 선등록. 댓글·관련 알림·Delivery의 원자적 삭제와 HTTP 인수 테스트는 구현 전이다.
+    status: review
+    owner: wontop02
+    description: 작성자·현재 리더 권한과 댓글·관련 알림·Delivery의 원자적 삭제를 검증한다.
   summary: 과제 댓글 삭제
   description: |
     인증된 작성자 본인 또는 해당 스터디의 현재 리더가 경로의 댓글을 삭제한다.

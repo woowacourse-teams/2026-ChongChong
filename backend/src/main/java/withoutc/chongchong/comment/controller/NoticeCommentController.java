@@ -21,6 +21,7 @@ import withoutc.chongchong.comment.controller.dto.CommentCreateResponse;
 import withoutc.chongchong.comment.controller.dto.CommentListResponse;
 import withoutc.chongchong.comment.controller.dto.CommentWriteRequest;
 import withoutc.chongchong.comment.service.CommentService;
+import withoutc.chongchong.comment.service.CommentTarget;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 
 @RestController
@@ -38,7 +39,7 @@ public class NoticeCommentController {
             @Valid @RequestBody CommentWriteRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                commentService.create(user.id(), studyId, noticeId, request));
+                commentService.create(user.id(), studyId, CommentTarget.notice(noticeId), request));
     }
 
     @GetMapping
@@ -50,7 +51,8 @@ public class NoticeCommentController {
             @RequestParam(required = false) @Positive Long focusCommentId,
             @RequestParam(defaultValue = "10") @Positive @Max(CursorPageRequest.MAX_SIZE) int size
     ) {
-        return ResponseEntity.ok(commentService.getList(user.id(), studyId, noticeId, cursor, focusCommentId, size));
+        return ResponseEntity.ok(commentService.getList(user.id(), studyId, CommentTarget.notice(noticeId),
+                cursor, focusCommentId, size));
     }
 
     @PatchMapping("/{commentId}")
@@ -61,7 +63,7 @@ public class NoticeCommentController {
             @PathVariable @Positive Long commentId,
             @Valid @RequestBody CommentWriteRequest request
     ) {
-        commentService.update(user.id(), studyId, noticeId, commentId, request);
+        commentService.update(user.id(), studyId, CommentTarget.notice(noticeId), commentId, request);
         return ResponseEntity.noContent().build();
     }
 
@@ -72,7 +74,7 @@ public class NoticeCommentController {
             @PathVariable @Positive Long noticeId,
             @PathVariable @Positive Long commentId
     ) {
-        commentService.delete(user.id(), studyId, noticeId, commentId);
+        commentService.delete(user.id(), studyId, CommentTarget.notice(noticeId), commentId);
         return ResponseEntity.noContent().build();
     }
 }

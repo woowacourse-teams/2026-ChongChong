@@ -32,6 +32,10 @@ import withoutc.chongchong.study.entity.StudyMember;
 @Transactional(readOnly = true)
 public class NotificationService {
 
+    private static final String COMMENT_TITLE_FORMAT = "[%s] 새 댓글";
+    private static final String COMMENT_BODY_FORMAT = "%s 스터디원이 댓글을 달았어요";
+    private static final String COMMENT_FOCUS_QUERY = "?focusCommentId=";
+
     private final NotificationRepository notificationRepository;
     private final NotificationDeliveryRepository notificationDeliveryRepository;
     private final WebPushSubscriptionRepository webPushSubscriptionRepository;
@@ -81,12 +85,12 @@ public class NotificationService {
     }
 
     @Transactional
-    public void createNoticeCommentCreatedEventNotifications(Comment comment, Notice notice, StudyMember author,
-                                                             List<StudyMember> recipients) {
-        String title = "[%s] 새 댓글".formatted(notice.getStudy().getName());
-        String body = "%s 스터디원이 댓글을 달았어요".formatted(author.getName());
-        String deepLink = createDeepLink(notice.getStudy().getId(), ResourceType.NOTICE, notice.getId())
-                + "?focusCommentId=" + comment.getId();
+    public void createCommentCreatedEventNotifications(Comment comment, Study study, StudyMember author,
+                                                        List<StudyMember> recipients) {
+        String title = COMMENT_TITLE_FORMAT.formatted(study.getName());
+        String body = COMMENT_BODY_FORMAT.formatted(author.getName());
+        String deepLink = createDeepLink(study.getId(), comment.getResourceType(), comment.getResourceId())
+                + COMMENT_FOCUS_QUERY + comment.getId();
         Set<Long> notifiedUsers = new HashSet<>();
         for (StudyMember recipient : recipients) {
             Long recipientId = recipient.getUser().getId();
