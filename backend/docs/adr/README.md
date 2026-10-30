@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0057](0057-reference-comment-resources-by-type-and-id.md) | 댓글 원문을 resourceType과 resourceId로 참조한다 |
 | [0056](0056-issue-notice-image-urls-after-access-check.md) | 공지 첨부 조회 URL은 조회 권한 확인 후 발급한다 |
 | [0055](0055-connect-completed-files-to-notices.md) | 공지 첨부는 업로드 완료 파일의 연결로 처리한다 |
 | [0054](0054-separate-upload-verification-from-database-transactions.md) | 업로드 검증의 S3 호출과 DB 트랜잭션을 분리한다 |

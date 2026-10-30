@@ -66,6 +66,12 @@ ErrorResponse:
         - STUDY_MEMBER_LIMIT_EXCEEDED
         - WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED
         - INVALID_CLICK_TOKEN
+        - COMMENT_INVALID_CONTENT
+        - COMMENT_INVALID_CURSOR
+        - COMMENT_INVALID_PAGE_REQUEST
+        - COMMENT_NOT_FOUND
+        - COMMENT_TARGET_NOT_READY
+        - COMMENT_STATE_CHANGED
     message: { type: string }
 InvalidInputValueError:
   type: object
