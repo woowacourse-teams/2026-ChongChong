@@ -98,7 +98,7 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
         databaseCleaner.clean();
         leader = userRepository.save(User.create("리더", null));
         User member = userRepository.save(User.create("스터디원", null));
-        Study study = studyRepository.save(Study.create("교차 도메인 첨부 스터디", "설명"));
+        Study study = studyRepository.save(Study.create("교차 도메인 첨부 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
         studyId = study.getId();
@@ -225,7 +225,7 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
     @EnumSource(OtherDomain.class)
     @DisplayName("다른 스터디의 공지 수정과 과제·제출물이 같은 파일을 연결해도 하나만 성공한다")
     void preventConcurrentCrossStudyAttachment(OtherDomain domain) throws Exception {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(otherStudy, leader, "리더", null, StudyMemberRole.LEADER));
         assignmentStudyId = otherStudy.getId();
         Response assignment = post("/studies/" + assignmentStudyId + "/assignments", Map.of(

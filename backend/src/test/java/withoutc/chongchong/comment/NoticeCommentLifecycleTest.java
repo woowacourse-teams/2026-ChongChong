@@ -285,7 +285,7 @@ class NoticeCommentLifecycleTest extends PostgresContainerTest {
         User leader = users.save(User.create("리더", null));
         User author = users.save(User.create("바니", "https://example.com/author.png"));
         User other = users.save(User.create("다른 작성자", null));
-        Study study = studies.save(Study.create("수명 스터디", "설명"));
+        Study study = studies.save(Study.create("수명 스터디", "설명", false));
         members.saveAndFlush(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember authorMember = members.saveAndFlush(StudyMember.create(study, author,
                 "바니", author.getProfileImageUrl(), StudyMemberRole.MEMBER));

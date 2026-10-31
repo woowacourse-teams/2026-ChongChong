@@ -25,6 +25,8 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 스터디 삭제 | `DELETE /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
 | 스터디 기본 정보 조회 | `GET /api/studies/{studyId}/info` | [paths/studies/info.yaml](paths/studies/info.yaml) |
 | 내 스터디 목록 조회 | `GET /api/studies/me` | [paths/studies/my-studies.yaml](paths/studies/my-studies.yaml) |
+| 공개 스터디 목록 조회 및 이름 검색 | `GET /api/studies/public` | [paths/studies/public.yaml](paths/studies/public.yaml) |
+| 스터디 참여 전 정보 조회 | `GET /api/studies/join-info` | [paths/studies/join-info.yaml](paths/studies/join-info.yaml) |
 | 스터디 초대 링크 조회 | `GET /api/studies/{studyId}/invite-link` | [paths/studies/invite-link.yaml](paths/studies/invite-link.yaml) |
 | 스터디 참여 | `POST /api/studies/join` | [paths/studies/join.yaml](paths/studies/join.yaml) |
 | 스터디 멤버 목록 조회 | `GET /api/studies/{studyId}/members` | [paths/study-members/collection.yaml](paths/study-members/collection.yaml) |

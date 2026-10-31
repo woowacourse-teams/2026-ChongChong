@@ -77,7 +77,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("공지 댓글은 작성자를 제외하고 사용자별 한 번 알림과 활성 구독 Delivery를 만든다")
     void createNoticeCommentNotifications() {
-        Study study = Study.create("자바 스터디", "설명");
+        Study study = Study.create("자바 스터디", "설명", false);
         ReflectionTestUtils.setField(study, "id", 5L);
         User authorUser = User.create("작성자", null);
         ReflectionTestUtils.setField(authorUser, "id", USER_ID);

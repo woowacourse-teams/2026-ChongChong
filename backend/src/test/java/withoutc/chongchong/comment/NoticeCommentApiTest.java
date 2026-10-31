@@ -114,7 +114,7 @@ class NoticeCommentApiTest {
     @BeforeEach
     void setUp() {
         cleaner.clean();
-        study = studyRepository.save(Study.create("댓글 스터디", "설명"));
+        study = studyRepository.save(Study.create("댓글 스터디", "설명", false));
         leader = addMember("리더", StudyMemberRole.LEADER).getUser();
         secondLeader = addMember("다른 리더", StudyMemberRole.LEADER).getUser();
         authorMember = addMember("바니", StudyMemberRole.MEMBER);
@@ -334,7 +334,7 @@ class NoticeCommentApiTest {
         request(author).body(Map.of("content", "잘못된 경로"))
                 .patch(PATH + "/{id}", study.getId(), another.getId(), id)
                 .then().statusCode(404).body("code", equalTo("COMMENT_NOT_FOUND"));
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         memberRepository.save(StudyMember.create(otherStudy, author, "바니", null, StudyMemberRole.MEMBER));
         request(author).get(PATH, otherStudy.getId(), notice.getId())
                 .then().statusCode(404).body("code", equalTo("NOTICE_NOT_FOUND"));

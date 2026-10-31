@@ -1,7 +1,10 @@
 package withoutc.chongchong.study.repository;
 
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -44,4 +47,40 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
     default Study getByIdForDeleteOrThrow(Long studyId) {
         return findByIdForDelete(studyId).orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
     }
+
+    @Query("""
+            SELECT s
+            FROM Study s
+            WHERE s.isPublic = true
+              AND (SELECT COUNT(member) FROM StudyMember member WHERE member.study.id = s.id) < :maxMemberCount
+              AND (:cursor IS NULL
+                   OR s.createdAt < :cursorCreatedAt
+                   OR (s.createdAt = :cursorCreatedAt AND s.id < :cursor))
+            ORDER BY s.createdAt DESC, s.id DESC
+            """)
+    List<Study> findByCursor(
+            @Param("cursor") Long cursor,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("maxMemberCount") int maxMemberCount,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT s
+            FROM Study s
+            WHERE s.isPublic = true
+              AND LOCATE(LOWER(:keyword), LOWER(s.name)) > 0
+              AND (SELECT COUNT(member) FROM StudyMember member WHERE member.study.id = s.id) < :maxMemberCount
+              AND (:cursor IS NULL
+                   OR s.createdAt < :cursorCreatedAt
+                   OR (s.createdAt = :cursorCreatedAt AND s.id < :cursor))
+            ORDER BY s.createdAt DESC, s.id DESC
+            """)
+    List<Study> searchByNameAndCursor(
+            @Param("keyword") String keyword,
+            @Param("cursor") Long cursor,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("maxMemberCount") int maxMemberCount,
+            Pageable pageable
+    );
 }

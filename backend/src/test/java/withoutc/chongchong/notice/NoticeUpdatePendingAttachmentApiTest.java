@@ -80,7 +80,7 @@ class NoticeUpdatePendingAttachmentApiTest extends PostgresContainerTest {
         databaseCleaner.clean();
         User leader = userRepository.save(User.create("현재 리더", null));
         User previousLeader = userRepository.save(User.create("이전 리더", null));
-        Study study = studyRepository.save(Study.create("검증 대기 스터디", "설명"));
+        Study study = studyRepository.save(Study.create("검증 대기 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         FileMetadata first = saveCompletedFile(previousLeader, "first.png");
         FileMetadata second = saveCompletedFile(previousLeader, "second.png");

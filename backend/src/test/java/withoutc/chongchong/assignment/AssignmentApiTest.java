@@ -119,7 +119,7 @@ class AssignmentApiTest {
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
         secondMemberUser = userRepository.save(User.create("두 번째 스터디원", null));
-        study = studyRepository.save(Study.create("자바 스터디", "설명"));
+        study = studyRepository.save(Study.create("자바 스터디", "설명", false));
         leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, "리더", "https://example.com/leader.png", StudyMemberRole.LEADER)
         );
@@ -550,7 +550,7 @@ class AssignmentApiTest {
     @Test
     @DisplayName("다른 스터디의 과제를 상세 조회하면 존재하지 않는 과제로 응답한다")
     void getAssignmentDetailFromOtherStudyTest() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "다른 스터디 리더", null, StudyMemberRole.LEADER)
         );
@@ -741,7 +741,7 @@ class AssignmentApiTest {
     @Test
     @DisplayName("요청 경로의 스터디와 과제의 소속 스터디가 다르면 제출할 수 없다")
     void submitAssignmentFromOtherStudyTest() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "다른 스터디 리더", null, StudyMemberRole.LEADER)
         );

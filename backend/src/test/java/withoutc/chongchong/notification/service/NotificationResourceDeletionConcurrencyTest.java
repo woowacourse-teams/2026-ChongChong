@@ -162,7 +162,7 @@ class NotificationResourceDeletionConcurrencyTest extends PostgresContainerTest 
         LocalDateTime creationTime = now.minusDays(1);
         User leaderUser = userRepository.saveAndFlush(User.create("리더", null));
         User recipient = userRepository.saveAndFlush(User.create("스터디원", null));
-        Study study = studyRepository.saveAndFlush(Study.create("스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("스터디", "설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leaderUser, "리더", null, StudyMemberRole.LEADER));
         StudyMember member = studyMemberRepository.saveAndFlush(
@@ -180,7 +180,7 @@ class NotificationResourceDeletionConcurrencyTest extends PostgresContainerTest 
         LocalDateTime creationTime = now.minusDays(1);
         User leaderUser = userRepository.saveAndFlush(User.create("리더", null));
         User recipient = userRepository.saveAndFlush(User.create("스터디원", null));
-        Study study = studyRepository.saveAndFlush(Study.create("스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("스터디", "설명", false));
         studyMemberRepository.saveAndFlush(
                 StudyMember.create(study, leaderUser, "리더", null, StudyMemberRole.LEADER));
         StudyMember member = studyMemberRepository.saveAndFlush(

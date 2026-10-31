@@ -416,7 +416,7 @@ class NoticeCommentConcurrencyTest extends PostgresContainerTest {
     private Fixture fixture(boolean dueReminder) {
         User leader = users.save(User.create("리더", null));
         User author = users.save(User.create("작성자", null));
-        Study study = studies.save(Study.create("경합 스터디", "설명"));
+        Study study = studies.save(Study.create("경합 스터디", "설명", false));
         members.saveAndFlush(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember member = members.saveAndFlush(
                 StudyMember.create(study, author, "작성자", null, StudyMemberRole.MEMBER));

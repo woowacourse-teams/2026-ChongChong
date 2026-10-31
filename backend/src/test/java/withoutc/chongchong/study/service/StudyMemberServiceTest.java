@@ -22,7 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notification.service.NotificationService;
-import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.controller.dto.StudyMemberResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
@@ -86,7 +86,7 @@ class StudyMemberServiceTest {
         when(user.getProfileImageUrl()).thenReturn("profile-image-url");
         Study study = mock(Study.class);
         when(study.getId()).thenReturn(studyId);
-        StudyInviteTokenRequest request = new StudyInviteTokenRequest(token);
+        StudyJoinRequest request = new StudyJoinRequest(null, token);
         ArgumentCaptor<StudyMember> captor = ArgumentCaptor.forClass(StudyMember.class);
         when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
         when(studyInviteTokenProvider.verifyAndExtractStudyId(token)).thenReturn(studyId);
@@ -107,6 +107,78 @@ class StudyMemberServiceTest {
     }
 
     @Test
+    @DisplayName("공개 스터디는 ID만으로 참여한다")
+    void joinPublicStudyByIdTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        User user = User.create("사용자", null);
+        Study study = mock(Study.class);
+        when(study.getId()).thenReturn(studyId);
+        when(study.isPublic()).thenReturn(true);
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
+        when(studyMemberRepository.save(any(StudyMember.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        StudyMemberJoinResponse response = studyMemberService.join(userId, new StudyJoinRequest(studyId, null));
+
+        assertThat(response.studyId()).isEqualTo(studyId);
+        verify(studyInviteTokenProvider, never()).verifyAndExtractStudyId(any());
+        verify(studyMemberRepository).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("비공개 스터디는 ID만으로 참여할 수 없다")
+    void joinPrivateStudyByIdTest() {
+        Long userId = 1L;
+        Long studyId = 2L;
+        User user = User.create("사용자", null);
+        Study study = mock(Study.class);
+        when(study.isPublic()).thenReturn(false);
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
+
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(studyId, null)))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.STUDY_NOT_PUBLIC);
+
+        verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰이 다른 스터디를 가리키면 참여할 수 없다")
+    void joinWithMismatchedTokenTest() {
+        Long userId = 1L;
+        User user = User.create("사용자", null);
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
+        when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(3L);
+
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(2L, "invite-token")))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN);
+
+        verify(studyRepository, never()).getByIdForUpdateOrThrow(any());
+        verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰을 모두 생략하면 참여할 수 없다")
+    void joinWithoutIdentifierTest() {
+        Long userId = 1L;
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(User.create("사용자", null));
+
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, null)))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.INVALID_STUDY_ID);
+
+        verify(studyRepository, never()).getByIdForUpdateOrThrow(any());
+    }
+
+    @Test
     @DisplayName("이미 가입한 스터디에는 참여할 수 없다")
     void joinAlreadyJoinedStudyTest() {
         Long userId = 1L;
@@ -123,7 +195,7 @@ class StudyMemberServiceTest {
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, "invite-token")))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.ALREADY_JOINED_STUDY);
@@ -146,7 +218,7 @@ class StudyMemberServiceTest {
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(50);
 
-        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, "invite-token")))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_LIMIT_EXCEEDED);
@@ -163,7 +235,7 @@ class StudyMemberServiceTest {
         when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
 
         assertThatThrownBy(() -> studyMemberService.join(
-                userId, new StudyInviteTokenRequest("invite-token")
+                userId, new StudyJoinRequest(null, "invite-token")
         ))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
@@ -182,7 +254,7 @@ class StudyMemberServiceTest {
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invalid-token"))
                 .thenThrow(new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN));
 
-        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invalid-token")))
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, "invalid-token")))
                 .isInstanceOf(StudyException.class)
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN);

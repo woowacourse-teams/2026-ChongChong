@@ -90,7 +90,7 @@ class NoticeUploadCompletionApiTest extends PostgresContainerTest {
         databaseCleaner.clean();
         leader = userRepository.save(User.create("리더", null));
         User member = userRepository.save(User.create("스터디원", null));
-        Study study = studyRepository.save(Study.create("업로드 완료 연동 스터디", "설명"));
+        Study study = studyRepository.save(Study.create("업로드 완료 연동 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
         memberId = member.getId();

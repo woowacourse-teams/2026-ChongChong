@@ -234,7 +234,7 @@ class AssignmentCommentConcurrencyTest extends PostgresContainerTest {
     }
 
     private Fixture fixture(boolean leaderOwnsSubmission) {
-        Study study = studies.saveAndFlush(Study.create("경합 스터디", null));
+        Study study = studies.saveAndFlush(Study.create("경합 스터디", null, false));
         StudyMember leader = member(study, "리더", StudyMemberRole.LEADER);
         StudyMember author = member(study, "작성자", StudyMemberRole.MEMBER);
         StudyMember owner = leader;

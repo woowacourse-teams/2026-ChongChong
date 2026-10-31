@@ -113,7 +113,7 @@ class AssignmentCommentApiTest {
     @BeforeEach
     void setUp() {
         cleaner.clean();
-        study = studies.saveAndFlush(Study.create("과제 스터디", "설명"));
+        study = studies.saveAndFlush(Study.create("과제 스터디", "설명", false));
         leader = member("리더", StudyMemberRole.LEADER).getUser();
         secondLeader = member("다른 리더", StudyMemberRole.LEADER).getUser();
         author = member("작성자", StudyMemberRole.MEMBER).getUser();
@@ -257,7 +257,7 @@ class AssignmentCommentApiTest {
         }
         request(author).body(Map.of("content", "잘못된 원문")).patch(wrongPath + "/" + second)
                 .then().statusCode(404);
-        Study otherStudy = studies.saveAndFlush(Study.create("다른 스터디", null));
+        Study otherStudy = studies.saveAndFlush(Study.create("다른 스터디", null, false));
         members.saveAndFlush(StudyMember.create(otherStudy, author, "작성자", null, StudyMemberRole.MEMBER));
         request(author).get(path.replace("/studies/" + study.getId(), "/studies/" + otherStudy.getId()))
                 .then().statusCode(404).body("code", equalTo("ASSIGNMENT_NOT_FOUND"));

@@ -53,7 +53,7 @@ class NoticeAccessPolicyTest {
     }
 
     private StudyMember member(StudyMemberRole role) {
-        Study study = Study.create("스터디", "설명");
+        Study study = Study.create("스터디", "설명", false);
         User user = User.create("사용자", null);
         return StudyMember.create(study, user, "사용자", null, role);
     }

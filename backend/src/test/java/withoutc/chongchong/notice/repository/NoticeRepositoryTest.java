@@ -234,7 +234,7 @@ class NoticeRepositoryTest {
 
     private StudyFixture createStudyFixture(String studyName, String userName) {
         User user = userRepository.save(User.create(userName, null));
-        Study study = studyRepository.save(Study.create(studyName, "설명"));
+        Study study = studyRepository.save(Study.create(studyName, "설명", false));
         StudyMember leader = studyMemberRepository.save(
                 StudyMember.create(study, user, userName, null, StudyMemberRole.LEADER)
         );
@@ -248,7 +248,7 @@ class NoticeRepositoryTest {
         User leaderUser = userRepository.save(User.create("리더", null));
         User firstMemberUser = userRepository.save(User.create("첫 번째 멤버", null));
         User secondMemberUser = userRepository.save(User.create("두 번째 멤버", null));
-        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        Study study = studyRepository.save(Study.create("스터디", "설명", false));
         StudyMember leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, leaderUser.getName(), null, StudyMemberRole.LEADER)
         );
