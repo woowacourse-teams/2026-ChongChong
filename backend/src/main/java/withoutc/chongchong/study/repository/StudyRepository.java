@@ -33,6 +33,21 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
         return findByIdForUpdate(studyId).orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
     }
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT study FROM Study study WHERE study.id = :studyId")
+    Optional<Study> findByIdForShare(@Param("studyId") Long studyId);
+
+    default Study getByIdForShareOrThrow(Long studyId) {
+        return findByIdForShare(studyId).orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+    }
+
+    @Query(value = "SELECT * FROM studies WHERE id = :studyId FOR UPDATE", nativeQuery = true)
+    Optional<Study> findByIdForDelete(@Param("studyId") Long studyId);
+
+    default Study getByIdForDeleteOrThrow(Long studyId) {
+        return findByIdForDelete(studyId).orElseThrow(() -> new StudyException(StudyErrorCode.STUDY_NOT_FOUND));
+    }
+
     @Query("""
             SELECT s
             FROM Study s

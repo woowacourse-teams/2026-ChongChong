@@ -74,6 +74,21 @@ class CursorPageResponseTest {
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
+    @Test
+    @DisplayName("마지막 페이지에서는 다음 커서를 생성하지 않는다")
+    void omitCursorOnLastPage() {
+        List<TestItem> results = List.of(new TestItem(8L));
+        CursorPageRequest request = CursorPageRequest.of(9L, 2);
+
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, request, item -> {
+            throw new AssertionError("마지막 페이지에서는 다음 커서를 만들면 안 됩니다.");
+        });
+
+        assertThat(response.content()).containsExactlyElementsOf(results);
+        assertThat(response.nextCursor()).isNull();
+        assertThat(response.hasNext()).isFalse();
+    }
+
     private CursorPageRequest pageRequest() {
         return CursorPageRequest.of(null, 2);
     }

@@ -54,6 +54,51 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
 
     Optional<AssignmentSubmission> findByIdAndAssignmentId(Long id, Long assignmentId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT submission FROM AssignmentSubmission submission
+            WHERE submission.id = :id AND submission.assignment.id = :assignmentId
+            """)
+    Optional<AssignmentSubmission> findByIdAndAssignmentIdForUpdate(@Param("id") Long id,
+                                                                 @Param("assignmentId") Long assignmentId);
+
+    default AssignmentSubmission getByIdAndAssignmentIdForUpdateOrThrow(Long id, Long assignmentId) {
+        return findByIdAndAssignmentIdForUpdate(id, assignmentId).orElseThrow(() -> new AssignmentException(
+                AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT submission FROM AssignmentSubmission submission
+            WHERE submission.assignment.id = :assignmentId
+            ORDER BY submission.id
+            """)
+    List<AssignmentSubmission> findAllByAssignmentIdForUpdate(@Param("assignmentId") Long assignmentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT submission FROM AssignmentSubmission submission
+            WHERE submission.assignment.study.id = :studyId
+            ORDER BY submission.id
+            """)
+    List<AssignmentSubmission> findAllByStudyIdForUpdate(@Param("studyId") Long studyId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT submission FROM AssignmentSubmission submission
+            WHERE submission.member.id = :memberId
+            ORDER BY submission.id
+            """)
+    List<AssignmentSubmission> findAllByMemberIdForUpdate(@Param("memberId") Long memberId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT submission FROM AssignmentSubmission submission
+            WHERE submission.member.user.id = :userId
+            ORDER BY submission.id
+            """)
+    List<AssignmentSubmission> findAllByUserIdForUpdate(@Param("userId") Long userId);
+
     default AssignmentSubmission getByIdOrThrow(Long id) {
         return findById(id).orElseThrow(() -> new AssignmentException(
                 AssignmentErrorCode.ASSIGNMENT_SUBMISSION_NOT_FOUND));

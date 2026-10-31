@@ -1,0 +1,99 @@
+CommentWriteRequest:
+  type: object
+  additionalProperties: false
+  required: [content]
+  properties:
+    content:
+      type: string
+      minLength: 1
+      description: |
+        필수 본문. 서버가 String.trim() 기준으로 앞뒤 공백을 제거한 뒤
+        공지·과제와 동일하게 String.length() 기준 1~1,000자로 검증한다. 보조 평면 이모지는 길이 2로 계산한다.
+        정리한 문자열이 String.isBlank()이면 거부한다.
+        NBSP 등 trim 대상이 아닌 문자는 별도로 제거하지 않으며 내부 공백·줄바꿈은 유지한다.
+        정규화 전 입력에는 maxLength를 적용하지 않는다. 수정에서도 생략·null은 허용하지 않는다.
+      example: "  일정 확인했습니다.\n다음 시간에 뵐게요.  "
+CommentCreateResponse:
+  type: object
+  additionalProperties: false
+  required: [commentId]
+  properties:
+    commentId: { type: integer, format: int64, minimum: 1, example: 42 }
+CommentAuthorResponse:
+  type: object
+  additionalProperties: false
+  required: [name, profileImageUrl, isDeparted]
+  properties:
+    name:
+      type: string
+      description: 현재 스터디 멤버 이름. 스터디 탈퇴·방출 또는 회원 탈퇴한 작성자는 탈퇴한 스터디원으로 표시한다.
+      example: 바니
+    profileImageUrl:
+      type: [string, 'null']
+      description: null이면 기본 이미지. 탈퇴한 작성자는 항상 null이다.
+      example: null
+    isDeparted: { type: boolean, description: 작성 당시 멤버십이 삭제됐는지 여부. 재가입으로 복원하지 않는다., example: false }
+CommentResponse:
+  type: object
+  additionalProperties: false
+  required: [id, author, createdAt, content, isEdited, canEdit, canDelete]
+  properties:
+    id: { type: integer, format: int64, minimum: 1, example: 42 }
+    author: { $ref: '#/CommentAuthorResponse' }
+    createdAt: { $ref: './common.yaml#/LocalDateTime' }
+    content:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: 앞뒤 공백을 제거하고 저장한 본문. 내부 공백·줄바꿈은 유지한다.
+      example: "일정 확인했습니다.\n다음 시간에 뵐게요."
+    isEdited: { type: boolean, description: 본문을 실제로 수정한 경우 true. 작성자 연결 해제로 바뀌지 않는다., example: false }
+    canEdit: { type: boolean, description: 현재 사용자가 작성자 본인인지 여부. 서버는 수정 요청에서 다시 검증한다., example: true }
+    canDelete: { type: boolean, description: 현재 사용자가 작성자 본인이거나 해당 스터디의 현재 리더인지 여부., example: true }
+CommentListResponse:
+  type: object
+  additionalProperties: false
+  required: [comments, nextCursor, hasNext]
+  properties:
+    comments:
+      type: array
+      maxItems: 100
+      description: ID 오름차순. 작성 시각 순서와 다를 수 있으며 수정해도 순서는 유지한다.
+      items: { $ref: '#/CommentResponse' }
+    nextCursor:
+      type: [integer, 'null']
+      format: int64
+      minimum: 1
+      description: 마지막으로 반환한 댓글 ID. 다음 요청의 cursor로 전달하며 hasNext가 false면 null이다.
+      example: 42
+    hasNext: { type: boolean, example: false }
+CommentInvalidContentError:
+  allOf:
+    - { $ref: './errors.yaml#/ErrorResponseBase' }
+    - properties:
+        code: { const: COMMENT_INVALID_CONTENT }
+        message: { const: 댓글은 앞뒤 공백을 제거한 뒤 1자 이상 1000자 이하여야 합니다. }
+CommentInvalidPageRequestError:
+  allOf:
+    - { $ref: './errors.yaml#/ErrorResponseBase' }
+    - properties:
+        code: { const: COMMENT_INVALID_PAGE_REQUEST }
+        message: { const: cursor와 focusCommentId는 함께 지정할 수 없습니다. }
+CommentNotFoundError:
+  allOf:
+    - { $ref: './errors.yaml#/ErrorResponseBase' }
+    - properties:
+        code: { const: COMMENT_NOT_FOUND }
+        message: { const: 해당 원문의 댓글을 찾을 수 없습니다. }
+CommentTargetNotReadyError:
+  allOf:
+    - { $ref: './errors.yaml#/ErrorResponseBase' }
+    - properties:
+        code: { const: COMMENT_TARGET_NOT_READY }
+        message: { const: 실제 제출이 완료된 후 댓글을 작성할 수 있습니다. }
+CommentStateChangedError:
+  allOf:
+    - { $ref: './errors.yaml#/ErrorResponseBase' }
+    - properties:
+        code: { const: COMMENT_STATE_CHANGED }
+        message: { const: 댓글 대상이나 참여 상태가 변경되었습니다. 다시 시도해 주세요. }

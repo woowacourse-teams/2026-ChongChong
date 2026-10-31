@@ -1,20 +1,18 @@
 package withoutc.chongchong.notification.service;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.assignment.entity.AssignmentReminder;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.AssignmentReminderRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.entity.NoticeReminder;
-import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
@@ -34,22 +32,20 @@ import withoutc.chongchong.study.entity.StudyMember;
 @Transactional(readOnly = true)
 public class NotificationService {
 
-    // TODO: 적절한 배치 사이즈 결정
-    private static final int REMINDER_BATCH_SIZE = 100;
+    private static final String COMMENT_TITLE_FORMAT = "[%s] 새 댓글";
+    private static final String COMMENT_BODY_FORMAT = "%s 스터디원이 댓글을 달았어요";
+    private static final String COMMENT_FOCUS_QUERY = "?focusCommentId=";
 
     private final NotificationRepository notificationRepository;
     private final NotificationDeliveryRepository notificationDeliveryRepository;
     private final WebPushSubscriptionRepository webPushSubscriptionRepository;
 
-    private final NoticeRecipientRepository noticeRecipientRepository;
     private final NoticeReminderRepository noticeReminderRepository;
     private final NoticeRepository noticeRepository;
 
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final AssignmentReminderRepository assignmentReminderRepository;
     private final AssignmentRepository assignmentRepository;
-
-    private final Clock clock;
 
     public MyNotificationListResponse getMyNotifications(Long userId) {
         List<Notification> notifications = notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(userId);
@@ -89,11 +85,28 @@ public class NotificationService {
     }
 
     @Transactional
-    public void createScheduledRemindNotifications() {
-        LocalDateTime now = LocalDateTime.now(clock);
+    public void createCommentCreatedEventNotifications(Comment comment, Study study, StudyMember author,
+                                                        List<StudyMember> recipients) {
+        String title = COMMENT_TITLE_FORMAT.formatted(study.getName());
+        String body = COMMENT_BODY_FORMAT.formatted(author.getName());
+        String deepLink = createDeepLink(study.getId(), comment.getResourceType(), comment.getResourceId())
+                + COMMENT_FOCUS_QUERY + comment.getId();
+        Set<Long> notifiedUsers = new HashSet<>();
+        for (StudyMember recipient : recipients) {
+            Long recipientId = recipient.getUser().getId();
+            if (recipientId.equals(author.getUser().getId()) || !notifiedUsers.add(recipientId)) {
+                continue;
+            }
+            Notification notification = Notification.createForComment(comment, recipient, title, body, deepLink);
+            notificationRepository.save(notification);
+            saveNotificationDelivery(notification);
+        }
+    }
 
-        createNoticeRemindNotifications(now);
-        createAssignmentRemindNotifications(now);
+    @Transactional
+    public void createReminderEventNotifications(Study study, List<StudyMember> recipients,
+                                                  Long resourceId, ResourceType resourceType) {
+        saveNotifications(study, recipients, NotificationType.REMIND, resourceId, resourceType);
     }
 
     @Transactional
@@ -125,37 +138,13 @@ public class NotificationService {
     }
 
     @Transactional
+    public void deleteNotificationsForLeaderSubmissions(Long assignmentId) {
+        notificationRepository.deleteAllForLeaderSubmissions(assignmentId);
+    }
+
+    @Transactional
     public void deleteNotificationsForUser(Long userId) {
         notificationRepository.deleteAllByUserId(userId);
-    }
-
-    private void createNoticeRemindNotifications(LocalDateTime now) {
-        List<NoticeReminder> noticeReminders = noticeReminderRepository.findClaimableForUpdate(
-                now, REMINDER_BATCH_SIZE);
-        for (NoticeReminder noticeReminder : noticeReminders) {
-            noticeReminder.markAsProcessing();
-            Notice notice = noticeReminder.getNotice();
-            List<StudyMember> recipients = noticeRecipientRepository.findUnreadMembersByNoticeId(
-                    notice.getId());
-            saveNotifications(notice.getStudy(), recipients, NotificationType.REMIND, notice.getId(),
-                    ResourceType.NOTICE);
-            noticeReminder.markAsSent();
-        }
-    }
-
-    private void createAssignmentRemindNotifications(LocalDateTime now) {
-        List<AssignmentReminder> assignmentReminders = assignmentReminderRepository.findClaimableForUpdate(
-                now, REMINDER_BATCH_SIZE);
-        for (AssignmentReminder assignmentReminder : assignmentReminders) {
-            assignmentReminder.markAsProcessing();
-            Assignment assignment = assignmentReminder.getAssignment();
-            List<StudyMember> recipients = assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(
-                    assignment.getId());
-            saveNotifications(assignment.getStudy(), recipients, NotificationType.REMIND,
-                    assignment.getId(),
-                    ResourceType.ASSIGNMENT);
-            assignmentReminder.markAsSent();
-        }
     }
 
     private void saveNotifications(Study study, List<StudyMember> recipients, NotificationType type,

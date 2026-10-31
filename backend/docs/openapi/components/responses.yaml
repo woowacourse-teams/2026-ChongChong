@@ -1,3 +1,67 @@
+CommentListBadRequest:
+  description: 경로·쿼리 형식 오류, 양수가 아닌 ID 또는 cursor와 focusCommentId 동시 지정
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }
+          - { $ref: './schemas/errors.yaml#/InvalidRequestError' }
+          - { $ref: './schemas/comments.yaml#/CommentInvalidPageRequestError' }
+CommentWriteBadRequest:
+  description: 경로·요청 형식 오류, 필수 본문 누락 또는 정규화 후 본문 길이·공백 규칙 위반
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/errors.yaml#/InvalidInputValueError' }
+          - { $ref: './schemas/errors.yaml#/InvalidRequestParameterError' }
+          - { $ref: './schemas/errors.yaml#/InvalidRequestError' }
+          - { $ref: './schemas/comments.yaml#/CommentInvalidContentError' }
+CommentMutationForbidden:
+  description: 댓글 수정은 작성자 본인만 가능하며 삭제는 작성자 본인 또는 해당 스터디의 현재 리더만 가능
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AccessDeniedError' } } }
+NoticeCommentNotFound:
+  description: 스터디·공지·사용자가 없거나 경로에 속한 댓글을 찾을 수 없음
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/errors.yaml#/StudyNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/NoticeNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/UserNotFoundError' }
+          - { $ref: './schemas/comments.yaml#/CommentNotFoundError' }
+AssignmentCommentNotFound:
+  description: 스터디·과제·사용자가 없거나 경로에 속한 댓글을 찾을 수 없음
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/errors.yaml#/StudyNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/AssignmentNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/UserNotFoundError' }
+          - { $ref: './schemas/comments.yaml#/CommentNotFoundError' }
+SubmissionCommentNotFound:
+  description: 스터디·과제·제출물·사용자가 없거나 경로에 속한 댓글을 찾을 수 없음
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/errors.yaml#/StudyNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/AssignmentNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/AssignmentSubmissionNotFoundError' }
+          - { $ref: './schemas/errors.yaml#/UserNotFoundError' }
+          - { $ref: './schemas/comments.yaml#/CommentNotFoundError' }
+CommentStateChanged:
+  description: 잠금 후 공유 잠그지 않은 새 수신 후보가 생기거나 알려진 잠금 경합으로 댓글 쓰기가 취소됨. 전체 트랜잭션은 롤백된다.
+  content: { application/json: { schema: { $ref: './schemas/comments.yaml#/CommentStateChangedError' } } }
+SubmissionCommentConflict:
+  description: 실제 제출 전이거나 공유 잠그지 않은 새 수신 후보·잠금 경합으로 댓글 쓰기가 취소됨
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/comments.yaml#/CommentTargetNotReadyError' }
+          - { $ref: './schemas/comments.yaml#/CommentStateChangedError' }
 InvalidInputAndRequest:
   description: 입력값 검증에 실패했거나 요청 JSON 형식이 잘못됨
   content:

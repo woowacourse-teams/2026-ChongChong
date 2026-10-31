@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -37,6 +39,8 @@ import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 
 @Service
@@ -51,18 +55,24 @@ public class AssignmentService {
     private final NotificationService notificationService;
     private final AssignmentAttachmentService assignmentAttachmentService;
     private final FileUrlGenerator fileUrlGenerator;
+    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
 
     private final Clock clock;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
 
     @Transactional
     public AssignmentCreateResponse create(Long userId, Long studyId, AssignmentCreateRequest request) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
+        List<StudyMemberIdentityProjection> candidates = studyMemberRepository.findIdentitiesByStudyId(studyId);
+        userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
+                .map(StudyMemberIdentityProjection::userId)).distinct().sorted().toList());
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanCreateAssignment(actor);
+        Study study = studyRepository.getByIdForShareOrThrow(studyId);
 
-        List<StudyMember> submitters = getSubmitters(studyId, request.submissionTarget());
-
-        Study study = studyRepository.getByIdOrThrow(studyId);
+        List<StudyMember> submitters = getSubmitters(studyId, request.submissionTarget()).stream()
+                .filter(member -> candidates.stream().anyMatch(candidate -> candidate.matches(member))).toList();
 
         LocalDateTime now = LocalDateTime.now(clock);
         Assignment assignment = Assignment.create(study, request.title(), request.content(), request.submissionMethod(),
@@ -80,10 +90,17 @@ public class AssignmentService {
 
     @Transactional
     public void update(Long userId, Long studyId, Long assignmentId, AssignmentUpdateRequest request) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanUpdateAssignment(actor);
 
-        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
+
+        if (request.submissionTarget() == SubmissionTarget.MEMBERS_ONLY) {
+            assignmentSubmissionRepository.findAllByAssignmentIdForUpdate(assignmentId);
+            commentRepository.deleteAllForLeaderSubmissions(assignmentId);
+            notificationService.deleteNotificationsForLeaderSubmissions(assignmentId);
+        }
 
         if (request.attachmentFileIds() != null) {
             List<FileMetadata> files = assignmentAttachmentService.prepare(userId,
@@ -104,10 +121,13 @@ public class AssignmentService {
 
     @Transactional
     public void delete(Long userId, Long studyId, Long assignmentId) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         assignmentAccessPolicy.requireCanDeleteAssignment(actor);
 
-        Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        Assignment assignment = assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
+        assignmentSubmissionRepository.findAllByAssignmentIdForUpdate(assignmentId);
+        commentRepository.deleteAllForAssignment(assignmentId);
         notificationService.deleteNotificationsForResource(ResourceType.ASSIGNMENT, assignmentId);
         assignmentRepository.delete(assignment);
     }

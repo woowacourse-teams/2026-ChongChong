@@ -1,0 +1,57 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+  - { $ref: '../../components/parameters.yaml#/NoticeId' }
+  - { $ref: '../../components/parameters.yaml#/CommentId' }
+patch:
+  tags: [Comment]
+  operationId: updateNoticeComment
+  x-backend:
+    status: review
+    owner: wontop02
+    description: 작성자 소유권·본문 수정·수정 표시·탈퇴 후 본인 수정과 HTTP 계약을 검증했으며 리뷰 중이다.
+  summary: 공지 댓글 수정
+  description: |
+    인증된 작성자 본인만 경로의 원문에 속한 댓글을 수정한다. 리더도 타인 본문은 수정할 수 없다.
+    스터디 탈퇴나 원문 조회 권한 변경 후에도 계정과 작성자 연결이 남아 있으면 본인 댓글을 수정할 수 있다.
+    조회·작성과 달리 원문 조회 권한이나 현재 멤버십을 추가 조건으로 요구하지 않는다.
+    content는 필수이며 String.trim() 기준 앞뒤 공백 제거 후 String.length() 기준 1~1,000자여야 한다.
+    정규화 후 기존 내용과 같으면 수정 표시를 새로 만들지 않고, 실제 변경이면 isEdited가 true가 된다.
+    createdAt과 정렬 순서는 유지하며 새 알림을 생성하지 않는다.
+    회원 탈퇴로 작성자 연결이 null이 된 댓글을 다른 계정이 본인 댓글로 수정할 수 없다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/comments.yaml#/CommentWriteRequest' }
+        example: { content: 수정한 댓글입니다. }
+  responses:
+    '204': { description: 댓글 수정 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/CommentWriteBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/CommentMutationForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeCommentNotFound' }
+    '409': { $ref: '../../components/responses.yaml#/CommentStateChanged' }
+delete:
+  tags: [Comment]
+  operationId: deleteNoticeComment
+  x-backend:
+    status: review
+    owner: wontop02
+    description: 댓글·관련 알림·Delivery 삭제, 작성자·리더 권한과 HTTP 계약을 검증했으며 리뷰 중이다.
+  summary: 공지 댓글 삭제
+  description: |
+    인증된 작성자 본인 또는 해당 스터디의 현재 리더가 경로의 댓글을 삭제한다.
+    스터디 탈퇴나 원문 조회 권한 변경 후에도 계정과 작성자 연결이 남아 있으면 본인 댓글을 삭제할 수 있다.
+    본인 삭제에 원문 조회 권한이나 현재 멤버십을 추가 조건으로 요구하지 않는다.
+    댓글·관련 알림·Delivery를 같은 트랜잭션으로 완전히 삭제하고 본문이나 삭제 표시를 남기지 않는다.
+    삭제 알림을 새로 생성하지 않는다. 이미 전달됐거나 동시에 외부 전달 중인 푸시는 회수하지 못한다.
+    이미 삭제됐거나 다른 원문의 댓글이면 404 COMMENT_NOT_FOUND다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '204': { description: 댓글 삭제 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/CommentMutationForbidden' }
+    '404': { $ref: '../../components/responses.yaml#/NoticeCommentNotFound' }
+    '409': { $ref: '../../components/responses.yaml#/CommentStateChanged' }
