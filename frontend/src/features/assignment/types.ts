@@ -92,7 +92,7 @@ export interface SubmissionDetail extends Omit<SubmissionBase, 'createdAt'> {
   link: string | null;
 }
 
-export interface AssignmentSubmissionValue {
+export interface AssignmentSubmissionFormValues {
   attachmentFileIds?: number[];
   content?: string | null;
   link?: string;

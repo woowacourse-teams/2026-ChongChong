@@ -6,7 +6,7 @@ import { findUserFromHeader } from '../../../mocks/auth';
 import { paginateByCursor } from '../../../mocks/pagination';
 import { memberTable } from '../../member/mocks/db';
 import {
-  AssignmentSubmissionValue,
+  AssignmentSubmissionFormValues,
   AssignmentFormValues,
   UpdateAssignmentFormValues,
 } from '../types';
@@ -379,7 +379,7 @@ export const handlers = [
         q.where({ assignmentId, userId: user.id }),
       );
       if (!submission) return new HttpResponse(null, { status: 404 });
-      const body = (await request.json()) as AssignmentSubmissionValue & {
+      const body = (await request.json()) as AssignmentSubmissionFormValues & {
         attachmentFileIds?: number[] | null;
       };
       const content = body.content ?? null;
@@ -435,7 +435,7 @@ export const handlers = [
       if (!submission) return new HttpResponse(null, { status: 404 });
       if (submission.userId !== user.id) return new HttpResponse(null, { status: 403 });
 
-      const values = (await request.json()) as AssignmentSubmissionValue & {
+      const values = (await request.json()) as AssignmentSubmissionFormValues & {
         attachmentFileIds?: number[] | null;
       };
       const content = values.content ?? submission.content;
