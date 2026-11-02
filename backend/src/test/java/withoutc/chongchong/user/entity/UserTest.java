@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.user.exception.UserErrorCode;
 import withoutc.chongchong.user.exception.UserException;
 
@@ -21,6 +23,7 @@ class UserTest {
 
         assertThat(user.getName()).isEqualTo("총총이");
         assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
+        assertThat(user.getProfileImageFile()).isNull();
     }
 
     @Test
@@ -29,6 +32,44 @@ class UserTest {
         User user = User.create("총총이", null);
 
         assertThat(user.getProfileImageUrl()).isNull();
+        assertThat(user.getProfileImageFile()).isNull();
+    }
+
+    @Test
+    @DisplayName("업로드 이미지를 교체하고 이름을 수정해도 기존 외부 URL과 파일 상태를 보존한다")
+    void changeUploadedImageWithoutChangingOtherProfileData() {
+        User user = User.create("기존이름", "https://example.com/social.png");
+        FileMetadata first = completedImage(user, "first");
+        FileMetadata second = completedImage(user, "second");
+
+        user.changeProfileImage(first);
+        user.changeProfileImage(second);
+        user.updateName("새이름");
+
+        assertThat(user.getProfileImageFile()).isSameAs(second);
+        assertThat(user.getName()).isEqualTo("새이름");
+        assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/social.png");
+        assertThat(first.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+        assertThat(second.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("홈 이미지를 반복 초기화하면 외부 URL과 파일 연결을 해제하고 이름과 파일 상태는 보존한다")
+    void resetProfileImageWithoutRestoringSocialImage(boolean uploaded) {
+        User user = User.create("기존이름", "https://example.com/social.png");
+        FileMetadata file = completedImage(user, "image");
+        if (uploaded) {
+            user.changeProfileImage(file);
+        }
+
+        user.resetProfileImage();
+        user.resetProfileImage();
+
+        assertThat(user.getProfileImageFile()).isNull();
+        assertThat(user.getProfileImageUrl()).isNull();
+        assertThat(user.getName()).isEqualTo("기존이름");
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.COMPLETED);
     }
 
     @ParameterizedTest
@@ -103,5 +144,11 @@ class UserTest {
                 .isInstanceOf(UserException.class)
                 .extracting(exception -> ((UserException) exception).getErrorCode())
                 .isEqualTo(UserErrorCode.INVALID_USER_PROFILE_IMAGE_URL);
+    }
+
+    private FileMetadata completedImage(User owner, String key) {
+        FileMetadata file = FileMetadata.create(owner, key + ".png", "uploads/" + key, "image/png", 1024);
+        file.completeUpload();
+        return file;
     }
 }
