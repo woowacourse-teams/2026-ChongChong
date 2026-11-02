@@ -1,6 +1,6 @@
 # 기존 단일 서버 배포 참고
 
-backend와 Nginx를 같은 EC2에 배포하는 legacy 운영 절차다. A/B 환경은 [서버 준비](server-setup.md)와 [A/B 배포](edge-deployment.md)를 사용한다.
+backend와 Nginx를 같은 EC2에 배포하는 legacy 운영 절차다. A/B 환경은 [서버 준비](server-setup.md)와 [블루그린 배포](edge-deployment.md)를 사용한다.
 
 legacy는 `DEPLOYMENT_MODE=legacy`로 선택하며 기본값도 legacy다. 아래 서버 명령은 단일 서버의 SSM 터미널에서 실행한다.
 
@@ -16,7 +16,7 @@ legacy는 `DEPLOYMENT_MODE=legacy`로 선택하며 기본값도 legacy다. 아�
 - RDS 5432 inbound source가 EC2의 Security Group인지 확인한다.
 - EC2에 CodeDeploy용 Instance Profile을 연결한다.
 - Docker Hub에 백엔드 이미지 Repository와 push/pull Token을 준비한다.
-- EC2 공개 IP가 바뀌면 `SERVER_NAME`과 인증서도 바뀌므로 개발 기간 중 IP 변경 여부를 관리한다.
+- IP가 포함된 nip.io 이름을 쓰면 EC2 공인 IP 변경 시 `SERVER_NAME`과 인증서를 함께 갱신한다. 고정 도메인을 쓰는 경우에는 DNS 연결 대상을 갱신하며, 도메인이 같다면 IP 변경만으로 인증서를 재발급할 필요는 없다.
 
 ## 2. EC2를 한 번 준비한다
 
@@ -133,7 +133,7 @@ CodeBuild 환경에는 다음 변수를 설정한다.
 
 CodeBuild Service Role에 위 두 파라미터를 읽을 `ssm:GetParameters` 권한을 부여한다.
 
-CodeBuild는 Corretto 25로 `bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA 태그로만 push한다.
+CodeBuild는 Corretto 25로 `test bootJar`를 실행하고 ARM64 이미지를 Docker Hub에 commit SHA 태그로만 push한다.
 CodeDeploy는 artifact에 포함된 `appspec.yml`, deploy 디렉터리와 `image.env`로 배포한다.
 
 파이프라인은 환경별로 구성한다. 각 빌드의 commit SHA를 이미지 태그와 `image.env`에 기록한다.
@@ -212,8 +212,8 @@ sudo bash -c '
 
 배포 스크립트는 backend와 Nginx 컨테이너가 실행되고 Nginx에서 backend 8080 포트로 연결할 수 있는지 확인한 뒤,
 Spring Boot health endpoint가 HTTPS 2xx로 응답하는지 검증한다.
-새 컨테이너 시작에 실패하면 직전 backend 이미지로 복구를 시도한다. 단일 EC2를 사용하므로 배포 중 짧은 중단은
-허용하며, 운영 전 무중단 전환은 별도 결정으로 다룬다.
+새 컨테이너 시작에 실패하면 직전 backend 이미지로 복구를 시도한다. 이 legacy 스크립트는 기존 컨테이너를 재생성하므로 배포 중 중단이 발생할 수 있다.
+블루그린 전환이 필요한 환경은 [블루그린 배포 절차](edge-deployment.md)를 따른다.
 
 ## 7. CloudWatch HTTP·Hikari·JVM 메트릭 수집기를 환경별로 활성화한다
 

@@ -301,7 +301,7 @@ sudoedit /opt/chongchong/config/backend.env
 
 Docker Hub 인증 정보, S3, DB, 프론트엔드 URL, 인증·알림 값과 CLOUD_WATCH_APP_ENV를 채운다. 기존 서버를 확장할 때 DB·JWT·카카오·VAPID·클릭 토큰 값은 같은 환경에서 쓰던 값을 옮긴다. 새 임의 값으로 바꾸면 로그인이나 기존 토큰에 영향을 준다.
 
-이 파일은 Bash에서 읽으므로 달러 기호나 공백이 포함된 값은 작은따옴표로 감싼다. 이미지 주소와 태그는 다음 단계의 image.env에서 정한다.
+이 파일은 Bash와 Compose에서 읽으므로 달러 기호나 공백이 포함된 값은 작은따옴표로 감싼다. 값 자체에 작은따옴표가 있으면 단순히 감싸는 것으로는 부족하므로 두 형식에서 같은 값으로 해석되는지 확인한다. 이미지 주소와 태그는 다음 단계의 image.env에서 정한다.
 
 CodeDeploy Agent가 없는 edge에서 실행한다.
 
@@ -364,7 +364,7 @@ source /opt/chongchong/config/edge.env
 curl -fsS --connect-timeout 2 --max-time 5 "http://$BACKEND_A_HOST:8080/actuator/health/readiness"
 ~~~
 
-status가 UP이면 완료다. 연결되지 않으면 A에서 docker logs --tail 100 chongchong-backend로 DB·설정 오류를 확인한다.
+status가 UP이면 앱의 준비 상태 검사를 통과한 것이다. readiness에 DB 검사가 자동으로 포함되는 것은 아니므로, 이어지는 edge health 검사와 주요 API 확인까지 진행한다. 연결되지 않으면 A에서 docker logs --tail 100 chongchong-backend로 DB·설정 오류를 확인한다.
 
 ~~~json
 {"status":"UP"}
@@ -410,6 +410,7 @@ openssl x509 -in "/etc/letsencrypt/live/$SERVER_NAME/fullchain.pem" -noout -date
 실행 설정과 갱신 작업을 설치한다.
 
 ~~~bash
+source /opt/chongchong/config/edge.env
 cd /opt/chongchong/deploy
 install -d /opt/chongchong/edge-runtime /opt/chongchong/edge-routing /var/www/certbot
 install -m 644 config/nginx/edge.conf.template /opt/chongchong/edge-runtime/edge.conf.template
@@ -466,7 +467,7 @@ A/B에서 각각 실행한다.
 bash /opt/chongchong/deploy/scripts/setup/check-server-setup.sh backend
 ~~~
 
-모두 OK가 나오면 [A/B 배포 절차](edge-deployment.md)로 이동한다. 그 문서에서 CodeBuild의 DEPLOYMENT_MODE와 CodeDeploy 대상 edge를 설정하고 첫 파이프라인을 실행한다.
+모두 OK가 나오면 [블루그린 배포 절차](edge-deployment.md)로 이동한다. 그 문서에서 CodeBuild의 DEPLOYMENT_MODE와 CodeDeploy 대상 edge를 설정하고 첫 파이프라인을 실행한다.
 
 **확인 결과 예시:**
 
@@ -489,4 +490,4 @@ bash /opt/chongchong/deploy/scripts/setup/check-server-setup.sh backend
 
 DNS 방식으로 별도 갱신 작업을 구성했다면 검사는 저장소의 webroot timer가 없다고 표시할 수 있다. 이 경우 선택한 DNS 갱신 작업의 실행 상태와 갱신 시험 결과를 확인한다.
 
-새 B의 앱은 첫 A/B 배포에서 실행된다. 기존 서버를 B로 편입할 때도 외부 요청이 새 edge로 옮겨진 뒤 첫 A/B 배포를 실행한다.
+새 B의 앱은 첫 블루그린 배포에서 실행된다. 기존 서버를 B로 편입할 때도 외부 요청이 새 edge로 옮겨진 뒤 첫 블루그린 배포를 실행한다.

@@ -5,7 +5,7 @@ dev는 **요청을 받는 edge 1대와 앱을 실행하는 backend A/B 2대**로
 팀원이 서버에 접속할 때는 AWS Systems Manager의 Session Manager(SSM)를 사용한다.
 
 > [!NOTE]
-> 이 안내는 Ubuntu ARM64 EC2와 기존 VPC·RDS를 사용해 A/B 배포를 구성하는 절차다.
+> 이 안내는 Ubuntu ARM64 EC2와 기존 VPC·RDS를 사용해 블루그린 배포를 구성하는 절차다.
 > EC2를 만든 다음 [서버 준비](docs/server-setup.md)부터 진행한다. VPC와 DB를 새로 만드는 과정은 포함하지 않는다.
 
 ## 처음 구성할 때 읽는 순서
@@ -13,7 +13,7 @@ dev는 **요청을 받는 edge 1대와 앱을 실행하는 backend A/B 2대**로
 | 순서 | 할 일 | 끝났을 때 확인할 결과 |
 | --- | --- | --- |
 | 1 | [서버 준비](docs/server-setup.md): AWS 설정 → SSM → Docker·메모리 수집 → SSH → 앱·Nginx | edge의 HTTPS 응답이 `UP`, 응답 헤더에 A 주소 표시 |
-| 2 | [A/B 배포](docs/edge-deployment.md): 파이프라인 설정 → 첫 배포 → 전환 확인 | 배포 성공 후 응답 헤더가 B 주소로 변경 |
+| 2 | [블루그린 배포](docs/edge-deployment.md): 파이프라인 설정 → 첫 배포 → 전환 확인 | 배포 성공 후 응답 헤더가 B 주소로 변경 |
 | 3 | [모니터링](docs/monitoring.md): 앱 지표 → EC2 메모리 → 로그 확인 | A/B 지표가 각각 보이고 최근 시각까지 갱신 |
 
 각 명령 위에 실행 위치를 적었다. **AWS 콘솔**은 브라우저 화면, **edge·A·B 터미널**은 그 서버에 SSM으로 접속한 화면이다.
@@ -32,7 +32,7 @@ dev는 **요청을 받는 edge 1대와 앱을 실행하는 backend A/B 2대**로
 | CodeBuild / CodeDeploy / CodePipeline | 각각 이미지 빌드 / 서버 배포 / 전체 실행 순서를 담당 |
 
 > [!IMPORTANT]
-> A/B 배포의 CodeBuild 환경변수는 `DEPLOYMENT_MODE=edge`다. 생략하면 기존 단일 서버 배포인 `legacy`가 선택된다.
+> 블루그린 배포의 CodeBuild 환경변수는 `DEPLOYMENT_MODE=edge`다. 생략하면 기존 단일 서버 배포인 `legacy`가 선택된다.
 
 ## 서버 세 대는 각각 무엇을 하나요?
 
@@ -49,11 +49,11 @@ flowchart LR
 
 | 서버 | 실행하는 것 | 운영자가 알아야 할 점 |
 | --- | --- | --- |
-| edge | Nginx, 앱 메트릭 수집기(ADOT), CodeDeploy Agent | HTTPS와 인증서를 관리하고 A/B 배포·트래픽 전환을 수행한다. |
+| edge | Nginx, 앱 메트릭 수집기(ADOT), CodeDeploy Agent | HTTPS와 인증서를 관리하고 블루그린 배포·트래픽 전환을 수행한다. |
 | backend A | Spring Boot 컨테이너 | 활성일 때 사용자 요청을 처리하고, 대기일 때 다음 배포 대상이 된다. |
 | backend B | Spring Boot 컨테이너 | A와 같은 역할을 번갈아 맡는다. |
 
-대기 서버도 앱이 실행 중이다. HTTP 요청이 가지 않더라도 DB 연결과 스케줄러·알림 작업은 남을 수 있다.
+첫 구성에서는 A만 실행하고, 첫 배포로 B를 실행한다. 이후에는 전환 전 서버도 다음 배포 전까지 유지한다. 대기 서버에 새 HTTP 요청을 보내지 않아도 기존 연결 처리, DB 연결과 스케줄러·알림 작업은 남을 수 있다.
 두 버전이 같은 DB를 사용하므로 스키마와 백그라운드 작업도 두 인스턴스가 함께 동작할 수 있어야 한다.
 
 ## 어떤 문서부터 읽으면 되나요?
@@ -61,12 +61,12 @@ flowchart LR
 | 하려는 일 | 문서 |
 | --- | --- |
 | 서버를 새로 준비하거나 빠진 설정을 찾기 | [서버 준비와 역할별 검사](docs/server-setup.md) |
-| 새 버전 배포, 앱 설정 변경, 실패 복구 | [A/B 배포 운영 절차](docs/edge-deployment.md) |
+| 새 버전 배포, 앱 설정 변경, 실패 복구 | [블루그린 배포 운영 절차](docs/edge-deployment.md) |
 | A/B 메트릭과 로그 확인, 부하 테스트 분석 | [모니터링 확인](docs/monitoring.md) |
 | 기존 단일 서버 환경을 관리하기 | [legacy 배포 참고](docs/legacy-deployment.md) |
 | Nginx 연결 한도를 정한 배경 확인 | [과거 실험 기록](docs/nginx-limits-and-observability.md) |
 
-처음 구성할 때는 **서버 준비 → A/B 배포 → 모니터링 확인** 순서로 읽는다. 각 문서에 실행할 서버, 명령과 정상 결과를 적었다.
+처음 구성할 때는 **서버 준비 → 블루그린 배포 → 모니터링 확인** 순서로 읽는다. 각 문서에 실행할 서버, 명령과 정상 결과를 적었다.
 
 ## 코드 변경이 서버에 도착하는 흐름
 
@@ -81,10 +81,12 @@ flowchart LR
     Script -->|SSH로 설정과 파일 전달| Standby["대기 backend<br/>backend-release.sh"]
     Registry -->|이미지 pull| Standby
     Standby --> Check[readiness 확인]
-    Check --> Switch["Nginx reload<br/>실제 HTTPS 응답 검증"]
+    Check --> Switch["Nginx reload<br/>edge 내부 HTTPS 응답 검증"]
 ```
 
 운영자는 SSM으로 접속한다. CodeDeploy는 edge에서 배포 스크립트를 실행하고, edge가 SSH로 대기 백엔드에 파일을 전달한다.
+
+CodeDeploy의 배포 유형은 edge 한 대의 파일을 갱신하는 In-place이며, 앱의 블루그린 전환은 스크립트와 Nginx가 수행한다. 전환 후 자동 검사는 edge의 loopback 주소로 HTTPS 요청을 보낸다. 공개 DNS·CloudFront를 거치는 사용자 경로는 배포 후 로컬 PC에서 별도로 확인한다.
 
 ## 파일을 찾을 때
 
@@ -96,7 +98,7 @@ deploy/
 │   ├── nginx/      # Nginx 설정과 템플릿
 │   └── systemd/    # 인증서 갱신 service·timer
 ├── scripts/
-│   ├── edge/       # edge의 A/B 배포·트래픽 전환·롤백
+│   ├── edge/       # edge의 블루그린 배포·트래픽 전환·롤백
 │   ├── backend/    # 대상 백엔드에서 앱 교체
 │   ├── setup/      # 서버 준비 검사·메모리 수집·인증서 갱신
 │   └── legacy/     # 기존 단일 서버 배포·초기 설치
@@ -122,7 +124,7 @@ legacy 복구는 폴더 정리 전후의 백업 구조를 모두 읽는다.
 | `config/edge.env.example`, `config/.env.example` | edge 주소·SSH 설정과 앱 환경변수의 예시다. |
 
 `scripts/legacy/`와 `config/docker-compose.dev.yml`은 기존 단일 서버 배포에서 사용한다.
-`config/docker-compose.yml`의 backend 정의는 A/B 배포에서도 공통으로 사용한다.
+`config/docker-compose.yml`의 backend 정의는 블루그린 배포에서도 공통으로 사용한다.
 
 ## 변경한 뒤 확인할 것
 
