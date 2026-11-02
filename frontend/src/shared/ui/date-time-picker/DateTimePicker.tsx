@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { CSSObject } from '@emotion/react';
 import Button from '../Button';
 import BottomSheet from './BottomSheet';
 import DatePicker from './DatePicker';
@@ -15,6 +16,8 @@ export interface DateTimePickerProps {
   title?: string;
   triggerLabel?: ReactNode;
   triggerVariant?: 'brandOutline' | 'neutralOutline';
+  triggerStyle?: CSSObject;
+  disabled?: boolean;
   onChange: (value: Date) => void;
 }
 
@@ -25,6 +28,8 @@ export default function DateTimePicker({
   title = '리마인드 시각 설정',
   triggerLabel = '리마인드 시각 설정',
   triggerVariant = 'neutralOutline',
+  triggerStyle,
+  disabled = false,
   onChange,
 }: DateTimePickerProps) {
   const [minimumDateTime, setMinimumDateTime] = useState(() => getMinimumDateTime(minDate));
@@ -56,6 +61,8 @@ export default function DateTimePicker({
     <>
       <Button
         id={id}
+        css={triggerStyle}
+        disabled={disabled}
         variant={triggerVariant}
         size="large"
         aria-haspopup="dialog"

@@ -58,13 +58,13 @@ export interface AssignmentDetail {
   closeAt: string;
   submissionTarget: SubmissionTarget;
   submissionVisibility: SubmissionVisibility;
+  remindAts?: string[] | null;
 }
 
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
 export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
 export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments'> & {
-  remindAts?: string[] | null;
   attachmentFileIds?: number[];
 };
 

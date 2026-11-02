@@ -36,6 +36,46 @@ describe('공지 수정 폼', () => {
     );
   });
 
+  test.each([0, 1, 2])(
+    '저장된 리마인드를 표시하고 %i개 삭제한 목록을 전송한다',
+    async (removeCount) => {
+      const remindAts = ['2999-12-30T18:00:00', '2999-12-31T18:00:00'];
+      const captureRequest = jest.fn();
+      server.use(
+        http.get(`${API_URL}/studies/:studyId/notices/:noticeId`, () =>
+          HttpResponse.json({
+            id: 10,
+            title: '기존 공지',
+            content: '기존 내용',
+            createdAt: '2026-09-02T00:00:00',
+            attachments: [],
+            remindAts,
+          }),
+        ),
+        http.patch(`${API_URL}/studies/:studyId/notices/:noticeId`, async ({ request }) => {
+          captureRequest(await request.json());
+          return HttpResponse.json(
+            { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+            { status: 403 },
+          );
+        }),
+      );
+      renderEditPage();
+
+      const list = await screen.findByRole('list', { name: '등록한 리마인드 시각' });
+      expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+      for (let index = 0; index < removeCount; index += 1) {
+        await user.click(within(list).getAllByRole('button', { name: /리마인드 삭제/ })[0]);
+      }
+      await user.click(screen.getByRole('button', { name: '수정하기' }));
+      await screen.findByRole('status');
+
+      expect(captureRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ remindAts: remindAts.slice(removeCount) }),
+      );
+    },
+  );
+
   test('스터디 리더가 아니면 공지 수정 권한 안내를 토스트로 표시한다', async () => {
     server.use(
       http.patch(`${API_URL}/studies/:studyId/notices/:noticeId`, () =>

@@ -13,6 +13,30 @@ const initialValues = {
 } satisfies AssignmentFormValues;
 
 describe('AssignmentForm 테스트', () => {
+  test('여러 리마인드 중 선택한 시각만 삭제하고 나머지 시각을 제출한다', async () => {
+    const user = userEvent.setup();
+    const onSubmit = jest.fn();
+    render(
+      <AssignmentForm
+        initialValues={{
+          ...initialValues,
+          remindAts: ['2999-12-30T18:00:00', '2999-12-31T18:00:00'],
+        }}
+        submitLabel="과제 수정하기"
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(
+      screen.getByText('설정한 시각마다 제출하지 않은 스터디원에게 알림을 보내드릴게요'),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '2999년 12월 30일 18:00 리마인드 삭제' }));
+    await user.click(screen.getByRole('button', { name: '과제 수정하기' }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ remindAts: ['2999-12-31T18:00:00'] }),
+    );
+  });
+
   test.each([
     ['제목', 'assignment-title-field'],
     ['내용', 'assignment-content-field'],

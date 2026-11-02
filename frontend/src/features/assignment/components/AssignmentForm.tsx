@@ -4,8 +4,7 @@ import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import type { Attachment } from '../../../shared/modules/files/types';
 import { CSSProperties, useState } from 'react';
 import Button from '../../../shared/ui/Button';
-import { Field } from '../../../shared/ui/inputs/Field';
-import DateTimePicker from '../../../shared/ui/date-time-picker/DateTimePicker';
+import CloseAtField from '../../../shared/widgets/CloseAtField';
 import InputField from '../../../shared/widgets/InputField';
 import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaField';
 import CheckField from '../../../shared/widgets/CheckField';
@@ -13,9 +12,9 @@ import RadioField from '../../../shared/widgets/RadioField';
 import { tokens } from '../../../styles/global';
 import { AssignmentFormValues } from '../types';
 import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, visibilityOptions } from '../constants';
-import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
 import { useInputState } from '../../../shared/hooks/useInputState';
+import ReminderField from '../../../shared/widgets/ReminderField';
 
 const formStyle = {
   display: 'flex',
@@ -38,6 +37,7 @@ interface AssignmentFormProps {
       | 'submissionMethod'
       | 'closeAt'
       | 'submissionTarget'
+      | 'remindAts'
       | 'submissionVisibility',
       string
     >
@@ -91,6 +91,7 @@ export default function AssignmentForm({
     initialValues.submissionVisibility,
   );
   const posthog = usePostHog();
+  const [remindAts, setRemindAts] = useState(initialValues.remindAts);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -109,6 +110,7 @@ export default function AssignmentForm({
       closeAt,
       submissionTarget,
       submissionVisibility,
+      remindAts,
     });
   }
 
@@ -139,18 +141,6 @@ export default function AssignmentForm({
         isRequired
         testId="assignment-content-field"
       />
-      <AttachmentField
-        showImagePreviews
-        id="assignment-images"
-        label="이미지 업로드"
-        items={attachments.items}
-        onSelect={attachments.addFiles}
-        onRemove={attachments.removeFile}
-        accept={IMAGE_ACCEPT}
-        disabled={isSubmitting}
-        errorText={attachments.error ?? fieldErrors.attachmentFileIds}
-        helpText="본문을 설명할 이미지를 추가할 수 있어요"
-      />
       <InputField
         id="submit-method"
         name="method"
@@ -162,22 +152,14 @@ export default function AssignmentForm({
         errorText={fieldErrors.submissionMethod}
         isRequired
       />
-      <Field>
-        <Field.Label htmlFor={'assignment-close-at'} isRequired={true}>
-          마감 시각
-        </Field.Label>
-        <DateTimePicker
-          id="assignment-close-at"
-          title="마감 시각 설정"
-          value={closeAt ? new Date(closeAt) : undefined}
-          triggerLabel={closeAt ? formatDateToString(closeAt) : '마감 시각 설정'}
-          triggerVariant="neutralOutline"
-          onChange={(value) => {
-            setCloseAt(toLocalDateTime(value));
-          }}
-        />
-        <Field.SubText errorText={fieldErrors.closeAt} />
-      </Field>
+      <CloseAtField
+        id="assignment-close-at"
+        value={closeAt}
+        onChange={setCloseAt}
+        errorText={fieldErrors.closeAt}
+        isRequired
+        disabled={isSubmitting}
+      />
 
       <RadioField
         id="submission-visibility"
@@ -203,6 +185,28 @@ export default function AssignmentForm({
         helpText="체크하지 않으면 리드는 과제 제출 대상에서 제외돼요"
         errorText={fieldErrors.submissionTarget}
         isRequired
+      />
+
+      <ReminderField
+        id="assignment-reminders"
+        value={remindAts}
+        onChange={setRemindAts}
+        disabled={isSubmitting}
+        helpText="설정한 시각마다 제출하지 않은 스터디원에게 알림을 보내드릴게요"
+        errorText={fieldErrors.remindAts}
+      />
+
+      <AttachmentField
+        showImagePreviews
+        id="assignment-images"
+        label="이미지 업로드"
+        items={attachments.items}
+        onSelect={attachments.addFiles}
+        onRemove={attachments.removeFile}
+        accept={IMAGE_ACCEPT}
+        disabled={isSubmitting}
+        errorText={attachments.error ?? fieldErrors.attachmentFileIds}
+        helpText="본문을 설명할 이미지를 추가할 수 있어요"
       />
 
       <Button

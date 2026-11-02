@@ -69,6 +69,7 @@ export interface NoticeDetail {
   content: string;
   createdAt: string;
   attachments: Attachment[];
+  remindAts?: string[] | null;
 }
 
 export type MemberReadStatus =

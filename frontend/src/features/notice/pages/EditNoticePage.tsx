@@ -84,6 +84,7 @@ function Content() {
       initialValues={{
         title: notice.title,
         content: notice.content,
+        remindAts: notice.remindAts,
       }}
     />
   );
