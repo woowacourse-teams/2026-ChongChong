@@ -152,7 +152,7 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
 
         List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(assignment);
-        return AssignmentDetailResponse.from(assignment, attachments);
+        return AssignmentDetailResponse.from(assignment, attachments, LocalDateTime.now(clock));
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {

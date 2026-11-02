@@ -40,7 +40,7 @@ AssignmentCreateResponse:
 AssignmentDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt]
+  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts]
   properties:
     attachments: { type: array, items: { $ref: './assignment-attachments.yaml#/Attachment' } }
     id: { type: integer, format: int64, example: 1 }
@@ -53,6 +53,10 @@ AssignmentDetailResponse:
       enum: [LEADER_ONLY, ALL_STUDY_MEMBERS]
       description: 현재 제출물 공개 범위. 기존 과제는 LEADER_ONLY로 이관한다. 공개 여부와 제출 대상 여부는 독립적이다.
     closeAt: { $ref: './common.yaml#/LocalDateTime' }
+    remindAts:
+      type: array
+      description: 조회 시각 이후의 대기(PENDING) 예약 시각을 오름차순으로 반환한다. 처리 중·발송 완료·지난 예약은 제외하며 없으면 빈 배열이다. 수정 시 유지할 예약과 추가할 예약을 함께 전송하며 목록에서 제외한 대기 예약은 삭제된다.
+      items: { $ref: './common.yaml#/LocalDateTime' }
 AssignmentSummaryResponse:
   type: object
   additionalProperties: false

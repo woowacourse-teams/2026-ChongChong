@@ -48,7 +48,7 @@ NoticeCreateResponse:
 NoticeDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, createdAt, attachments]
+  required: [id, title, content, createdAt, attachments, remindAts]
   properties:
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 이번 주 공지 }
@@ -60,6 +60,10 @@ NoticeDetailResponse:
         objectKey와 업로드용 URL은 별도 필드로 반환하지 않는다.
       type: array
       items: { $ref: '#/NoticeAttachmentResponse' }
+    remindAts:
+      type: array
+      description: 조회 시각 이후의 대기(PENDING) 예약 시각을 오름차순으로 반환한다. 처리 중·발송 완료·지난 예약은 제외하며 없으면 빈 배열이다. 수정 시 유지할 예약과 추가할 예약을 함께 전송하며 목록에서 제외한 대기 예약은 삭제된다.
+      items: { $ref: './common.yaml#/LocalDateTime' }
 NoticeAttachmentResponse:
   type: object
   additionalProperties: false

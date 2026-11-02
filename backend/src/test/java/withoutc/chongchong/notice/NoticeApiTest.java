@@ -120,6 +120,46 @@ class NoticeApiTest {
     }
 
     @Test
+    @DisplayName("상세 예약을 유지·추가·개별 삭제하고 전체 삭제하면 빈 배열을 반환한다")
+    void roundTripDetailRemindAts() {
+        String path = "/studies/{studyId}/notices/{id}";
+        String original = remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String added = remindAt.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        List<String> existing = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), notice.getId())
+                .then().statusCode(200).body("remindAts", equalTo(List.of(original)))
+                .extract().jsonPath().getList("remindAts", String.class);
+
+        for (List<String> requested : List.of(List.of(existing.getFirst(), added), List.of(added), List.<String>of())) {
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .contentType(ContentType.JSON).body(Map.of("remindAts", requested))
+                    .when().patch(path, study.getId(), notice.getId())
+                    .then().statusCode(204);
+
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .when().get(path, study.getId(), notice.getId())
+                    .then().statusCode(200)
+                    .body("remindAts", equalTo(requested.stream().sorted().toList()));
+        }
+    }
+
+    @Test
+    @DisplayName("상세 응답은 처리 중·발송 완료·지난 예약을 제외한다")
+    void excludeNonEditableRemindAts() {
+        notice.getReminders().getFirst().markAsSent();
+        LocalDateTime now = remindAt.minusDays(10);
+        notice.addReminders(List.of(remindAt.minusDays(1)), now);
+        notice.getReminders().getLast().markAsProcessing();
+        notice.addReminders(List.of(LocalDateTime.of(2000, 1, 2, 0, 0)),
+                LocalDateTime.of(2000, 1, 1, 0, 0));
+        noticeRepository.saveAndFlush(notice);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/notices/{id}", study.getId(), notice.getId())
+                .then().statusCode(200).body("remindAts", equalTo(List.of()));
+    }
+
+    @Test
     @DisplayName("생성 시 101자 제목은 거부하고 저장하지 않는다")
     void createWithOverLengthTitleTest() {
         long originalCount = noticeRepository.count();
