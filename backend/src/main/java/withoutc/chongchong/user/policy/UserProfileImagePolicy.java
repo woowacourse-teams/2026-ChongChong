@@ -16,12 +16,13 @@ public class UserProfileImagePolicy {
 
     public UserProfileImagePolicy(
             @Value("${user.profile-image.max-size-bytes}") long maxSizeBytes,
-            @Value("${user.profile-image.allowed-content-types}") List<String> allowedContentTypes
+            @Value("${user.profile-image.allowed-content-types}") List<String> allowedContentTypes,
+            @Value("${file.upload.max-size-bytes}") long uploadMaxSizeBytes
     ) {
-        if (maxSizeBytes < 1 || allowedContentTypes.isEmpty()) {
+        if (maxSizeBytes < 1 || uploadMaxSizeBytes < 0 || allowedContentTypes.isEmpty()) {
             throw new IllegalArgumentException("사용자 프로필 이미지 정책 설정이 올바르지 않습니다.");
         }
-        this.maxSizeBytes = maxSizeBytes;
+        this.maxSizeBytes = Math.min(maxSizeBytes, uploadMaxSizeBytes);
         this.allowedContentTypes = Set.copyOf(allowedContentTypes);
     }
 

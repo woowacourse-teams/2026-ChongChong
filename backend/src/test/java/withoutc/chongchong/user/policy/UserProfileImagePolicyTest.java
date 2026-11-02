@@ -18,7 +18,7 @@ import withoutc.chongchong.user.exception.UserException;
 class UserProfileImagePolicyTest {
 
     private final UserProfileImagePolicy policy = new UserProfileImagePolicy(
-            5242880, List.of("image/jpeg", "image/png", "image/webp"));
+            5242880, List.of("image/jpeg", "image/png", "image/webp"), 5242880);
 
     @ParameterizedTest
     @NullSource
@@ -72,7 +72,7 @@ class UserProfileImagePolicyTest {
     @Test
     @DisplayName("설정한 홈 이미지 형식과 크기 제한을 적용한다")
     void appliesConfiguredImageRules() {
-        UserProfileImagePolicy configuredPolicy = new UserProfileImagePolicy(1024, List.of("image/png"));
+        UserProfileImagePolicy configuredPolicy = new UserProfileImagePolicy(1024, List.of("image/png"), 5242880);
 
         assertThatCode(() -> configuredPolicy.validateImage(file("image/png", 1024))).doesNotThrowAnyException();
         assertThatThrownBy(() -> configuredPolicy.validateImage(file("image/webp", 1024)))
@@ -87,14 +87,42 @@ class UserProfileImagePolicyTest {
     @ValueSource(longs = {0L, -1L})
     @DisplayName("홈 이미지의 최대 크기를 양수로 설정해야 한다")
     void rejectsInvalidSizeConfiguration(long maxSizeBytes) {
-        assertThatThrownBy(() -> new UserProfileImagePolicy(maxSizeBytes, List.of("image/png")))
+        assertThatThrownBy(() -> new UserProfileImagePolicy(maxSizeBytes, List.of("image/png"), 5242880))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @DisplayName("홈 이미지 허용 형식을 비워 둘 수 없다")
     void rejectsEmptyContentTypesConfiguration() {
-        assertThatThrownBy(() -> new UserProfileImagePolicy(5242880, List.of()))
+        assertThatThrownBy(() -> new UserProfileImagePolicy(5242880, List.of(), 5242880))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("프로필 최대 크기보다 공통 업로드 제한이 작으면 공통 제한을 함께 적용한다")
+    void appliesSmallerCommonUploadLimit() {
+        UserProfileImagePolicy configuredPolicy = new UserProfileImagePolicy(5242880, List.of("image/png"), 1024);
+
+        assertThatCode(() -> configuredPolicy.validateImage(file("image/png", 1024))).doesNotThrowAnyException();
+        assertThatThrownBy(() -> configuredPolicy.validateImage(file("image/png", 1025)))
+                .isInstanceOfSatisfying(UserException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(UserErrorCode.INVALID_USER_PROFILE_IMAGE_SIZE));
+    }
+
+    @Test
+    @DisplayName("공통 업로드 제한이 0이면 비어 있지 않은 프로필 이미지를 연결할 수 없다")
+    void rejectsImageWhenCommonUploadsAreDisabled() {
+        UserProfileImagePolicy configuredPolicy = new UserProfileImagePolicy(5242880, List.of("image/png"), 0);
+
+        assertThatThrownBy(() -> configuredPolicy.validateImage(file("image/png", 1)))
+                .isInstanceOfSatisfying(UserException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(UserErrorCode.INVALID_USER_PROFILE_IMAGE_SIZE));
+    }
+
+    @Test
+    @DisplayName("공통 업로드 제한은 음수로 설정할 수 없다")
+    void rejectsNegativeCommonUploadLimit() {
+        assertThatThrownBy(() -> new UserProfileImagePolicy(5242880, List.of("image/png"), -1))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
