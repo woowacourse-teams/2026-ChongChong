@@ -69,6 +69,22 @@ function fallbackFor(pathname: string): string {
   return path.studies;
 }
 
+// OAuth 왕복 후에도 앱 내부의 로그인 전 주소로만 복귀한다.
+function loginReturnPath(returnTo: string | null | undefined): string | undefined {
+  if (!returnTo?.startsWith('/')) return;
+
+  try {
+    const url = new URL(returnTo, window.location.origin);
+    const pathname =
+      '/' + decodeURIComponent(url.pathname).split('/').filter(Boolean).join('/').toLowerCase();
+    if (url.origin !== window.location.origin || url.pathname.startsWith('//')) return;
+    if (pathname === path.login || pathname === path.callback) return;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return;
+  }
+}
+
 export const URL_POLICY = {
   // 일반 진입은 새 이력으로 남긴다.
   toLanding: () => push(path.landing),
@@ -134,7 +150,8 @@ export const URL_POLICY = {
   afterAssignmentDelete: (studyId: Id) => replace(path.assignments(studyId)),
   afterStudyDelete: () => replace(path.studies),
   afterStudyLeave: () => replace(path.studies),
-  afterLogin: () => replace(path.studies),
+  loginReturnPath,
+  afterLogin: (returnTo?: string | null) => replace(loginReturnPath(returnTo) ?? path.studies),
   afterLogout: () => replace(path.login),
   afterAccountWithdrawal: () => replace(path.login),
   afterSessionExpired: () => replace(path.login),

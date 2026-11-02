@@ -1,3 +1,4 @@
+import { clearInviteLinkDraft } from './useInviteLinkState';
 import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { useMemo } from 'react';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
@@ -12,7 +13,10 @@ export default function useStudyJoin() {
   const toast = useToast();
   const { mutate, isPending, error } = useMutation({
     mutationFn: ({ token }: { token: string }) => joinStudy({ token }),
-    onSuccess: (data) => move(URL_POLICY.afterStudyJoin(data.studyId)),
+    onSuccess: (data) => {
+      clearInviteLinkDraft();
+      return move(URL_POLICY.afterStudyJoin(data.studyId));
+    },
     onError: (error) => {
       if (error instanceof ValidationError) return;
       toast.open(<StatusToast message={error.message} status={'error'} />);

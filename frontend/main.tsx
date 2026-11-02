@@ -1,3 +1,4 @@
+import { saveLoginReturnPath } from './src/features/login/loginReturnPath';
 import { URL_POLICY } from './src/shared/constants/urlPolicy';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
@@ -74,6 +75,7 @@ async function restoreSession() {
     await refreshAccessToken();
     return false;
   } catch {
+    saveLoginReturnPath();
     window.history.replaceState({}, document.title, URL_POLICY.afterSessionExpired().to);
     return true;
   }

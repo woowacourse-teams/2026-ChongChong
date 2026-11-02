@@ -1,3 +1,4 @@
+import { saveLoginReturnPath } from './features/login/loginReturnPath';
 import { URL_POLICY } from './shared/constants/urlPolicy';
 import ky from 'ky';
 import { API_PREFIX, BASE_URL } from '../config';
@@ -38,6 +39,7 @@ const api = ky.create({
             options.context.redirectOnAuthFailure !== false &&
             window.location.pathname !== URL_POLICY.toLogin().to
           ) {
+            saveLoginReturnPath();
             window.location.assign(URL_POLICY.afterAuthenticationRejected().to);
           }
 

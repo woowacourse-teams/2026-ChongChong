@@ -1,5 +1,6 @@
-import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
+import { consumeLoginReturnPath } from '../loginReturnPath';
 import { keyframes, type CSSObject } from '@emotion/react';
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
@@ -166,7 +167,7 @@ export default function KakaoCallbackPage() {
         // TODO: 아래와 같이 전환할경우 Posthog에서 유저 식별 필터링이 용이해진다. (논의필요)
         // posthog.identify(String(userId), { username: '안톨리니', email: 'some@example.com' });
         posthog.identify(String(userId));
-        move(URL_POLICY.afterLogin());
+        await move(URL_POLICY.afterLogin(consumeLoginReturnPath()));
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : '카카오 로그인에 실패했습니다.');
       }

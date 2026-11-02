@@ -1,24 +1,38 @@
+import { useState, type ChangeEventHandler } from 'react';
 import { useLocation } from 'react-router';
-import { useSearchParams } from 'react-router';
-import { useInputState } from '../../../shared/hooks/useInputState';
+
+const INVITE_LINK_DRAFT_KEY = 'study_join_invite_link';
+
+export function clearInviteLinkDraft() {
+  sessionStorage.removeItem(INVITE_LINK_DRAFT_KEY);
+}
 
 export default function useInviteLinkState() {
-  function hasTokenInQueryParams() {
-    return searchParams.has('token');
-  }
-
-  function getCurrentUrl() {
-    return new URL(`${location.pathname}${location.search}${location.hash}`, window.location.origin)
-      .href;
-  }
-
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
-  const [inviteLink, handleInviteLink] = useInputState(() => {
-    if (!hasTokenInQueryParams()) return '';
-    return getCurrentUrl();
+  const [inviteLink, setInviteLink] = useState(() => {
+    const saved = sessionStorage.getItem(INVITE_LINK_DRAFT_KEY);
+    if (saved) {
+      try {
+        const draft: { path: string; value: unknown } = JSON.parse(saved);
+        // 다른 초대 링크로 새로 진입하면 이전에 작성한 값으로 덮어쓰지 않는다.
+        if (draft.path === currentPath && typeof draft.value === 'string') return draft.value;
+      } catch {
+        clearInviteLinkDraft();
+      }
+    }
+
+    return new URLSearchParams(location.search).has('token')
+      ? new URL(currentPath, window.location.origin).href
+      : '';
   });
+
+  const handleInviteLink: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const value = event.target.value;
+    setInviteLink(value);
+    sessionStorage.setItem(INVITE_LINK_DRAFT_KEY, JSON.stringify({ path: currentPath, value }));
+  };
 
   return [inviteLink, handleInviteLink] as const;
 }
