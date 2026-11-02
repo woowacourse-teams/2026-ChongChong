@@ -1,5 +1,6 @@
-import { useState, type ChangeEventHandler } from 'react';
+import type { ChangeEventHandler } from 'react';
 import { useLocation } from 'react-router';
+import { useInputState } from '../../../shared/hooks/useInputState';
 
 const INVITE_LINK_DRAFT_KEY = 'study_join_invite_link';
 
@@ -11,7 +12,7 @@ export default function useInviteLinkState() {
   const location = useLocation();
   const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
-  const [inviteLink, setInviteLink] = useState(() => {
+  const [inviteLink, handleChange] = useInputState(() => {
     const saved = sessionStorage.getItem(INVITE_LINK_DRAFT_KEY);
     if (saved) {
       try {
@@ -30,7 +31,7 @@ export default function useInviteLinkState() {
 
   const handleInviteLink: ChangeEventHandler<HTMLInputElement> = (event) => {
     const value = event.target.value;
-    setInviteLink(value);
+    handleChange(event);
     sessionStorage.setItem(INVITE_LINK_DRAFT_KEY, JSON.stringify({ path: currentPath, value }));
   };
 
