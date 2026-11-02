@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0058](0058-preserve-study-profile-images-with-home-inheritance.md) | 홈 프로필 이미지를 상속하되 스터디 전용 설정을 보존한다 |
 | [0057](0057-reference-comment-resources-by-type-and-id.md) | 댓글 원문을 resourceType과 resourceId로 참조한다 |
 | [0056](0056-issue-notice-image-urls-after-access-check.md) | 공지 첨부 조회 URL은 조회 권한 확인 후 발급한다 |
 | [0055](0055-connect-completed-files-to-notices.md) | 공지 첨부는 업로드 완료 파일의 연결로 처리한다 |
