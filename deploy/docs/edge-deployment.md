@@ -1,4 +1,8 @@
-# A/B 배포하기
+# 블루그린 배포하기
+
+블루그린 배포는 두 백엔드 환경 중 비활성 환경에 새 버전을 배포하고, 준비 상태를 확인한 뒤 요청 대상을 전환하는 방식이다. 이 문서의 A/B는 두 환경을 구분하는 이름이다.
+
+CodeDeploy는 edge 한 대에 배포 파일을 설치하는 In-place 방식으로 설정한다. 앱의 블루그린 전환은 CodeDeploy의 관리형 Blue/Green 기능이 아니라 배포 스크립트와 Nginx가 수행한다. A와 B는 배포할 때마다 활성·대기 역할을 바꾼다.
 
 2026-10-29 prod의 연속 요청 측정과 실제 롤백 결과는 [무중단 배포와 롤백 기록](prod-deployment-verification.md)을 참고한다.
 
@@ -99,14 +103,14 @@ curl -fsS --resolve "$SERVER_NAME:443:127.0.0.1" -D - \
 
 Build가 실패하면 해당 단계의 **세부 정보 → 빌드 로그**, Deploy가 실패하면 **세부 정보 → 배포 ID → 인스턴스 → 이벤트**에서 실패한 hook 로그를 연다.
 
-**현재 이미지로 수동 재배포:** 파이프라인이 실행 중이지 않을 때 edge에서 실행한다.
+**edge에 남아 있는 이미지 정보로 수동 재배포:** 파이프라인과 CodeDeploy 배포가 모두 끝난 상태에서 edge의 root 셸로 실행한다. 수동 롤백과 설정 적용에도 같은 조건이 필요하다. 스크립트의 잠금은 CodeDeploy의 파일 복사까지 막지는 않는다.
 
 ~~~bash
 cat /opt/chongchong/deploy/image.env
 bash /opt/chongchong/deploy/scripts/edge/edge-deploy.sh
 ~~~
 
-수동 명령은 image.env에 적힌 이미지를 사용한다. 새 코드를 빌드하려면 파이프라인을 실행한다.
+수동 명령은 image.env에 적힌 이미지를 사용한다. 이 파일은 마지막으로 설치된 배포 산출물의 값이므로, 배포 실패나 수동 롤백 뒤에는 현재 활성 앱의 이미지와 다를 수 있다. 이미지 저장소와 태그가 의도한 버전인지 먼저 확인한다. 새 코드를 빌드하려면 파이프라인을 실행한다.
 
 A가 활성인 경우 스크립트는 다음 순서로 동작한다.
 
@@ -122,16 +126,20 @@ sequenceDiagram
     E->>B: readiness 확인
     alt UP
         E->>N: B로 upstream 변경 후 reload
-        E->>N: HTTPS 응답과 B 주소 확인
+        E->>N: edge loopback HTTPS 응답과 B 주소 확인
         alt 확인 실패
-            E->>N: A 라우팅 복원
+            E->>N: A 라우팅 복원 시도·응답 확인
         end
-    else 기동 실패
+    else 준비 검사 실패
         Note over E,A: A로 요청을 계속 전달
     end
 ~~~
 
-성공하면 Deployment verified on backend b가 출력된다. 이전 A 앱은 기존 요청 처리와 롤백을 위해 계속 실행된다.
+준비 검사는 edge에서 대상 서버의 사설 IP로 `/actuator/health/readiness`를 호출해 `status=UP`을 확인한다. 저장소에는 readiness 그룹에 DB 같은 외부 의존성을 추가하는 설정이 없다. readiness 성공만으로 DB·로그인·과제 제출까지 정상임을 보장하지는 않는다. [Spring Boot readiness 설명](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes.external-state).
+
+전환 후에는 `--resolve`로 도메인을 `127.0.0.1`에 연결해 edge의 HTTPS `/actuator/health` 응답과 `X-Deploy-Backend`를 검사한다. 공개 DNS나 CloudFront를 통과하는 검사는 4번에서 별도로 진행한다.
+
+A에서 B로 전환해 성공하면 Deployment verified on backend b가 출력된다. 이전 A 앱은 기존 요청 처리와 롤백을 위해 계속 실행된다.
 
 ## 4. 전환 결과를 확인한다
 
@@ -163,7 +171,7 @@ CloudWatch에서는 A/B별 요청량이 이동했는지, 전체 오류율·응�
 bash /opt/chongchong/deploy/scripts/edge/edge-rollback.sh
 ~~~
 
-이 명령은 이전 서버의 readiness를 확인한 뒤 라우팅을 되돌린다. 복구 후 2번과 4번으로 내부·외부 응답을 확인한다.
+이 명령은 이전 서버의 readiness를 확인한 뒤 라우팅을 되돌린다. 이미지·앱 설정·DB 데이터를 과거 상태로 복원하지는 않는다. 이전 앱이 현재 DB·외부 시스템과 호환되는지 확인해야 한다. 복구 후 2번과 4번으로 내부·외부 응답을 확인한다.
 
 복구할 주소는 edge-state/previous-upstream.conf에 있다. 전환이 중단된 경우에는 pending-upstream.conf를 우선 사용한다. 복구 검증에 실패하면 pending 파일이 남고 다음 배포가 차단된다. 이때는 앱·Nginx 오류를 해결한 뒤 롤백 명령을 다시 실행한다.
 
@@ -193,6 +201,6 @@ bash /opt/chongchong/deploy/scripts/edge/edge-deploy.sh
 | A/B의 /opt/chongchong/releases/release.*/ | 전달받은 설정·이미지 정보·Compose |
 | A/B의 /opt/chongchong/current-backend-release | 앱 시작에 사용한 release |
 
-앱 배포는 Nginx·ADOT를 재생성하지 않는다. 수집기 설정 변경은 [모니터링 문서](monitoring.md)의 적용 명령을 사용한다. Nginx의 연결 한도나 마운트 변경은 컨테이너 재생성이 필요하므로 서비스 전환과 별도로 작업 시간을 잡는다.
+앱 배포는 Nginx·ADOT를 재생성하지 않는다. 수집기 설정 변경은 [모니터링 문서](monitoring.md)의 적용 명령을 사용한다. Nginx의 `worker_connections` 같은 설정은 해당 파일을 반영한 뒤 reload로 적용할 수 있지만, 컨테이너의 `ulimits`나 마운트 변경에는 재생성이 필요하다. `edge.conf.template`은 컨테이너 시작 때 실제 설정으로 변환되므로 템플릿 수정만으로는 실행 중인 설정이 바뀌지 않는다. 이런 변경은 일상적인 백엔드 전환과 별도로 적용·검증한다.
 
-edge의 배포 사본은 기본 3개를 보관한다. EDGE_DEPLOYMENT_RETENTION_COUNT로 개수를 바꿀 수 있다. 마지막 성공 사본과 복구 중인 자료는 보존한다. 백엔드의 과거 성공 release와 rollback 디렉터리는 자동 정리하지 않는다.
+edge의 배포 사본은 기본 3개를 보관한다. EDGE_DEPLOYMENT_RETENTION_COUNT로 개수를 바꿀 수 있다. 마지막 성공 사본과 복구 중인 자료는 보존한다. 백엔드의 과거 release 디렉터리와 edge의 rollback.* 진단 디렉터리는 자동 정리하지 않는다.
