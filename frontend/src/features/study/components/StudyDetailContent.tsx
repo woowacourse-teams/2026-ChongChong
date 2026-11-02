@@ -1,8 +1,9 @@
-import { Heading, Paragraph } from '../../../shared/ui/Typography';
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { CSSProperties, useMemo } from 'react';
 import { useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
 import { tokens } from '../../../styles/global';
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import noticeIcon from '../../../shared/assets/notice-green.webp';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import List from '../../../shared/ui/List';
@@ -126,7 +127,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
   return (
     <div css={DetailContentStyle}>
       {nowMemberCount === 1 ? (
-        <InviteMemberBanner studyId={studyId} invitePageLink={`/studies/${studyId}/members`} />
+        <InviteMemberBanner studyId={studyId} invitePageLink={URL_POLICY.toMembers(studyId).to} />
       ) : (
         <CheeringBanner username={username} />
       )}
@@ -135,7 +136,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
           스터디 현황
         </Heading>
         <div css={StatusCardListStyle}>
-          <Link to="notices" css={StatusCardStyle}>
+          <Link {...URL_POLICY.toNotices(studyId)} css={StatusCardStyle}>
             <div>
               <img src={noticeIcon} alt="" css={IconStyle} />
               <Paragraph variant="headline" css={StatusCountStyle}>
@@ -146,7 +147,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
               </Paragraph>
             </div>
           </Link>
-          <Link to="assignments" css={StatusCardStyle}>
+          <Link {...URL_POLICY.toAssignments(studyId)} css={StatusCardStyle}>
             <div>
               <img src={assignmentIcon} alt="" css={IconStyle} />
               <Paragraph variant="headline" css={StatusCountStyle}>
@@ -172,7 +173,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
           <List aria-label="진행 중인 공지와 과제">
             {notices.items.map((notice) => (
               <List.Item key={`notice-${notice.id}`}>
-                <Link to={`notices/${notice.id}`}>
+                <Link {...URL_POLICY.toNotice(studyId, notice.id)}>
                   <LeaderActiveNoticeCard
                     title={notice.title}
                     memberCount={notice.memberCount}
@@ -183,7 +184,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
             ))}
             {assignments.items.map((assignment) => (
               <List.Item key={`assignment-${assignment.id}`}>
-                <Link to={`assignments/${assignment.id}`}>
+                <Link {...URL_POLICY.toAssignment(studyId, assignment.id)}>
                   <LeaderActiveAssignmentCard
                     title={assignment.title}
                     memberCount={assignment.memberCount}
@@ -230,7 +231,7 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                 <List>
                   {data.notices.items.map((notice) => (
                     <List.Item key={`notice-${notice.id}`}>
-                      <Link to={`notices/${notice.id}`}>
+                      <Link {...URL_POLICY.toNotice(studyId, notice.id)}>
                         <MemberActiveNoticeCard title={notice.title} />
                       </Link>
                     </List.Item>
@@ -246,7 +247,7 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
                 <List>
                   {data.assignments.items.map((assignment) => (
                     <List.Item key={`assignment-${assignment.id}`}>
-                      <Link to={`assignments/${assignment.id}`}>
+                      <Link {...URL_POLICY.toAssignment(studyId, assignment.id)}>
                         <MemberActiveAssignmentCard title={assignment.title} />
                       </Link>
                     </List.Item>

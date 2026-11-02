@@ -1,7 +1,8 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
-import { Link } from 'react-router';
 import type { Notice } from '../types';
 import type { ReactNode } from 'react';
 import { formatRelativeTime } from '../../../shared/utils/formatDate';
@@ -21,11 +22,7 @@ export default function NoticeList<T extends Notice>({
     <List>
       {notices.map((notice) => (
         <List.Item key={notice.id}>
-          <Link
-            to={{
-              pathname: `/studies/${studyId}/notices/${notice.id}`,
-            }}
-          >
+          <Link {...URL_POLICY.toNotice(studyId, notice.id)}>
             <ContentCard>
               <ContentCard.Badges>{children(notice)}</ContentCard.Badges>
               <ContentCard.TitleRow>

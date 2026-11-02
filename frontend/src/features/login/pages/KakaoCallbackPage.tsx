@@ -1,7 +1,9 @@
 import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { keyframes, type CSSObject } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg?width=360&as=webp';
 import Page from '../../../shared/ui/Page';
 import { tokens, typography } from '../../../styles/global';
@@ -148,7 +150,7 @@ const retryLinkStyle = {
 
 export default function KakaoCallbackPage() {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const startedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const posthog = usePostHog();
@@ -164,14 +166,14 @@ export default function KakaoCallbackPage() {
         // TODO: 아래와 같이 전환할경우 Posthog에서 유저 식별 필터링이 용이해진다. (논의필요)
         // posthog.identify(String(userId), { username: '안톨리니', email: 'some@example.com' });
         posthog.identify(String(userId));
-        navigate('/studies', { replace: true });
+        move(URL_POLICY.afterLogin());
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : '카카오 로그인에 실패했습니다.');
       }
     };
 
     void completeLogin();
-  }, [location.search, navigate, posthog]);
+  }, [location.search, move, posthog]);
 
   return (
     <Page>
@@ -194,7 +196,7 @@ export default function KakaoCallbackPage() {
               <Paragraph variant="body" css={descriptionStyle}>
                 {errorMessage}
               </Paragraph>
-              <Link css={retryLinkStyle} to="/login">
+              <Link css={retryLinkStyle} {...URL_POLICY.toLogin()}>
                 다시 로그인하기
               </Link>
             </>

@@ -1,7 +1,8 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { Paragraph, Text } from '../../../shared/ui/Typography';
 import { CSSProperties, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
-import { Link } from 'react-router';
 import { tokens, typography } from '../../../styles/global';
 import LaptopLogo from '../../../shared/assets/icons/laptop-icon.svg?width=360&as=webp';
 import CheckLogo from '../../../shared/assets/icons/check-icon.svg?width=360&as=webp';
@@ -139,7 +140,11 @@ export function InviteMemberBanner({
     <Banner
       title={'함께할 스터디원을 초대해 보세요'}
       content={
-        <Link to={invitePageLink} css={InviteLinkStyle} onClick={handleInviteClick}>
+        <Link
+          {...URL_POLICY.toInvitePage(invitePageLink)}
+          css={InviteLinkStyle}
+          onClick={handleInviteClick}
+        >
           <Text variant="inherited">초대하러 가기</Text>
           <Text variant="inherited" aria-hidden="true">
             →

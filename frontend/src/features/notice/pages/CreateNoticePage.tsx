@@ -1,5 +1,6 @@
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { usePostHog } from '@posthog/react';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
@@ -17,7 +18,7 @@ import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 export default function CreateNoticePage() {
   const { studyId } = useIntegerParams(['studyId']);
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const queryClient = useQueryClient();
   const toast = useToast();
   const posthog = usePostHog();
@@ -35,7 +36,7 @@ export default function CreateNoticePage() {
         queryKey: noticeQueries.lists(studyId),
       });
 
-      await navigate(`/studies/${studyId}/notices/${noticeId}`);
+      await move(URL_POLICY.afterNoticeCreate(studyId, noticeId));
     },
 
     onError: (error) => {

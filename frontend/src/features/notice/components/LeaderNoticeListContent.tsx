@@ -1,8 +1,9 @@
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import Badge from '../../../shared/ui/Badge';
@@ -29,7 +30,7 @@ const buttonAreaStyle = {
 } satisfies CSSProperties;
 
 export default function LeaderNoticeListContent({ studyId }: Props) {
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     noticeQueries.list(studyId),
@@ -76,7 +77,7 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
         <Button
           variant="brandSolid"
           size="large"
-          onClick={() => navigate(`/studies/${studyId}/notices/create`)}
+          onClick={() => move(URL_POLICY.toCreateNotice(studyId))}
         >
           공지 작성하기
         </Button>

@@ -8,6 +8,7 @@ import noticeIcon from '../../../shared/assets/notice.webp';
 import assignIcon from '../../../shared/assets/assign.webp';
 import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
 import { tokens, typography } from '../../../styles/global';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { Link } from 'react-router';
 import { Study } from '../types';
 
@@ -31,7 +32,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
     <List>
       {studies.map((study) => (
         <List.Item key={study.id}>
-          <Link to={`/studies/${study.id}`}>
+          <Link {...URL_POLICY.toStudy(study.id)}>
             <StudyContentCard>
               <StudyContentCard.Badges>
                 <Badge variant="brandSolid" size="small" css={RoleBadgeStyle}>

@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { removeStudy } from '../api';
 import studyQueries from '../queries';
@@ -10,14 +11,14 @@ interface Params {
 }
 
 export default function useDeleteStudy({ onError }: Params) {
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const queryClient = useQueryClient();
   const toast = useToast();
   const { mutate, isPending } = useMutation({
     mutationFn: ({ studyId }: { studyId: number }) => removeStudy(studyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studyQueries.lists() });
-      navigate('/studies');
+      move(URL_POLICY.afterStudyDelete());
     },
     onError: (error) => {
       onError();

@@ -1,6 +1,7 @@
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { Link, useLocation } from 'react-router';
 import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
-import { Link } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
@@ -78,6 +79,7 @@ const detailLinkStyle = {
 } satisfies CSSProperties;
 
 export default function MySubmissionStatus({ submission, member }: Props) {
+  const location = useLocation();
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
   const isCompleted = isCompletedAssignment(submission);
@@ -115,7 +117,7 @@ export default function MySubmissionStatus({ submission, member }: Props) {
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link css={detailLinkStyle} to="?view=detail">
+          <Link css={detailLinkStyle} {...URL_POLICY.toContentTab(location, 'detail')}>
             상세 보기
           </Link>
         </div>

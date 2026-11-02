@@ -10,6 +10,8 @@ import { notificationTable } from '../../mocks/db';
 import NotificationListPage from '../NotificationListPage';
 import { createWrapper, setup } from '../../../../test/render';
 import * as notificationApi from '../../api';
+import { Route } from 'react-router';
+import { PrevButton } from '../../../../shared/widgets/PrevButton';
 
 describe('알림 목록 페이지 테스트', () => {
   const testerId = 1;
@@ -126,6 +128,37 @@ describe('알림 목록 페이지 테스트', () => {
     });
 
     describe('알림을 클릭한 경우', () => {
+      test('상세 화면의 뒤로 가기로 알림 목록에 복귀한다', async () => {
+        jest.spyOn(window.history, 'state', 'get').mockReturnValue({ idx: 1 });
+        const { user } = setup(<NotificationListPage />, {
+          wrapper: createWrapper({
+            initialEntries: ['/notifications'],
+            routes: (element) => (
+              <>
+                <Route path="/notifications" element={element} />
+                <Route
+                  path="/studies/:studyId/assignments/:assignmentId"
+                  element={<PrevButton />}
+                />
+                <Route path="/studies/1/assignments" element={<h1>과제 목록</h1>} />
+              </>
+            ),
+          }),
+        });
+        await user.click(
+          await screen.findByRole('link', {
+            name: (name) => name.includes('삼겹살 얻어먹기'),
+          }),
+        );
+        await user.click(screen.getByRole('button', { name: '뒤로 가기' }));
+
+        expect(
+          await screen.findByRole('link', {
+            name: (name) => name.includes('삼겹살 얻어먹기'),
+          }),
+        ).toBeVisible();
+      });
+
       test('미확인 알림의 읽음 처리를 요청한다', async () => {
         const markAsRead = jest.spyOn(notificationApi, 'markNotificationAsRead');
         const { user } = setup(<NotificationListPage />, { wrapper: createWrapper() });

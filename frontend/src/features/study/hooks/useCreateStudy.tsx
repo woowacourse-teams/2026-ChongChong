@@ -1,6 +1,7 @@
 import studyQueries from '../queries';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createStudy } from '../api';
 import { ValidationError } from '../../../shared/api/error';
@@ -8,7 +9,7 @@ import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 export default function useCreateStudy() {
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -16,7 +17,7 @@ export default function useCreateStudy() {
     mutationFn: createStudy,
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: studyQueries.all() });
-      navigate(`/studies/${data.studyId}`);
+      move(URL_POLICY.afterStudyCreate(data.studyId));
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;

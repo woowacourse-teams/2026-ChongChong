@@ -1,6 +1,7 @@
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { type CSSProperties } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { logout } from '../../login/api';
 import { clearLocalPushSubscription } from '../../notification/localPush';
 import { useToast } from '../../../shared/providers/ToastProvider';
@@ -37,7 +38,7 @@ const menuButtonStyle = {
 } satisfies CSSProperties;
 
 export default function AccountMenuSection() {
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const toast = useToast();
   const [isOpen, openDialog, closeDialog] = useBooleanState();
 
@@ -73,7 +74,7 @@ export default function AccountMenuSection() {
     if (isAccountActionPending) return;
     requestLogout(undefined, {
       onSuccess: () => {
-        navigate('/login', { replace: true });
+        move(URL_POLICY.afterLogout());
       },
       onError: (error) => {
         toast.open(<StatusToast message={error.message} status="error" />);
@@ -86,7 +87,7 @@ export default function AccountMenuSection() {
     withdraw(undefined, {
       onSuccess: () => {
         posthog.reset();
-        navigate('/login', { replace: true });
+        move(URL_POLICY.afterAccountWithdrawal());
       },
       onError: (error) => {
         closeDialog();

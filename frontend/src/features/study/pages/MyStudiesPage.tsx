@@ -1,8 +1,9 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { Suspense, CSSProperties } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { Link } from 'react-router';
 import logo from '../../../shared/assets/icons/header-icon.svg?width=120&as=webp';
 import MyStudies from '../components/MyStudies';
 import Main from '../../../shared/ui/Main';
@@ -32,7 +33,7 @@ export default function MyStudiesPage() {
         right={
           <div css={{ display: 'flex', gap: tokens.spacing[5], alignItems: 'center' }}>
             <NotificationLink />
-            <Link to={'/studies/mypage'} aria-label="마이페이지">
+            <Link {...URL_POLICY.toMyPage()} aria-label="마이페이지">
               <img css={{ width: '28px', height: '28px' }} src={MyIcon} alt="" />
             </Link>
           </div>
@@ -48,12 +49,12 @@ export default function MyStudiesPage() {
 
             <div css={actionsStyle}>
               {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
-              <Link to="/studies/new">
+              <Link {...URL_POLICY.toCreateStudy()}>
                 <Button variant="brandSolid" size="large">
                   스터디 만들기
                 </Button>
               </Link>
-              <Link to="/studies/join">
+              <Link {...URL_POLICY.toJoinStudy()}>
                 <Button role="link" variant="neutralOutline" size="large">
                   스터디 참여하기
                 </Button>

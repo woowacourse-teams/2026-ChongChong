@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../shared/constants/urlPolicy';
 import { useEffect, useState } from 'react';
 import chongchongLogo from './assets/chongchong-logo.png';
 import FeatureCarousel from './components/FeatureCarousel';
@@ -6,7 +8,6 @@ import UploadUpdateModal from './components/UploadUpdateModal';
 import { TRANSITION_DURATION, useFeaturePreview } from './useFeaturePreview';
 import { previewFeatures } from './previewFeatures';
 import { usePostHog } from '@posthog/react';
-import { Link } from 'react-router';
 
 const pretendardFont = new URL('./assets/PretendardVariable.woff2', import.meta.url).href;
 const doHyeonFont = new URL('./assets/DoHyeon-Regular.ttf', import.meta.url).href;
@@ -37,7 +38,7 @@ export default function App() {
       <style>{LANDING_STYLES}</style>
       <div className="cc-site-shell">
         <header className="cc-site-header">
-          <Link className="cc-brand" to={'/studies'} aria-label="총총 웹사이트로 이동">
+          <Link className="cc-brand" {...URL_POLICY.toStudies()} aria-label="총총 웹사이트로 이동">
             <span className="cc-brand-mark" aria-hidden="true">
               <img src={chongchongLogo} alt="" width={232} height={256} />
             </span>
@@ -69,7 +70,7 @@ export default function App() {
             <div className="cc-actions" aria-label="총총 이용 경로">
               <Link
                 className="cc-destination cc-destination--web"
-                to={'/studies'}
+                {...URL_POLICY.toStudies()}
                 onClick={handleClickWeb}
               >
                 <svg

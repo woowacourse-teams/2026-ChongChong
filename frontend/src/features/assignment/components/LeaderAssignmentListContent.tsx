@@ -1,9 +1,10 @@
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
@@ -31,7 +32,7 @@ const buttonAreaStyle = {
 } satisfies CSSProperties;
 
 export default function LeaderAssignmentListContent({ studyId }: Props) {
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     assignmentQueries.list(studyId),
@@ -85,7 +86,7 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
         <Button
           variant="brandSolid"
           size="large"
-          onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
+          onClick={() => move(URL_POLICY.toCreateAssignment(studyId))}
         >
           과제 추가하기
         </Button>

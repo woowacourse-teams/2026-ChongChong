@@ -1,3 +1,4 @@
+import { URL_POLICY } from './shared/constants/urlPolicy';
 import ky from 'ky';
 import { API_PREFIX, BASE_URL } from '../config';
 import { clearAccessToken, getAccessToken } from './features/login/accessToken';
@@ -35,9 +36,9 @@ const api = ky.create({
           posthog.reset();
           if (
             options.context.redirectOnAuthFailure !== false &&
-            window.location.pathname !== '/login'
+            window.location.pathname !== URL_POLICY.toLogin().to
           ) {
-            window.location.assign('/login');
+            window.location.assign(URL_POLICY.afterAuthenticationRejected().to);
           }
 
           return response;

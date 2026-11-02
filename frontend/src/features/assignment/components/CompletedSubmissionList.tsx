@@ -1,7 +1,8 @@
-import { Heading, Text } from '../../../shared/ui/Typography';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
+import { Heading, Text } from '../../../shared/ui/Typography';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import Badge from '../../../shared/ui/Badge';
 import List from '../../../shared/ui/List';
@@ -119,7 +120,7 @@ export default function CompletedSubmissionList({ submissions }: Props) {
 
             <Link
               css={detailLinkStyle}
-              to={`/studies/${studyId}/assignments/${assignmentId}/submissions/${submission.id}`}
+              {...URL_POLICY.toSubmission(studyId!, assignmentId!, submission.id)}
               aria-label={`${submission.name} 제출 내역 상세 보기`}
               onClick={handleShowDetail}
             >

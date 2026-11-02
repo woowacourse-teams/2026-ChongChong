@@ -1,7 +1,7 @@
 import { Paragraph } from '../ui/Typography';
 import { CSSProperties } from 'react';
-import { Link } from 'react-router';
-import { useParams, useLocation } from 'react-router';
+import { URL_POLICY } from '../constants/urlPolicy';
+import { Link, useParams, useLocation } from 'react-router';
 import HomeIcon from '../assets/home.webp';
 import ActivehomeIcon from '../assets/home-green.webp';
 import NoticeIcon from '../assets/notice.webp';
@@ -41,7 +41,8 @@ const textStyle = {
 export default function BottomTab() {
   const { studyId } = useParams();
   const { pathname } = useLocation();
-  const basePath = `/studies/${studyId}`;
+  const basePath =
+    studyId === undefined ? URL_POLICY.toStudies().to : URL_POLICY.toStudy(studyId).to;
 
   const isHome = pathname === basePath;
   const isNotice = pathname.includes('notices');
@@ -50,13 +51,21 @@ export default function BottomTab() {
 
   return (
     <nav css={tabStyle}>
-      <Link css={linkStyle} to={basePath} aria-current={isHome ? 'page' : undefined}>
+      <Link
+        css={linkStyle}
+        {...URL_POLICY.toStudyTab(studyId, 'home', pathname)}
+        aria-current={isHome ? 'page' : undefined}
+      >
         {<img src={isHome ? ActivehomeIcon : HomeIcon} alt="" width={22} height={22} />}
         <Paragraph variant="footnote" css={[textStyle, isHome && { color: tokens.text.brand }]}>
           홈
         </Paragraph>
       </Link>
-      <Link css={linkStyle} to={`${basePath}/notices`} aria-current={isNotice ? 'page' : undefined}>
+      <Link
+        css={linkStyle}
+        {...URL_POLICY.toStudyTab(studyId, 'notices', pathname)}
+        aria-current={isNotice ? 'page' : undefined}
+      >
         <img src={isNotice ? ActiveNoticeIcon : NoticeIcon} width={22} height={22} alt="" />
         <Paragraph variant="footnote" css={[textStyle, isNotice && { color: tokens.text.brand }]}>
           공지
@@ -64,7 +73,7 @@ export default function BottomTab() {
       </Link>
       <Link
         css={linkStyle}
-        to={`${basePath}/assignments`}
+        {...URL_POLICY.toStudyTab(studyId, 'assignments', pathname)}
         aria-current={isAssignment ? 'page' : undefined}
       >
         <img
@@ -80,7 +89,11 @@ export default function BottomTab() {
           과제
         </Paragraph>
       </Link>
-      <Link css={linkStyle} to={`${basePath}/members`} aria-current={isMember ? 'page' : undefined}>
+      <Link
+        css={linkStyle}
+        {...URL_POLICY.toStudyTab(studyId, 'members', pathname)}
+        aria-current={isMember ? 'page' : undefined}
+      >
         <img src={isMember ? ActiveMemberIcon : MemberIcon} width={22} height={22} alt="" />
         <Paragraph variant="footnote" css={[textStyle, isMember && { color: tokens.text.brand }]}>
           멤버

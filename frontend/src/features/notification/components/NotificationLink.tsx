@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { useQuery } from '@tanstack/react-query';
 import hasNotificationLogo from '../../../shared/assets/notification-green.webp';
 import notificationLogo from '../../../shared/assets/notification.webp';
@@ -10,7 +11,7 @@ export default function NotificationLink() {
 
   return (
     <Link
-      to={'/notifications'}
+      {...URL_POLICY.toNotifications()}
       aria-label={hasUnreadNotification ? '알림, 읽지 않은 알림 있음' : '알림'}
     >
       {hasUnreadNotification ? (
