@@ -16,6 +16,7 @@ import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, visibilityOptions } from '../cons
 import { formatDateToString, toLocalDateTime } from '../../../shared/utils/formatDate';
 import { usePostHog } from '@posthog/react';
 import { useInputState } from '../../../shared/hooks/useInputState';
+import ReminderField from '../../../shared/widgets/ReminderField';
 
 const formStyle = {
   display: 'flex',
@@ -38,6 +39,7 @@ interface AssignmentFormProps {
       | 'submissionMethod'
       | 'closeAt'
       | 'submissionTarget'
+      | 'remindAts'
       | 'submissionVisibility',
       string
     >
@@ -91,6 +93,7 @@ export default function AssignmentForm({
     initialValues.submissionVisibility,
   );
   const posthog = usePostHog();
+  const [remindAts, setRemindAts] = useState(initialValues.remindAts);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -109,6 +112,7 @@ export default function AssignmentForm({
       closeAt,
       submissionTarget,
       submissionVisibility,
+      remindAts,
     });
   }
 
@@ -203,6 +207,15 @@ export default function AssignmentForm({
         helpText="체크하지 않으면 리드는 과제 제출 대상에서 제외돼요"
         errorText={fieldErrors.submissionTarget}
         isRequired
+      />
+
+      <ReminderField
+        id="assignment-reminders"
+        value={remindAts}
+        onChange={setRemindAts}
+        disabled={isSubmitting}
+        helpText="설정한 시각마다 제출하지 않은 스터디원에게 알림을 보내드릴게요"
+        errorText={fieldErrors.remindAts}
       />
 
       <Button
