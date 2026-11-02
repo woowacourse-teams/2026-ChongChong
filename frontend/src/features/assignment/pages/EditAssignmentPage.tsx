@@ -53,6 +53,7 @@ function Content() {
         closeAt: assignment.closeAt,
         submissionTarget: assignment.submissionTarget,
         submissionVisibility: assignment.submissionVisibility,
+        remindAts: assignment.remindAts,
       }}
       fieldErrors={fieldErrors}
     />

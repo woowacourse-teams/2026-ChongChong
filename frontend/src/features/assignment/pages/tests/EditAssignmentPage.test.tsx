@@ -83,6 +83,49 @@ describe('과제 수정 페이지 테스트', () => {
       expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
+    test.each([0, 1, 2])(
+      '저장된 리마인드를 표시하고 %i개 삭제한 목록을 전송한다',
+      async (removeCount) => {
+        const remindAts = ['2999-12-30T18:00:00', '2999-12-31T18:00:00'];
+        const captureRequest = jest.fn();
+        server.use(
+          http.get(ASSIGNMENT_DETAIL_URL, () =>
+            HttpResponse.json({
+              id: 999,
+              title: '기존 과제',
+              content: '기존 내용',
+              submissionMethod: '링크 제출',
+              closeAt: '2999-12-31T23:59:59',
+              submissionTarget: 'MEMBERS_ONLY',
+              submissionVisibility: 'ALL_STUDY_MEMBERS',
+              attachments: [],
+              remindAts,
+            }),
+          ),
+          http.patch(ASSIGNMENT_DETAIL_URL, async ({ request }) => {
+            captureRequest(await request.json());
+            return HttpResponse.json(
+              { code: 'ACCESS_DENIED', message: '요청한 작업을 수행할 권한이 없습니다.' },
+              { status: 403 },
+            );
+          }),
+        );
+        const { user } = setupEditAssignmentPage();
+
+        const list = await screen.findByRole('list', { name: '등록한 리마인드 시각' });
+        expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+        for (let index = 0; index < removeCount; index += 1) {
+          await user.click(within(list).getAllByRole('button', { name: /리마인드 삭제/ })[0]);
+        }
+        await user.click(getSubmitButton());
+        await screen.findByRole('status');
+
+        expect(captureRequest).toHaveBeenCalledWith(
+          expect.objectContaining({ remindAts: remindAts.slice(removeCount) }),
+        );
+      },
+    );
+
     test('필수 필드를 비우고 수정하면 브라우저 검증에 걸린다', async () => {
       const { user } = setupEditAssignmentPage();
 
