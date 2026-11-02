@@ -3,26 +3,10 @@ import AttachmentField from '../../../shared/widgets/AttachmentField';
 
 // 임시 기술 소개: 제거할 때 이 파일과 App.tsx의 import / <UploadUpdateModal />만 삭제합니다.
 // 안내 문구, 표시 정책, 스타일은 이 파일 안에서만 관리합니다.
-const SEEN_KEY = 'chongchong:upload-update:v1';
-
 export default function UploadUpdateModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem(SEEN_KEY) === 'seen';
-    } catch {
-      // 저장소를 사용할 수 없어도 안내를 열고 닫을 수 있습니다.
-    }
-    if (!seen && !dialog.open) dialog.showModal();
-    return () => {
-      if (dialog.open) dialog.close();
-    };
-  }, []);
+  const openedWithPointerRef = useRef(false);
 
   // 모달이 열려 있는 동안에만 배경 스크롤을 잠급니다. Escape도 같은 정리를 거칩니다.
   useEffect(() => {
@@ -48,11 +32,6 @@ export default function UploadUpdateModal() {
   }, []);
 
   const close = () => {
-    try {
-      sessionStorage.setItem(SEEN_KEY, 'seen');
-    } catch {
-      // 저장소 차단 여부와 관계없이 닫습니다.
-    }
     dialogRef.current?.close();
   };
 
@@ -64,7 +43,10 @@ export default function UploadUpdateModal() {
         className="cc-upload-update-trigger"
         type="button"
         aria-haspopup="dialog"
-        onClick={() => dialogRef.current?.showModal()}
+        onClick={(event) => {
+          openedWithPointerRef.current = event.detail > 0;
+          dialogRef.current?.showModal();
+        }}
       >
         <span>NEW</span> 이미지·파일 첨부가 생겼어요 <span aria-hidden="true">↗</span>
       </button>
@@ -77,7 +59,13 @@ export default function UploadUpdateModal() {
           event.preventDefault();
           close();
         }}
-        onClose={() => triggerRef.current?.focus({ preventScroll: true })}
+        onClose={() => {
+          if (openedWithPointerRef.current) {
+            triggerRef.current?.blur();
+          } else {
+            triggerRef.current?.focus({ preventScroll: true });
+          }
+        }}
         onClick={(event) => {
           if (event.target === event.currentTarget) close();
         }}
