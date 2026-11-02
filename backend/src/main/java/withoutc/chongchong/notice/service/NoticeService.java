@@ -132,7 +132,7 @@ public class NoticeService {
         List<NoticeAttachmentResponse> attachments = notice.getAttachments().stream()
                 .map(this::toAttachmentResponse)
                 .toList();
-        return NoticeDetailResponse.from(notice, attachments);
+        return NoticeDetailResponse.from(notice, attachments, LocalDateTime.now(clock));
     }
 
     private NoticeAttachmentResponse toAttachmentResponse(NoticeAttachment attachment) {

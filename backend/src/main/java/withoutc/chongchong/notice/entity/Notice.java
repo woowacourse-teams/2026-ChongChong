@@ -128,6 +128,15 @@ public class Notice extends BaseEntity {
                 noticeRecipient -> NoticeReadStatus.READ.equals(noticeRecipient.readStatus())).count());
     }
 
+    public List<LocalDateTime> getPendingRemindAts(LocalDateTime now) {
+        return reminders.stream()
+                .filter(NoticeReminder::isPending)
+                .map(NoticeReminder::getRemindAt)
+                .filter(remindAt -> remindAt.isAfter(now))
+                .sorted()
+                .toList();
+    }
+
     public LocalDateTime getNextRemindAt() {
         return reminders.stream().filter(NoticeReminder::isPending).map(NoticeReminder::getRemindAt)
                 .min(LocalDateTime::compareTo).orElse(null);

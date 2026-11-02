@@ -14,9 +14,11 @@ public record AssignmentDetailResponse(
         SubmissionTarget submissionTarget,
         SubmissionVisibility submissionVisibility,
         LocalDateTime closeAt,
-        List<AssignmentAttachmentResponse> attachments
+        List<AssignmentAttachmentResponse> attachments,
+        List<LocalDateTime> remindAts
 ) {
-    public static AssignmentDetailResponse from(Assignment assignment, List<AssignmentAttachmentResponse> attachments) {
+    public static AssignmentDetailResponse from(Assignment assignment, List<AssignmentAttachmentResponse> attachments,
+                                                LocalDateTime now) {
         return new AssignmentDetailResponse(
                 assignment.getId(),
                 assignment.getTitle(),
@@ -25,7 +27,8 @@ public record AssignmentDetailResponse(
                 assignment.getSubmissionTarget(),
                 assignment.getSubmissionVisibility(),
                 assignment.getCloseAt(),
-                attachments
+                attachments,
+                assignment.getPendingRemindAts(now)
         );
     }
 }

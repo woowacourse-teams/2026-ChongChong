@@ -168,6 +168,15 @@ public class Assignment extends BaseEntity {
                 .filter(submission -> submission.isSubmit(now)).count());
     }
 
+    public List<LocalDateTime> getPendingRemindAts(LocalDateTime now) {
+        return reminders.stream()
+                .filter(AssignmentReminder::isPending)
+                .map(AssignmentReminder::getRemindAt)
+                .filter(remindAt -> remindAt.isAfter(now))
+                .sorted()
+                .toList();
+    }
+
     public LocalDateTime getNextRemindAt() {
         return reminders.stream().filter(AssignmentReminder::isPending).map(AssignmentReminder::getRemindAt)
                 .min(LocalDateTime::compareTo).orElse(null);
