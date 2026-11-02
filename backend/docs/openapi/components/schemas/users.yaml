@@ -9,6 +9,17 @@ UserProfileNameUpdateRequest:
       minLength: 1
       maxLength: 8
       example: 바니
+UserProfileImageUpdateRequest:
+  type: object
+  additionalProperties: false
+  required: [fileId]
+  properties:
+    fileId:
+      description: 업로드 완료 API에 성공한 본인 소유 파일의 ID. 현재 홈 프로필 파일이거나 다른 용도에 미연결인 파일이어야 한다.
+      type: integer
+      format: int64
+      minimum: 1
+      example: 123
 UserProfileResponse:
   type: object
   additionalProperties: false
@@ -21,7 +32,7 @@ UserProfileResponse:
       maxLength: 255
       example: 바니
     profileImageUrl:
-      description: 홈 프로필 이미지 URL. 등록된 이미지가 없으면 null이다.
-      type: [string, 'null']
-      maxLength: 2048
-      example: 'https://cdn.example.com/profiles/uuid.webp'
+      $ref: './common.yaml#/ProfileImageUrl'
+      description: |
+        홈 이미지 조회 URL. 업로드 파일이 있으면 presigned GET URL, 그렇지 않으면 기존 소셜 이미지 등 외부 URL을 반환한다.
+        기본 이미지로 초기화한 경우 키를 포함해 null을 반환한다. 업로드 파일 URL 처리는 #622에서 구현 중이다.

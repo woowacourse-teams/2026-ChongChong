@@ -29,8 +29,10 @@ CommentAuthorResponse:
       description: 현재 스터디 멤버 이름. 스터디 탈퇴·방출 또는 회원 탈퇴한 작성자는 탈퇴한 스터디원으로 표시한다.
       example: 바니
     profileImageUrl:
-      type: [string, 'null']
-      description: null이면 기본 이미지. 탈퇴한 작성자는 항상 null이다.
+      $ref: './common.yaml#/ProfileImageUrl'
+      description: |
+        null이면 기본 이미지. 탈퇴한 작성자는 홈 이미지와 관계없이 항상 null이다.
+        #622에서 현재 멤버는 홈 상속/스터디 전용 설정에 따라 이미지 URL을 선택하도록 확장하며 구현은 진행 중이다.
       example: null
     isDeparted: { type: boolean, description: 작성 당시 멤버십이 삭제됐는지 여부. 재가입으로 복원하지 않는다., example: false }
 CommentResponse:

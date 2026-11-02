@@ -183,6 +183,22 @@ UserProfileNameUpdateBadRequest:
   content:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidUserNameError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }] }
+UserProfileImageUpdateBadRequest:
+  description: |
+    파일 ID·요청 형식 또는 프로필 이미지 형식·용량 정책 위반.
+    PENDING·DELETE_PENDING 또는 다른 대상에 연결된 파일은 FILE_NOT_ATTACHABLE을 반환한다.
+  content:
+    application/json:
+      schema:
+        oneOf:
+          - { $ref: './schemas/errors.yaml#/InvalidInputValueError' }
+          - { $ref: './schemas/errors.yaml#/InvalidRequestError' }
+          - { $ref: './schemas/errors.yaml#/UserProfileImageBadRequestError' }
+      examples:
+        invalidImageType:
+          value: { code: INVALID_USER_PROFILE_IMAGE_TYPE, message: 사용자 프로필 이미지 형식이 올바르지 않습니다. }
+        fileNotAttachable:
+          value: { code: FILE_NOT_ATTACHABLE, message: 파일을 첨부할 수 없습니다. }
 StudyLeaderWithdrawalBlocked:
   description: 리더인 스터디가 남아 있어 사용자 탈퇴가 차단됨
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/StudyLeaderWithdrawalBlockedError' } } }
