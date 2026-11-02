@@ -17,6 +17,22 @@ public enum UserErrorCode implements ErrorCode {
             "사용자 프로필 이미지 URL이 올바르지 않습니다."
     ),
 
+    INVALID_USER_PROFILE_IMAGE_ID(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_USER_PROFILE_IMAGE_ID",
+            "사용자 프로필 이미지 파일 식별자가 올바르지 않습니다."
+    ),
+    INVALID_USER_PROFILE_IMAGE_TYPE(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_USER_PROFILE_IMAGE_TYPE",
+            "사용자 프로필 이미지 형식이 올바르지 않습니다."
+    ),
+    INVALID_USER_PROFILE_IMAGE_SIZE(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_USER_PROFILE_IMAGE_SIZE",
+            "사용자 프로필 이미지 크기가 올바르지 않습니다."
+    ),
+
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "해당 사용자를 찾을 수 없습니다."),
     STUDY_LEADER_WITHDRAWAL_BLOCKED(
             HttpStatus.CONFLICT, "STUDY_LEADER_WITHDRAWAL_BLOCKED", "리더인 스터디를 삭제한 뒤 회원 탈퇴할 수 있습니다.")
