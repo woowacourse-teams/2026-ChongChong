@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
+import withoutc.chongchong.assignment.entity.SubmissionVisibility;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AssignmentSummaryResponse(
@@ -16,7 +17,8 @@ public record AssignmentSummaryResponse(
         Integer completeCount,
         Boolean isComplete,
         LocalDateTime remindAt,
-        SubmissionStatus submissionStatus
+        SubmissionStatus submissionStatus,
+        SubmissionVisibility submissionVisibility
 ) {
     public static AssignmentSummaryResponse forLeader(LocalDateTime now, Assignment assignment,
                                                       SubmissionStatus submissionStatus) {
@@ -36,7 +38,8 @@ public record AssignmentSummaryResponse(
                 completeCount,
                 isComplete,
                 assignment.getNextRemindAt(),
-                submissionStatus
+                submissionStatus,
+                assignment.getSubmissionVisibility()
         );
     }
 
@@ -51,7 +54,8 @@ public record AssignmentSummaryResponse(
                 null,
                 null,
                 null,
-                submissionStatus
+                submissionStatus,
+                assignment.getSubmissionVisibility()
         );
     }
 }
