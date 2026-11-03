@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { Assignment } from '../types';
 import { ReactNode } from 'react';
 import { formatDateToString } from '../../../shared/utils/formatDate';
+import Badge from '../../../shared/ui/Badge';
 import LinkIcon from '../../../shared/assets/link.svg';
 
 interface AssigmentListProps<T extends Assignment> {
@@ -28,7 +29,12 @@ export default function AssigmentList<T extends Assignment>({
             }}
           >
             <ContentCard>
-              <ContentCard.Badges>{children(assignment)}</ContentCard.Badges>
+              <ContentCard.Badges>
+                {children(assignment)}
+                <Badge variant="neutralSolid" size="small">
+                  {assignment.submissionVisibility === 'ALL_STUDY_MEMBERS' ? '공개' : '미공개'}
+                </Badge>
+              </ContentCard.Badges>
               <ContentCard.TitleRow>
                 <ContentCard.Title>{assignment.title}</ContentCard.Title>
 

@@ -10,6 +10,7 @@ interface AssignmentSummaryBase {
   submissionMethod: string;
   closeAt: string;
   submissionStatus: SubmissionStatus;
+  submissionVisibility: SubmissionVisibility;
 }
 
 export interface LeaderAssignmentSummary extends AssignmentSummaryBase {
