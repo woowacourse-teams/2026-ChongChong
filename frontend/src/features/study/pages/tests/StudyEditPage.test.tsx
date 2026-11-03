@@ -225,6 +225,33 @@ describe('스터디 수정 페이지 테스트', () => {
   describe('스터디 프로필 이미지', () => {
     setupImageBrowserMocks();
 
+    test('저장된 이미지가 없으면 바텀시트에 이미지 선택과 취소만 보인다', async () => {
+      const { user } = setupStudyEditPage();
+
+      await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+
+      const sheet = within(screen.getByRole('dialog', { name: '프로필 이미지' }));
+      expect(sheet.getByRole('button', { name: '프로필 이미지 선택' })).toBeVisible();
+      expect(sheet.getByRole('button', { name: '취소' })).toBeVisible();
+    });
+
+    test('저장된 이미지가 있으면 바텀시트에 기본 프로필 이미지 사용 메뉴도 보인다', async () => {
+      const study = studyTable.findFirst((q) => q.where({ id: 2 }));
+      await studyTable.update(study!, {
+        data(record) {
+          record.imageUrl = 'https://example.com/study-profile.png';
+        },
+      });
+      const { user } = setupStudyEditPage();
+
+      await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+
+      const sheet = within(screen.getByRole('dialog', { name: '프로필 이미지' }));
+      expect(sheet.getByRole('button', { name: '프로필 이미지 선택' })).toBeVisible();
+      expect(sheet.getByRole('button', { name: '기본 프로필 이미지 사용' })).toBeVisible();
+      expect(sheet.getByRole('button', { name: '취소' })).toBeVisible();
+    });
+
     test('프로필 이미지가 없으면 기본 프로필 이미지가 보인다', async () => {
       setupStudyEditPage();
 
