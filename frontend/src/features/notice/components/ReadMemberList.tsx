@@ -1,4 +1,4 @@
-import { Heading } from '../../../shared/ui/Typography';
+import { Heading, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import List from '../../../shared/ui/List';
@@ -45,7 +45,6 @@ const memberStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   overflow: 'hidden',
   color: tokens.text.primary,
   textOverflow: 'ellipsis',
@@ -73,7 +72,9 @@ export default function ReadMemberList({ members }: Props) {
               css={profileStyle}
             />
             <div css={memberStyle}>
-              <span css={nameStyle}>{member.name}</span>
+              <Text variant="body" css={nameStyle}>
+                {member.name}
+              </Text>
               {member.readAt ? (
                 <time css={dateStyle} dateTime={member.readAt}>
                   {formatReadAt(member.readAt)}

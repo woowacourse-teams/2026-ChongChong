@@ -1,8 +1,8 @@
-import { Heading } from '../../../shared/ui/Typography';
+import { Heading, Text } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import assignmentLogo from '../../../shared/assets/assign-green.webp';
 import noticeLogo from '../../../shared/assets/notice-green.webp';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 
 interface ActiveStudyCardProps {
   icon: string;
@@ -56,7 +56,6 @@ const TitleStyle = {
 } satisfies CSSProperties;
 
 const StatusStyle = {
-  ...typography.footnote,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -81,7 +80,9 @@ export function LeaderActiveNoticeCard({
     <ActiveStudyCard
       icon={noticeLogo}
       title={title}
-      status={<span css={StatusStyle}>{`${completeCount}/${memberCount} 읽음`}</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>{`${completeCount}/${memberCount} 읽음`}</Text>
+      }
     />
   );
 }
@@ -95,7 +96,9 @@ export function LeaderActiveAssignmentCard({
     <ActiveStudyCard
       icon={assignmentLogo}
       title={title}
-      status={<span css={StatusStyle}>{`${completeCount}/${memberCount} 제출`}</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>{`${completeCount}/${memberCount} 제출`}</Text>
+      }
     />
   );
 }
@@ -105,7 +108,11 @@ export function MemberActiveNoticeCard({ title }: MemberActiveNoticeCardProps) {
     <ActiveStudyCard
       icon={noticeLogo}
       title={title}
-      status={<span css={StatusStyle}>읽지 않음</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>
+          읽지 않음
+        </Text>
+      }
     />
   );
 }
@@ -115,7 +122,11 @@ export function MemberActiveAssignmentCard({ title }: MemberActiveAssignmentCard
     <ActiveStudyCard
       icon={assignmentLogo}
       title={title}
-      status={<span css={StatusStyle}>미제출</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>
+          미제출
+        </Text>
+      }
     />
   );
 }

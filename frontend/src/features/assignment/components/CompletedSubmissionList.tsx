@@ -1,4 +1,4 @@
-import { Heading } from '../../../shared/ui/Typography';
+import { Heading, Text } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
@@ -55,7 +55,6 @@ const nameRowStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   minWidth: 0,
   overflow: 'hidden',
   color: tokens.text.primary,
@@ -104,7 +103,9 @@ export default function CompletedSubmissionList({ submissions }: Props) {
 
             <div css={memberStyle}>
               <div css={nameRowStyle}>
-                <span css={nameStyle}>{submission.name}</span>
+                <Text variant="body" css={nameStyle}>
+                  {submission.name}
+                </Text>
                 {submission.submissionStatus === 'LATE_SUBMITTED' && (
                   <Badge variant="warningSolid" size="status">
                     지각 제출

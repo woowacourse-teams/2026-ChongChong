@@ -1,4 +1,4 @@
-import { Paragraph } from '../../../shared/ui/Typography';
+import { Paragraph, Text } from '../../../shared/ui/Typography';
 import { CSSProperties, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
 import { Link } from 'react-router';
@@ -140,8 +140,10 @@ export function InviteMemberBanner({
       title={'함께할 스터디원을 초대해 보세요'}
       content={
         <Link to={invitePageLink} css={InviteLinkStyle} onClick={handleInviteClick}>
-          <span>초대하러 가기</span>
-          <span aria-hidden="true">→</span>
+          <Text variant="inherited">초대하러 가기</Text>
+          <Text variant="inherited" aria-hidden="true">
+            →
+          </Text>
         </Link>
       }
       image={InviteLogo}

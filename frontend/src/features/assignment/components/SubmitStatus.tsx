@@ -1,6 +1,6 @@
-import { Heading } from '../../../shared/ui/Typography';
+import { Heading, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import { AssignmentSubmitStatus } from '../types';
 import { PostHogCaptureOnViewed } from '@posthog/react';
 
@@ -41,7 +41,6 @@ const readCountStyle = {
 } satisfies CSSProperties;
 
 const totalCountStyle = {
-  ...typography.subtitle,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -74,7 +73,9 @@ export default function SubmitStatus({ status }: Props) {
 
         <div css={countStyle}>
           <strong css={readCountStyle}>{status.completeCount}</strong>
-          <span css={totalCountStyle}>/ {status.memberCount}명</span>
+          <Text variant="subtitle" css={totalCountStyle}>
+            / {status.memberCount}명
+          </Text>
         </div>
 
         <div

@@ -1,4 +1,4 @@
-import { Heading, Paragraph } from '../Typography';
+import { Heading, Paragraph, Text } from '../Typography';
 import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
@@ -64,7 +64,6 @@ const largeTitleStyle = {
 } satisfies CSSProperties;
 
 const accessoryStyle = {
-  ...typography.label,
   display: 'inline-flex',
   flex: '0 0 auto',
   alignItems: 'center',
@@ -149,14 +148,18 @@ ContentCard.Title = function Title({ size = 'default', children }: TitleProps) {
 };
 
 ContentCard.Accessory = function Accessory({ children }: ChildrenProps) {
-  return <span css={accessoryStyle}>{children}</span>;
+  return (
+    <Text variant="label" css={accessoryStyle}>
+      {children}
+    </Text>
+  );
 };
 
 ContentCard.Trailing = function Trailing({ children }: ChildrenProps) {
   return (
-    <span css={trailingStyle} aria-hidden="true">
+    <Text variant="inherited" css={trailingStyle} aria-hidden="true">
       {children}
-    </span>
+    </Text>
   );
 };
 
@@ -184,9 +187,14 @@ ContentCard.Footer = function Footer({ direction = 'row', children }: FooterProp
 
 ContentCard.Meta = function Meta({ tone = 'muted', icon, children }: MetaProps) {
   return (
-    <span css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}>
+    <Text
+      variant="inherited"
+      css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}
+    >
       {icon && <>{icon}</>}
-      <span css={metaTextStyle}>{children}</span>
-    </span>
+      <Text variant="inherited" css={metaTextStyle}>
+        {children}
+      </Text>
+    </Text>
   );
 };

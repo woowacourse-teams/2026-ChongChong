@@ -1,4 +1,4 @@
-import { Heading, Paragraph } from '../../../shared/ui/Typography';
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
@@ -61,7 +61,6 @@ const nameRowStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
@@ -103,7 +102,9 @@ export default function MySubmissionStatus({ submission, member }: Props) {
           />
           <div css={memberStyle}>
             <div css={nameRowStyle}>
-              <span css={nameStyle}>{member.name} (나)</span>
+              <Text variant="body" css={nameStyle}>
+                {member.name} (나)
+              </Text>
               {submission.submissionStatus === 'LATE_SUBMITTED' && (
                 <Badge variant="warningSolid" size="status">
                   지각 제출

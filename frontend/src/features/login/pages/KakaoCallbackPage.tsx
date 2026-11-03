@@ -1,4 +1,4 @@
-import { Heading, Paragraph } from '../../../shared/ui/Typography';
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { keyframes, type CSSObject } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -71,7 +71,6 @@ const characterStyle = {
 } satisfies CSSObject;
 
 const errorBadgeStyle = {
-  ...typography.bodyStrong,
   display: 'flex',
   position: 'absolute',
   right: '4px',
@@ -180,7 +179,11 @@ export default function KakaoCallbackPage() {
         <section css={statusContentStyle}>
           <div css={characterBackdropStyle}>
             <img css={characterStyle} src={chongchongCharacter} alt="" />
-            {errorMessage ? <span css={errorBadgeStyle}>!</span> : null}
+            {errorMessage ? (
+              <Text variant="bodyStrong" css={errorBadgeStyle}>
+                !
+              </Text>
+            ) : null}
           </div>
 
           {errorMessage ? (

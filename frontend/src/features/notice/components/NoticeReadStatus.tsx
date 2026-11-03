@@ -1,6 +1,6 @@
-import { Heading } from '../../../shared/ui/Typography';
+import { Heading, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import type { NoticeReadStatus as NoticeReadStatusData } from '../types';
 
 interface Props {
@@ -39,7 +39,6 @@ const readCountStyle = {
 } satisfies CSSProperties;
 
 const totalCountStyle = {
-  ...typography.subtitle,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -71,7 +70,9 @@ export default function NoticeReadStatus({ status }: Props) {
 
       <div css={countStyle}>
         <strong css={readCountStyle}>{status.readCount}</strong>
-        <span css={totalCountStyle}>/ {status.memberCount}명</span>
+        <Text variant="subtitle" css={totalCountStyle}>
+          / {status.memberCount}명
+        </Text>
       </div>
 
       <div

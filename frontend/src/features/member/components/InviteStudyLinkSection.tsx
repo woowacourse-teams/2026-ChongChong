@@ -1,8 +1,8 @@
-import { Heading, Paragraph } from '../../../shared/ui/Typography';
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import CopyIcon from '../../../shared/assets/copy.svg';
 import CopySuccessIcon from '../../../shared/assets/check.svg';
 import studyQueries from '../../study/queries';
@@ -36,7 +36,6 @@ const inviteLinkBlockStyle = {
 } satisfies CSSProperties;
 
 const inviteLinkStyle = {
-  ...typography.paragraph,
   overflow: 'hidden',
   color: tokens.text.secondary,
   textOverflow: 'ellipsis',
@@ -81,7 +80,9 @@ export function InviteLinkBox({ inviteLink }: InviteLinkBoxProps) {
 
   return (
     <div css={inviteLinkBlockStyle}>
-      <span css={inviteLinkStyle}>{inviteLink}</span>
+      <Text variant="paragraph" css={inviteLinkStyle}>
+        {inviteLink}
+      </Text>
       <button
         css={[copyButtonStyle, isCopySuccess && { cursor: 'default' }]}
         type="button"
@@ -102,9 +103,9 @@ export function InviteStudyLinkSectionFallback({ message }: InviteStudyLinkSecti
         초대 링크
       </Heading>
       <div css={inviteLinkBlockStyle}>
-        <span css={inviteLinkStyle} role="alert">
+        <Text variant="paragraph" css={inviteLinkStyle} role="alert">
           {message ?? '초대링크를 가져오지 못했어요'}
-        </span>
+        </Text>
         <button
           css={[copyButtonStyle, { cursor: 'default', opacity: 0.5 }]}
           type="button"

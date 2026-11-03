@@ -1,3 +1,4 @@
+import { Text } from '../ui/Typography';
 import type { CSSProperties } from 'react';
 import deleteIcon from '../assets/delete.svg';
 import modifyIcon from '../assets/modify.svg';
@@ -25,16 +26,16 @@ export default function DetailActions({ onEdit, onDelete }: DetailActionsProps) 
   return (
     <div css={actionsStyle}>
       <Button variant="neutralOutline" size="small" onClick={onEdit}>
-        <span css={{ ...buttonContentStyle, color: tokens.text.primary }}>
+        <Text variant="inherited" css={{ ...buttonContentStyle, color: tokens.text.primary }}>
           <img src={modifyIcon} alt="" width={18} height={18} />
           수정
-        </span>
+        </Text>
       </Button>
       <Button variant="criticalOutline" size="small" onClick={onDelete}>
-        <span css={buttonContentStyle}>
+        <Text variant="inherited" css={buttonContentStyle}>
           <img src={deleteIcon} alt="" width={18} height={18} />
           삭제
-        </span>
+        </Text>
       </Button>
     </div>
   );

@@ -1,8 +1,8 @@
-import { Heading } from '../ui/Typography';
+import { Heading, Text } from '../ui/Typography';
 import type { CSSProperties } from 'react';
 import profileIcon from '../assets/unknown-profile.svg';
 import List from '../ui/List';
-import { tokens, typography } from '../../styles/global';
+import { tokens } from '../../styles/global';
 
 interface Member {
   id: number;
@@ -43,7 +43,6 @@ const profileStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   minWidth: 0,
   marginLeft: tokens.spacing[3],
   overflow: 'hidden',
@@ -67,7 +66,9 @@ export default function IncompleteMemberList({ title, members }: Props) {
               aria-hidden="true"
               css={profileStyle}
             />
-            <span css={nameStyle}>{member.name}</span>
+            <Text variant="body" css={nameStyle}>
+              {member.name}
+            </Text>
           </List.Item>
         ))}
       </List>

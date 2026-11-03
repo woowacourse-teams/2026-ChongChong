@@ -1,4 +1,4 @@
-import { Paragraph } from '../Typography';
+import { Paragraph, Text } from '../Typography';
 import type { CSSProperties, ComponentProps } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
@@ -46,10 +46,10 @@ Field.Label = function Label({ htmlFor, children, isRequired = false, ...props }
     <label htmlFor={htmlFor} css={labelStyle} {...props}>
       {children}
       {isRequired && (
-        <span aria-hidden="true" css={{ color: tokens.text.brand }}>
+        <Text variant="inherited" aria-hidden="true" css={{ color: tokens.text.brand }}>
           {' '}
           *
-        </span>
+        </Text>
       )}
     </label>
   );
@@ -61,15 +61,15 @@ Field.GroupLabel = function GroupLabel({
   ...props
 }: GroupLabelProps) {
   return (
-    <span css={labelStyle} {...props}>
+    <Text variant="inherited" css={labelStyle} {...props}>
       {children}
       {isRequired && (
-        <span aria-hidden="true" css={{ color: tokens.text.brand }}>
+        <Text variant="inherited" aria-hidden="true" css={{ color: tokens.text.brand }}>
           {' '}
           *
-        </span>
+        </Text>
       )}
-    </span>
+    </Text>
   );
 };
 
@@ -103,10 +103,8 @@ Field.HelpText = function HelpText({ children, ...props }: ComponentProps<'p'>) 
 
 Field.CurrentLength = function CurrentLegth({ currentLength, maxLength }: CurrentLengthProps) {
   return (
-    <span
-      css={{ ...typography.footnote, color: tokens.text.muted, marginRight: tokens.spacing[1] }}
-    >
+    <Text variant="footnote" css={{ color: tokens.text.muted, marginRight: tokens.spacing[1] }}>
       {currentLength} / {maxLength}
-    </span>
+    </Text>
   );
 };

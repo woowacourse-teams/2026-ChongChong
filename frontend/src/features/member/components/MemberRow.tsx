@@ -1,3 +1,4 @@
+import { Text } from '../../../shared/ui/Typography';
 import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import crownIcon from '../../../shared/assets/lead.svg';
@@ -46,7 +47,6 @@ const profileStyle = {
 } satisfies CSSProperties;
 
 const avatarStyle = {
-  ...typography.label,
   display: 'inline-flex',
   width: '28px',
   height: '28px',
@@ -60,7 +60,6 @@ const avatarStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.subtitle,
   overflow: 'hidden',
   color: tokens.text.primary,
   textOverflow: 'ellipsis',
@@ -92,10 +91,12 @@ export default function MemberRow({ left, right, ...props }: Props) {
 function Profile({ name, icon }: ProfileProps) {
   return (
     <div css={profileStyle}>
-      <span css={avatarStyle} aria-hidden="true">
+      <Text variant="label" css={avatarStyle} aria-hidden="true">
         {name.slice(0, 1)}
-      </span>
-      <span css={nameStyle}>{name}</span>
+      </Text>
+      <Text variant="subtitle" css={nameStyle}>
+        {name}
+      </Text>
       {icon}
     </div>
   );
