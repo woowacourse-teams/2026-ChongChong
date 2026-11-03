@@ -55,6 +55,7 @@ export const handlers = [
         submissionMethod: assignment.submissionMethod,
         closeAt: assignment.closeAt,
         submissionStatus,
+        submissionVisibility: assignment.submissionVisibility,
       };
 
       if (isLeader) {

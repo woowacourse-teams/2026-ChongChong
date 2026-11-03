@@ -34,6 +34,7 @@ const assignmentSummaryBaseSchema = z.object({
   submissionMethod: z.string(),
   closeAt: z.string(),
   submissionStatus: submissionStatusSchema,
+  submissionVisibility: z.enum(['LEADER_ONLY', 'ALL_STUDY_MEMBERS']),
 });
 
 const leaderAssignmentSummarySchema = assignmentSummaryBaseSchema.extend({
