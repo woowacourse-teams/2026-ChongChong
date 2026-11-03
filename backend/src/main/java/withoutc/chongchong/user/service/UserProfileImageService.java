@@ -27,7 +27,6 @@ public class UserProfileImageService {
     private final UserProfileImagePolicy imagePolicy;
     private final EntityManager entityManager;
 
-    // 호출자는 사용자 쓰기 잠금을 먼저 획득하고 같은 트랜잭션에서 검증 결과를 연결한다.
     public FileMetadata prepareForUpdate(User user, Long fileId) {
         imagePolicy.validateId(fileId);
         Long currentFileId = currentFileId(user);
@@ -40,7 +39,6 @@ public class UserProfileImageService {
         return file;
     }
 
-    // 호출자는 사용자 쓰기 잠금을 유지한 채 홈 파일 연결과 외부 URL을 함께 해제한다.
     public void prepareForReset(User user) {
         Long fileId = currentFileId(user);
         if (fileId == null) {

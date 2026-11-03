@@ -26,7 +26,6 @@ public class UserProfileImageUrlResolver {
         return fileUrlGenerator.generateImageUrl(file.getObjectKey(), file.getContentType());
     }
 
-    // 호출자는 조회 대상 리소스의 권한을 확인한 뒤 응답에 포함할 멤버 ID만 전달한다.
     public Map<Long, String> resolveForMembers(List<Long> memberIds) {
         if (memberIds.isEmpty()) {
             return Map.of();
