@@ -4,6 +4,7 @@ import { validateAttachments } from '../../../shared/modules/files/validation';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
+// TODO: useAttachment와 동일한 로직을 파악하고 최대한 책임, 역할을 분리
 export default function useStudyProfileImage(initialImageUrl?: string | null) {
   const [selection, setSelection] = useState<{ url?: string | null; fileId?: number }>({
     url: initialImageUrl,
