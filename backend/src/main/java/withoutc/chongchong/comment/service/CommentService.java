@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class CommentService {
     private final NotificationService notificationService;
     private final CommentAccessPolicy commentAccessPolicy;
     private final Clock clock;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
     public CommentCreateResponse create(Long userId, Long studyId, CommentTarget target, CommentWriteRequest request) {
@@ -79,12 +82,25 @@ public class CommentService {
                 target.resourceType(), target.resourceId(), cursorId, focusCommentId != null, pageable);
         CursorPageResponse<CommentSummaryProjection> commentPage = CursorPageResponse.of(
                 results, pageRequest, CommentSummaryProjection::id);
+        List<Long> memberIds = commentPage.content().stream().map(CommentSummaryProjection::authorMemberId)
+                .filter(Objects::nonNull).distinct().toList();
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(memberIds);
         List<CommentResponse> comments = commentPage.content().stream()
-                .map(comment -> CommentResponse.from(comment,
-                        commentAccessPolicy.canEdit(userId, comment.authorUserId()),
-                        commentAccessPolicy.canDelete(userId, comment.authorUserId(), actor.isLeader())))
+                .map(comment -> toCommentResponse(userId, actor.isLeader(), comment, imageUrls))
                 .toList();
         return new CommentListResponse(comments, commentPage.nextCursor(), commentPage.hasNext());
+    }
+
+    private CommentResponse toCommentResponse(Long userId, boolean isLeader, CommentSummaryProjection comment,
+                                               Map<Long, String> imageUrls) {
+        Long memberId = comment.authorMemberId();
+        boolean isDeparted = memberId == null || !imageUrls.containsKey(memberId);
+        String profileImageUrl = isDeparted ? null : imageUrls.get(memberId);
+        CommentResponse.Author author = CommentResponse.Author.of(comment.authorName(), profileImageUrl, isDeparted);
+        return new CommentResponse(comment.id(), author, comment.createdAt(), comment.content(),
+                comment.editedAt() != null,
+                commentAccessPolicy.canEdit(userId, comment.authorUserId()),
+                commentAccessPolicy.canDelete(userId, comment.authorUserId(), isLeader));
     }
 
     @Transactional

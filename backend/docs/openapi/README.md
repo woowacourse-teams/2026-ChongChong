@@ -134,6 +134,7 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 
 현재 남아 있는 차이와 미연동 기능은 다음과 같다.
 
+- 홈 프로필 이미지([#622](https://github.com/woowacourse-teams/2026-ChongChong/issues/622)): `PATCH /api/users/me/profile-image`와 `DELETE /api/users/me/profile-image`를 구현하고 자동화 테스트로 검증했다. 기존 업로드 URL 발급·S3 PUT·완료 API 이후 `fileId`로 변경하며 업로드 용도는 생략·null로 공통 경로를 사용한다. 기본 정책은 JPEG/PNG/WebP 한 장·0바이트 초과·최대 5MiB이며 형식·용량은 설정 가능하다. 홈 초기화는 업로드 연결과 외부 URL을 해제해 `profileImageUrl: null`을 반환한다. 홈 변경·초기화는 현재 참여 중인 모든 스터디의 해당 사용자 이미지에 함께 반영한다. 신규 가입·생성 후에도 현재 홈 이미지를 사용한다. 스터디별 이미지 수정과 선택 방식은 이번 작업에 포함하지 않는다. 업로드 이미지는 응답 시 presigned GET URL을 생성하고 만료 시 해당 리소스를 재조회한다. 내 프로필·이름 수정 응답과 멤버·공지·제출물·댓글 조회에도 현재 홈 이미지를 반영하며 기존 응답의 필드명·nullable 형태를 유지한다. 이미지 변경·초기화와 내 프로필 조회·이름 수정 API는 `review`이며 PR 검토 및 배포 환경 확인 대기다. 회원 탈퇴 시 파일 소유자 연결은 null로 분리하고 사용 중인 파일을 보존하며, 실제 미사용 파일 삭제는 별도 File 작업으로 연계한다. 프론트 이미지 변경·초기화와 관련 캐시 갱신·URL 만료 대응은 미연동이다.
 - 과제 생성·수정: 공개 범위와 리더 참여 설정은 연결되어 있다. 제출 방법은 서버에서는 선택 값이지만 웹 폼에서는 필수다.
 - 과제 제출·수정: 서버는 내용과 링크를 각각 선택 값으로 받지만 웹 폼은 내용을 필수로 요구한다.
 - 제출물 상세(`/submissions/{submissionId}`): `submissionDetailSchema`가 서버에서 허용하는 `createdAt·content=null`을 거부한다. 내 제출 조회(`/submissions/my`)는 별도 스키마를 사용하며, `NOT_SUBMITTED`, `MISSING`, `NOT_ASSIGNED` 상태에서는 두 필드의 누락이나 null 때문에 검증이 실패하지 않는다.
@@ -141,7 +142,7 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 - 공지 이미지 첨부: [#542](https://github.com/woowacourse-teams/2026-ChongChong/issues/542)에서 추가한 요청·응답 구조를 바탕으로 [#554](https://github.com/woowacourse-teams/2026-ChongChong/issues/554)의 완료 파일 연결 구현이 [#556](https://github.com/woowacourse-teams/2026-ChongChong/pull/556)으로 dev에 병합됐으며 관련 테스트와 CI 검증을 통과했다. 생성·수정은 `attachmentFileIds`로 최종 목록과 순서를 지정하며, 신규 첨부는 업로드 완료 API에 성공한 본인 소유·미연결 COMPLETED 파일만 허용한다. 공지는 이미지 정책과 실제 연결 여부를 검증하고 S3 조회나 완료 상태 전환을 수행하지 않는다. 수정 생략·null은 유지, 빈 배열은 전체 제거다. 첨부 제거·공지 삭제는 관계만 정리하고 COMPLETED 상태를 유지해 소유자의 재첨부를 허용한다. 공지 저장 실패도 선행 완료 API의 COMPLETED 상태를 되돌리지 않는다. 상세 `attachments`의 기존 메타데이터에 `imageUrl`을 추가한 [#561](https://github.com/woowacourse-teams/2026-ChongChong/issues/561)은 [#564](https://github.com/woowacourse-teams/2026-ChongChong/pull/564)로 dev에 병합됐으며 CI를 통과했다. 2026-10-22 사용자가 dev의 이미지 첨부 공지를 조회하고 반환된 URL로 실제 이미지가 표시되는 것을 확인했다. 상세 조회의 백엔드 상태는 `done`이다. 조회 권한 확인 후 공통 `FileImageUrlGenerator`로 JPEG·PNG·WebP의 presigned GET URL을 발급하고, 미지원 형식은 `null`을 반환한다. URL은 `aws.s3.url-validity`(기본 10분, `AWS_URL_VALIDITY`로 변경)를 따르며 만료 시 공지 상세를 다시 조회해 갱신한다. 웹의 첨부 입력·표시는 아직 연결되지 않았다.
 - 파일 업로드: `URL 발급 → 필수 헤더를 포함한 S3 PUT → POST /api/files/{fileId}/complete → 공지·과제·제출물 저장` 순서다. PUT에는 발급 시의 `Content-Type`과 `If-None-Match: *`가 필요하며 버킷 CORS에서도 허용해야 한다. 완료 API는 실제 S3 파일 존재·크기를 검증해 COMPLETED로 전환하고, 과제·제출물은 완료 파일 연결을 지원한다. 공지의 완료 파일 연결도 #556으로 dev에 반영됐다. 기본 공통 최대 용량과 공지의 장당 최대 용량은 각각 5MiB이며 두 설정이 함께 적용된다. 이 명세의 공지 API에서 업로드 검증 실패 응답을 제거하고, S3 관련 오류는 선행 완료 API에서 처리한다.
 
-위 항목은 총 9개 API에 `needs-update`로 표시한다. 웹 입력 제약을 서버보다 엄격하게 둔 경우와 서버의 정상 응답을 거부하는 경우를 구분해 설명했다.
+위 항목의 연동 작업은 해당 API의 `needs-update` 안내에 표시한다. 웹 입력 제약을 서버보다 엄격하게 둔 경우와 서버의 정상 응답을 거부하는 경우를 구분해 설명했다.
 
 스터디 정보 수정, 공개 범위 설정·조회, 공개 제출물 목록·상세 이동, 다섯 제출 상태와 지각 배지, 푸시 클릭 기록은 웹에 반영되어 있다.
 로그인·갱신·로그아웃 명세는 다중 세션과 현재 세션만 갱신·종료하는 서버 동작을 설명한다.

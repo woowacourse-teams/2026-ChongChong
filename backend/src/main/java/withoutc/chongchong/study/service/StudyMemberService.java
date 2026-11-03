@@ -3,6 +3,8 @@ package withoutc.chongchong.study.service;
 import static withoutc.chongchong.study.entity.Study.MAX_STUDY_MEMBER_COUNT;
 import static withoutc.chongchong.study.service.StudyService.MAX_JOINED_STUDY_COUNT;
 
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
+import withoutc.chongchong.study.controller.dto.StudyMemberResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
@@ -23,9 +26,11 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,7 @@ public class StudyMemberService {
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
     public StudyMemberJoinResponse join(Long userId, StudyJoinRequest request) {
@@ -80,8 +86,14 @@ public class StudyMemberService {
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
         studyRepository.getByIdOrThrow(studyId);
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        return StudyMembersResponse.from(MAX_STUDY_MEMBER_COUNT,
-                studyMemberRepository.findAllSummariesByStudyId(studyId));
+        List<StudyMemberSummaryProjection> summaries = studyMemberRepository.findAllSummariesByStudyId(studyId);
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(
+                summaries.stream().map(StudyMemberSummaryProjection::id).toList());
+        List<StudyMemberResponse> members = summaries.stream()
+                .map(member -> new StudyMemberResponse(member.id(), member.name(), imageUrls.get(member.id()),
+                        member.role()))
+                .toList();
+        return new StudyMembersResponse(MAX_STUDY_MEMBER_COUNT, members.size(), members);
     }
 
     @Transactional

@@ -2,13 +2,18 @@ package withoutc.chongchong.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.user.exception.UserErrorCode;
 import withoutc.chongchong.user.exception.UserException;
@@ -33,6 +38,10 @@ public class User extends BaseEntity {
     @Column(name = "profile_image_url", length = MAX_PROFILE_IMAGE_URL_LENGTH)
     private String profileImageUrl;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_image_file_id", unique = true)
+    private FileMetadata profileImageFile;
+
     public static User create(
             String name,
             String profileImageUrl
@@ -43,6 +52,15 @@ public class User extends BaseEntity {
     public void updateName(String name) {
         validateName(name, MAX_EDITABLE_NAME_LENGTH);
         this.name = name;
+    }
+
+    public void changeProfileImage(FileMetadata file) {
+        this.profileImageFile = Objects.requireNonNull(file, "프로필 이미지 파일은 필수입니다.");
+    }
+
+    public void resetProfileImage() {
+        this.profileImageFile = null;
+        this.profileImageUrl = null;
     }
 
     private User(

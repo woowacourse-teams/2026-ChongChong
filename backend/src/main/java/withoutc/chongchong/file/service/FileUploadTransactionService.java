@@ -26,7 +26,7 @@ public class FileUploadTransactionService {
     @Transactional
     public void complete(Long userId, Long fileId, long actualSize) {
         FileMetadata file = fileMetaDataRepository.getByIdForUpdateOrThrow(fileId);
-        filePolicy.validateCompletion(userId, file.getOwner().getId(), file.getStatus());
+        filePolicy.validateCompletion(userId, file.getOwnerId(), file.getStatus());
         if (file.isCompleted()) {
             return;
         }

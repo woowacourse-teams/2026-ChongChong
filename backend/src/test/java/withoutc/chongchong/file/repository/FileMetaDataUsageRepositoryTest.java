@@ -124,6 +124,26 @@ class FileMetaDataUsageRepositoryTest extends PostgresContainerTest {
         assertThat(fileRepository.existsStudyImageByFileId(file.getId())).isFalse();
     }
 
+    @Test
+    @DisplayName("홈 프로필 파일 연결을 DB에 저장하고 초기화 후에는 파일을 보존한 채 미사용으로 조회한다")
+    void findCurrentUserProfileImage() {
+        FileMetadata file = saveFile(FileUploadStatus.COMPLETED);
+        User owner = file.getOwner();
+        Long ownerId = owner.getId();
+        owner.changeProfileImage(file);
+        entityManager.flush();
+        entityManager.clear();
+
+        User storedOwner = entityManager.find(User.class, ownerId);
+        assertThat(storedOwner.getProfileImageFile().getId()).isEqualTo(file.getId());
+        assertThat(fileRepository.existsUserProfileImageByFileId(file.getId())).isTrue();
+        assertOnlyRequestedFileLinked(file);
+
+        storedOwner.resetProfileImage();
+        assertUnlinkedAfterFlush(file);
+        assertThat(fileRepository.existsUserProfileImageByFileId(file.getId())).isFalse();
+    }
+
     private void assertOnlyRequestedFileLinked(FileMetadata linkedFile) {
         FileMetadata unlinkedFile = saveFile(FileUploadStatus.COMPLETED);
         entityManager.flush();

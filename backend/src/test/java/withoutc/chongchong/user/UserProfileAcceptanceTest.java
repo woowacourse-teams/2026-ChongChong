@@ -2,10 +2,12 @@ package withoutc.chongchong.user;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,23 +16,40 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import withoutc.chongchong.auth.support.TestAuthRequest;
+import withoutc.chongchong.file.entity.FileMetadata;
+import withoutc.chongchong.file.repository.FileMetaDataRepository;
+import withoutc.chongchong.file.service.FileUrlGenerator;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.support.TestDatabaseCleaner;
+import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestS3PresignerConfiguration.class)
 class UserProfileAcceptanceTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FileMetaDataRepository fileRepository;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @MockitoSpyBean
+    private FileUrlGenerator fileUrlGenerator;
 
     @Autowired
     private StudyRepository studyRepository;
@@ -85,6 +104,28 @@ class UserProfileAcceptanceTest {
         assertThat(responseBody.get("profileImageUrl")).isNull();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"image/jpeg", "image/png", "image/webp"})
+    @DisplayName("홈에 업로드 이미지가 있으면 외부 URL 대신 서명된 조회 URL을 반환하고 DB에는 저장하지 않는다")
+    void getMyProfileWithUploadedImage(String contentType) {
+        User user = userRepository.saveAndFlush(User.create("이든", "https://example.com/social.png"));
+        FileMetadata file = connectCompletedImage(user, contentType);
+
+        Response response = requestProfile(user.getId());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.jsonPath().getMap("$"))
+                .containsOnlyKeys("name", "profileImageUrl")
+                .containsEntry("name", "이든");
+        assertThat(response.jsonPath().getString("profileImageUrl"))
+                .startsWith("https://")
+                .contains(file.getObjectKey(), "X-Amz-Signature=", "X-Amz-Expires=180");
+        assertThat(jdbc.queryForObject("SELECT profile_image_url FROM users WHERE id = ?", String.class, user.getId()))
+                .isEqualTo("https://example.com/social.png");
+        assertThat(jdbc.queryForObject("SELECT profile_image_file_id FROM users WHERE id = ?", Long.class, user.getId()))
+                .isEqualTo(file.getId());
+    }
+
     @Test
     @DisplayName("인증 없이 홈 프로필을 조회하면 401을 반환한다")
     void rejectUnauthenticatedProfileRequest() {
@@ -95,6 +136,7 @@ class UserProfileAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.jsonPath().getString("code")).isEqualTo("AUTHENTICATION_REQUIRED");
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test
@@ -104,6 +146,7 @@ class UserProfileAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.jsonPath().getString("code")).isEqualTo("USER_NOT_FOUND");
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test
@@ -142,6 +185,44 @@ class UserProfileAcceptanceTest {
         assertThat(responseBody).containsOnlyKeys("name", "profileImageUrl");
         assertThat(responseBody.get("name")).isEqualTo("바니");
         assertThat(responseBody.get("profileImageUrl")).isNull();
+    }
+
+    @Test
+    @DisplayName("홈 이름 수정 응답에도 현재 업로드 이미지의 조회 URL을 반환하고 파일 연결을 유지한다")
+    void updateNameWithUploadedProfileImage() {
+        User user = userRepository.saveAndFlush(User.create("기존이름", "https://example.com/social.png"));
+        FileMetadata file = connectCompletedImage(user, "image/png");
+
+        Response response = updateProfileName(user.getId(), "{\"name\":\"새이름\"}");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.jsonPath().getMap("$"))
+                .containsOnlyKeys("name", "profileImageUrl")
+                .containsEntry("name", "새이름");
+        assertThat(response.jsonPath().getString("profileImageUrl"))
+                .startsWith("https://")
+                .contains(file.getObjectKey(), "X-Amz-Signature=");
+        assertThat(jdbc.queryForObject("SELECT name FROM users WHERE id = ?", String.class, user.getId()))
+                .isEqualTo("새이름");
+        assertThat(jdbc.queryForObject("SELECT profile_image_file_id FROM users WHERE id = ?", Long.class, user.getId()))
+                .isEqualTo(file.getId());
+    }
+
+    @Test
+    @DisplayName("업로드 이미지가 있어도 잘못된 이름 수정은 URL 발급 전에 거부하고 기존 프로필을 보존한다")
+    void rejectsInvalidNameBeforeSigningUploadedImage() {
+        User user = userRepository.saveAndFlush(User.create("기존이름", null));
+        FileMetadata file = connectCompletedImage(user, "image/png");
+
+        Response response = updateProfileName(user.getId(), "{\"name\":\"\"}");
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.jsonPath().getString("code")).isEqualTo("INVALID_USER_NAME");
+        verifyNoInteractions(fileUrlGenerator);
+        assertThat(jdbc.queryForObject("SELECT name FROM users WHERE id = ?", String.class, user.getId()))
+                .isEqualTo("기존이름");
+        assertThat(jdbc.queryForObject("SELECT profile_image_file_id FROM users WHERE id = ?", Long.class, user.getId()))
+                .isEqualTo(file.getId());
     }
 
     @ParameterizedTest
@@ -186,6 +267,7 @@ class UserProfileAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.jsonPath().getString("code")).isEqualTo("AUTHENTICATION_REQUIRED");
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test
@@ -195,6 +277,7 @@ class UserProfileAcceptanceTest {
 
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.jsonPath().getString("code")).isEqualTo("USER_NOT_FOUND");
+        verifyNoInteractions(fileUrlGenerator);
     }
 
     @Test
@@ -258,6 +341,15 @@ class UserProfileAcceptanceTest {
         Long newStudyId = createResponse.jsonPath().getLong("studyId");
         assertThat(studyMemberRepository.getByStudyIdAndUserIdOrThrow(newStudyId, user.getId()).getName())
                 .isEqualTo("새이름");
+    }
+
+    private FileMetadata connectCompletedImage(User user, String contentType) {
+        FileMetadata file = FileMetadata.create(user, "image", "uploads/" + UUID.randomUUID(), contentType, 1024);
+        file.completeUpload();
+        fileRepository.saveAndFlush(file);
+        user.changeProfileImage(file);
+        userRepository.saveAndFlush(user);
+        return file;
     }
 
     private Response requestProfile(Long userId) {
