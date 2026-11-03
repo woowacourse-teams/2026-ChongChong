@@ -91,6 +91,20 @@ describe('스터디 관리 페이지 테스트', () => {
       login(leaderUserName);
     });
 
+    test('스터디 프로필 이미지가 렌더링된다', async () => {
+      const study = studyTable.findFirst((q) => q.where({ id: 1 }));
+      await studyTable.update(study!, {
+        data(record) {
+          record.imageUrl = 'https://example.com/soccer.png';
+        },
+      });
+      setupStudyManagementPage();
+
+      const profile = await screen.findByRole('img', { name: '축구 스터디 프로필' });
+      expect(profile).toHaveAttribute('src', 'https://example.com/soccer.png');
+      expect(profile).toBeVisible();
+    });
+
     test('스터디 리드에게는 스터디 프로필 수정 링크가 표시된다', async () => {
       setupStudyManagementPage();
 
