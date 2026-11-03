@@ -89,7 +89,7 @@ export default function StudyProfileField({ imageUrl, disabled, onSelect, onRese
           if (file) onSelect(file);
         }}
       />
-      <BottomSheet open={open} title="프로필 이미지" variant="menu" onClose={openBottomSheet}>
+      <BottomSheet open={open} title="프로필 이미지" variant="menu" onClose={closeBottomSheet}>
         <BottomSheet.Action onClick={selectProfileImage}>프로필 이미지 선택</BottomSheet.Action>
         {imageUrl && (
           <BottomSheet.Action onClick={selectDefaultProfileImage}>

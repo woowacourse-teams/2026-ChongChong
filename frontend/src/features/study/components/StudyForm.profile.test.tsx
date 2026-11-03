@@ -206,3 +206,21 @@ test('디코딩 중 새 사진을 선택하면 이전 결과를 무시하고 해
   await user.click(screen.getByRole('button', { name: '저장' }));
   expect(onSubmit).toHaveBeenCalledWith({ name: '스터디', description: '', imageFileId: 2 });
 });
+
+test.each(['배경 클릭', 'Escape'])(
+  '%s으로 프로필 메뉴를 닫으면 포커스가 돌아온다',
+  async (action) => {
+    const { user, onSubmit } = renderForm();
+    const trigger = screen.getByRole('button', { name: '스터디 프로필 이미지 변경' });
+    await user.click(trigger);
+    expect(screen.getByRole('dialog', { name: '프로필 이미지' })).toBeVisible();
+    if (action === '배경 클릭') {
+      await user.click(screen.getByTestId('bottom-sheet-backdrop'));
+    } else {
+      await user.keyboard('{Escape}');
+    }
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    expect(onSubmit).not.toHaveBeenCalled();
+  },
+);
