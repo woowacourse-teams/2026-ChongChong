@@ -1,3 +1,6 @@
+import StudyProfileField from './StudyProfileField';
+import useStudyProfileImage from '../hooks/useStudyProfileImage';
+import type { StudyFormValues } from '../types';
 import { CSSProperties } from 'react';
 import Button from '../../../shared/ui/Button';
 import InputField from '../../../shared/widgets/InputField';
@@ -16,13 +19,13 @@ const StudyFormStyle = {
 
 interface Props {
   submitLabel: string;
-  onSubmit: ({ name, description }: { name: string; description: string }) => void;
+  onSubmit: (body: StudyFormValues) => void;
   isSubmitting: boolean;
-  fieldErrors: Partial<Record<'name' | 'description', string>>;
-  initialValues?: { name: string; description: string | null };
+  fieldErrors: Partial<Record<'name' | 'description' | 'imageFileId', string>>;
+  initialValues?: { name: string; description: string | null; imageUrl?: string | null };
 }
 
-const defaultInitialValues = {
+const defaultInitialValues: NonNullable<Props['initialValues']> = {
   name: '',
   description: '',
 };
@@ -34,6 +37,7 @@ export default function StudyForm({
   fieldErrors,
   initialValues = defaultInitialValues,
 }: Props) {
+  const profile = useStudyProfileImage({ initialImageUrl: initialValues.imageUrl, fieldErrors });
   const [nameValue, handleNameValue] = useInputState(initialValues.name, (value, prevValue) => {
     if (value.length > STUDY_NAME.length) return prevValue;
     return value;
@@ -49,15 +53,24 @@ export default function StudyForm({
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isSubmitting || profile.isUploading || isBlank(nameValue)) return;
     posthog?.capture('study_form_submitted', {
       location: 'study_create_page',
     });
-    const body = { name: nameValue, description: descriptionValue };
+    const body: StudyFormValues = { name: nameValue, description: descriptionValue };
+    if (profile.imageFileId !== undefined) body.imageFileId = profile.imageFileId;
     onSubmit(body);
   }
 
   return (
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
+      <StudyProfileField
+        imageUrl={profile.imageUrl}
+        disabled={isSubmitting || profile.isUploading}
+        errorText={profile.error}
+        onSelect={profile.select}
+        onReset={profile.reset}
+      />
       <InputField
         id="study-name"
         label="스터디 이름"
@@ -85,7 +98,7 @@ export default function StudyForm({
         variant="brandSolid"
         size="large"
         type="submit"
-        disabled={isBlank(nameValue) || isSubmitting}
+        disabled={isBlank(nameValue) || isSubmitting || profile.isUploading}
         css={{ marginTop: tokens.spacing[1] }}
       >
         {submitLabel}

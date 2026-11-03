@@ -1,7 +1,7 @@
 import api from '../../client';
 import { ValidationError, ApiError } from '../../shared/api/error';
 import { STUDY_URLS } from './urls';
-import type { Role } from './types';
+import type { Role, StudyFormValues } from './types';
 import {
   isCreateStudyResponse,
   isInviteLinkResponse,
@@ -44,12 +44,9 @@ export async function fetchStudyDetail<R extends Role>(studyId: number, role: R)
   }
 }
 
-export async function createStudy(body: {
-  name: string;
-  description: string;
-}): Promise<{ studyId: number }> {
+export async function createStudy(body: StudyFormValues): Promise<{ studyId: number }> {
   try {
-    const response = await api.post(STUDY_URLS.create, { json: body });
+    const response = await api.post(STUDY_URLS.create, { json: { ...body, isPublic: false } });
     const data: unknown = await response.json<{ studyId: number }>();
 
     if (!isCreateStudyResponse(data)) {
@@ -65,7 +62,7 @@ export async function createStudy(body: {
   }
 }
 
-export async function editStudy(studyId: number, body: { name: string; description: string }) {
+export async function editStudy(studyId: number, body: StudyFormValues) {
   try {
     await api.patch(`/studies/${studyId}`, { json: body });
   } catch (error) {

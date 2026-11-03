@@ -1,3 +1,5 @@
+import { MOCK_UPLOAD_ORIGIN } from '../../../shared/modules/files/mocks/db';
+import type { StudyFormValues } from '../types';
 import { http, HttpResponse } from 'msw';
 import { studyTable } from './db';
 import { API_URL } from '../../../../config';
@@ -98,6 +100,9 @@ export const handlers = [
           role: membership.role,
           name: study.name,
           description: study.description,
+          imageUrl: study.imageFileId
+            ? `${MOCK_UPLOAD_ORIGIN}/images/${study.imageFileId}`
+            : (study.imageUrl ?? null),
           memberCount: members.length,
           noticeCount,
           assignmentCount,
@@ -153,7 +158,7 @@ export const handlers = [
   }),
 
   http.post(`${API_URL}${STUDY_URLS.create}`, async ({ request }) => {
-    const body = (await request.json()) as { name: string; description: string };
+    const body = (await request.json()) as StudyFormValues;
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
     const fieldErrors = validateStudy(body);
@@ -182,10 +187,7 @@ export const handlers = [
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
-    const body = (await request.json()) as {
-      name: string;
-      description: string;
-    };
+    const body = (await request.json()) as StudyFormValues;
 
     const fieldErrors = validateStudy(body);
     if (fieldErrors.length > 0) {
@@ -205,6 +207,10 @@ export const handlers = [
       data(study) {
         study.name = body.name;
         study.description = body.description;
+        if (body.imageFileId !== undefined) {
+          study.imageFileId = body.imageFileId;
+          study.imageUrl = null;
+        }
       },
     });
 
@@ -261,6 +267,9 @@ export const handlers = [
       role: member.role,
       userName: member.name,
       description: study.description,
+      imageUrl: study.imageFileId
+        ? `${MOCK_UPLOAD_ORIGIN}/images/${study.imageFileId}`
+        : (study.imageUrl ?? null),
     });
   }),
 

@@ -1,6 +1,7 @@
+import studyQueries from '../queries';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createStudy } from '../api';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
@@ -9,10 +10,14 @@ import StatusToast from '../../../shared/ui/toasts/StatusToast';
 export default function useCreateStudy() {
   const navigate = useNavigate();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: createStudy,
-    onSuccess: (data) => navigate(`/studies/${data.studyId}`),
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: studyQueries.all() });
+      navigate(`/studies/${data.studyId}`);
+    },
     onError: (error) => {
       if (error instanceof ValidationError) return;
       toast.open(<StatusToast message={error.message} status={'error'} />);

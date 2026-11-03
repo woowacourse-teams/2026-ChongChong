@@ -1,11 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
 import Button from '../Button';
-import BottomSheet from './BottomSheet';
+import BottomSheet from '../BottomSheet';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
+import { actionStyle, headerStyle } from './dateTimePicker.styles';
 import { clampToMinimumTime, getMinimumDateTime } from './dateTimePicker.utils';
+import { Heading } from '../Typography';
 
 type PickerStep = 'date' | 'time';
 
@@ -32,6 +34,7 @@ export default function DateTimePicker({
   disabled = false,
   onChange,
 }: DateTimePickerProps) {
+  const titleId = useId();
   const [minimumDateTime, setMinimumDateTime] = useState(() => getMinimumDateTime(minDate));
   const [draftValue, setDraftValue] = useState(() =>
     clampToMinimumTime(value ?? minimumDateTime, minimumDateTime),
@@ -72,13 +75,19 @@ export default function DateTimePicker({
         {triggerLabel}
       </Button>
 
-      <BottomSheet
-        open={isOpen}
-        title={title}
-        actionLabel={step === 'date' ? '다음' : '완료'}
-        onAction={step === 'date' ? () => setStep('time') : complete}
-        onClose={closePicker}
-      >
+      <BottomSheet open={isOpen} aria-labelledby={titleId} onClose={closePicker}>
+        <header css={headerStyle}>
+          <Heading level={2} id={titleId} variant="title">
+            {title}
+          </Heading>
+          <button
+            type="button"
+            css={actionStyle}
+            onClick={step === 'date' ? () => setStep('time') : complete}
+          >
+            {step === 'date' ? '다음' : '완료'}
+          </button>
+        </header>
         {step === 'date' ? (
           <DatePicker value={draftValue} minDate={minimumDateTime} onChange={setDraftValue} />
         ) : (

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { createWrapper, setup, login } from '../../../../test/render';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../../mocks/msw-node';
@@ -35,6 +35,7 @@ describe('스터디 목록 페이지 테스트', () => {
         name: '탄자니아 스터디',
         description: '탄자니아 출신 벤지와 함께하는 탄자니아 치안',
         inviteLink: 'tanzania',
+        imageUrl: 'https://example.com/tanzania.png',
       });
       await studyTable.create({
         id: 2,
@@ -58,6 +59,16 @@ describe('스터디 목록 페이지 테스트', () => {
         profileImage: 'http://localhost:8000',
         role: 'MEMBER',
       });
+    });
+
+    test('스터디 프로필 이미지가 렌더링된다', async () => {
+      setup(<MyStudiesPage />, { wrapper: createWrapper() });
+
+      const card = await screen.findByRole('link', { name: /탄자니아 스터디/ });
+      const profile = within(card)
+        .getAllByRole('presentation')
+        .find((image) => image.getAttribute('src') === 'https://example.com/tanzania.png');
+      expect(profile).toBeVisible();
     });
 
     test('응답으로 받은 스터디들을 렌더링 한다', async () => {
