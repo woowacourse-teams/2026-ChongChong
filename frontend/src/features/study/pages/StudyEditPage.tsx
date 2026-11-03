@@ -18,7 +18,7 @@ export default function StudyEditPage() {
         left={<PrevButton />}
         middle={<TopHeader.Title>스터디 정보 수정</TopHeader.Title>}
       />
-      <Main css={{ paddingTop: 0 }}>
+      <Main>
         <ErrorBoundary
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >

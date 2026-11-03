@@ -5,8 +5,9 @@ import Button from '../Button';
 import BottomSheet from '../BottomSheet';
 import DatePicker from './DatePicker';
 import TimePicker from './TimePicker';
-import { actionStyle, headerStyle, titleStyle } from './dateTimePicker.styles';
+import { actionStyle, headerStyle } from './dateTimePicker.styles';
 import { clampToMinimumTime, getMinimumDateTime } from './dateTimePicker.utils';
+import { Heading } from '../Typography';
 
 type PickerStep = 'date' | 'time';
 
@@ -76,9 +77,9 @@ export default function DateTimePicker({
 
       <BottomSheet open={isOpen} aria-labelledby={titleId} onClose={closePicker}>
         <header css={headerStyle}>
-          <h2 id={titleId} css={titleStyle}>
+          <Heading level={2} id={titleId} variant="title">
             {title}
-          </h2>
+          </Heading>
           <button
             type="button"
             css={actionStyle}

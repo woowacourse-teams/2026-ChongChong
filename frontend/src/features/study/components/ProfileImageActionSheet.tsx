@@ -1,7 +1,8 @@
 import { useId, ComponentProps, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
 import BottomSheet from '../../../shared/ui/BottomSheet';
-import { tokens, typography } from '../../../styles/global';
+import { Heading } from '../../../shared/ui/Typography';
+import { tokens } from '../../../styles/global';
 
 type Actions = {
   onSelect: () => void;
@@ -26,13 +27,6 @@ const HeaderStyle = {
   justifyContent: 'center',
   height: 40,
   margin: 0,
-} satisfies CSSObject;
-
-const TitleStyle = {
-  ...typography.title,
-  margin: 0,
-  fontFamily: tokens.fontFamily.base,
-  color: tokens.text.default,
 } satisfies CSSObject;
 
 const ActionStyle = {
@@ -69,9 +63,9 @@ export default function ProfileImageActionSheet({
   return (
     <BottomSheet open={open} aria-labelledby={titleId} onClose={actions.onClose}>
       <header css={HeaderStyle}>
-        <h2 id={titleId} css={TitleStyle}>
+        <Heading id={titleId} level={2} variant="title">
           프로필 이미지
-        </h2>
+        </Heading>
       </header>
       <ActionButton onClick={actions.onSelect}>프로필 이미지 선택</ActionButton>
       {hasImage && <ActionButton onClick={actions.onReset}>기본 프로필 이미지 사용</ActionButton>}

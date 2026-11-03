@@ -11,12 +11,6 @@ export const headerStyle = {
   marginTop: tokens.spacing[2],
 } satisfies CSSProperties;
 
-export const titleStyle = {
-  margin: tokens.spacing[0],
-  fontFamily: tokens.fontFamily.base,
-  color: tokens.text.default,
-} satisfies CSSProperties;
-
 export const actionStyle = {
   ...typography.button,
   padding: tokens.spacing[0],
