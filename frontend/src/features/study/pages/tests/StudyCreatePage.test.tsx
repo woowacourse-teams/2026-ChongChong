@@ -259,7 +259,7 @@ describe('스터디 생성 페이지', () => {
     });
 
     test.each(invalidImageFileCases)(
-      '$title을 선택하면 에러 토스트가 보이고 기존 이미지를 유지한다',
+      '$title을 선택하면 프로필 아래에 에러가 보이고 기존 이미지를 유지한다',
       async ({ createFile, message }) => {
         setupStudyCreatePage();
         // accept 필터를 통과시켜 애플리케이션의 실제 파일 검증을 실행합니다.
@@ -269,14 +269,18 @@ describe('스터디 생성 페이지', () => {
         await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
         await user.upload(screen.getByLabelText('프로필 이미지 파일'), createFile());
 
-        const toast = await screen.findByRole('status');
-        expect(toast).toHaveTextContent(message);
-        expect(toast).toBeVisible();
+        const error = await screen.findByRole('alert');
+        expect(error).toHaveTextContent(message);
+        expect(error).toBeVisible();
+        expect(
+          screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }),
+        ).toHaveAccessibleDescription(error.textContent ?? '');
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
         expect(screen.getByRole('img', { name: '스터디 프로필' })).toHaveAttribute('src', rabbit);
       },
     );
 
-    test('프로필 이미지 업로드에 실패하면 토스트 에러 메시지가 보인다', async () => {
+    test('프로필 이미지 업로드에 실패하면 프로필 아래에 에러 메시지가 보인다', async () => {
       mockImageUpload();
       server.use(
         http.post(`${API_URL}/files/100/complete`, () =>
@@ -293,9 +297,13 @@ describe('스터디 생성 페이지', () => {
       await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
       await user.upload(screen.getByLabelText('프로필 이미지 파일'), file);
 
-      const toast = await screen.findByRole('status');
-      expect(toast).toHaveTextContent('업로드한 파일을 찾을 수 없습니다.');
-      expect(toast).toBeVisible();
+      const error = await screen.findByRole('alert');
+      expect(error).toHaveTextContent('업로드한 파일을 찾을 수 없습니다.');
+      expect(error).toBeVisible();
+      expect(
+        screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }),
+      ).toHaveAccessibleDescription(error.textContent ?? '');
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
 });

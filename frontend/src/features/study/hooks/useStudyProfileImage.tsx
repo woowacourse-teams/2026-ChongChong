@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { uploadAttachment } from '../../../shared/modules/files/api';
 import { validateAttachments } from '../../../shared/modules/files/validation';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 // TODO: useAttachment와 동일한 로직을 파악하고 최대한 책임, 역할을 분리
-export default function useStudyProfileImage(initialImageUrl?: string | null) {
+interface Options {
+  initialImageUrl?: string | null;
+  fieldErrors?: { imageFileId?: string };
+}
+
+export default function useStudyProfileImage({ initialImageUrl, fieldErrors }: Options) {
   const [selection, setSelection] = useState<{ url?: string | null; fileId?: number | null }>({
     url: initialImageUrl,
   });
   const [isUploading, setIsUploading] = useState(false);
   const isMounted = useRef(false);
-  const toast = useToast();
+  const [error, setError] = useState<string>();
+  const [dismissedErrors, setDismissedErrors] = useState<Options['fieldErrors']>();
+  const serverError = fieldErrors === dismissedErrors ? undefined : fieldErrors?.imageFileId;
 
   useEffect(() => {
     isMounted.current = true;
@@ -28,9 +33,11 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
 
   async function select(file: File) {
     if (isUploading) return;
+    setDismissedErrors(fieldErrors);
+    setError(undefined);
     const validation = validateAttachments([file], 0, 'image');
     if (validation) {
-      toast.open(<StatusToast status="error" message={validation.message} />);
+      setError(validation.message);
       return;
     }
     setIsUploading(true);
@@ -42,26 +49,19 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
       const preview = new Image();
       preview.src = previewUrl;
       try {
-        // Keep the current photo until the replacement is ready to paint.
         await preview.decode();
       } catch (cause) {
         throw new Error('이미지를 불러오지 못했어요. 다른 이미지를 선택해 주세요.', { cause });
       }
       if (!isMounted.current) return;
       setSelection({ url: previewUrl, fileId });
-      // The selection effect now owns this URL and revokes it after replacement/unmount.
       previewUrl = undefined;
     } catch (error) {
       if (!isMounted.current) return;
-      toast.open(
-        <StatusToast
-          status="error"
-          message={
-            error instanceof Error
-              ? error.message
-              : '이미지를 업로드하지 못했어요. 다시 선택해 주세요.'
-          }
-        />,
+      setError(
+        error instanceof Error
+          ? error.message
+          : '이미지를 업로드하지 못했어요. 다시 선택해 주세요.',
       );
     } finally {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -71,8 +71,17 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
 
   function reset() {
     if (isUploading) return;
+    setDismissedErrors(fieldErrors);
+    setError(undefined);
     setSelection({ fileId: initialImageUrl ? null : undefined });
   }
 
-  return { imageUrl: selection.url, imageFileId: selection.fileId, isUploading, select, reset };
+  return {
+    imageUrl: selection.url,
+    imageFileId: selection.fileId,
+    isUploading,
+    error: error ?? serverError,
+    select,
+    reset,
+  };
 }

@@ -19,11 +19,7 @@ export default function useCreateStudy() {
       navigate(`/studies/${data.studyId}`);
     },
     onError: (error) => {
-      if (error instanceof ValidationError) {
-        if (error.fieldErrors.imageFileId)
-          toast.open(<StatusToast message={error.fieldErrors.imageFileId} status="error" />);
-        return;
-      }
+      if (error instanceof ValidationError) return;
       toast.open(<StatusToast message={error.message} status={'error'} />);
     },
   });

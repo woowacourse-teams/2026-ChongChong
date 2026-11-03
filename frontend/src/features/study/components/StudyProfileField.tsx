@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import type { CSSObject } from '@emotion/react';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
 import ProfileImageActionSheet from './ProfileImageActionSheet';
@@ -6,18 +6,29 @@ import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import { tokens } from '../../../styles/global';
 import camera from '../assets/profile-camera.svg';
 import StudyAvatar from './StudyAvatar';
+import { Field } from '../../../shared/ui/inputs/Field';
 
 interface Props {
   imageUrl?: string | null;
   disabled: boolean;
+  errorText?: string;
+  helpText?: string;
   onSelect: (file: File) => void;
   onReset: () => void;
 }
 
 const StudyProfileFieldStyle = {
   display: 'flex',
-  justifyContent: 'center',
-  margin: '24px 0 52px',
+  flexDirection: 'column',
+  alignItems: 'center',
+  margin: '24px 0 8px',
+} satisfies CSSObject;
+
+const SubTextContainerStyle = {
+  margin: '8px 0 0',
+  minHeight: 'calc(2 * var(--line-height-18))',
+  width: '100%',
+  overflowWrap: 'anywhere',
 } satisfies CSSObject;
 
 const ProfileButtonStyle = {
@@ -46,8 +57,17 @@ const CameraBadgeStyle = {
   placeItems: 'center',
 } satisfies CSSObject;
 
-export default function StudyProfileField({ imageUrl, disabled, onSelect, onReset }: Props) {
+export default function StudyProfileField({
+  imageUrl,
+  disabled,
+  errorText,
+  helpText,
+  onSelect,
+  onReset,
+}: Props) {
   const [open, openBottomSheet, closeBottomSheet] = useBooleanState();
+  const subTextId = useId();
+  const hasSubText = Boolean(errorText || helpText);
   const input = useRef<HTMLInputElement>(null);
 
   function selectProfileImage() {
@@ -69,6 +89,8 @@ export default function StudyProfileField({ imageUrl, disabled, onSelect, onRese
         aria-label="스터디 프로필 이미지 변경"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-describedby={hasSubText ? subTextId : undefined}
+        aria-invalid={Boolean(errorText)}
         disabled={disabled}
         onClick={openBottomSheet}
         css={ProfileButtonStyle}
@@ -78,12 +100,17 @@ export default function StudyProfileField({ imageUrl, disabled, onSelect, onRese
           <img src={camera} alt="" width={16} height={16} />
         </span>
       </button>
+      <div id={subTextId} css={SubTextContainerStyle}>
+        <Field.SubText errorText={errorText} helpText={helpText} />
+      </div>
       <input
         ref={input}
         type="file"
         hidden
         aria-label="프로필 이미지 파일"
         accept={IMAGE_ACCEPT}
+        aria-describedby={hasSubText ? subTextId : undefined}
+        aria-invalid={Boolean(errorText)}
         disabled={disabled}
         onChange={(event) => {
           const file = event.target.files?.[0];

@@ -21,7 +21,7 @@ interface Props {
   submitLabel: string;
   onSubmit: (body: StudyFormValues) => void;
   isSubmitting: boolean;
-  fieldErrors: Partial<Record<'name' | 'description', string>>;
+  fieldErrors: Partial<Record<'name' | 'description' | 'imageFileId', string>>;
   initialValues?: { name: string; description: string | null; imageUrl?: string | null };
 }
 
@@ -37,7 +37,7 @@ export default function StudyForm({
   fieldErrors,
   initialValues = defaultInitialValues,
 }: Props) {
-  const profile = useStudyProfileImage(initialValues.imageUrl);
+  const profile = useStudyProfileImage({ initialImageUrl: initialValues.imageUrl, fieldErrors });
   const [nameValue, handleNameValue] = useInputState(initialValues.name, (value, prevValue) => {
     if (value.length > STUDY_NAME.length) return prevValue;
     return value;
@@ -67,6 +67,7 @@ export default function StudyForm({
       <StudyProfileField
         imageUrl={profile.imageUrl}
         disabled={isSubmitting || profile.isUploading}
+        errorText={profile.error}
         onSelect={profile.select}
         onReset={profile.reset}
       />
