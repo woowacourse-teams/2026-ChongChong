@@ -1,5 +1,6 @@
 import StudyAvatar from './StudyAvatar';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties } from 'react';
+import StudyContentCard from './StudyContentCard';
 import List from '../../../shared/ui/List';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import Badge from '../../../shared/ui/Badge';
@@ -10,21 +11,20 @@ import { tokens, typography } from '../../../styles/global';
 import { Link } from 'react-router';
 import { Study } from '../types';
 
-const StudyCardStyle = {
-  display: 'flex',
-  width: '100%',
-  height: '148px',
-  flexDirection: 'column',
-  padding: tokens.spacing[5],
-  background: tokens.bg.default,
-  border: tokens.border.neutral,
-  borderRadius: tokens.radius.lg,
-  color: tokens.text.default,
+const RoleBadgeStyle = {
+  ...typography.label,
+  padding: '5px 10px',
+  marginRight: '3px',
+  flexShrink: 0,
 } satisfies CSSProperties;
 
-function StudyContentCard({ children }: { children: ReactNode }) {
-  return <article css={StudyCardStyle}>{children}</article>;
-}
+const CountBadgeStyle = {
+  ...typography.label,
+  minWidth: '64px',
+  height: '24px',
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+} satisfies CSSProperties;
 
 export default function StudyList({ studies }: { studies: Study[] }) {
   return (
@@ -33,23 +33,19 @@ export default function StudyList({ studies }: { studies: Study[] }) {
         <List.Item key={study.id}>
           <Link to={`/studies/${study.id}`}>
             <StudyContentCard>
-              <ContentCard.Badges>
-                <Badge
-                  variant="brandSolid"
-                  size="small"
-                  css={{ ...typography.label, padding: '5px 10px' }}
-                >
+              <StudyContentCard.Badges>
+                <Badge variant="brandSolid" size="small" css={RoleBadgeStyle}>
                   {study.role === 'LEADER' ? '스터디 리드' : '스터디원'}
                 </Badge>
-                <Badge variant="neutralSolid" size="small" css={typography.label}>
+                <Badge variant="neutralSolid" size="small" css={CountBadgeStyle}>
                   <img src={noticeIcon} alt="" width={12} height={12} />
                   공지 {study.noticeCount}
                 </Badge>
-                <Badge variant="neutralSolid" size="small" css={typography.label}>
+                <Badge variant="neutralSolid" size="small" css={CountBadgeStyle}>
                   <img src={assignIcon} alt="" width={12} height={12} />
                   과제 {study.assignmentCount}
                 </Badge>
-              </ContentCard.Badges>
+              </StudyContentCard.Badges>
               <div css={{ display: 'flex', alignItems: 'flex-start', gap: tokens.spacing[4] }}>
                 <StudyAvatar imageUrl={study.imageUrl} size={64} variant="list" />
                 <div css={{ flex: 1, minWidth: 0 }}>
@@ -59,7 +55,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                       <img src={rightArrowIcon} alt="" width={20} height={20} />
                     </ContentCard.Trailing>
                   </ContentCard.TitleRow>
-                  <ContentCard.Description>{study.description}</ContentCard.Description>
+                  <StudyContentCard.Description>{study.description}</StudyContentCard.Description>
                 </div>
               </div>
             </StudyContentCard>
