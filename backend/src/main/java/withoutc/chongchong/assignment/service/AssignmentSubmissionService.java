@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @Service
 @Transactional(readOnly = true)
@@ -47,6 +49,7 @@ public class AssignmentSubmissionService {
     private final AssignmentAttachmentPolicy assignmentAttachmentPolicy;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
     private final Clock clock;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
     public AssignmentSubmitResponse submit(Long userId, Long studyId, Long assignmentId,
@@ -143,7 +146,11 @@ public class AssignmentSubmissionService {
                     return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
                 })
                 .toList();
-        return SubmissionDetailResponse.of(submission, submission.getMember(), attachments);
+        StudyMember submitter = submission.getMember();
+        String profileImageUrl = profileImageUrlResolver.resolveForMembers(List.of(submitter.getId()))
+                .get(submitter.getId());
+        return new SubmissionDetailResponse(submission.getId(), submitter.getName(), profileImageUrl,
+                submission.getSubmittedAt(), submission.getContent(), submission.getLink(), attachments);
     }
 
     public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
@@ -153,10 +160,14 @@ public class AssignmentSubmissionService {
 
         List<AssignmentSubmission> submissions = assignmentSubmissionRepository
                 .findAllByAssignmentIdAndSubmittedAtIsNotNull(assignmentId);
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(
+                submissions.stream().map(submission -> submission.getMember().getId()).toList());
 
         LocalDateTime now = LocalDateTime.now(clock);
         return SubmissionListResponse.from(submissions.stream().map(
-                submission -> SubmissionSummary.of(now, submission)).toList());
+                submission -> new SubmissionSummary(submission.getId(), submission.getMember().getName(),
+                        imageUrls.get(submission.getMember().getId()), submission.submissionStatus(now),
+                        submission.getSubmittedAt())).toList());
     }
 
     private List<FileMetadata> prepareAttachments(Long userId, AssignmentSubmission submission,

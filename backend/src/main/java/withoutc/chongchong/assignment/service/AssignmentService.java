@@ -41,6 +41,7 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 import withoutc.chongchong.study.repository.StudyRepository;
 
 @Service
@@ -60,6 +61,7 @@ public class AssignmentService {
 
     private final Clock clock;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
     public AssignmentCreateResponse create(Long userId, Long studyId, AssignmentCreateRequest request) {
@@ -141,9 +143,11 @@ public class AssignmentService {
 
         List<AssignmentSubmitterStatusProjection> statuses = assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(
                 assignmentId);
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(
+                statuses.stream().map(AssignmentSubmitterStatusProjection::memberId).toList());
 
         return AssignmentSubmissionStatusResponse.of(assignmentId, assignment.getNextRemindAt(),
-                toCompleteMembers(statuses), toIncompleteMembers(statuses));
+                toCompleteMembers(statuses, imageUrls), toIncompleteMembers(statuses, imageUrls));
     }
 
     public AssignmentDetailResponse getDetail(Long userId, Long studyId, Long assignmentId) {
@@ -183,18 +187,20 @@ public class AssignmentService {
                 .toList();
     }
 
-    private List<CompleteMember> toCompleteMembers(List<AssignmentSubmitterStatusProjection> statuses) {
+    private List<CompleteMember> toCompleteMembers(List<AssignmentSubmitterStatusProjection> statuses,
+                                                  Map<Long, String> imageUrls) {
         return statuses.stream()
                 .filter(AssignmentSubmitterStatusProjection::isSubmitted)
-                .map(status -> CompleteMember.of(status.memberId(), status.name(), status.profileImageUrl(),
+                .map(status -> CompleteMember.of(status.memberId(), status.name(), imageUrls.get(status.memberId()),
                         status.submittedAt()))
                 .toList();
     }
 
-    private List<IncompleteMember> toIncompleteMembers(List<AssignmentSubmitterStatusProjection> statuses) {
+    private List<IncompleteMember> toIncompleteMembers(List<AssignmentSubmitterStatusProjection> statuses,
+                                                      Map<Long, String> imageUrls) {
         return statuses.stream()
                 .filter(status -> !status.isSubmitted())
-                .map(status -> IncompleteMember.of(status.memberId(), status.name(), status.profileImageUrl(),
+                .map(status -> IncompleteMember.of(status.memberId(), status.name(), imageUrls.get(status.memberId()),
                         status.lastRemindAt()))
                 .toList();
     }

@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,7 @@ import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.user.entity.User;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @ExtendWith(MockitoExtension.class)
 class AssignmentServiceTest {
@@ -94,6 +96,9 @@ class AssignmentServiceTest {
     @Mock
     private AssignmentAccessPolicy assignmentAccessPolicy;
 
+    @Mock
+    private UserProfileImageUrlResolver profileImageUrlResolver;
+
     private AssignmentService assignmentService;
 
     @BeforeEach
@@ -111,7 +116,8 @@ class AssignmentServiceTest {
                 userRepository,
                 commentRepository,
                 clock,
-                assignmentAccessPolicy
+                assignmentAccessPolicy,
+                profileImageUrlResolver
         );
     }
 
@@ -354,6 +360,8 @@ class AssignmentServiceTest {
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID))
                 .thenReturn(statuses);
+        when(profileImageUrlResolver.resolveForMembers(List.of(MEMBER_ID, 22L)))
+                .thenReturn(Map.of(MEMBER_ID, "current-complete.png", 22L, "current-incomplete.png"));
 
         AssignmentSubmissionStatusResponse response = assignmentService.getAssignmentSubmissionStatus(
                 USER_ID, STUDY_ID, ASSIGNMENT_ID);
@@ -364,9 +372,16 @@ class AssignmentServiceTest {
         assertThat(response.completeMembers()).extracting(AssignmentSubmissionStatusResponse.CompleteMember::id)
                 .containsExactly(MEMBER_ID);
         assertThat(response.completeMembers()).singleElement()
-                .satisfies(member -> assertThat(member.submittedAt()).isEqualTo(NOW));
+                .satisfies(member -> {
+                    assertThat(member.submittedAt()).isEqualTo(NOW);
+                    assertThat(member.profileImage()).isEqualTo("current-complete.png");
+                });
         assertThat(response.incompleteMembers()).singleElement()
-                .satisfies(member -> assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1)));
+                .satisfies(member -> {
+                    assertThat(member.lastRemindAt()).isEqualTo(NOW.minusHours(1));
+                    assertThat(member.profileImage()).isEqualTo("current-incomplete.png");
+                });
+        verify(profileImageUrlResolver).resolveForMembers(List.of(MEMBER_ID, 22L));
         verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(leader);
         verify(assignmentSubmissionRepository).findAllSubmitterStatusesByAssignmentId(ASSIGNMENT_ID);
     }
@@ -383,7 +398,7 @@ class AssignmentServiceTest {
                 ASSIGNMENT_ID));
 
         verify(assignmentAccessPolicy).requireCanReadAssignmentSubmissionStatus(member);
-        verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
+        verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository, profileImageUrlResolver);
     }
 
     @Test

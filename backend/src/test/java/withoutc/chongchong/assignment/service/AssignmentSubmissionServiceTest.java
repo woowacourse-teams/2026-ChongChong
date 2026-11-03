@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +51,7 @@ import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.user.entity.User;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @ExtendWith(MockitoExtension.class)
 class AssignmentSubmissionServiceTest {
@@ -78,6 +80,9 @@ class AssignmentSubmissionServiceTest {
     @Mock
     private AssignmentAccessPolicy assignmentAccessPolicy;
 
+    @Mock
+    private UserProfileImageUrlResolver profileImageUrlResolver;
+
     private AssignmentSubmissionService assignmentSubmissionService;
 
     @BeforeEach
@@ -94,7 +99,8 @@ class AssignmentSubmissionServiceTest {
                 userRepository,
                 new AssignmentAttachmentPolicy(),
                 assignmentAccessPolicy,
-                clock
+                clock,
+                profileImageUrlResolver
         );
     }
 
@@ -310,12 +316,17 @@ class AssignmentSubmissionServiceTest {
         when(assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID))
                 .thenReturn(submission);
 
+        when(profileImageUrlResolver.resolveForMembers(List.of(MEMBER_ID)))
+                .thenReturn(Map.of(MEMBER_ID, "current-home-image.png"));
+
         SubmissionDetailResponse response = assignmentSubmissionService.getSubmissionDetail(USER_ID, STUDY_ID,
                 ASSIGNMENT_ID, 300L);
 
         assertThat(response.id()).isEqualTo(300L);
         assertThat(response.name()).isEqualTo("스터디원");
         assertThat(response.content()).isEqualTo("제출 내용");
+        assertThat(response.profileImage()).isEqualTo("current-home-image.png");
+        verify(profileImageUrlResolver).resolveForMembers(List.of(MEMBER_ID));
         verify(assignmentAccessPolicy).requireCanReadSubmission(member, assignment, submission);
         verify(assignmentSubmissionRepository).getByIdAndAssignmentIdOrThrow(300L, ASSIGNMENT_ID);
     }
@@ -338,6 +349,7 @@ class AssignmentSubmissionServiceTest {
                 USER_ID, STUDY_ID, ASSIGNMENT_ID, 300L));
 
         verify(assignmentAccessPolicy).requireCanReadSubmission(actor, assignment, submission);
+        verifyNoInteractions(profileImageUrlResolver);
     }
 
     @Test
@@ -352,12 +364,18 @@ class AssignmentSubmissionServiceTest {
         when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
         when(assignmentSubmissionRepository.findAllByAssignmentIdAndSubmittedAtIsNotNull(ASSIGNMENT_ID))
                 .thenReturn(List.of(submission));
+        when(profileImageUrlResolver.resolveForMembers(List.of(22L)))
+                .thenReturn(Map.of(22L, "current-home-image.png"));
 
         SubmissionListResponse response = assignmentSubmissionService.getSubmissionList(USER_ID, STUDY_ID,
                 ASSIGNMENT_ID);
 
         assertThat(response.submissions()).singleElement()
-                .satisfies(summary -> assertThat(summary.id()).isEqualTo(300L));
+                .satisfies(summary -> {
+                    assertThat(summary.id()).isEqualTo(300L);
+                    assertThat(summary.profileImage()).isEqualTo("current-home-image.png");
+                });
+        verify(profileImageUrlResolver).resolveForMembers(List.of(22L));
         verify(assignmentAccessPolicy).requireCanReadSubmissionList(assignment, leader);
         verify(assignmentSubmissionRepository).findAllByAssignmentIdAndSubmittedAtIsNotNull(ASSIGNMENT_ID);
     }
@@ -375,7 +393,7 @@ class AssignmentSubmissionServiceTest {
         assertAccessDenied(() -> assignmentSubmissionService.getSubmissionList(USER_ID, STUDY_ID, ASSIGNMENT_ID));
 
         verify(assignmentAccessPolicy).requireCanReadSubmissionList(assignment, member);
-        verifyNoInteractions(assignmentSubmissionRepository);
+        verifyNoInteractions(assignmentSubmissionRepository, profileImageUrlResolver);
     }
 
     private Assignment assignmentWithId(Long assignmentId) {
