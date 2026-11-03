@@ -15,10 +15,8 @@ export default function StudyList({ studies }: { studies: Study[] }) {
       {studies.map((study) => (
         <List.Item key={study.id}>
           <Link to={`/studies/${study.id}`}>
-            <ContentCard css={{ height: 'auto', minHeight: 148, padding: '15px 19px 19px' }}>
-              <ContentCard.Badges
-                css={{ gap: tokens.spacing[3], marginBottom: tokens.spacing[3], flexWrap: 'wrap' }}
-              >
+            <ContentCard>
+              <ContentCard.Badges>
                 <Badge
                   variant="brandSolid"
                   size="small"
@@ -44,9 +42,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                       <img src={rightArrowIcon} alt="" />
                     </ContentCard.Trailing>
                   </ContentCard.TitleRow>
-                  <ContentCard.Description css={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
-                    {study.description}
-                  </ContentCard.Description>
+                  <ContentCard.Description>{study.description}</ContentCard.Description>
                 </div>
               </div>
             </ContentCard>

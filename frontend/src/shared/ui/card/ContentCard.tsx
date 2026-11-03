@@ -7,7 +7,6 @@ type MetaTone = 'muted' | 'brand';
 
 interface ChildrenProps {
   children: ReactNode;
-  className?: string;
 }
 
 interface ContentCardProps extends ChildrenProps {
@@ -120,20 +119,16 @@ const metaTextStyle = {
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
-export default function ContentCard({ children, onClick, className }: ContentCardProps) {
+export default function ContentCard({ children, onClick }: ContentCardProps) {
   return (
-    <article css={baseStyle} onClick={onClick} className={className}>
+    <article css={baseStyle} onClick={onClick}>
       {children}
     </article>
   );
 }
 
-ContentCard.Badges = function Badges({ children, className }: ChildrenProps) {
-  return (
-    <div css={badgesStyle} className={className}>
-      {children}
-    </div>
-  );
+ContentCard.Badges = function Badges({ children }: ChildrenProps) {
+  return <div css={badgesStyle}>{children}</div>;
 };
 
 ContentCard.TitleRow = function TitleRow({ children }: ChildrenProps) {
