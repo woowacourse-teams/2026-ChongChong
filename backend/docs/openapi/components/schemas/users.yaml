@@ -35,4 +35,4 @@ UserProfileResponse:
       $ref: './common.yaml#/ProfileImageUrl'
       description: |
         홈 이미지 조회 URL. 업로드 파일이 있으면 presigned GET URL, 그렇지 않으면 기존 소셜 이미지 등 외부 URL을 반환한다.
-        기본 이미지로 초기화한 경우 키를 포함해 null을 반환한다. 업로드 파일 URL 처리는 #622에서 구현 중이다.
+        기본 이미지로 초기화한 경우 키를 포함해 null을 반환한다. 업로드 이미지 URL은 만료 시 내 프로필을 재조회해 갱신한다.

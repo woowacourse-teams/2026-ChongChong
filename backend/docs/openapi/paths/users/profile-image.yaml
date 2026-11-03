@@ -6,17 +6,17 @@ patch:
     description: |
       기능 추가: 홈 프로필에서 이미지를 선택하고 업로드 URL 발급 → S3 PUT → 업로드 완료 API → 이 API 순서로 호출한다.
       완료에 성공한 fileId만 전달하고, 성공 후 내 프로필과 관련 멤버·공지·제출물·댓글 조회 캐시를 갱신한다.
-      현재는 OpenAPI 계약을 먼저 작성한 단계로 백엔드 구현은 진행 중이다.
+      백엔드 구현과 자동화 검증은 완료했으며 PR 검토 및 배포 환경 확인을 앞두고 있다.
     sources:
       - frontend/src/features/user/components/ProfileSection.tsx
       - frontend/src/features/user/api.ts
       - frontend/src/features/user/queries.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
-      #622 홈 이미지 변경 API의 Controller·파일 검증·잠금·조회 URL 응답을 연결하는 중이다.
-      모든 참여 스터디의 이미지 조회 반영과 전체 회귀·배포 검증은 후속 단위로 진행한다.
+      #622 홈 이미지 변경 API의 파일 정책·소유권·완료 상태·사용처 검사와 잠금·조회 URL 응답을 구현했다.
+      모든 참여 스터디의 이미지 조회 반영, 동시 요청과 실패 롤백을 자동화 테스트로 검증했다. PR 검토 및 배포 환경 확인 대기다.
   summary: 내 홈 프로필 이미지 변경
   description: |
     인증된 사용자의 홈 프로필 이미지를 업로드 완료된 파일로 교체한다. 이름은 변경하지 않는다.
@@ -80,17 +80,17 @@ delete:
     description: |
       기능 추가: 홈 프로필의 기본 이미지 초기화 동작을 연결하고 본문 없는 204 응답을 처리한다.
       성공 후 내 프로필과 관련 조회 캐시를 갱신하고 null 이미지는 프론트 기본 이미지로 표시한다.
-      참여 중인 모든 스터디의 해당 사용자 이미지도 기본 이미지로 반영된다. 백엔드는 명세 선행 단계다.
+      참여 중인 모든 스터디의 해당 사용자 이미지도 기본 이미지로 반영된다. 백엔드 구현과 자동화 검증은 완료했으며 PR 검토 및 배포 환경 확인 대기다.
     sources:
       - frontend/src/features/user/components/ProfileSection.tsx
       - frontend/src/features/user/api.ts
       - frontend/src/features/user/queries.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
-      #622 홈 이미지 초기화 API의 사용자·파일 잠금과 파일 연결·외부 URL 해제를 연결하는 중이다.
-      홈 조회의 기본 이미지 응답을 검증하며 모든 참여 스터디의 조회 반영과 전체 회귀·배포 확인은 후속 단위로 진행한다.
+      #622 홈 이미지 초기화 API의 사용자·파일 잠금과 파일 연결·외부 URL 해제를 구현했다.
+      반복 초기화, 완료 파일 보존과 재연결, 모든 참여 스터디의 기본 이미지 반영을 자동화 테스트로 검증했다. PR 검토 및 배포 환경 확인 대기다.
   summary: 내 홈 프로필 이미지 초기화
   description: |
     요청 본문 없이 현재 사용자의 홈 프로필 이미지를 기본 이미지로 초기화한다. 이름은 변경하지 않는다.

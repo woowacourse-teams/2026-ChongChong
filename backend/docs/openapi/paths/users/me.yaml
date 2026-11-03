@@ -6,25 +6,25 @@ get:
     description: |
       기능 추가: #622의 홈 이미지 변경·초기화 후 내 프로필을 갱신하고 null은 기본 이미지로 표시한다.
       업로드 이미지 URL이 만료되면 내 프로필을 재조회한다. 응답 키는 기존 name·profileImageUrl을 유지한다.
-      현재 백엔드는 명세 선행 단계로 업로드 이미지 응답 처리는 구현 중이다.
+      업로드 이미지 응답과 기본 이미지 처리는 백엔드에서 구현·검증했으며 PR 검토 및 배포 환경 확인 대기다.
     sources:
       - frontend/src/features/user/components/ProfileSection.tsx
       - frontend/src/features/user/api.ts
       - frontend/src/features/user/queries.ts
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
-      #363 홈 마이페이지 기본 프로필 조회는 구현되어 있다.
-      #622에서 업로드 파일의 조회 URL 및 기본 이미지 초기화 응답을 추가한다. 현재는 명세 선행 단계다.
+      #363 홈 마이페이지 기본 프로필 조회에 #622의 업로드 파일 조회 URL 및 기본 이미지 초기화 응답을 반영했다.
+      업로드 파일·기존 외부 URL·기본 이미지의 응답을 자동화 테스트로 검증했다. #622 확장은 PR 검토 및 배포 환경 확인 대기다.
   summary: 내 프로필 조회
   description: |
     인증된 사용자의 홈 프로필 이름과 프로필 이미지 URL을 조회한다.
     프로필 이미지를 등록하지 않은 경우 profileImageUrl은 null이다.
     홈 프로필은 소셜 최초 로그인 시 공급자 프로필로 생성하며, 재로그인 시 기존 값을 덮어쓰지 않는다.
-    #622의 추가 계약: 업로드 파일이 연결되면 조회용 presigned GET URL을 반환하고, 그렇지 않으면 기존 외부 URL을 사용한다.
+    업로드 파일이 연결되면 조회용 presigned GET URL을 반환하고, 그렇지 않으면 기존 외부 URL을 사용한다.
     홈 이미지 초기화 후에는 profileImageUrl 키를 포함해 null을 반환한다. 업로드 이미지의 조회 URL은 공통 유효기간(기본 10분) 이후
-    만료되므로 내 프로필을 다시 조회한다. 이 추가 계약의 백엔드 구현은 진행 중이다.
+    만료되므로 내 프로필을 다시 조회한다.
   security: [{ bearerAuth: [] }]
   responses:
     '200':
@@ -34,7 +34,7 @@ get:
           schema: { $ref: '../../components/schemas/users.yaml#/UserProfileResponse' }
           examples:
             uploadedImage:
-              summary: 업로드 이미지가 연결된 홈 프로필 (#622 구현 예정)
+              summary: 업로드 이미지가 연결된 홈 프로필
               value: { name: 바니, profileImageUrl: 'https://example.com/profiles/avatar.webp?X-Amz-Expires=600&X-Amz-Signature=example' }
             socialImage:
               summary: 기존 외부 이미지가 있는 홈 프로필
@@ -49,16 +49,16 @@ patch:
   tags: [User]
   operationId: updateMyProfileName
   x-backend:
-    status: in-progress
+    status: review
     owner: JYL35
     description: |
-      #423 홈 마이페이지 이름 수정 API 구현 완료.
-      #455의 현재 참여 스터디 멤버 이름 동기화는 구현되어 있다.
-      #622에서 이름 수정 응답도 현재 홈 이미지의 조회 URL을 반환하도록 변경한다. 이미지 연결 자체는 변경하지 않으며 명세 선행 단계다.
+      #423 이름 수정과 #455의 현재 참여 스터디 멤버 이름 동기화를 유지한다.
+      #622에서 이름 수정 응답에도 현재 홈 이미지의 조회 URL을 반영했다. 이미지 연결 보존과 동시 이미지 교체를 자동화 테스트로 검증했다.
+      #622 확장은 PR 검토 및 배포 환경 확인 대기다.
   summary: 내 홈 프로필 이름 수정
   description: |
     인증된 사용자의 홈 프로필 이름을 수정한다. 프로필 이미지 연결은 변경하지 않고 현재 홈 이미지를 응답한다.
-    #622에서 업로드 파일은 응답 시 조회 URL을 생성하도록 계약을 확장했으며 구현은 진행 중이다.
+    업로드 파일이 연결되어 있으면 응답 시 조회 URL을 생성한다.
     조회 URL 문자열 자체가 이전 응답과 같다는 보장은 없다.
     이름 수정 시 현재 참여 중인 모든 스터디의 해당 사용자 멤버 이름도 같은 트랜잭션에서 변경한다.
     새 스터디 생성·가입 시에는 변경된 홈 이름을 멤버 이름의 초깃값으로 복사한다.
