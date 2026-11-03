@@ -286,6 +286,9 @@ export const tokens = {
   },
 } as const;
 
+const mobileLanding = '@media (max-width: 720px)';
+const mobileUpdateDialog = '@media (max-width: 600px)';
+
 export const typography = {
   headline: {
     fontSize: 'var(--font-size-24)',
@@ -363,4 +366,64 @@ export const typography = {
     lineHeight: 'var(--line-height-18)',
     letterSpacing: 'var(--letter-spacing-default)',
   },
+
+  inherited: {},
+
+  landingEyebrow: { fontSize: 'var(--font-label)', fontWeight: 720 },
+  landingDisplay: {
+    fontSize: 'var(--font-display)',
+    fontFamily: 'var(--font-display-family)',
+    fontWeight: 'var(--font-display-weight)',
+    lineHeight: 'var(--font-display-line-height)',
+    letterSpacing: 'var(--font-display-tracking)',
+  },
+  landingLead: {
+    fontSize: 'var(--font-lead)',
+    fontWeight: 520,
+    lineHeight: 1.65,
+    [mobileLanding]: { lineHeight: 1.55 },
+  },
+  landingInstallLabel: { fontSize: 'var(--font-label)', fontWeight: 800 },
+  landingInstallTitle: { fontSize: 'var(--dialog-title-size)', lineHeight: 1.15 },
+  landingInstallDescription: { fontSize: 'var(--dialog-body-size)', lineHeight: 1.55 },
+  landingDemoTab: {
+    fontSize: 'var(--font-size-12)',
+    fontWeight: 400,
+    lineHeight: 'var(--line-height-18)',
+    letterSpacing: 'var(--letter-spacing-default)',
+  },
+  landingDemoNotificationTitle: {
+    fontSize: 15,
+    fontWeight: 750,
+    lineHeight: '21px',
+    letterSpacing: '-.045em',
+  },
+  landingDemoNotificationAssignment: { fontSize: 13, fontWeight: 600, lineHeight: '21px' },
+  landingDemoNotificationDescription: {
+    fontSize: 13,
+    lineHeight: '20px',
+    letterSpacing: '-.025em',
+  },
+  landingUpdateEyebrow: { fontSize: 12, fontWeight: 600 },
+  landingUpdateTitle: {
+    fontSize: 'clamp(26px, 4vw, 34px)',
+    fontWeight: 750,
+    letterSpacing: '-.05em',
+    lineHeight: 1.3,
+  },
+  landingUpdateBody: { fontSize: 14, lineHeight: 1.8 },
+  landingUpdatePreviewLabel: { fontSize: 11 },
+  landingUpdateTechTitle: {
+    fontSize: 20,
+    lineHeight: 1.5,
+    letterSpacing: '-.04em',
+    [mobileUpdateDialog]: { fontSize: 18 },
+  },
+  landingUpdateFlow: {
+    fontSize: 11,
+    lineHeight: 1.8,
+    [mobileUpdateDialog]: { fontSize: 12 },
+  },
+  landingUpdateResult: { fontSize: 12, lineHeight: 1.8 },
+  landingUpdateFooter: { fontSize: 11 },
 } as const;
