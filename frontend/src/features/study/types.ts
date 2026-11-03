@@ -5,6 +5,7 @@ export interface Study {
   role: Role;
   name: string;
   description: string | null;
+  imageUrl?: string | null;
   memberCount: number;
   noticeCount: number;
   assignmentCount: number;
@@ -38,10 +39,17 @@ export type StudyDetail<R extends Role> = R extends 'LEADER'
 export interface UserStudyInfo {
   studyName: string;
   description: string | null;
+  imageUrl?: string | null;
   role: Role;
   userName: string;
 }
 
 export interface InviteLink {
   inviteLink: string;
+}
+
+export interface StudyFormValues {
+  name: string;
+  description: string;
+  imageFileId?: number;
 }

@@ -3,7 +3,6 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import Page from '../../../shared/ui/Page';
-import headerIcon from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
 import useCreateStudy from '../hooks/useCreateStudy';
 
 import StudyForm from '../components/StudyForm';
@@ -14,19 +13,7 @@ export default function NewStudyPage() {
   return (
     <Page>
       <TopHeader left={<PrevButton />} middle={<div>스터디 만들기</div>} />
-      <Main
-        css={{ padding: `0 ${tokens.spacing[4]} ${tokens.layout.gutter} ${tokens.spacing[5]}` }}
-      >
-        <div
-          css={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: `56px 0`,
-          }}
-        >
-          <img src={headerIcon} alt="" css={{ width: '70px', height: '70px' }} />
-        </div>
+      <Main css={{ padding: `0 ${tokens.layout.gutter} ${tokens.spacing[5]}` }}>
         <StudyForm
           submitLabel={'스터디 만들기'}
           onSubmit={createStudy}

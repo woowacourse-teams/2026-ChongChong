@@ -26,9 +26,10 @@ interface DragState {
 export interface BottomSheetProps {
   open: boolean;
   title: ReactNode;
-  actionLabel: ReactNode;
+  actionLabel?: ReactNode;
+  variant?: 'default' | 'menu';
   children: ReactNode;
-  onAction: () => void;
+  onAction?: () => void;
   onClose: () => void;
 }
 
@@ -39,6 +40,7 @@ export default function BottomSheet({
   children,
   onAction,
   onClose,
+  variant = 'default',
 }: BottomSheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -54,11 +56,29 @@ export default function BottomSheet({
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (event.key === 'Escape') onClose();
+    if (event.key === 'Tab') {
+      const buttons = sheetRef.current?.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), input:not(:disabled), [tabindex="0"]',
+      );
+      const first = buttons?.[0];
+      const last = buttons?.[buttons.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first || document.activeElement === sheetRef.current)
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
   });
 
   useEffect(() => {
     if (!open) return;
 
+    const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     sheetRef.current?.focus();
@@ -68,6 +88,7 @@ export default function BottomSheet({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
   }, [open]);
 
@@ -133,6 +154,7 @@ export default function BottomSheet({
         },
       ]}
       aria-hidden={!open}
+      inert={!open}
     >
       <div
         css={[
@@ -147,7 +169,15 @@ export default function BottomSheet({
       />
       <div
         ref={sheetRef}
-        css={[sheetStyle, { transform: sheetTransform, transition }]}
+        css={[
+          sheetStyle,
+          variant === 'menu' && {
+            padding: '0 0 max(34px, env(safe-area-inset-bottom))',
+            borderRadius: '20px 20px 0 0',
+            overflowY: 'auto',
+          },
+          { transform: sheetTransform, transition },
+        ]}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -157,7 +187,11 @@ export default function BottomSheet({
         }}
       >
         <div
-          css={[handleAreaStyle, { cursor: isDragging ? 'grabbing' : 'grab' }]}
+          css={[
+            handleAreaStyle,
+            variant === 'menu' && { height: 24, margin: 0 },
+            { cursor: isDragging ? 'grabbing' : 'grab' },
+          ]}
           aria-hidden="true"
           data-testid="bottom-sheet-handle"
           onPointerDown={handleDragStart}
@@ -165,16 +199,22 @@ export default function BottomSheet({
           onPointerUp={(event) => finishDrag(event, true)}
           onPointerCancel={(event) => finishDrag(event, false)}
         >
-          <div css={handleStyle} />
+          <div css={[handleStyle, variant === 'menu' && { width: 32 }]} />
         </div>
-
-        <header css={headerStyle}>
+        <header
+          css={[
+            headerStyle,
+            variant === 'menu' && { height: 40, margin: 0, justifyContent: 'center' },
+          ]}
+        >
           <Heading level={2} variant="title" id={titleId} css={titleStyle}>
             {title}
           </Heading>
-          <button type="button" css={actionStyle} onClick={onAction}>
-            {actionLabel}
-          </button>
+          {actionLabel && (
+            <button type="button" css={actionStyle} onClick={onAction}>
+              {actionLabel}
+            </button>
+          )}
         </header>
 
         {children}

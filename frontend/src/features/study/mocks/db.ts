@@ -6,6 +6,8 @@ const studySchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   inviteLink: z.string(),
+  imageFileId: z.number().optional(),
+  imageUrl: z.string().nullable().optional(),
 });
 
 export const studyTable = new Collection({

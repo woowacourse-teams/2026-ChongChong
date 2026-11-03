@@ -14,6 +14,7 @@ const studyItemSchema = z.object({
   role: z.enum(['LEADER', 'MEMBER']),
   name: z.string(),
   description: z.string().nullable(),
+  imageUrl: z.string().nullable().optional(),
   memberCount: z.number(),
   noticeCount: z.number(),
   assignmentCount: z.number(),
@@ -64,6 +65,7 @@ const memberStudyDetailSchema = z.object({
 const studyInfoSchema = z.object({
   studyName: z.string(),
   description: z.string().nullable(),
+  imageUrl: z.string().nullable().optional(),
   role: z.enum(['LEADER', 'MEMBER']),
   userName: z.string(),
 }) satisfies z.ZodType<UserStudyInfo>;

@@ -9,7 +9,6 @@ import ErrorContent from '../../../shared/ui/ErrorContent';
 import StudyForm from '../components/StudyForm';
 import useEditStudy from '../hooks/useEditStudy';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
-import headerIcon from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
 import studyQueries from '../queries';
 
 export default function StudyEditPage() {
@@ -19,7 +18,7 @@ export default function StudyEditPage() {
         left={<PrevButton />}
         middle={<TopHeader.Title>스터디 정보 수정</TopHeader.Title>}
       />
-      <Main>
+      <Main css={{ paddingTop: 0 }}>
         <ErrorBoundary
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
@@ -36,28 +35,17 @@ function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const { mutate: editStudy, isPending, fieldErrors } = useEditStudy(studyId);
   const {
-    data: { studyName, description },
+    data: { studyName, description, imageUrl },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return (
     <>
-      {/* // TODO: 스터디 프로필 이미지 필드입니다, 프로필 이미지가 추가되면 Form 내부 필드로 정의합니다 */}
-      <div
-        css={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: `56px 0`,
-        }}
-      >
-        <img src={headerIcon} alt="" css={{ width: '70px', height: '70px' }} />
-      </div>
       <StudyForm
         submitLabel={'스터디 수정하기'}
         onSubmit={editStudy}
         isSubmitting={isPending}
         fieldErrors={fieldErrors}
-        initialValues={{ name: studyName, description: description }}
+        initialValues={{ name: studyName, description: description, imageUrl }}
       />
     </>
   );
