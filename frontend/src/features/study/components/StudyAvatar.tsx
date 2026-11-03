@@ -15,6 +15,7 @@ export default function StudyAvatar({
   alt?: string;
   variant?: 'circle' | 'list' | 'management';
 }) {
+  // 관리 페이지에서는 67사용 외에는 size 사용 ->
   const height = variant === 'management' ? 67 : size;
   const mask = variant === 'list' ? listMask : managementMask;
   const [failedUrl, setFailedUrl] = useState<string>();

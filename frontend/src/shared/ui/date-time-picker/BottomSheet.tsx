@@ -1,6 +1,7 @@
 import { Heading } from '../Typography';
 import { useEffect, useEffectEvent, useId, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import { CSSObject } from '@emotion/react';
 import {
   actionStyle,
   backdropStyle,
@@ -11,6 +12,7 @@ import {
   sheetStyle,
   titleStyle,
 } from './dateTimePicker.styles';
+import { tokens } from '../../../styles/global';
 
 const ANIMATION_DURATION_MS = 280;
 const CLOSE_VELOCITY = 0.6;
@@ -32,6 +34,26 @@ export interface BottomSheetProps {
   onAction?: () => void;
   onClose: () => void;
 }
+
+interface BottomSheetActionProps extends React.ComponentProps<'button'> {
+  onClick: () => void;
+}
+
+const BottomSheetActionStyle = {
+  display: 'block',
+  width: '100%',
+  height: 56,
+  padding: '0 24px',
+  border: 0,
+  background: tokens.bg.default,
+  color: tokens.text.default,
+  font: 'inherit',
+  fontSize: 16,
+  textAlign: 'left',
+  cursor: 'pointer',
+  '&:hover': { background: tokens.bg.brandSubtle },
+  '&:focus-visible': { outline: `2px solid ${tokens.bg.brand}`, outlineOffset: -2 },
+} satisfies CSSObject;
 
 export default function BottomSheet({
   open,
@@ -222,3 +244,11 @@ export default function BottomSheet({
     </div>
   );
 }
+
+BottomSheet.Action = function Action({ onClick, children, ...props }: BottomSheetActionProps) {
+  return (
+    <button type="button" css={BottomSheetActionStyle} onClick={onClick} {...props}>
+      {children}
+    </button>
+  );
+};

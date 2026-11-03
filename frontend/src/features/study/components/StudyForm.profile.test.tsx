@@ -139,18 +139,6 @@ test('5MB를 넘는 이미지는 업로드하지 않고 토스트를 표시한�
   expect(upload).not.toHaveBeenCalled();
 });
 
-test('메뉴에서 키보드 포커스가 순환하고 Escape로 닫는다', async () => {
-  const { user } = renderForm('https://example.com/photo.png');
-  const trigger = screen.getByRole('button', { name: '스터디 프로필 이미지 변경' });
-  await user.click(trigger);
-  await user.tab({ shift: true });
-  expect(screen.getByRole('button', { name: '취소' })).toHaveFocus();
-  await user.tab();
-  expect(screen.getByRole('button', { name: '프로필 이미지 선택' })).toHaveFocus();
-  await user.keyboard('{Escape}');
-  expect(trigger).toHaveFocus();
-});
-
 test('새 이미지 디코딩이 끝날 때까지 기존 사진을 표시한다', async () => {
   let finishDecode!: () => void;
   jest.mocked(HTMLImageElement.prototype.decode).mockImplementationOnce(

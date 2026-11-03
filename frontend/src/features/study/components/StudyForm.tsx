@@ -37,6 +37,7 @@ export default function StudyForm({
   fieldErrors,
   initialValues = defaultInitialValues,
 }: Props) {
+  const profile = useStudyProfileImage(initialValues.imageUrl);
   const [nameValue, handleNameValue] = useInputState(initialValues.name, (value, prevValue) => {
     if (value.length > STUDY_NAME.length) return prevValue;
     return value;
@@ -49,7 +50,6 @@ export default function StudyForm({
     },
   );
   const posthog = usePostHog();
-  const profile = useStudyProfileImage(initialValues.imageUrl);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
