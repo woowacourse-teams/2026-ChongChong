@@ -51,5 +51,5 @@ export interface InviteLink {
 export interface StudyFormValues {
   name: string;
   description: string;
-  imageFileId?: number;
+  imageFileId?: number | null;
 }

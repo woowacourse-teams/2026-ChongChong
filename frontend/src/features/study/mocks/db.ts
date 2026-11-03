@@ -6,7 +6,7 @@ const studySchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   inviteLink: z.string(),
-  imageFileId: z.number().optional(),
+  imageFileId: z.number().nullish(),
   imageUrl: z.string().nullable().optional(),
 });
 

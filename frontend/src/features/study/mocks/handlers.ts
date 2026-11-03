@@ -207,7 +207,10 @@ export const handlers = [
       data(study) {
         study.name = body.name;
         study.description = body.description;
-        if (body.imageFileId != null) study.imageFileId = body.imageFileId;
+        if (body.imageFileId !== undefined) {
+          study.imageFileId = body.imageFileId;
+          study.imageUrl = null;
+        }
       },
     });
 

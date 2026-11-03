@@ -6,7 +6,7 @@ import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 // TODO: useAttachment와 동일한 로직을 파악하고 최대한 책임, 역할을 분리
 export default function useStudyProfileImage(initialImageUrl?: string | null) {
-  const [selection, setSelection] = useState<{ url?: string | null; fileId?: number }>({
+  const [selection, setSelection] = useState<{ url?: string | null; fileId?: number | null }>({
     url: initialImageUrl,
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -71,17 +71,7 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
 
   function reset() {
     if (isUploading) return;
-    // The current PATCH API cannot remove an already saved study image.
-    if (initialImageUrl) {
-      toast.open(
-        <StatusToast
-          status="error"
-          message="저장된 이미지를 기본 프로필로 되돌리는 기능은 아직 지원되지 않아요."
-        />,
-      );
-      return;
-    }
-    setSelection({});
+    setSelection({ fileId: initialImageUrl ? null : undefined });
   }
 
   return { imageUrl: selection.url, imageFileId: selection.fileId, isUploading, select, reset };
