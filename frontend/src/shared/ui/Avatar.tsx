@@ -32,6 +32,8 @@ export default function Avatar({
   fallback,
   className,
 }: AvatarProps) {
+  // TODO: 객체가 전달되었을때 해당 사이즈 사용, 숫자가 전달되었을때는 해당 값을 width, heigth으로 사용.
+  // 이 부분은 사용과 직접적으로 관련되어 문서화가 필요해 보임.
   const dimensions = typeof size === 'number' ? { width: size, height: size } : size;
 
   return (
