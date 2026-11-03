@@ -1,7 +1,8 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import type { CSSObject } from '@emotion/react';
 import Page from '../../../shared/ui/Page';
 import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg?width=360&as=webp';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import KakaoLoginButton from '../components/KakaoLoginButton';
 import { startKakaoLogin } from '../kakaoOAuth';
 
@@ -23,14 +24,12 @@ const characterStyle = {
 } satisfies CSSObject;
 
 const titleStyle = {
-  ...typography.headline,
   margin: '18px 0 0',
   color: tokens.text.primary,
   textAlign: 'center',
 } satisfies CSSObject;
 
 const descriptionStyle = {
-  ...typography.body,
   margin: `${tokens.spacing[2]} 0 0`,
   color: tokens.text.secondary,
   textAlign: 'center',
@@ -42,7 +41,6 @@ const kakaoLoginButtonContainerStyle = {
 } satisfies CSSObject;
 
 const termsStyle = {
-  ...typography.caption,
   maxWidth: '330px',
   margin: `${tokens.spacing[4]} 0 0`,
   color: tokens.text.secondary,
@@ -55,14 +53,20 @@ export default function LoginPage() {
       <main css={contentStyle}>
         <img css={characterStyle} src={chongchongCharacter} alt="" />
 
-        <h1 css={titleStyle}>총총에 오신 걸 환영해요</h1>
-        <p css={descriptionStyle}>번거로운 스터디 운영, 이제 총총에게 맡기세요</p>
+        <Heading variant="headline" level={1} css={titleStyle}>
+          총총에 오신 걸 환영해요
+        </Heading>
+        <Paragraph variant="body" css={descriptionStyle}>
+          번거로운 스터디 운영, 이제 총총에게 맡기세요
+        </Paragraph>
 
         <div css={kakaoLoginButtonContainerStyle}>
           <KakaoLoginButton onClick={startKakaoLogin} />
         </div>
 
-        <p css={termsStyle}>계속하면 서비스 이용약관과 개인정보 처리방침에 동의하게 됩니다.</p>
+        <Paragraph variant="caption" css={termsStyle}>
+          계속하면 서비스 이용약관과 개인정보 처리방침에 동의하게 됩니다.
+        </Paragraph>
       </main>
     </Page>
   );

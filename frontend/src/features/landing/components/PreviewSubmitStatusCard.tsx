@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { useId, type CSSProperties } from 'react';
 import checkIcon from '../../../shared/assets/check.svg';
 import clockIcon from '../../../shared/assets/clock.svg';
@@ -28,7 +29,6 @@ const headerStyle = {
 } satisfies CSSProperties;
 
 const statusTitleStyle = {
-  ...typography.subtitle,
   margin: 0,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -68,7 +68,6 @@ const progressBarStyle = {
 } satisfies CSSProperties;
 
 const groupLabelStyle = {
-  ...typography.footnote,
   display: 'flex',
   alignItems: 'center',
   gap: tokens.spacing[1],
@@ -100,9 +99,9 @@ export default function PreviewSubmitStatusCard({ status }: Props) {
   return (
     <section css={cardStyle} aria-labelledby={titleId}>
       <header css={headerStyle}>
-        <h2 id={titleId} css={statusTitleStyle}>
+        <Heading variant="subtitle" level={2} id={titleId} css={statusTitleStyle}>
           제출 현황
-        </h2>
+        </Heading>
       </header>
 
       <div css={countStyle}>
@@ -122,10 +121,10 @@ export default function PreviewSubmitStatusCard({ status }: Props) {
       </div>
 
       <div css={groupStyle}>
-        <p css={{ ...groupLabelStyle, color: tokens.text.brand }}>
+        <Paragraph variant="footnote" css={{ ...groupLabelStyle, color: tokens.text.brand }}>
           <img src={checkIcon} alt="" width={18} height={18} />
           제출 {status.completeCount}명
-        </p>
+        </Paragraph>
         <div css={badgeRowStyle}>
           {status.completeMembers.map((member) => (
             <Badge key={member.id} variant="neutralSolid" size="large">
@@ -137,10 +136,10 @@ export default function PreviewSubmitStatusCard({ status }: Props) {
       </div>
 
       <div css={groupStyle}>
-        <p css={{ ...groupLabelStyle, color: tokens.text.muted }}>
+        <Paragraph variant="footnote" css={{ ...groupLabelStyle, color: tokens.text.muted }}>
           <img src={clockIcon} alt="" width={18} height={18} />
           미제출 {status.incompleteCount}명
-        </p>
+        </Paragraph>
         <div css={badgeRowStyle}>
           {status.incompleteMembers.map((member) => (
             <Badge key={member.id} variant="neutralSolid" size="large">

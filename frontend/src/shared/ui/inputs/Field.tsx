@@ -1,3 +1,4 @@
+import { Paragraph } from '../Typography';
 import type { CSSProperties, ComponentProps } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
@@ -86,17 +87,17 @@ Field.SubText = function SubText({ errorText, helpText }: SubTextProps) {
 
 Field.ErrorText = function ErrorText({ children, ...props }: ComponentProps<'p'>) {
   return (
-    <p css={{ ...typography.footnote, color: tokens.text.critical }} {...props}>
+    <Paragraph variant="footnote" css={{ color: tokens.text.critical }} {...props}>
       {children}
-    </p>
+    </Paragraph>
   );
 };
 
 Field.HelpText = function HelpText({ children, ...props }: ComponentProps<'p'>) {
   return (
-    <p css={{ ...typography.footnote, color: tokens.text.muted }} {...props}>
+    <Paragraph variant="footnote" css={{ color: tokens.text.muted }} {...props}>
       {children}
-    </p>
+    </Paragraph>
   );
 };
 

@@ -1,3 +1,4 @@
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
 import { Link } from 'react-router';
@@ -38,14 +39,12 @@ const BannerTextStyle = {
 } satisfies CSSProperties;
 
 const BannerTitleStyle = {
-  ...typography.title,
   margin: 0,
   color: 'inherit',
   fontWeight: tokens.fontWeight.semibold,
 } satisfies CSSProperties;
 
 const BannerSubTextStyle = {
-  ...typography.body,
   margin: 0,
   color: 'inherit',
 } satisfies CSSProperties;
@@ -69,7 +68,11 @@ interface BannerProps {
 }
 
 function SubText({ text }: { text: string }) {
-  return <p css={BannerSubTextStyle}>{text}</p>;
+  return (
+    <Paragraph variant="body" css={BannerSubTextStyle}>
+      {text}
+    </Paragraph>
+  );
 }
 
 export function Banner({ title, content, image, theme = 'brand' }: BannerProps) {
@@ -86,7 +89,9 @@ export function Banner({ title, content, image, theme = 'brand' }: BannerProps) 
       ]}
     >
       <div css={BannerTextStyle}>
-        <p css={BannerTitleStyle}>{title}</p>
+        <Paragraph variant="title" css={BannerTitleStyle}>
+          {title}
+        </Paragraph>
         {content}
       </div>
       <img src={image} alt="" css={{ width: '120px', height: '120px' }} />

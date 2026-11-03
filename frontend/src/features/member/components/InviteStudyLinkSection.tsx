@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
@@ -20,7 +21,6 @@ interface InviteStudyLinkSectionFallbackProps {
 }
 
 const inviteDescriptionStyle = {
-  ...typography.paragraph,
   margin: `${tokens.spacing[2]} 0`,
   color: tokens.text.muted,
 } satisfies CSSProperties;
@@ -57,9 +57,13 @@ export function InviteStudyLinkSection({ studyId }: InviteStudyLinkSectionProps)
 
   return (
     <section>
-      <h2 css={typography.subtitle}>초대 링크</h2>
+      <Heading level={2} variant="subtitle">
+        초대 링크
+      </Heading>
       <InviteLinkBox inviteLink={inviteLink} />
-      <p css={inviteDescriptionStyle}>링크를 통해 새로운 스터디원을 초대해요</p>
+      <Paragraph variant="paragraph" css={inviteDescriptionStyle}>
+        링크를 통해 새로운 스터디원을 초대해요
+      </Paragraph>
     </section>
   );
 }
@@ -94,7 +98,9 @@ export function InviteLinkBox({ inviteLink }: InviteLinkBoxProps) {
 export function InviteStudyLinkSectionFallback({ message }: InviteStudyLinkSectionFallbackProps) {
   return (
     <section>
-      <h2 css={typography.subtitle}>초대 링크</h2>
+      <Heading level={2} variant="subtitle">
+        초대 링크
+      </Heading>
       <div css={inviteLinkBlockStyle}>
         <span css={inviteLinkStyle} role="alert">
           {message ?? '초대링크를 가져오지 못했어요'}

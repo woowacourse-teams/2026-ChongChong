@@ -1,3 +1,4 @@
+import { Heading } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import { AssignmentSubmitStatus } from '../types';
@@ -21,7 +22,6 @@ const headerStyle = {
 } satisfies CSSProperties;
 
 const statusTitleStyle = {
-  ...typography.subtitle,
   margin: 0,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -67,9 +67,9 @@ export default function SubmitStatus({ status }: Props) {
     <PostHogCaptureOnViewed name="assignment-submit-status-section">
       <section css={cardStyle} aria-labelledby="submit-status-title">
         <header css={headerStyle}>
-          <h2 id="submit-status-title" css={statusTitleStyle}>
+          <Heading variant="subtitle" level={2} id="submit-status-title" css={statusTitleStyle}>
             제출 현황
-          </h2>
+          </Heading>
         </header>
 
         <div css={countStyle}>

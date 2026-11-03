@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { useEffect, useRef, useState } from 'react';
 import { usePostHog } from '@posthog/react';
 import { useNavigate } from 'react-router';
@@ -116,13 +117,21 @@ export default function InstallAppButton({
           <span className="cc-install-dialog-bunny" aria-hidden="true">
             <img src={chongchongLogo} alt="" width={232} height={256} />
           </span>
-          <p className="cc-install-dialog-label">총총 앱</p>
-          <h2 id="cc-install-dialog-title">총총을 앱으로 만나요</h2>
-          <p className="cc-install-dialog-description" id="cc-install-dialog-description">
+          <Paragraph variant="landingInstallLabel" className="cc-install-dialog-label">
+            총총 앱
+          </Paragraph>
+          <Heading variant="landingInstallTitle" level={2} id="cc-install-dialog-title">
+            총총을 앱으로 만나요
+          </Heading>
+          <Paragraph
+            variant="landingInstallDescription"
+            className="cc-install-dialog-description"
+            id="cc-install-dialog-description"
+          >
             브라우저에서 직접 추가할 수 있어요.
             <br />
             이미 추가했다면 총총 앱 아이콘으로 시작해 주세요.
-          </p>
+          </Paragraph>
           <ol className="cc-install-steps">
             {getInstallSteps().map((step) => (
               <li key={step}>{step}</li>

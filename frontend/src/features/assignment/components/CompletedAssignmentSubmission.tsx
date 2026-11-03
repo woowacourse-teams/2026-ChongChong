@@ -1,3 +1,4 @@
+import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
@@ -32,7 +33,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const sectionTitleStyle = {
-  ...typography.title,
   margin: 0,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -135,9 +135,9 @@ export default function CompletedAssignmentSubmission({
   ) : (
     <section css={sectionStyle} aria-labelledby="my-submission-title">
       <div css={sectionTitleRowStyle}>
-        <h2 id="my-submission-title" css={sectionTitleStyle}>
+        <Heading variant="title" level={2} id="my-submission-title" css={sectionTitleStyle}>
           내 제출
-        </h2>
+        </Heading>
         {submission.submissionStatus === 'LATE_SUBMITTED' && (
           <Badge variant="warningSolid" size="status">
             지각 제출

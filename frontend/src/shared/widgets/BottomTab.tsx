@@ -1,3 +1,4 @@
+import { Paragraph } from '../ui/Typography';
 import { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useParams, useLocation } from 'react-router';
@@ -9,7 +10,7 @@ import AssignmentIcon from '../assets/assign.webp';
 import ActiveAssignmentIcon from '../assets/assign-green.webp';
 import MemberIcon from '../assets/user.webp';
 import ActiveMemberIcon from '../assets/user-green.webp';
-import { tokens, typography } from '../../styles/global';
+import { tokens } from '../../styles/global';
 
 const tabStyle = {
   position: 'sticky',
@@ -33,7 +34,6 @@ const linkStyle = {
 } satisfies CSSProperties;
 
 const textStyle = {
-  ...typography.footnote,
   textAlign: 'center',
   color: tokens.text.placeholder,
 } satisfies CSSProperties;
@@ -52,11 +52,15 @@ export default function BottomTab() {
     <nav css={tabStyle}>
       <Link css={linkStyle} to={basePath} aria-current={isHome ? 'page' : undefined}>
         {<img src={isHome ? ActivehomeIcon : HomeIcon} alt="" width={22} height={22} />}
-        <p css={[textStyle, isHome && { color: tokens.text.brand }]}>홈</p>
+        <Paragraph variant="footnote" css={[textStyle, isHome && { color: tokens.text.brand }]}>
+          홈
+        </Paragraph>
       </Link>
       <Link css={linkStyle} to={`${basePath}/notices`} aria-current={isNotice ? 'page' : undefined}>
         <img src={isNotice ? ActiveNoticeIcon : NoticeIcon} width={22} height={22} alt="" />
-        <p css={[textStyle, isNotice && { color: tokens.text.brand }]}>공지</p>
+        <Paragraph variant="footnote" css={[textStyle, isNotice && { color: tokens.text.brand }]}>
+          공지
+        </Paragraph>
       </Link>
       <Link
         css={linkStyle}
@@ -69,11 +73,18 @@ export default function BottomTab() {
           height={22}
           alt=""
         />
-        <p css={[textStyle, isAssignment && { color: tokens.text.brand }]}>과제</p>
+        <Paragraph
+          variant="footnote"
+          css={[textStyle, isAssignment && { color: tokens.text.brand }]}
+        >
+          과제
+        </Paragraph>
       </Link>
       <Link css={linkStyle} to={`${basePath}/members`} aria-current={isMember ? 'page' : undefined}>
         <img src={isMember ? ActiveMemberIcon : MemberIcon} width={22} height={22} alt="" />
-        <p css={[textStyle, isMember && { color: tokens.text.brand }]}>멤버</p>
+        <Paragraph variant="footnote" css={[textStyle, isMember && { color: tokens.text.brand }]}>
+          멤버
+        </Paragraph>
       </Link>
     </nav>
   );

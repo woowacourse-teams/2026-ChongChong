@@ -1,3 +1,4 @@
+import { Heading } from '../ui/Typography';
 import type { CSSProperties } from 'react';
 import profileIcon from '../assets/unknown-profile.svg';
 import List from '../ui/List';
@@ -21,7 +22,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -55,7 +55,9 @@ const nameStyle = {
 export default function IncompleteMemberList({ title, members }: Props) {
   return (
     <section css={sectionStyle} aria-label={title}>
-      <h2 css={titleStyle}>{title}</h2>
+      <Heading variant="title" level={2} css={titleStyle}>
+        {title}
+      </Heading>
       <List>
         {members.map((member) => (
           <List.Item key={member.id} css={itemStyle}>

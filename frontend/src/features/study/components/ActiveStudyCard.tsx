@@ -1,3 +1,4 @@
+import { Heading } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import assignmentLogo from '../../../shared/assets/assign-green.webp';
 import noticeLogo from '../../../shared/assets/notice-green.webp';
@@ -46,7 +47,6 @@ const IconStyle = {
 } satisfies CSSProperties;
 
 const TitleStyle = {
-  ...typography.body,
   flex: 1,
   margin: 0,
   color: tokens.text.primary,
@@ -64,7 +64,9 @@ function ActiveStudyCard({ icon, title, status }: ActiveStudyCardProps) {
   return (
     <div css={ActiveStudyCardStyle}>
       <img css={IconStyle} src={icon} alt="" />
-      <h3 css={TitleStyle}>{title}</h3>
+      <Heading variant="body" level={3} css={TitleStyle}>
+        {title}
+      </Heading>
       {status}
     </div>
   );

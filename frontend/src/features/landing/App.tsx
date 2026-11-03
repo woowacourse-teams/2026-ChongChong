@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../shared/ui/Typography';
 import { useEffect, useState } from 'react';
 import chongchongLogo from './assets/chongchong-logo.png';
 import FeatureCarousel from './components/FeatureCarousel';
@@ -9,6 +10,7 @@ import { usePostHog } from '@posthog/react';
 import { Link } from 'react-router';
 
 const pretendardFont = new URL('./assets/PretendardVariable.woff2', import.meta.url).href;
+
 const doHyeonFont = new URL('./assets/DoHyeon-Regular.ttf', import.meta.url).href;
 
 // BrowserRouter / RouterProvider는 기존 프로젝트의 설정을 그대로 사용합니다.
@@ -54,15 +56,19 @@ export default function App() {
               aria-atomic="true"
             >
               <div key={preview.feature.id} className="cc-feature-copy-content">
-                <p className="cc-eyebrow">
+                <Paragraph variant="landingEyebrow" className="cc-eyebrow">
                   {preview.feature.label}
                   <span className="cc-feature-number">
                     {String(preview.activeIndex + 1).padStart(2, '0')} /{' '}
                     {String(previewFeatures.length).padStart(2, '0')}
                   </span>
-                </p>
-                <h1 id="cc-hero-title">{preview.feature.title}</h1>
-                <p className="cc-lead">{preview.feature.description}</p>
+                </Paragraph>
+                <Heading variant="landingDisplay" level={1} id="cc-hero-title">
+                  {preview.feature.title}
+                </Heading>
+                <Paragraph variant="landingLead" className="cc-lead">
+                  {preview.feature.description}
+                </Paragraph>
               </div>
             </div>
 
@@ -109,6 +115,7 @@ const LANDING_STYLES = `
       font-weight: 45 920;
       font-display: swap;
     }
+
     @font-face {
       font-family: "Chongchong Do Hyeon";
       src: url("${doHyeonFont}") format("truetype");
@@ -197,6 +204,7 @@ const LANDING_STYLES = `
       --dialog-bunny-radius: 28px;
       --dialog-bunny-width: 72px;
       --dialog-bunny-height: 78px;
+
       --dialog-title-size: 1.65rem;
       --dialog-body-size: .95rem;
       --dialog-confirm-height: 48px;
@@ -212,6 +220,7 @@ const LANDING_STYLES = `
       --motion-micro: 180ms cubic-bezier(.16, 1, .3, 1);
       --motion-entry: 560ms cubic-bezier(.16, 1, .3, 1);
       --motion-dialog: 430ms cubic-bezier(.2, 0, .2, 1);
+
       --font-display: clamp(2.35rem, 5.6vw, 5.5rem);
       --font-display-family: "Chongchong Do Hyeon", "Chongchong Pretendard", sans-serif;
       --font-display-weight: 400;
@@ -341,17 +350,10 @@ const LANDING_STYLES = `
       margin: 0 0 var(--space-5);
       align-items: center;
       color: var(--brand-deep);
-      font-size: var(--font-label);
-      font-weight: 720;
     }
     .cc-feature-copy h1 {
       max-width: var(--title-max-width);
       margin: 0;
-      font-size: var(--font-display);
-      font-family: var(--font-display-family);
-      font-weight: var(--font-display-weight);
-      line-height: var(--font-display-line-height);
-      letter-spacing: var(--font-display-tracking);
       word-break: keep-all;
     }
     .cc-feature-copy h1, .cc-feature-copy .cc-lead { white-space: pre-line; }
@@ -361,9 +363,6 @@ const LANDING_STYLES = `
       max-width: var(--lead-max-width);
       margin: var(--space-6) 0 0;
       color: var(--muted);
-      font-size: var(--font-lead);
-      font-weight: 520;
-      line-height: 1.65;
       word-break: keep-all;
     }
     .cc-actions {
@@ -468,20 +467,14 @@ const LANDING_STYLES = `
     .cc-install-dialog-label {
       margin: 0 0 var(--space-2);
       color: var(--brand-deep);
-      font-size: var(--font-label);
-      font-weight: 800;
     }
     .cc-install-dialog h2 {
       margin: 0;
-      font-size: var(--dialog-title-size);
-      line-height: 1.15;
       text-wrap: balance;
     }
     .cc-install-dialog-description {
       margin: var(--space-3) 0 0;
       color: var(--muted);
-      font-size: var(--dialog-body-size);
-      line-height: 1.55;
       word-break: keep-all;
     }
     .cc-install-steps {
@@ -570,6 +563,7 @@ const LANDING_STYLES = `
         --dialog-bunny-box: 82px;
         --dialog-bunny-width: 62px;
         --dialog-bunny-height: 68px;
+
         --font-display: clamp(2.05rem, 10vw, 3.15rem);
         --font-lead: .95rem;
         --action-bar-gap: 5px;
@@ -585,8 +579,8 @@ const LANDING_STYLES = `
       }
       .cc-copy { padding-top: var(--copy-mobile-padding-top); }
       .cc-eyebrow { margin-bottom: var(--space-4); }
-      .cc-feature-copy h1 { font-size: var(--font-display); }
-      .cc-lead { margin: var(--space-4) auto 0; font-size: var(--font-lead); line-height: 1.55; }
+
+      .cc-lead { margin: var(--space-4) auto 0; }
       .cc-actions { margin-top: var(--space-5); max-width: none; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
       .cc-destination { padding: var(--space-2); gap: var(--space-1); }
       .cc-destination-name { font-size: var(--control-name-size); }
@@ -599,15 +593,16 @@ const LANDING_STYLES = `
     @media (max-height: 700px) and (max-width: 720px) {
       .cc-landing {
         --header-height: 52px;
-        --control-height: 48px;
         --font-display: clamp(1.8rem, 8.7vw, 2.35rem);
         --font-lead: .875rem;
+        --control-height: 48px;
+
       }
       .cc-site-header { min-height: var(--header-height); }
       .cc-copy { padding-top: var(--space-1); }
       .cc-eyebrow { margin-bottom: var(--space-3); }
-      .cc-feature-copy h1 { font-size: var(--font-display); }
-      .cc-lead { margin-top: var(--space-3); font-size: var(--font-lead); }
+
+      .cc-lead { margin-top: var(--space-3); }
       .cc-actions { margin-top: var(--space-4); }
     }
 

@@ -1,3 +1,4 @@
+import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';
@@ -19,7 +20,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -88,9 +88,9 @@ export default function CompletedSubmissionList({ submissions }: Props) {
 
   return (
     <section css={sectionStyle} aria-labelledby="completed-submission-list-title">
-      <h2 id="completed-submission-list-title" css={titleStyle}>
+      <Heading variant="title" level={2} id="completed-submission-list-title" css={titleStyle}>
         제출 완료 {submissions.length}명
-      </h2>
+      </Heading>
 
       <List>
         {submissions.map((submission) => (

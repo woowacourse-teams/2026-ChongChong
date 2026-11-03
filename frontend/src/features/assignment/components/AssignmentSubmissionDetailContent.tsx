@@ -1,3 +1,4 @@
+import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import AttachmentList from '../../../shared/widgets/AttachmentList';
 import type { CSSProperties } from 'react';
@@ -37,7 +38,6 @@ const submitterInfoStyle = {
 } satisfies CSSProperties;
 
 const submitterNameStyle = {
-  ...typography.body,
   margin: 0,
   overflow: 'hidden',
   color: tokens.text.primary,
@@ -89,9 +89,9 @@ export default function AssignmentSubmissionDetailContent() {
         <img src={profileIcon} alt="" aria-hidden="true" css={profileStyle} />
 
         <div css={submitterInfoStyle}>
-          <h2 id="submission-member-name" css={submitterNameStyle}>
+          <Heading variant="body" level={2} id="submission-member-name" css={submitterNameStyle}>
             {submission.name}
-          </h2>
+          </Heading>
           {submission.createdAt && (
             <time css={submittedAtStyle} dateTime={submission.createdAt}>
               {formatSubmittedAt(submission.createdAt)}

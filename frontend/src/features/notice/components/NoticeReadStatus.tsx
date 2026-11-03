@@ -1,3 +1,4 @@
+import { Heading } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import { tokens, typography } from '../../../styles/global';
 import type { NoticeReadStatus as NoticeReadStatusData } from '../types';
@@ -19,7 +20,6 @@ const headerStyle = {
 } satisfies CSSProperties;
 
 const statusTitleStyle = {
-  ...typography.subtitle,
   margin: 0,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -64,9 +64,9 @@ export default function NoticeReadStatus({ status }: Props) {
   return (
     <section css={cardStyle} aria-labelledby="read-status-title">
       <header css={headerStyle}>
-        <h2 id="read-status-title" css={statusTitleStyle}>
+        <Heading variant="subtitle" level={2} id="read-status-title" css={statusTitleStyle}>
           확인 현황
-        </h2>
+        </Heading>
       </header>
 
       <div css={countStyle}>

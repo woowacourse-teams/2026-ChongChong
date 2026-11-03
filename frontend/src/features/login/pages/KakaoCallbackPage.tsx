@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { keyframes, type CSSObject } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -86,13 +87,11 @@ const errorBadgeStyle = {
 } satisfies CSSObject;
 
 const titleStyle = {
-  ...typography.headline,
   margin: `${tokens.spacing[6]} 0 0`,
   color: tokens.text.primary,
 } satisfies CSSObject;
 
 const descriptionStyle = {
-  ...typography.body,
   maxWidth: '270px',
   margin: `${tokens.spacing[2]} 0 0`,
   color: tokens.text.secondary,
@@ -186,16 +185,24 @@ export default function KakaoCallbackPage() {
 
           {errorMessage ? (
             <>
-              <h1 css={titleStyle}>로그인을 완료하지 못했어요</h1>
-              <p css={descriptionStyle}>{errorMessage}</p>
+              <Heading variant="headline" level={1} css={titleStyle}>
+                로그인을 완료하지 못했어요
+              </Heading>
+              <Paragraph variant="body" css={descriptionStyle}>
+                {errorMessage}
+              </Paragraph>
               <Link css={retryLinkStyle} to="/login">
                 다시 로그인하기
               </Link>
             </>
           ) : (
             <>
-              <h1 css={titleStyle}>총총으로 이동 중이에요</h1>
-              <p css={descriptionStyle}>카카오 계정을 확인하고 스터디를 준비하고 있어요.</p>
+              <Heading variant="headline" level={1} css={titleStyle}>
+                총총으로 이동 중이에요
+              </Heading>
+              <Paragraph variant="body" css={descriptionStyle}>
+                카카오 계정을 확인하고 스터디를 준비하고 있어요.
+              </Paragraph>
               <div css={loadingStatusStyle} role="status">
                 <span css={loadingDotsStyle} aria-hidden="true">
                   <span css={loadingDotStyle} />

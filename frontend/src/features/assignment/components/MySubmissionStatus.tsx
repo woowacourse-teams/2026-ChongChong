@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
@@ -19,13 +20,11 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
 const emptyStyle = {
-  ...typography.footnote,
   margin: `${tokens.spacing[5]} 0`,
   color: tokens.text.muted,
   textAlign: 'center',
@@ -86,12 +85,14 @@ export default function MySubmissionStatus({ submission, member }: Props) {
 
   return (
     <section css={sectionStyle} aria-labelledby="my-submission-status-title">
-      <h2 id="my-submission-status-title" css={titleStyle}>
+      <Heading variant="title" level={2} id="my-submission-status-title" css={titleStyle}>
         내 제출
-      </h2>
+      </Heading>
 
       {!isCompleted ? (
-        <p css={emptyStyle}>아직 과제를 제출하지 않았어요</p>
+        <Paragraph variant="footnote" css={emptyStyle}>
+          아직 과제를 제출하지 않았어요
+        </Paragraph>
       ) : (
         <div css={cardStyle}>
           <img

@@ -1,6 +1,7 @@
+import { Paragraph } from './Typography';
 import emptyIcon from '../assets/icons/error-icon.svg';
 import { CSSProperties } from 'react';
-import { tokens, typography } from '../../styles/global';
+import { tokens } from '../../styles/global';
 
 interface ErrorContentProps {
   message: string | undefined;
@@ -16,7 +17,6 @@ const divStyle = {
 } satisfies CSSProperties;
 
 const messageStyle = {
-  ...typography.sectionLabel,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -24,7 +24,9 @@ export default function ErrorContent({ message = '요청이 실패했습니다.'
   return (
     <div css={divStyle}>
       <img src={emptyIcon} width={150} height={150} alt="오류" />
-      <p css={messageStyle}>{message}</p>
+      <Paragraph variant="sectionLabel" css={messageStyle}>
+        {message}
+      </Paragraph>
     </div>
   );
 }

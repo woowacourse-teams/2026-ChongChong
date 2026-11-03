@@ -1,4 +1,5 @@
 // AssignmentInfoCard.tsx
+import { Heading } from '../../../shared/ui/Typography';
 import type { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
@@ -19,7 +20,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.body,
   display: 'flex',
   alignItems: 'center',
   gap: tokens.spacing[1],
@@ -38,10 +38,10 @@ const contentStyle = {
 export default function InfoCard({ icon, title, children }: Props) {
   return (
     <section css={sectionStyle}>
-      <h3 css={titleStyle}>
+      <Heading variant="body" level={3} css={titleStyle}>
         <img src={icon} alt="" aria-hidden="true" width={16} height={16} />
         {title}
-      </h3>
+      </Heading>
 
       <div css={contentStyle}>{children}</div>
     </section>

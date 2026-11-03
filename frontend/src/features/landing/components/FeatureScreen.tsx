@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { useId } from 'react';
 import type { CSSProperties } from 'react';
 import assignmentIcon from '../../../shared/assets/assign.webp';
@@ -18,7 +19,7 @@ import List from '../../../shared/ui/List';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import AssignmentArticle from '../../assignment/components/AssignmentArticle';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import PreviewSubmitStatusCard from './PreviewSubmitStatusCard';
@@ -50,7 +51,6 @@ const formStyle = {
   gap: tokens.spacing[4],
 } satisfies CSSProperties;
 const sectionLabelStyle = {
-  ...typography.sectionLabel,
   margin: '0 0 ' + tokens.spacing[3],
   color: tokens.text.default,
 } satisfies CSSProperties;
@@ -116,7 +116,12 @@ function ScreenTabs({ active }: { active: 'home' | 'notice' | 'assignment' | 'me
       {tabs.map((tab) => (
         <div key={tab.name}>
           <img src={tab.icon} alt="" width={22} height={22} />
-          <p className={active === tab.name ? 'cc-demo-tab-active' : undefined}>{tab.label}</p>
+          <Paragraph
+            variant="landingDemoTab"
+            className={active === tab.name ? 'cc-demo-tab-active' : undefined}
+          >
+            {tab.label}
+          </Paragraph>
         </div>
       ))}
     </div>
@@ -170,7 +175,9 @@ function InviteScreen() {
       <ScreenHeader title="멤버" />
       <Main>
         <section>
-          <h2 css={typography.subtitle}>스터디 멤버</h2>
+          <Heading level={2} variant="subtitle">
+            스터디 멤버
+          </Heading>
           <List css={{ marginBottom: tokens.spacing[6] }}>
             {['서연', '지우', '민준', '하은'].map((name, index) => (
               <List.Item key={name}>
@@ -185,17 +192,19 @@ function InviteScreen() {
               </List.Item>
             ))}
           </List>
-          <h2 css={typography.subtitle}>초대 링크</h2>
+          <Heading level={2} variant="subtitle">
+            초대 링크
+          </Heading>
           <InviteLinkBox inviteLink="https://chongchong.app/studies/join?token=book-study" />
-          <p
+          <Paragraph
+            variant="paragraph"
             css={{
-              ...typography.paragraph,
               margin: `${tokens.spacing[2]} 0`,
               color: tokens.text.muted,
             }}
           >
             링크를 통해 새로운 스터디원을 초대해요
-          </p>
+          </Paragraph>
         </section>
         <Button variant="criticalSolid" size="large" css={{ margin: tokens.spacing[5] + ' 0' }}>
           스터디 탈퇴하기
@@ -302,7 +311,9 @@ function ReminderScreen({ active = false, animationPaused = false }: ScreenAnima
           <TodoBanner username="지우" todoCount={2} />
           <div className="cc-demo-study-sections">
             <section>
-              <h2 css={sectionLabelStyle}>읽지 않은 공지</h2>
+              <Heading variant="sectionLabel" level={2} css={sectionLabelStyle}>
+                읽지 않은 공지
+              </Heading>
               <List>
                 <List.Item>
                   <MemberActiveNoticeCard title={noticeTitle} />
@@ -310,7 +321,9 @@ function ReminderScreen({ active = false, animationPaused = false }: ScreenAnima
               </List>
             </section>
             <section>
-              <h2 css={sectionLabelStyle}>제출하지 않은 과제</h2>
+              <Heading variant="sectionLabel" level={2} css={sectionLabelStyle}>
+                제출하지 않은 과제
+              </Heading>
               <List>
                 <List.Item>
                   <MemberActiveAssignmentCard title={assignment.title} />
@@ -337,11 +350,24 @@ function ReminderScreen({ active = false, animationPaused = false }: ScreenAnima
                 <strong>총총</strong>
                 <span>지금</span>
               </div>
-              <p className="cc-demo-notification-title">과제 마감이 얼마 남지 않았어요</p>
-              <p className="cc-demo-notification-assignment">{assignment.title}</p>
-              <p className="cc-demo-notification-description">
+              <Paragraph
+                variant="landingDemoNotificationTitle"
+                className="cc-demo-notification-title"
+              >
+                과제 마감이 얼마 남지 않았어요
+              </Paragraph>
+              <Paragraph
+                variant="landingDemoNotificationAssignment"
+                className="cc-demo-notification-assignment"
+              >
+                {assignment.title}
+              </Paragraph>
+              <Paragraph
+                variant="landingDemoNotificationDescription"
+                className="cc-demo-notification-description"
+              >
                 오늘 오후 8시까지 독서 노트를 제출해요.
-              </p>
+              </Paragraph>
             </div>
           </div>
           <div className="cc-demo-notification-handle" />

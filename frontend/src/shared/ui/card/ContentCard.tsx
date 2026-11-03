@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../Typography';
 import { CSSProperties, ReactNode } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
@@ -51,7 +52,6 @@ const titleRowStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.subtitle,
   margin: 0,
   overflow: 'hidden',
   color: tokens.color.mainBlack,
@@ -60,7 +60,6 @@ const titleStyle = {
 } satisfies CSSProperties;
 
 const largeTitleStyle = {
-  ...typography.title,
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
@@ -88,7 +87,6 @@ const trailingStyle = {
 } satisfies CSSProperties;
 
 const descriptionStyle = {
-  ...typography.body,
   display: '-webkit-box',
   margin: `${tokens.spacing[1]} 0 0`,
   color: tokens.text.muted,
@@ -139,7 +137,15 @@ ContentCard.TitleRow = function TitleRow({ children }: ChildrenProps) {
 };
 
 ContentCard.Title = function Title({ size = 'default', children }: TitleProps) {
-  return <h3 css={{ ...titleStyle, ...(size === 'large' ? largeTitleStyle : {}) }}>{children}</h3>;
+  return (
+    <Heading
+      level={3}
+      variant={size === 'large' ? 'title' : 'subtitle'}
+      css={[titleStyle, size === 'large' && largeTitleStyle]}
+    >
+      {children}
+    </Heading>
+  );
 };
 
 ContentCard.Accessory = function Accessory({ children }: ChildrenProps) {
@@ -155,7 +161,11 @@ ContentCard.Trailing = function Trailing({ children }: ChildrenProps) {
 };
 
 ContentCard.Description = function Description({ children }: ChildrenProps) {
-  return <p css={descriptionStyle}>{children}</p>;
+  return (
+    <Paragraph variant="body" css={descriptionStyle}>
+      {children}
+    </Paragraph>
+  );
 };
 
 ContentCard.Footer = function Footer({ direction = 'row', children }: FooterProps) {

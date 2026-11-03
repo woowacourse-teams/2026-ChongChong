@@ -1,3 +1,4 @@
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
@@ -73,7 +74,11 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
             )}
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">과제를 더 불러오는 중...</p>}
+          {isFetchingNextPage && (
+            <Paragraph variant="inherited" role="status">
+              과제를 더 불러오는 중...
+            </Paragraph>
+          )}
         </>
       )}
       <div css={buttonAreaStyle}>

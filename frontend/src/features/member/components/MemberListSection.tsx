@@ -1,6 +1,6 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { typography } from '../../../styles/global';
 import List from '../../../shared/ui/List';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
@@ -35,8 +35,12 @@ const SectionHeaderStyle = {
   alignItems: 'center',
 } satisfies CSSProperties;
 
-function Heading() {
-  return <h2 css={{ ...typography.subtitle, flexShrink: 0 }}>스터디 멤버</h2>;
+function MemberListHeading() {
+  return (
+    <Heading level={2} variant="subtitle" css={{ flexShrink: 0 }}>
+      스터디 멤버
+    </Heading>
+  );
 }
 
 export function MemberListSection({ role }: MemberListSectionProps) {
@@ -48,10 +52,10 @@ export function MemberListSection({ role }: MemberListSectionProps) {
   return (
     <section css={memberListSectionStyle}>
       <div css={SectionHeaderStyle}>
-        <Heading />
-        <p css={typography.paragraph}>
+        <MemberListHeading />
+        <Paragraph variant="paragraph">
           {nowMemberCount} / {maxMemberCount}
-        </p>
+        </Paragraph>
       </div>
       <List css={memberListStyle}>
         {members.map((member) => (
@@ -71,7 +75,7 @@ export function MemberListSection({ role }: MemberListSectionProps) {
 export function MemberListSectionFallback({ message }: MemberListSectionFallback) {
   return (
     <section css={memberListSectionStyle}>
-      <Heading />
+      <MemberListHeading />
       <ErrorContent message={message ?? '멤버 목록을 불러오는데 실패했습니다'} />
     </section>
   );

@@ -1,3 +1,4 @@
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { CSSObject } from '@emotion/react';
 import reminderIcon from '../../../shared/assets/remind.svg';
@@ -28,7 +29,6 @@ const TextStyle = {
 } satisfies CSSProperties;
 
 const DescriptionStyle = {
-  ...typography.caption,
   ...TextStyle,
   maxWidth: '202px',
   marginTop: tokens.spacing[1],
@@ -57,8 +57,12 @@ export default function NotificationItem({ notification }: { notification: Notif
     <div css={NotificationItemStyle}>
       {isReminder ? <ReminderNotificationIcon /> : <CommonNotificationIcon />}
       <div css={{ minWidth: 0 }}>
-        <p css={{ ...typography.subtitle, ...TextStyle }}>{notification.title}</p>
-        <p css={DescriptionStyle}>{notification.body}</p>
+        <Paragraph variant="subtitle" css={TextStyle}>
+          {notification.title}
+        </Paragraph>
+        <Paragraph variant="caption" css={DescriptionStyle}>
+          {notification.body}
+        </Paragraph>
         <time css={TimeStyle} dateTime={notification.createdAt}>
           {formatRelativeTime(notification.createdAt)}
         </time>

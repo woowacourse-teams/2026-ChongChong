@@ -1,3 +1,4 @@
+import { Heading } from '../Typography';
 import { useEffect, useEffectEvent, useId, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import {
@@ -168,9 +169,9 @@ export default function BottomSheet({
         </div>
 
         <header css={headerStyle}>
-          <h2 id={titleId} css={titleStyle}>
+          <Heading level={2} variant="title" id={titleId} css={titleStyle}>
             {title}
-          </h2>
+          </Heading>
           <button type="button" css={actionStyle} onClick={onAction}>
             {actionLabel}
           </button>
