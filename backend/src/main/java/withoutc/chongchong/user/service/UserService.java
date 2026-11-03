@@ -31,6 +31,7 @@ public class UserService {
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final CommentRepository commentRepository;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
     public void withdraw(Long userId) {
@@ -49,7 +50,8 @@ public class UserService {
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.getByIdOrThrow(userId);
-        return UserProfileResponse.from(user);
+        String profileImageUrl = profileImageUrlResolver.resolve(user);
+        return UserProfileResponse.from(user.getName(), profileImageUrl);
     }
 
     @Transactional
@@ -60,6 +62,7 @@ public class UserService {
         List<StudyMember> studyMembers = studyMemberRepository.findAllByUserId(userId);
         studyMembers.forEach(studyMember -> studyMember.syncNameFromUser(newName));
 
-        return UserProfileResponse.from(user);
+        String profileImageUrl = profileImageUrlResolver.resolve(user);
+        return UserProfileResponse.from(user.getName(), profileImageUrl);
     }
 }
