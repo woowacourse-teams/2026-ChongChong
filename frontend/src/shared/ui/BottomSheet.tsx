@@ -1,18 +1,59 @@
-import { Heading } from '../Typography';
-import { useEffect, useEffectEvent, useId, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
-import { CSSObject } from '@emotion/react';
-import {
-  actionStyle,
-  backdropStyle,
-  handleAreaStyle,
-  handleStyle,
-  headerStyle,
-  overlayStyle,
-  sheetStyle,
-  titleStyle,
-} from './dateTimePicker.styles';
-import { tokens } from '../../../styles/global';
+import type { CSSProperties } from 'react';
+import { tokens } from '../../styles/global';
+
+const overlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  zIndex: 1000,
+  display: 'flex',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+} satisfies CSSProperties;
+
+const backdropStyle = {
+  position: 'absolute',
+  inset: 0,
+  background: tokens.bg.dim,
+  willChange: 'opacity',
+} satisfies CSSProperties;
+
+const sheetStyle = {
+  position: 'relative',
+  zIndex: 1,
+  width: '100%',
+  maxWidth: tokens.screenSize.default,
+  maxHeight: '100dvh',
+  padding: `${tokens.spacing[2]} ${tokens.spacing[5]} calc(${tokens.spacing[8]} + 2px + ${tokens.layout.safeBottom})`,
+  borderRadius: `${tokens.spacing[6]} ${tokens.spacing[6]} ${tokens.spacing[0]} ${tokens.spacing[0]}`,
+  background: tokens.bg.default,
+  boxShadow: tokens.shadow[3],
+  color: tokens.text.default,
+  outline: 'none',
+  overscrollBehavior: 'contain',
+  willChange: 'transform',
+} satisfies CSSProperties;
+
+const handleAreaStyle = {
+  display: 'flex',
+  width: '100%',
+  height: tokens.spacing[8],
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: `calc(${tokens.spacing[2]} * -1)`,
+  marginBottom: `calc(${tokens.spacing[2]} * -1)`,
+  cursor: 'grab',
+  touchAction: 'none',
+  userSelect: 'none',
+} satisfies CSSProperties;
+
+const handleStyle = {
+  width: '36px',
+  height: tokens.spacing[1],
+  borderRadius: '2px',
+  background: tokens.color.optionSubFontColor55,
+} satisfies CSSProperties;
 
 const ANIMATION_DURATION_MS = 280;
 const CLOSE_VELOCITY = 0.6;
@@ -27,44 +68,19 @@ interface DragState {
 
 export interface BottomSheetProps {
   open: boolean;
-  title: ReactNode;
-  actionLabel?: ReactNode;
-  variant?: 'default' | 'menu';
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
   children: ReactNode;
-  onAction?: () => void;
   onClose: () => void;
 }
 
-interface BottomSheetActionProps extends React.ComponentProps<'button'> {
-  onClick: () => void;
-}
-
-const BottomSheetActionStyle = {
-  display: 'block',
-  width: '100%',
-  height: 56,
-  padding: '0 24px',
-  border: 0,
-  background: tokens.bg.default,
-  color: tokens.text.default,
-  font: 'inherit',
-  fontSize: 16,
-  textAlign: 'left',
-  cursor: 'pointer',
-  '&:hover': { background: tokens.bg.brandSubtle },
-  '&:focus-visible': { outline: `2px solid ${tokens.bg.brand}`, outlineOffset: -2 },
-} satisfies CSSObject;
-
 export default function BottomSheet({
   open,
-  title,
-  actionLabel,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   children,
-  onAction,
   onClose,
-  variant = 'default',
 }: BottomSheetProps) {
-  const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const dragOffsetRef = useRef(0);
@@ -131,7 +147,6 @@ export default function BottomSheet({
   const handleDragMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const dragState = dragStateRef.current;
     if (!dragState || dragState.pointerId !== event.pointerId) return;
-
     const elapsed = Math.max(event.timeStamp - dragState.lastTime, 1);
     dragState.velocity = (event.clientY - dragState.lastY) / elapsed;
     dragState.lastY = event.clientY;
@@ -191,29 +206,18 @@ export default function BottomSheet({
       />
       <div
         ref={sheetRef}
-        css={[
-          sheetStyle,
-          variant === 'menu' && {
-            padding: '0 0 max(34px, env(safe-area-inset-bottom))',
-            borderRadius: '20px 20px 0 0',
-            overflowY: 'auto',
-          },
-          { transform: sheetTransform, transition },
-        ]}
+        css={[sheetStyle, { transform: sheetTransform, transition }]}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         tabIndex={-1}
         onTransitionEnd={(event) => {
           if (!open && event.propertyName === 'transform') updateDragOffset(0);
         }}
       >
         <div
-          css={[
-            handleAreaStyle,
-            variant === 'menu' && { height: 24, margin: 0 },
-            { cursor: isDragging ? 'grabbing' : 'grab' },
-          ]}
+          css={[handleAreaStyle, { cursor: isDragging ? 'grabbing' : 'grab' }]}
           aria-hidden="true"
           data-testid="bottom-sheet-handle"
           onPointerDown={handleDragStart}
@@ -221,34 +225,10 @@ export default function BottomSheet({
           onPointerUp={(event) => finishDrag(event, true)}
           onPointerCancel={(event) => finishDrag(event, false)}
         >
-          <div css={[handleStyle, variant === 'menu' && { width: 32 }]} />
+          <div css={handleStyle} />
         </div>
-        <header
-          css={[
-            headerStyle,
-            variant === 'menu' && { height: 40, margin: 0, justifyContent: 'center' },
-          ]}
-        >
-          <Heading level={2} variant="title" id={titleId} css={titleStyle}>
-            {title}
-          </Heading>
-          {actionLabel && (
-            <button type="button" css={actionStyle} onClick={onAction}>
-              {actionLabel}
-            </button>
-          )}
-        </header>
-
         {children}
       </div>
     </div>
   );
 }
-
-BottomSheet.Action = function Action({ onClick, children, ...props }: BottomSheetActionProps) {
-  return (
-    <button type="button" css={BottomSheetActionStyle} onClick={onClick} {...props}>
-      {children}
-    </button>
-  );
-};

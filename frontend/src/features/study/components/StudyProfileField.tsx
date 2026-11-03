@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import type { CSSObject } from '@emotion/react';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
-import BottomSheet from '../../../shared/ui/date-time-picker/BottomSheet';
+import ProfileImageActionSheet from './ProfileImageActionSheet';
 import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import { tokens } from '../../../styles/global';
 import camera from '../assets/profile-camera.svg';
@@ -89,15 +89,15 @@ export default function StudyProfileField({ imageUrl, disabled, onSelect, onRese
           if (file) onSelect(file);
         }}
       />
-      <BottomSheet open={open} title="프로필 이미지" variant="menu" onClose={closeBottomSheet}>
-        <BottomSheet.Action onClick={selectProfileImage}>프로필 이미지 선택</BottomSheet.Action>
-        {imageUrl && (
-          <BottomSheet.Action onClick={selectDefaultProfileImage}>
-            기본 프로필 이미지 사용
-          </BottomSheet.Action>
-        )}
-        <BottomSheet.Action onClick={closeBottomSheet}>취소</BottomSheet.Action>
-      </BottomSheet>
+      <ProfileImageActionSheet
+        open={open}
+        hasImage={Boolean(imageUrl)}
+        actions={{
+          onClose: closeBottomSheet,
+          onSelect: selectProfileImage,
+          onReset: selectDefaultProfileImage,
+        }}
+      />
     </div>
   );
 }
