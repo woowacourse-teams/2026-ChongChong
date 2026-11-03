@@ -12,6 +12,7 @@ import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.study.repository.projection.StudyMemberProfileImageProjection;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 
 @Repository
@@ -103,4 +104,15 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
                 member.id ASC
             """)
     List<StudyMemberSummaryProjection> findAllSummariesByStudyId(@Param("studyId") Long studyId);
+
+    @Query("""
+            SELECT new withoutc.chongchong.study.repository.projection.StudyMemberProfileImageProjection(
+                member.id, profileUser.profileImageUrl, image.objectKey, image.contentType
+            )
+            FROM StudyMember member
+            JOIN member.user profileUser
+            LEFT JOIN profileUser.profileImageFile image
+            WHERE member.id IN :memberIds
+            """)
+    List<StudyMemberProfileImageProjection> findProfileImagesByMemberIds(@Param("memberIds") List<Long> memberIds);
 }

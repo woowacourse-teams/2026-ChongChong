@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,7 @@ import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProject
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @ExtendWith(MockitoExtension.class)
 class StudyMemberServiceTest {
@@ -70,6 +72,9 @@ class StudyMemberServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private UserProfileImageUrlResolver profileImageUrlResolver;
 
     @InjectMocks
     private StudyMemberService studyMemberService;
@@ -288,13 +293,18 @@ class StudyMemberServiceTest {
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);
         when(studyMemberRepository.findAllSummariesByStudyId(studyId)).thenReturn(projections);
+        when(profileImageUrlResolver.resolveForMembers(List.of(10L, 11L)))
+                .thenReturn(Map.of(10L, "current-home-image-url"));
 
         StudyMembersResponse response = studyMemberService.getAllStudyMembers(userId, studyId);
 
         assertThat(response.maxMemberCount()).isEqualTo(50);
         assertThat(response.nowMemberCount()).isEqualTo(2);
         assertThat(response.members())
-                .containsExactly(StudyMemberResponse.from(projection1), StudyMemberResponse.from(projection2));
+                .containsExactly(
+                        new StudyMemberResponse(10L, "리더", "current-home-image-url", StudyMemberRole.LEADER),
+                        StudyMemberResponse.from(projection2));
+        verify(profileImageUrlResolver).resolveForMembers(List.of(10L, 11L));
     }
 
     @Test
@@ -313,7 +323,7 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
 
-        verifyNoInteractions(studyMemberRepository);
+        verifyNoInteractions(studyMemberRepository, profileImageUrlResolver);
     }
 
     @Test
@@ -333,6 +343,7 @@ class StudyMemberServiceTest {
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verify(studyMemberRepository, never()).findAllSummariesByStudyId(studyId);
+        verifyNoInteractions(profileImageUrlResolver);
     }
 
     @Test
