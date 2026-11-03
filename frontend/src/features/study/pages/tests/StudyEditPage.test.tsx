@@ -318,7 +318,7 @@ describe('스터디 수정 페이지 테스트', () => {
         await user.upload(screen.getByLabelText('프로필 이미지 파일'), createFile());
 
         const error = await screen.findByRole('alert');
-        expect(error).toHaveTextContent(message);
+        expect(error.textContent).toBe(message);
         expect(error).toBeVisible();
         expect(
           screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }),

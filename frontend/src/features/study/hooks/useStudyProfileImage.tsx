@@ -35,7 +35,7 @@ export default function useStudyProfileImage({ initialImageUrl, fieldErrors }: O
     if (isUploading) return;
     setDismissedErrors(fieldErrors);
     setError(undefined);
-    const validation = validateAttachments([file], 0, 'image');
+    const validation = validateAttachments([file], 0, 'image', { includeFileName: false });
     if (validation) {
       setError(validation.message);
       return;

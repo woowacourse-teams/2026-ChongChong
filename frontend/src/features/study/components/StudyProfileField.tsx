@@ -25,9 +25,10 @@ const StudyProfileFieldStyle = {
 } satisfies CSSObject;
 
 const SubTextContainerStyle = {
-  margin: '8px 0 0',
+  margin: '12px 0 0',
   minHeight: 'calc(2 * var(--line-height-18))',
   width: '100%',
+  textAlign: 'center',
   overflowWrap: 'anywhere',
 } satisfies CSSObject;
 
