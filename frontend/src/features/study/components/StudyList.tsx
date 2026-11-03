@@ -1,4 +1,5 @@
 import StudyAvatar from './StudyAvatar';
+import type { CSSProperties, ReactNode } from 'react';
 import List from '../../../shared/ui/List';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import Badge from '../../../shared/ui/Badge';
@@ -9,13 +10,29 @@ import { tokens, typography } from '../../../styles/global';
 import { Link } from 'react-router';
 import { Study } from '../types';
 
+const StudyCardStyle = {
+  display: 'flex',
+  width: '100%',
+  height: '148px',
+  flexDirection: 'column',
+  padding: tokens.spacing[5],
+  background: tokens.bg.default,
+  border: tokens.border.neutral,
+  borderRadius: tokens.radius.lg,
+  color: tokens.text.default,
+} satisfies CSSProperties;
+
+function StudyContentCard({ children }: { children: ReactNode }) {
+  return <article css={StudyCardStyle}>{children}</article>;
+}
+
 export default function StudyList({ studies }: { studies: Study[] }) {
   return (
     <List>
       {studies.map((study) => (
         <List.Item key={study.id}>
           <Link to={`/studies/${study.id}`}>
-            <ContentCard>
+            <StudyContentCard>
               <ContentCard.Badges>
                 <Badge
                   variant="brandSolid"
@@ -45,7 +62,7 @@ export default function StudyList({ studies }: { studies: Study[] }) {
                   <ContentCard.Description>{study.description}</ContentCard.Description>
                 </div>
               </div>
-            </ContentCard>
+            </StudyContentCard>
           </Link>
         </List.Item>
       ))}

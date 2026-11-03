@@ -77,56 +77,50 @@ test('교체 업로드 실패 시 기존 이미지를 유지하고 토스트로 
   expect(screen.getByRole('button', { name: '저장' })).toBeEnabled();
 });
 
-test('연속 선택에서는 마지막 업로드만 적용하고 완료 전에는 기존 이미지를 유지한다', async () => {
-  let finishFirst!: (id: number) => void;
-  let finishLast!: (id: number) => void;
-  upload
-    .mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          finishFirst = resolve;
-        }),
-    )
-    .mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          finishLast = resolve;
-        }),
-    );
-  const { user, onSubmit } = renderForm('https://example.com/previous.png');
-  const input = screen.getByLabelText('프로필 이미지 파일');
-  await user.upload(input, new File(['one'], 'one.png', { type: 'image/png' }));
-  expect(screen.getByAltText('스터디 프로필')).toHaveAttribute(
-    'src',
-    'https://example.com/previous.png',
-  );
-  expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
-  await user.upload(input, new File(['two'], 'two.png', { type: 'image/png' }));
-  await act(async () => finishLast(2));
-  await act(async () => finishFirst(1));
-  await user.click(screen.getByRole('button', { name: '저장' }));
-  expect(onSubmit).toHaveBeenCalledWith({ name: '스터디', description: '', imageFileId: 2 });
-  expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
-});
-
-test('기본 이미지로 되돌린 후 늦게 완료된 업로드를 무시한다', async () => {
+test('업로드 중에는 프로필 메뉴와 파일 선택을 막고 완료 후 다시 활성화한다', async () => {
   let finish!: (id: number) => void;
-  upload.mockResolvedValueOnce(1).mockImplementationOnce(
+  upload.mockImplementationOnce(
     () =>
       new Promise((resolve) => {
         finish = resolve;
       }),
   );
-  const { user, onSubmit } = renderForm();
+  const { user } = renderForm('https://example.com/previous.png');
   const input = screen.getByLabelText('프로필 이미지 파일');
+  const trigger = screen.getByRole('button', { name: '스터디 프로필 이미지 변경' });
   await user.upload(input, new File(['one'], 'one.png', { type: 'image/png' }));
-  await waitFor(() => expect(screen.getByRole('button', { name: '저장' })).toBeEnabled());
+  expect(trigger).toBeDisabled();
+  expect(input).toBeDisabled();
+  expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
+  await user.click(trigger);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   await user.upload(input, new File(['two'], 'two.png', { type: 'image/png' }));
-  await user.click(screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }));
-  await user.click(screen.getByRole('button', { name: '기본 프로필 이미지 사용' }));
-  await act(async () => finish(2));
-  await user.click(screen.getByRole('button', { name: '저장' }));
-  expect(onSubmit).toHaveBeenCalledWith({ name: '스터디', description: '' });
+  expect(upload).toHaveBeenCalledTimes(1);
+  expect(screen.getByAltText('스터디 프로필')).toHaveAttribute(
+    'src',
+    'https://example.com/previous.png',
+  );
+  await act(async () => finish(1));
+  expect(trigger).toBeEnabled();
+  expect(input).toBeEnabled();
+});
+
+test('화면을 떠난 후 업로드가 끝나면 미리보기를 생성하지 않는다', async () => {
+  let finish!: (id: number) => void;
+  upload.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const { user, unmount } = renderForm();
+  await user.upload(
+    screen.getByLabelText('프로필 이미지 파일'),
+    new File(['one'], 'one.png', { type: 'image/png' }),
+  );
+  unmount();
+  await act(async () => finish(1));
+  expect(URL.createObjectURL).not.toHaveBeenCalled();
 });
 
 test('5MB를 넘는 이미지는 업로드하지 않고 토스트를 표시한다', async () => {
@@ -179,32 +173,24 @@ test('읽을 수 없는 이미지이면 기존 사진을 유지하고 미리보�
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:study-photo');
 });
 
-test('디코딩 중 새 사진을 선택하면 이전 결과를 무시하고 해당 URL을 정리한다', async () => {
-  let finishFirstDecode!: () => void;
+test('디코딩 중 화면을 떠나면 준비 중이던 미리보기 URL을 정리한다', async () => {
+  let finishDecode!: () => void;
   jest.mocked(HTMLImageElement.prototype.decode).mockImplementationOnce(
     () =>
       new Promise<void>((resolve) => {
-        finishFirstDecode = resolve;
+        finishDecode = resolve;
       }),
   );
-  jest
-    .mocked(URL.createObjectURL)
-    .mockReturnValueOnce('blob:first')
-    .mockReturnValueOnce('blob:last');
-  upload.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
-  const { user, onSubmit } = renderForm('https://example.com/previous.png');
-  const input = screen.getByLabelText('프로필 이미지 파일');
-  await user.upload(input, new File(['one'], 'one.png', { type: 'image/png' }));
-  await user.upload(input, new File(['two'], 'two.png', { type: 'image/png' }));
-  await waitFor(() =>
-    expect(screen.getByAltText('스터디 프로필')).toHaveAttribute('src', 'blob:last'),
+  upload.mockResolvedValueOnce(1);
+  const { user, unmount } = renderForm();
+  await user.upload(
+    screen.getByLabelText('프로필 이미지 파일'),
+    new File(['one'], 'one.png', { type: 'image/png' }),
   );
-  await act(async () => finishFirstDecode());
-  expect(screen.getByAltText('스터디 프로필')).toHaveAttribute('src', 'blob:last');
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:first');
-  expect(URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:last');
-  await user.click(screen.getByRole('button', { name: '저장' }));
-  expect(onSubmit).toHaveBeenCalledWith({ name: '스터디', description: '', imageFileId: 2 });
+  expect(screen.getByRole('button', { name: '스터디 프로필 이미지 변경' })).toBeDisabled();
+  unmount();
+  await act(async () => finishDecode());
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:study-photo');
 });
 
 test.each(['배경 클릭', 'Escape'])(

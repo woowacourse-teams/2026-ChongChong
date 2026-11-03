@@ -66,7 +66,7 @@ export default function StudyForm({
     <form css={StudyFormStyle} onSubmit={handleSubmit}>
       <StudyProfileField
         imageUrl={profile.imageUrl}
-        disabled={isSubmitting}
+        disabled={isSubmitting || profile.isUploading}
         onSelect={profile.select}
         onReset={profile.reset}
       />

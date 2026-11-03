@@ -9,15 +9,15 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
     url: initialImageUrl,
   });
   const [isUploading, setIsUploading] = useState(false);
-  const generation = useRef(0);
+  const isMounted = useRef(false);
   const toast = useToast();
 
-  useEffect(
-    () => () => {
-      generation.current++;
-    },
-    [],
-  );
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   useEffect(() => {
     const url = selection.fileId === undefined ? undefined : selection.url;
     return () => {
@@ -26,17 +26,17 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
   }, [selection]);
 
   async function select(file: File) {
+    if (isUploading) return;
     const validation = validateAttachments([file], 0, 'image');
     if (validation) {
       toast.open(<StatusToast status="error" message={validation.message} />);
       return;
     }
-    const request = ++generation.current;
     setIsUploading(true);
     let previewUrl: string | undefined;
     try {
       const fileId = await uploadAttachment(file);
-      if (request !== generation.current) return;
+      if (!isMounted.current) return;
       previewUrl = URL.createObjectURL(file);
       const preview = new Image();
       preview.src = previewUrl;
@@ -46,12 +46,12 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
       } catch (cause) {
         throw new Error('이미지를 불러오지 못했어요. 다른 이미지를 선택해 주세요.', { cause });
       }
-      if (request !== generation.current) return;
+      if (!isMounted.current) return;
       setSelection({ url: previewUrl, fileId });
       // The selection effect now owns this URL and revokes it after replacement/unmount.
       previewUrl = undefined;
     } catch (error) {
-      if (request !== generation.current) return;
+      if (!isMounted.current) return;
       toast.open(
         <StatusToast
           status="error"
@@ -64,11 +64,12 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
       );
     } finally {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      if (request === generation.current) setIsUploading(false);
+      if (isMounted.current) setIsUploading(false);
     }
   }
 
   function reset() {
+    if (isUploading) return;
     // The current PATCH API cannot remove an already saved study image.
     if (initialImageUrl) {
       toast.open(
@@ -79,8 +80,6 @@ export default function useStudyProfileImage(initialImageUrl?: string | null) {
       );
       return;
     }
-    generation.current++;
-    setIsUploading(false);
     setSelection({});
   }
 

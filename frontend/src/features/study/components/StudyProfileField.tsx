@@ -51,11 +51,13 @@ export default function StudyProfileField({ imageUrl, disabled, onSelect, onRese
   const input = useRef<HTMLInputElement>(null);
 
   function selectProfileImage() {
+    if (disabled) return;
     closeBottomSheet();
     input.current?.click();
   }
 
   function selectDefaultProfileImage() {
+    if (disabled) return;
     closeBottomSheet();
     onReset();
   }
@@ -86,11 +88,11 @@ export default function StudyProfileField({ imageUrl, disabled, onSelect, onRese
         onChange={(event) => {
           const file = event.target.files?.[0];
           event.target.value = '';
-          if (file) onSelect(file);
+          if (file && !disabled) onSelect(file);
         }}
       />
       <ProfileImageActionSheet
-        open={open}
+        open={open && !disabled}
         hasImage={Boolean(imageUrl)}
         actions={{
           onClose: closeBottomSheet,
