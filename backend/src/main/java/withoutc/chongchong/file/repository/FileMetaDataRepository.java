@@ -19,9 +19,10 @@ public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long
                 file.objectKey,
                 file.size,
                 file.status,
-                file.owner.id
+                owner.id
             )
             FROM FileMetadata file
+            LEFT JOIN file.owner owner
             WHERE file.id = :id
             """)
     Optional<FileUploadSnapshotProjection> findUploadSnapshotById(@Param("id") Long id);

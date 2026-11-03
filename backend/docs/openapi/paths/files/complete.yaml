@@ -13,6 +13,7 @@ post:
     description: 소유권과 S3 실제 크기를 검증한 뒤 파일을 COMPLETED로 전환한다.
   description: |
     인증된 소유자만 자신의 파일 업로드를 완료할 수 있다.
+    소유자가 탈퇴해 owner_id가 null인 파일은 403 FILE_NOT_OWNED로 거절하며 S3 확인 이후 완료 저장 단계에서도 소유권을 다시 검증한다.
     실제 파일이 존재하고 크기가 선언값과 일치하며 공통 제한(기본 5MiB) 이하이면 완료한다.
     0바이트 파일도 허용한다. 이미 COMPLETED인 파일은 소유권 확인 후 재조회 없이 204를 반환한다.
     검증 실패 시 PENDING을 유지하며 DELETE_PENDING 파일은 완료할 수 없다.
@@ -40,7 +41,7 @@ post:
               message: { type: string }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403':
-      description: 다른 사용자의 파일
+      description: 다른 사용자의 파일이거나 소유자가 탈퇴한 파일
       content:
         application/json:
           schema: { $ref: '../../components/schemas/errors.yaml#/FileNotOwnedError' }

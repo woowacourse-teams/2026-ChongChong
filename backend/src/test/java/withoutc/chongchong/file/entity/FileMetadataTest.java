@@ -117,6 +117,17 @@ class FileMetadataTest {
     }
 
     @Test
+    @DisplayName("소유자가 탈퇴한 파일은 null 사용자 ID를 포함해 누구의 소유로도 판단하지 않는다")
+    void rejectsOwnershipAfterOwnerWithdrawal() {
+        FileMetadata file = FileMetadata.create(owner, "a.png", "uploads/a", "image/png", 1);
+        ReflectionTestUtils.setField(file, "owner", null);
+
+        assertThat(file.getOwnerId()).isNull();
+        assertThat(file.isOwnedBy(null)).isFalse();
+        assertThat(file.isOwnedBy(1L)).isFalse();
+    }
+
+    @Test
     @DisplayName("소유자가 없으면 파일을 생성할 수 없다")
     void rejectNullOwner() {
         assertThatThrownBy(() -> FileMetadata.create(null, "a.pdf", "uploads/a.pdf", "application/pdf", 1))

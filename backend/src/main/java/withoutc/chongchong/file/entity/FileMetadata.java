@@ -33,8 +33,8 @@ public class FileMetadata extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
     private User owner;
 
     @Column(name = "original_file_name", nullable = false)
@@ -60,8 +60,12 @@ public class FileMetadata extends BaseEntity {
     }
 
     public boolean isOwnedBy(Long userId) {
-        Long ownerId = owner.getId();
+        Long ownerId = getOwnerId();
         return ownerId != null && ownerId.equals(userId);
+    }
+
+    public Long getOwnerId() {
+        return owner == null ? null : owner.getId();
     }
 
     public void completeUpload() {
