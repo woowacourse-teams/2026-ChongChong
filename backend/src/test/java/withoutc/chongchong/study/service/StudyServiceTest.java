@@ -396,6 +396,44 @@ class StudyServiceTest {
     }
 
     @Test
+    @DisplayName("이미지 ID를 생략한 수정은 기존 이미지를 유지하고 이미지 검증을 건너뛴다")
+    void updateStudyWithoutImageChange() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("기존 스터디", "설명", false);
+        FileMetadata image = mock(FileMetadata.class);
+        study.changeImage(image);
+        User user = User.create("리더", null);
+        StudyMember leader = StudyMember.create(study, user, user.getName(), null, StudyMemberRole.LEADER);
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
+
+        studyService.updateStudy(userId, studyId, new StudyUpdateRequest("수정 스터디", null, null));
+
+        assertThat(study.getName()).isEqualTo("수정 스터디");
+        assertThat(study.getImageFile()).isSameAs(image);
+        verifyNoInteractions(studyImageService);
+    }
+
+    @Test
+    @DisplayName("이미지 ID를 null로 지정한 수정은 기존 이미지 연결을 해제한다")
+    void updateStudyWithDefaultImage() {
+        Long userId = 1L;
+        Long studyId = 1L;
+        Study study = Study.create("기존 스터디", "설명", false);
+        study.changeImage(mock(FileMetadata.class));
+        User user = User.create("리더", null);
+        StudyMember leader = StudyMember.create(study, user, user.getName(), null, StudyMemberRole.LEADER);
+        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
+        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
+
+        studyService.updateStudy(userId, studyId, new StudyUpdateRequest(null, null, null, null));
+
+        assertThat(study.getImageFile()).isNull();
+        verify(studyImageService).prepareForUpdate(userId, study, null);
+    }
+
+    @Test
     @DisplayName("존재하지 않는 스터디는 수정할 수 없다")
     void updateStudyForMissingStudyTest() {
         Long userId = 1L;

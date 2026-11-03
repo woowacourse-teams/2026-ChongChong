@@ -67,9 +67,7 @@ public class Study extends BaseEntity {
     }
 
     public void changeImage(FileMetadata file) {
-        if (file != null) {
-            this.imageFile = file;
-        }
+        this.imageFile = file;
     }
 
     private Study(

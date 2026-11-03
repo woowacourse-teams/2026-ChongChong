@@ -33,7 +33,7 @@ public class StudyImageService {
 
     public FileMetadata prepareForUpdate(Long userId, Study study, Long fileId) {
         if (fileId == null) {
-            return study.getImageFile();
+            return null;
         }
         imagePolicy.validateId(fileId);
 
