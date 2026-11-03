@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import { tokens } from '../../styles/global';
-import { typography } from '../../styles/global';
+import { Text } from './Typography';
 
 export type Variant = 'brandSolid' | 'neutralSolid' | 'brandOutline' | 'warningSolid';
 
@@ -49,7 +49,6 @@ const sizeStyle = {
     gap: '6px',
   },
   status: {
-    ...typography.label,
     minHeight: '24px',
     padding: `3px ${tokens.spacing[2]}`,
   },
@@ -57,11 +56,12 @@ const sizeStyle = {
 
 export default function Badge({ variant, size, children, ...props }: BadgeProps) {
   return (
-    <span
-      css={{ ...typography.caption, ...badgeStyle, ...variantStyle[variant], ...sizeStyle[size] }}
+    <Text
+      variant={size === 'status' ? 'label' : 'caption'}
+      css={{ ...badgeStyle, ...variantStyle[variant], ...sizeStyle[size] }}
       {...props}
     >
       {children}
-    </span>
+    </Text>
   );
 }

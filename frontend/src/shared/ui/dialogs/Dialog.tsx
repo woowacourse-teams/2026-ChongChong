@@ -1,5 +1,6 @@
+import { Heading, Paragraph } from '../Typography';
 import { CSSProperties, useId, useRef, useEffect } from 'react';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import { CSSObject } from '@emotion/react';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
@@ -47,7 +48,6 @@ const actionsStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.subtitle,
   fontWeight: tokens.fontWeight.semibold,
   color: tokens.text.default,
   whiteSpace: 'pre-line',
@@ -55,7 +55,6 @@ const titleStyle = {
 } satisfies CSSProperties;
 
 const descriptionStyle = {
-  ...typography.body,
   color: tokens.text.muted,
   whiteSpace: 'pre-line',
   margin: 0,
@@ -89,13 +88,13 @@ export default function Dialog({
       onClose={onClose}
     >
       <div css={bodyStyle}>
-        <h2 id={titleId} css={titleStyle}>
+        <Heading variant="subtitle" level={2} id={titleId} css={titleStyle}>
           {title}
-        </h2>
+        </Heading>
         {description && (
-          <p id={descriptionId} css={descriptionStyle}>
+          <Paragraph variant="body" id={descriptionId} css={descriptionStyle}>
             {description}
-          </p>
+          </Paragraph>
         )}
       </div>
       <div css={actionsStyle}>{actions}</div>

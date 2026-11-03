@@ -1,3 +1,4 @@
+import { Paragraph } from '../../../shared/ui/Typography';
 import AssignmentList from './AssignmentList';
 import { CSSProperties } from 'react';
 import EmptyContent from '../../../shared/ui/EmptyContent';
@@ -49,7 +50,11 @@ export default function MemberAssignmentListContent({ studyId }: Props) {
             }}
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">과제를 더 불러오는 중...</p>}
+          {isFetchingNextPage && (
+            <Paragraph variant="inherited" role="status">
+              과제를 더 불러오는 중...
+            </Paragraph>
+          )}
         </>
       )}
     </section>

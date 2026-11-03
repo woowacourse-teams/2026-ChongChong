@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import { CSSProperties, Suspense } from 'react';
@@ -6,7 +7,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import StudyIcon from '../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import studyQueries from '../queries';
 import { StudyLeaderManagementList, StudyMemberManagementList } from '../components/ManagementList';
 import useIntegerParam from '../../../shared/hooks/useIntegerParams';
@@ -25,12 +26,10 @@ const SectionStyle = {
 } satisfies CSSProperties;
 
 const StudyProfileTitleStyle = {
-  ...typography.title,
   margin: tokens.spacing[3],
 } satisfies CSSProperties;
 
 const StudyProfileSubTitleStyle = {
-  ...typography.paragraph,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -63,10 +62,12 @@ function Content() {
     <Main>
       <section aria-labelledby="study-name" css={SectionStyle}>
         <img src={StudyIcon} alt="" width={68} height={68} />
-        <h2 id="study-name" css={StudyProfileTitleStyle}>
+        <Heading variant="title" level={2} id="study-name" css={StudyProfileTitleStyle}>
           {studyName}
-        </h2>
-        <p css={StudyProfileSubTitleStyle}>{description}</p>
+        </Heading>
+        <Paragraph variant="paragraph" css={StudyProfileSubTitleStyle}>
+          {description}
+        </Paragraph>
       </section>
       <section>
         {role === 'LEADER' ? (

@@ -64,7 +64,6 @@ export const headerStyle = {
 } satisfies CSSProperties;
 
 export const titleStyle = {
-  ...typography.title,
   margin: tokens.spacing[0],
   fontFamily: tokens.fontFamily.base,
   color: tokens.text.default,

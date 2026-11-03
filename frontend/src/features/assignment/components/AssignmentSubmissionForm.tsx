@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { useState } from 'react';
 import AttachmentField from '../../../shared/widgets/AttachmentField';
 import { useAttachments } from '../../../shared/modules/files/useAttachments';
@@ -7,7 +8,7 @@ import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import { ASSIGNMENT_SUBMISSION_CONTENT, ASSIGNMENT_SUBMISSION_LINK } from '../constants';
 import type { AssignmentSubmissionValue } from '../types';
 import { usePostHog } from '@posthog/react';
@@ -33,7 +34,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[4]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -98,9 +98,9 @@ export default function AssignmentSubmissionForm({
 
   return (
     <section css={sectionStyle} aria-labelledby="assignment-submission-title">
-      <h2 id="assignment-submission-title" css={titleStyle}>
+      <Heading variant="title" level={2} id="assignment-submission-title" css={titleStyle}>
         내 제출
-      </h2>
+      </Heading>
 
       <form css={formStyle} onSubmit={submitAssignment}>
         <TextAreaField
@@ -137,9 +137,9 @@ export default function AssignmentSubmissionForm({
           errorText={attachments.error ?? fieldErrors.attachmentFileIds}
         />
         {submissionError && (
-          <p role="alert" css={{ color: tokens.text.critical }}>
+          <Paragraph variant="inherited" role="alert" css={{ color: tokens.text.critical }}>
             {submissionError}
-          </p>
+          </Paragraph>
         )}
         <Button
           type="submit"

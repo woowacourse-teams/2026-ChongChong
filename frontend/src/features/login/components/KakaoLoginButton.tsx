@@ -1,3 +1,4 @@
+import { Text } from '../../../shared/ui/Typography';
 import type { CSSObject } from '@emotion/react';
 import kakaoIcon from '../../../shared/assets/Social Login/Icon/kakao.svg';
 import { tokens, typography } from '../../../styles/global';
@@ -30,7 +31,7 @@ export default function KakaoLoginButton(props: Props) {
   return (
     <button css={buttonStyle} type="button" {...props}>
       <img css={iconStyle} src={kakaoIcon} alt="" />
-      <span>카카오로 계속하기</span>
+      <Text variant="inherited">카카오로 계속하기</Text>
     </button>
   );
 }

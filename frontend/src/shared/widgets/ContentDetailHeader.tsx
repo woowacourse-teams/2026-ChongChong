@@ -1,3 +1,4 @@
+import { Heading } from '../ui/Typography';
 import type { CSSProperties } from 'react';
 import { tokens, typography } from '../../styles/global';
 
@@ -13,7 +14,6 @@ const headerStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.headline,
   margin: 0,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -27,7 +27,9 @@ const metaStyle = {
 export default function ContentDetailHeader({ title, dateTime, meta }: Props) {
   return (
     <header css={headerStyle}>
-      <h2 css={titleStyle}>{title}</h2>
+      <Heading variant="headline" level={2} css={titleStyle}>
+        {title}
+      </Heading>
       <time css={metaStyle} dateTime={dateTime}>
         {meta}
       </time>

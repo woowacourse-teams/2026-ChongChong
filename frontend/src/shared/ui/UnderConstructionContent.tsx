@@ -1,5 +1,6 @@
+import { Paragraph } from './Typography';
 import { CSSProperties } from 'react';
-import { typography, tokens } from '../../styles/global';
+import { tokens } from '../../styles/global';
 import underConstructionIcon from '../assets/icons/no-construction-icon.svg';
 
 interface Props {
@@ -16,7 +17,6 @@ const divStyle = {
 } satisfies CSSProperties;
 
 const messageStyle = {
-  ...typography.sectionLabel,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -24,7 +24,9 @@ export default function UnderConstructionContent({ message }: Props) {
   return (
     <div css={divStyle}>
       <img src={underConstructionIcon} width={150} height={150} alt="빈 목록" />
-      <p css={messageStyle}>{message}</p>
+      <Paragraph variant="sectionLabel" css={messageStyle}>
+        {message}
+      </Paragraph>
     </div>
   );
 }

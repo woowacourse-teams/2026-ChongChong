@@ -1,3 +1,4 @@
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { tokens } from '../../../styles/global';
 import Button from '../../../shared/ui/Button';
@@ -64,7 +65,11 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
             )}
           </NoticeList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">공지를 더 불러오는 중...</p>}
+          {isFetchingNextPage && (
+            <Paragraph variant="inherited" role="status">
+              공지를 더 불러오는 중...
+            </Paragraph>
+          )}
         </>
       )}
       <div css={buttonAreaStyle}>

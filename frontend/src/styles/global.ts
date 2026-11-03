@@ -363,4 +363,6 @@ export const typography = {
     lineHeight: 'var(--line-height-18)',
     letterSpacing: 'var(--letter-spacing-default)',
   },
+
+  inherited: {},
 } as const;
