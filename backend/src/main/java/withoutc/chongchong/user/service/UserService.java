@@ -7,11 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.comment.repository.CommentRepository;
+import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.user.controller.dto.UserProfileImageUpdateRequest;
 import withoutc.chongchong.user.controller.dto.UserProfileNameUpdateRequest;
 import withoutc.chongchong.user.controller.dto.UserProfileResponse;
 import withoutc.chongchong.user.entity.User;
@@ -32,6 +34,7 @@ public class UserService {
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final CommentRepository commentRepository;
     private final UserProfileImageUrlResolver profileImageUrlResolver;
+    private final UserProfileImageService profileImageService;
 
     @Transactional
     public void withdraw(Long userId) {
@@ -61,6 +64,16 @@ public class UserService {
         user.updateName(newName);
         List<StudyMember> studyMembers = studyMemberRepository.findAllByUserId(userId);
         studyMembers.forEach(studyMember -> studyMember.syncNameFromUser(newName));
+
+        String profileImageUrl = profileImageUrlResolver.resolve(user);
+        return UserProfileResponse.from(user.getName(), profileImageUrl);
+    }
+
+    @Transactional
+    public UserProfileResponse updateMyProfileImage(Long userId, UserProfileImageUpdateRequest request) {
+        User user = userRepository.getByIdForUpdateOrThrow(userId);
+        FileMetadata file = profileImageService.prepareForUpdate(user, request.fileId());
+        user.changeProfileImage(file);
 
         String profileImageUrl = profileImageUrlResolver.resolve(user);
         return UserProfileResponse.from(user.getName(), profileImageUrl);

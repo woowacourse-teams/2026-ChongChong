@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,9 +63,13 @@ public class UserProfileImageService {
     }
 
     private FileMetadata findFileForUpdate(Long fileId) {
-        FileMetadata file = fileRepository.getByIdForUpdateOrThrow(fileId);
-        entityManager.refresh(file);
-        return file;
+        try {
+            FileMetadata file = fileRepository.getByIdForUpdateOrThrow(fileId);
+            entityManager.refresh(file);
+            return file;
+        } catch (PessimisticLockingFailureException exception) {
+            throw new FileException(FileErrorCode.FILE_UPLOAD_BUSY, exception);
+        }
     }
 
     private void validateOwnedCompletedFile(Long userId, FileMetadata file) {
