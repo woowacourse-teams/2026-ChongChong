@@ -14,7 +14,7 @@ StudyUpdateRequest:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 변경할 스터디 이름. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 15, example: 수정된 스터디 }
     description: { description: "변경할 스터디 소개. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 30, example: 매주 화요일에 진행한다. }
     isPublic: { description: "변경할 공개 여부. 생략하거나 null이면 기존 값을 유지한다.", type: [boolean, 'null'], example: true }
-    imageFileId: { description: "교체할 이미지 파일 ID. 새 파일은 업로드 완료·본인 소유·미연결 상태여야 하며, 기본 허용 형식은 JPEG·PNG·WebP, 최대 크기는 5 MiB이다. 생략하거나 null이면 기존 이미지를 유지한다.", type: [integer, 'null'], format: int64, minimum: 1, example: 102 }
+    imageFileId: { description: "교체할 이미지 파일 ID. 새 파일은 업로드 완료·본인 소유·미연결 상태여야 하며, 기본 허용 형식은 JPEG·PNG·WebP, 최대 크기는 5 MiB이다. 생략하면 기존 이미지를 유지하고, null이면 이미지 연결을 해제해 기본 이미지로 변경한다.", type: [integer, 'null'], format: int64, minimum: 1, example: 102 }
 StudyCreateResponse:
   type: object
   additionalProperties: false

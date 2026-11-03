@@ -95,6 +95,17 @@ class StudyImageServiceTest {
     }
 
     @Test
+    @DisplayName("기본 이미지로 변경할 때 파일을 조회하거나 검증하지 않는다")
+    void resetsImageToDefault() {
+        Study study = Study.create("스터디", "설명", false);
+        study.changeImage(file(1L));
+
+        assertThat(service.prepareForUpdate(1L, study, null)).isNull();
+
+        verifyNoInteractions(fileRepository, imagePolicy);
+    }
+
+    @Test
     @DisplayName("이미지 파일 ID를 생략하면 생성 시 이미지가 없다")
     void createsWithoutImage() {
         assertThat(service.prepareForCreate(1L, null)).isNull();

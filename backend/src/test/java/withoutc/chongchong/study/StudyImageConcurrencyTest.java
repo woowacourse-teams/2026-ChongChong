@@ -66,13 +66,27 @@ class StudyImageConcurrencyTest extends PostgresContainerTest {
         Fixture fixture = createFixture(hasOriginalImage);
 
         runWhileReplacingImage(fixture, () -> studyService.updateStudy(
-                fixture.userId(), fixture.studyId(), new StudyUpdateRequest("수정된 이름", null, null, null)));
+                fixture.userId(), fixture.studyId(), new StudyUpdateRequest("수정된 이름", null, null)));
 
         assertThat(jdbcTemplate.queryForObject("SELECT name FROM studies WHERE id = ?", String.class,
                 fixture.studyId())).isEqualTo("수정된 이름");
         assertThat(jdbcTemplate.queryForObject("SELECT image_file_id FROM studies WHERE id = ?", Long.class,
                 fixture.studyId())).isEqualTo(fixture.replacementFileId());
         assertThat(fileRepository.existsAnyUsageByFileId(fixture.originalFileId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("기본 이미지 변경이 이미지 교체와 겹쳐도 교체 완료 후 이미지 연결을 해제한다")
+    void resetsImageAfterReplacement() throws Exception {
+        Fixture fixture = createFixture(true);
+
+        runWhileReplacingImage(fixture, () -> studyService.updateStudy(
+                fixture.userId(), fixture.studyId(), new StudyUpdateRequest(null, null, null, null)));
+
+        assertThat(jdbcTemplate.queryForObject("SELECT image_file_id FROM studies WHERE id = ?", Long.class,
+                fixture.studyId())).isNull();
+        assertThat(fileRepository.existsAnyUsageByFileId(fixture.originalFileId())).isFalse();
+        assertThat(fileRepository.existsAnyUsageByFileId(fixture.replacementFileId())).isFalse();
     }
 
     @Test

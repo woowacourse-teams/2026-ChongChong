@@ -109,7 +109,10 @@ public class StudyService {
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         validateLeaderRole(studyMember);
 
-        FileMetadata file = studyImageService.prepareForUpdate(userId, study, request.imageFileId());
+        FileMetadata file = study.getImageFile();
+        if (request.hasImageFileId()) {
+            file = studyImageService.prepareForUpdate(userId, study, request.imageFileId());
+        }
 
         study.update(request.name(), request.description(), request.isPublic());
         study.changeImage(file);

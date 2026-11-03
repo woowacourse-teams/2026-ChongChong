@@ -3,8 +3,10 @@ package withoutc.chongchong.study;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 import io.restassured.http.ContentType;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,7 +94,7 @@ class StudyImageAcceptanceTest extends PostgresContainerTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    @DisplayName("이미지 유무와 관계없이 새 이미지로 교체하고 이후 이미지 ID가 null이면 유지한다")
+    @DisplayName("이미지 유무와 관계없이 새 이미지로 교체하고 이후 이미지 ID를 생략하면 유지한다")
     void replacesAndRetainsImage(boolean hasOriginalImage) {
         User owner = userRepository.saveAndFlush(User.create("리더", null));
         FileMetadata original = hasOriginalImage ? saveFile(owner, "image/png", true) : null;
@@ -127,13 +129,97 @@ class StudyImageAcceptanceTest extends PostgresContainerTest {
         testAuthRequest.givenAuthenticatedUser(owner.getId())
                 .port(port)
                 .contentType(ContentType.JSON)
-                .body(new StudyUpdateRequest("다시 수정한 이름", null, null, null))
+                .body("""
+                        {"name": "다시 수정한 이름"}
+                        """)
                 .patch("/studies/{studyId}", studyId)
                 .then()
                 .statusCode(204);
 
         assertThat(imageFileId(studyId)).isEqualTo(replacement.getId());
         assertThat(studyRepository.getByIdOrThrow(studyId).getName()).isEqualTo("다시 수정한 이름");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("이미지 ID를 null로 보내면 기본 이미지로 변경하고 재조회해도 기존 이미지가 돌아오지 않는다")
+    void resetsImageToDefault(boolean hasOriginalImage) {
+        User owner = userRepository.saveAndFlush(User.create("리더", null));
+        FileMetadata original = saveFile(owner, "image/png", true);
+        Long originalImageId = null;
+        if (hasOriginalImage) {
+            originalImageId = original.getId();
+        }
+        Long studyId = createStudy(owner, originalImageId);
+
+        testAuthRequest.givenAuthenticatedUser(owner.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body("""
+                        {"imageFileId": null}
+                        """)
+                .patch("/studies/{studyId}", studyId)
+                .then()
+                .statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(owner.getId())
+                .port(port)
+                .get("/studies/{studyId}/info", studyId)
+                .then()
+                .statusCode(200)
+                .body("imageUrl", nullValue());
+        testAuthRequest.givenAuthenticatedUser(owner.getId())
+                .port(port)
+                .get("/studies/me")
+                .then()
+                .statusCode(200)
+                .body("studies[0].imageUrl", nullValue());
+        assertThat(imageFileId(studyId)).isNull();
+        Study unchanged = studyRepository.getByIdOrThrow(studyId);
+        assertThat(unchanged.getName()).isEqualTo("원래 이름");
+        assertThat(unchanged.getDescription()).isEqualTo("원래 설명");
+        assertThat(unchanged.isPublic()).isTrue();
+        assertThat(fileRepository.existsAnyUsageByFileId(original.getId())).isFalse();
+        assertThat(fileRepository.findById(original.getId()).orElseThrow().getStatus())
+                .isEqualTo(FileUploadStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("현재 이미지 ID를 다시 보내면 기존 이미지를 유지한다")
+    void retainsSameImage() {
+        User owner = userRepository.saveAndFlush(User.create("리더", null));
+        FileMetadata original = saveFile(owner, "image/png", true);
+        Long studyId = createStudy(owner, original.getId());
+
+        testAuthRequest.givenAuthenticatedUser(owner.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("imageFileId", original.getId()))
+                .patch("/studies/{studyId}", studyId)
+                .then()
+                .statusCode(204);
+
+        assertThat(imageFileId(studyId)).isEqualTo(original.getId());
+        assertThat(fileRepository.existsAnyUsageByFileId(original.getId())).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {0, -1})
+    @DisplayName("이미지 ID가 양수가 아니면 요청을 거절하고 기존 이미지를 유지한다")
+    void rejectsNonPositiveImageId(long invalidImageId) {
+        User owner = userRepository.saveAndFlush(User.create("리더", null));
+        FileMetadata original = saveFile(owner, "image/png", true);
+        Long studyId = createStudy(owner, original.getId());
+
+        testAuthRequest.givenAuthenticatedUser(owner.getId())
+                .port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("imageFileId", invalidImageId))
+                .patch("/studies/{studyId}", studyId)
+                .then()
+                .statusCode(400);
+
+        assertThat(imageFileId(studyId)).isEqualTo(original.getId());
     }
 
     @Test

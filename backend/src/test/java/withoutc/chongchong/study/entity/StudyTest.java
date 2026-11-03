@@ -56,14 +56,14 @@ class StudyTest {
     }
 
     @Test
-    @DisplayName("이미지를 생략하면 기존 이미지를 유지한다")
-    void changeImageWithNullKeepsExistingImage() {
+    @DisplayName("이미지를 null로 변경하면 기존 이미지 연결을 해제한다")
+    void changeImageWithNullRemovesExistingImage() {
         Study study = Study.create("자바 스터디", null, false);
         FileMetadata image = mock(FileMetadata.class);
         study.changeImage(image);
 
         study.changeImage(null);
 
-        assertThat(study.getImageFile()).isSameAs(image);
+        assertThat(study.getImageFile()).isNull();
     }
 }
