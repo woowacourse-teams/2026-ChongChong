@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../shared/policy/urlPolicy';
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize';
 const KAKAO_OAUTH_STATE_KEY = 'kakao_oauth_state';
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY ?? '';

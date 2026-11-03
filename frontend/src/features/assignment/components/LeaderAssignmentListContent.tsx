@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';

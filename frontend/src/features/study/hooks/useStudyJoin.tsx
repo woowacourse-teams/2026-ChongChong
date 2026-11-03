@@ -1,5 +1,5 @@
 import { clearInviteLinkDraft } from './useInviteLinkState';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { useMutation } from '@tanstack/react-query';

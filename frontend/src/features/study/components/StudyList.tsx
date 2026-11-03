@@ -1,6 +1,8 @@
 import StudyAvatar from './StudyAvatar';
 import type { CSSProperties } from 'react';
 import StudyContentCard from './StudyContentCard';
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import List from '../../../shared/ui/List';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import Badge from '../../../shared/ui/Badge';
@@ -8,8 +10,6 @@ import noticeIcon from '../../../shared/assets/notice.webp';
 import assignIcon from '../../../shared/assets/assign.webp';
 import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
 import { tokens, typography } from '../../../styles/global';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
-import { Link } from 'react-router';
 import { Study } from '../types';
 
 const RoleBadgeStyle = {

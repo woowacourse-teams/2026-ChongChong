@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { Suspense, CSSProperties } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';

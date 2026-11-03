@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { URL_POLICY, type NavigationPolicy } from '../constants/urlPolicy';
+import { URL_POLICY, type NavigationPolicy } from '../policy/urlPolicy';
 
 // 정책을 실행할 뿐, 목적지와 이력 방식을 여기서 결정하지 않는다.
 export default function usePageNavigation() {

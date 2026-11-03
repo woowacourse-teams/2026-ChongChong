@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { consumeLoginReturnPath, saveLoginReturnPath } from '../loginReturnPath';
 
 beforeEach(() => {

@@ -4,7 +4,7 @@ import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg?width=360&as=webp';
 import Page from '../../../shared/ui/Page';
 import { tokens, typography } from '../../../styles/global';

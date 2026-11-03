@@ -1,12 +1,12 @@
 import type { StudyFormValues } from '../types';
 import studyQueries from '../queries';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { editStudy } from '../api';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 export default function useEditStudy(studyId: number) {

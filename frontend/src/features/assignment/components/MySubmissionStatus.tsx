@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { Link, useLocation } from 'react-router';
 import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';

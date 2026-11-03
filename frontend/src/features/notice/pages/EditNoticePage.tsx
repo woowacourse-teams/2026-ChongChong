@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { usePostHog } from '@posthog/react';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';

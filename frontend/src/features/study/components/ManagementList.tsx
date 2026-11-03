@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { CSSProperties } from 'react';
 import List from '../../../shared/ui/List';
 import { tokens, typography } from '../../../styles/global';

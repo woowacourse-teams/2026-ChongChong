@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../shared/policy/urlPolicy';
 import { useEffect, useState } from 'react';
 import chongchongLogo from './assets/chongchong-logo.png';
 import FeatureCarousel from './components/FeatureCarousel';

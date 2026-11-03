@@ -1,6 +1,6 @@
 import { Paragraph } from '../ui/Typography';
 import { CSSProperties } from 'react';
-import { URL_POLICY } from '../constants/urlPolicy';
+import { URL_POLICY } from '../policy/urlPolicy';
 import { Link, useParams, useLocation } from 'react-router';
 import HomeIcon from '../assets/home.webp';
 import ActivehomeIcon from '../assets/home-green.webp';

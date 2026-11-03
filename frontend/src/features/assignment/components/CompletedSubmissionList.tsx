@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { Link, useParams } from 'react-router';

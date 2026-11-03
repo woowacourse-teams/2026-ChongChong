@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { Paragraph, Text } from '../../../shared/ui/Typography';
 import { CSSProperties, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';

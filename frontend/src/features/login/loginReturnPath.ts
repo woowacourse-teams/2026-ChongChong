@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../shared/policy/urlPolicy';
 
 const LOGIN_RETURN_PATH_KEY = 'login_return_path';
 

@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';

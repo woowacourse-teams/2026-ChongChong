@@ -1,7 +1,7 @@
 import studyQueries from '../queries';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createStudy } from '../api';
 import { ValidationError } from '../../../shared/api/error';

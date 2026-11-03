@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useQuery } from '@tanstack/react-query';
 import hasNotificationLogo from '../../../shared/assets/notification-green.webp';
 import notificationLogo from '../../../shared/assets/notification.webp';

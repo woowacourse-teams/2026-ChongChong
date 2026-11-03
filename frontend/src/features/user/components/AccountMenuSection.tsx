@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { type CSSProperties } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';

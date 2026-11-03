@@ -1,5 +1,5 @@
 import { saveLoginReturnPath } from './features/login/loginReturnPath';
-import { URL_POLICY } from './shared/constants/urlPolicy';
+import { URL_POLICY } from './shared/policy/urlPolicy';
 import ky from 'ky';
 import { API_PREFIX, BASE_URL } from '../config';
 import { clearAccessToken, getAccessToken } from './features/login/accessToken';

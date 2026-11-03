@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { CSSProperties, useMemo } from 'react';
 import { useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query';
 import { tokens } from '../../../styles/global';

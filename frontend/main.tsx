@@ -1,5 +1,5 @@
 import { saveLoginReturnPath } from './src/features/login/loginReturnPath';
-import { URL_POLICY } from './src/shared/constants/urlPolicy';
+import { URL_POLICY } from './src/shared/policy/urlPolicy';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter, matchRoutes, RouterProvider } from 'react-router';

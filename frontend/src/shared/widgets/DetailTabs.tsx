@@ -1,6 +1,6 @@
 import { useId, type CSSProperties, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
-import { URL_POLICY } from '../constants/urlPolicy';
+import { URL_POLICY } from '../policy/urlPolicy';
 import usePageNavigation from '../hooks/usePageNavigation';
 import { tokens, typography } from '../../styles/global';
 

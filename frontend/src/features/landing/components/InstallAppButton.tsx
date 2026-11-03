@@ -1,4 +1,4 @@
-import { URL_POLICY } from '../../../shared/constants/urlPolicy';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useEffect, useRef, useState } from 'react';
 import { usePostHog } from '@posthog/react';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
