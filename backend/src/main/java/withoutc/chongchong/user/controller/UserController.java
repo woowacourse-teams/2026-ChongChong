@@ -57,4 +57,10 @@ public class UserController {
     ) {
         return ResponseEntity.ok(userService.updateMyProfileImage(user.id(), request));
     }
+
+    @DeleteMapping("/me/profile-image")
+    public ResponseEntity<Void> resetMyProfileImage(@AuthenticationPrincipal AuthenticatedUser user) {
+        userService.resetMyProfileImage(user.id());
+        return ResponseEntity.noContent().build();
+    }
 }

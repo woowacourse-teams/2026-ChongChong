@@ -89,8 +89,8 @@ delete:
     status: in-progress
     owner: JYL35
     description: |
-      #622 홈 이미지 초기화 계약을 먼저 작성했다. Controller·파일 연결 해제 및 회귀 검증은 구현 전이다.
-      홈 파일 연결과 기존 외부 URL을 해제하며 홈과 모든 참여 스터디 조회의 기본 이미지 반영을 검증할 예정이다.
+      #622 홈 이미지 초기화 API의 사용자·파일 잠금과 파일 연결·외부 URL 해제를 연결하는 중이다.
+      홈 조회의 기본 이미지 응답을 검증하며 모든 참여 스터디의 조회 반영과 전체 회귀·배포 확인은 후속 단위로 진행한다.
   summary: 내 홈 프로필 이미지 초기화
   description: |
     요청 본문 없이 현재 사용자의 홈 프로필 이미지를 기본 이미지로 초기화한다. 이름은 변경하지 않는다.
@@ -100,8 +100,22 @@ delete:
     스터디별 이미지 수정과 선택 방식은 이번 작업에 포함하지 않는다.
     이미 기본 이미지인 경우에도 204를 반환한다. 응답 본문과 파일 ID 요청은 없다.
     분리한 파일은 COMPLETED를 유지하며 S3 파일 조회·삭제는 수행하지 않는다.
+    현재 파일이 있으면 파일 잠금 획득 대기를 3초로 제한한다. 파일 잠금 시간 초과 시 초기화를 롤백하고
+    503 FILE_UPLOAD_BUSY를 반환하므로 잠시 후 같은 요청을 다시 시도할 수 있다.
   security: [{ bearerAuth: [] }]
   responses:
     '204': { description: 홈 프로필 이미지 초기화 성공 또는 이미 기본 이미지 상태. 응답 본문 없음. }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '404': { $ref: '../../components/responses.yaml#/UserNotFound' }
+    '503':
+      description: 현재 파일의 잠금 경합으로 초기화하지 못함. 잠시 후 같은 요청을 다시 시도할 수 있다.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [code, message]
+            properties:
+              code: { type: string, const: FILE_UPLOAD_BUSY }
+              message: { type: string }
+          example: { code: FILE_UPLOAD_BUSY, message: 파일 처리 중입니다. 잠시 후 다시 시도해 주세요. }

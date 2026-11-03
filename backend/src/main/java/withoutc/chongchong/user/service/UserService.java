@@ -78,4 +78,11 @@ public class UserService {
         String profileImageUrl = profileImageUrlResolver.resolve(user);
         return UserProfileResponse.from(user.getName(), profileImageUrl);
     }
+
+    @Transactional
+    public void resetMyProfileImage(Long userId) {
+        User user = userRepository.getByIdForUpdateOrThrow(userId);
+        profileImageService.prepareForReset(user);
+        user.resetProfileImage();
+    }
 }
