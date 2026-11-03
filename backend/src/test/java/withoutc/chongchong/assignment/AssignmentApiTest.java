@@ -141,6 +141,29 @@ class AssignmentApiTest {
     }
 
     @ParameterizedTest
+    @EnumSource(value = StudyMemberRole.class, names = {"LEADER", "MEMBER"})
+    @DisplayName("리더와 스터디원의 과제 목록은 각 과제의 제출물 공개 범위를 반환한다")
+    void getAssignmentsWithSubmissionVisibilityTest(StudyMemberRole role) {
+        Long publicAssignmentId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "공개 과제", "content", "내용", "submissionMethod", "링크",
+                        "submissionTarget", "MEMBERS_ONLY", "submissionVisibility", "ALL_STUDY_MEMBERS",
+                        "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+        Long userId = role == StudyMemberRole.LEADER ? leaderUser.getId() : memberUser.getId();
+
+        testAuthRequest.givenAuthenticatedUser(userId).port(port)
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(200)
+                .body("assignments", hasSize(2))
+                .body("assignments[0].id", equalTo(publicAssignmentId.intValue()))
+                .body("assignments[0].submissionVisibility", equalTo("ALL_STUDY_MEMBERS"))
+                .body("assignments[1].id", equalTo(assignment.getId().intValue()))
+                .body("assignments[1].submissionVisibility", equalTo("LEADER_ONLY"));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"", ", \"submissionMethod\": null"})
     @DisplayName("생성 시 제출 방법 필드를 생략하거나 null이면 빈 설명으로 저장한다")
     void createWithMissingSubmissionMethodTest(String methodField) {
