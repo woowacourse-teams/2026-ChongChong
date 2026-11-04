@@ -32,13 +32,19 @@ public record MySubmissionDetailResponse(
                                                 List<AssignmentAttachmentResponse> attachments) {
         return new MySubmissionDetailResponse(
                 submission.getId(),
-                !submission.isAssigned() && submission.getSubmittedAt() == null
-                        ? SubmissionStatus.NOT_ASSIGNED : submission.submissionStatus(now),
+                getSubmissionStatus(submission, now),
                 submission.getSubmittedAt(),
                 submission.getContent(),
                 submission.getLink(),
                 attachments,
                 submission.isAssigned()
         );
+    }
+
+    private static SubmissionStatus getSubmissionStatus(AssignmentSubmission submission, LocalDateTime now) {
+        if (!submission.isAssigned() && submission.getSubmittedAt() == null) {
+            return SubmissionStatus.NOT_ASSIGNED;
+        }
+        return submission.submissionStatus(now);
     }
 }

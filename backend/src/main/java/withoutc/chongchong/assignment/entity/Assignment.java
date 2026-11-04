@@ -204,8 +204,11 @@ public class Assignment extends BaseEntity {
         submissions.stream().filter(submission -> !memberIds.contains(submission.getMember().getId()))
                 .forEach(AssignmentSubmission::unassign);
         assignSubmitters(members, memberIds);
-        submissionTarget = members.stream().anyMatch(StudyMember::isLeader)
-                ? SubmissionTarget.MEMBERS_AND_LEADER : SubmissionTarget.MEMBERS_ONLY;
+        if (members.stream().anyMatch(StudyMember::isLeader)) {
+            submissionTarget = SubmissionTarget.MEMBERS_AND_LEADER;
+        } else {
+            submissionTarget = SubmissionTarget.MEMBERS_ONLY;
+        }
     }
 
     public List<Long> getSubmitterIds() {

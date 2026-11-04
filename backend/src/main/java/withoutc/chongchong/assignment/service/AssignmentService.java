@@ -24,6 +24,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentAttachment;
+import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
@@ -94,9 +95,9 @@ public class AssignmentService {
     @Transactional
     public void update(Long userId, Long studyId, Long assignmentId, AssignmentUpdateRequest request) {
         studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
-        List<StudyMemberIdentityProjection> candidates = request.submitterIds() == null ? List.of()
-                : studyMemberRepository.findIdentitiesByStudyId(studyId);
+        List<StudyMemberIdentityProjection> candidates = List.of();
         if (request.submitterIds() != null) {
+            candidates = studyMemberRepository.findIdentitiesByStudyId(studyId);
             userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
                     .map(StudyMemberIdentityProjection::userId)).distinct().sorted().toList());
         }
@@ -105,19 +106,19 @@ public class AssignmentService {
 
         Assignment assignment = assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
 
-        List<StudyMember> submitters = request.submitterIds() == null ? null
-                : getSubmittersByIds(studyId, request.submitterIds());
-
-        if (submitters != null && submitters.stream().anyMatch(member -> candidates.stream()
-                .noneMatch(candidate -> candidate.matches(member)))) {
-            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
+        List<StudyMember> submitters = null;
+        SubmissionTarget submissionTarget = request.submissionTarget();
+        if (request.submitterIds() != null) {
+            submitters = getSubmittersByIds(studyId, request.submitterIds());
+            validateSubmitterCandidates(submitters, candidates);
+            submissionTarget = null;
         }
 
         replaceAttachments(userId, assignment, request.attachmentFileIds());
 
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(actor, request.title(), request.content(), request.submissionMethod(),
-                request.submitterIds() == null ? request.submissionTarget() : null,
+                submissionTarget,
                 request.submissionVisibility(), request.closeAt(), request.remindAts(),
                 now);
 
@@ -247,6 +248,21 @@ public class AssignmentService {
         return members;
     }
 
+    private void validateSubmitterCandidates(List<StudyMember> submitters,
+                                             List<StudyMemberIdentityProjection> candidates) {
+        if (submitters.stream().anyMatch(member -> candidates.stream()
+                .noneMatch(candidate -> candidate.matches(member)))) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
+        }
+    }
+
+    private SubmissionStatus getAssignmentListSubmissionStatus(AssignmentSubmission submission, LocalDateTime now) {
+        if (!submission.isAssigned()) {
+            return SubmissionStatus.NOT_ASSIGNED;
+        }
+        return submission.submissionStatus(now);
+    }
+
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,
                                                                       List<Assignment> assignments) {
 
@@ -259,8 +275,7 @@ public class AssignmentService {
         Map<Long, SubmissionStatus> submissionStatusByAssignmentId = assignmentSubmissionRepository
                 .findAllByAssignmentIdInAndMemberId(assignmentIds, member.getId())
                 .stream().collect(Collectors.toMap(submission -> submission.getAssignment().getId(),
-                        submission -> submission.isAssigned()
-                                ? submission.submissionStatus(now) : SubmissionStatus.NOT_ASSIGNED));
+                        submission -> getAssignmentListSubmissionStatus(submission, now)));
 
         if (member.isLeader()) {
             return assignments.stream().map(assignment ->
