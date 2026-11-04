@@ -43,30 +43,26 @@ function back(fallback: string): NavigationPolicy {
     : replace(fallback);
 }
 
+function parseParentPath(pathname: string) {
+  let parentPath = pathname;
+
+  // 후행 슬래시 제거
+  if (pathname.endsWith('/')) {
+    parentPath = pathname.replace(/\/+$/, '');
+  }
+
+  parentPath = parentPath.substring(0, parentPath.lastIndexOf('/'));
+
+  if (parentPath.endsWith('submissions')) {
+    return parentPath.substring(0, parentPath.lastIndexOf('/'));
+  } else {
+    return parentPath;
+  }
+}
+
 // 직접 URL 진입 등 이전 앱 이력이 없을 때만 사용하는 기본 복귀 목적지.
 function fallbackFor(pathname: string): string {
-  const parts = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
-  const [root, studyId, section, itemId, action] = parts;
-  if (root !== 'studies' || !studyId) return path.studies;
-
-  if (parts.length === 6 && section === 'assignments' && action === 'submissions') {
-    return path.assignment(studyId, itemId);
-  }
-  if (parts.length === 5 && action === 'edit') {
-    if (section === 'notices') return path.notice(studyId, itemId);
-    if (section === 'assignments') return path.assignment(studyId, itemId);
-  }
-  if (parts.length === 4) {
-    if (section === 'notices') return path.notices(studyId);
-    if (section === 'assignments') return path.assignments(studyId);
-  }
-  if (
-    parts.length === 3 &&
-    ['notices', 'assignments', 'members', 'management', 'edit'].includes(section)
-  ) {
-    return path.study(studyId);
-  }
-  return path.studies;
+  return parseParentPath(pathname) || path.studies;
 }
 
 // OAuth 왕복 후에도 앱 내부의 로그인 전 주소로만 복귀한다.
