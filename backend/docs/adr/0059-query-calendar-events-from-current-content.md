@@ -2,7 +2,7 @@
 
 - 날짜: 2026-11-04
 - 관련 이슈: [#639](https://github.com/woowacourse-teams/2026-ChongChong/issues/639)
-- 적용 상태: 월간 조회와 본인 상태 응답을 구현하고 단위·H2 저장소·HTTP 계약 테스트를 검증했다. `x-backend.status: in-progress`이며 전체 백엔드 회귀·PostgreSQL 검증과 PR·Merge 이후 Postman 기능 테스트 대기다.
+- 적용 상태: 월간 조회와 본인 상태 응답을 구현하고 단위·H2 저장소·PostgreSQL HTTP 계약 테스트를 검증했다. 전체 백엔드 테스트 1,685개(캘린더 PostgreSQL HTTP 32개 포함)가 실패·오류·스킵 없이 통과했고 63개 API의 성공 호출 커버리지를 확인했다. `x-backend.status: review`이며 PR 검토·Merge 이후 실행 환경의 Postman 기능 테스트 대기다.
 - 관련 계약: [스터디 홈 월간 일정 조회](../openapi/paths/studies/calendar.yaml), [월간 응답 스키마](../openapi/components/schemas/study-calendar.yaml)
 - 관련 결정: [ADR-0013](0013-unify-application-time-source.md)의 한국 기준 Clock,
   [ADR-0015](0015-use-records-for-read-projections.md)의 조회 projection,
@@ -127,6 +127,6 @@
 ## 후속 작업
 
 - [x] #638의 `assigned` 모델에 연계해 월간 projection·서비스·컨트롤러와 본인 상태 응답을 구현했다.
-- [x] 월 경계·권한·완료 상태·수정/삭제·대상 제외/재지정에 대한 단위·H2 저장소·HTTP 계약 테스트를 추가했다.
-- [ ] 전체 백엔드·OpenAPI와 PostgreSQL 검증 후 `x-backend.status`를 `review`로 갱신한다.
+- [x] 월 경계·권한·완료 상태·수정/삭제·대상 제외/재지정에 대한 단위·H2 저장소·PostgreSQL HTTP 계약 테스트를 추가했다.
+- [x] 전체 백엔드·OpenAPI와 PostgreSQL 검증 후 `x-backend.status`를 `review`로 갱신했다.
 - [ ] 병합과 검증 확인 후 `done`으로 갱신하고 실행 환경에서 Postman 기능 테스트 결과를 기록한다.
