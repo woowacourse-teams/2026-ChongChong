@@ -106,21 +106,14 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
 
         List<StudyMember> submitters = request.submitterIds() == null ? null
-                : getSubmitters(studyId, request.submissionTarget(), request.submitterIds());
+                : getSubmittersByIds(studyId, request.submitterIds());
 
         if (submitters != null && submitters.stream().anyMatch(member -> candidates.stream()
                 .noneMatch(candidate -> candidate.matches(member)))) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
         }
 
-        if (request.attachmentFileIds() != null) {
-            List<FileMetadata> files = assignmentAttachmentService.prepare(userId,
-                    assignment.getAttachments().stream().map(AssignmentAttachment::getFile).toList(),
-                    request.attachmentFileIds());
-            assignment.clearAttachments();
-            assignmentRepository.flush();
-            assignment.addAttachments(files);
-        }
+        replaceAttachments(userId, assignment, request.attachmentFileIds());
 
         LocalDateTime now = LocalDateTime.now(clock);
         assignment.update(actor, request.title(), request.content(), request.submissionMethod(),
@@ -187,6 +180,17 @@ public class AssignmentService {
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
     }
 
+    private void replaceAttachments(Long userId, Assignment assignment, List<Long> fileIds) {
+        if (fileIds == null) {
+            return;
+        }
+        List<FileMetadata> files = assignmentAttachmentService.prepare(userId,
+                assignment.getAttachments().stream().map(AssignmentAttachment::getFile).toList(), fileIds);
+        assignment.clearAttachments();
+        assignmentRepository.flush();
+        assignment.addAttachments(files);
+    }
+
     private List<AssignmentAttachmentResponse> createAttachmentResponses(Assignment assignment) {
         return assignment.getAttachments().stream()
                 .map(attachment -> {
@@ -221,13 +225,7 @@ public class AssignmentService {
     private List<StudyMember> getSubmitters(Long studyId, SubmissionTarget submissionTarget,
                                            List<Long> submitterIds) {
         if (submitterIds != null) {
-            List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
-                    .filter(member -> submitterIds.contains(member.getId())).toList();
-            if (submitterIds.isEmpty() || new HashSet<>(submitterIds).size() != submitterIds.size()
-                    || members.size() != submitterIds.size()) {
-                throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
-            }
-            return members;
+            return getSubmittersByIds(studyId, submitterIds);
         }
         if (submissionTarget == null) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
@@ -237,6 +235,16 @@ public class AssignmentService {
         }
         return studyMemberRepository.findAllByStudyId(studyId).stream()
                 .filter(studyMember -> !studyMember.isLeader()).toList();
+    }
+
+    private List<StudyMember> getSubmittersByIds(Long studyId, List<Long> submitterIds) {
+        List<StudyMember> members = studyMemberRepository.findAllByStudyId(studyId).stream()
+                .filter(member -> submitterIds.contains(member.getId())).toList();
+        if (submitterIds.isEmpty() || new HashSet<>(submitterIds).size() != submitterIds.size()
+                || members.size() != submitterIds.size()) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
+        }
+        return members;
     }
 
     private List<AssignmentSummaryResponse> createAssignmentSummaries(StudyMember member,

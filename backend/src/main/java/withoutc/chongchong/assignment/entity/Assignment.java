@@ -203,7 +203,7 @@ public class Assignment extends BaseEntity {
         Set<Long> memberIds = members.stream().map(StudyMember::getId).collect(Collectors.toSet());
         submissions.stream().filter(submission -> !memberIds.contains(submission.getMember().getId()))
                 .forEach(AssignmentSubmission::unassign);
-        assignSubmitters(members);
+        assignSubmitters(members, memberIds);
         submissionTarget = members.stream().anyMatch(StudyMember::isLeader)
                 ? SubmissionTarget.MEMBERS_AND_LEADER : SubmissionTarget.MEMBERS_ONLY;
     }
@@ -236,8 +236,7 @@ public class Assignment extends BaseEntity {
         replaceSubmitters(members);
     }
 
-    private void assignSubmitters(List<StudyMember> members) {
-        Set<Long> memberIds = members.stream().map(StudyMember::getId).collect(Collectors.toSet());
+    private void assignSubmitters(List<StudyMember> members, Set<Long> memberIds) {
         submissions.stream().filter(submission -> memberIds.contains(submission.getMember().getId()))
                 .forEach(AssignmentSubmission::assign);
         initializeSubmissions(members);
