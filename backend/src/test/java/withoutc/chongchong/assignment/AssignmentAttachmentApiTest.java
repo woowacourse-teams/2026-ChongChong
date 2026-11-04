@@ -292,8 +292,8 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("리더를 제출 대상에서 제외하면 파일 상태를 유지하고 연결만 제거한다")
-    void removingLeaderFromSubmissionTargetUnlinksTheirFiles() {
+    @DisplayName("리더를 제출 대상에서 제외해도 파일 상태와 연결을 보존한다")
+    void removingLeaderFromSubmissionTargetPreservesTheirFiles() {
         Long assignment = create(List.of());
         patch(leader, path(assignment), Map.of("submissionTarget", "MEMBERS_AND_LEADER")).then().statusCode(204);
         Long fileId = file(leader, "application/pdf", 1, true);
@@ -301,7 +301,7 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .then().statusCode(201);
         patch(leader, path(assignment), Map.of("submissionTarget", "MEMBERS_ONLY")).then().statusCode(204);
         assertStatus(fileId, FileUploadStatus.COMPLETED);
-        assertThat(fileMetaDataRepository.existsSubmissionAttachmentByFileId(fileId)).isFalse();
+        assertThat(fileMetaDataRepository.existsSubmissionAttachmentByFileId(fileId)).isTrue();
     }
 
     @ParameterizedTest

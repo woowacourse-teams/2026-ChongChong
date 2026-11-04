@@ -142,15 +142,19 @@ class AssignmentCommentConcurrencyTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("제출 대상 축소로 리더 제출물이 삭제되면 대기한 댓글도 없는 원문으로 실패한다")
+    @DisplayName("제출 대상에서 제외해도 제출물을 보존하여 대기한 댓글이 저장된다")
     void targetReductionBeforeCreation() throws Exception {
         Fixture f = fixture(true);
+        Long authorMemberId = members.getIdByStudyIdAndUserIdOrThrow(f.studyId(), f.authorId());
         race(() -> assignmentService.update(f.leaderId(), f.studyId(), f.assignmentId(),
-                        new AssignmentUpdateRequest(null, null, null, SubmissionTarget.MEMBERS_ONLY,
-                                null, null, null)),
-                () -> create(f, true), "ASSIGNMENT_SUBMISSION_NOT_FOUND");
-        assertThat(submissions.existsById(f.submissionId())).isFalse();
-        assertEmpty();
+                        new AssignmentUpdateRequest(null, null, null, null,
+                                null, null, null, null, java.util.List.of(authorMemberId))),
+                () -> create(f, true), null);
+        assertThat(submissions.findById(f.submissionId())).hasValueSatisfying(submission -> {
+            assertThat(submission.isAssigned()).isFalse();
+            assertThat(submission.getContent()).isEqualTo("제출");
+        });
+        assertThat(comments.count()).isEqualTo(1);
     }
 
     private void makePrivate(Fixture f) {

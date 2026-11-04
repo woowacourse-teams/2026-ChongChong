@@ -40,6 +40,29 @@ class AssignmentRepositoryTest {
     private AssignmentRepository assignmentRepository;
 
     @Autowired
+    private AssignmentSubmissionRepository submissionRepository;
+
+    @Test
+    @DisplayName("제외된 멤버는 현황·리마인드·미완료 과제 집계에 포함하지 않는다")
+    void excludesUnassignedMembersFromQueries() {
+        StudyWithMembersFixture fixture = createStudyWithMembersFixture();
+        Assignment assignment = createAssignment(fixture.study(), "대상 변경",
+                List.of(fixture.firstMember(), fixture.secondMember()), 1);
+        assignment.replaceSubmitters(List.of(fixture.firstMember()));
+        assignmentRepository.flush();
+        assertThat(assignment.getSubmissionCount()).isEqualTo(1);
+        assertThat(assignment.getSubmittedCount(NOW)).isEqualTo(1);
+        assertThat(submissionRepository.findAllSubmitterStatusesByAssignmentId(assignment.getId())).hasSize(1);
+        assertThat(submissionRepository.findUnsubmittedMembersByAssignmentId(assignment.getId())).isEmpty();
+        assertThat(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(fixture.study().getId())).isEmpty();
+        assertThat(assignmentRepository.countIncompleteAssignmentByStudyId(fixture.study().getId())).isZero();
+        assertThat(assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.secondMember().getId())).isZero();
+        assertThat(assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(
+                fixture.study().getId(), fixture.secondMember().getId())).isEmpty();
+    }
+
+    @Autowired
     private StudyRepository studyRepository;
 
     @Autowired

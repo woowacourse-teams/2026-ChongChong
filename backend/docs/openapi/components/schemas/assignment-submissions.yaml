@@ -30,6 +30,7 @@ MySubmissionDetailResponse:
   additionalProperties: false
   required: [submissionStatus]
   properties:
+    assigned: { type: boolean, description: 현재 제출 대상 여부. false이면 기존 제출물은 조회만 가능하며 다시 대상으로 추가되면 수정할 수 있다. }
     attachments: { type: array, items: { $ref: './assignment-attachments.yaml#/Attachment' } }
     submissionId: { type: integer, format: int64, example: 1 }
     submissionStatus: { $ref: '#/SubmissionStatus' }

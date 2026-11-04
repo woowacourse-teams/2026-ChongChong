@@ -29,11 +29,24 @@ public record AssignmentUpdateRequest(
                 @NotNull(message = "첨부파일 ID는 필수 값입니다.")
                 @Positive(message = "첨부파일 ID는 양수여야 합니다.")
                         Long
-                > attachmentFileIds
+                > attachmentFileIds,
+        @Size(min = 1, message = "제출할 스터디원을 한 명 이상 선택해 주세요.")
+        List<
+                @NotNull(message = "제출 대상 ID는 필수 값입니다.")
+                @Positive(message = "제출 대상 ID는 양수여야 합니다.")
+                        Long
+                > submitterIds
 ) {
     public AssignmentUpdateRequest(String title, String content, String submissionMethod,
                                    SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
                                    LocalDateTime closeAt, List<LocalDateTime> remindAts) {
-        this(title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts, null);
+        this(title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts, null, null);
+    }
+
+    public AssignmentUpdateRequest(String title, String content, String submissionMethod,
+                                   SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
+                                   LocalDateTime closeAt, List<LocalDateTime> remindAts, List<Long> attachmentFileIds) {
+        this(title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts,
+                attachmentFileIds, null);
     }
 }

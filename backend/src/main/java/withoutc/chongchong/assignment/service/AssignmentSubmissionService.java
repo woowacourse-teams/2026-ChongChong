@@ -63,6 +63,7 @@ public class AssignmentSubmissionService {
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
+        assignmentAccessPolicy.requireCanSubmitAssignment(actor, submission);
         LocalDateTime now = LocalDateTime.now(clock);
         boolean isFirstSubmit = !submission.isSubmit(now);
 
