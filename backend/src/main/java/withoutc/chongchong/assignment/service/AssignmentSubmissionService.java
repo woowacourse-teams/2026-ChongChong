@@ -4,8 +4,8 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +63,7 @@ public class AssignmentSubmissionService {
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
+        assignmentAccessPolicy.requireCanSubmitAssignment(actor, submission);
         LocalDateTime now = LocalDateTime.now(clock);
         boolean isFirstSubmit = !submission.isSubmit(now);
 
@@ -114,16 +115,7 @@ public class AssignmentSubmissionService {
         }
 
         AssignmentSubmission submission = foundSubmission.get();
-        List<AssignmentAttachmentResponse> attachments = submission.getAttachments().stream()
-                .map(attachment -> {
-                    FileMetadata file = attachment.getFile();
-                    String imageUrl = fileUrlGenerator.generateImageUrl(
-                            file.getObjectKey(), file.getContentType());
-                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
-                            file.getObjectKey(), file.getOriginalFileName());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
-                })
-                .toList();
+        List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(submission);
         return MySubmissionDetailResponse.of(LocalDateTime.now(clock), submission, attachments);
     }
 
@@ -136,16 +128,7 @@ public class AssignmentSubmissionService {
                 assignmentId);
         assignmentAccessPolicy.requireCanReadSubmission(actor, assignment, submission);
 
-        List<AssignmentAttachmentResponse> attachments = submission.getAttachments().stream()
-                .map(attachment -> {
-                    FileMetadata file = attachment.getFile();
-                    String imageUrl = fileUrlGenerator.generateImageUrl(
-                            file.getObjectKey(), file.getContentType());
-                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
-                            file.getObjectKey(), file.getOriginalFileName());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
-                })
-                .toList();
+        List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(submission);
         StudyMember submitter = submission.getMember();
         String profileImageUrl = profileImageUrlResolver.resolveForMembers(List.of(submitter.getId()))
                 .get(submitter.getId());
@@ -168,6 +151,19 @@ public class AssignmentSubmissionService {
                 submission -> new SubmissionSummary(submission.getId(), submission.getMember().getName(),
                         imageUrls.get(submission.getMember().getId()), submission.submissionStatus(now),
                         submission.getSubmittedAt())).toList());
+    }
+
+    private List<AssignmentAttachmentResponse> createAttachmentResponses(AssignmentSubmission submission) {
+        return submission.getAttachments().stream()
+                .map(attachment -> {
+                    FileMetadata file = attachment.getFile();
+                    String imageUrl = fileUrlGenerator.generateImageUrl(
+                            file.getObjectKey(), file.getContentType());
+                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
+                            file.getObjectKey(), file.getOriginalFileName());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
+                })
+                .toList();
     }
 
     private List<FileMetadata> prepareAttachments(Long userId, AssignmentSubmission submission,

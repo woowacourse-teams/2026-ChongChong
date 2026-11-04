@@ -127,7 +127,7 @@ AssignmentWriteBadRequest:
   description: 입력값 검증 실패, 요청 형식 오류 또는 과제 필드 도메인 규칙 위반
   content:
     application/json:
-      schema: { oneOf: [{ $ref: './schemas/assignment-attachments.yaml#/AttachmentBadRequest' }, { $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidTitleError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidSubmissionMethodError' }, { $ref: './schemas/errors.yaml#/InvalidCloseAtError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }] }
+      schema: { oneOf: [{ $ref: './schemas/assignment-attachments.yaml#/AttachmentBadRequest' }, { $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidTitleError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidSubmissionMethodError' }, { $ref: './schemas/errors.yaml#/InvalidSubmitterIdsError' }, { $ref: './schemas/errors.yaml#/InvalidCloseAtError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }] }
 SubmissionWriteBadRequest:
   description: 입력값 검증 실패, 요청 형식 오류 또는 제출 내용·링크 도메인 규칙 위반
   content:

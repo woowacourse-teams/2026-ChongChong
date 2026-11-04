@@ -112,6 +112,102 @@ class AssignmentApiTest {
         });
     }
 
+    @Test
+    @DisplayName("제출 대상을 제외해도 기록을 보존하고 재추가 후 수정할 수 있다")
+    void preserveSubmissionWhenChangingSubmitters() {
+        Long submissionId = submitAssignment(memberUser, assignment, "보존할 내용", "https://example.com");
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(secondMember.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(saved -> {
+            assertThat(saved.isAssigned()).isFalse();
+            assertThat(saved.getContent()).isEqualTo("보존할 내용");
+            assertThat(saved.getSubmittedAt()).isNotNull();
+        });
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("content", "변경 시도"))
+                .when().post("/studies/{studyId}/assignments/{assignmentId}/submissions", study.getId(), assignment.getId())
+                .then().statusCode(403);
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}/submissions/my", study.getId(), assignment.getId())
+                .then().statusCode(200).body("assigned", equalTo(false)).body("content", equalTo("보존할 내용"));
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(member.getId(), secondMember.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertThat(submitAssignment(memberUser, assignment, "수정된 내용", "https://example.com")).isEqualTo(submissionId);
+    }
+
+    @Test
+    @DisplayName("빈 대상과 다른 스터디의 멤버 지정을 거부하고 마감 후 변경은 허용한다")
+    void validateSubmittersAndAllowChangesAfterDeadline() {
+        for (List<Long> ids : List.of(List.<Long>of(), List.of(Long.MAX_VALUE), List.of(member.getId(), member.getId()))) {
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .contentType(ContentType.JSON).body(Map.of("submitterIds", ids))
+                    .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                    .then().statusCode(400);
+        }
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?", LocalDateTime.now(CLOCK).minusDays(1), assignment.getId());
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(leader.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(200).body("submitterIds", hasSize(1));
+    }
+
+    @Test
+    @DisplayName("선택한 스터디원만 과제 생성 시 할당하고 일반 멤버의 대상 변경은 거부한다")
+    void createWithSelectedSubmitters() {
+        Long id = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "선택 과제", "content", "내용", "submissionTarget", "MEMBERS_AND_LEADER",
+                        "submissionVisibility", "ALL_STUDY_MEMBERS", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER),
+                        "submitterIds", List.of(member.getId())))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, member.getId())).isPresent();
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, leader.getId())).isEmpty();
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, secondMember.getId())).isEmpty();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(secondMember.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), id)
+                .then().statusCode(403);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("호환용 필드 없이 대상 목록만으로 생성하며 리드 본인도 선택할 수 있다")
+    void createWithSubmitterIdsOnlyTest(boolean includeLeader) {
+        List<Long> submitterIds = includeLeader ? List.of(leader.getId(), member.getId()) : List.of(member.getId());
+        Long id = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "선택 과제", "content", "내용",
+                        "submissionVisibility", "ALL_STUDY_MEMBERS", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER),
+                        "submitterIds", submitterIds))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), id)
+                .then().statusCode(200).body("submitterIds", hasSize(submitterIds.size()))
+                .body("submissionTarget", equalTo(includeLeader ? "MEMBERS_AND_LEADER" : "MEMBERS_ONLY"));
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, leader.getId()).isPresent())
+                .isEqualTo(includeLeader);
+    }
+
+    @Test
+    @DisplayName("과제 생성 시 제출 대상 목록과 호환용 대상 범위를 모두 생략하면 거부한다")
+    void rejectCreateWithoutSubmittersTest() {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "선택 과제", "content", "내용",
+                        "submissionVisibility", "ALL_STUDY_MEMBERS", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(400).body("code", equalTo("INVALID_SUBMITTER_IDS"));
+    }
+
     @BeforeEach
     void setUp() {
         databaseCleaner.clean();
@@ -1040,7 +1136,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("리더 포함을 반복해도 제출물을 유지하고 제외하면 삭제하며 다시 포함하면 빈 제출물을 만든다")
+    @DisplayName("리더 제외와 재포함 시 제출물을 보존한다")
     void changeLeaderParticipationTest() {
         updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
         Long submissionId = submitAssignment(leaderUser, assignment, "리더의 제출 내용", "https://example.com");
@@ -1061,8 +1157,9 @@ class AssignmentApiTest {
                 assertThat(saved.getSubmissionTarget()).isEqualTo(SubmissionTarget.MEMBERS_AND_LEADER));
 
         updateSubmissionTarget(SubmissionTarget.MEMBERS_ONLY);
-        assertThat(assignmentSubmissionRepository.existsById(submissionId)).isFalse();
-        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(2);
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(
+                saved -> assertThat(saved.isAssigned()).isFalse());
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
 
         updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
         assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
@@ -1071,7 +1168,11 @@ class AssignmentApiTest {
                         SELECT COUNT(*) FROM assignment_submissions
                         WHERE assignment_id = ? AND member_id = ? AND id <> ?
                           AND content IS NULL AND link IS NULL AND submitted_at IS NULL
-                        """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
+                        """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isZero();
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(saved -> {
+            assertThat(saved.isAssigned()).isTrue();
+            assertThat(saved.getContent()).isEqualTo("리더의 제출 내용");
+        });
     }
 
     @ParameterizedTest

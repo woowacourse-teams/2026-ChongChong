@@ -1,0 +1,1 @@
+ALTER TABLE assignment_submissions ADD COLUMN assigned BOOLEAN NOT NULL DEFAULT TRUE;

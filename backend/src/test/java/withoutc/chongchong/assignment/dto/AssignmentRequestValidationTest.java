@@ -95,7 +95,6 @@ class AssignmentRequestValidationTest {
                 .containsExactlyInAnyOrder(
                         "title",
                         "content",
-                        "submissionTarget",
                         "submissionVisibility",
                         "closeAt",
                         "remindAts[0].<list element>"
@@ -104,7 +103,6 @@ class AssignmentRequestValidationTest {
                 .containsExactlyInAnyOrder(
                         "제목은 필수 값입니다.",
                         "내용은 필수 값입니다.",
-                        "리더 제출 여부는 필수 값입니다.",
                         "제출물 공개 범위는 필수 값입니다.",
                         "마감 시각은 필수 값입니다.",
                         "리마인드 시각은 필수 값입니다."

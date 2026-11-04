@@ -56,6 +56,7 @@ ErrorResponse:
         - INVALID_TITLE
         - INVALID_CONTENT
         - INVALID_LINK
+        - INVALID_SUBMITTER_IDS
         - INVALID_SUBMISSION_METHOD
         - INVALID_CLOSE_AT
         - INVALID_REMIND_AT
@@ -182,3 +183,9 @@ FileNotFoundError:
     - properties:
         code: { const: FILE_NOT_FOUND }
         message: { const: 존재하지 않는 파일입니다. }
+InvalidSubmitterIdsError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code: { const: INVALID_SUBMITTER_IDS }
+        message: { const: 제출할 스터디원을 한 명 이상 선택해 주세요. }
