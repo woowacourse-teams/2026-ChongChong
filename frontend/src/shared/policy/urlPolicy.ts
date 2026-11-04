@@ -43,8 +43,13 @@ function back(fallback: string): NavigationPolicy {
     : replace(fallback);
 }
 
-function studyTabHome(): unknown {
-  return window.history.state?.usr?.studyTabHome;
+function hasPreviousStudyHome(state: unknown, home: string): boolean {
+  return (
+    typeof state === 'object' &&
+    state !== null &&
+    'previousStudyHome' in state &&
+    state.previousStudyHome === home
+  );
 }
 
 function parseParentPath(pathname: string) {
@@ -113,19 +118,32 @@ export const URL_POLICY = {
   toDeepLink: (url: string) => push(url),
   toInvitePage: (url: string) => push(url),
 
-  toStudyTab: (
+  toStudyHomeTab: (
     studyId: Id | undefined,
-    tab: StudyTab,
-    currentPathname: string,
-  ): LinkPolicy & { state?: { studyTabHome: string } } => {
+    current: { pathname: string; state: unknown },
+  ): NavigationPolicy => {
     if (studyId === undefined) return replace(path.studies);
     const home = path.study(studyId);
-    if (tab === 'home') return replace(home);
-
-    const fromHome = currentPathname.replace(/\/+$/, '') === home || studyTabHome() === home;
+    return current.pathname.replace(/\/+$/, '') !== home &&
+      hasPreviousStudyHome(current.state, home)
+      ? { to: -1 }
+      : replace(home);
+  },
+  toStudyTab: (
+    studyId: Id | undefined,
+    tab: Exclude<StudyTab, 'home'>,
+    current: { pathname: string; state: unknown },
+  ): LinkPolicy & { state?: { previousStudyHome: string } } => {
+    if (studyId === undefined) return replace(path.studies);
+    const home = path.study(studyId);
+    const isHome = current.pathname.replace(/\/+$/, '') === home;
+    const target = `${home}/${tab}`;
     return {
-      ...replace(`${home}/${tab}`),
-      state: fromHome ? { studyTabHome: home } : undefined,
+      ...(isHome ? push(target) : replace(target)),
+      state:
+        isHome || hasPreviousStudyHome(current.state, home)
+          ? { previousStudyHome: home }
+          : undefined,
     };
   },
   // 콘텐츠 내부 내용/현황 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
@@ -163,10 +181,5 @@ export const URL_POLICY = {
   afterSessionExpired: () => replace(path.login),
   afterAuthenticationRejected: () => push(path.login),
 
-  back: (pathname: string) => {
-    // 하단 탭은 홈과 이력 한 칸을 공유하므로 앱 뒤로가기는 홈으로 교체한다.
-    const studyTab = /^\/studies\/[^/]+\/(notices|assignments|members)\/*$/.test(pathname);
-    const fallback = fallbackFor(pathname);
-    return studyTab && studyTabHome() === fallback ? replace(fallback) : back(fallback);
-  },
+  back: (pathname: string) => back(fallbackFor(pathname)),
 } as const;
