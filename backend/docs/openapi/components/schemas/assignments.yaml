@@ -61,7 +61,7 @@ AssignmentCreateResponse:
 AssignmentDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts]
+  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts, submitterIds]
   properties:
     submitterIds:
       type: array

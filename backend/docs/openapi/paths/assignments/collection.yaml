@@ -5,7 +5,7 @@ post:
   operationId: createAssignment
   x-frontend:
     status: needs-update
-    description: "공개 범위와 리더 참여 선택은 연결되어 있다. 남은 작업: 서버에서 선택 값인 제출 방법을 웹에서도 선택 입력으로 변경하고 리마인드 예약 입력을 추가한다."
+    description: "공개 범위와 기존 리더 참여 선택은 연결되어 있다. 기능 추가: 본인을 포함한 제출 대상 개별·전체 선택 후 submitterIds로 전송해야 한다. 남은 작업: 서버에서 선택 값인 제출 방법을 웹에서도 선택 입력으로 변경하고 리마인드 예약 입력을 추가한다."
     sources:
       - frontend/src/features/assignment/components/AssignmentForm.tsx
   x-backend:
@@ -22,7 +22,7 @@ post:
     content:
       application/json:
         schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentCreateRequest' }
-        example: { title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, submissionVisibility: LEADER_ONLY, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
+        example: { title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submitterIds: [2, 3], submissionVisibility: LEADER_ONLY, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
   responses:
     '201':
       description: 과제 생성 성공

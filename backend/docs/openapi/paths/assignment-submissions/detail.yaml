@@ -38,7 +38,7 @@ patch:
   operationId: updateSubmission
   x-frontend:
     status: needs-update
-    description: "본인 제출물 편집 흐름은 연결되어 있지만 공통 제출 폼이 content를 필수로 요구한다. 서버가 허용하는 내용 없는 제출물 수정에 맞춰 입력 제약을 완화해야 한다."
+    description: "본인 제출물 편집 흐름은 연결되어 있지만 공통 제출 폼이 content를 필수로 요구한다. 서버가 허용하는 내용 없는 제출물 수정에 맞춰 입력 제약을 완화하고, 내 제출 조회의 assigned=false이면 편집을 제한해야 한다."
     sources:
       - frontend/src/features/assignment/components/CompletedAssignmentSubmission.tsx
       - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx
@@ -47,10 +47,10 @@ patch:
     owner: frombunny
     description: |
       본인 제출물을 수정하며 과제와 제출물의 소속을 검증한다. 미제출 행도 수정할 수 있지만 수정 요청만으로 제출 완료 상태가 되지는 않는다.
-      리더도 본인의 제출물을 수정할 수 있다.
+      리더도 현재 제출 대상인 경우에만 본인의 제출물을 수정할 수 있다.
       완료된 이미지·파일 첨부 연결을 지원한다.
   summary: 과제 제출 수정
-  description: 현재 사용자가 자신의 제출 내용을 수정한다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
+  description: 현재 제출 대상인 사용자가 자신의 제출 내용을 수정한다. 대상에서 제외된 경우 403으로 거부하며 재추가 후 수정할 수 있다. 입력·형식·내용·링크 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제·제출물 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
