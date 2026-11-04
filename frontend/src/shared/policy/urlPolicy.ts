@@ -43,6 +43,10 @@ function back(fallback: string): NavigationPolicy {
     : replace(fallback);
 }
 
+function studyTabHome(): unknown {
+  return window.history.state?.usr?.studyTabHome;
+}
+
 function parseParentPath(pathname: string) {
   let parentPath = pathname;
 
@@ -109,14 +113,20 @@ export const URL_POLICY = {
   toDeepLink: (url: string) => push(url),
   toInvitePage: (url: string) => push(url),
 
-  // 홈에서 첫 탭 진입은 홈을 남기고, 다른 탭으로의 전환은 현재 항목을 교체한다.
-  toStudyTab: (studyId: Id | undefined, tab: StudyTab, currentPathname: string): LinkPolicy => {
+  toStudyTab: (
+    studyId: Id | undefined,
+    tab: StudyTab,
+    currentPathname: string,
+  ): LinkPolicy & { state?: { studyTabHome: string } } => {
     if (studyId === undefined) return replace(path.studies);
     const home = path.study(studyId);
-    const target = tab === 'home' ? home : `${home}/${tab}`;
-    return currentPathname.replace(/\/+$/, '') === home && tab !== 'home'
-      ? push(target)
-      : replace(target);
+    if (tab === 'home') return replace(home);
+
+    const fromHome = currentPathname.replace(/\/+$/, '') === home || studyTabHome() === home;
+    return {
+      ...replace(`${home}/${tab}`),
+      state: fromHome ? { studyTabHome: home } : undefined,
+    };
   },
   // 콘텐츠 내부 내용/현황 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
   toContentTab: (
@@ -153,5 +163,10 @@ export const URL_POLICY = {
   afterSessionExpired: () => replace(path.login),
   afterAuthenticationRejected: () => push(path.login),
 
-  back: (pathname: string) => back(fallbackFor(pathname)),
+  back: (pathname: string) => {
+    // 하단 탭은 홈과 이력 한 칸을 공유하므로 앱 뒤로가기는 홈으로 교체한다.
+    const studyTab = /^\/studies\/[^/]+\/(notices|assignments|members)\/*$/.test(pathname);
+    const fallback = fallbackFor(pathname);
+    return studyTab && studyTabHome() === fallback ? replace(fallback) : back(fallback);
+  },
 } as const;
