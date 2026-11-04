@@ -8,12 +8,13 @@ get:
       - frontend/src/features/study/api.ts
       - frontend/src/features/study/pages/StudyDetailPage.tsx
   x-backend:
-    status: todo
+    status: in-progress
     owner: JYL35
     description: |
-      #639의 명세 선행 단계다. OpenAPI와 ADR을 작성했으며 월간 조회 구현과 HTTP 계약 테스트는 아직 없다.
-      공지는 가입 전·후 전체, 과제는 현재 본인이 지정된 항목만 조회하고 본인 상태를 함께 반환한다.
-      #637의 제출물 보존과 연계하여 제출 기록 존재 여부와 현재 지정 여부를 구분해야 한다.
+      #639의 월간 조회 컨트롤러·서비스·projection과 본인 상태 응답을 구현하고 HTTP 계약 테스트를 검증했다.
+      공지는 가입 전·후 전체, 과제는 #638의 assigned=true 조건으로 현재 본인 지정 항목만 반환한다.
+      H2에서 월 경계·정렬·상태·권한·원본 수정/삭제·대상 제외/재지정을 검증했다.
+      전체 백엔드 회귀·PostgreSQL 검증과 PR·Merge 이후 Postman 기능 테스트가 남아 있다.
   summary: 스터디 홈 월간 일정 조회
   description: |
     현재 스터디 멤버가 선택한 월의 공지 생성·과제 생성·과제 제출 마감 이벤트를 조회한다.
