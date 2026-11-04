@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
@@ -47,15 +46,15 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
 @Import({TestS3PresignerConfiguration.class, StudyCalendarApiTest.FixedClockConfiguration.class})
-class StudyCalendarApiTest {
+class StudyCalendarApiTest extends PostgresContainerTest {
 
     private static final LocalDateTime START = LocalDateTime.of(2026, 11, 1, 0, 0);
     private static final LocalDateTime END = LocalDateTime.of(2026, 12, 1, 0, 0);
