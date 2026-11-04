@@ -152,8 +152,7 @@ export const URL_POLICY = {
     tab: ContentTab,
   ): LinkPolicy => {
     const params = new URLSearchParams(location.search);
-    if (tab === 'status') params.set('view', 'status');
-    else params.delete('view');
+    params.set('tab', tab);
     const search = params.toString();
     return replace(`${location.pathname}${search ? `?${search}` : ''}${location.hash}`);
   },
