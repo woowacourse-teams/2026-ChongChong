@@ -225,6 +225,27 @@ class AssignmentTest {
         assertThat(assignment.getNextRemindAt()).isEqualTo(nextRemindAt);
     }
 
+    @Test
+    @DisplayName("마지막 제출 대상을 제외하려는 변경은 거부하고 기존 대상을 유지한다")
+    void rejectRemovingLastSubmitterTest() {
+        Assignment assignment = createAssignment();
+        StudyMember leader = memberWithId(1L);
+        when(leader.isLeader()).thenReturn(true);
+        assignment.replaceSubmitters(List.of(leader));
+
+        assertThatThrownBy(() -> assignment.update(leader, null, null, null,
+                SubmissionTarget.MEMBERS_ONLY, null, null, null, NOW))
+                .isInstanceOf(AssignmentException.class);
+        assertThat(assignment.getSubmitterIds()).containsExactly(leader.getId());
+        assertThat(assignment.getSubmissionTarget()).isEqualTo(SubmissionTarget.MEMBERS_AND_LEADER);
+
+        assertThatThrownBy(() -> assignment.replaceSubmitters(List.of()))
+                .isInstanceOf(AssignmentException.class);
+        assertThatThrownBy(() -> assignment.replaceSubmitters(List.of(memberWithId(null))))
+                .isInstanceOf(AssignmentException.class);
+        assertThat(assignment.getSubmitterIds()).containsExactly(leader.getId());
+    }
+
     private Assignment createAssignment() {
         return createAssignment("과제 제목", "과제 내용", "링크 제출", NOW.plusDays(1));
     }

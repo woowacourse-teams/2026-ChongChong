@@ -1,13 +1,28 @@
 AssignmentCreateRequest:
   type: object
   additionalProperties: false
-  required: [title, content, submissionTarget, submissionVisibility, closeAt]
+  required: [title, content, submissionVisibility, closeAt]
+  anyOf:
+    - required: [submitterIds]
+      additionalProperties: true
+      properties:
+        submitterIds: { type: array, minItems: 1 }
+    - required: [submissionTarget]
+      additionalProperties: true
+      properties:
+        submissionTarget: { type: string }
   properties:
+    submitterIds:
+      type: [array, 'null']
+      description: 제출할 스터디 멤버 ID 전체 목록. 리드 본인도 멤버 ID로 포함할 수 있다. 한 명 이상이며 중복·다른 스터디 멤버는 거부한다. 지정하면 submissionTarget 없이 생성 가능하고 두 필드를 함께 보내면 이 목록을 우선한다. 생략·null이면 호환용 submissionTarget이 필수다.
+      minItems: 1
+      uniqueItems: true
+      items: { type: integer, format: int64, minimum: 1 }
     attachmentFileIds: { $ref: './assignment-attachments.yaml#/AttachmentFileIds' }
     title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 제목.", type: string, minLength: 1, maxLength: 100, example: 1주 차 과제 }
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다.", type: string, minLength: 1, maxLength: 10000, example: 이번 주 과제를 제출해주세요. }
     submissionMethod: { description: "선택 입력인 제출 방법 안내문. 생략, null, 빈 문자열 또는 공백만 입력하면 빈 문자열로 저장한다. 실제 제출 형식은 제한하지 않는다.", type: [string, 'null'], maxLength: 10000, example: 링크 제출 }
-    submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다.", type: string, enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER] }
+    submissionTarget: { description: "기존 클라이언트 호환용 제출 대상 범위. submitterIds가 없을 때만 사용한다. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다.", deprecated: true, type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
     closeAt: { description: "과제 제출 마감 시각. 새 값을 전달하면 서버의 현재 시각보다 미래여야 한다.", $ref: './common.yaml#/LocalDateTime' }
     remindAts: { description: "리마인드 알림을 보낼 시각 목록. 생략하거나 null이면 알림을 예약하지 않는다. 시각은 서버의 현재 시각보다 미래여야 한다.", type: [array, 'null'], items: { $ref: './common.yaml#/LocalDateTime' } }
     submissionVisibility:
@@ -18,11 +33,17 @@ AssignmentUpdateRequest:
   type: object
   additionalProperties: false
   properties:
+    submitterIds:
+      type: [array, 'null']
+      description: 제출할 스터디 멤버 ID 전체 목록. 리드 본인도 멤버 ID로 포함할 수 있다. 한 명 이상이며 중복·다른 스터디 멤버는 거부한다. 지정하면 submissionTarget보다 우선한다. 생략·null이면 submissionTarget이 있을 때 기존 리드 참여 규칙을 적용하고 두 필드 모두 생략·null이면 기존 대상을 유지한다. 제외해도 제출물을 보존하며 마감 후에도 변경 가능하다.
+      minItems: 1
+      uniqueItems: true
+      items: { type: integer, format: int64, minimum: 1 }
     attachmentFileIds: { $ref: './assignment-attachments.yaml#/AttachmentFileIds' }
     title: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 제목. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 100, example: 수정된 과제 }
     content: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 과제 본문. 과제 요구사항이나 학습 내용을 작성한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 10000, example: 수정된 과제 내용입니다. }
     submissionMethod: { description: "선택 입력인 제출 방법 안내문. 생략하거나 null이면 기존 값을 유지하고, 빈 문자열이나 공백만 보내면 설명을 비운다.", type: [string, 'null'], maxLength: 10000, example: 링크 제출 }
-    submissionTarget: { description: "제출 대상 범위. MEMBERS_ONLY는 일반 스터디원만, MEMBERS_AND_LEADER는 리더까지 포함한다. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
+    submissionTarget: { description: "기존 클라이언트 호환용 리드 참여 변경. submitterIds가 없을 때만 사용한다. MEMBERS_ONLY는 리드를 제외하고 MEMBERS_AND_LEADER는 요청한 리드를 포함한다. 생략·null이면 기존 대상을 유지한다.", deprecated: true, type: [string, 'null'], enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null] }
     submissionVisibility:
       type: [string, 'null']
       enum: [LEADER_ONLY, ALL_STUDY_MEMBERS, null]
@@ -40,8 +61,12 @@ AssignmentCreateResponse:
 AssignmentDetailResponse:
   type: object
   additionalProperties: false
-  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts]
+  required: [id, title, content, submissionMethod, submissionTarget, submissionVisibility, closeAt, remindAts, submitterIds]
   properties:
+    submitterIds:
+      type: array
+      description: 현재 제출 대상인 스터디 멤버 ID 목록.
+      items: { type: integer, format: int64, minimum: 1 }
     attachments: { type: array, items: { $ref: './assignment-attachments.yaml#/Attachment' } }
     id: { type: integer, format: int64, example: 1 }
     title: { type: string, example: 1주 차 과제 }

@@ -13,7 +13,8 @@ public record MySubmissionDetailResponse(
         LocalDateTime createdAt,
         String content,
         String link,
-        List<AssignmentAttachmentResponse> attachments
+        List<AssignmentAttachmentResponse> attachments,
+        boolean assigned
 ) {
     public static MySubmissionDetailResponse notAssigned() {
         return new MySubmissionDetailResponse(
@@ -22,7 +23,8 @@ public record MySubmissionDetailResponse(
                 null,
                 null,
                 null,
-                List.of()
+                List.of(),
+                false
         );
     }
 
@@ -30,11 +32,19 @@ public record MySubmissionDetailResponse(
                                                 List<AssignmentAttachmentResponse> attachments) {
         return new MySubmissionDetailResponse(
                 submission.getId(),
-                submission.submissionStatus(now),
+                getSubmissionStatus(submission, now),
                 submission.getSubmittedAt(),
                 submission.getContent(),
                 submission.getLink(),
-                attachments
+                attachments,
+                submission.isAssigned()
         );
+    }
+
+    private static SubmissionStatus getSubmissionStatus(AssignmentSubmission submission, LocalDateTime now) {
+        if (!submission.isAssigned() && submission.getSubmittedAt() == null) {
+            return SubmissionStatus.NOT_ASSIGNED;
+        }
+        return submission.submissionStatus(now);
     }
 }

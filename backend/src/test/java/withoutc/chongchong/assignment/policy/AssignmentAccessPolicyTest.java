@@ -54,6 +54,7 @@ class AssignmentAccessPolicyTest {
         StudyMember owner = mock(StudyMember.class);
         AssignmentSubmission submission = mock(AssignmentSubmission.class);
         when(submission.isOwnedBy(owner)).thenReturn(true);
+        when(submission.isAssigned()).thenReturn(true);
 
         assertThatCode(() -> policy.requireCanUpdateSubmission(owner, submission))
                 .doesNotThrowAnyException();
@@ -66,6 +67,24 @@ class AssignmentAccessPolicyTest {
         AssignmentSubmission submission = mock(AssignmentSubmission.class);
 
         assertAccessDenied(() -> policy.requireCanUpdateSubmission(actor, submission));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true, true, true", "true, false, false", "false, true, false", "false, false, false"})
+    @DisplayName("제출과 수정은 현재 제출 대상인 소유자만 허용한다")
+    void requireAssignedOwnerTest(boolean assigned, boolean owner, boolean allowed) {
+        StudyMember actor = mock(StudyMember.class);
+        AssignmentSubmission submission = mock(AssignmentSubmission.class);
+        when(submission.isAssigned()).thenReturn(assigned);
+        when(submission.isOwnedBy(actor)).thenReturn(owner);
+
+        if (allowed) {
+            assertThatCode(() -> policy.requireCanSubmitAssignment(actor, submission)).doesNotThrowAnyException();
+            assertThatCode(() -> policy.requireCanUpdateSubmission(actor, submission)).doesNotThrowAnyException();
+        } else {
+            assertAccessDenied(() -> policy.requireCanSubmitAssignment(actor, submission));
+            assertAccessDenied(() -> policy.requireCanUpdateSubmission(actor, submission));
+        }
     }
 
     private static Stream<Arguments> leaderOnlyActions() {

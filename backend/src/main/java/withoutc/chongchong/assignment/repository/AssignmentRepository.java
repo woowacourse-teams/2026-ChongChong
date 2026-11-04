@@ -95,7 +95,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             SUM(CASE WHEN s.submittedAt IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Assignment a
-            JOIN AssignmentSubmission s ON s.assignment.id = a.id
+            JOIN AssignmentSubmission s ON s.assignment.id = a.id AND s.assigned = true
             WHERE a.study.id = :studyId
             GROUP BY a.id, a.title, a.createdAt
             HAVING SUM(CASE WHEN s.submittedAt IS NULL THEN 1 ELSE 0 END) > 0
@@ -114,7 +114,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             SELECT s.id
             FROM AssignmentSubmission s
             WHERE s.assignment = a AND s.member.id = :memberId
-            AND s.submittedAt IS NULL
+            AND s.submittedAt IS NULL AND s.assigned = true
             )
             ORDER BY a.createdAt DESC
             """)
@@ -131,7 +131,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             AND EXISTS (
             SELECT s.id
             FROM AssignmentSubmission s
-            WHERE s.assignment.id = a.id AND s.submittedAt IS NULL
+            WHERE s.assignment.id = a.id AND s.submittedAt IS NULL AND s.assigned = true
             )
             """)
     long countIncompleteAssignmentByStudyId(
@@ -146,7 +146,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             AND EXISTS (
             SELECT s.id
             FROM AssignmentSubmission s
-            WHERE s.assignment.id = a.id AND s.member.id = :memberId AND s.submittedAt IS NULL
+            WHERE s.assignment.id = a.id AND s.member.id = :memberId AND s.submittedAt IS NULL AND s.assigned = true
             )
             """)
     long countIncompleteAssignmentByStudyIdAndMemberId(

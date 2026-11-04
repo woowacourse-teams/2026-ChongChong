@@ -33,10 +33,12 @@ public class AssignmentAccessPolicy {
         requireLeader(actor);
     }
 
+    public void requireCanSubmitAssignment(StudyMember actor, AssignmentSubmission submission) {
+        requireAssignedOwner(actor, submission);
+    }
+
     public void requireCanUpdateSubmission(StudyMember actor, AssignmentSubmission submission) {
-        if (!submission.isOwnedBy(actor)) {
-            throw new AuthException(AuthErrorCode.ACCESS_DENIED);
-        }
+        requireAssignedOwner(actor, submission);
     }
 
     public void requireCanReadSubmission(StudyMember actor, Assignment assignment, AssignmentSubmission submission) {
@@ -44,6 +46,12 @@ public class AssignmentAccessPolicy {
             return;
         }
         if (!actor.isLeader() && !submission.isOwnedBy(actor)) {
+            throw new AuthException(AuthErrorCode.ACCESS_DENIED);
+        }
+    }
+
+    private void requireAssignedOwner(StudyMember actor, AssignmentSubmission submission) {
+        if (!submission.isAssigned() || !submission.isOwnedBy(actor)) {
             throw new AuthException(AuthErrorCode.ACCESS_DENIED);
         }
     }

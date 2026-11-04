@@ -49,6 +49,7 @@ get:
                 title: 이번 주 공지
                 content: 이번 주 스터디 일정을 확인해주세요.
                 createdAt: '2026-08-27T10:00:00'
+                remindAts: []
                 attachments:
                   - fileId: 101
                     originalFileName: schedule.png
@@ -69,6 +70,7 @@ get:
                 title: 이번 주 공지
                 content: 이번 주 스터디 일정을 확인해주세요.
                 createdAt: '2026-08-27T10:00:00'
+                remindAts: []
                 attachments: []
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

@@ -38,7 +38,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
              AND notification.resourceType = withoutc.chongchong.notification.entity.ResourceType.ASSIGNMENT
              AND notification.resourceId = submission.assignment.id
              AND notification.type = withoutc.chongchong.notification.entity.NotificationType.REMIND
-            WHERE submission.assignment.id = :assignmentId
+            WHERE submission.assignment.id = :assignmentId AND submission.assigned = true
             GROUP BY member.id,
                      member.name,
                      member.profileImageUrl,
@@ -124,7 +124,7 @@ public interface AssignmentSubmissionRepository extends JpaRepository<Assignment
             SELECT DISTINCT submission.member
             FROM AssignmentSubmission submission
             WHERE submission.assignment.id = :assignmentId
-              AND submission.submittedAt IS NULL
+              AND submission.submittedAt IS NULL AND submission.assigned = true
             """)
     List<StudyMember> findUnsubmittedMembersByAssignmentId(@Param("assignmentId") Long assignmentId);
 
