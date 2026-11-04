@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { createWrapper, setup, login } from '../../../../test/render';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../../mocks/msw-node';
@@ -9,6 +9,7 @@ import { studyTable } from '../../mocks/db';
 import { userTable } from '../../../user/mocks/db';
 import { memberTable } from '../../../member/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
+import { URL_POLICY } from '../../../../shared/policy/urlPolicy';
 
 const STUDIES_URL = `${API_URL}${STUDY_URLS.list}`;
 
@@ -26,6 +27,40 @@ describe('스터디 목록 페이지 테스트', () => {
 
   afterEach(() => {
     logout();
+  });
+
+  test('빈 목록에서도 Floating을 열어 만들기와 참여하기 링크를 선택할 수 있다', async () => {
+    const { user } = setup(<MyStudiesPage />, { wrapper: createWrapper() });
+    await screen.findByText('아직 스터디가 없어요');
+    expect(screen.queryByRole('link', { name: /스터디 만들기/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '스터디 메뉴 열기' }));
+    const panel = within(screen.getByRole('dialog', { name: '스터디 메뉴' }));
+    expect(panel.getByRole('link', { name: /스터디 만들기/ })).toHaveAttribute(
+      'href',
+      URL_POLICY.toCreateStudy().to,
+    );
+    expect(panel.getByRole('link', { name: /스터디 참여하기/ })).toHaveAttribute(
+      'href',
+      URL_POLICY.toJoinStudy().to,
+    );
+  });
+
+  test('메뉴 안의 닫기 버튼으로 접으면 Floating 버튼으로 초점이 돌아온다', async () => {
+    const { user } = setup(<MyStudiesPage />, { wrapper: createWrapper() });
+    const trigger = screen.getByRole('button', { name: '스터디 메뉴 열기' });
+    await user.click(trigger);
+
+    const panel = screen.getByRole('dialog', { name: '스터디 메뉴' });
+    const closeButton = within(panel).getByRole('button', { name: '닫기' });
+    expect(closeButton).toHaveTextContent(/^닫기$/);
+    await waitFor(() => expect(closeButton).toBeVisible());
+    await user.click(closeButton);
+
+    expect(panel).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toBeVisible();
+    expect(trigger).toHaveFocus();
   });
 
   describe('참여 중인 스터디가 있는 경우', () => {

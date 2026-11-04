@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { API_URL } from '../../../../../config';
@@ -69,6 +69,34 @@ describe('과제 목록 페이지 테스트', () => {
   afterEach(() => {
     logout();
   });
+
+  test.each([leaderUserName, memberUserName])(
+    '%s에게 역할에 맞는 과제 메뉴를 제공하고 닫으면 Floating으로 돌아온다',
+    async (userName) => {
+      login(userName);
+      const { user } = setupAssignmentListPage();
+      await screen.findByText('아직 과제가 없어요');
+      expect(screen.queryByRole('link', { name: /과제 추가하기/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      if (userName === leaderUserName) {
+        const trigger = screen.getByRole('button', { name: '과제 메뉴 열기' });
+        await user.click(trigger);
+        const menu = within(screen.getByRole('dialog', { name: '과제 메뉴' }));
+        expect(menu.getAllByRole('link')).toHaveLength(1);
+        expect(menu.getByRole('link', { name: /과제 추가하기/ })).toHaveAttribute(
+          'href',
+          '/studies/1/assignments/create',
+        );
+        const closeButton = menu.getByRole('button', { name: '닫기' });
+        await waitFor(() => expect(closeButton).toBeVisible());
+        await user.click(closeButton);
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(trigger).toHaveFocus();
+      } else {
+        expect(screen.queryByRole('button', { name: '과제 메뉴 열기' })).not.toBeInTheDocument();
+      }
+    },
+  );
 
   test.each([
     { userName: leaderUserName, visibility: 'LEADER_ONLY', label: '미공개' },

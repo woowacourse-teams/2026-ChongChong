@@ -1,9 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { API_URL } from '../../../../../config';
 import { server } from '../../../../mocks/msw-node';
-import { createWrapper } from '../../../../test/render';
+import { createWrapper, setup } from '../../../../test/render';
 import { STUDY_URLS } from '../../../study/urls';
 import NoticeListPage from '../NoticeListPage';
 
@@ -11,13 +11,55 @@ const STUDY_INFO_URL = `${API_URL}${STUDY_URLS.info}`;
 const NOTICE_LIST_URL = `${API_URL}/studies/:studyId/notices`;
 
 function renderNoticeListPage() {
-  render(
+  return setup(
     <Routes>
       <Route path="/studies/:studyId/notices" element={<NoticeListPage />} />
     </Routes>,
     { wrapper: createWrapper({ initialEntries: ['/studies/1/notices'] }) },
   );
 }
+
+describe('공지 작성 Floating', () => {
+  test.each(['LEADER', 'MEMBER'])(
+    '%s에게 역할에 맞는 공지 메뉴를 제공하고 닫으면 Floating으로 돌아온다',
+    async (role) => {
+      server.use(
+        http.get(STUDY_INFO_URL, () =>
+          HttpResponse.json({
+            studyName: '스터디',
+            role,
+            userName: '총총',
+            description: '스터디 설명',
+          }),
+        ),
+        http.get(NOTICE_LIST_URL, () =>
+          HttpResponse.json({ notices: [], hasNext: false, nextCursor: null }),
+        ),
+      );
+      const { user } = renderNoticeListPage();
+      await screen.findByText('아직 공지가 없어요');
+      expect(screen.queryByRole('link', { name: /공지 작성하기/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      if (role === 'LEADER') {
+        const trigger = screen.getByRole('button', { name: '공지 메뉴 열기' });
+        await user.click(trigger);
+        const menu = within(screen.getByRole('dialog', { name: '공지 메뉴' }));
+        expect(menu.getAllByRole('link')).toHaveLength(1);
+        expect(menu.getByRole('link', { name: /공지 작성하기/ })).toHaveAttribute(
+          'href',
+          '/studies/1/notices/create',
+        );
+        const closeButton = menu.getByRole('button', { name: '닫기' });
+        await waitFor(() => expect(closeButton).toBeVisible());
+        await user.click(closeButton);
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(trigger).toHaveFocus();
+      } else {
+        expect(screen.queryByRole('button', { name: '공지 메뉴 열기' })).not.toBeInTheDocument();
+      }
+    },
+  );
+});
 
 describe('기본 정보 조회 실패', () => {
   beforeEach(() => {
