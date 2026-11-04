@@ -1,0 +1,72 @@
+CalendarYear:
+  type: integer
+  minimum: 1
+  maximum: 9998
+  description: 한국 시간 기준 조회 연도. 다음 달 경계도 네 자리 연도로 표현할 수 있는 범위다.
+  example: 2026
+CalendarMonth:
+  type: integer
+  minimum: 1
+  maximum: 12
+  description: 조회 월. 1월부터 12월까지의 정수다.
+  example: 11
+StudyCalendarResponse:
+  type: object
+  additionalProperties: false
+  required: [year, month, events]
+  properties:
+    year: { $ref: '#/CalendarYear' }
+    month: { $ref: '#/CalendarMonth' }
+    events:
+      description: |
+        선택한 월의 모든 조회 대상 이벤트. 일정이 없으면 빈 배열이다. 페이지 크기로 자르지 않는다.
+        eventAt 오름차순, 같은 시각이면 NOTICE_CREATED, ASSIGNMENT_CREATED, ASSIGNMENT_DUE 순서,
+        같은 종류이면 resourceId 오름차순으로 정렬한다.
+      type: array
+      items:
+        oneOf:
+          - { $ref: '#/NoticeCalendarEvent' }
+          - { $ref: '#/AssignmentCalendarEvent' }
+NoticeCalendarEvent:
+  type: object
+  additionalProperties: false
+  required: [eventType, resourceType, resourceId, title, eventAt, readStatus]
+  properties:
+    eventType: { type: string, const: NOTICE_CREATED, description: 공지의 생성 이벤트 }
+    resourceType: { type: string, const: NOTICE, description: 상세 조회 대상의 종류 }
+    resourceId: { type: integer, format: int64, minimum: 1, description: 원본 공지 ID, example: 15 }
+    title: { type: string, description: 원본 공지의 현재 제목, example: 스터디 진행 안내 }
+    eventAt:
+      $ref: './common.yaml#/LocalDateTime'
+      description: 원본 공지의 생성 시각. Asia/Seoul 기준이며 UTC 오프셋을 붙이지 않는다.
+    readStatus:
+      $ref: './notices.yaml#/NoticeReadStatus'
+      description: |
+        조회 시점의 본인 읽음 상태. 본인 확인 대상 기록이 없으면 NOT_ASSIGNED다.
+        가입 전 공지와 리더 등 확인 대상이 아닌 공지도 제외하지 않는다. 전체 대상자의 완료 상태가 아니다.
+AssignmentCalendarEvent:
+  type: object
+  additionalProperties: false
+  required: [eventType, resourceType, resourceId, title, eventAt, submissionStatus]
+  properties:
+    eventType:
+      type: string
+      enum: [ASSIGNMENT_CREATED, ASSIGNMENT_DUE]
+      description: 과제 생성과 제출 마감을 구분한다. 같은 날짜여도 두 이벤트로 반환한다.
+    resourceType: { type: string, const: ASSIGNMENT, description: 상세 조회 대상의 종류 }
+    resourceId: { type: integer, format: int64, minimum: 1, description: 원본 과제 ID, example: 21 }
+    title: { type: string, description: 원본 과제의 현재 제목, example: 알고리즘 과제 }
+    eventAt:
+      $ref: './common.yaml#/LocalDateTime'
+      description: |
+        ASSIGNMENT_CREATED는 원본 createdAt, ASSIGNMENT_DUE는 현재 closeAt이다.
+        Asia/Seoul 기준이며 UTC 오프셋을 붙이지 않는다.
+    submissionStatus:
+      description: |
+        조회 시점의 본인 제출 상태. 현재 제출 대상으로 지정된 과제만 반환하므로 NOT_ASSIGNED는 없다.
+        미제출이면 기준 시각이 현재 마감 시각 이하일 때 NOT_SUBMITTED, 마감을 지나면 MISSING이다.
+        최초 제출 시각이 현재 마감 시각 이하이면 SUBMITTED, 마감을 지나면 LATE_SUBMITTED다.
+        같은 과제의 생성·마감 이벤트에는 같은 상태를 반환한다. 전체 대상자의 완료 상태가 아니다.
+      allOf:
+        - { $ref: './assignment-submissions.yaml#/SubmissionStatus' }
+        - { type: string, enum: [NOT_SUBMITTED, SUBMITTED, LATE_SUBMITTED, MISSING] }

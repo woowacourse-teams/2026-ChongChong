@@ -1,6 +1,7 @@
 package withoutc.chongchong.assignment.repository;
 
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -11,9 +12,44 @@ import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
+import withoutc.chongchong.assignment.repository.projection.AssignmentCalendarProjection;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
+
+    @Query("""
+            SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentCalendarProjection(
+                assignment.id, assignment.title, assignment.createdAt, assignment.closeAt, submission.submittedAt
+            )
+            FROM Assignment assignment
+            JOIN AssignmentSubmission submission
+              ON submission.assignment = assignment AND submission.member.id = :memberId AND submission.assigned = true
+            WHERE assignment.study.id = :studyId
+              AND assignment.createdAt >= :startAt AND assignment.createdAt < :endAt
+            """)
+    List<AssignmentCalendarProjection> findCalendarCreatedAssignments(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt
+    );
+
+    @Query("""
+            SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentCalendarProjection(
+                assignment.id, assignment.title, assignment.createdAt, assignment.closeAt, submission.submittedAt
+            )
+            FROM Assignment assignment
+            JOIN AssignmentSubmission submission
+              ON submission.assignment = assignment AND submission.member.id = :memberId AND submission.assigned = true
+            WHERE assignment.study.id = :studyId
+              AND assignment.closeAt >= :startAt AND assignment.closeAt < :endAt
+            """)
+    List<AssignmentCalendarProjection> findCalendarDueAssignments(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt
+    );
 
     Optional<Assignment> findByIdAndStudyId(Long id, Long studyId);
 

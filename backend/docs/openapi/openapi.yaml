@@ -48,6 +48,8 @@ paths:
     $ref: './paths/studies/detail.yaml'
   /api/studies/{studyId}/info:
     $ref: './paths/studies/info.yaml'
+  /api/studies/{studyId}/calendar:
+    $ref: './paths/studies/calendar.yaml'
   /api/studies/me:
     $ref: './paths/studies/my-studies.yaml'
   /api/studies/public:

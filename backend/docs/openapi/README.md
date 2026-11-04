@@ -24,6 +24,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 스터디 수정 | `PATCH /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
 | 스터디 삭제 | `DELETE /api/studies/{studyId}` | [paths/studies/detail.yaml](paths/studies/detail.yaml) |
 | 스터디 기본 정보 조회 | `GET /api/studies/{studyId}/info` | [paths/studies/info.yaml](paths/studies/info.yaml) |
+| 스터디 홈 월간 일정 조회 | `GET /api/studies/{studyId}/calendar` | [paths/studies/calendar.yaml](paths/studies/calendar.yaml) |
 | 내 스터디 목록 조회 | `GET /api/studies/me` | [paths/studies/my-studies.yaml](paths/studies/my-studies.yaml) |
 | 공개 스터디 목록 조회 및 이름 검색 | `GET /api/studies/public` | [paths/studies/public.yaml](paths/studies/public.yaml) |
 | 스터디 참여 전 정보 조회 | `GET /api/studies/join-info` | [paths/studies/join-info.yaml](paths/studies/join-info.yaml) |
@@ -66,6 +67,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 - [공통 오류 응답](components/responses.yaml): 상태별 오류 조합과 예시
 - [오류 스키마](components/schemas/errors.yaml): 오류 코드·메시지·필드 오류 구조
 - [공통 타입](components/schemas/common.yaml): 서버 날짜·시간
+- [스터디 캘린더](components/schemas/study-calendar.yaml): 월간 조회 범위, 공지·과제 이벤트와 본인 상태
 - 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [Web Push](components/schemas/web-push-subscriptions.yaml), [알림](components/schemas/notifications.yaml)
 
 공통 정의를 바꾸면 이를 참조하는 여러 API에 적용된다. 특정 API만 달라져야 한다면 해당 API에 맞는 정의를 분리한다.
@@ -134,6 +136,7 @@ CI는 명세 문법·참조·문서 생성 가능 여부, Spring MVC의 업무 e
 
 현재 남아 있는 차이와 미연동 기능은 다음과 같다.
 
+- 스터디 홈 캘린더([#639](https://github.com/woowacourse-teams/2026-ChongChong/issues/639)): `GET /api/studies/{studyId}/calendar?year=2026&month=11`을 구현하고 단위·H2 저장소·PostgreSQL HTTP 계약 테스트로 검증했다. 공지는 가입 전·후 전체, 과제는 [#638](https://github.com/woowacourse-teams/2026-ChongChong/pull/638)의 `assigned=true` 조건으로 현재 본인 지정 항목의 생성·마감을 조회하며 본인 읽음·제출 상태를 제공한다. 제목·마감·삭제는 현재 원본을 반영하고 기타 일정은 제외한다. 전체 백엔드 테스트 1,685개(캘린더 PostgreSQL HTTP 32개 포함)가 실패·오류·스킵 없이 통과하고 63개 API의 성공 호출 커버리지를 확인했다. 백엔드는 `review`, 담당자는 `JYL35`이며 PR 검토·Merge 후 실행 환경의 Postman 테스트가 남아 있다. 프론트 화면 연동과 실제 배포는 별도 작업이다. 응답과 상태는 [월간 조회 계약](paths/studies/calendar.yaml), 결정 근거는 [ADR-0059](../adr/0059-query-calendar-events-from-current-content.md)에 기록한다.
 - 홈 프로필 이미지([#622](https://github.com/woowacourse-teams/2026-ChongChong/issues/622)): `PATCH /api/users/me/profile-image`와 `DELETE /api/users/me/profile-image`를 구현하고 자동화 테스트로 검증했다. 기존 업로드 URL 발급·S3 PUT·완료 API 이후 `fileId`로 변경하며 업로드 용도는 생략·null로 공통 경로를 사용한다. 기본 정책은 JPEG/PNG/WebP 한 장·0바이트 초과·최대 5MiB이며 형식·용량은 설정 가능하다. 홈 초기화는 업로드 연결과 외부 URL을 해제해 `profileImageUrl: null`을 반환한다. 홈 변경·초기화는 현재 참여 중인 모든 스터디의 해당 사용자 이미지에 함께 반영한다. 신규 가입·생성 후에도 현재 홈 이미지를 사용한다. 스터디별 이미지 수정과 선택 방식은 이번 작업에 포함하지 않는다. 업로드 이미지는 응답 시 presigned GET URL을 생성하고 만료 시 해당 리소스를 재조회한다. 내 프로필·이름 수정 응답과 멤버·공지·제출물·댓글 조회에도 현재 홈 이미지를 반영하며 기존 응답의 필드명·nullable 형태를 유지한다. 이미지 변경·초기화와 내 프로필 조회·이름 수정 API는 `review`이며 PR 검토 및 배포 환경 확인 대기다. 회원 탈퇴 시 파일 소유자 연결은 null로 분리하고 사용 중인 파일을 보존하며, 실제 미사용 파일 삭제는 별도 File 작업으로 연계한다. 프론트 이미지 변경·초기화와 관련 캐시 갱신·URL 만료 대응은 미연동이다.
 - 과제 생성·수정: 공개 범위와 기존 리더 참여 설정은 연결되어 있다. #637 브랜치에서는 submitterIds로 본인을 포함한 최종 대상을 지정하고 기존 submissionTarget은 호환용으로 유지한다. 개별·전체 선택, 생성 후 추가·제외는 웹 미연동이다. 제출 방법은 서버에서는 선택 값이지만 웹 폼에서는 필수다.
 - 과제 대상 제외: 제출물·첨부·댓글·알림을 보존하고 기존 공개 범위로 조회한다. 현재 대상의 현황·리마인드에서는 제외하며 재추가 전 제출·수정은 거부한다. 내 제출 응답의 assigned를 이용한 웹 편집 제한이 필요하다. 0명은 금지하고 마감 후 대상 변경은 허용한다. 2026-11-04 로컬 구현 기준이며 배포 완료를 뜻하지 않는다.

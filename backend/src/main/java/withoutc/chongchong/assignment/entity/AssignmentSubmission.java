@@ -113,20 +113,7 @@ public class AssignmentSubmission extends BaseEntity {
     }
 
     public SubmissionStatus submissionStatus(LocalDateTime now) {
-        LocalDateTime closeAt = assignment.getCloseAt();
-
-        if (submittedAt == null) {
-            if (now.isAfter(closeAt)) {
-                return SubmissionStatus.MISSING;
-            }
-            return SubmissionStatus.NOT_SUBMITTED;
-        }
-
-        if (submittedAt.isAfter(closeAt)) {
-            return SubmissionStatus.LATE_SUBMITTED;
-        }
-
-        return SubmissionStatus.SUBMITTED;
+        return SubmissionStatus.from(submittedAt, assignment.getCloseAt(), now);
     }
 
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,
