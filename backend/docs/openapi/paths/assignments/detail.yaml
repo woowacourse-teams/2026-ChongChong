@@ -25,7 +25,7 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentDetailResponse' }
-          example: { id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, submissionVisibility: LEADER_ONLY, closeAt: '2026-08-29T23:59:00' }
+          example: { id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, submissionVisibility: LEADER_ONLY, closeAt: '2026-08-29T23:59:00', remindAts: [] }
     '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }

@@ -66,10 +66,10 @@ get:
           examples:
             leader:
               summary: 리더의 전체 현황
-              value: { nextCursor: null, hasNext: false, assignments: [{ id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, closeAt: '2026-08-29T23:59:00', memberCount: 5, completeCount: 3, remindAt: '2026-08-28T10:00:00', isComplete: false, submissionStatus: NOT_ASSIGNED }] }
+              value: { nextCursor: null, hasNext: false, assignments: [{ id: 1, title: 1주 차 과제, content: 이번 주 과제를 제출해주세요., submissionMethod: 링크 제출, closeAt: '2026-08-29T23:59:00', memberCount: 5, completeCount: 3, remindAt: '2026-08-28T10:00:00', isComplete: false, submissionStatus: NOT_ASSIGNED, submissionVisibility: LEADER_ONLY }] }
             notAssignedMember:
               summary: 가입 전 글을 조회하는 신규 스터디원
-              value: { nextCursor: null, hasNext: false, assignments: [{ id: 1, title: 가입 전 글, content: 이전 내용을 확인해주세요., submissionMethod: 링크 제출, closeAt: '2026-08-29T23:59:00', submissionStatus: NOT_ASSIGNED }] }
+              value: { nextCursor: null, hasNext: false, assignments: [{ id: 1, title: 가입 전 글, content: 이전 내용을 확인해주세요., submissionMethod: 링크 제출, closeAt: '2026-08-29T23:59:00', submissionStatus: NOT_ASSIGNED, submissionVisibility: LEADER_ONLY }] }
     '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
