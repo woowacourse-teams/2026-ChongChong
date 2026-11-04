@@ -1,6 +1,7 @@
 package withoutc.chongchong.notice.repository;
 
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -12,8 +13,26 @@ import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
+import withoutc.chongchong.notice.repository.projection.NoticeCalendarProjection;
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
+    @Query("""
+            SELECT new withoutc.chongchong.notice.repository.projection.NoticeCalendarProjection(
+                notice.id, notice.title, notice.createdAt, recipient.id, recipient.readAt
+            )
+            FROM Notice notice
+            LEFT JOIN NoticeRecipient recipient
+              ON recipient.notice = notice AND recipient.member.id = :memberId
+            WHERE notice.study.id = :studyId
+              AND notice.createdAt >= :startAt AND notice.createdAt < :endAt
+            """)
+    List<NoticeCalendarProjection> findCalendarNotices(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt
+    );
+
     @Query("""
             SELECT n
             FROM Notice n
