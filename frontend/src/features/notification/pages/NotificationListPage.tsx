@@ -1,7 +1,8 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import { Suspense } from 'react';
-import { Link } from 'react-router';
 import Page from '../../../shared/ui/Page';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -23,7 +24,7 @@ export default function NotificationListPage() {
       <TopHeader
         left={
           <>
-            <PrevButton to="/studies" />
+            <PrevButton />
             <TopHeader.Title>알림</TopHeader.Title>
           </>
         }
@@ -62,8 +63,7 @@ function Content() {
       {notifications.map((notification) => (
         <List.Item key={notification.id}>
           <Link
-            to={notification.deepLink}
-            state={{ returnTo: '/notifications' }}
+            {...URL_POLICY.toDeepLink(notification.deepLink)}
             onClick={() => handleNotificationClick(notification)}
           >
             <NotificationItem key={notification.id} notification={notification} />

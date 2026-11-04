@@ -1,5 +1,6 @@
-import { CSSProperties } from 'react';
 import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
+import { CSSProperties } from 'react';
 import ManagementIcon from '../../../shared/assets/management-icon.webp';
 
 const managementLinkStyle = {
@@ -15,7 +16,7 @@ interface Props {
 
 export default function StudyManagementLink({ studyId }: Props) {
   return (
-    <Link to={`/studies/${studyId}/management`} css={managementLinkStyle}>
+    <Link {...URL_POLICY.toStudyManagement(studyId)} css={managementLinkStyle}>
       <img src={ManagementIcon} alt="스터디 관리" width={26} height={26} />
     </Link>
   );

@@ -1,6 +1,7 @@
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useEffect, useRef, useState } from 'react';
 import { usePostHog } from '@posthog/react';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import chongchongLogo from '../assets/chongchong-logo.png';
 import { usePwaInstall } from '../usePwaInstall';
 
@@ -40,7 +41,7 @@ export default function InstallAppButton({
   const [guideOpen, setGuideOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const posthog = usePostHog();
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function InstallAppButton({
       setGuideOpen(true);
     } else {
       onActiveChange(false);
-      if (result === 'installed') navigate('/studies');
+      if (result === 'installed') move(URL_POLICY.toStudies());
     }
   }
 

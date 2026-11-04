@@ -1,7 +1,8 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
-import { Link } from 'react-router';
 import { Assignment } from '../types';
 import { ReactNode } from 'react';
 import { formatDateToString } from '../../../shared/utils/formatDate';
@@ -23,11 +24,7 @@ export default function AssigmentList<T extends Assignment>({
     <List>
       {assignments.map((assignment) => (
         <List.Item key={assignment.id}>
-          <Link
-            to={{
-              pathname: `/studies/${studyId}/assignments/${assignment.id}`,
-            }}
-          >
+          <Link {...URL_POLICY.toAssignment(studyId, assignment.id)}>
             <ContentCard>
               <ContentCard.Badges>
                 {children(assignment)}

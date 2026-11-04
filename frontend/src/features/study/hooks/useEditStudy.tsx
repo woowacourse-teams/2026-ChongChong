@@ -1,15 +1,16 @@
 import type { StudyFormValues } from '../types';
 import studyQueries from '../queries';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { editStudy } from '../api';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 
 export default function useEditStudy(studyId: number) {
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -17,7 +18,7 @@ export default function useEditStudy(studyId: number) {
     mutationFn: (body: StudyFormValues) => editStudy(studyId, body),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: studyQueries.all() });
-      navigate(`/studies/${studyId}`);
+      move(URL_POLICY.afterStudyEdit(studyId));
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;

@@ -1,3 +1,4 @@
+import { clearInviteLinkDraft } from '../../hooks/useInviteLinkState';
 import { screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { createWrapper, setup, login } from '../../../../test/render';
@@ -14,6 +15,9 @@ import { clearAccessToken as logout } from '../../../login/accessToken';
 const STUDY_JOIN_URL = `${API_URL}${STUDY_URLS.join}`;
 
 describe('스터디 참가 폼 테스트', () => {
+  beforeEach(() => {
+    clearInviteLinkDraft();
+  });
   afterEach(() => {
     logout();
   });
@@ -96,6 +100,36 @@ describe('스터디 참가 폼 테스트', () => {
       expect(inviteLinkInput()).toHaveValue(expectedLink);
     },
   );
+
+  test('로그인 후 같은 주소로 돌아오면 직접 입력한 초대 링크를 복원한다', async () => {
+    const path = '/studies/join?token=original-token';
+    const { user, unmount } = setup(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: [path] }),
+    });
+    await user.clear(inviteLinkInput());
+    const typedLink = createInviteLink('edited-token');
+    await user.type(inviteLinkInput(), typedLink);
+    unmount();
+
+    setup(<StudyJoinPage />, { wrapper: createWrapper({ initialEntries: [path] }) });
+
+    expect(inviteLinkInput()).toHaveValue(typedLink);
+  });
+
+  test('다른 초대 링크로 진입하면 이전 입력 대신 새 초대 링크를 표시한다', async () => {
+    const { user, unmount } = setup(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: ['/studies/join?token=first'] }),
+    });
+    await user.clear(inviteLinkInput());
+    await user.type(inviteLinkInput(), createInviteLink('edited-token'));
+    unmount();
+
+    setup(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: ['/studies/join?token=second'] }),
+    });
+
+    expect(inviteLinkInput()).toHaveValue(createInviteLink('second'));
+  });
 
   describe('스터디에 참여한다', () => {
     const userId = 1;

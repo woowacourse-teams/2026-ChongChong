@@ -1,3 +1,5 @@
+import { saveLoginReturnPath } from './src/features/login/loginReturnPath';
+import { URL_POLICY } from './src/shared/policy/urlPolicy';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter, matchRoutes, RouterProvider } from 'react-router';
@@ -60,7 +62,11 @@ async function enableMocking() {
 
 const queryClient = new QueryClient();
 
-const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
+const publicPaths = new Set([
+  URL_POLICY.toLanding().to,
+  URL_POLICY.toLogin().to,
+  URL_POLICY.toKakaoCallback().to,
+]);
 
 async function restoreSession() {
   if (publicPaths.has(window.location.pathname)) return false;
@@ -69,7 +75,8 @@ async function restoreSession() {
     await refreshAccessToken();
     return false;
   } catch {
-    window.history.replaceState({}, document.title, '/login');
+    saveLoginReturnPath();
+    window.history.replaceState({}, document.title, URL_POLICY.afterSessionExpired().to);
     return true;
   }
 }

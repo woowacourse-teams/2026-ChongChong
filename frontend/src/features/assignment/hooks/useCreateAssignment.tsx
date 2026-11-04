@@ -1,8 +1,9 @@
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AssignmentFormValues } from '../types';
 import { createAssignment } from '../api';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import { usePostHog } from '@posthog/react';
@@ -15,7 +16,7 @@ interface Params {
 
 export default function useCreateAssignment({ studyId }: Params) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const toast = useToast();
   const posthog = usePostHog();
 
@@ -31,7 +32,7 @@ export default function useCreateAssignment({ studyId }: Params) {
         attachment_count: body.attachmentFileIds?.length ?? 0,
       });
 
-      await navigate(`/studies/${studyId}/assignments/${assignmentId}`);
+      await move(URL_POLICY.afterAssignmentCreate(studyId, assignmentId));
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;

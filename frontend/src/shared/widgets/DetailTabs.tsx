@@ -1,8 +1,8 @@
 import { useId, type CSSProperties, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router';
+import { useLocation } from 'react-router';
+import { URL_POLICY } from '../policy/urlPolicy';
+import usePageNavigation from '../hooks/usePageNavigation';
 import { tokens, typography } from '../../styles/global';
-
-type Tab = 'status' | 'detail';
 
 interface Props {
   status: ReactNode;
@@ -39,27 +39,16 @@ const panelStyle = {
 } satisfies CSSProperties;
 
 export default function DetailTabs({ status, detail }: Props) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab: Tab = searchParams.get('view') === 'status' ? 'status' : 'detail';
+  const location = useLocation();
+  const { move } = usePageNavigation();
+  const searchParams = new URLSearchParams(location.search);
+  const activeTab: 'status' | 'detail' =
+    searchParams.get('view') === 'status' ? 'status' : 'detail';
   const id = useId();
   const statusTabId = `${id}-status-tab`;
   const detailTabId = `${id}-detail-tab`;
   const statusPanelId = `${id}-status-panel`;
   const detailPanelId = `${id}-detail-panel`;
-
-  const selectTab = (tab: Tab) => {
-    setSearchParams((currentParams) => {
-      const nextParams = new URLSearchParams(currentParams);
-
-      if (tab === 'status') {
-        nextParams.set('view', 'status');
-      } else {
-        nextParams.delete('view');
-      }
-
-      return nextParams;
-    });
-  };
 
   return (
     <>
@@ -71,7 +60,7 @@ export default function DetailTabs({ status, detail }: Props) {
           aria-selected={activeTab === 'detail'}
           aria-controls={detailPanelId}
           css={{ ...tabStyle, ...(activeTab === 'detail' ? selectedTabStyle : {}) }}
-          onClick={() => selectTab('detail')}
+          onClick={() => move(URL_POLICY.toContentTab(location, 'detail'))}
         >
           내용
         </button>
@@ -82,7 +71,7 @@ export default function DetailTabs({ status, detail }: Props) {
           aria-selected={activeTab === 'status'}
           aria-controls={statusPanelId}
           css={{ ...tabStyle, ...(activeTab === 'status' ? selectedTabStyle : {}) }}
-          onClick={() => selectTab('status')}
+          onClick={() => move(URL_POLICY.toContentTab(location, 'status'))}
         >
           현황
         </button>

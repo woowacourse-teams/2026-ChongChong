@@ -1,7 +1,6 @@
 import { CSSProperties } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import usePageNavigation from '../hooks/usePageNavigation';
 import backIcon from '../assets/left-arrow.svg';
-import { parseParentPath } from '../utils/parseParentPath';
 
 const backButtonStyle = {
   display: 'grid',
@@ -14,27 +13,11 @@ const backButtonStyle = {
   cursor: 'pointer',
 } satisfies CSSProperties;
 
-interface PrevButtonProps {
-  to?: string;
-}
-
-export function PrevButton({ to }: PrevButtonProps = {}) {
-  const navigate = useNavigate();
-  const { pathname, state } = useLocation();
-  const parentPath = parseParentPath(pathname);
-  const returnTo = state?.returnTo;
-
-  function goToPreviousPage() {
-    if (returnTo) {
-      navigate(returnTo, { replace: true });
-      return;
-    }
-
-    navigate(to ?? parentPath);
-  }
+export function PrevButton() {
+  const { back } = usePageNavigation();
 
   return (
-    <button type="button" css={backButtonStyle} aria-label="뒤로 가기" onClick={goToPreviousPage}>
+    <button type="button" css={backButtonStyle} aria-label="뒤로 가기" onClick={back}>
       <img src={backIcon} alt="" css={{ width: '24px', height: '24px' }} />
     </button>
   );

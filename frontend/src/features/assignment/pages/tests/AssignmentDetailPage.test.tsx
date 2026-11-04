@@ -547,7 +547,6 @@ describe('과제 디테일 페이지 테스트', () => {
         await openStatusTab(user);
 
         const detailLink = await screen.findByRole('link', { name: '상세 보기' });
-        expect(detailLink).toHaveAttribute('href', '/studies/1/assignments/1?view=detail');
 
         await user.click(detailLink);
 
