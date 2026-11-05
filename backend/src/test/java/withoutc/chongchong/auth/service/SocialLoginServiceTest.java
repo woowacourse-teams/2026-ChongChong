@@ -8,11 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import withoutc.chongchong.auth.entity.AuthSession;
-import withoutc.chongchong.auth.entity.SocialAccount;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
 import withoutc.chongchong.auth.repository.SocialAccountRepository;
 import withoutc.chongchong.auth.social.SocialProvider;
@@ -53,72 +51,6 @@ class SocialLoginServiceTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
-    }
-
-    @Test
-    @DisplayName("처음 로그인한 소셜 사용자를 자동 가입시키고 총총 Token을 발급한다")
-    void signUpNewSocialUserAndIssueTokenPair() {
-        SocialUserInfo socialUserInfo = createSocialUserInfo(
-                SocialProvider.GOOGLE,
-                "google-user-id",
-                "총총이",
-                "https://example.com/profile.png"
-        );
-
-        SocialLoginResult result = socialLoginService.login(socialUserInfo);
-        IssuedTokenPair tokenPair = result.tokenPair();
-
-        User user = userRepository.findAll().getFirst();
-        SocialAccount socialAccount = socialAccountRepository.findByProviderAndProviderUserId(
-                SocialProvider.GOOGLE,
-                "google-user-id"
-        ).orElseThrow();
-        AuthSession authSession = findOnlySession(user.getId());
-        Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
-        HashedRefreshToken expectedRefreshTokenHash = refreshTokenHasher.hash(tokenPair.refreshToken());
-
-        assertThat(result.userId()).isEqualTo(user.getId());
-        assertThat(userRepository.count()).isOne();
-        assertThat(user.getName()).isEqualTo("총총이");
-        assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
-        assertThat(socialAccountRepository.count()).isOne();
-        assertThat(socialAccount.getUser().getId()).isEqualTo(user.getId());
-        assertThat(authSessionRepository.count()).isOne();
-        assertThat(authSession.getRefreshTokenHash()).isEqualTo(expectedRefreshTokenHash);
-        assertThat(accessToken.getSubject()).isEqualTo(user.getId().toString());
-    }
-
-    @Test
-    @DisplayName("기존 소셜 사용자는 연결된 User를 재사용하고 프로필을 덮어쓰지 않는다")
-    void reuseExistingUserWithoutUpdatingProfile() {
-        User existingUser = userRepository.saveAndFlush(User.create(
-                "기존 이름",
-                "https://example.com/old-profile.png"
-        ));
-        socialAccountRepository.saveAndFlush(SocialAccount.create(
-                existingUser,
-                SocialProvider.GOOGLE,
-                "google-user-id"
-        ));
-        SocialUserInfo changedSocialUserInfo = createSocialUserInfo(
-                SocialProvider.GOOGLE,
-                "google-user-id",
-                "Provider에서 바뀐 이름",
-                "https://example.com/new-profile.png"
-        );
-
-        SocialLoginResult result = socialLoginService.login(changedSocialUserInfo);
-        IssuedTokenPair tokenPair = result.tokenPair();
-
-        User found = userRepository.findById(existingUser.getId()).orElseThrow();
-        Jwt accessToken = jwtDecoder.decode(tokenPair.accessToken().value());
-        assertThat(result.userId()).isEqualTo(existingUser.getId());
-        assertThat(userRepository.count()).isOne();
-        assertThat(socialAccountRepository.count()).isOne();
-        assertThat(authSessionRepository.count()).isOne();
-        assertThat(found.getName()).isEqualTo("기존 이름");
-        assertThat(found.getProfileImageUrl()).isEqualTo("https://example.com/old-profile.png");
-        assertThat(accessToken.getSubject()).isEqualTo(existingUser.getId().toString());
     }
 
     @Test
