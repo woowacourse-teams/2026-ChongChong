@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
-import { tokens } from '../../styles/global';
-import { Text } from '../ui/Typography';
+import { tokens } from '../../../styles/global';
+import { Text } from '../../../shared/ui/Typography';
 import {
   calendarGridStyle,
   dayButtonStyle,
@@ -8,8 +8,8 @@ import {
   monthHeaderStyle,
   selectedDayStyle,
   weekdayRowStyle,
-} from '../ui/date-time-picker/dateTimePicker.styles';
-import { getCalendarDays, isSameDay, WEEKDAYS } from '../ui/date-time-picker/dateTimePicker.utils';
+} from '../../../shared/ui/date-time-picker/dateTimePicker.styles';
+import { getCalendarDays, isSameDay, WEEKDAYS } from '../../../shared/ui/date-time-picker/dateTimePicker.utils';
 
 interface CalenderProps {
   selectedDate: Date;
