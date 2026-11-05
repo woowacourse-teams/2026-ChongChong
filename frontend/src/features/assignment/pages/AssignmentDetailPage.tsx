@@ -1,5 +1,6 @@
+import calendarQueries from '../../calendar/queries';
 import { Suspense } from 'react';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import LeaderAssignmentDetailContent from '../components/LeaderAssignmentDetailContent';
 import MemberAssignmentDetailContent from '../components/MemberAssignmentDetailContent';
@@ -57,11 +58,19 @@ function Content() {
 
 function HeaderActions() {
   const { studyId, assignmentId } = useIntegerParams(['studyId', 'assignmentId']);
+  const queryClient = useQueryClient();
   const {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return role === 'LEADER' ? (
-    <ContentActionMenu studyId={studyId} id={assignmentId} content="assignment" />
+    <ContentActionMenu
+      studyId={studyId}
+      id={assignmentId}
+      content="assignment"
+      onDeleteSuccess={() => {
+        queryClient.invalidateQueries({ queryKey: calendarQueries.months(studyId) });
+      }}
+    />
   ) : null;
 }

@@ -1,3 +1,4 @@
+import calendarQueries from '../../calendar/queries';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,6 +37,8 @@ export default function useEditAssignment({ studyId, assignmentId }: Params) {
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.detail(studyId, assignmentId).queryKey,
       });
+
+      queryClient.invalidateQueries({ queryKey: calendarQueries.months(studyId) });
 
       await move(URL_POLICY.afterAssignmentEdit(studyId, assignmentId));
     },
