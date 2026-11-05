@@ -77,7 +77,7 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
       )}
       <FloatingMenu
         aria-label="과제 메뉴"
-        bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.safeBottom} + ${tokens.spacing[4]})`}
+        bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.tabBarBottomInset} + ${tokens.spacing[4]})`}
         trigger={({ bottom, ...props }) => (
           <Floating
             {...props}

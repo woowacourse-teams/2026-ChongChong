@@ -80,8 +80,10 @@ export const globalStyles = css`
     --layout-gutter: 20px;
     --layout-header-height: 64px;
     --layout-tab-bar-height: 64px;
+    --layout-tab-bar-padding-bottom: 8px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --layout-tab-bar-bottom-inset: var(--safe-bottom);
 
     /* Spacing */
 
@@ -141,6 +143,17 @@ export const globalStyles = css`
     /* Screen Size */
     --body-width: 448px;
   }
+  /* iOS WebKit의 기능 지원 여부와 홈 화면 앱 표시 모드를 함께 확인한다. */
+  @supports (-webkit-touch-callout: none) {
+    @media (display-mode: standalone) {
+      :root {
+        --layout-tab-bar-height: 52px;
+        --layout-tab-bar-padding-bottom: 4px;
+        --layout-tab-bar-bottom-inset: max(0px, calc(var(--safe-bottom) - 12px));
+      }
+    }
+  }
+
   ${modernNormalize}
 `;
 
@@ -219,6 +232,8 @@ export const tokens = {
     gutter: 'var(--layout-gutter)',
     headerHeight: 'var(--layout-header-height)',
     tabBarHeight: 'var(--layout-tab-bar-height)',
+    tabBarPaddingBottom: 'var(--layout-tab-bar-padding-bottom)',
+    tabBarBottomInset: 'var(--layout-tab-bar-bottom-inset)',
     safeTop: 'var(--safe-top)',
     safeBottom: 'var(--safe-bottom)',
   },
