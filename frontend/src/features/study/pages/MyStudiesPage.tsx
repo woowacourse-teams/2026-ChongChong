@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
-import { Suspense, CSSProperties } from 'react';
+import { Suspense } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -8,18 +8,11 @@ import logo from '../../../shared/assets/icons/header-icon.svg?width=120&as=webp
 import MyStudies from '../components/MyStudies';
 import Main from '../../../shared/ui/Main';
 import { tokens } from '../../../styles/global';
-import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
 import Loading from '../../../shared/ui/Loading';
 import NotificationLink from '../../notification/components/NotificationLink';
 import MyIcon from '../../../shared/assets/my.webp';
-
-const actionsStyle = {
-  display: 'flex',
-  gap: tokens.spacing[3],
-  flexDirection: 'column',
-  margin: `${tokens.spacing[3]} 0`,
-} satisfies CSSProperties;
+import StudyFloatingActions from '../components/StudyFloatingActions';
 
 export default function MyStudiesPage() {
   return (
@@ -40,29 +33,16 @@ export default function MyStudiesPage() {
         }
       />
 
-      <Main>
+      <Main css={{ paddingBottom: `calc(${tokens.spacing[20]} + ${tokens.layout.safeBottom})` }}>
         <ErrorBoundary
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
             <MyStudies />
-
-            <div css={actionsStyle}>
-              {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
-              <Link {...URL_POLICY.toCreateStudy()}>
-                <Button variant="brandSolid" size="large">
-                  스터디 만들기
-                </Button>
-              </Link>
-              <Link {...URL_POLICY.toJoinStudy()}>
-                <Button role="link" variant="neutralOutline" size="large">
-                  스터디 참여하기
-                </Button>
-              </Link>
-            </div>
           </Suspense>
         </ErrorBoundary>
       </Main>
+      <StudyFloatingActions />
     </Page>
   );
 }
