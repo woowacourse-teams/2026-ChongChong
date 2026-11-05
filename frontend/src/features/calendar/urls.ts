@@ -1,3 +1,6 @@
 export const CALENDAR_URLS = {
-  monthly: '/studies/:studyId/calendar',
+  monthly: {
+    path: (studyId: number) => `/studies/${studyId}/calendar`,
+    mock: '/studies/:studyId/calendar',
+  },
 };
