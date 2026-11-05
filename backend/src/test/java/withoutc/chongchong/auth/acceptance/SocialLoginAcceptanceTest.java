@@ -275,6 +275,9 @@ class SocialLoginAcceptanceTest {
                 .header(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax"));
 
         String rotatedAccessToken = refreshResponse.jsonPath().getString("accessToken");
+        Instant rotatedAccessTokenExpiresAt = Instant.parse(
+                refreshResponse.jsonPath().getString("accessTokenExpiresAt")
+        );
         String rotatedRefreshToken = refreshResponse.getCookie("refresh_token");
         HashedRefreshToken rotatedHash = refreshTokenHasher.hash(
                 new RawRefreshToken(rotatedRefreshToken)
@@ -283,6 +286,8 @@ class SocialLoginAcceptanceTest {
 
         assertThat(rotatedRefreshToken).isNotEqualTo(originalRefreshToken);
         assertThat(rotatedAccessToken).isNotEqualTo(originalAccessToken);
+        assertThat(jwtDecoder.decode(rotatedAccessToken).getExpiresAt())
+                .isEqualTo(rotatedAccessTokenExpiresAt);
         assertThat(rotatedSession.getId()).isEqualTo(sessionId);
         assertThat(rotatedSession.getRefreshTokenHash())
                 .isEqualTo(rotatedHash)

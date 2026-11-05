@@ -59,7 +59,6 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 내 알림 목록 조회 | `GET /api/notifications` | [paths/notifications/collection.yaml](paths/notifications/collection.yaml) |
 | 알림 읽음 처리 | `PATCH /api/notifications/{notificationId}` | [paths/notifications/detail.yaml](paths/notifications/detail.yaml) |
 | 푸시 알림 클릭 기록 | `POST /api/notification-deliveries/{deliveryId}/click` | [paths/notifications/delivery-click.yaml](paths/notifications/delivery-click.yaml) |
-
 | 파일 업로드 완료 확인 | `POST /api/files/{fileId}/complete` | [paths/files/complete.yaml](paths/files/complete.yaml) |
 | 내 홈 프로필 이미지 변경 | `PATCH /api/users/me/profile-image` | [paths/users/profile-image.yaml](paths/users/profile-image.yaml) |
 | 내 홈 프로필 이미지 초기화 | `DELETE /api/users/me/profile-image` | [paths/users/profile-image.yaml](paths/users/profile-image.yaml) |

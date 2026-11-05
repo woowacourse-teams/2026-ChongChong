@@ -18,7 +18,7 @@
 | `ChongChongApplicationTests.contextLoads` | 검증문 없는 Spring 컨텍스트 시작만 수행 | 각 실제 HTTP 테스트의 전체 앱 시작과 요청 처리, `OpenApiMappingContractTest` |
 | `StudyCalendarResponseTest` 2개 | 별도 JsonMapper로 확인하는 필드·null 제외·빈 배열 계약을 실제 HTTP가 이미 검사 | `StudyCalendarApiTest.returnsAllNoticesAndOnlyAssignedPersonalAssignments`, `returnsEmptyCalendar`, OpenAPI 응답 검증 |
 | `StudyRepositoryTest` 2개 | mock의 findById 반환값을 다시 확인하며 실제 쿼리·매핑·제약을 검증하지 않음 | `StudyAcceptanceTest.getStudyInfoForMissingStudyTest`, `getStudyJoinInfoForMissingStudyTest`와 성공 조회 |
-| 인증 요청·응답 변환 테스트 3개 | 필드 복사 결과를 별도로 검사하지만 로그인·갱신 HTTP에서도 같은 값을 사용·검증 | `KakaoSocialLoginAcceptanceTest.loginNewKakaoUserAndAccessProtectedApi`, `SocialLoginAcceptanceTest.completeWebAuthenticationLifecycle` 등 |
+| 인증 요청·응답 변환 테스트 3개 | 필드 복사 결과를 별도로 검사하지만 로그인·갱신 HTTP에서도 같은 값을 사용·검증 | `KakaoSocialLoginAcceptanceTest.loginNewKakaoUserAndAccessProtectedApi`, `SocialLoginAcceptanceTest.completeWebAuthenticationLifecycle` 등. 갱신 응답의 accessTokenExpiresAt은 반환된 JWT의 만료 시각과 직접 비교한다. |
 | `SocialLoginResultTest.createSocialLoginResult` | 입력값과 접근자 반환값 비교 | 실제 로그인 흐름. 이 클래스의 잘못된 사용자 ID·누락 토큰 검증은 유지 |
 | `NoticeRequestValidationTest` 첨부 검증 12개 | 생성·수정 각각 null·빈 배열·양수·null 원소·0·음수를 Validator와 HTTP에서 반복 | `NoticeCreationAttachmentApiTest`의 생성·잘못된 ID 검사, `NoticeUpdateAttachmentApiTest`의 보존·제거·교체·잘못된 ID 검사 |
 | 같은 DTO 테스트의 빈 수정·잘못된 수정 예약 2개 | HTTP에서 상태 보존까지 검증하는 사례와 겹침 | `NoticeApiTest.updateNoticeWithoutFieldsTest`, `preserveNoticeWhenReminderIsInvalid` |
