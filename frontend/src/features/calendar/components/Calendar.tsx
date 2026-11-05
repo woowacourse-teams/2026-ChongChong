@@ -21,6 +21,13 @@ interface CalendarProps {
   onSelectDate: (date: Date) => void;
 }
 
+const eventKindOrder = ['created', 'due'] as const;
+
+const contentStyle = {
+  border: tokens.border.neutral,
+  borderRadius: tokens.radius.md,
+} satisfies CSSProperties;
+
 const dateButtonStyle = { height: '40px' } satisfies CSSProperties;
 
 const dayContentStyle = {
@@ -63,7 +70,7 @@ export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: 
   }
 
   return (
-    <>
+    <div css={contentStyle}>
       <div css={monthHeaderStyle}>
         <button
           type="button"
@@ -106,7 +113,8 @@ export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: 
 
           const day = date.getDate();
           const isSelected = isSameDay(date, selectedDate);
-          const eventKinds = getEventKinds(date);
+          const dayEventKinds = getEventKinds(date);
+          const eventKinds = eventKindOrder.filter((kind) => dayEventKinds.includes(kind));
           return (
             <button
               key={date.getTime()}
@@ -149,6 +157,6 @@ export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: 
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

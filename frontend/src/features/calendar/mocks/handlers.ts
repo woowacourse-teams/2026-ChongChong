@@ -48,7 +48,7 @@ function koreanEventAt(value: string) {
 }
 
 export const handlers = [
-  http.get(`${API_URL}${CALENDAR_URLS.monthly}`, ({ request, params }) => {
+  http.get(`${API_URL}${CALENDAR_URLS.monthly.mock}`, ({ request, params }) => {
     const query = new URL(request.url).searchParams;
     const yearValue = query.get('year');
     const monthValue = query.get('month');

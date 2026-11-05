@@ -21,7 +21,7 @@ export default function StudyCalendarPage() {
       >
         <Suspense fallback={<Loading />}>
           <Main>
-            <StudyCalendar studyId={studyId} eventsByDate={{}} />
+            <StudyCalendar studyId={studyId} />
           </Main>
         </Suspense>
       </ErrorBoundary>
