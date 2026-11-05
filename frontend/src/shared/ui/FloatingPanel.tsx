@@ -30,7 +30,7 @@ interface FloatingPanelProps {
   'aria-label': string;
   trigger: (props: TriggerProps) => ReactNode;
   children: ReactNode | ((actions: { close: () => void }) => ReactNode);
-  closeButton?: (actions: { close: () => void; expanded: boolean }) => ReactNode;
+  closeButton?: (actions: { close: () => void }) => ReactNode;
   bottom?: CSSProperties['bottom'];
 }
 
@@ -240,7 +240,7 @@ function PanelDialog({
                 transition: `padding ${duration}ms ${easing}`,
               }}
             >
-              {closeButton({ close: onClose, expanded })}
+              {closeButton({ close: onClose })}
             </div>
           )}
         </div>
