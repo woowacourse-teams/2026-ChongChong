@@ -1,10 +1,10 @@
 import { ComponentProps, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { CSSObject } from '@emotion/react';
-import { tokens } from '../../styles/global';
-import Button from './Button';
+import { tokens } from '../../../styles/global';
+import Button from '../../ui/Button';
 import FloatingPanel from './FloatingPanel';
-import { Text } from './Typography';
+import { Text } from '../../ui/Typography';
 
 type FloatingMenuProps = Omit<ComponentProps<typeof FloatingPanel>, 'children' | 'closeButton'> & {
   children: ReactNode;

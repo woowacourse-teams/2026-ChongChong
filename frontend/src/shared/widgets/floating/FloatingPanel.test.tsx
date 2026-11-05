@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { setup } from '../../test/render';
+import { setup } from '../../../test/render';
 import FloatingPanel from './FloatingPanel';
 
 function renderFloatingPanel() {

@@ -1,6 +1,6 @@
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import Floating from '../../../shared/ui/Floating';
-import FloatingMenu from '../../../shared/ui/FloatingMenu';
+import FloatingMenu from '../../../shared/widgets/floating/FloatingMenu';
 import plus from '../../../shared/assets/icons/plus-white.svg';
 import door from '../../../shared/assets/icons/door-open-white.svg';
 

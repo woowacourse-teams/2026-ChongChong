@@ -4,7 +4,7 @@ import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
 import Floating from '../../../shared/ui/Floating';
-import FloatingMenu from '../../../shared/ui/FloatingMenu';
+import FloatingMenu from '../../../shared/widgets/floating/FloatingMenu';
 import plus from '../../../shared/assets/icons/plus-white.svg';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';

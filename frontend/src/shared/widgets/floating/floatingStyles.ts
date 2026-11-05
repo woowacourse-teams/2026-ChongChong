@@ -1,5 +1,5 @@
 import { CSSObject } from '@emotion/react';
-import { tokens } from '../../styles/global';
+import { tokens } from '../../../styles/global';
 
 export const FLOATING_SIZE = 56;
 

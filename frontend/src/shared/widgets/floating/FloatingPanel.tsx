@@ -10,8 +10,8 @@ import {
   useState,
 } from 'react';
 import { CSSObject } from '@emotion/react';
-import { tokens } from '../../styles/global';
-import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { tokens } from '../../../styles/global';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { FLOATING_SIZE, floatingMotion, floatingPositionStyle } from './floatingStyles';
 
 type TriggerProps = Pick<
