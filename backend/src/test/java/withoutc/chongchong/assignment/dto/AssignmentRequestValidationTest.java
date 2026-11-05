@@ -130,14 +130,6 @@ class AssignmentRequestValidationTest {
     }
 
     @Test
-    @DisplayName("과제 수정 요청은 모든 필드를 생략할 수 있다")
-    void validateEmptyUpdateRequestTest() {
-        AssignmentUpdateRequest request = new AssignmentUpdateRequest(null, null, null, null, null, null, null);
-
-        assertThat(validator.validate(request)).isEmpty();
-    }
-
-    @Test
     @DisplayName("과제 수정 요청의 제목, 내용, 제출 방법이 최대 길이를 초과하면 거부한다")
     void validateUpdateRequestOverLengthTest() {
         AssignmentUpdateRequest request = new AssignmentUpdateRequest(

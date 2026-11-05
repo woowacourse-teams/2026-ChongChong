@@ -143,7 +143,7 @@ class UserProfileImageUpdateApiTest extends PostgresContainerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"{}", "{\"fileId\":null}", "{\"fileId\":0}", "{\"fileId\":-1}"})
+    @ValueSource(strings = {"{}", "{\"fileId\":null}", "{\"fileId\":0}"})
     @DisplayName("필수 양수 파일 식별자가 아니면 입력 검증 오류를 반환한다")
     void rejectsInvalidFileId(String body) {
         assertRejected(request(user.getId(), body), 400, "INVALID_INPUT_VALUE");

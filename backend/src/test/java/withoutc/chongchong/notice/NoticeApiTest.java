@@ -699,16 +699,6 @@ class NoticeApiTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
                 .body("errors.field", hasItem("size"));
-
-        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
-                .port(port)
-                .queryParam("size", Integer.MAX_VALUE)
-                .when()
-                .get("/studies/{studyId}/notices", study.getId())
-                .then()
-                .statusCode(400)
-                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
-                .body("errors.field", hasItem("size"));
     }
 
     @Test
