@@ -53,8 +53,10 @@ const floatingMenuItemStyle = {
   color: tokens.text.default,
   textAlign: 'left',
   cursor: 'pointer',
+  '&:focus': {
+    outline: 'none',
+  },
   '&:hover': { background: tokens.bg.subtle },
-  '&:focus-visible': { outline: `2px solid ${tokens.text.brand}`, outlineOffset: '2px' },
 } satisfies CSSObject;
 
 FloatingMenu.LinkItem = function LinkItem({
