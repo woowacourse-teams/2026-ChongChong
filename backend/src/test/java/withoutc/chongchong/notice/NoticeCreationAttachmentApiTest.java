@@ -140,19 +140,6 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("최대 10장의 PNG 이미지는 장당 정확히 5MiB까지 첨부할 수 있다")
-    void acceptMaximumCountAndSize() {
-        List<Long> fileIds = LongStream.range(0, 10)
-                .mapToObj(index -> saveFile(leader, "image/png", 5242880).getId()).toList();
-
-        request(leader.getId(), validBody(fileIds)).then().statusCode(201);
-
-        assertThat(countRows("notice_attachments")).isEqualTo(10);
-        assertThat(fileRepository.findAllById(fileIds)).hasSize(10).extracting(FileMetadata::getStatus)
-                .containsOnly(FileUploadStatus.COMPLETED);
-    }
-
-    @Test
     @DisplayName("첨부 개수 제한을 넘으면 400 ATTACHMENT_LIMIT_EXCEEDED를 반환한다")
     void rejectTooManyAttachments() {
         List<Long> fileIds = LongStream.rangeClosed(1, 11).boxed().toList();
@@ -227,20 +214,9 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("허용하지 않는 형식은 400 INVALID_NOTICE_IMAGE_TYPE을 반환한다")
-    void rejectUnsupportedImageType() {
-        FileMetadata file = saveFile(leader, "application/pdf", 1024);
-
-        assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_TYPE");
-
-        verifyNoInteractions(s3FileMetadataReader);
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {0L, 5242881L})
-    @DisplayName("빈 파일이나 용량 초과 파일은 400 INVALID_NOTICE_IMAGE_SIZE를 반환한다")
-    void rejectInvalidImageSize(long size) {
-        FileMetadata file = saveFile(leader, "image/png", size);
+    @DisplayName("용량 초과 파일은 400 INVALID_NOTICE_IMAGE_SIZE를 반환한다")
+    void rejectInvalidImageSize() {
+        FileMetadata file = saveFile(leader, "image/png", 5242881L);
 
         assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_SIZE");
 

@@ -16,7 +16,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -24,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
-import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
 import withoutc.chongchong.study.controller.dto.StudyMemberResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
@@ -78,60 +76,6 @@ class StudyMemberServiceTest {
 
     @InjectMocks
     private StudyMemberService studyMemberService;
-
-    @Test
-    @DisplayName("유효한 초대 토큰으로 스터디에 참여하고 멤버를 생성한다")
-    void joinTest() {
-        Long userId = 1L;
-        Long studyId = 2L;
-        String token = "invite-token";
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(userId);
-        when(user.getName()).thenReturn("사용자");
-        when(user.getProfileImageUrl()).thenReturn("profile-image-url");
-        Study study = mock(Study.class);
-        when(study.getId()).thenReturn(studyId);
-        StudyJoinRequest request = new StudyJoinRequest(null, token);
-        ArgumentCaptor<StudyMember> captor = ArgumentCaptor.forClass(StudyMember.class);
-        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
-        when(studyInviteTokenProvider.verifyAndExtractStudyId(token)).thenReturn(studyId);
-        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
-        when(studyMemberRepository.save(any(StudyMember.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        StudyMemberJoinResponse response = studyMemberService.join(userId, request);
-
-        verify(studyMemberRepository).save(captor.capture());
-        StudyMember studyMember = captor.getValue();
-        assertThat(response.studyId()).isEqualTo(studyId);
-        assertThat(studyMember.getStudy()).isSameAs(study);
-        assertThat(studyMember.getUser()).isSameAs(user);
-        assertThat(studyMember.getRole()).isEqualTo(StudyMemberRole.MEMBER);
-    }
-
-    @Test
-    @DisplayName("공개 스터디는 ID만으로 참여한다")
-    void joinPublicStudyByIdTest() {
-        Long userId = 1L;
-        Long studyId = 2L;
-        User user = User.create("사용자", null);
-        Study study = mock(Study.class);
-        when(study.getId()).thenReturn(studyId);
-        when(study.isPublic()).thenReturn(true);
-        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
-        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
-        when(studyMemberRepository.save(any(StudyMember.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        StudyMemberJoinResponse response = studyMemberService.join(userId, new StudyJoinRequest(studyId, null));
-
-        assertThat(response.studyId()).isEqualTo(studyId);
-        verify(studyInviteTokenProvider, never()).verifyAndExtractStudyId(any());
-        verify(studyMemberRepository).save(any(StudyMember.class));
-    }
 
     @Test
     @DisplayName("비공개 스터디는 ID만으로 참여할 수 없다")

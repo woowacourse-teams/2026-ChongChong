@@ -6,17 +6,17 @@ get:
     description: |
       기능 추가: #622의 홈 이미지 변경·초기화 후 내 프로필을 갱신하고 null은 기본 이미지로 표시한다.
       업로드 이미지 URL이 만료되면 내 프로필을 재조회한다. 응답 키는 기존 name·profileImageUrl을 유지한다.
-      업로드 이미지 응답과 기본 이미지 처리는 백엔드에서 구현·검증했으며 PR 검토 및 배포 환경 확인 대기다.
+      업로드 이미지 응답과 기본 이미지 처리는 백엔드 구현·검증 후 통합 개발 브랜치에 병합됐으며 배포 환경 확인은 별도다.
     sources:
       - frontend/src/features/user/components/ProfileSection.tsx
       - frontend/src/features/user/api.ts
       - frontend/src/features/user/queries.ts
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       #363 홈 마이페이지 기본 프로필 조회에 #622의 업로드 파일 조회 URL 및 기본 이미지 초기화 응답을 반영했다.
-      업로드 파일·기존 외부 URL·기본 이미지의 응답을 자동화 테스트로 검증했다. #622 확장은 PR 검토 및 배포 환경 확인 대기다.
+      업로드 파일·기존 외부 URL·기본 이미지의 응답을 자동화 테스트로 검증했다. #622 확장은 통합 개발 브랜치에 병합됐으며 배포 환경 확인은 별도다.
   summary: 내 프로필 조회
   description: |
     인증된 사용자의 홈 프로필 이름과 프로필 이미지 URL을 조회한다.
@@ -49,12 +49,12 @@ patch:
   tags: [User]
   operationId: updateMyProfileName
   x-backend:
-    status: review
+    status: done
     owner: JYL35
     description: |
       #423 이름 수정과 #455의 현재 참여 스터디 멤버 이름 동기화를 유지한다.
       #622에서 이름 수정 응답에도 현재 홈 이미지의 조회 URL을 반영했다. 이미지 연결 보존과 동시 이미지 교체를 자동화 테스트로 검증했다.
-      #622 확장은 PR 검토 및 배포 환경 확인 대기다.
+      #622 확장은 통합 개발 브랜치에 병합됐으며 배포 환경 확인은 별도다.
   summary: 내 홈 프로필 이름 수정
   description: |
     인증된 사용자의 홈 프로필 이름을 수정한다. 프로필 이미지 연결은 변경하지 않고 현재 홈 이미지를 응답한다.

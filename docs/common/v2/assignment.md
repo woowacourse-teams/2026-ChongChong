@@ -4,7 +4,7 @@
 
 ## 작성과 설정
 
-리더는 제목·내용·제출 방법·마감 시각을 입력하고 제출물 공개 범위와 제출할 스터디원을 선택한다. 제출 대상 선택 API는 2026-11-04 #637 브랜치 기준이며, 웹은 기존 리더 참여 설정을 사용한다.
+리더는 제목·내용·제출 방법·마감 시각을 입력하고 제출물 공개 범위와 제출할 스터디원을 선택한다. 제출 대상 선택 API는 통합 개발 브랜치에 병합된 #638 기준이며, 웹은 기존 리더 참여 설정을 사용한다.
 
 | 항목 | 현재 정책 |
 | --- | --- |
@@ -17,7 +17,7 @@
 | 공개 범위 | 비공개(`LEADER_ONLY`) 또는 전체 스터디원에게 공개(`ALL_STUDY_MEMBERS`) |
 | 웹 생성 폼 초기값 | 리더 참여, 전체 스터디원 공개 |
 
-‘제출 방법’에는 과제를 어떻게 제출하면 되는지 안내하는 글을 선택적으로 적는다. 생성 시 `submissionMethod`의 생략·null·빈 문자열·공백은 빈 문자열로 저장한다. 수정 시 생략·null은 기존 설명을 유지하고, 빈 문자열·공백은 설명을 지운다. 설명이 없으면 응답에는 빈 문자열을 반환한다. 제출할 파일 형식을 지정하거나 제한하는 기능은 없다.
+‘제출 방법’에는 과제를 어떻게 제출하면 되는지 안내하는 글을 선택적으로 적는다. 생성 시 `submissionMethod`의 생략·null·빈 문자열·공백은 빈 문자열로 저장한다. 수정 시 생략·null은 기존 설명을 유지하고, 빈 문자열·공백은 설명을 지운다. 설명이 없으면 응답에는 빈 문자열을 반환한다. 리더가 제출할 파일 형식을 별도로 지정하는 기능은 없다. 실제 첨부는 공통 과제 첨부 정책으로 형식·크기·개수를 제한한다.
 현재 웹 폼은 제출 방법을 필수 입력으로 유지한다. 서버의 선택 입력 정책과 웹 입력 제약이 다르다.
 
 리더는 과제를 수정하거나 삭제할 수 있다. 제출 대상은 마감 후에도 변경할 수 있지만 0명으로 만들 수는 없다.
@@ -33,16 +33,16 @@
 - 제외된 사람은 현재 제출 현황·완료 인원·미완료 과제·리마인드 수신 대상에서 빠진다. 제출 완료 목록에는 보존된 제출물이 계속 포함된다.
 
 이는 과제의 제출 대상에서 제외하는 정책이다. 과제 삭제, 스터디 탈퇴·방출, 회원 탈퇴의 기존 삭제 정책은 그대로다.
-웹의 개별·전체 선택, 대상 재설정, 제외된 제출물의 수정 제한 표시는 미연동이다. 이번 변경에는 API만 포함한다.
+웹의 개별·전체 선택, 대상 재설정, 제외된 제출물의 수정 제한 표시는 미연동이다. 병합된 서버 API와 웹 연동 범위를 구분한다.
 
 ## 과제 제출과 제출물 공개
 
 제출 대상인 사용자는 내용과 링크를 입력해 과제를 제출하고, 나중에 자신의 제출물을 수정할 수 있다. 서버는 내용과 링크를 각각 최대 10,000자까지 받는다. 서버는 업로드 완료된 파일을 과제·제출물에 첨부할 수 있고, 제출 결과에는 내용·링크·첨부 중 하나 이상이 있어야 한다.
 
-2026-10-23 #567에서는 과제 상세·내 제출·제출물 상세의 첨부 응답에 `downloadUrl`을 추가했다. 이미지는 미리보기용 `imageUrl`도 제공한다. 다운로드 URL은 기존 상세 조회 권한을 확인한 뒤 발급하며, 만료 시 상세를 다시 조회한다. 파일을 원본 파일명으로 내려받는 URL 계약이며 웹 다운로드 구현·배포 여부는 별도 확인 대상이다. 자세한 정책은 [파일 업로드와 다운로드](file.md)를 따른다.
+과제 상세·내 제출·제출물 상세의 첨부 응답은 `downloadUrl`을 제공한다. 이미지는 미리보기용 `imageUrl`도 제공한다. 다운로드 URL은 기존 상세 조회 권한을 확인한 뒤 발급하며, 만료 시 상세를 다시 조회한다. 웹 첨부 목록에도 다운로드 링크가 연결되어 있다. 실제 S3 다운로드와 배포 여부는 별도 확인 대상이다. 자세한 정책은 [파일 업로드와 다운로드](file.md)를 따른다.
 
-서버에서는 내용과 링크 모두 선택 값이지만, 웹 제출·수정 폼은 내용을 필수로 받는다. 따라서 링크만 제출하는 서버 기능은 웹에서 사용할 수 없다.
-제출물 상세 조회 `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}`는 미제출 항목의 `createdAt`과 비어 있는 `content`에 `null`을 반환할 수 있다. 이 API에 사용하는 `submissionDetailSchema`는 두 값을 문자열로 요구하므로 해당 응답은 웹 검증에서 실패한다.
+웹 제출·수정 폼도 내용·링크·첨부 중 하나 이상을 요구한다. 링크만 또는 첨부만 제출할 수 있다.
+제출물 상세 조회 `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}`는 미제출 항목의 `createdAt`과 비어 있는 `content`에 `null`을 반환할 수 있다. 웹의 `submissionDetailSchema`도 두 값의 null을 허용한다.
 내 제출 조회 `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my`는 별도의 `userAssignmentSubmitDetailSchema`로 검증한다. `NOT_SUBMITTED`, `MISSING`, `NOT_ASSIGNED` 상태에서는 두 필드를 요구하지 않으며, 값이 없거나 `null`이라는 이유로 검증이 실패하지 않는다.
 근거: [제출 폼](../../../frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx), [웹 응답 검증](../../../frontend/src/features/assignment/responseSchemas.ts), [제출 API 스키마](../../../backend/docs/openapi/components/schemas/assignment-submissions.yaml).
 
@@ -75,6 +75,6 @@
 리더가 제출했을 때 다른 리더에게 알릴지는 코드에 검토 항목으로 남아 있다. 현재 코드는 리더가 제출한 경우에도 같은 규칙을 적용한다.
 
 서버에는 아직 제출하지 않은 대상에게 예약 알림을 보내는 기능이 있다. 앞으로의 시각만 예약할 수 있으며, 예약 목록을 생략하거나 `null`로 보내면 기존 예약을 유지한다. 빈 배열을 보내면 아직 발송하지 않은 예약을 지운다.
-웹에는 예약 시각을 입력하는 화면이 없다.
+웹 작성·수정 폼에서 예약을 입력하며 상세 응답의 `remindAts`로 기존 예약을 불러와 유지·추가·삭제한다. 상세 응답은 미래의 대기 예약만 오름차순으로 반환한다. null 원소나 지난 시각을 포함한 변경 요청은 거부하고 기존 제목·예약을 보존한다.
 
 근거: [과제 모델](../../../backend/src/main/java/withoutc/chongchong/assignment/entity/Assignment.java), [제출 상태](../../../backend/src/main/java/withoutc/chongchong/assignment/entity/AssignmentSubmission.java), [제출 서비스](../../../backend/src/main/java/withoutc/chongchong/assignment/service/AssignmentSubmissionService.java), [조회·수정 권한](../../../backend/src/main/java/withoutc/chongchong/assignment/policy/AssignmentAccessPolicy.java), [웹 폼](../../../frontend/src/features/assignment/components/AssignmentForm.tsx), [일반 멤버 상세](../../../frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx), [상태 표시](../../../frontend/src/features/assignment/constants.ts).

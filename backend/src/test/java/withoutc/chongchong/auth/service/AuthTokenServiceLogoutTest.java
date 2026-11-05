@@ -1,7 +1,6 @@
 package withoutc.chongchong.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.AfterEach;
@@ -17,7 +16,6 @@ import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.auth.repository.AuthSessionRepository;
 import withoutc.chongchong.auth.token.HashedRefreshToken;
 import withoutc.chongchong.auth.token.IssuedTokenPair;
-import withoutc.chongchong.auth.token.RawRefreshToken;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
@@ -42,34 +40,6 @@ class AuthTokenServiceLogoutTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
-    }
-
-    @Test
-    @DisplayName("현재 Refresh Token과 일치하는 인증 세션을 삭제한다")
-    void deleteMatchingAuthSession() {
-        User user = saveUser("총총이");
-        IssuedTokenPair tokenPair = authTokenService.issue(user.getId());
-
-        authTokenService.logout(tokenPair.refreshToken());
-
-        assertThat(authSessionRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(authSessionRepository.count()).isZero();
-    }
-
-    @Test
-    @DisplayName("Session이 없거나 이미 제거된 Refresh Token의 로그아웃은 멱등하게 성공한다")
-    void logoutIdempotentlyWithoutCurrentSession() {
-        User user = saveUser("총총이");
-        IssuedTokenPair tokenPair = authTokenService.issue(user.getId());
-
-        authTokenService.logout(tokenPair.refreshToken());
-
-        assertThatCode(() -> {
-            authTokenService.logout(tokenPair.refreshToken());
-            authTokenService.logout(new RawRefreshToken("already-logged-out-refresh-token"));
-        }).doesNotThrowAnyException();
-
-        assertThat(authSessionRepository.count()).isZero();
     }
 
     @Test

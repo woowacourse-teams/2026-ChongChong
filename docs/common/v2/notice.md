@@ -20,7 +20,7 @@
 ## 다시 읽도록 알리는 예약 알림
 
 서버에는 아직 공지를 읽지 않은 멤버에게 예약 알림을 보내는 기능이 있다. 앞으로의 시각만 예약할 수 있고, 같은 시각을 여러 번 보내면 하나로 저장한다.
-예약 시각이 되면 아직 읽지 않은 확인 대상에게 알림을 만든다. 웹 작성 화면에는 예약 시각을 입력하는 기능이 없다.
+예약 시각이 되면 아직 읽지 않은 확인 대상에게 알림을 만든다. 웹 작성·수정 화면에서 예약을 입력한다. 상세 응답의 `remindAts`에는 아직 처리되지 않은 미래 예약만 오름차순으로 반환하며, 없으면 빈 배열이다.
 
 예약을 수정하는 API는 요청 값에 따라 다음과 같이 처리한다.
 
@@ -28,6 +28,10 @@
 - 빈 배열을 보내면 아직 발송하지 않은 예약을 지운다.
 - 시각 목록을 보내면 아직 발송하지 않은 예약을 새 목록으로 바꾼다.
 
-공지에 이미지를 첨부하는 기능은 없다. 멤버가 공지를 읽었을 때 리더에게 별도 알림을 보내는 기능도 없다.
+## 이미지 첨부
+
+웹 작성·수정 화면에서 이미지를 선택하고 업로드 완료 후 `attachmentFileIds`로 연결한다. 서버 기본 정책은 JPEG·PNG·WebP, 최대 10장, 장당 5MiB이며 0바이트는 거부한다. 상세 응답의 `attachments`와 `imageUrl`로 이미지를 표시한다.
+첨부 목록 생략·null은 유지, 빈 배열은 전체 제거이며 첨부 제거·공지 삭제는 파일 연결만 해제한다. 자세한 흐름은 [파일](file.md)을 따른다.
+멤버가 공지를 읽었을 때 리더에게 별도 알림을 보내는 기능은 없다.
 
 근거: [공지 서비스](../../../backend/src/main/java/withoutc/chongchong/notice/service/NoticeService.java), [읽음 서비스](../../../backend/src/main/java/withoutc/chongchong/notice/service/NoticeReadService.java), [공지 모델](../../../backend/src/main/java/withoutc/chongchong/notice/entity/Notice.java), [작성 폼](../../../frontend/src/features/notice/components/NoticeForm.tsx), [자동 읽음 화면](../../../frontend/src/features/notice/components/MemberNoticeDetailContent.tsx).

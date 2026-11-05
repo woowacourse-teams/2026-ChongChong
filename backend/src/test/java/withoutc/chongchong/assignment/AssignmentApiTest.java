@@ -325,6 +325,41 @@ class AssignmentApiTest {
                 .then().statusCode(200).body("submissionMethod", equalTo(originalMethod));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"title\":\"수정 제목\"}", "{\"title\":\"수정 제목\",\"remindAts\":null}"})
+    @DisplayName("예약 목록을 생략하거나 null로 수정하면 기존 예약을 유지한다")
+    void preserveRemindAtsWhenOmittedOrNull(String body) {
+        String path = "/studies/{studyId}/assignments/{id}";
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(body)
+                .when().patch(path, study.getId(), assignment.getId())
+                .then().statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), assignment.getId())
+                .then().statusCode(200)
+                .body("title", equalTo("수정 제목"))
+                .body("remindAts", equalTo(List.of(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[null]", "[\"2000-01-01T00:00:00\"]"})
+    @DisplayName("null 원소나 지난 예약 시각을 포함한 수정은 거부하고 제목과 기존 예약을 보존한다")
+    void preserveAssignmentWhenReminderIsInvalid(String remindAts) {
+        String path = "/studies/{studyId}/assignments/{id}";
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body("{\"title\":\"저장되면 안 되는 제목\",\"remindAts\":" + remindAts + "}")
+                .when().patch(path, study.getId(), assignment.getId())
+                .then().statusCode(400).body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), assignment.getId())
+                .then().statusCode(200)
+                .body("title", equalTo("기존 과제"))
+                .body("remindAts", equalTo(List.of(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))));
+    }
+
     @Test
     @DisplayName("상세 예약을 유지·추가·개별 삭제하고 전체 삭제하면 빈 배열을 반환한다")
     void roundTripDetailRemindAts() {

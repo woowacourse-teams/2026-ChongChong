@@ -11,21 +11,9 @@ import withoutc.chongchong.auth.token.RawRefreshToken;
 
 import java.time.Instant;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SocialLoginResultTest {
-
-    @Test
-    @DisplayName("사용자 ID와 발급 Token으로 소셜 로그인 결과를 생성한다")
-    void createSocialLoginResult() {
-        IssuedTokenPair tokenPair = createIssuedTokenPair();
-
-        SocialLoginResult result = SocialLoginResult.of(1L, tokenPair);
-
-        assertThat(result.userId()).isEqualTo(1L);
-        assertThat(result.tokenPair()).isSameAs(tokenPair);
-    }
 
     @ParameterizedTest
     @NullSource

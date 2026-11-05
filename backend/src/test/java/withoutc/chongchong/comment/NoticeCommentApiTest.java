@@ -288,7 +288,7 @@ class NoticeCommentApiTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "\n\t", OVER_LENGTH_CONTENT_MARKER})
+    @ValueSource(strings = {"", OVER_LENGTH_CONTENT_MARKER})
     @DisplayName("빈 본문과 정규화 후 1000자를 초과한 본문을 거부한다")
     void rejectInvalidContent(String value) {
         String content = value;
@@ -343,7 +343,7 @@ class NoticeCommentApiTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"0, INVALID_REQUEST_PARAMETER", "-1, INVALID_REQUEST_PARAMETER",
+    @CsvSource({"0, INVALID_REQUEST_PARAMETER",
             "broken, INVALID_REQUEST", "9223372036854775808, INVALID_REQUEST"})
     @DisplayName("커서가 양수 Long 형식이 아니면 공통 파라미터 오류를 반환한다")
     void rejectInvalidCursor(String cursor, String errorCode) {

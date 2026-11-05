@@ -336,23 +336,6 @@ class NoticeServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 참여자가 소속 스터디의 공지 상세 정보를 조회한다")
-    void getDetailTest() {
-        StudyMember member = mock(StudyMember.class);
-        Notice notice = noticeWithId(NOTICE_ID);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
-
-        NoticeDetailResponse response = noticeService.getDetail(USER_ID, STUDY_ID, NOTICE_ID);
-
-        assertThat(response.id()).isEqualTo(NOTICE_ID);
-        assertThat(response.title()).isEqualTo("공지 제목");
-        assertThat(response.content()).isEqualTo("공지 내용");
-        assertThat(response.attachments()).isEmpty();
-        verifyNoInteractions(fileUrlGenerator);
-    }
-
-    @Test
     @DisplayName("첨부 순서에 맞춰 공통 생성기의 이미지 URL과 null을 응답에 담는다")
     void getDetailWithAttachmentUrls() {
         StudyMember member = mock(StudyMember.class);

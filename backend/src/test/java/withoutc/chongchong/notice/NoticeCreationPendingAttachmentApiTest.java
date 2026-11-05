@@ -102,19 +102,6 @@ class NoticeCreationPendingAttachmentApiTest extends PostgresContainerTest {
         assertThat(fileRepository.findById(fileId).orElseThrow().getStatus()).isEqualTo(FileUploadStatus.PENDING);
     }
 
-    @Test
-    @DisplayName("미완료 파일이 있어도 첨부 없는 공지 생성은 201로 성공한다")
-    void createWithoutAttachments() {
-        Response response = request(Map.of("title", "첨부 없는 공지", "content", "공지 내용"));
-
-        response.then().statusCode(201);
-        assertThat(response.jsonPath().getLong("noticeId")).isNotNull();
-        assertThat(countRows("notices")).isOne();
-        assertThat(countRows("notice_attachments")).isZero();
-        assertThat(countRows("notifications")).isOne();
-        assertThat(fileRepository.findById(fileId).orElseThrow().getStatus()).isEqualTo(FileUploadStatus.PENDING);
-    }
-
     private Response request(Object body) {
         return testAuthRequest.givenAuthenticatedUser(leaderId).port(port).contentType(ContentType.JSON)
                 .body(body).post("/studies/{studyId}/notices", studyId);

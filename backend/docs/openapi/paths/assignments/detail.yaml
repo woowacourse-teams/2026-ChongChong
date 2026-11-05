@@ -35,9 +35,10 @@ patch:
   operationId: updateAssignment
   x-frontend:
     status: needs-update
-    description: "공개 범위 초기값과 수정 저장은 연결되어 있다. 기능 추가: submitterIds로 최종 제출 대상 전체 목록을 보내 추가·제외하고 최소 한 명을 유지해야 한다. 남은 작업: 제출 방법의 선택 입력과 리마인드 예약 추가·변경·취소 UI."
+    description: "공개 범위 초기값과 수정 저장은 연결되어 있다. 기능 추가: submitterIds로 최종 제출 대상 전체 목록을 보내 추가·제외하고 최소 한 명을 유지해야 한다. 리마인드 예약 추가·변경·취소와 이미지 첨부는 연결되어 있으며 제출 방법의 선택 입력은 남아 있다. 웹 폼은 수정 시 기존 closeAt도 전송하므로 마감이 지난 과제는 마감 시각을 미래로 변경하지 않으면 서버의 @Future 검증으로 예약·첨부 수정도 거부된다."
     sources:
       - frontend/src/features/assignment/components/AssignmentForm.tsx
+      - frontend/src/features/assignment/pages/EditAssignmentPage.tsx
   x-backend:
     status: done
     owner: frombunny
@@ -45,14 +46,23 @@ patch:
       과제를 부분 수정하고 대기 중인 리마인더를 교체한다. 제출 대상을 변경해도 기존 제출물·첨부·댓글을 보존하며 다시 포함한 뒤 수정할 수 있다.
       완료된 이미지·파일 첨부 연결을 지원한다.
   summary: 과제 수정
-  description: 스터디 리더가 과제를 부분 수정한다. submitterIds로 제출 대상 전체 목록을 교체하며 마감 후에도 변경할 수 있다. 기존 제출물은 보존하고 최소 한 명을 유지한다. submissionVisibility를 생략하거나 null로 보내면 기존 값을 유지한다. 공개·비공개 전환은 이후 제출물 조회 권한에 즉시 반영되며 타인의 제출물 수정 권한을 부여하지 않는다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
+  description: 스터디 리더가 과제를 부분 수정한다. remindAts 생략·null은 예약 유지, 빈 배열은 대기 예약 제거이며 배열은 최종 예약 목록으로 교체한다. null 원소나 미래가 아닌 시각은 400 INVALID_INPUT_VALUE로 거부하고 제목·예약을 변경하지 않는다. submitterIds로 제출 대상 전체 목록을 교체하며 마감 후에도 변경할 수 있다. 기존 제출물은 보존하고 최소 한 명을 유지한다. submissionVisibility를 생략하거나 null로 보내면 기존 값을 유지한다. 공개·비공개 전환은 이후 제출물 조회 권한에 즉시 반영되며 타인의 제출물 수정 권한을 부여하지 않는다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 과제 없음(404)을 반환할 수 있다.
   security: [{ bearerAuth: [] }]
   requestBody:
     required: true
     content:
       application/json:
         schema: { $ref: '../../components/schemas/assignments.yaml#/AssignmentUpdateRequest' }
-        example: { title: 수정된 과제, content: 수정된 과제 내용입니다., submissionMethod: 텍스트 제출, submitterIds: [2, 3], submissionVisibility: ALL_STUDY_MEMBERS, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
+        examples:
+          updateAssignment:
+            summary: 과제 정보와 최종 예약 목록 수정
+            value: { title: 수정된 과제, content: 수정된 과제 내용입니다., submissionMethod: 텍스트 제출, submitterIds: [2, 3], submissionVisibility: ALL_STUDY_MEMBERS, closeAt: '2099-12-31T23:59:00', remindAts: ['2099-12-30T10:00:00'] }
+          keepReminders:
+            summary: 제목만 바꾸고 예약 유지 (remindAts 생략도 동일)
+            value: { title: 수정된 과제, remindAts: null }
+          clearReminders:
+            summary: 대기 예약 전체 제거
+            value: { remindAts: [] }
   responses:
     '204': { description: 과제 수정 성공. 응답 본문 없음. }
     '400': { $ref: '../../components/responses.yaml#/AssignmentWriteBadRequest' }

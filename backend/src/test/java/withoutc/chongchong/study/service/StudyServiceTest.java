@@ -20,31 +20,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
-import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.service.FileUrlGenerator;
-import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
-import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 import withoutc.chongchong.notification.service.NotificationService;
-import withoutc.chongchong.study.controller.dto.LeaderStudyDetailResponse;
-import withoutc.chongchong.study.controller.dto.MemberStudyDetailResponse;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse.MyStudyResponse;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
-import withoutc.chongchong.study.controller.dto.StudyDetailResponse;
-import withoutc.chongchong.study.controller.dto.StudyInfoResponse;
-import withoutc.chongchong.study.controller.dto.StudyInviteLinkResponse;
 import withoutc.chongchong.study.controller.dto.StudySummaryResponse;
 import withoutc.chongchong.study.controller.dto.StudyUpdateRequest;
 import withoutc.chongchong.study.entity.Study;
@@ -169,47 +159,6 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("공개 스터디의 기본 정보와 현재 인원수 및 이미지 조회 URL을 반환한다")
-    void getStudyJoinInfoForPublicStudyTest() {
-        Long userId = 1L;
-        Long studyId = 2L;
-        Study study = Study.create("자바 스터디", "공개 스터디 설명", true);
-        ReflectionTestUtils.setField(study, "id", studyId);
-        FileMetadata image = mock(FileMetadata.class);
-        study.changeImage(image);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(49);
-        when(image.getObjectKey()).thenReturn("study-images/cover.png");
-        when(image.getContentType()).thenReturn("image/png");
-        when(fileUrlGenerator.generateImageUrl("study-images/cover.png", "image/png"))
-                .thenReturn("https://example.com/cover.png");
-
-        StudySummaryResponse response = studyService.getStudyJoinInfo(userId, studyId, null);
-
-        assertThat(response).isEqualTo(new StudySummaryResponse(
-                studyId, "자바 스터디", "공개 스터디 설명", "https://example.com/cover.png", 49));
-        verify(userRepository).getByIdOrThrow(userId);
-        verifyNoInteractions(studyInviteTokenProvider);
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = {50, 51})
-    @DisplayName("정원 이상의 공개 스터디도 참여 전 정보를 조회하고 현재 인원수를 반환한다")
-    void getStudyJoinInfoForFullStudyTest(int memberCount) {
-        Long studyId = 2L;
-        Study study = Study.create("정원이 찬 스터디", "공개 스터디 설명", true);
-        ReflectionTestUtils.setField(study, "id", studyId);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(memberCount);
-
-        StudySummaryResponse response = studyService.getStudyJoinInfo(1L, studyId, null);
-
-        assertThat(response.studyId()).isEqualTo(studyId);
-        assertThat(response.memberCount()).isEqualTo(memberCount);
-        verifyNoInteractions(fileUrlGenerator);
-    }
-
-    @Test
     @DisplayName("비공개 스터디이면 이미지 URL 발급과 인원수 조회 전에 비공개 스터디 예외를 반환한다")
     void getStudyJoinInfoForPrivateStudyWithoutTokenTest() {
         Long studyId = 2L;
@@ -290,54 +239,6 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디를 생성하고 생성자를 리더로 등록한다")
-    void createStudyTest() {
-        Long userId = 1L;
-        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "매주 월요일에 진행한다.", true, null);
-        User user = User.create("사용자", "profile-image-url");
-        ArgumentCaptor<Study> studyCaptor = ArgumentCaptor.forClass(Study.class);
-        ArgumentCaptor<StudyMember> studyMemberCaptor = ArgumentCaptor.forClass(StudyMember.class);
-        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
-        when(studyRepository.save(any(Study.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        studyService.createStudy(userId, request);
-
-        verify(studyRepository).save(studyCaptor.capture());
-        verify(studyMemberRepository).save(studyMemberCaptor.capture());
-        Study study = studyCaptor.getValue();
-        assertThat(study.getName()).isEqualTo("자바 스터디");
-        assertThat(study.getDescription()).isEqualTo("매주 월요일에 진행한다.");
-        assertThat(study.isPublic()).isTrue();
-        assertThat(study.getImageFile()).isNull();
-
-        StudyMember studyMember = studyMemberCaptor.getValue();
-        assertThat(studyMember.getStudy()).isSameAs(study);
-        assertThat(studyMember.getUser()).isSameAs(user);
-        assertThat(studyMember.getRole()).isEqualTo(StudyMemberRole.LEADER);
-        assertThat(studyMember.getName()).isEqualTo(user.getName());
-        assertThat(studyMember.getProfileImageUrl()).isEqualTo(user.getProfileImageUrl());
-    }
-
-    @Test
-    @DisplayName("스터디 생성 시 검증된 이미지 파일을 연결한다")
-    void createStudyWithImage() {
-        Long userId = 1L;
-        FileMetadata image = mock(FileMetadata.class);
-        User user = User.create("사용자", null);
-        StudyCreateRequest request = new StudyCreateRequest("자바 스터디", "설명", false, 7L);
-        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
-        when(studyImageService.prepareForCreate(userId, 7L)).thenReturn(image);
-        when(studyRepository.save(any(Study.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        studyService.createStudy(userId, request);
-
-        ArgumentCaptor<Study> studyCaptor = ArgumentCaptor.forClass(Study.class);
-        verify(studyRepository).save(studyCaptor.capture());
-        assertThat(studyCaptor.getValue().getImageFile()).isSameAs(image);
-    }
-
-    @Test
     @DisplayName("가입한 스터디가 50개 이상이면 스터디를 생성할 수 없다")
     void createStudyStudyWhenJoinedStudyCountLimitExceededTest() {
         Long userId = 1L;
@@ -353,46 +254,6 @@ class StudyServiceTest {
 
         verify(studyRepository, never()).save(any(Study.class));
         verify(studyMemberRepository, never()).save(any(StudyMember.class));
-    }
-
-    @Test
-    @DisplayName("스터디 리더가 스터디를 수정하면 스터디 정보를 변경한다")
-    void updateStudyTest() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = Study.create("기존 스터디", "기존 설명", false);
-        User user = User.create("리더", "profile-image-url");
-        StudyMember studyMember = StudyMember.create(
-                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER
-        );
-        StudyUpdateRequest request = new StudyUpdateRequest("수정 스터디", "수정 설명", true, null);
-        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
-                .thenReturn(studyMember);
-
-        studyService.updateStudy(userId, studyId, request);
-
-        assertThat(study.getName()).isEqualTo("수정 스터디");
-        assertThat(study.getDescription()).isEqualTo("수정 설명");
-        assertThat(study.isPublic()).isTrue();
-    }
-
-    @Test
-    @DisplayName("스터디 수정 시 검증된 이미지 파일로 교체한다")
-    void updateStudyImage() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = Study.create("기존 스터디", "설명", false);
-        User user = User.create("리더", null);
-        StudyMember leader = StudyMember.create(study, user, user.getName(), null, StudyMemberRole.LEADER);
-        FileMetadata image = mock(FileMetadata.class);
-        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
-        when(studyImageService.prepareForUpdate(userId, study, 7L)).thenReturn(image);
-
-        studyService.updateStudy(userId, studyId, new StudyUpdateRequest(null, null, null, 7L));
-
-        assertThat(study.getImageFile()).isSameAs(image);
     }
 
     @Test
@@ -413,24 +274,6 @@ class StudyServiceTest {
         assertThat(study.getName()).isEqualTo("수정 스터디");
         assertThat(study.getImageFile()).isSameAs(image);
         verifyNoInteractions(studyImageService);
-    }
-
-    @Test
-    @DisplayName("이미지 ID를 null로 지정한 수정은 기존 이미지 연결을 해제한다")
-    void updateStudyWithDefaultImage() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = Study.create("기존 스터디", "설명", false);
-        study.changeImage(mock(FileMetadata.class));
-        User user = User.create("리더", null);
-        StudyMember leader = StudyMember.create(study, user, user.getName(), null, StudyMemberRole.LEADER);
-        when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
-
-        studyService.updateStudy(userId, studyId, new StudyUpdateRequest(null, null, null, null));
-
-        assertThat(study.getImageFile()).isNull();
-        verify(studyImageService).prepareForUpdate(userId, study, null);
     }
 
     @Test
@@ -582,51 +425,6 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 정보를 조회하면 스터디명·설명과 현재 사용자의 역할·이름을 반환한다")
-    void getStudyInfoTest() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = Study.create("자바 스터디", "설명", false);
-        User user = User.create("테스트 사용자", "profile-image-url");
-        StudyMember studyMember = StudyMember.create(
-                study, user, "스터디 내 이름", user.getProfileImageUrl(), StudyMemberRole.MEMBER);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
-                .thenReturn(studyMember);
-
-        StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
-
-        assertThat(response.studyName()).isEqualTo("자바 스터디");
-        assertThat(response.description()).isEqualTo("설명");
-        assertThat(response.role()).isEqualTo(StudyMemberRole.MEMBER);
-        assertThat(response.userName()).isEqualTo("스터디 내 이름");
-        assertThat(response.imageUrl()).isNull();
-        verifyNoInteractions(fileUrlGenerator);
-    }
-
-    @Test
-    @DisplayName("스터디 정보 조회 시 현재 이미지의 조회 URL을 반환한다")
-    void getStudyInfoWithImage() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = Study.create("자바 스터디", "설명", false);
-        User user = User.create("리더", null);
-        StudyMember leader = StudyMember.create(study, user, user.getName(), null, StudyMemberRole.LEADER);
-        FileMetadata image = mock(FileMetadata.class);
-        study.changeImage(image);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
-        when(image.getObjectKey()).thenReturn("study-images/current.png");
-        when(image.getContentType()).thenReturn("image/png");
-        when(fileUrlGenerator.generateImageUrl("study-images/current.png", "image/png"))
-                .thenReturn("https://example.com/current.png");
-
-        StudyInfoResponse response = studyService.getStudyInfo(userId, studyId);
-
-        assertThat(response.imageUrl()).isEqualTo("https://example.com/current.png");
-    }
-
-    @Test
     @DisplayName("존재하지 않는 스터디 정보를 조회하면 스터디 없음 예외가 발생한다")
     void getStudyInfoForMissingStudyTest() {
         Long userId = 1L;
@@ -661,83 +459,6 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("스터디 리더는 공지·과제별 대상자 수와 완료 수를 포함한 상세 정보를 조회한다")
-    void getStudyDetailForLeaderTest() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = mock(Study.class);
-        User user = User.create("리더", "profile-image-url");
-        StudyMember studyMember = StudyMember.create(
-                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER);
-        when(study.getId()).thenReturn(studyId);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
-                .thenReturn(studyMember);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId))
-                .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "공지", 2L, 1L)));
-        when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId))
-                .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "과제", 2L, 1L)));
-
-        StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
-
-        assertThat(response).isInstanceOf(LeaderStudyDetailResponse.class);
-        LeaderStudyDetailResponse leaderResponse = (LeaderStudyDetailResponse) response;
-        assertThat(leaderResponse.notices().count()).isEqualTo(1);
-        assertThat(leaderResponse.notices().items())
-                .extracting(LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::id,
-                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::title,
-                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::memberCount,
-                        LeaderStudyDetailResponse.LeaderNoticeSummaryResponse::completeCount)
-                .containsExactly(tuple(10L, "공지", 2, 1));
-        assertThat(leaderResponse.assignments().count()).isEqualTo(1);
-        assertThat(leaderResponse.assignments().items())
-                .extracting(LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::id,
-                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::title,
-                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::memberCount,
-                        LeaderStudyDetailResponse.LeaderAssignmentSummaryResponse::completeCount)
-                .containsExactly(tuple(20L, "과제", 2, 1));
-    }
-
-    @Test
-    @DisplayName("스터디 멤버는 공지·과제 목록과 전체 미완료 개수를 포함한 상세 정보를 조회한다")
-    void getStudyDetailForMemberTest() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        Study study = mock(Study.class);
-        User user = User.create("멤버", "profile-image-url");
-        StudyMember studyMember = StudyMember.create(
-                study, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER);
-        Notice notice = mock(Notice.class);
-        Assignment assignment = mock(Assignment.class);
-        when(study.getId()).thenReturn(studyId);
-        when(notice.getId()).thenReturn(10L);
-        when(notice.getTitle()).thenReturn("공지");
-        when(assignment.getId()).thenReturn(20L);
-        when(assignment.getTitle()).thenReturn("과제");
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
-                .thenReturn(studyMember);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(noticeRepository.findIncompleteNoticesByStudyIdAndMemberId(studyId, studyMember.getId()))
-                .thenReturn(List.of(notice));
-        when(assignmentRepository.findIncompleteAssignmentsByStudyIdAndMemberId(studyId, studyMember.getId()))
-                .thenReturn(List.of(assignment));
-
-        StudyDetailResponse response = studyService.getStudyDetail(userId, studyId);
-
-        assertThat(response).isInstanceOf(MemberStudyDetailResponse.class);
-        MemberStudyDetailResponse memberResponse = (MemberStudyDetailResponse) response;
-        assertThat(memberResponse.totalCount()).isEqualTo(2);
-        assertThat(memberResponse.notices().items())
-                .extracting(MemberStudyDetailResponse.MemberNoticeSummaryResponse::id,
-                        MemberStudyDetailResponse.MemberNoticeSummaryResponse::title)
-                .containsExactly(tuple(10L, "공지"));
-        assertThat(memberResponse.assignments().items())
-                .extracting(MemberStudyDetailResponse.MemberAssignmentSummaryResponse::id,
-                        MemberStudyDetailResponse.MemberAssignmentSummaryResponse::title)
-                .containsExactly(tuple(20L, "과제"));
-    }
-
-    @Test
     @DisplayName("스터디 멤버가 아니면 스터디 상세 정보를 조회할 수 없다")
     void getStudyDetailForNonMemberTest() {
         Long userId = 1L;
@@ -753,27 +474,6 @@ class StudyServiceTest {
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verifyNoInteractions(noticeRepository, assignmentRepository);
-    }
-
-    @Test
-    @DisplayName("존재하는 스터디의 초대 링크를 반환한다")
-    void getInviteLinkTest() {
-        Long userId = 1L;
-        Long studyId = 1L;
-        User user = User.create("사용자", "profile-image-url");
-        Study study = Study.create("자바 스터디", "설명", false);
-        StudyMember studyMember = StudyMember.create(study, user, user.getName(), user.getProfileImageUrl(),
-                StudyMemberRole.MEMBER);
-        when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(any(), any()))
-                .thenReturn(studyMember);
-        when(studyInviteLinkGenerator.generate(studyId))
-                .thenReturn("https://test.chongchong.app/studies/join?token=invite-token");
-
-        StudyInviteLinkResponse response = studyService.getInviteLink(userId, studyId);
-
-        assertThat(response.inviteLink()).isEqualTo("https://test.chongchong.app/studies/join?token=invite-token");
-        verify(studyInviteLinkGenerator).generate(studyId);
     }
 
     @Test

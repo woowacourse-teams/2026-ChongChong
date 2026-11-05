@@ -10,18 +10,34 @@
 서버는 요청 사용자 소유의 파일 메타데이터를 업로드 대기(`PENDING`) 상태로 저장하고, `fileId`, `uploadUrl`, `expiresAt`을 반환한다.
 클라이언트는 발급받은 URL에 같은 Content-Type과 `If-None-Match: *` 헤더로 파일 본문을 PUT한다. URL 유효기간은 설정값을 사용하며 기본값은 10분이다.
 
+선택 입력인 `uploadPurpose`는 스터디 이미지·공지 첨부·과제 첨부·제출물 첨부의 저장 경로를 구분한다. 생략·null이면 공통 경로를 사용하며, 파일을 연결할 권한이나 용도 검증을 대신하지 않는다.
+
 ## 업로드 완료와 첨부 연결
 
 URL 발급 성공은 실제 업로드 완료를 뜻하지 않는다. 요청의 크기는 클라이언트가 선언한 값이며 업로드 결과를 검증한 값이 아니다.
-업로드 후 완료 API를 호출하면 서버가 소유권과 파일 상태, S3 객체의 존재 여부·실제 크기·요청 크기 일치 여부를 검증하고 `COMPLETED`로 전환한다. 완료된 파일 ID를 공지·과제·제출물 요청의 `attachmentFileIds`에 전달해 연결한다.
+업로드 후 완료 API를 호출하면 서버가 소유권과 파일 상태, S3 객체의 존재 여부·실제 크기·요청 크기 일치 여부를 검증하고 `COMPLETED`로 전환한다. 완료된 파일 ID를 공지·과제·제출물 요청의 `attachmentFileIds`에 전달해 연결한다. 스터디 대표 이미지는 `imageFileId`, 홈 프로필 이미지는 `fileId`로 연결한다.
+웹의 공통 업로드 모듈은 URL 발급 → 필수 헤더를 포함한 S3 PUT → 완료 API의 204 확인 순서로 처리한다. 공지·과제·제출물·스터디 대표 이미지 폼에서 사용한다. 홈 프로필 변경 UI는 미연동이다.
 
-## 과제·제출물 다운로드 (#567)
+근거: [웹 업로드](../../../frontend/src/shared/modules/files/api.ts), [첨부 표시](../../../frontend/src/shared/widgets/AttachmentList.tsx).
 
-2026-10-23 작업 브랜치에서 과제 상세·내 제출·제출물 상세의 첨부 응답에 `downloadUrl`을 추가했다. 배포 및 웹 다운로드 연결 완료를 의미하지 않는다.
+## 연결 대상별 기본 정책
+
+| 연결 대상 | 형식·개수·크기 |
+| --- | --- |
+| 공지 이미지 | JPEG·PNG·WebP, 최대 10장, 장당 0바이트 초과·5MiB 이하 |
+| 과제·제출물 첨부 | JPEG·PNG·WebP·PDF·텍스트·ZIP·DOCX·PPTX, 최대 10개, 파일당 5MiB 이하. 서버는 0바이트도 허용 |
+| 스터디 대표·홈 프로필 이미지 | JPEG·PNG·WebP 한 장, 0바이트 초과·5MiB 이하 |
+
+형식·개수·크기는 서버 설정으로 바꿀 수 있다. 파일 메타데이터의 Content-Type을 검증하며 파일 내용 자체의 형식 검사는 별개다.
+근거: [과제 첨부 정책](../../../backend/src/main/java/withoutc/chongchong/assignment/policy/AssignmentAttachmentPolicy.java), [공지 이미지 정책](../../../backend/src/main/java/withoutc/chongchong/notice/policy/NoticeAttachmentPolicy.java).
+
+## 과제·제출물 다운로드
+
+과제 상세·내 제출·제출물 상세의 첨부 응답에 `downloadUrl`을 제공한다. 웹 첨부 목록은 이 URL을 다운로드 링크로 사용한다.
 기존 상세 조회 권한을 통과하면 모든 첨부파일에 다운로드용 S3 서명 URL을 반환한다. 클라이언트는 이 URL로 S3에서 직접 내려받는다. 원본 파일명은 UTF-8로 지정하고, 제어 문자와 경로 구분자는 밑줄로 바꾼다.
 JPEG·PNG·WebP는 미리보기용 `imageUrl`도 반환하며, 일반 문서는 `imageUrl`이 null이다. 다운로드 URL은 `Content-Disposition: attachment`와 `application/octet-stream` 응답을 지정한다.
 URL은 `aws.s3.url-validity` 동안 유효하며 만료되면 상세를 다시 조회한다. 발급된 URL을 가진 사람은 만료 전까지 사용할 수 있으므로 공개 캐시에 저장하지 않는다. 권한 변경이 이미 발급된 URL을 즉시 무효화하지는 않는다.
-이번 작업은 백엔드와 명세서에 한정하며 웹 다운로드 동작과 실제 S3 다운로드는 별도 검증이 필요하다.
+웹 연결 코드는 확인했으며 실제 브라우저·S3 다운로드는 이번 작업에서 검증하지 않았다.
 
 다운로드 근거: [URL 생성기](../../../backend/src/main/java/withoutc/chongchong/file/service/FileUrlGenerator.java), [첨부 API 스키마](../../../backend/docs/openapi/components/schemas/assignment-attachments.yaml), [첨부 계약](../../../backend/docs/assignment-attachments.md).
 
