@@ -1,14 +1,8 @@
-import { usePostHog } from '@posthog/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ValidationError } from '../../../shared/api/error';
-import { useToast } from '../../../shared/providers/ToastProvider';
-import StatusToast from '../../../shared/ui/toasts/StatusToast';
-import { createAssignmentSubmission } from '../api';
-import assignmentQueries from '../queries';
 import { isCompletedAssignment } from '../submissionStatus';
-import type { AssignmentSubmissionValue, UserAssignmentSubmitDetail } from '../types';
+import { UserAssignmentSubmitDetail } from '../types';
 import AssignmentSubmissionForm from './AssignmentSubmissionForm';
 import CompletedAssignmentSubmission from './CompletedAssignmentSubmission';
+import useCreateAssignmentSubmission from '../hooks/useCreateAssignmentSubmission';
 
 interface Props {
   studyId: number;
@@ -17,33 +11,11 @@ interface Props {
 }
 
 export default function MyAssignmentSubmission({ studyId, assignmentId, submission }: Props) {
-  const queryClient = useQueryClient();
-  const toast = useToast();
-  const posthog = usePostHog();
-
-  const { mutate, isPending, error } = useMutation({
-    mutationFn: (values: AssignmentSubmissionValue) =>
-      createAssignmentSubmission(studyId, assignmentId, values),
-    onSuccess: async (_data, values) => {
-      posthog?.capture('assignment_submission_saved', {
-        content_type: 'submission',
-        mode: 'create',
-        attachment_count: values.attachmentFileIds?.length ?? 0,
-      });
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: assignmentQueries.lists(studyId) }),
-        queryClient.invalidateQueries({
-          queryKey: assignmentQueries.mySubmission(studyId, assignmentId).queryKey,
-        }),
-      ]);
-    },
-    onError: (error) => {
-      if (error instanceof ValidationError) return;
-      toast.open(<StatusToast message={error.message} status="error" />);
-    },
-  });
-
-  const fieldErrors = error instanceof ValidationError ? error.fieldErrors : {};
+  const {
+    mutate: handleCreateAssignmentSubmission,
+    isPending,
+    fieldErrors,
+  } = useCreateAssignmentSubmission({ studyId, assignmentId });
 
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
@@ -58,7 +30,7 @@ export default function MyAssignmentSubmission({ studyId, assignmentId, submissi
     <AssignmentSubmissionForm
       key={`${studyId}-${assignmentId}`}
       isSubmitting={isPending}
-      onSubmit={mutate}
+      onSubmit={handleCreateAssignmentSubmission}
       fieldErrors={fieldErrors}
     />
   );
