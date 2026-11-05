@@ -6,9 +6,9 @@ patch:
   tags: [Comment]
   operationId: updateNoticeComment
   x-backend:
-    status: review
+    status: done
     owner: wontop02
-    description: 작성자 소유권·본문 수정·수정 표시·탈퇴 후 본인 수정과 HTTP 계약을 검증했으며 리뷰 중이다.
+    description: 작성자 소유권·본문 수정·수정 표시·탈퇴 후 본인 수정과 HTTP 계약을 검증했고 통합 개발 브랜치에 병합됐다.
   summary: 공지 댓글 수정
   description: |
     인증된 작성자 본인만 경로의 원문에 속한 댓글을 수정한다. 리더도 타인 본문은 수정할 수 없다.
@@ -36,9 +36,9 @@ delete:
   tags: [Comment]
   operationId: deleteNoticeComment
   x-backend:
-    status: review
+    status: done
     owner: wontop02
-    description: 댓글·관련 알림·Delivery 삭제, 작성자·리더 권한과 HTTP 계약을 검증했으며 리뷰 중이다.
+    description: 댓글·관련 알림·Delivery 삭제, 작성자·리더 권한과 HTTP 계약을 검증했고 통합 개발 브랜치에 병합됐다.
   summary: 공지 댓글 삭제
   description: |
     인증된 작성자 본인 또는 해당 스터디의 현재 리더가 경로의 댓글을 삭제한다.

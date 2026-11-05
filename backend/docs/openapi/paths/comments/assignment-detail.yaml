@@ -6,7 +6,7 @@ patch:
   tags: [Comment]
   operationId: updateAssignmentComment
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: 작성자 소유권·원문 소속·본문 수정·수정 시각을 공통 댓글 흐름으로 검증한다.
   summary: 과제 댓글 수정
@@ -36,7 +36,7 @@ delete:
   tags: [Comment]
   operationId: deleteAssignmentComment
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: 작성자·현재 리더 권한과 댓글·관련 알림·Delivery의 원자적 삭제를 검증한다.
   summary: 과제 댓글 삭제

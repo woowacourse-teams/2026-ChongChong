@@ -2,7 +2,7 @@ get:
   tags: [Study]
   operationId: getStudyJoinInfo
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: |
       공개 탐색과 초대 링크에서 사용할 참여 전 정보를 조회한다. 초대 토큰 검증 후 현재 인원수를 포함한 기본 정보를 반환한다.

@@ -3,7 +3,8 @@ post:
   operationId: createStudy
   x-frontend:
     status: integrated
-    description: "name·description을 전송하고 studyId 응답으로 생성 후 이동한다."
+    description: |
+      이름·설명과 선택한 imageFileId를 전송하고 studyId로 이동한다. 현재 웹은 isPublic=false를 전송한다.
     sources:
       - frontend/src/features/study/api.ts
       - frontend/src/features/study/pages/CreateStudyPage.tsx

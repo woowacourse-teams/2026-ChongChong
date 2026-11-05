@@ -11,6 +11,15 @@
 이름을 바꾸면 계정 이름과 참여 중인 모든 스터디의 멤버 이름이 함께 바뀐다. 서버는 이 변경을 하나의 트랜잭션으로 처리한다.
 스터디마다 다른 이름을 쓰거나 프로필 이미지를 바꾸는 화면은 없다.
 
+## 홈 프로필 이미지 API
+
+서버는 `PATCH /api/users/me/profile-image`에 업로드 완료된 본인 소유 파일의 `fileId`를 받아 홈 이미지를 변경한다. 기본 정책은 JPEG·PNG·WebP 한 장, 0바이트 초과·최대 5MiB이며 다른 게시물·스터디·프로필에 사용 중인 새 파일은 거부한다.
+`DELETE /api/users/me/profile-image`는 업로드 연결과 소셜 이미지 URL을 함께 해제하고 본문 없는 204를 반환한다. 이후 프로필 조회의 `profileImageUrl`은 null이며, 소셜 이미지로 복원하는 기능은 아니다.
+홈 이미지 변경·초기화는 현재 참여 중인 모든 스터디의 해당 사용자 이미지에 반영된다. 신규 스터디 생성·참여 후에도 현재 홈 이미지를 사용한다. 스터디별로 다른 사용자 이미지를 설정하는 기능은 없다. 스터디 자체의 대표 이미지와는 별개다.
+파일은 연결만 해제하며 즉시 S3에서 삭제하지 않는다. 업로드 이미지 조회 URL이 만료되면 해당 조회 API를 다시 호출한다. 웹의 홈 이미지 변경·초기화 화면은 미연동이다.
+
+근거: [프로필 이미지 서비스](../../../backend/src/main/java/withoutc/chongchong/user/service/UserProfileImageService.java), [이미지 조회](../../../backend/src/main/java/withoutc/chongchong/user/service/UserProfileImageUrlResolver.java), [API 계약](../../../backend/docs/openapi/paths/users/profile-image.yaml).
+
 ## 계정 메뉴
 
 - 푸시 스위치로 현재 브라우저의 알림을 켜거나 끈다. 같은 계정으로 이용하는 다른 브라우저의 설정까지 바뀌지는 않는다.
