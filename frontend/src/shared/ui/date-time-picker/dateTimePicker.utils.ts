@@ -8,7 +8,9 @@ export interface CalendarDay {
 }
 
 export function startOfDay(value: Date) {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 export function isSameDay(a: Date, b: Date) {
@@ -65,8 +67,10 @@ export function getTimeMinutes(value: Date) {
   return value.getHours() * 60 + value.getMinutes();
 }
 
-export function getCalendarDays(viewDate: Date, minDate: Date): CalendarDay[] {
-  const firstDay = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+export function getCalendarDays(viewDate: Date, minDate?: Date): CalendarDay[] {
+  const firstDay = startOfDay(viewDate);
+  firstDay.setDate(1);
+  const minimum = minDate ? startOfDay(minDate).getTime() : -Infinity;
   const gridStart = new Date(firstDay);
   gridStart.setDate(firstDay.getDate() - firstDay.getDay());
 
@@ -77,7 +81,7 @@ export function getCalendarDays(viewDate: Date, minDate: Date): CalendarDay[] {
     return {
       date,
       isCurrentMonth: date.getMonth() === viewDate.getMonth(),
-      isDisabled: startOfDay(date).getTime() < startOfDay(minDate).getTime(),
+      isDisabled: date.getTime() < minimum,
     };
   });
 }
