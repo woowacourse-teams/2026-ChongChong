@@ -4,42 +4,25 @@ import { delay, http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { API_URL } from '../../../../../config';
 import { server } from '../../../../mocks/msw-node';
-import { createWrapper } from '../../../../test/render';
+import { createWrapper, login, logout } from '../../../../test/render';
+import { assignmentTable, submissionTable } from '../../../assignment/mocks/db';
+import { memberTable } from '../../../member/mocks/db';
+import { noticeTable, noticeRecipientTable } from '../../../notice/mocks/db';
+import { studyTable } from '../../../study/mocks/db';
+import { userTable } from '../../../user/mocks/db';
+import { CALENDAR_URLS } from '../../urls';
 import StudyCalendarPage from '../StudyCalendarPage';
 
-const calendarUrl = `${API_URL}/studies/:studyId/calendar`;
-const events = [
-  {
-    eventType: 'NOTICE_CREATED',
-    resourceType: 'NOTICE',
-    resourceId: 12,
-    title: '11월 스터디 진행 안내',
-    eventAt: '2026-11-05T00:15:00',
-    readStatus: 'READ',
-  },
-  {
-    eventType: 'ASSIGNMENT_CREATED',
-    resourceType: 'ASSIGNMENT',
-    resourceId: 31,
-    title: '이번 주 알고리즘 과제',
-    eventAt: '2026-11-05T18:00:00',
-    submissionStatus: 'NOT_SUBMITTED',
-  },
-  {
-    eventType: 'ASSIGNMENT_DUE',
-    resourceType: 'ASSIGNMENT',
-    resourceId: 31,
-    title: '이번 주 알고리즘 과제',
-    eventAt: '2026-11-09T23:59:00',
-    submissionStatus: 'NOT_SUBMITTED',
-  },
-];
+const calendarUrl = `${API_URL}${CALENDAR_URLS.monthly.path(42)}`;
 
-function mockCalendarResponse(request: Request) {
-  const params = new URL(request.url).searchParams;
-  const year = Number(params.get('year'));
-  const month = Number(params.get('month'));
-  return HttpResponse.json({ year, month, events: year === 2026 && month === 11 ? events : [] });
+function captureCalendarRequests() {
+  const captureRequest = jest.fn();
+  server.use(
+    http.get(calendarUrl, ({ request }) => {
+      captureRequest(new URL(request.url).search);
+    }),
+  );
+  return captureRequest;
 }
 
 function setup(now = '2026-11-05T00:00:00Z') {
@@ -56,11 +39,56 @@ function setup(now = '2026-11-05T00:00:00Z') {
   return user;
 }
 
-beforeEach(() => {
-  server.use(http.get(calendarUrl, ({ request }) => mockCalendarResponse(request)));
+beforeEach(async () => {
+  await userTable.create({ id: 1, name: '스터디원', profileImage: null });
+  await studyTable.create({ id: 42, name: '스터디', description: null, inviteLink: 'calendar' });
+  await memberTable.create({
+    id: 10,
+    studyId: 42,
+    userId: 1,
+    name: '스터디원',
+    profileImage: null,
+    role: 'MEMBER',
+  });
+  await noticeTable.create({
+    id: 12,
+    studyId: 42,
+    title: '11월 스터디 진행 안내',
+    content: '이번 달 일정 안내',
+    createdAt: '2026-11-05T00:15:00',
+  });
+  await noticeRecipientTable.create({
+    id: 1,
+    noticeId: 12,
+    memberId: 10,
+    readAt: '2026-11-05T01:00:00',
+    lastRemindAt: null,
+  });
+  await assignmentTable.create({
+    id: 31,
+    studyId: 42,
+    title: '이번 주 알고리즘 과제',
+    content: '알고리즘 문제 풀이',
+    submissionMethod: 'GitHub 링크',
+    createdAt: '2026-11-05T18:00:00',
+    closeAt: '2026-11-09T23:59:00',
+    submissionTarget: 'MEMBERS_ONLY',
+    completeUserIds: [],
+  });
+  await submissionTable.create({
+    id: 1,
+    assignmentId: 31,
+    userId: 1,
+    assigned: true,
+    submitted: false,
+  });
+  login('스터디원');
 });
 
-afterEach(() => jest.useRealTimers());
+afterEach(() => {
+  logout();
+  jest.useRealTimers();
+});
 
 test('한국 기준 오늘을 선택하고 해당 월의 일정을 표시한다', async () => {
   setup('2026-11-04T15:00:00Z');
@@ -75,14 +103,7 @@ test('한국 기준 오늘을 선택하고 해당 월의 일정을 표시한다'
 });
 
 test('같은 달에서 날짜를 선택하면 월간 데이터를 재사용한다', async () => {
-  const requests = jest.fn();
-  server.use(
-    http.get(calendarUrl, ({ request }) => {
-      requests();
-      return mockCalendarResponse(request);
-    }),
-  );
-
+  const requests = captureCalendarRequests();
   const user = setup();
   const list = await screen.findByRole('region', { name: '해당 날짜 일정' });
   expect(within(list).getAllByRole('link')).toHaveLength(2);
@@ -96,15 +117,7 @@ test('같은 달에서 날짜를 선택하면 월간 데이터를 재사용한�
 });
 
 test('연말에 다음 달로 이동하면 새해 1월을 조회하고 1일을 선택한다', async () => {
-  const requests = jest.fn();
-  server.use(
-    http.get(calendarUrl, ({ request }) => {
-      const { search } = new URL(request.url);
-      requests(search);
-      return mockCalendarResponse(request);
-    }),
-  );
-
+  const requests = captureCalendarRequests();
   const user = setup('2026-12-31T00:00:00Z');
   await screen.findByText('등록된 일정이 없어요');
   await act(async () => {
@@ -123,7 +136,6 @@ test('다음 달을 조회하는 동안 페이지 로딩을 표시한다', async
     http.get(calendarUrl, async ({ request }) => {
       const params = new URL(request.url).searchParams;
       if (params.get('month') === '12') await delay(1500);
-      return mockCalendarResponse(request);
     }),
   );
 
@@ -178,14 +190,8 @@ test('조회 실패 시 페이지에 오류를 표시하고 일정 탭을 유지
 
 test('스터디 접근이 거부되면 일정 대신 권한 오류를 표시한다', async () => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
-  server.use(
-    http.get(calendarUrl, () =>
-      HttpResponse.json(
-        { code: 'STUDY_ACCESS_DENIED', message: '스터디에 접근할 수 없습니다.' },
-        { status: 403 },
-      ),
-    ),
-  );
+  await userTable.create({ id: 2, name: '비멤버', profileImage: null });
+  login('비멤버');
   setup();
 
   expect(await screen.findByText('스터디에 접근할 수 없습니다.')).toBeVisible();
