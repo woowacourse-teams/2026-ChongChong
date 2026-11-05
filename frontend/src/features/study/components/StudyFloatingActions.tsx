@@ -27,8 +27,8 @@ export default function StudyFloatingActions() {
       trigger={(props) => (
         <Floating
           {...props}
-          aria-label="스터디 메뉴 열기"
           icon={<img src={plus} alt="" width={30} height={30} />}
+          aria-label="스터디 메뉴 열기"
         />
       )}
     >

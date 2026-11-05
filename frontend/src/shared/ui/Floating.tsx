@@ -1,14 +1,16 @@
-import { ComponentPropsWithRef, CSSProperties, ElementType, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { CSSObject } from '@emotion/react';
 import { tokens } from '../../styles/global';
-import { FLOATING_SIZE, floatingPositionStyle } from './floatingStyles';
 
-type FloatingProps<T extends ElementType> = {
-  as?: T;
+interface FloatingProps {
   icon: ReactNode;
-  'aria-label': string;
-  bottom?: CSSProperties['bottom'];
-} & Omit<ComponentPropsWithRef<T>, 'as' | 'icon' | 'children' | 'aria-label' | 'bottom'>;
+}
+
+const floatingPositionStyle = {
+  position: 'fixed',
+  right: `max(${tokens.layout.gutter}, calc((100% - ${tokens.screenSize.default}) / 2 + ${tokens.layout.gutter}))`,
+  bottom: `calc(${tokens.layout.safeBottom} + ${tokens.spacing[5]})`,
+} satisfies CSSObject;
 
 const floatingStyle = {
   ...floatingPositionStyle,
@@ -16,8 +18,8 @@ const floatingStyle = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: FLOATING_SIZE,
-  height: FLOATING_SIZE,
+  width: 56,
+  height: 56,
   padding: 0,
   border: 0,
   borderRadius: tokens.radius.full,
@@ -25,34 +27,20 @@ const floatingStyle = {
   color: tokens.text.onBrand,
   boxShadow: tokens.shadow[3],
   cursor: 'pointer',
-  textDecoration: 'none',
-  WebkitTapHighlightColor: 'transparent',
   '&:focus-visible': { outline: `2px solid ${tokens.text.default}`, outlineOffset: '4px' },
   '&:disabled': { cursor: 'not-allowed', opacity: 0.5 },
   '&[hidden]': { display: 'none' },
 } satisfies CSSObject;
 
-/** 동작은 as와 네이티브 props로 조합하고, Floating은 배치와 아이콘 표현만 담당한다. */
-export default function Floating<T extends ElementType = 'button'>({
-  as,
-  icon,
-  bottom,
-  ...props
-}: FloatingProps<T>) {
-  const Component = as ?? 'button';
-
+export default function Floating({ icon, ...props }: FloatingProps) {
   return (
-    <Component
-      {...(Component === 'button' ? { type: 'button' } : {})}
-      css={[floatingStyle, bottom !== undefined && { bottom }]}
-      {...props}
-    >
+    <button type="button" css={floatingStyle} {...props}>
       <span
         aria-hidden="true"
         css={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
       >
         {icon}
       </span>
-    </Component>
+    </button>
   );
 }
