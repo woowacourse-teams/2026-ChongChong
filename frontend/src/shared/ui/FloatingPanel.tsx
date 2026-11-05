@@ -34,10 +34,6 @@ interface FloatingPanelProps {
   bottom?: CSSProperties['bottom'];
 }
 
-const reducedMotionQuery = '(prefers-reduced-motion: reduce)';
-const reducedMotionStyle = { [`@media ${reducedMotionQuery}`]: { transition: 'none' } };
-const prefersReducedMotion = () => window.matchMedia?.(reducedMotionQuery).matches ?? false;
-
 const dialogStyle = {
   position: 'fixed',
   inset: 0,
@@ -84,10 +80,6 @@ export default function FloatingPanel({
   const id = useId();
   const finishClose = useCallback(() => setPhase('closed'), []);
   const close = () => {
-    if (prefersReducedMotion()) {
-      finishClose();
-      return;
-    }
     setPhase((current) => (current === 'closed' ? current : 'closing'));
   };
 
@@ -100,9 +92,7 @@ export default function FloatingPanel({
         'aria-hidden': open || undefined,
         style: {
           opacity: phase === 'open' ? 0 : 1,
-          transition: prefersReducedMotion()
-            ? 'none'
-            : `opacity ${phase === 'open' ? 100 : 180}ms ${floatingMotion.open.easing} ${phase === 'closing' ? 60 : 0}ms`,
+          transition: `opacity ${phase === 'open' ? 100 : 180}ms ${floatingMotion.open.easing} ${phase === 'closing' ? 60 : 0}ms`,
         },
         'aria-haspopup': 'dialog',
         'aria-expanded': open,
@@ -150,7 +140,7 @@ function PanelDialog({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const [entered, setEntered] = useState(prefersReducedMotion);
+  const [entered, setEntered] = useState(false);
   const expanded = entered && !closing;
   const { durationMs: duration, easing } = floatingMotion[closing ? 'close' : 'open'];
   useBodyScrollLock();
@@ -158,8 +148,8 @@ function PanelDialog({
   useEffect(() => {
     if (!closing) return;
     // 전환이 취소되거나 transitionend가 누락되어도 모달이 남지 않도록 한다.
-    const timeout = window.setTimeout(onExited, floatingMotion.close.durationMs + 80);
-    return () => window.clearTimeout(timeout);
+    const timeout = setTimeout(onExited, floatingMotion.close.durationMs + 80);
+    return () => clearTimeout(timeout);
   }, [closing, onExited]);
 
   useEffect(() => {
@@ -168,9 +158,9 @@ function PanelDialog({
     dialog?.showModal();
     // 시작 윤곽을 계산한 다음 전환한다. 도중에 닫아도 현재 모습에서 이어진다.
     surfaceRef.current?.getBoundingClientRect();
-    const frame = window.requestAnimationFrame(() => setEntered(true));
+    const frame = requestAnimationFrame(() => setEntered(true));
     return () => {
-      window.cancelAnimationFrame(frame);
+      cancelAnimationFrame(frame);
       dialog?.close();
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
@@ -200,7 +190,6 @@ function PanelDialog({
           {
             opacity: expanded ? 1 : 0,
             transition: `opacity ${expanded ? 120 : 100}ms ease ${closing ? 140 : 0}ms`,
-            ...reducedMotionStyle,
           },
           bottom !== undefined && { bottom },
         ]}
@@ -215,7 +204,6 @@ function PanelDialog({
               ? `inset(0 0 0 0 round ${tokens.spacing[6]})`
               : `inset(calc(100% - ${FLOATING_SIZE}px) 0 0 calc(100% - ${FLOATING_SIZE}px) round ${FLOATING_SIZE / 2}px)`,
             transition: `clip-path ${duration}ms ${easing}`,
-            ...reducedMotionStyle,
           }}
           onTransitionEnd={(event) => {
             if (
@@ -241,7 +229,6 @@ function PanelDialog({
                 opacity: expanded ? 1 : 0,
                 transform: expanded ? 'translateY(0)' : 'translateY(6px)',
                 transition: `opacity ${expanded ? 160 : 90}ms ease ${expanded ? 65 : 0}ms, transform ${expanded ? 240 : 140}ms ${easing}`,
-                ...reducedMotionStyle,
               }}
             >
               {children}
@@ -255,7 +242,6 @@ function PanelDialog({
                 // 접힐 때 여백도 줄여 brand 버튼이 원래 Floating 윤곽까지 이어지게 한다.
                 padding: expanded ? `0 ${tokens.spacing[3]} ${tokens.spacing[3]}` : 0,
                 transition: `padding ${duration}ms ${easing}`,
-                ...reducedMotionStyle,
               }}
             >
               {closeButton({ close: onClose, expanded })}
