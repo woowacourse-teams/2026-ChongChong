@@ -22,7 +22,7 @@ const tabStyle = {
   display: 'flex',
   flexShrink: 0,
   alignItems: 'stretch',
-  paddingBottom: tokens.layout.safeBottom,
+  paddingBottom: tokens.layout.tabBarBottomInset,
   borderTop: tokens.border.neutral,
   borderTopLeftRadius: tokens.radius.lg,
   borderTopRightRadius: tokens.radius.lg,
@@ -37,7 +37,7 @@ const linkStyle = {
   alignItems: 'center',
   justifyContent: 'center',
   textAlign: 'center',
-  padding: `${tokens.spacing[2]} 0`,
+  padding: `${tokens.spacing[2]} 0 ${tokens.layout.tabBarPaddingBottom}`,
 } satisfies CSSProperties;
 
 const textStyle = {

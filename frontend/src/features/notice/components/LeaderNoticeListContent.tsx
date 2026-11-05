@@ -68,7 +68,7 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
       )}
       <FloatingMenu
         aria-label="공지 메뉴"
-        bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.safeBottom} + ${tokens.spacing[4]})`}
+        bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.tabBarBottomInset} + ${tokens.spacing[4]})`}
         trigger={({ bottom, ...props }) => (
           <Floating
             {...props}
