@@ -20,7 +20,9 @@ const tabStyle = {
   background: tokens.bg.default,
   maxWidth: tokens.screenSize.default,
   display: 'flex',
+  flexShrink: 0,
   alignItems: 'stretch',
+  paddingBottom: tokens.layout.safeBottom,
   borderTop: tokens.border.neutral,
   borderTopLeftRadius: tokens.radius.lg,
   borderTopRightRadius: tokens.radius.lg,
@@ -29,9 +31,13 @@ const tabStyle = {
 const linkStyle = {
   flex: 1,
   minWidth: 0,
+  minHeight: tokens.layout.tabBarHeight,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
   textAlign: 'center',
   padding: `${tokens.spacing[2]} 0`,
-  paddingBottom: `calc(${tokens.spacing[2]} + ${tokens.layout.safeBottom})`,
 } satisfies CSSProperties;
 
 const textStyle = {
