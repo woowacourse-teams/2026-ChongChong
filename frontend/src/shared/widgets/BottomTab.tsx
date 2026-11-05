@@ -59,7 +59,7 @@ export default function BottomTab() {
   const isHome = pathname === basePath;
   const isNotice = pathname.includes('notices');
   const isAssignment = pathname.includes('assignments');
-  const isCalendar = pathname.includes('calender');
+  const isCalendar = pathname.includes('calendar');
   const isMember = pathname.includes('member');
   const homeTab = URL_POLICY.toStudyHomeTab(studyId, location);
   const homeContent = (
@@ -115,7 +115,7 @@ export default function BottomTab() {
       </Link>
       <Link
         css={linkStyle}
-        {...URL_POLICY.toStudyTab(studyId, 'calender', location)}
+        {...URL_POLICY.toStudyTab(studyId, 'calendar', location)}
         aria-current={isCalendar ? 'page' : undefined}
       >
         <img src={isCalendar ? ActiveCalendarIcon : CalendarIcon} width={22} height={22} alt="" />

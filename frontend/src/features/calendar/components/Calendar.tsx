@@ -9,9 +9,13 @@ import {
   selectedDayStyle,
   weekdayRowStyle,
 } from '../../../shared/ui/date-time-picker/dateTimePicker.styles';
-import { getCalendarDays, isSameDay, WEEKDAYS } from '../../../shared/ui/date-time-picker/dateTimePicker.utils';
+import {
+  getCalendarDays,
+  isSameDay,
+  WEEKDAYS,
+} from '../../../shared/ui/date-time-picker/dateTimePicker.utils';
 
-interface CalenderProps {
+interface CalendarProps {
   selectedDate: Date;
   getEventKinds: (date: Date) => readonly ('created' | 'due')[];
   onSelectDate: (date: Date) => void;
@@ -48,7 +52,7 @@ const eventDotStyle = {
   borderRadius: tokens.radius.full,
 } satisfies CSSProperties;
 
-export default function Calender({ selectedDate, getEventKinds, onSelectDate }: CalenderProps) {
+export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: CalendarProps) {
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
 
