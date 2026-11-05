@@ -5,15 +5,22 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -103,6 +110,8 @@ class NotificationApiTest extends PostgresContainerTest {
                 .get("/notifications")
                 .then()
                 .statusCode(200)
+                .body("nextCursor", nullValue())
+                .body("hasNext", equalTo(false))
                 .body("notifications", hasSize(2))
                 .body("notifications[0].id", equalTo(later.getId().intValue()))
                 .body("notifications[0].title", equalTo("[스터디] 새 제출물"))
@@ -117,6 +126,113 @@ class NotificationApiTest extends PostgresContainerTest {
                 .body("notifications[1].resourceType", equalTo("NOTICE"))
                 .body("notifications[1].isRead", equalTo(false))
                 .body("notifications[1].createdAt", equalTo(EARLIER.format(RESPONSE_DATE_TIME_FORMATTER)));
+    }
+
+    @Test
+    @DisplayName("알림 목록은 페이지 크기를 생략하면 10개를 반환한다")
+    void getMyNotificationsWithDefaultSizeTest() {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+        List<Notification> notifications = new ArrayList<>();
+        for (int index = 0; index < 11; index++) {
+            notifications.add(saveNotification(user));
+        }
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/notifications")
+                .then()
+                .statusCode(200)
+                .body("notifications", hasSize(10))
+                .body("notifications[0].id", equalTo(notifications.getLast().getId().intValue()))
+                .body("notifications[9].id", equalTo(notifications.get(1).getId().intValue()))
+                .body("nextCursor", equalTo(notifications.get(1).getId().intValue()))
+                .body("hasNext", equalTo(true));
+    }
+
+    @Test
+    @DisplayName("새 알림 추가와 커서 알림 삭제 후에도 본인 알림의 다음 페이지를 중복 없이 조회한다")
+    void getMyNotificationsByCursorTest() {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+        User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", null));
+        Notification first = saveNotification(user);
+        Notification second = saveNotification(user);
+        saveNotification(otherUser);
+        Notification third = saveNotification(user);
+        Notification fourth = saveNotification(user);
+
+        Response firstPage = testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .queryParam("size", 2)
+                .when()
+                .get("/notifications")
+                .then()
+                .statusCode(200)
+                .body("notifications.id", equalTo(List.of(fourth.getId().intValue(), third.getId().intValue())))
+                .body("nextCursor", equalTo(third.getId().intValue()))
+                .body("hasNext", equalTo(true))
+                .extract().response();
+
+        Long cursor = firstPage.jsonPath().getLong("nextCursor");
+        saveNotification(user);
+        notificationRepository.deleteById(cursor);
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .queryParam("cursor", cursor)
+                .queryParam("size", 2)
+                .when()
+                .get("/notifications")
+                .then()
+                .statusCode(200)
+                .body("notifications.id", equalTo(List.of(second.getId().intValue(), first.getId().intValue())))
+                .body("nextCursor", nullValue())
+                .body("hasNext", equalTo(false));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .queryParam("cursor", first.getId())
+                .queryParam("size", 2)
+                .when()
+                .get("/notifications")
+                .then()
+                .statusCode(200)
+                .body("notifications", empty())
+                .body("nextCursor", nullValue())
+                .body("hasNext", equalTo(false));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"cursor, 0", "cursor, -1", "size, 0", "size, -1", "size, 101", "size, 2147483647"})
+    @DisplayName("알림 커서가 양수가 아니거나 페이지 크기가 범위를 벗어나면 파라미터 오류를 반환한다")
+    void getMyNotificationsWithInvalidPageParameterTest(String field, long value) {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .queryParam(field, value)
+                .when()
+                .get("/notifications")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
+                .body("errors.field", hasItem(field));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"cursor", "size"})
+    @DisplayName("알림 커서나 페이지 크기가 숫자가 아니면 잘못된 요청 오류를 반환한다")
+    void getMyNotificationsWithMalformedPageParameterTest(String field) {
+        User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .queryParam(field, "invalid")
+                .when()
+                .get("/notifications")
+                .then()
+                .statusCode(400)
+                .body("code", equalTo("INVALID_REQUEST"));
     }
 
     @Test
@@ -224,17 +340,20 @@ class NotificationApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("알림이 없으면 빈 notifications를 반환한다")
+    @DisplayName("알림이 없으면 최대 페이지 크기로 조회해도 빈 페이지를 반환한다")
     void getMyNotificationsWhenEmptyTest() {
         User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
+                .queryParam("size", 100)
                 .when()
                 .get("/notifications")
                 .then()
                 .statusCode(200)
-                .body("notifications", empty());
+                .body("notifications", empty())
+                .body("nextCursor", nullValue())
+                .body("hasNext", equalTo(false));
     }
 
     @Test
@@ -248,6 +367,11 @@ class NotificationApiTest extends PostgresContainerTest {
                 .then()
                 .statusCode(401)
                 .body("code", equalTo("AUTHENTICATION_REQUIRED"));
+    }
+
+    private Notification saveNotification(User recipient) {
+        return saveNotification(recipient, "[스터디] 새 공지", "공지 내용", NotificationType.NEW,
+                ResourceType.NOTICE, 10L, "/studies/2/notices/10", LATER);
     }
 
     private Notification saveNotification(

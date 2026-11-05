@@ -21,8 +21,10 @@ WebPushPayload:
 MyNotificationListResponse:
   type: object
   additionalProperties: false
-  required: [notifications]
+  required: [nextCursor, hasNext, notifications]
   properties:
+    nextCursor: { description: "다음 페이지 요청에 사용할 마지막 알림 ID. 다음 페이지가 없으면 null.", type: [integer, 'null'], format: int64, example: 10 }
+    hasNext: { type: boolean, example: false }
     notifications:
       type: array
       items: { $ref: '#/MyNotificationResponse' }
