@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import Floating from '../../../shared/ui/Floating';
 import FloatingMenu from '../../../shared/ui/FloatingMenu';
@@ -33,13 +32,12 @@ export default function StudyFloatingActions() {
       )}
     >
       {actions.map(({ label, description, icon, destination }) => (
-        <FloatingMenu.Item
+        <FloatingMenu.LinkItem
           key={label}
-          as={Link}
-          {...destination}
           icon={<img src={icon} alt="" width={22} height={22} />}
           label={label}
           description={description}
+          {...destination}
         />
       ))}
     </FloatingMenu>
