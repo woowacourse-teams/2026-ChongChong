@@ -90,10 +90,6 @@ export default function FloatingPanel({
         onClick: () => setPhase('open'),
         inert: open,
         'aria-hidden': open || undefined,
-        style: {
-          opacity: phase === 'open' ? 0 : 1,
-          transition: `opacity ${phase === 'open' ? 100 : 180}ms ${floatingMotion.open.easing} ${phase === 'closing' ? 60 : 0}ms`,
-        },
         'aria-haspopup': 'dialog',
         'aria-expanded': open,
         'aria-controls': open ? id : undefined,

@@ -2,7 +2,6 @@ import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { tokens } from '../../../styles/global';
-import { Link } from 'react-router';
 import Floating from '../../../shared/ui/Floating';
 import FloatingMenu from '../../../shared/ui/FloatingMenu';
 import plus from '../../../shared/assets/icons/plus-white.svg';
@@ -70,16 +69,16 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
       <FloatingMenu
         aria-label="공지 메뉴"
         bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.safeBottom} + ${tokens.spacing[4]})`}
-        trigger={(props) => (
+        trigger={({ bottom, ...props }) => (
           <Floating
             {...props}
+            css={{ bottom }}
             aria-label="공지 메뉴 열기"
             icon={<img src={plus} alt="" width={30} height={30} />}
           />
         )}
       >
-        <FloatingMenu.Item
-          as={Link}
+        <FloatingMenu.LinkItem
           {...URL_POLICY.toCreateNotice(studyId)}
           icon={<img src={plus} alt="" width={22} height={22} />}
           label="공지 작성하기"

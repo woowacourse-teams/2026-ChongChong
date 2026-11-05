@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
+import { ComponentPropsWithRef, ReactNode } from 'react';
 import { CSSObject } from '@emotion/react';
 import { tokens } from '../../styles/global';
 
-interface FloatingProps {
+interface FloatingProps extends Omit<ComponentPropsWithRef<'button'>, 'children'> {
   icon: ReactNode;
 }
 

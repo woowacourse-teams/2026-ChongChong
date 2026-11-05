@@ -3,7 +3,6 @@ import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
-import { Link } from 'react-router';
 import Floating from '../../../shared/ui/Floating';
 import FloatingMenu from '../../../shared/ui/FloatingMenu';
 import plus from '../../../shared/assets/icons/plus-white.svg';
@@ -79,16 +78,16 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
       <FloatingMenu
         aria-label="과제 메뉴"
         bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.safeBottom} + ${tokens.spacing[4]})`}
-        trigger={(props) => (
+        trigger={({ bottom, ...props }) => (
           <Floating
             {...props}
+            css={{ bottom }}
             aria-label="과제 메뉴 열기"
             icon={<img src={plus} alt="" width={30} height={30} />}
           />
         )}
       >
-        <FloatingMenu.Item
-          as={Link}
+        <FloatingMenu.LinkItem
           {...URL_POLICY.toCreateAssignment(studyId)}
           icon={<img src={plus} alt="" width={22} height={22} />}
           label="과제 추가하기"
