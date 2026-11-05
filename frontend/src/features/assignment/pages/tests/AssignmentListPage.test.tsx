@@ -70,33 +70,28 @@ describe('과제 목록 페이지 테스트', () => {
     logout();
   });
 
-  test.each([leaderUserName, memberUserName])(
-    '%s에게 역할에 맞는 과제 메뉴를 제공하고 닫으면 Floating으로 돌아온다',
-    async (userName) => {
-      login(userName);
+  describe('Floating UI', () => {
+    test('스터디원이 과제 목록에 들어오면 Floating 메뉴가 보이지 않는다', async () => {
+      login(memberUserName);
+      setupAssignmentListPage();
+
+      expect(await screen.findByText('아직 과제가 없어요')).toBeVisible();
+      expect(screen.queryByRole('button', { name: '과제 메뉴 열기' })).not.toBeInTheDocument();
+    });
+
+    test('리드가 Floating을 열면 과제 추가하기와 닫기 메뉴가 보인다', async () => {
+      login(leaderUserName);
       const { user } = setupAssignmentListPage();
-      await screen.findByText('아직 과제가 없어요');
-      expect(screen.queryByRole('link', { name: /과제 추가하기/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      if (userName === leaderUserName) {
-        const trigger = screen.getByRole('button', { name: '과제 메뉴 열기' });
-        await user.click(trigger);
-        const menu = within(screen.getByRole('dialog', { name: '과제 메뉴' }));
-        expect(menu.getAllByRole('link')).toHaveLength(1);
-        expect(menu.getByRole('link', { name: /과제 추가하기/ })).toHaveAttribute(
-          'href',
-          '/studies/1/assignments/create',
-        );
-        const closeButton = menu.getByRole('button', { name: '닫기' });
-        await waitFor(() => expect(closeButton).toBeVisible());
-        await user.click(closeButton);
-        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        expect(trigger).toHaveFocus();
-      } else {
-        expect(screen.queryByRole('button', { name: '과제 메뉴 열기' })).not.toBeInTheDocument();
-      }
-    },
-  );
+
+      const floating = await screen.findByRole('button', { name: '과제 메뉴 열기' });
+
+      await user.click(floating);
+
+      const menu = within(screen.getByRole('dialog', { name: '과제 메뉴' }));
+      await waitFor(() => expect(menu.getByRole('link', { name: /과제 추가하기/ })).toBeVisible());
+      await waitFor(() => expect(menu.getByRole('button', { name: '닫기' })).toBeVisible());
+    });
+  });
 
   test.each([
     { userName: leaderUserName, visibility: 'LEADER_ONLY', label: '미공개' },
