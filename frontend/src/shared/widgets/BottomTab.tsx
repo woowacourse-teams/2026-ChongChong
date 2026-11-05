@@ -9,6 +9,8 @@ import NoticeIcon from '../assets/notice.webp';
 import ActiveNoticeIcon from '../assets/notice-green.webp';
 import AssignmentIcon from '../assets/assign.webp';
 import ActiveAssignmentIcon from '../assets/assign-green.webp';
+import CalendarIcon from '../assets/calendar-days.svg?width=66&as=webp';
+import ActiveCalendarIcon from '../assets/calendar-days-active.svg?width=66&as=webp';
 import MemberIcon from '../assets/user.webp';
 import ActiveMemberIcon from '../assets/user-green.webp';
 import { tokens } from '../../styles/global';
@@ -57,6 +59,7 @@ export default function BottomTab() {
   const isHome = pathname === basePath;
   const isNotice = pathname.includes('notices');
   const isAssignment = pathname.includes('assignments');
+  const isCalendar = pathname.includes('calender');
   const isMember = pathname.includes('member');
   const homeTab = URL_POLICY.toStudyHomeTab(studyId, location);
   const homeContent = (
@@ -108,6 +111,16 @@ export default function BottomTab() {
           css={[textStyle, isAssignment && { color: tokens.text.brand }]}
         >
           과제
+        </Paragraph>
+      </Link>
+      <Link
+        css={linkStyle}
+        {...URL_POLICY.toStudyTab(studyId, 'calender', location)}
+        aria-current={isCalendar ? 'page' : undefined}
+      >
+        <img src={isCalendar ? ActiveCalendarIcon : CalendarIcon} width={22} height={22} alt="" />
+        <Paragraph variant="footnote" css={[textStyle, isCalendar && { color: tokens.text.brand }]}>
+          일정
         </Paragraph>
       </Link>
       <Link
