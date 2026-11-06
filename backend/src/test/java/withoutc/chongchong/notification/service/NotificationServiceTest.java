@@ -1,11 +1,13 @@
 package withoutc.chongchong.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -13,9 +15,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
@@ -26,6 +32,7 @@ import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
@@ -122,6 +129,47 @@ class NotificationServiceTest {
                 assignmentReminderRepository,
                 assignmentRepository
         );
+    }
+
+    @Test
+    @DisplayName("알림은 요청 크기보다 하나 더 조회하고 마지막 반환 알림 ID를 다음 커서로 제공한다")
+    void getListWithNextPage() {
+        Long cursor = 400L;
+        PageRequest pageable = PageRequest.of(0, 3);
+        when(notificationRepository.findByCursor(USER_ID, cursor, pageable))
+                .thenReturn(List.of(createNotification(300L), createNotification(200L), createNotification(100L)));
+
+        MyNotificationListResponse response = notificationService.getList(USER_ID, cursor, 2);
+
+        assertThat(response.notifications()).hasSize(2);
+        assertThat(response.nextCursor()).isEqualTo(200L);
+        assertThat(response.hasNext()).isTrue();
+        verify(notificationRepository).findByCursor(USER_ID, cursor, pageable);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    @DisplayName("알림 수가 요청 크기 이하면 다음 페이지와 커서가 없다")
+    void getListWithoutNextPage(int notificationCount) {
+        List<Notification> notifications = List.of(createNotification(200L), createNotification(100L));
+        when(notificationRepository.findByCursor(USER_ID, null, PageRequest.of(0, 3)))
+                .thenReturn(notifications.subList(0, notificationCount));
+
+        MyNotificationListResponse response = notificationService.getList(USER_ID, null, 2);
+
+        assertThat(response.notifications()).hasSize(notificationCount);
+        assertThat(response.nextCursor()).isNull();
+        assertThat(response.hasNext()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 10", "-1, 10", "1, 0", "1, -1", "1, 101", "1, 2147483647"})
+    @DisplayName("잘못된 알림 커서나 페이지 크기는 저장소 조회 전에 거부한다")
+    void rejectInvalidPageRequest(Long cursor, int size) {
+        assertThatThrownBy(() -> notificationService.getList(USER_ID, cursor, size))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(notificationRepository);
     }
 
     @Test
@@ -290,4 +338,17 @@ class NotificationServiceTest {
         verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(USER_ID);
     }
 
+    private Notification createNotification(Long id) {
+        Notification notification = Notification.create(
+                User.create("수신자", null),
+                "[스터디] 새 공지",
+                "공지 내용",
+                NotificationType.NEW,
+                NOTICE_ID,
+                ResourceType.NOTICE,
+                "/studies/1/notices/100"
+        );
+        ReflectionTestUtils.setField(notification, "id", id);
+        return notification;
+    }
 }
