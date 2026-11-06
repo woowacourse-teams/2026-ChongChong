@@ -10,9 +10,13 @@ import { memberTable } from '../../../../member/mocks/db';
 import CreateAssignmentPage from '../../../pages/CreateAssignmentPage';
 import { completeContentStep, completeScheduleStep } from './fixtures/assignmentSteps';
 
-async function setupSubmittersStep() {
+async function setupSubmittersStep(browserHistory = false) {
+  if (browserHistory) {
+    window.history.replaceState({ idx: 0 }, '', '/studies/1/assignments/create');
+  }
   const result = setup(<CreateAssignmentPage />, {
     wrapper: createWrapper({
+      browserHistory,
       initialEntries: ['/studies/1/assignments/create'],
       routes: (element) => <Route path="/studies/:studyId/assignments/create" element={element} />,
     }),
@@ -81,7 +85,7 @@ describe('AssignmentSubmittersStep Tests', () => {
 
   describe('제출 인원 선택', () => {
     test('다음 단계에서 돌아오면 선택한 제출 인원이 유지된다', async () => {
-      const { user } = await setupSubmittersStep();
+      const { user } = await setupSubmittersStep(true);
       await user.click(await screen.findByRole('checkbox', { name: '루멘' }));
       await user.click(screen.getByRole('button', { name: '다음' }));
 

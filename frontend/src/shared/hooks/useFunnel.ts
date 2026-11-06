@@ -1,40 +1,33 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import usePageNavigation from './usePageNavigation';
 
 interface Params<Step> {
+  steps: readonly Step[];
   initial: { step: Step };
 }
 
-export default function useFunnel<Step extends string>({ initial }: Params<Step>) {
-  const [historySteps, setHistorySteps] = useState<{ historySteps: Step[]; index: number }>({
-    historySteps: [initial.step],
-    index: 0,
-  });
+export default function useFunnel<Step extends string>({ steps, initial }: Params<Step>) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { back } = usePageNavigation();
+  const savedStep: unknown = location.state?.funnel?.step;
+  const step = steps.find((step) => step === savedStep) ?? initial.step;
 
-  const push = useCallback((step: Step) => {
-    setHistorySteps((current) => {
-      const historySteps = [...current.historySteps.slice(0, current.index + 1), step];
+  function push(nextStep: Step) {
+    navigate(
+      { pathname: location.pathname, search: location.search, hash: location.hash },
+      {
+        state: {
+          ...location.state,
+          funnel: { step: nextStep },
+        },
+      },
+    );
+  }
 
-      return { historySteps, index: historySteps.length - 1 };
-    });
-  }, []);
+  function go(move: number) {
+    navigate(move);
+  }
 
-  const go = useCallback((move: number) => {
-    setHistorySteps((current) => {
-      const nextIndex = current.index + move;
-
-      if (nextIndex < 0 || nextIndex >= current.historySteps.length) return current;
-
-      return { ...current, index: nextIndex };
-    });
-  }, []);
-
-  const back = useCallback(() => {
-    go(-1);
-  }, [go]);
-
-  const history = useMemo(() => {
-    return { push, back, go };
-  }, [push, back, go]);
-
-  return { step: historySteps.historySteps[historySteps.index], history };
+  return { step, history: { push, back, go } };
 }

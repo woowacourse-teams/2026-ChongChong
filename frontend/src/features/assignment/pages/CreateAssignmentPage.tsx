@@ -71,7 +71,10 @@ export default function CreateAssignmentPage() {
     fieldErrors,
   } = useCreateAssignment({ studyId });
 
-  const { step, history } = useFunnel<AssignmentStep>({ initial: { step: '내용' } });
+  const { step, history } = useFunnel<AssignmentStep>({
+    steps: ASSIGNMENT_FORM_STEPS,
+    initial: { step: '내용' },
+  });
   const stepNumber = ASSIGNMENT_FORM_STEPS.indexOf(step) + 1;
   const totalSteps = ASSIGNMENT_FORM_STEPS.length;
 
@@ -143,16 +146,7 @@ export default function CreateAssignmentPage() {
 
   return (
     <Page>
-      <TopHeader
-        left={
-          step === '내용' ? (
-            <PrevButton />
-          ) : (
-            <FunnelPrevButton goBack={() => history.back()} disabled={isSubmitting} />
-          )
-        }
-        middle={<TopHeader.Title>과제</TopHeader.Title>}
-      />
+      <TopHeader left={<PrevButton />} middle={<TopHeader.Title>과제</TopHeader.Title>} />
       <Main>
         {step === '내용' && (
           <AssignmentContentStep

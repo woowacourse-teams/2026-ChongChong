@@ -3,7 +3,7 @@ import { Routes } from 'react-router';
 import { render, type RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
-import { MemoryRouter } from 'react-router';
+import { BrowserRouter, MemoryRouter } from 'react-router';
 import { http, HttpResponse } from 'msw';
 import { ToastProvider } from '../shared/providers/ToastProvider';
 import { server } from '../mocks/msw-node';
@@ -11,6 +11,7 @@ import { clearAccessToken, setAccessToken } from '../features/login/accessToken'
 import { userTable } from '../features/user/mocks/db';
 
 interface WrapperParams {
+  browserHistory?: boolean;
   initialEntries?: string[];
   routes?: (element: React.ReactNode) => React.ReactNode;
   queryClient?: QueryClient;
@@ -21,6 +22,7 @@ export function mockResponse<T>(url: string, studies: T[]) {
 }
 
 export function createWrapper({
+  browserHistory = false,
   initialEntries,
   routes,
   queryClient: providedQueryClient,
@@ -39,9 +41,13 @@ export function createWrapper({
     return (
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <MemoryRouter initialEntries={initialEntries}>
-            {routes ? <Routes>{routes(children)}</Routes> : children}
-          </MemoryRouter>
+          {browserHistory ? (
+            <BrowserRouter>{routes ? <Routes>{routes(children)}</Routes> : children}</BrowserRouter>
+          ) : (
+            <MemoryRouter initialEntries={initialEntries}>
+              {routes ? <Routes>{routes(children)}</Routes> : children}
+            </MemoryRouter>
+          )}
         </ToastProvider>
       </QueryClientProvider>
     );
