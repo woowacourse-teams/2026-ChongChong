@@ -1,7 +1,7 @@
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AssignmentFormValues } from '../types';
+import { CreateAssignmentFormValues } from '../types';
 import { createAssignment } from '../api';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import { ValidationError } from '../../../shared/api/error';
@@ -21,7 +21,7 @@ export default function useCreateAssignment({ studyId }: Params) {
   const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
-    mutationFn: (body: AssignmentFormValues) => createAssignment(studyId, body),
+    mutationFn: (body: CreateAssignmentFormValues) => createAssignment(studyId, body),
     onSuccess: async ({ assignmentId }, body) => {
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(studyId),

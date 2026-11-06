@@ -1,6 +1,6 @@
 import api from '../../client';
 import {
-  AssignmentFormValues,
+  CreateAssignmentFormValues,
   UpdateAssignmentFormValues,
   AssignmentSubmissionValue,
 } from './types';
@@ -161,7 +161,7 @@ export async function updateAssignmentSubmission(
   }
 }
 
-export async function createAssignment(studyId: number, body: AssignmentFormValues) {
+export async function createAssignment(studyId: number, body: CreateAssignmentFormValues) {
   try {
     const response = await api.post(`/studies/${studyId}/assignments`, { json: body });
     const data: unknown = await response.json();

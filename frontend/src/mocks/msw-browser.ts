@@ -12,8 +12,8 @@ enableBrowserFilePreviews();
 createSeedUsers();
 createSeedStudies();
 createSeedMembers();
-createSeedAssignments();
-createSeedSubmissions();
+await createSeedAssignments();
+await createSeedSubmissions();
 createSeedNotices();
 createSeedNotification();
 

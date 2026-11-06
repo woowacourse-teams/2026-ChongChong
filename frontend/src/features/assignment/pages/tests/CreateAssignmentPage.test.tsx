@@ -1,4 +1,4 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, Route, RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -60,6 +60,156 @@ describe('과제 생성 페이지 테스트', () => {
 
   afterEach(() => {
     logout();
+  });
+
+  test('제출 인원을 선택하고 공개 범위를 바꾼 뒤 이전 단계로 돌아가도 선택을 유지한다', async () => {
+    const requestBody = jest.fn();
+    server.use(
+      http.post(ASSIGNMENT_CREATE_URL, async ({ request }) => {
+        requestBody(await request.json());
+        return invalidInputResponse([
+          { field: 'submissionVisibility', code: 'INVALID', reason: '공개 범위를 확인해주세요.' },
+        ]);
+      }),
+    );
+    await memberTable.create({
+      id: 2,
+      studyId: 1,
+      userId: 2,
+      name: '피즈',
+      profileImage: null,
+      role: 'MEMBER',
+    });
+    const { user } = setupCreateAssignmentPage();
+
+    expect(screen.queryByText('제목을 입력해주세요.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByText('제목을 입력해주세요.')).toBeVisible();
+    expect(screen.getByText('내용을 입력해주세요.')).toBeVisible();
+    expect(screen.getByText('제출 방법을 입력해주세요.')).toBeVisible();
+    await user.type(getTitleInput(), '과제 제목');
+    await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '   ');
+    expect(screen.queryByText('제목을 입력해주세요.')).not.toBeInTheDocument();
+    expect(screen.queryByText('내용을 입력해주세요.')).not.toBeInTheDocument();
+    expect(screen.getByText('제출 방법을 입력해주세요.')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByRole('textbox', { name: '제출 방법' })).toBeVisible();
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+    expect(screen.queryByText('제출 방법을 입력해주세요.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.queryByText('마감 시각을 선택해주세요.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByText('마감 시각을 선택해주세요.')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '마감 시각' }));
+    const dialog = within(screen.getByRole('dialog'));
+    await user.click(dialog.getByRole('button', { name: '다음' }));
+    await user.click(dialog.getByRole('button', { name: '완료' }));
+    expect(screen.queryByText('마감 시각을 선택해주세요.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(await screen.findByRole('checkbox', { name: '전체 선택' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByText('제출할 멤버를 한 명 이상 선택해주세요.')).toBeVisible();
+    await user.click(screen.getByRole('checkbox', { name: '피즈' }));
+    expect(screen.queryByText('제출할 멤버를 한 명 이상 선택해주세요.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+
+    expect(screen.getByText('제출 인원 1명 · 피즈')).toBeVisible();
+    await user.click(screen.getByRole('radio', { name: '제출한 사람과 리더만' }));
+    await user.click(screen.getByRole('button', { name: '뒤로 가기' }));
+    expect(screen.getByRole('checkbox', { name: '피즈' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: '안톨리니 (나)' })).not.toBeChecked();
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByRole('radio', { name: '제출한 사람과 리더만' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: '과제 만들기' }));
+    await waitFor(() => expect(requestBody).toHaveBeenCalledTimes(1));
+    expect(requestBody.mock.calls[0][0]).toMatchObject({
+      title: '과제 제목',
+      content: '과제 내용',
+      submitterIds: [2],
+      submissionVisibility: 'LEADER_ONLY',
+      attachmentFileIds: [],
+    });
+    expect(requestBody.mock.calls[0][0]).not.toHaveProperty('submissionTarget');
+    expect(await screen.findByText('공개 범위를 확인해주세요.')).toBeVisible();
+  });
+
+  async function proceedToVisibility(user: ReturnType<typeof setupCreateAssignmentPage>['user']) {
+    await user.type(getTitleInput(), '과제 제목');
+    await user.type(screen.getByRole('textbox', { name: '내용' }), '과제 내용');
+    await user.type(screen.getByRole('textbox', { name: '제출 방법' }), '링크 제출');
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(screen.getByRole('button', { name: '마감 시각' }));
+    const dialog = within(screen.getByRole('dialog'));
+    await user.click(dialog.getByRole('button', { name: '다음' }));
+    await user.click(dialog.getByRole('button', { name: '완료' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await screen.findByRole('checkbox', { name: '전체 선택' });
+    await user.click(screen.getByRole('button', { name: '다음' }));
+  }
+
+  test.each([
+    ['title', '어떤 과제를 함께 할까요?'],
+    ['remindAts[0]', '과제 일정을 정해주세요'],
+    ['submitterIds', '누가 과제를 제출하나요?'],
+  ])('서버의 %s 오류가 있는 단계로 돌아간다', async (field, heading) => {
+    server.use(
+      http.post(ASSIGNMENT_CREATE_URL, () =>
+        invalidInputResponse([{ field, code: 'INVALID', reason: '입력값을 확인해주세요.' }]),
+      ),
+    );
+    const { user } = setupCreateAssignmentPage();
+    await proceedToVisibility(user);
+    await user.click(screen.getByRole('button', { name: '과제 만들기' }));
+    expect(await screen.findByRole('heading', { name: heading })).toBeVisible();
+    expect(screen.getByText('입력값을 확인해주세요.')).toBeVisible();
+    if (field === 'title') expect(getTitleInput()).toHaveValue('과제 제목');
+  });
+
+  test('이미지 업로드 중이거나 실패하면 생성을 막고 삭제하면 다시 허용한다', async () => {
+    jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:assignment-image');
+    jest.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    let failUpload!: () => void;
+    const uploadPending = new Promise<void>((resolve) => {
+      failUpload = resolve;
+    });
+    const createRequest = jest.fn();
+    server.use(
+      http.post(`${API_URL}/files/presigned-url`, async () => {
+        await uploadPending;
+        return HttpResponse.json({ message: '업로드 실패' }, { status: 400 });
+      }),
+      http.post(ASSIGNMENT_CREATE_URL, () => {
+        createRequest();
+        return HttpResponse.json({ assignmentId: 1 }, { status: 201 });
+      }),
+    );
+    const { user } = setupCreateAssignmentPage();
+    await user.upload(
+      document.querySelector<HTMLInputElement>('input[type="file"]')!,
+      new File(['image'], '과제.png', { type: 'image/png' }),
+    );
+    await proceedToVisibility(user);
+    expect(screen.getByRole('button', { name: '과제 만들기' })).toBeDisabled();
+    expect(
+      screen.getByText(
+        '이미지 업로드가 완료되지 않았어요. 내용 단계에서 업로드 상태를 확인해주세요.',
+      ),
+    ).toBeVisible();
+    failUpload();
+    for (let i = 0; i < 3; i++) await user.click(screen.getByRole('button', { name: '뒤로 가기' }));
+    await screen.findByText('파일 업로드에 실패했어요. 삭제 후 다시 선택해주세요.');
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByRole('button', { name: '과제 만들기' })).toBeDisabled();
+    expect(createRequest).not.toHaveBeenCalled();
+    for (let i = 0; i < 3; i++) await user.click(screen.getByRole('button', { name: '뒤로 가기' }));
+    await user.click(screen.getByRole('button', { name: '과제.png 삭제' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(screen.getByRole('button', { name: '다음' }));
+    expect(screen.getByRole('button', { name: '과제 만들기' })).toBeEnabled();
   });
 
   describe('과제 입력 검증', () => {
