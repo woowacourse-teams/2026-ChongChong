@@ -169,7 +169,7 @@ class NoticeRepositoryTest {
         noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
 
         List<LeaderNoticeSummaryProjection> summaries =
-                noticeRepository.findIncompleteNoticeSummariesByStudyId(fixture.study().getId());
+                noticeRepository.findIncompleteNoticeSummariesByStudyId(fixture.study().getId(), CLOCK.minusDays(7));
 
         assertThat(summaries)
                 .extracting(LeaderNoticeSummaryProjection::id,
@@ -209,7 +209,7 @@ class NoticeRepositoryTest {
         completeNotice.getRecipients().forEach(recipient -> recipient.markAsRead(CLOCK));
         noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
 
-        long count = noticeRepository.countIncompleteNoticeByStudyId(fixture.study().getId());
+        long count = noticeRepository.countIncompleteNoticeByStudyId(fixture.study().getId(), CLOCK.minusDays(7));
 
         assertThat(count).isEqualTo(1L);
     }
