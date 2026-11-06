@@ -1,6 +1,6 @@
 import Page from '../../../shared/ui/Page';
 import { ValidationError } from '../../../shared/api/error';
-import { useState, type CSSProperties } from 'react';
+import { Suspense, useState, type CSSProperties } from 'react';
 import TopHeader from '../../../shared/ui/TopHeader';
 import backIcon from '../../../shared/assets/left-arrow.svg';
 import Main from '../../../shared/ui/Main';
@@ -18,6 +18,9 @@ import AssignmentContentStep from '../components/AssignmentFormSteps/AssignmentC
 import AssignmentScheduleStep from '../components/AssignmentFormSteps/AssignmentScheduleStep';
 import AssignmentSubmittersStep from '../components/AssignmentFormSteps/AssignmentSubmittersStep';
 import AssignmentVisibilityStep from '../components/AssignmentFormSteps/AssignmentVisibilityStep';
+import Loading from '../../../shared/ui/Loading';
+import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
+import ErrorContent from '../../../shared/ui/ErrorContent';
 
 const backButtonStyle = {
   display: 'grid',
@@ -103,7 +106,6 @@ export default function CreateAssignmentPage() {
     data: memberData,
     isPending: isMembersPending,
     error: membersError,
-    refetch,
   } = useQuery(memberQueries.list(studyId));
   const members = memberData?.members ?? [];
   const selectedMembers = members.filter(
@@ -190,17 +192,21 @@ export default function CreateAssignmentPage() {
           />
         )}
         {step === '제출 대상' && (
-          <AssignmentSubmittersStep
-            members={members}
-            selectedIds={selectedIds}
-            isSubmitting={isSubmitting}
-            isMembersPending={isMembersPending}
-            membersError={membersError}
-            errorText={fieldErrors.submitterIds}
-            onRetry={() => void refetch()}
-            setSubmitterIds={setSubmitterIds}
-            onNext={() => history.push('공개여부')}
-          />
+          <ErrorBoundary
+            fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+          >
+            <Suspense fallback={<Loading />}>
+              <AssignmentSubmittersStep
+                members={members}
+                selectedIds={selectedIds}
+                isSubmitting={isSubmitting}
+                isMembersPending={isMembersPending}
+                membersError={membersError}
+                setSubmitterIds={setSubmitterIds}
+                onNext={() => history.push('공개여부')}
+              />
+            </Suspense>
+          </ErrorBoundary>
         )}
         {step === '공개여부' && (
           <AssignmentVisibilityStep
