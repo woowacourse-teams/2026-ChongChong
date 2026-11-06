@@ -95,7 +95,7 @@ describe('AssignmentScheduleStep Tests', () => {
     test('리마인드 등록하기 버튼을 클릭하면 날짜 선택 화면이 열린다', async () => {
       const { user } = await setupScheduleStep();
 
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
 
       expect(screen.getByRole('dialog', { name: '리마인드 시각 설정' })).toBeVisible();
     });
@@ -103,7 +103,7 @@ describe('AssignmentScheduleStep Tests', () => {
     test('날짜와 시간을 선택하고 완료하면 리마인드 시각이 목록에 표시된다', async () => {
       const { user } = await setupScheduleStep();
 
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 10);
 
       const reminders = within(screen.getByRole('list', { name: '등록한 리마인드 시각' }));
@@ -113,9 +113,9 @@ describe('AssignmentScheduleStep Tests', () => {
     test('서로 다른 시각의 리마인드를 여러 개 등록하면 등록한 시각이 모두 표시된다', async () => {
       const { user } = await setupScheduleStep();
 
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 10);
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 11);
 
       const reminders = within(screen.getByRole('list', { name: '등록한 리마인드 시각' }));
@@ -125,10 +125,10 @@ describe('AssignmentScheduleStep Tests', () => {
 
     test('이미 등록한 시각을 다시 선택해도 리마인드가 중복으로 추가되지 않는다', async () => {
       const { user } = await setupScheduleStep();
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 10);
 
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 10);
 
       const reminders = within(screen.getByRole('list', { name: '등록한 리마인드 시각' }));
@@ -137,9 +137,9 @@ describe('AssignmentScheduleStep Tests', () => {
 
     test('삭제 버튼을 클릭하면 해당 리마인드만 목록에서 제외된다', async () => {
       const { user } = await setupScheduleStep();
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 10);
-      await user.click(screen.getByRole('button', { name: '리마인드 시각 (선택)' }));
+      await user.click(screen.getByRole('button', { name: '리마인드 시각' }));
       await selectDateTime(user, 11);
       const reminders = within(screen.getByRole('list', { name: '등록한 리마인드 시각' }));
 

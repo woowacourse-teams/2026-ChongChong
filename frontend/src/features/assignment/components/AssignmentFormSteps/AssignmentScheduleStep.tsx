@@ -64,7 +64,7 @@ export default function AssignmentScheduleStep({
       />
       <ReminderField
         id="assignment-reminders"
-        label="리마인드 시각 (선택)"
+        label="리마인드 시각"
         value={remindAts}
         onChange={setRemindAts}
         helpText="리마인드가 필요하면 알림 시각을 추가해 주세요."
