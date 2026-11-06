@@ -164,7 +164,9 @@ export default function AssignmentSubmittersStep({
         <Button
           variant="brandSolid"
           size="large"
-          disabled={isSubmitting || isMembersPending || Boolean(membersError)}
+          disabled={
+            isSubmitting || isMembersPending || Boolean(membersError) || selectedIds.length === 0
+          }
           onClick={() => {
             setHasAttemptedNext(true);
             if (!canProceed) return;
