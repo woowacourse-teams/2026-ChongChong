@@ -15,6 +15,7 @@ const assignmentSchema = z.object({
   submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
   submissionVisibility: z.enum(['LEADER_ONLY', 'ALL_STUDY_MEMBERS']).default('LEADER_ONLY'),
   completeUserIds: z.array(z.number()),
+  remindAts: z.array(z.string()).default([]),
   attachmentFileIds: z.array(z.number()).optional(),
 });
 
@@ -23,9 +24,9 @@ export const assignmentTable = new Collection({
 });
 
 export type AssignmentSchemaType = z.infer<typeof assignmentSchema>;
-type AssignmentSchemaInput = z.input<typeof assignmentSchema>;
+type AssignmentSchemaInput = z.input<typeof assignmentSchema> & { submitterIds?: number[] };
 
-export const mockAssigments = [
+export const mockAssigments: AssignmentSchemaInput[] = [
   {
     id: 1,
     studyId: 2,
@@ -188,16 +189,31 @@ export const mockAssigments = [
     submissionVisibility: 'ALL_STUDY_MEMBERS',
     completeUserIds: [1, 5],
   },
+  {
+    id: 17,
+    studyId: 2,
+    title: '선택한 멤버만 제출하는 과제',
+    content: '바니만 제출 대상이며 리더는 제출 현황을 확인할 수 있어요.',
+    submissionMethod: '텍스트로 제출해주세요.',
+    closeAt: '2099-12-31T23:59:00',
+    submissionTarget: 'MEMBERS_ONLY',
+    submissionVisibility: 'ALL_STUDY_MEMBERS',
+    submitterIds: [6],
+    remindAts: ['2099-12-30T10:00:00'],
+    completeUserIds: [],
+  },
 ] satisfies AssignmentSchemaInput[];
 
-export function createSeedAssignments() {
+export async function createSeedAssignments() {
   for (const mockAssignment of mockAssigments) {
     const createdAt = new Date(mockAssignment.closeAt + '+09:00');
     createdAt.setUTCDate(createdAt.getUTCDate() - 7);
-    assignmentTable.create({
-      ...mockAssignment,
-      createdAt: new Date(createdAt.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, -1),
-    });
+    await assignmentTable.create(
+      assignmentSchema.parse({
+        ...mockAssignment,
+        createdAt: new Date(createdAt.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, -1),
+      }),
+    );
   }
 }
 
@@ -444,9 +460,9 @@ export const mockSubmissions = [
   },
 ] satisfies SubmissionSchemaInput[];
 
-export function createSeedSubmissions() {
+export async function createSeedSubmissions() {
   for (const mockSubmission of mockSubmissions) {
-    submissionTable.create(mockSubmission);
+    await submissionTable.create(mockSubmission);
   }
 
   let submissionId = Math.max(...mockSubmissions.map(({ id }) => id)) + 1;
@@ -454,8 +470,10 @@ export function createSeedSubmissions() {
   for (const assignment of mockAssigments) {
     const submitters = memberTable
       .findMany((q) => q.where({ studyId: assignment.studyId }))
-      .filter(
-        ({ role }) => assignment.submissionTarget === 'MEMBERS_AND_LEADER' || role !== 'LEADER',
+      .filter(({ id, role }) =>
+        assignment.submitterIds
+          ? assignment.submitterIds.includes(id)
+          : assignment.submissionTarget === 'MEMBERS_AND_LEADER' || role !== 'LEADER',
       );
 
     for (const submitter of submitters) {
@@ -465,7 +483,7 @@ export function createSeedSubmissions() {
 
       if (exists) continue;
 
-      submissionTable.create({
+      await submissionTable.create({
         id: submissionId++,
         assignmentId: assignment.id,
         userId: submitter.userId,
