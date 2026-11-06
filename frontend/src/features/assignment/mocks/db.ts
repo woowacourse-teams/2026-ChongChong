@@ -9,6 +9,9 @@ const assignmentSchema = z.object({
   content: z.string(),
   submissionMethod: z.string(),
   closeAt: z.string(),
+  createdAt: z
+    .string()
+    .default(() => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, -1)),
   submissionTarget: z.enum(['MEMBERS_ONLY', 'MEMBERS_AND_LEADER']),
   submissionVisibility: z.enum(['LEADER_ONLY', 'ALL_STUDY_MEMBERS']).default('LEADER_ONLY'),
   completeUserIds: z.array(z.number()),
@@ -189,7 +192,12 @@ export const mockAssigments = [
 
 export function createSeedAssignments() {
   for (const mockAssignment of mockAssigments) {
-    assignmentTable.create(mockAssignment);
+    const createdAt = new Date(mockAssignment.closeAt + '+09:00');
+    createdAt.setUTCDate(createdAt.getUTCDate() - 7);
+    assignmentTable.create({
+      ...mockAssignment,
+      createdAt: new Date(createdAt.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, -1),
+    });
   }
 }
 
@@ -198,6 +206,7 @@ const submissionSchema = z.object({
   id: z.number(),
   assignmentId: z.number(),
   userId: z.number(),
+  assigned: z.boolean().default(true),
   submitted: z.boolean().default(true),
   content: z.string().nullable().default(null),
   link: z.string().nullable().default(null),

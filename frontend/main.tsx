@@ -8,6 +8,7 @@ import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/study/routes';
+import { routes as calenderRoutes } from './src/features/calendar/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
@@ -27,6 +28,7 @@ const appRoutes = [
     }),
   },
   ...studiesRoutes,
+  ...calenderRoutes,
   ...noticeRoutes,
   ...AssignmentRoutes,
   ...memberRoutes,

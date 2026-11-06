@@ -1,3 +1,4 @@
+import calendarQueries from '../../calendar/queries';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { usePostHog } from '@posthog/react';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -61,6 +62,8 @@ function Content() {
       queryClient.invalidateQueries({
         queryKey: noticeQueries.detail(studyId, noticeId).queryKey,
       });
+
+      queryClient.invalidateQueries({ queryKey: calendarQueries.months(studyId) });
 
       await move(URL_POLICY.afterNoticeEdit(studyId, noticeId));
     },

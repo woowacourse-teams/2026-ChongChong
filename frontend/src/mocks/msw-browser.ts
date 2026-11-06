@@ -6,6 +6,7 @@ import { createSeedUsers } from '../features/user/mocks/db';
 import { createSeedAssignments, createSeedSubmissions } from '../features/assignment/mocks/db';
 import { createSeedNotices } from '../features/notice/mocks/db';
 import { createSeedNotification } from '../features/notification/mocks/db';
+import { createSeedCalendar } from '../features/calendar/mocks/db';
 import { enableBrowserFilePreviews } from '../shared/modules/files/mocks/attachments';
 
 enableBrowserFilePreviews();
@@ -16,5 +17,6 @@ createSeedAssignments();
 createSeedSubmissions();
 createSeedNotices();
 createSeedNotification();
+createSeedCalendar();
 
 export const worker = setupWorker(...handlers);

@@ -4,7 +4,7 @@ export type LinkPolicy = {
 };
 export type NavigationPolicy = LinkPolicy | { to: -1 };
 type Id = number | string;
-export type StudyTab = 'home' | 'notices' | 'assignments' | 'members';
+export type StudyTab = 'home' | 'notices' | 'assignments' | 'calendar' | 'members';
 export type ContentTab = 'detail' | 'status';
 
 const path = {

@@ -1,3 +1,4 @@
+import calendarQueries from '../../calendar/queries';
 import { Suspense } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import LeaderNoticeDetailContent from '../components/LeaderNoticeDetailContent';
@@ -11,7 +12,7 @@ import Loading from '../../../shared/ui/Loading';
 import BottomTab from '../../../shared/widgets/BottomTab';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import ContentActionMenu from '../../../shared/widgets/ContentActionMenu';
 
 export default function NoticeDetailPage() {
@@ -62,11 +63,19 @@ function Content() {
 
 NoticeDetailPage.HeaderActions = function HeaderActions() {
   const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
+  const queryClient = useQueryClient();
   const {
     data: { role },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return role === 'LEADER' ? (
-    <ContentActionMenu studyId={studyId} id={noticeId} content="notice" />
+    <ContentActionMenu
+      studyId={studyId}
+      id={noticeId}
+      content="notice"
+      onDeleteSuccess={() => {
+        queryClient.invalidateQueries({ queryKey: calendarQueries.months(studyId) });
+      }}
+    />
   ) : null;
 };
