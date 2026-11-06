@@ -8,6 +8,7 @@ import deleteIcon from '../assets/image-upload-delete.svg';
 
 interface ReminderFieldProps {
   id: string;
+  label?: string;
   value?: string[] | null;
   onChange: (value: string[]) => void;
   helpText: string;
@@ -39,6 +40,7 @@ const addButtonStyle = {
 
 export default function ReminderField({
   id,
+  label = '리마인드 시각',
   value,
   onChange,
   helpText,
@@ -49,7 +51,7 @@ export default function ReminderField({
 
   return (
     <Field>
-      <Field.Label htmlFor={id}>리마인드 시각</Field.Label>
+      <Field.Label htmlFor={id}>{label}</Field.Label>
       {reminders.length > 0 && (
         <div
           role="list"

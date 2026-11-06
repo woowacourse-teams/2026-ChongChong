@@ -69,6 +69,10 @@ export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments'> 
   attachmentFileIds?: number[];
 };
 
+export type CreateAssignmentFormValues = Omit<AssignmentFormValues, 'submissionTarget'> & {
+  submitterIds: number[];
+};
+
 export type UpdateAssignmentFormValues = Partial<AssignmentFormValues>;
 
 interface SubmissionBase {
