@@ -80,6 +80,17 @@ describe('AssignmentSubmittersStep Tests', () => {
   });
 
   describe('제출 인원 선택', () => {
+    test('다음 단계에서 돌아오면 선택한 제출 인원이 유지된다', async () => {
+      const { user } = await setupSubmittersStep();
+      await user.click(await screen.findByRole('checkbox', { name: '루멘' }));
+      await user.click(screen.getByRole('button', { name: '다음' }));
+
+      await user.click(screen.getByRole('button', { name: '뒤로 가기' }));
+
+      expect(await screen.findByRole('checkbox', { name: '안톨리니 (나)' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: '루멘' })).not.toBeChecked();
+    });
+
     test('스터디원 목록에 각 스터디원의 이름이 표시된다', async () => {
       await setupSubmittersStep();
 
@@ -153,7 +164,7 @@ describe('AssignmentSubmittersStep Tests', () => {
   });
 
   describe('스터디원 목록 조회', () => {
-    test('스터디원 목록을 불러오는 동안 로딩 화면이 표시되고 다음 버튼이 비활성화되어 있다', async () => {
+    test('스터디원 목록을 불러오는 동안 로딩 화면이 표시된다', async () => {
       let finishLoading!: () => void;
       const pending = new Promise<void>((resolve) => {
         finishLoading = resolve;
@@ -167,12 +178,11 @@ describe('AssignmentSubmittersStep Tests', () => {
       await setupSubmittersStep();
 
       expect(await screen.findByRole('img', { name: '로딩 중' })).toBeVisible();
-      expect(await screen.findByRole('button', { name: '다음' })).toBeDisabled();
       finishLoading();
       await screen.findByRole('checkbox', { name: '전체 선택' });
     });
 
-    test('스터디원 목록을 불러오지 못한 상태에서는 다음 버튼이 비활성화되어 있다', async () => {
+    test('스터디원 목록을 불러오지 못하면 오류 화면이 표시된다', async () => {
       server.use(
         http.get(`${API_URL}/studies/:studyId/members`, () =>
           HttpResponse.json(
@@ -182,9 +192,8 @@ describe('AssignmentSubmittersStep Tests', () => {
         ),
       );
       await setupSubmittersStep();
-      await screen.findByRole('alert');
 
-      expect(screen.getByRole('button', { name: '다음' })).toBeDisabled();
+      expect(await screen.findByText('스터디를 찾을 수 없습니다.')).toBeVisible();
     });
   });
 });

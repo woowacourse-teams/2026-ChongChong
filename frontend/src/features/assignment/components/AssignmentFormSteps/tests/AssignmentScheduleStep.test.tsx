@@ -62,7 +62,7 @@ describe('AssignmentScheduleStep Tests', () => {
 
     await user.click(screen.getByRole('button', { name: '다음' }));
 
-    expect(screen.getByRole('heading', { name: '누가 과제를 제출하나요?' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: '누가 과제를 제출하나요?' })).toBeVisible();
   });
 
   describe('마감 시각 설정', () => {
