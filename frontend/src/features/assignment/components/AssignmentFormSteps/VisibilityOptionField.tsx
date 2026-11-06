@@ -13,7 +13,7 @@ interface VisibilityOptionFieldProps {
   onChange: (visibility: SubmissionVisibility) => void;
 }
 
-const visibilityOptionFieldLabelStyle = {
+const labelStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: tokens.spacing[2],
@@ -22,7 +22,7 @@ const visibilityOptionFieldLabelStyle = {
   cursor: 'pointer',
 } satisfies CSSObject;
 
-const visibilityOptionFieldInputStyle = {
+const inputStyle = {
   appearance: 'none',
   margin: 0,
   width: 24,
@@ -45,7 +45,7 @@ export default function VisibilityOptionField({
   return (
     <label
       css={{
-        ...visibilityOptionFieldLabelStyle,
+        ...labelStyle,
         border: isActive ? `1.5px solid ${tokens.text.brand}` : tokens.border.default,
         background: isActive ? tokens.bg.brandSubtle : tokens.bg.default,
       }}
@@ -67,7 +67,7 @@ export default function VisibilityOptionField({
           checked={isActive}
           onChange={() => onChange(value)}
           css={{
-            ...visibilityOptionFieldInputStyle,
+            ...inputStyle,
             background: `url(${isActive ? selectedIcon : unselectedIcon}) center / 24px 24px no-repeat`,
           }}
         />
