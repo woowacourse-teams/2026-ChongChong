@@ -69,7 +69,7 @@ export default function BottomTab() {
         variant="footnote"
         css={[textStyle, { display: 'block' }, isHome && { color: tokens.text.brand }]}
       >
-        홈
+        스터디홈
       </Text>
     </>
   );
