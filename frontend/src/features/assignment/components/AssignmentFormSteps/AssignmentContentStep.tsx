@@ -1,7 +1,6 @@
 import { stepStyle, questionStyle, footerStyle } from './assignmentFormSteps.styles';
-import { useState } from 'react';
-import type { useInputState } from '../../../../shared/hooks/useInputState';
-import type { useAttachments } from '../../../../shared/modules/files/useAttachments';
+import { useState, type ChangeEvent, type ChangeEventHandler } from 'react';
+import type { AttachmentItem } from '../../../../shared/modules/files/types';
 import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../../constants';
 import InputField from '../../../../shared/widgets/InputField';
 import AutoResizeTextAreaField from '../../../../shared/widgets/AutoResizeTextAreaField';
@@ -16,10 +15,15 @@ interface AssignmentContentStepProps {
   title: string;
   content: string;
   submissionMethod: string;
-  handleTitleChange: ReturnType<typeof useInputState>[1];
-  handleContentChange: ReturnType<typeof useInputState>[1];
-  handleSubmissionMethodChange: ReturnType<typeof useInputState>[1];
-  attachments: ReturnType<typeof useAttachments>;
+  handleTitleChange: ChangeEventHandler<HTMLInputElement>;
+  handleContentChange: ChangeEventHandler<HTMLTextAreaElement>;
+  handleSubmissionMethodChange: ChangeEventHandler<HTMLInputElement>;
+  attachments: {
+    items: AttachmentItem[];
+    error?: string;
+    addFiles: (files: File[]) => void;
+    removeFile: (id: string) => void;
+  };
   fieldErrors: Record<string, string>;
   onNext: () => void;
 }
@@ -35,24 +39,58 @@ export default function AssignmentContentStep({
   fieldErrors,
   onNext,
 }: AssignmentContentStepProps) {
-  const [hasAttemptedNext, setHasAttemptedNext] = useState(false);
-  const validationErrors = validateAssignmentContent(title, content, submissionMethod);
-  const canProceed = Object.keys(validationErrors).length === 0;
+  const [validationErrors, setValidationErrors] = useState<
+    Partial<Record<'title' | 'content' | 'submissionMethod', string>>
+  >({});
+  const errors = { ...fieldErrors, ...validationErrors };
+
+  function onTitleChange(event: ChangeEvent<HTMLInputElement>) {
+    handleTitleChange(event);
+    if (errors.title) {
+      const { title: error } = validateAssignmentContent(
+        event.target.value,
+        content,
+        submissionMethod,
+      );
+      setValidationErrors((current) => ({ ...current, title: error }));
+    }
+  }
+
+  function onContentChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    handleContentChange(event);
+    if (errors.content) {
+      const { content: error } = validateAssignmentContent(
+        title,
+        event.target.value,
+        submissionMethod,
+      );
+      setValidationErrors((current) => ({ ...current, content: error }));
+    }
+  }
+
+  function onSubmissionMethodChange(event: ChangeEvent<HTMLInputElement>) {
+    handleSubmissionMethodChange(event);
+    if (errors.submissionMethod) {
+      const { submissionMethod: error } = validateAssignmentContent(
+        title,
+        content,
+        event.target.value,
+      );
+      setValidationErrors((current) => ({ ...current, submissionMethod: error }));
+    }
+  }
+
+  function handleNext() {
+    const nextErrors = validateAssignmentContent(title, content, submissionMethod);
+    setValidationErrors({
+      title: nextErrors.title,
+      content: nextErrors.content,
+      submissionMethod: nextErrors.submissionMethod,
+    });
+    if (Object.keys(nextErrors).length === 0) onNext();
+  }
   return (
-    <div
-      css={[
-        stepStyle,
-        {
-          '& label[for]': { marginBottom: 0 },
-          '& input:not([type=file])': { padding: '14px 16px' },
-          '& [aria-label="첨부 파일"]:empty': { display: 'none' },
-          '& input[type="file"] ~ button': {
-            height: 44,
-            '& > img': { display: 'none' },
-          },
-        },
-      ]}
-    >
+    <div css={stepStyle}>
       <div css={questionStyle}>
         <Paragraph variant="paragraph" css={{ color: tokens.text.brand }}>
           1 / 4
@@ -70,10 +108,10 @@ export default function AssignmentContentStep({
         label="제목"
         value={title}
         autoFocus
-        onChange={handleTitleChange}
+        onChange={onTitleChange}
         maxLength={ASSIGNMENT_TITLE.length}
         placeholder="제목을 입력해주세요"
-        errorText={(hasAttemptedNext ? validationErrors.title : undefined) ?? fieldErrors.title}
+        errorText={errors.title}
         isRequired
         testId="assignment-title-field"
       />
@@ -84,8 +122,8 @@ export default function AssignmentContentStep({
         value={content}
         placeholder="내용을 입력해주세요"
         maxLength={ASSIGNMENT_CONTENT.length}
-        onChange={handleContentChange}
-        errorText={(hasAttemptedNext ? validationErrors.content : undefined) ?? fieldErrors.content}
+        onChange={onContentChange}
+        errorText={errors.content}
         isRequired
         testId="assignment-content-field"
       />
@@ -107,12 +145,9 @@ export default function AssignmentContentStep({
         label="제출 방법"
         value={submissionMethod}
         maxLength={ASSIGNMENT_CONTENT.length}
-        onChange={handleSubmissionMethodChange}
+        onChange={onSubmissionMethodChange}
         placeholder="제출 방법을 입력해주세요"
-        errorText={
-          (hasAttemptedNext ? validationErrors.submissionMethod : undefined) ??
-          fieldErrors.submissionMethod
-        }
+        errorText={errors.submissionMethod}
         isRequired
       />
       <div css={footerStyle}>
@@ -120,10 +155,7 @@ export default function AssignmentContentStep({
           variant="brandSolid"
           size="large"
           disabled={!title.trim() || !content.trim() || !submissionMethod.trim()}
-          onClick={() => {
-            setHasAttemptedNext(true);
-            if (canProceed) onNext();
-          }}
+          onClick={handleNext}
         >
           다음
         </Button>
