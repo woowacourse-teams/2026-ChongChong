@@ -28,22 +28,7 @@ export default function AssignmentScheduleStep({
   const validationErrors = validateAssignmentSchedule(closeAt, remindAts);
   const canProceed = Object.keys(validationErrors).length === 0;
   return (
-    <div
-      css={[
-        stepStyle,
-        {
-          gap: 24,
-          '& #assignment-close-at': {
-            justifyContent: 'flex-start',
-            height: 54,
-            padding: '14px 16px',
-            color: tokens.text.primary,
-            ...(closeAt ? { border: tokens.border.brand } : {}),
-          },
-          '& #assignment-reminders img': { width: 16, height: 16 },
-        },
-      ]}
-    >
+    <div css={[stepStyle, { gap: tokens.spacing[6] }]}>
       <div css={questionStyle}>
         <Paragraph variant="paragraph" css={{ color: tokens.text.brand }}>
           2 / 4
