@@ -24,9 +24,32 @@ export default function AssignmentScheduleStep({
   setRemindAts,
   onNext,
 }: AssignmentScheduleStepProps) {
-  const [hasAttemptedNext, setHasAttemptedNext] = useState(false);
-  const validationErrors = validateAssignmentSchedule(closeAt, remindAts);
-  const canProceed = Object.keys(validationErrors).length === 0;
+  const [validationErrors, setValidationErrors] = useState<
+    Partial<Record<'closeAt' | 'remindAts', string>>
+  >({});
+  const errors = { ...fieldErrors, ...validationErrors };
+
+  function handleCloseAtChange(value: string) {
+    setCloseAt(value);
+    if (errors.closeAt) {
+      const { closeAt: error } = validateAssignmentSchedule(value, remindAts);
+      setValidationErrors((current) => ({ ...current, closeAt: error }));
+    }
+  }
+
+  function handleRemindAtsChange(values: string[]) {
+    setRemindAts(values);
+    if (errors.remindAts) {
+      const { remindAts: error } = validateAssignmentSchedule(closeAt, values);
+      setValidationErrors((current) => ({ ...current, remindAts: error }));
+    }
+  }
+
+  function handleNext() {
+    const nextErrors = validateAssignmentSchedule(closeAt, remindAts);
+    setValidationErrors({ closeAt: nextErrors.closeAt, remindAts: nextErrors.remindAts });
+    if (Object.keys(nextErrors).length === 0) onNext();
+  }
   return (
     <div css={[stepStyle, { gap: tokens.spacing[6] }]}>
       <div css={questionStyle}>
@@ -43,30 +66,20 @@ export default function AssignmentScheduleStep({
       <CloseAtField
         id="assignment-close-at"
         value={closeAt}
-        onChange={setCloseAt}
-        errorText={(hasAttemptedNext ? validationErrors.closeAt : undefined) ?? fieldErrors.closeAt}
+        onChange={handleCloseAtChange}
+        errorText={errors.closeAt}
         isRequired
       />
       <ReminderField
         id="assignment-reminders"
         label="리마인드 시각"
         value={remindAts}
-        onChange={setRemindAts}
+        onChange={handleRemindAtsChange}
         helpText="리마인드가 필요하면 알림 시각을 추가해 주세요."
-        errorText={
-          (hasAttemptedNext ? validationErrors.remindAts : undefined) ?? fieldErrors.remindAts
-        }
+        errorText={errors.remindAts}
       />
       <div css={[footerStyle, { paddingTop: 0 }]}>
-        <Button
-          variant="brandSolid"
-          size="large"
-          disabled={!closeAt}
-          onClick={() => {
-            setHasAttemptedNext(true);
-            if (canProceed) onNext();
-          }}
-        >
+        <Button variant="brandSolid" size="large" disabled={!closeAt} onClick={handleNext}>
           다음
         </Button>
       </div>
