@@ -1,14 +1,12 @@
-import { stepStyle, questionStyle, footerStyle } from './assignmentFormSteps.styles';
+import AssignmentStepLayout from './AssignmentStepLayout';
 import { useState, type ChangeEvent, type ChangeEventHandler } from 'react';
 import type { AttachmentItem } from '../../../../shared/modules/files/types';
-import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../../constants';
+import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, ASSIGNMENT_FORM_STEPS } from '../../constants';
 import InputField from '../../../../shared/widgets/InputField';
 import AutoResizeTextAreaField from '../../../../shared/widgets/AutoResizeTextAreaField';
 import AttachmentField from '../../../../shared/widgets/AttachmentField';
 import { IMAGE_ACCEPT } from '../../../../shared/modules/files/validation';
 import { validateAssignmentContent } from '../../validation';
-import { Heading, Paragraph } from '../../../../shared/ui/Typography';
-import { tokens } from '../../../../styles/global';
 import Button from '../../../../shared/ui/Button';
 
 interface AssignmentContentStepProps {
@@ -90,18 +88,22 @@ export default function AssignmentContentStep({
     if (Object.keys(nextErrors).length === 0) onNext();
   }
   return (
-    <div css={stepStyle}>
-      <div css={questionStyle}>
-        <Paragraph variant="paragraph" css={{ color: tokens.text.brand }}>
-          1 / 4
-        </Paragraph>
-        <Heading level={2} variant="title">
-          어떤 과제를 함께 할까요?
-        </Heading>
-        <Paragraph variant="paragraph" css={{ color: tokens.text.secondary }}>
-          제목과 내용, 제출 방법을 알려주세요.
-        </Paragraph>
-      </div>
+    <AssignmentStepLayout
+      step={ASSIGNMENT_FORM_STEPS.indexOf('내용') + 1}
+      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      title="어떤 과제를 함께 할까요?"
+      subTitle="제목과 내용, 제출 방법을 알려주세요."
+      footer={
+        <Button
+          variant="brandSolid"
+          size="large"
+          disabled={!title.trim() || !content.trim() || !submissionMethod.trim()}
+          onClick={handleNext}
+        >
+          다음
+        </Button>
+      }
+    >
       <InputField
         id="assignment-title"
         name="title"
@@ -150,16 +152,6 @@ export default function AssignmentContentStep({
         errorText={errors.submissionMethod}
         isRequired
       />
-      <div css={footerStyle}>
-        <Button
-          variant="brandSolid"
-          size="large"
-          disabled={!title.trim() || !content.trim() || !submissionMethod.trim()}
-          onClick={handleNext}
-        >
-          다음
-        </Button>
-      </div>
-    </div>
+    </AssignmentStepLayout>
   );
 }

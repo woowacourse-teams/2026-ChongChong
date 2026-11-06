@@ -7,7 +7,7 @@ import Main from '../../../shared/ui/Main';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import useCreateAssignment from '../hooks/useCreateAssignment';
 import { useInputState } from '../../../shared/hooks/useInputState';
-import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../constants';
+import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, ASSIGNMENT_FORM_STEPS } from '../constants';
 import { useAttachments } from '../../../shared/modules/files/useAttachments';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import type { SubmissionVisibility } from '../types';
@@ -53,7 +53,7 @@ const initialValues = {
   submissionVisibility: 'ALL_STUDY_MEMBERS',
 } as const;
 
-type AssignmentStep = '내용' | '일정' | '제출 대상' | '공개여부';
+type AssignmentStep = (typeof ASSIGNMENT_FORM_STEPS)[number];
 
 export default function CreateAssignmentPage() {
   const { studyId } = useIntegerParams(['studyId']);

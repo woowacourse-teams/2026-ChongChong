@@ -1,7 +1,7 @@
-import { stepStyle, questionStyle, footerStyle } from './assignmentFormSteps.styles';
+import { ASSIGNMENT_FORM_STEPS } from '../../constants';
+import AssignmentStepLayout from './AssignmentStepLayout';
 import type { SubmissionVisibility } from '../../types';
 import { Field } from '../../../../shared/ui/inputs/Field';
-import { Heading, Paragraph } from '../../../../shared/ui/Typography';
 import { tokens } from '../../../../styles/global';
 import Button from '../../../../shared/ui/Button';
 import VisibilityOptionField from './VisibilityOptionField';
@@ -42,18 +42,17 @@ export default function AssignmentVisibilityStep({
   errorText,
 }: AssignmentVisibilityStepProps) {
   return (
-    <div css={stepStyle}>
-      <div css={questionStyle}>
-        <Paragraph variant="paragraph" css={{ color: tokens.text.brand }}>
-          4 / 4
-        </Paragraph>
-        <Heading level={2} variant="title">
-          제출물을 누구에게 보여줄까요?
-        </Heading>
-        <Paragraph variant="paragraph" css={{ color: tokens.text.secondary }}>
-          제출 인원과 별개로 볼 수 있는 범위를 정해요.
-        </Paragraph>
-      </div>
+    <AssignmentStepLayout
+      step={ASSIGNMENT_FORM_STEPS.indexOf('공개여부') + 1}
+      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      title="제출물을 누구에게 보여줄까요?"
+      subTitle="제출 인원과 별개로 볼 수 있는 범위를 정해요."
+      footer={
+        <Button variant="brandSolid" size="large" onClick={onSubmit} disabled={isSubmitting}>
+          과제 만들기
+        </Button>
+      }
+    >
       <div role="radiogroup" aria-label="제출물 공개 범위" css={optionGroupStyle}>
         {visibilityOptions.map((option) => (
           <VisibilityOptionField
@@ -66,11 +65,6 @@ export default function AssignmentVisibilityStep({
         ))}
       </div>
       <Field.SubText errorText={errorText} />
-      <div css={footerStyle}>
-        <Button variant="brandSolid" size="large" onClick={onSubmit} disabled={isSubmitting}>
-          과제 만들기
-        </Button>
-      </div>
-    </div>
+    </AssignmentStepLayout>
   );
 }

@@ -1,8 +1,8 @@
-import { stepStyle, questionStyle, footerStyle } from './assignmentFormSteps.styles';
+import { ASSIGNMENT_FORM_STEPS } from '../../constants';
+import AssignmentStepLayout from './AssignmentStepLayout';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { memberQueries } from '../../../member/queries';
 import { SelectAllSubmittersField, SelectSubmitterField } from './SubmitterField';
-import { Heading, Paragraph } from '../../../../shared/ui/Typography';
 import { tokens } from '../../../../styles/global';
 import Button from '../../../../shared/ui/Button';
 import type { CSSObject } from '@emotion/react';
@@ -50,18 +50,22 @@ export default function AssignmentSubmittersStep({
   }
 
   return (
-    <div css={stepStyle}>
-      <div css={questionStyle}>
-        <Paragraph variant="paragraph" css={{ color: tokens.text.brand }}>
-          3 / 4
-        </Paragraph>
-        <Heading level={2} variant="title">
-          누가 과제를 제출하나요?
-        </Heading>
-        <Paragraph variant="paragraph" css={{ color: tokens.text.secondary }}>
-          본인을 포함해 제출할 멤버를 선택해 주세요.
-        </Paragraph>
-      </div>
+    <AssignmentStepLayout
+      step={ASSIGNMENT_FORM_STEPS.indexOf('제출 대상') + 1}
+      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      title="누가 과제를 제출하나요?"
+      subTitle="본인을 포함해 제출할 멤버를 선택해 주세요."
+      footer={
+        <Button
+          variant="brandSolid"
+          size="large"
+          disabled={isSubmitting || selectedIds.length === 0}
+          onClick={() => onNext(selectedIds)}
+        >
+          다음
+        </Button>
+      }
+    >
       <SelectAllSubmittersField
         checked={isAllSelected}
         disabled={isSubmitting}
@@ -79,16 +83,6 @@ export default function AssignmentSubmittersStep({
           />
         ))}
       </div>
-      <div css={footerStyle}>
-        <Button
-          variant="brandSolid"
-          size="large"
-          disabled={isSubmitting || selectedIds.length === 0}
-          onClick={() => onNext(selectedIds)}
-        >
-          다음
-        </Button>
-      </div>
-    </div>
+    </AssignmentStepLayout>
   );
 }
