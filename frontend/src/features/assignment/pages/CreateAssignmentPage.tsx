@@ -10,8 +10,6 @@ import { useInputState } from '../../../shared/hooks/useInputState';
 import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../constants';
 import { useAttachments } from '../../../shared/modules/files/useAttachments';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import { useQuery } from '@tanstack/react-query';
-import { memberQueries } from '../../member/queries';
 import type { SubmissionVisibility } from '../types';
 import useFunnel from '../../../shared/hooks/useFunnel';
 import AssignmentContentStep from '../components/AssignmentFormSteps/AssignmentContentStep';
@@ -102,19 +100,8 @@ export default function CreateAssignmentPage() {
   const [submissionVisibility, setSubmissionVisibility] = useState<SubmissionVisibility>(
     initialValues.submissionVisibility,
   );
-  const {
-    data: memberData,
-    isPending: isMembersPending,
-    error: membersError,
-  } = useQuery(memberQueries.list(studyId));
-  const members = memberData?.members ?? [];
-  const selectedMembers = members.filter(
-    ({ id }) => submitterIds === undefined || submitterIds.includes(id),
-  );
-  const selectedIds = selectedMembers.map(({ id }) => id);
-
   const onSubmit = () => {
-    if (isSubmitting || !attachments.isReady) return;
+    if (isSubmitting || !attachments.isReady || !submitterIds?.length) return;
 
     createAssignment(
       {
@@ -122,7 +109,7 @@ export default function CreateAssignmentPage() {
         content,
         submissionMethod,
         closeAt,
-        submitterIds: selectedIds,
+        submitterIds,
         submissionVisibility,
         remindAts,
         attachmentFileIds: attachments.attachmentFileIds,
@@ -197,13 +184,15 @@ export default function CreateAssignmentPage() {
           >
             <Suspense fallback={<Loading />}>
               <AssignmentSubmittersStep
-                members={members}
-                selectedIds={selectedIds}
+                studyId={studyId}
+                submitterIds={submitterIds}
                 isSubmitting={isSubmitting}
-                isMembersPending={isMembersPending}
-                membersError={membersError}
+                errorText={fieldErrors.submitterIds}
                 setSubmitterIds={setSubmitterIds}
-                onNext={() => history.push('공개여부')}
+                onNext={(ids) => {
+                  setSubmitterIds(ids);
+                  history.push('공개여부');
+                }}
               />
             </Suspense>
           </ErrorBoundary>

@@ -1,19 +1,20 @@
 import { stepStyle, questionStyle, footerStyle } from './assignmentFormSteps.styles';
-import type { Member } from '../../../member/types';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { memberQueries } from '../../../member/queries';
 import { SelectAllSubmittersField, SelectSubmitterField } from './SubmitterField';
 import { Heading, Paragraph } from '../../../../shared/ui/Typography';
 import { tokens } from '../../../../styles/global';
 import Button from '../../../../shared/ui/Button';
 import type { CSSObject } from '@emotion/react';
+import { Field } from '../../../../shared/ui/inputs/Field';
 
 interface AssignmentSubmittersStepProps {
-  members: Member[];
-  selectedIds: number[];
+  studyId: number;
+  submitterIds: number[] | undefined;
   isSubmitting: boolean;
-  isMembersPending: boolean;
-  membersError: Error | null;
+  errorText?: string;
   setSubmitterIds: (ids: number[]) => void;
-  onNext: () => void;
+  onNext: (ids: number[]) => void;
 }
 
 const checkboxContainerStyle = {
@@ -23,14 +24,18 @@ const checkboxContainerStyle = {
 } satisfies CSSObject;
 
 export default function AssignmentSubmittersStep({
-  members,
-  selectedIds,
+  studyId,
+  submitterIds,
   isSubmitting,
-  isMembersPending,
-  membersError,
+  errorText,
   setSubmitterIds,
   onNext,
 }: AssignmentSubmittersStepProps) {
+  const { data } = useSuspenseQuery(memberQueries.list(studyId));
+  const members = data.members;
+  const selectedIds = members
+    .filter(({ id }) => submitterIds === undefined || submitterIds.includes(id))
+    .map(({ id }) => id);
   const isAllSelected = members.length > 0 && selectedIds.length === members.length;
 
   function onChangeSubmitters(memberId: number) {
@@ -63,6 +68,7 @@ export default function AssignmentSubmittersStep({
         selectedCount={selectedIds.length}
         onChange={onToggleAllSelect}
       />
+      <Field.SubText errorText={errorText} />
       <div css={checkboxContainerStyle}>
         {members.map((member) => (
           <SelectSubmitterField
@@ -77,10 +83,8 @@ export default function AssignmentSubmittersStep({
         <Button
           variant="brandSolid"
           size="large"
-          disabled={
-            isSubmitting || isMembersPending || Boolean(membersError) || selectedIds.length === 0
-          }
-          onClick={onNext}
+          disabled={isSubmitting || selectedIds.length === 0}
+          onClick={() => onNext(selectedIds)}
         >
           다음
         </Button>
