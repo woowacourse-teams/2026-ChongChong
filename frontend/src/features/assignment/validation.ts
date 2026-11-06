@@ -34,9 +34,3 @@ export function validateAssignmentSchedule(closeAt: string, remindAts: string[])
   }
   return errors;
 }
-
-export function validateAssignmentSubmitters(selectedIds: number[]) {
-  const errors: Record<string, string> = {};
-  if (selectedIds.length === 0) errors.submitterIds = '제출할 멤버를 한 명 이상 선택해주세요.';
-  return errors;
-}
