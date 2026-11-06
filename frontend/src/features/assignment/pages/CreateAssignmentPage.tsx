@@ -65,6 +65,8 @@ export default function CreateAssignmentPage() {
   } = useCreateAssignment({ studyId });
 
   const { step, history } = useFunnel<AssignmentStep>({ initial: { step: '내용' } });
+  const stepNumber = ASSIGNMENT_FORM_STEPS.indexOf(step) + 1;
+  const totalSteps = ASSIGNMENT_FORM_STEPS.length;
 
   const [title, handleTitleChange] = useInputState(initialValues.title, (value, prevValue) => {
     if (value.length > ASSIGNMENT_TITLE.length) return prevValue;
@@ -157,6 +159,8 @@ export default function CreateAssignmentPage() {
       >
         {step === '내용' && (
           <AssignmentContentStep
+            step={stepNumber}
+            totalSteps={totalSteps}
             title={title}
             content={content}
             submissionMethod={submissionMethod}
@@ -170,6 +174,8 @@ export default function CreateAssignmentPage() {
         )}
         {step === '일정' && (
           <AssignmentScheduleStep
+            step={stepNumber}
+            totalSteps={totalSteps}
             closeAt={closeAt}
             remindAts={remindAts}
             fieldErrors={fieldErrors}
@@ -184,6 +190,8 @@ export default function CreateAssignmentPage() {
           >
             <Suspense fallback={<Loading />}>
               <AssignmentSubmittersStep
+                step={stepNumber}
+                totalSteps={totalSteps}
                 studyId={studyId}
                 submitterIds={submitterIds}
                 isSubmitting={isSubmitting}
@@ -199,6 +207,8 @@ export default function CreateAssignmentPage() {
         )}
         {step === '공개여부' && (
           <AssignmentVisibilityStep
+            step={stepNumber}
+            totalSteps={totalSteps}
             submissionVisibility={submissionVisibility}
             changeSubmissionVisibility={setSubmissionVisibility}
             isSubmitting={isSubmitting}

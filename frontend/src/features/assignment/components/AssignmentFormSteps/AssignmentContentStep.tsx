@@ -1,7 +1,7 @@
 import AssignmentStepLayout from './AssignmentStepLayout';
 import { useState, type ChangeEvent, type ChangeEventHandler } from 'react';
 import type { AttachmentItem } from '../../../../shared/modules/files/types';
-import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT, ASSIGNMENT_FORM_STEPS } from '../../constants';
+import { ASSIGNMENT_TITLE, ASSIGNMENT_CONTENT } from '../../constants';
 import InputField from '../../../../shared/widgets/InputField';
 import AutoResizeTextAreaField from '../../../../shared/widgets/AutoResizeTextAreaField';
 import AttachmentField from '../../../../shared/widgets/AttachmentField';
@@ -10,6 +10,8 @@ import { validateAssignmentContent } from '../../validation';
 import Button from '../../../../shared/ui/Button';
 
 interface AssignmentContentStepProps {
+  step: number;
+  totalSteps: number;
   title: string;
   content: string;
   submissionMethod: string;
@@ -27,6 +29,8 @@ interface AssignmentContentStepProps {
 }
 
 export default function AssignmentContentStep({
+  step,
+  totalSteps,
   title,
   content,
   submissionMethod,
@@ -89,8 +93,8 @@ export default function AssignmentContentStep({
   }
   return (
     <AssignmentStepLayout
-      step={ASSIGNMENT_FORM_STEPS.indexOf('내용') + 1}
-      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      step={step}
+      totalSteps={totalSteps}
       title="어떤 과제를 함께 할까요?"
       subTitle="제목과 내용, 제출 방법을 알려주세요."
       footer={

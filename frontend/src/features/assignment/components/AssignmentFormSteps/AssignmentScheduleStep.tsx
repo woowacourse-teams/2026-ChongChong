@@ -1,4 +1,3 @@
-import { ASSIGNMENT_FORM_STEPS } from '../../constants';
 import AssignmentStepLayout from './AssignmentStepLayout';
 import { useState } from 'react';
 import CloseAtField from '../../../../shared/widgets/CloseAtField';
@@ -7,6 +6,8 @@ import { validateAssignmentSchedule } from '../../validation';
 import Button from '../../../../shared/ui/Button';
 
 interface AssignmentScheduleStepProps {
+  step: number;
+  totalSteps: number;
   closeAt: string;
   remindAts: string[];
   fieldErrors: Record<string, string>;
@@ -16,6 +17,8 @@ interface AssignmentScheduleStepProps {
 }
 
 export default function AssignmentScheduleStep({
+  step,
+  totalSteps,
   closeAt,
   remindAts,
   fieldErrors,
@@ -51,8 +54,8 @@ export default function AssignmentScheduleStep({
   }
   return (
     <AssignmentStepLayout
-      step={ASSIGNMENT_FORM_STEPS.indexOf('일정') + 1}
-      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      step={step}
+      totalSteps={totalSteps}
       title="과제 일정을 정해주세요"
       subTitle="마감과 리마인드 시각을 설정해 주세요."
       footer={

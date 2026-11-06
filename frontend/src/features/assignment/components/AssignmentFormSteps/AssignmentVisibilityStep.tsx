@@ -1,4 +1,3 @@
-import { ASSIGNMENT_FORM_STEPS } from '../../constants';
 import AssignmentStepLayout from './AssignmentStepLayout';
 import type { SubmissionVisibility } from '../../types';
 import { Field } from '../../../../shared/ui/inputs/Field';
@@ -21,6 +20,8 @@ const visibilityOptions = [
 ] as const;
 
 interface AssignmentVisibilityStepProps {
+  step: number;
+  totalSteps: number;
   submissionVisibility: SubmissionVisibility;
   changeSubmissionVisibility: (visibility: SubmissionVisibility) => void;
   isSubmitting: boolean;
@@ -35,6 +36,8 @@ const optionGroupStyle = {
 } satisfies CSSObject;
 
 export default function AssignmentVisibilityStep({
+  step,
+  totalSteps,
   submissionVisibility,
   changeSubmissionVisibility,
   isSubmitting,
@@ -43,8 +46,8 @@ export default function AssignmentVisibilityStep({
 }: AssignmentVisibilityStepProps) {
   return (
     <AssignmentStepLayout
-      step={ASSIGNMENT_FORM_STEPS.indexOf('공개여부') + 1}
-      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      step={step}
+      totalSteps={totalSteps}
       title="제출물을 누구에게 보여줄까요?"
       subTitle="제출 인원과 별개로 볼 수 있는 범위를 정해요."
       footer={

@@ -1,4 +1,3 @@
-import { ASSIGNMENT_FORM_STEPS } from '../../constants';
 import AssignmentStepLayout from './AssignmentStepLayout';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { memberQueries } from '../../../member/queries';
@@ -9,6 +8,8 @@ import type { CSSObject } from '@emotion/react';
 import { Field } from '../../../../shared/ui/inputs/Field';
 
 interface AssignmentSubmittersStepProps {
+  step: number;
+  totalSteps: number;
   studyId: number;
   submitterIds: number[] | undefined;
   isSubmitting: boolean;
@@ -24,6 +25,8 @@ const checkboxContainerStyle = {
 } satisfies CSSObject;
 
 export default function AssignmentSubmittersStep({
+  step,
+  totalSteps,
   studyId,
   submitterIds,
   isSubmitting,
@@ -51,8 +54,8 @@ export default function AssignmentSubmittersStep({
 
   return (
     <AssignmentStepLayout
-      step={ASSIGNMENT_FORM_STEPS.indexOf('제출 대상') + 1}
-      totalSteps={ASSIGNMENT_FORM_STEPS.length}
+      step={step}
+      totalSteps={totalSteps}
       title="누가 과제를 제출하나요?"
       subTitle="본인을 포함해 제출할 멤버를 선택해 주세요."
       footer={
