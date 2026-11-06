@@ -55,6 +55,13 @@ const initialValues = {
 
 type AssignmentStep = (typeof ASSIGNMENT_FORM_STEPS)[number];
 
+const STEP_FIELDS = {
+  내용: ['title', 'content', 'submissionMethod', 'attachmentFileIds'],
+  일정: ['closeAt', 'remindAts'],
+  '제출 대상': ['submitterIds'],
+  공개여부: ['submissionVisibility'],
+} satisfies Record<AssignmentStep, string[]>;
+
 export default function CreateAssignmentPage() {
   const { studyId } = useIntegerParams(['studyId']);
 
@@ -102,6 +109,18 @@ export default function CreateAssignmentPage() {
   const [submissionVisibility, setSubmissionVisibility] = useState<SubmissionVisibility>(
     initialValues.submissionVisibility,
   );
+
+  function navigateToErrorStep(error: unknown) {
+    if (!(error instanceof ValidationError)) return;
+
+    const errorStep = ASSIGNMENT_FORM_STEPS.find((step) =>
+      STEP_FIELDS[step].some((field) => field in error.fieldErrors),
+    );
+    if (!errorStep) return;
+
+    history.go(ASSIGNMENT_FORM_STEPS.indexOf(errorStep) - ASSIGNMENT_FORM_STEPS.indexOf(step));
+  }
+
   const onSubmit = () => {
     if (isSubmitting || !attachments.isReady || !submitterIds?.length) return;
 
@@ -117,19 +136,7 @@ export default function CreateAssignmentPage() {
         attachmentFileIds: attachments.attachmentFileIds,
       },
       {
-        onError: (error) => {
-          if (!(error instanceof ValidationError)) return;
-          const stepFields = [
-            ['title', 'content', 'submissionMethod', 'attachmentFileIds'],
-            ['closeAt', 'remindAts'],
-            ['submitterIds'],
-            ['submissionVisibility'],
-          ];
-          const errorStepIndex = stepFields.findIndex((fields) =>
-            fields.some((field) => field in error.fieldErrors),
-          );
-          if (errorStepIndex >= 0) history.go(errorStepIndex - 3);
-        },
+        onError: navigateToErrorStep,
       },
     );
   };
@@ -137,11 +144,6 @@ export default function CreateAssignmentPage() {
   return (
     <Page>
       <TopHeader
-        css={{
-          gridTemplateColumns: '24px 1fr 24px',
-          '& > div:nth-of-type(2)': { textAlign: 'left' },
-          '& button': { width: 24, height: 24 },
-        }}
         left={
           step === '내용' ? (
             <PrevButton />
@@ -151,12 +153,7 @@ export default function CreateAssignmentPage() {
         }
         middle={<TopHeader.Title>과제</TopHeader.Title>}
       />
-      <Main
-        css={{
-          paddingTop: step === '내용' ? 16 : 24,
-          paddingBottom: 'max(20px, var(--safe-bottom))',
-        }}
-      >
+      <Main>
         {step === '내용' && (
           <AssignmentContentStep
             step={stepNumber}
