@@ -76,6 +76,7 @@ export default function AssignmentScheduleStep({
         <Button
           variant="brandSolid"
           size="large"
+          disabled={!closeAt}
           onClick={() => {
             setHasAttemptedNext(true);
             if (canProceed) onNext();

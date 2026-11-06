@@ -102,6 +102,7 @@ export default function AssignmentContentStep({
       />
       <InputField
         id="submit-method"
+        testId="assignment-submission-method-field"
         name="method"
         label="제출 방법"
         value={submissionMethod}
@@ -118,6 +119,7 @@ export default function AssignmentContentStep({
         <Button
           variant="brandSolid"
           size="large"
+          disabled={!title.trim() || !content.trim() || !submissionMethod.trim()}
           onClick={() => {
             setHasAttemptedNext(true);
             if (canProceed) onNext();
