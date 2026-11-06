@@ -1,7 +1,7 @@
 import type { CSSObject } from '@emotion/react';
 import type { SubmissionVisibility } from '../../types';
-import selectedIcon from '../../assets/visibility-selected.svg';
-import unselectedIcon from '../../assets/visibility-unselected.svg';
+import selectedIcon from '../../../../shared/assets/visibility-selected.svg';
+import unselectedIcon from '../../../../shared/assets/visibility-unselected.svg';
 import { Paragraph } from '../../../../shared/ui/Typography';
 import { tokens } from '../../../../styles/global';
 
