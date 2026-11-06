@@ -204,12 +204,10 @@ export default function CreateAssignmentPage() {
         )}
         {step === '공개여부' && (
           <AssignmentVisibilityStep
-            selectedMembers={selectedMembers}
             submissionVisibility={submissionVisibility}
-            setSubmissionVisibility={setSubmissionVisibility}
+            changeSubmissionVisibility={setSubmissionVisibility}
             isSubmitting={isSubmitting}
             errorText={fieldErrors.submissionVisibility}
-            attachmentsReady={attachments.isReady}
             onSubmit={onSubmit}
           />
         )}
