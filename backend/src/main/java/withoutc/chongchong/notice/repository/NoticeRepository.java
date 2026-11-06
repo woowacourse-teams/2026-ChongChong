@@ -102,12 +102,14 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             JOIN NoticeRecipient nr
               ON nr.notice = n
             WHERE n.study.id = :studyId
+              AND n.createdAt > :createdAfter
             GROUP BY n.id, n.title, n.createdAt
             HAVING COUNT(nr.readAt) < COUNT(nr.id)
             ORDER BY n.createdAt DESC
             """)
     List<LeaderNoticeSummaryProjection> findIncompleteNoticeSummariesByStudyId(
-            @Param("studyId") Long studyId
+            @Param("studyId") Long studyId,
+            @Param("createdAfter") LocalDateTime createdAfter
     );
 
     // 스터디원용
@@ -133,6 +135,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             SELECT count(n.id)
             FROM Notice n
             WHERE n.study.id = :studyId
+              AND n.createdAt > :createdAfter
             AND EXISTS (
             SELECT nr.id
             FROM NoticeRecipient nr
@@ -140,7 +143,8 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             )
             """)
     long countIncompleteNoticeByStudyId(
-            @Param("studyId") Long studyId
+            @Param("studyId") Long studyId,
+            @Param("createdAfter") LocalDateTime createdAfter
     );
 
     // 스터디원용

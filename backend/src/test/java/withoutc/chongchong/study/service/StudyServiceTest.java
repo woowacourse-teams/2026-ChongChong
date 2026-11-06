@@ -12,6 +12,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityManager;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -108,6 +112,8 @@ class StudyServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(studyService, "entityManager", entityManager);
+        ReflectionTestUtils.setField(studyService, "clock",
+                Clock.fixed(Instant.parse("2026-11-06T01:00:00Z"), ZoneId.of("Asia/Seoul")));
     }
 
     @Test
@@ -138,7 +144,7 @@ class StudyServiceTest {
                 .thenReturn(List.of(leader, member));
         when(studyMemberRepository.countByStudyId(1L)).thenReturn(3);
         when(studyMemberRepository.countByStudyId(2L)).thenReturn(2);
-        when(noticeRepository.countIncompleteNoticeByStudyId(1L)).thenReturn(1L);
+        when(noticeRepository.countIncompleteNoticeByStudyId(1L, LocalDateTime.of(2026, 10, 30, 10, 0))).thenReturn(1L);
         when(assignmentRepository.countIncompleteAssignmentByStudyId(1L)).thenReturn(1L);
         when(noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(2L, member.getId()))
                 .thenReturn(1L);
@@ -673,7 +679,7 @@ class StudyServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
-        when(noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId))
+        when(noticeRepository.findIncompleteNoticeSummariesByStudyId(studyId, LocalDateTime.of(2026, 10, 30, 10, 0)))
                 .thenReturn(List.of(new LeaderNoticeSummaryProjection(10L, "공지", 2L, 1L)));
         when(assignmentRepository.findIncompleteAssignmentSummariesByStudyId(studyId))
                 .thenReturn(List.of(new LeaderAssignmentSummaryProjection(20L, "과제", 2L, 1L)));
