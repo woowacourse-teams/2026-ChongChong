@@ -11,7 +11,7 @@ interface Props {
 }
 
 const tabListStyle = {
-  display: 'grid',
+  display: 'flex',
   marginTop: tokens.spacing[5],
   borderBottom: tokens.border.neutral,
 } satisfies CSSProperties;
@@ -19,6 +19,9 @@ const tabListStyle = {
 const tabStyle = {
   ...typography.body,
   position: 'relative',
+  flex: '1 0 auto',
+  minWidth: 80,
+  whiteSpace: 'nowrap',
   minHeight: 44,
   padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
   border: 0,
@@ -70,7 +73,6 @@ export default function Tabs({ tabs }: Props) {
         aria-label="콘텐츠 정보"
         css={{
           ...tabListStyle,
-          gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
         }}
       >
         {tabs.map(({ key, label }) => {
