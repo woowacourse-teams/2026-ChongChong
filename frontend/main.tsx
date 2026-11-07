@@ -2,7 +2,7 @@ import { saveLoginReturnPath } from './src/features/login/loginReturnPath';
 import { URL_POLICY } from './src/shared/policy/urlPolicy';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { createBrowserRouter, matchRoutes, RouterProvider } from 'react-router';
+import { createBrowserRouter, matchRoutes, Outlet, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
@@ -19,6 +19,7 @@ import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
 import RouteLoading from './src/shared/ui/RouteLoading';
+import { FunnelNavigationProvider } from './src/shared/providers/FunnelNavigationProvider';
 
 const appRoutes = [
   {
@@ -101,9 +102,17 @@ async function bootstrap() {
     throw new Error('Root element "#root" was not found.');
   }
 
-  const router = createBrowserRouter(
-    appRoutes.map((route) => ({ ...route, HydrateFallback: RouteLoading })),
-  );
+  const router = createBrowserRouter([
+    {
+      element: (
+        <FunnelNavigationProvider>
+          <Outlet />
+        </FunnelNavigationProvider>
+      ),
+      HydrateFallback: RouteLoading,
+      children: appRoutes,
+    },
+  ]);
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker

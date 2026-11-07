@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router';
 import usePageNavigation from './usePageNavigation';
+import { getFunnelStartIndex } from '../utils/funnelHistory';
 
 interface Params<Step> {
   steps: readonly Step[];
@@ -12,6 +13,7 @@ export default function useFunnel<Step extends string>({ steps, initial }: Param
   const { back } = usePageNavigation();
   const savedStep: unknown = location.state?.funnel?.step;
   const step = steps.find((step) => step === savedStep) ?? initial.step;
+  const startIndex = getFunnelStartIndex(location.state?.funnel?.startIndex);
 
   function push(nextStep: Step) {
     navigate(
@@ -19,7 +21,7 @@ export default function useFunnel<Step extends string>({ steps, initial }: Param
       {
         state: {
           ...location.state,
-          funnel: { step: nextStep },
+          funnel: { step: nextStep, startIndex },
         },
       },
     );

@@ -3,6 +3,10 @@ export type LinkPolicy = {
   replace: boolean;
 };
 export type NavigationPolicy = LinkPolicy | { to: -1 };
+export type FunnelCompletionPolicy = {
+  to: string;
+  fallback: string;
+};
 type Id = number | string;
 export type StudyTab = 'home' | 'notices' | 'assignments' | 'calendar' | 'members';
 export type ContentTab = 'detail' | 'status';
@@ -162,14 +166,18 @@ export const URL_POLICY = {
   afterStudyCreate: (studyId: Id) => replace(path.study(studyId)),
   afterStudyJoin: (studyId: Id) => replace(path.study(studyId)),
   afterNoticeCreate: (studyId: Id, noticeId: Id) => replace(path.notice(studyId, noticeId)),
-  afterAssignmentCreate: (studyId: Id, assignmentId: Id) =>
-    replace(path.assignment(studyId, assignmentId)),
+  // 퍼널 완료 시 이력을 정리한 뒤 이동할 상세와 직접 진입 시 남길 목록이다.
+  afterAssignmentCreate: (studyId: Id, assignmentId: Id): FunnelCompletionPolicy => ({
+    to: path.assignment(studyId, assignmentId),
+    fallback: path.assignments(studyId),
+  }),
   // 수정 완료는 기존 화면으로 복귀하고, 직접 진입했으면 해당 상세를 사용한다.
   afterStudyEdit: (studyId: Id) => back(path.study(studyId)),
   afterNoticeEdit: (studyId: Id, noticeId: Id) => back(path.notice(studyId, noticeId)),
-  // 퍼널의 이전 단계로 돌아가지 않고 저장한 과제 상세로 이동한다.
-  afterAssignmentEdit: (studyId: Id, assignmentId: Id) =>
-    replace(path.assignment(studyId, assignmentId)),
+  afterAssignmentEdit: (studyId: Id, assignmentId: Id): FunnelCompletionPolicy => ({
+    to: path.assignment(studyId, assignmentId),
+    fallback: path.assignments(studyId),
+  }),
   // 삭제한 현재 화면을 목록으로 교체한다.
   afterNoticeDelete: (studyId: Id) => replace(path.notices(studyId)),
   afterAssignmentDelete: (studyId: Id) => replace(path.assignments(studyId)),

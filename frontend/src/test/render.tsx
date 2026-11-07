@@ -6,6 +6,7 @@ import { PropsWithChildren } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router';
 import { http, HttpResponse } from 'msw';
 import { ToastProvider } from '../shared/providers/ToastProvider';
+import { FunnelNavigationProvider } from '../shared/providers/FunnelNavigationProvider';
 import { server } from '../mocks/msw-node';
 import { clearAccessToken, setAccessToken } from '../features/login/accessToken';
 import { userTable } from '../features/user/mocks/db';
@@ -42,10 +43,16 @@ export function createWrapper({
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           {browserHistory ? (
-            <BrowserRouter>{routes ? <Routes>{routes(children)}</Routes> : children}</BrowserRouter>
+            <BrowserRouter>
+              <FunnelNavigationProvider>
+                {routes ? <Routes>{routes(children)}</Routes> : children}
+              </FunnelNavigationProvider>
+            </BrowserRouter>
           ) : (
             <MemoryRouter initialEntries={initialEntries}>
-              {routes ? <Routes>{routes(children)}</Routes> : children}
+              <FunnelNavigationProvider>
+                {routes ? <Routes>{routes(children)}</Routes> : children}
+              </FunnelNavigationProvider>
             </MemoryRouter>
           )}
         </ToastProvider>
