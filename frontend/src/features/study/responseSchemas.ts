@@ -7,6 +7,7 @@ import {
   StudyDetail,
   UserStudyInfo,
   InviteLink,
+  StudyJoinInfo,
 } from './types';
 
 const studyItemSchema = z.object({
@@ -77,6 +78,18 @@ const inviteLinkSchema = z.object({
 const createStudySchema = z.object({
   studyId: z.number(),
 });
+
+const studyJoinInfoSchema = z.object({
+  studyId: z.number().int().positive(),
+  studyName: z.string(),
+  description: z.string().nullable(),
+  imageUrl: z.string().nullable(),
+  memberCount: z.number().int().nonnegative(),
+}) satisfies z.ZodType<StudyJoinInfo>;
+
+export function isStudyJoinInfoResponse(data: unknown): data is StudyJoinInfo {
+  return studyJoinInfoSchema.safeParse(data).success;
+}
 
 export function isStudyResponse(data: unknown): data is { studies: Study[] } {
   return studySchema.safeParse(data).success;
