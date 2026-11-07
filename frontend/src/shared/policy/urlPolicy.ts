@@ -9,7 +9,6 @@ export type FunnelCompletionPolicy = {
 };
 type Id = number | string;
 export type StudyTab = 'home' | 'notices' | 'assignments' | 'calendar' | 'members';
-export type ContentTab = 'detail' | 'status';
 
 const path = {
   landing: '/',
@@ -150,10 +149,10 @@ export const URL_POLICY = {
           : undefined,
     };
   },
-  // 콘텐츠 내부 내용/현황 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
-  toContentTab: (
+  // 탭 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
+  toConvertTab: (
     location: { pathname: string; search: string; hash: string },
-    tab: ContentTab,
+    tab: string,
   ): LinkPolicy => {
     const params = new URLSearchParams(location.search);
     params.set('tab', tab);

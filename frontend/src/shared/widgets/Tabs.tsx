@@ -1,6 +1,9 @@
 import { useId, type CSSProperties, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
+import { useLocation } from 'react-router';
 import { tokens, typography } from '../../styles/global';
+import usePageNavigation from '../hooks/usePageNavigation';
+import { URL_POLICY } from '../policy/urlPolicy';
 
 type TabItem = { key: string; label: string; panel: ReactNode };
 
@@ -44,18 +47,16 @@ const panelStyle = {
 const TAB_QUERY_NAME = 'tab';
 
 function useQueryTabs(tabs: TabItemList) {
+  const location = useLocation();
   const defaultTab = tabs[0];
-  const [searchParams, setSearchParams] = useSearchParams({
+  const [searchParams] = useSearchParams({
     tab: defaultTab.key,
   });
   const requestedTab = searchParams.get(TAB_QUERY_NAME);
+  const { move } = usePageNavigation();
 
   const selectTab = (key: (typeof tabs)[number]['key']) => {
-    setSearchParams((currentParams) => {
-      const nextParams = new URLSearchParams(currentParams);
-      nextParams.set(TAB_QUERY_NAME, key);
-      return nextParams;
-    });
+    move(URL_POLICY.toConvertTab(location, key));
   };
 
   const activeTab = tabs.find(({ key }) => key === requestedTab) ?? defaultTab;

@@ -117,7 +117,7 @@ export default function MySubmissionStatus({ submission, member }: Props) {
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link css={detailLinkStyle} {...URL_POLICY.toContentTab(location, 'detail')}>
+          <Link css={detailLinkStyle} {...URL_POLICY.toConvertTab(location, 'detail')}>
             상세 보기
           </Link>
         </div>
