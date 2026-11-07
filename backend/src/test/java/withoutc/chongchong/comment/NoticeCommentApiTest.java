@@ -322,6 +322,23 @@ class NoticeCommentApiTest {
         assertThat(notificationRepository.count()).isZero();
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("비회원의 댓글 등록은 원문 존재 여부와 관계없이 같은 접근 거부 응답을 반환한다")
+    void rejectNonMemberRegardlessOfNoticeExistence(boolean deleteNotice) {
+        User outsider = userRepository.saveAndFlush(User.create("외부인", null));
+        if (deleteNotice) {
+            noticeRepository.delete(notice);
+        }
+
+        request(outsider).body(Map.of("content", "외부 댓글")).post(PATH, study.getId(), notice.getId())
+                .then().statusCode(403).body("code", equalTo("STUDY_ACCESS_DENIED"));
+
+        assertThat(commentRepository.count()).isZero();
+        assertThat(notificationRepository.count()).isZero();
+        assertThat(deliveryRepository.count()).isZero();
+    }
+
     @Test
     @DisplayName("비회원·다른 스터디의 원문·다른 원문의 댓글을 사용한 접근을 거부한다")
     void rejectUnauthorizedAndMixedScope() {

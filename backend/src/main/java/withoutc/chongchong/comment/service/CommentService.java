@@ -50,6 +50,7 @@ public class CommentService {
 
     @Transactional
     public CommentCreateResponse create(Long userId, Long studyId, CommentTarget target, CommentWriteRequest request) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
         List<StudyMemberIdentityProjection> candidates = studyMemberRepository.findIdentitiesByStudyId(studyId);
         userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
                 .map(StudyMemberIdentityProjection::userId)).distinct().sorted().toList());

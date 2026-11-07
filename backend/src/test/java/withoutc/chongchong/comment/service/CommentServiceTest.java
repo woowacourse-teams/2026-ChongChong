@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,11 +18,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -42,6 +48,8 @@ import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
+import withoutc.chongchong.study.exception.StudyMemberErrorCode;
+import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
 import withoutc.chongchong.user.entity.User;
@@ -56,6 +64,12 @@ class CommentServiceTest {
 
     @Mock
     private NoticeRepository notices;
+
+    @Mock
+    private AssignmentRepository assignments;
+
+    @Mock
+    private AssignmentSubmissionRepository submissions;
 
     @Mock
     private StudyMemberRepository members;
@@ -75,12 +89,50 @@ class CommentServiceTest {
 
     @BeforeEach
     void setUp() {
-        CommentTargetResolver resolver = new CommentTargetResolver(notices, mock(AssignmentRepository.class),
-                mock(AssignmentSubmissionRepository.class), new AssignmentAccessPolicy());
+        CommentTargetResolver resolver = new CommentTargetResolver(notices, assignments, submissions,
+                new AssignmentAccessPolicy());
         service = new CommentService(comments, resolver, members, users, notifications,
                 new CommentAccessPolicy(), Clock.systemUTC(), profileImageUrlResolver);
         author = member(1L);
         notice = mock(Notice.class);
+    }
+
+    @ParameterizedTest
+    @MethodSource("commentTargets")
+    @DisplayName("비회원의 댓글 등록은 수신 후보 조회와 사용자·원문 잠금 전에 거부한다")
+    void rejectNonMemberBeforeLocking(CommentTarget target) {
+        doThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED))
+                .when(members).requireExistsByStudyIdAndUserId(10L, 1L);
+
+        assertThatThrownBy(() -> service.create(1L, 10L, target, new CommentWriteRequest("내용")))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+
+        verify(members, never()).findIdentitiesByStudyId(10L);
+        verify(members, never()).getByStudyIdAndUserIdOrThrow(10L, 1L);
+        verifyNoInteractions(users, notices, assignments, submissions, comments, notifications);
+    }
+
+    @Test
+    @DisplayName("사전 검사를 통과해도 잠금 후 멤버십이 없으면 댓글을 저장하지 않는다")
+    void recheckMembershipAfterLocking() {
+        locked(Set.of(1L));
+        when(members.getByStudyIdAndUserIdOrThrow(10L, 1L))
+                .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_ACCESS_DENIED));
+
+        assertThatThrownBy(() -> service.create(1L, 10L, CommentTarget.notice(20L), new CommentWriteRequest("내용")))
+                .isInstanceOf(StudyMemberException.class)
+                .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
+                .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
+
+        InOrder order = inOrder(members, users, notices);
+        order.verify(members).requireExistsByStudyIdAndUserId(10L, 1L);
+        order.verify(members).findIdentitiesByStudyId(10L);
+        order.verify(users).findAllByIdInForShare(List.of(1L));
+        order.verify(notices).getByIdAndStudyIdForUpdateOrThrow(20L, 10L);
+        order.verify(members).getByStudyIdAndUserIdOrThrow(10L, 1L);
+        verifyNoInteractions(comments, notifications);
     }
 
     @Test
@@ -179,6 +231,10 @@ class CommentServiceTest {
         assertThat(response.comments().getFirst().author().profileImageUrl()).isNull();
         assertThat(response.comments().getFirst().author().isDeparted()).isTrue();
         assertThat(response.comments().getFirst().content()).isEqualTo("댓글 내용");
+    }
+
+    private static Stream<CommentTarget> commentTargets() {
+        return Stream.of(CommentTarget.notice(20L), CommentTarget.assignment(20L), CommentTarget.submission(20L, 30L));
     }
 
     private void locked(Set<Long> userIds) {
