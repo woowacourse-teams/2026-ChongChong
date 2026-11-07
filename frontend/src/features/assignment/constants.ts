@@ -1,6 +1,8 @@
 import type { Variant } from '../../shared/ui/Badge';
 import type { SubmissionStatus } from './types';
 
+export const ASSIGNMENT_FORM_STEPS = ['내용', '일정', '제출 대상', '공개여부'] as const;
+
 export const ASSIGNMENT_TITLE = {
   length: 100,
 };

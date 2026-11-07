@@ -51,6 +51,7 @@ export interface AssignmentSubmitStatus {
 }
 
 export interface AssignmentDetail {
+  submitterIds: number[];
   attachments?: Attachment[];
   id: number;
   title: string;
@@ -65,11 +66,15 @@ export interface AssignmentDetail {
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
 export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
-export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments'> & {
+export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments' | 'submitterIds'> & {
   attachmentFileIds?: number[];
 };
 
-export type UpdateAssignmentFormValues = Partial<AssignmentFormValues>;
+export type CreateAssignmentFormValues = Omit<AssignmentFormValues, 'submissionTarget'> & {
+  submitterIds: number[];
+};
+
+export type UpdateAssignmentFormValues = Partial<CreateAssignmentFormValues>;
 
 interface SubmissionBase {
   id: number;

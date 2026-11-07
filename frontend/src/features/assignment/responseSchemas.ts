@@ -79,6 +79,7 @@ const submissionListResponseSchema = z.object({
 }) satisfies z.ZodType<SubmissionListResponse>;
 
 const assignmentDetailSchema = z.object({
+  submitterIds: z.array(z.number()),
   remindAts: z.array(z.string()).nullish(),
   attachments: z.array(assignmentAttachmentSchema).optional(),
   id: z.number(),
