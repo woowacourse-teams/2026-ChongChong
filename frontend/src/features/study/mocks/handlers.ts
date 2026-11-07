@@ -112,6 +112,31 @@ export const handlers = [
     return HttpResponse.json({ studies: studies.filter((study) => study !== null) });
   }),
 
+  http.get(`${API_URL}${STUDY_URLS.joinInfo}`, ({ request }) => {
+    const user = findUserFromHeader(request.headers);
+    if (!user) return new HttpResponse(null, { status: 401 });
+
+    const token = new URL(request.url).searchParams.get('token');
+    const study = studyTable.findFirst((q) => q.where({ inviteLink: token ?? '' }));
+
+    if (!study) {
+      return HttpResponse.json(
+        { code: 'INVALID_INVITE_TOKEN', message: '초대 코드가 올바르지 않거나 만료되었습니다.' },
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json({
+      studyId: study.id,
+      studyName: study.name,
+      description: study.description,
+      imageUrl: study.imageFileId
+        ? `${MOCK_UPLOAD_ORIGIN}/images/${study.imageFileId}`
+        : (study.imageUrl ?? null),
+      memberCount: memberTable.findMany((q) => q.where({ studyId: study.id })).length,
+    });
+  }),
+
   http.get(`${API_URL}${STUDY_URLS.detail}`, async ({ request, params }) => {
     const studyId = Number(params.studyId);
     const user = findUserFromHeader(request.headers);

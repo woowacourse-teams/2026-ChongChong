@@ -48,6 +48,14 @@ export interface InviteLink {
   inviteLink: string;
 }
 
+export interface StudyJoinInfo {
+  studyId: number;
+  studyName: string;
+  description: string | null;
+  imageUrl: string | null;
+  memberCount: number;
+}
+
 export interface StudyFormValues {
   name: string;
   description: string;

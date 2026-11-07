@@ -19,6 +19,7 @@ const path = {
   myPage: '/studies/mypage',
   createStudy: '/studies/new',
   joinStudy: '/studies/join',
+  confirmStudyJoin: '/studies/join/confirm',
   study: (studyId: Id) => `/studies/${studyId}`,
   management: (studyId: Id) => `/studies/${studyId}/management`,
   editStudy: (studyId: Id) => `/studies/${studyId}/edit`,
@@ -103,6 +104,8 @@ export const URL_POLICY = {
   toMyPage: () => push(path.myPage),
   toCreateStudy: () => push(path.createStudy),
   toJoinStudy: () => push(path.joinStudy),
+  toStudyJoinInfo: (token: string) =>
+    push(`${path.confirmStudyJoin}?${new URLSearchParams({ token })}`),
   toStudy: (studyId: Id) => push(path.study(studyId)),
   toStudyManagement: (studyId: Id) => push(path.management(studyId)),
   toEditStudy: (studyId: Id) => push(path.editStudy(studyId)),
