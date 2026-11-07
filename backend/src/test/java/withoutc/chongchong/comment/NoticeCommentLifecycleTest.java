@@ -130,6 +130,12 @@ class NoticeCommentLifecycleTest extends PostgresContainerTest {
         assertThat(rejoined.getId()).isNotEqualTo(f.authorMember().getId());
         assertDeparted(f, id);
         assertThat(view(f, id).content()).isEqualTo("탈퇴 후 본인 수정");
+        CommentResponse own = commentService.getList(f.author().getId(), f.study().getId(),
+                CommentTarget.notice(f.notice().getId()), null, id, 10).comments().getFirst();
+        assertThat(own.author().role()).isNull();
+        assertThat(own.author().isDeparted()).isTrue();
+        assertThat(own.isMine()).isTrue();
+        assertThat(own.canEdit()).isTrue();
 
         userService.withdraw(f.author().getId());
         assertThat(comments.findById(id).orElseThrow().getAuthorUser()).isNull();
@@ -312,6 +318,8 @@ class NoticeCommentLifecycleTest extends PostgresContainerTest {
         assertThat(response.author().name()).isEqualTo("탈퇴한 스터디원");
         assertThat(response.author().profileImageUrl()).isNull();
         assertThat(response.author().isDeparted()).isTrue();
+        assertThat(response.author().role()).isNull();
+        assertThat(response.isMine()).isFalse();
         assertThat(response.canEdit()).isFalse();
         assertThat(response.canDelete()).isTrue();
     }

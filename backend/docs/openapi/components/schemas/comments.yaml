@@ -22,7 +22,7 @@ CommentCreateResponse:
 CommentAuthorResponse:
   type: object
   additionalProperties: false
-  required: [name, profileImageUrl, isDeparted]
+  required: [name, profileImageUrl, role, isDeparted]
   properties:
     name:
       type: string
@@ -34,11 +34,16 @@ CommentAuthorResponse:
         null이면 기본 이미지. 탈퇴한 작성자는 홈 이미지와 관계없이 항상 null이다.
         현재 멤버는 User의 현재 홈 이미지를 사용한다. 스터디별 이미지 수정과 선택 방식은 별도 후속 작업이다.
       example: null
+    role:
+      type: [string, 'null']
+      enum: [LEADER, MEMBER, null]
+      description: 작성자의 현재 스터디 역할. 작성 당시 멤버십이 삭제되면 null이며 재가입해도 복원하지 않는다.
+      example: LEADER
     isDeparted: { type: boolean, description: 작성 당시 멤버십이 삭제됐는지 여부. 재가입으로 복원하지 않는다., example: false }
 CommentResponse:
   type: object
   additionalProperties: false
-  required: [id, author, createdAt, content, isEdited, canEdit, canDelete]
+  required: [id, author, createdAt, content, isEdited, isMine, canEdit, canDelete]
   properties:
     id: { type: integer, format: int64, minimum: 1, example: 42 }
     author: { $ref: '#/CommentAuthorResponse' }
@@ -50,18 +55,25 @@ CommentResponse:
       description: 앞뒤 공백을 제거하고 저장한 본문. 내부 공백·줄바꿈은 유지한다.
       example: "일정 확인했습니다.\n다음 시간에 뵐게요."
     isEdited: { type: boolean, description: 본문을 실제로 수정한 경우 true. 작성자 연결 해제로 바뀌지 않는다., example: false }
-    canEdit: { type: boolean, description: 현재 사용자가 작성자 본인인지 여부. 서버는 수정 요청에서 다시 검증한다., example: true }
+    isMine: { type: boolean, description: 인증 사용자와 댓글 작성자의 계정이 같은지 여부. 스터디 탈퇴 후 재가입해도 본인 댓글로 판정하며 회원 탈퇴로 작성자 계정 연결이 해제되면 false다., example: true }
+    canEdit: { type: boolean, description: 현재 사용자가 댓글을 수정할 수 있는지 여부. 서버는 수정 요청에서 다시 검증한다., example: true }
     canDelete: { type: boolean, description: 현재 사용자가 작성자 본인이거나 해당 스터디의 현재 리더인지 여부., example: true }
 CommentListResponse:
   type: object
   additionalProperties: false
-  required: [comments, nextCursor, hasNext]
+  required: [comments, totalCount, nextCursor, hasNext]
   properties:
     comments:
       type: array
       maxItems: 100
       description: ID 오름차순. 작성 시각 순서와 다를 수 있으며 수정해도 순서는 유지한다.
       items: { $ref: '#/CommentResponse' }
+    totalCount:
+      type: integer
+      format: int64
+      minimum: 0
+      description: 해당 원문 종류와 ID에 속한 전체 댓글 수. size, cursor, focusCommentId와 무관하며 탈퇴한 작성자의 보존된 댓글도 포함한다.
+      example: 13
     nextCursor:
       type: [integer, 'null']
       format: int64

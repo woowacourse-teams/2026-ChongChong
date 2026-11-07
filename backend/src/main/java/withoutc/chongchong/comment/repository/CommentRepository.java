@@ -17,6 +17,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     Optional<Comment> findByIdAndResourceTypeAndResourceId(Long id, ResourceType resourceType, Long resourceId);
 
+    long countByResourceTypeAndResourceId(ResourceType resourceType, Long resourceId);
+
     default Comment getByIdAndResourceOrThrow(Long id, ResourceType resourceType, Long resourceId) {
         return findByIdAndResourceTypeAndResourceId(id, resourceType, resourceId)
                 .orElseThrow(() -> new CommentException(CommentErrorCode.COMMENT_NOT_FOUND));
@@ -24,7 +26,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("""
             SELECT new withoutc.chongchong.comment.repository.projection.CommentSummaryProjection(
-                c.id, authorUser.id, author.id, author.name, author.profileImageUrl,
+                c.id, authorUser.id, author.id, author.name, author.profileImageUrl, author.role,
                 c.createdAt, c.content, c.editedAt
             )
             FROM Comment c

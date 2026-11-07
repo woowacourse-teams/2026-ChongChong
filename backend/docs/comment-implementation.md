@@ -166,7 +166,7 @@ JPA 삭제 콜백만으로 DB CASCADE에 따른 제출물 삭제를 감지하려
 
 | 경로 | 잠금과 재검사 |
 | --- | --- |
-| 댓글 생성 | 요청자와 사전 멤버 후보 User 공유 잠금, 공지 또는 과제·제출물 쓰기 잠금, 원문·현재 멤버십·조회 권한·실제 제출 여부·수신 후보 재검사 |
+| 댓글 생성 | 비잠금 멤버십 사전 검사, 요청자와 사전 멤버 후보 User 공유 잠금, 공지 또는 과제·제출물 쓰기 잠금, 원문·현재 멤버십·조회 권한·실제 제출 여부·수신 후보 재검사 |
 | 댓글 수정·삭제 | 요청자 User 공유 잠금, 공지 또는 과제·제출물 쓰기 잠금, 댓글 소속·작성자/현재 리더 권한 재검사 |
 | 기존 공지·과제 생성 | 요청자와 사전 수신/제출 후보 User 공유 잠금, 부모 Study 공유 잠금, 최초 원문 save·flush와 알림 저장 |
 | 기존 최초 제출 | 요청자와 사전 알림 후보 User 공유 잠금, 과제·해당 제출물 쓰기 잠금, 최초 제출 여부 재검사 후 알림 저장 |
@@ -223,8 +223,12 @@ cursor는 숫자로 된 조회 경계이며 기준 댓글의 존재나 원문 �
 focusCommentId는 같은 원문에 속한 댓글인지 확인한 뒤 그 댓글을 포함하여 이후 size개를 조회한다.
 cursor와 동시에 지정하면 `400 COMMENT_INVALID_PAGE_REQUEST`다.
 포커스 댓글이 삭제됐거나 다른 원문에 속하면 `404 COMMENT_NOT_FOUND`이며 삭제 표시를 만들지 않는다.
-응답은 comments, nullable nextCursor, hasNext다. hasNext가 false면 nextCursor는 null이다.
-댓글 응답에는 작성자 표시 정보, createdAt, content, isEdited와 현재 사용자의 canEdit·canDelete를 담는다.
+응답은 comments, totalCount, nullable nextCursor, hasNext다. hasNext가 false면 nextCursor는 null이다.
+totalCount는 원문 종류·ID로만 집계하며 size·cursor·focusCommentId와 무관하다. 작성자가 탈퇴해 보존된 댓글도 포함한다.
+댓글 응답에는 작성자 표시 정보, createdAt, content, isEdited, isMine과 현재 사용자의 canEdit·canDelete를 담는다.
+author.role은 작성자의 현재 스터디 역할(LEADER·MEMBER)이며 작성 당시 멤버십이 삭제되면 null이다.
+isMine은 인증 사용자 ID와 작성자 계정 ID가 같은지 나타낸다. 스터디 재가입 후에도 본인 댓글로 판정하며
+회원 탈퇴로 작성자 계정 연결이 해제되면 false다. 역할과 본인 여부의 표시 문구는 클라이언트가 결정한다.
 작성자 User ID·멤버 ID를 응답으로 노출하지 않으며 권한 플래그는 실제 쓰기 요청에서 다시 검증한다.
 
 ## 오류와 검증 기준
