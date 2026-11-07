@@ -166,6 +166,7 @@ export const URL_POLICY = {
   // 완료한 생성/참여 화면은 뒤로가기 대상에서 제외한다.
   afterStudyCreate: (studyId: Id) => replace(path.study(studyId)),
   afterStudyJoin: (studyId: Id) => replace(path.study(studyId)),
+  afterMissingInviteToken: () => replace(path.joinStudy),
   afterNoticeCreate: (studyId: Id, noticeId: Id) => replace(path.notice(studyId, noticeId)),
   // 퍼널 완료 시 이력을 정리한 뒤 이동할 상세와 직접 진입 시 남길 목록이다.
   afterAssignmentCreate: (studyId: Id, assignmentId: Id): FunnelCompletionPolicy => ({

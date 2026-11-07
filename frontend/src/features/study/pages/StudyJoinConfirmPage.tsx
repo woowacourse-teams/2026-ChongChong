@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, type ReactNode } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
@@ -25,45 +25,59 @@ export default function StudyJoinConfirmPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
+  return (
+    <RequireInviteToken token={token}>
+      {(token) => (
+        <Page>
+          <TopHeader
+            left={
+              <>
+                <PrevButton />
+                <TopHeader.Title>스터디 참여하기</TopHeader.Title>
+              </>
+            }
+            right={
+              <div css={{ display: 'flex', gap: tokens.spacing[5], alignItems: 'center' }}>
+                <NotificationLink />
+                <Link {...URL_POLICY.toMyPage()} aria-label="마이페이지">
+                  <img width={28} height={28} src={MyIcon} alt="" />
+                </Link>
+              </div>
+            }
+          />
+          <Main css={{ paddingTop: tokens.spacing[3] }}>
+            <ErrorBoundary
+              fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+            >
+              <Suspense fallback={<Loading />}>
+                <Content token={token} />
+              </Suspense>
+            </ErrorBoundary>
+          </Main>
+        </Page>
+      )}
+    </RequireInviteToken>
+  );
+}
+
+function RequireInviteToken({
+  token,
+  children,
+}: {
+  token: string | null;
+  children: (token: string) => ReactNode;
+}) {
   const { move } = usePageNavigation();
 
   useEffect(() => {
     if (!token?.trim()) {
-      move({ ...URL_POLICY.toJoinStudy(), replace: true });
+      move(URL_POLICY.afterMissingInviteToken());
     }
   }, [token, move]);
 
   if (!token?.trim()) return null;
 
-  return (
-    <Page>
-      <TopHeader
-        left={
-          <>
-            <PrevButton />
-            <TopHeader.Title>스터디 참여하기</TopHeader.Title>
-          </>
-        }
-        right={
-          <div css={{ display: 'flex', gap: tokens.spacing[5], alignItems: 'center' }}>
-            <NotificationLink />
-            <Link {...URL_POLICY.toMyPage()} aria-label="마이페이지">
-              <img css={{ width: '28px', height: '28px' }} src={MyIcon} alt="" />
-            </Link>
-          </div>
-        }
-      />
-      <Main css={{ paddingTop: tokens.spacing[3] }}>
-        <ErrorBoundary
-          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
-        >
-          <Suspense fallback={<Loading />}>
-            <Content token={token!} />
-          </Suspense>
-        </ErrorBoundary>
-      </Main>
-    </Page>
-  );
+  return children(token);
 }
 
 const CardStyle = {
