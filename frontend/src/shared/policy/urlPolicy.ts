@@ -167,8 +167,9 @@ export const URL_POLICY = {
   // 수정 완료는 기존 화면으로 복귀하고, 직접 진입했으면 해당 상세를 사용한다.
   afterStudyEdit: (studyId: Id) => back(path.study(studyId)),
   afterNoticeEdit: (studyId: Id, noticeId: Id) => back(path.notice(studyId, noticeId)),
+  // 퍼널의 이전 단계로 돌아가지 않고 저장한 과제 상세로 이동한다.
   afterAssignmentEdit: (studyId: Id, assignmentId: Id) =>
-    back(path.assignment(studyId, assignmentId)),
+    replace(path.assignment(studyId, assignmentId)),
   // 삭제한 현재 화면을 목록으로 교체한다.
   afterNoticeDelete: (studyId: Id) => replace(path.notices(studyId)),
   afterAssignmentDelete: (studyId: Id) => replace(path.assignments(studyId)),

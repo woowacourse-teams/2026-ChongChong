@@ -26,6 +26,7 @@ interface AssignmentVisibilityStepProps {
   changeSubmissionVisibility: (visibility: SubmissionVisibility) => void;
   isSubmitting: boolean;
   onSubmit: () => void;
+  submitLabel?: string;
   errorText?: string;
 }
 
@@ -42,6 +43,7 @@ export default function AssignmentVisibilityStep({
   changeSubmissionVisibility,
   isSubmitting,
   onSubmit,
+  submitLabel,
   errorText,
 }: AssignmentVisibilityStepProps) {
   return (
@@ -52,13 +54,14 @@ export default function AssignmentVisibilityStep({
       subTitle="제출 인원과 별개로 볼 수 있는 범위를 정해요."
       footer={
         <Button variant="brandSolid" size="large" onClick={onSubmit} disabled={isSubmitting}>
-          과제 만들기
+          {submitLabel}
         </Button>
       }
     >
       <div role="radiogroup" aria-label="제출물 공개 범위" css={optionGroupStyle}>
         {visibilityOptions.map((option) => (
           <VisibilityOptionField
+            key={option.value}
             label={option.label}
             description={option.description}
             value={option.value}

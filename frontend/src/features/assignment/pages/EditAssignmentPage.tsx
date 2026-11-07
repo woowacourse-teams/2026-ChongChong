@@ -1,8 +1,7 @@
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import BottomTab from '../../../shared/widgets/BottomTab';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import AssignmentForm from '../components/AssignmentForm';
+import AssignmentFormFunnel from '../components/AssignmentFormFunnel';
 import Main from '../../../shared/ui/Main';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import assignmentQueries from '../queries';
@@ -26,7 +25,6 @@ export default function EditAssignmentPage() {
           </Suspense>
         </ErrorBoundary>
       </Main>
-      <BottomTab />
     </Page>
   );
 }
@@ -41,8 +39,10 @@ function Content() {
   } = useEditAssignment({ studyId, assignmentId });
 
   return (
-    <AssignmentForm
-      submitLabel="과제 수정하기"
+    <AssignmentFormFunnel
+      key={assignmentId}
+      studyId={studyId}
+      mode="edit"
       onSubmit={handleEditAssignment}
       isSubmitting={isPending}
       initialAttachments={assignment.attachments}
@@ -51,7 +51,7 @@ function Content() {
         content: assignment.content,
         submissionMethod: assignment.submissionMethod,
         closeAt: assignment.closeAt,
-        submissionTarget: assignment.submissionTarget,
+        submitterIds: assignment.submitterIds,
         submissionVisibility: assignment.submissionVisibility,
         remindAts: assignment.remindAts,
       }}
