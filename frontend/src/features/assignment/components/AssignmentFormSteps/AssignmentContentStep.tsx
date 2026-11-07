@@ -20,6 +20,7 @@ interface AssignmentContentStepProps {
   handleSubmissionMethodChange: ChangeEventHandler<HTMLInputElement>;
   attachments: {
     items: AttachmentItem[];
+    isReady: boolean;
     error?: string;
     addFiles: (files: File[]) => void;
     removeFile: (id: string) => void;
@@ -101,7 +102,9 @@ export default function AssignmentContentStep({
         <Button
           variant="brandSolid"
           size="large"
-          disabled={!title.trim() || !content.trim() || !submissionMethod.trim()}
+          disabled={
+            !attachments.isReady || !title.trim() || !content.trim() || !submissionMethod.trim()
+          }
           onClick={handleNext}
         >
           다음
