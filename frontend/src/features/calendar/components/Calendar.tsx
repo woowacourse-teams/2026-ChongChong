@@ -59,9 +59,43 @@ const eventDotStyle = {
   borderRadius: tokens.radius.full,
 } satisfies CSSProperties;
 
+const legendStyle = {
+  display: 'flex',
+  justifyContent: 'flex-start',
+  gap: tokens.spacing[5],
+  margin: `${tokens.spacing[3]} ${tokens.spacing[3]} 0`,
+  padding: `${tokens.spacing[3]} 0`,
+  borderTop: tokens.border.neutral,
+} satisfies CSSProperties;
+
+const legendItemStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: tokens.spacing[2],
+  color: tokens.text.default,
+} satisfies CSSProperties;
+
+const createdLegendDotStyle = {
+  ...eventDotStyle,
+  width: 7,
+  height: 7,
+  flexShrink: 0,
+  background: tokens.bg.brand,
+} satisfies CSSProperties;
+
+const dueLegendDotStyle = {
+  ...createdLegendDotStyle,
+  background: tokens.text.critical,
+} satisfies CSSProperties;
+
 export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: CalendarProps) {
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
+  const lastDateOfMonth = new Date(selectedDate);
+  lastDateOfMonth.setMonth(month + 1, 0);
+  const calendarDays = getCalendarDays(selectedDate).filter(
+    ({ date }) => date.getTime() <= lastDateOfMonth.getTime(),
+  );
 
   function moveMonth(offset: number) {
     const nextDate = new Date(selectedDate);
@@ -108,7 +142,7 @@ export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: 
       </div>
 
       <div css={[calendarGridStyle, { gridAutoRows: '40px' }]} role="group" aria-label="날짜 선택">
-        {getCalendarDays(selectedDate).map(({ date, isCurrentMonth }) => {
+        {calendarDays.map(({ date, isCurrentMonth }) => {
           if (!isCurrentMonth) return <span key={date.getTime()} aria-hidden="true" />;
 
           const day = date.getDate();
@@ -156,6 +190,16 @@ export default function Calendar({ selectedDate, getEventKinds, onSelectDate }: 
             </button>
           );
         })}
+      </div>
+      <div css={legendStyle} role="group" aria-label="일정 표시 안내">
+        <Text variant="footnote" css={legendItemStyle}>
+          <span css={createdLegendDotStyle} aria-hidden="true" />
+          공지·과제 생성
+        </Text>
+        <Text variant="footnote" css={legendItemStyle}>
+          <span css={dueLegendDotStyle} aria-hidden="true" />
+          과제 마감
+        </Text>
       </div>
     </div>
   );
