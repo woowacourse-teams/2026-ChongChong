@@ -109,7 +109,8 @@ export default function AssignmentFormFunnel({
     );
     if (!errorStep) return;
 
-    history.go(ASSIGNMENT_FORM_STEPS.indexOf(errorStep) - ASSIGNMENT_FORM_STEPS.indexOf(step));
+    const delta = ASSIGNMENT_FORM_STEPS.indexOf(errorStep) - ASSIGNMENT_FORM_STEPS.indexOf(step);
+    if (delta < 0) history.go(delta);
   }
 
   const handleSubmit = () => {
