@@ -89,17 +89,23 @@ public class CommentService {
         List<CommentResponse> comments = commentPage.content().stream()
                 .map(comment -> toCommentResponse(userId, actor.isLeader(), comment, imageUrls))
                 .toList();
-        return new CommentListResponse(comments, commentPage.nextCursor(), commentPage.hasNext());
+        long totalCount = commentRepository.countByResourceTypeAndResourceId(target.resourceType(), target.resourceId());
+        return new CommentListResponse(comments, totalCount, commentPage.nextCursor(), commentPage.hasNext());
     }
 
     private CommentResponse toCommentResponse(Long userId, boolean isLeader, CommentSummaryProjection comment,
                                                Map<Long, String> imageUrls) {
         Long memberId = comment.authorMemberId();
         boolean isDeparted = memberId == null || !imageUrls.containsKey(memberId);
-        String profileImageUrl = isDeparted ? null : imageUrls.get(memberId);
-        CommentResponse.Author author = CommentResponse.Author.of(comment.authorName(), profileImageUrl, isDeparted);
+        String profileImageUrl = null;
+        if (!isDeparted) {
+            profileImageUrl = imageUrls.get(memberId);
+        }
+        CommentResponse.Author author = CommentResponse.Author.of(comment.authorName(), profileImageUrl,
+                comment.authorRole(), isDeparted);
         return new CommentResponse(comment.id(), author, comment.createdAt(), comment.content(),
                 comment.editedAt() != null,
+                userId.equals(comment.authorUserId()),
                 commentAccessPolicy.canEdit(userId, comment.authorUserId()),
                 commentAccessPolicy.canDelete(userId, comment.authorUserId(), isLeader));
     }

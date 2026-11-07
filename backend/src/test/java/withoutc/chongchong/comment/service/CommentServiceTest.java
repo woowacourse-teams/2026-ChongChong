@@ -193,10 +193,11 @@ class CommentServiceTest {
         when(notices.getByIdAndStudyIdOrThrow(20L, 10L)).thenReturn(notice);
         when(comments.findByCursor(eq(ResourceType.NOTICE), eq(20L), isNull(), eq(false), any()))
                 .thenReturn(List.of(
-                        new CommentSummaryProjection(1L, 2L, 7L, "스터디 이름", "stale.png", now, "첫 댓글", null),
-                        new CommentSummaryProjection(2L, 2L, 7L, "스터디 이름", "stale.png", now, "둘째 댓글", now),
-                        new CommentSummaryProjection(3L, 3L, null, "예전 이름", "private.png", now, "탈퇴 댓글", null),
-                        new CommentSummaryProjection(4L, 4L, 8L, "다음 작성자", "next.png", now, "다음 댓글", null)));
+                        new CommentSummaryProjection(1L, 2L, 7L, "스터디 이름", "stale.png", StudyMemberRole.MEMBER, now, "첫 댓글", null),
+                        new CommentSummaryProjection(2L, 2L, 7L, "스터디 이름", "stale.png", StudyMemberRole.MEMBER, now, "둘째 댓글", now),
+                        new CommentSummaryProjection(3L, 3L, null, "예전 이름", "private.png", null, now, "탈퇴 댓글", null),
+                        new CommentSummaryProjection(4L, 4L, 8L, "다음 작성자", "next.png", StudyMemberRole.MEMBER, now, "다음 댓글", null)));
+        when(comments.countByResourceTypeAndResourceId(ResourceType.NOTICE, 20L)).thenReturn(4L);
         when(profileImageUrlResolver.resolveForMembers(List.of(7L))).thenReturn(Map.of(7L, "current-home.png"));
 
         CommentListResponse response = service.getList(1L, 10L, CommentTarget.notice(20L), null, null, 3);
@@ -204,6 +205,9 @@ class CommentServiceTest {
         assertThat(response.hasNext()).isTrue();
         assertThat(response.nextCursor()).isEqualTo(3L);
         assertThat(response.comments()).hasSize(3);
+        assertThat(response.totalCount()).isEqualTo(4);
+        assertThat(response.comments().getFirst().author().role()).isEqualTo(StudyMemberRole.MEMBER);
+        assertThat(response.comments().getFirst().isMine()).isFalse();
         assertThat(response.comments().getFirst().author().name()).isEqualTo("스터디 이름");
         assertThat(response.comments().getFirst().author().profileImageUrl()).isEqualTo("current-home.png");
         assertThat(response.comments().get(1).author().profileImageUrl()).isEqualTo("current-home.png");
@@ -222,7 +226,7 @@ class CommentServiceTest {
         when(notices.getByIdAndStudyIdOrThrow(20L, 10L)).thenReturn(notice);
         when(comments.findByCursor(eq(ResourceType.NOTICE), eq(20L), isNull(), eq(false), any()))
                 .thenReturn(List.of(new CommentSummaryProjection(
-                        1L, 2L, 7L, "예전 이름", "private.png", now, "댓글 내용", null)));
+                        1L, 2L, 7L, "예전 이름", "private.png", StudyMemberRole.LEADER, now, "댓글 내용", null)));
         when(profileImageUrlResolver.resolveForMembers(List.of(7L))).thenReturn(Map.of());
 
         CommentListResponse response = service.getList(1L, 10L, CommentTarget.notice(20L), null, null, 3);
@@ -230,6 +234,8 @@ class CommentServiceTest {
         assertThat(response.comments().getFirst().author().name()).isEqualTo("탈퇴한 스터디원");
         assertThat(response.comments().getFirst().author().profileImageUrl()).isNull();
         assertThat(response.comments().getFirst().author().isDeparted()).isTrue();
+        assertThat(response.comments().getFirst().author().role()).isNull();
+        assertThat(response.comments().getFirst().isMine()).isFalse();
         assertThat(response.comments().getFirst().content()).isEqualTo("댓글 내용");
     }
 
