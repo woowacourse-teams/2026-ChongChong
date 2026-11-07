@@ -6,7 +6,7 @@ import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { isCompletedAssignment } from '../submissionStatus';
-import type { Submission, UserAssignmentSubmitDetail } from '../types';
+import type { AssignmentTab, Submission, UserAssignmentSubmitDetail } from '../types';
 import Badge from '../../../shared/ui/Badge';
 
 interface Props {
@@ -117,7 +117,10 @@ export default function MySubmissionStatus({ submission, member }: Props) {
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link css={detailLinkStyle} {...URL_POLICY.toConvertTab(location, 'detail')}>
+          <Link
+            css={detailLinkStyle}
+            {...URL_POLICY.toConvertTab<AssignmentTab>(location, 'detail')}
+          >
             상세 보기
           </Link>
         </div>

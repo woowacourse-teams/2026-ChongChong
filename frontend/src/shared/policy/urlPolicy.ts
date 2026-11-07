@@ -150,9 +150,9 @@ export const URL_POLICY = {
     };
   },
   // 탭 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
-  toConvertTab: (
+  toConvertTab: <TTab extends string>(
     location: { pathname: string; search: string; hash: string },
-    tab: string,
+    tab: TTab,
   ): LinkPolicy => {
     const params = new URLSearchParams(location.search);
     params.set('tab', tab);

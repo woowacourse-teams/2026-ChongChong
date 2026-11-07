@@ -5,12 +5,12 @@ import { tokens, typography } from '../../styles/global';
 import usePageNavigation from '../hooks/usePageNavigation';
 import { URL_POLICY } from '../policy/urlPolicy';
 
-type TabItem = { key: string; label: string; panel: ReactNode };
+type TabItem<TTab extends string> = { key: TTab; label: string; panel: ReactNode };
 
-type TabItemList = readonly [TabItem, ...TabItem[]];
+type TabItemList<TTab extends string> = readonly [TabItem<TTab>, ...TabItem<TTab>[]];
 
-interface Props {
-  tabs: TabItemList;
+interface Props<TTab extends string> {
+  tabs: TabItemList<TTab>;
 }
 
 const tabListStyle = {
@@ -46,7 +46,7 @@ const panelStyle = {
 
 const TAB_QUERY_NAME = 'tab';
 
-function useQueryTabs(tabs: TabItemList) {
+function useQueryTabs<TTab extends string>(tabs: TabItemList<TTab>) {
   const location = useLocation();
   const defaultTab = tabs[0];
   const [searchParams] = useSearchParams({
@@ -55,16 +55,16 @@ function useQueryTabs(tabs: TabItemList) {
   const requestedTab = searchParams.get(TAB_QUERY_NAME);
   const { move } = usePageNavigation();
 
-  const selectTab = (key: (typeof tabs)[number]['key']) => {
-    move(URL_POLICY.toConvertTab(location, key));
+  const selectTab = (key: TTab) => {
+    move(URL_POLICY.toConvertTab<TTab>(location, key));
   };
 
   const activeTab = tabs.find(({ key }) => key === requestedTab) ?? defaultTab;
   return { activeTab, selectTab };
 }
 
-export default function Tabs({ tabs }: Props) {
-  const { activeTab, selectTab } = useQueryTabs(tabs);
+export default function Tabs<TTab extends string>({ tabs }: Props<TTab>) {
+  const { activeTab, selectTab } = useQueryTabs<TTab>(tabs);
   const id = useId();
 
   return (

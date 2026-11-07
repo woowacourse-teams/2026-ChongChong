@@ -1,3 +1,4 @@
+import type { AssignmentTab } from '../types';
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
@@ -43,7 +44,7 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
         dateTime={assignment.closeAt}
         meta={`${formatDateToString(assignment.closeAt)} 마감`}
       />
-      <Tabs
+      <Tabs<AssignmentTab>
         tabs={[
           {
             key: 'detail',

@@ -1,5 +1,7 @@
 import type { Attachment } from '../../shared/modules/files/types';
 
+export type NoticeTab = 'detail' | 'status';
+
 export interface NoticeFormValues {
   title: string;
   content: string;
