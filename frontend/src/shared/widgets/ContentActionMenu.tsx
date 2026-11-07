@@ -56,9 +56,10 @@ interface Props {
   studyId: number;
   id: number;
   content: 'notice' | 'assignment';
+  onDeleteSuccess: () => void;
 }
 
-export default function ContentActionMenu({ studyId, id, content }: Props) {
+export default function ContentActionMenu({ studyId, id, content, onDeleteSuccess }: Props) {
   const { move } = usePageNavigation();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -100,6 +101,7 @@ export default function ContentActionMenu({ studyId, id, content }: Props) {
         });
       }
       queryClient.invalidateQueries({ queryKey: queries.lists(studyId) });
+      onDeleteSuccess();
       move(
         content === 'notice'
           ? URL_POLICY.afterNoticeDelete(studyId)
