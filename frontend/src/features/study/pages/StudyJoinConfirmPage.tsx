@@ -1,5 +1,5 @@
-import { Link, Navigate, useSearchParams } from 'react-router';
-import { Suspense } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { Suspense, useEffect } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
@@ -14,6 +14,7 @@ import TopHeader from '../../../shared/ui/TopHeader';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { tokens } from '../../../styles/global';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import NotificationLink from '../../notification/components/NotificationLink';
 import MyIcon from '../../../shared/assets/my.webp';
 import StudyAvatar from '../components/StudyAvatar';
@@ -24,9 +25,15 @@ export default function StudyJoinConfirmPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
-  if (!token?.trim()) {
-    return <Navigate to={URL_POLICY.toJoinStudy().to} replace />;
-  }
+  const { move } = usePageNavigation();
+
+  useEffect(() => {
+    if (!token?.trim()) {
+      move({ ...URL_POLICY.toJoinStudy(), replace: true });
+    }
+  }, [token, move]);
+
+  if (!token?.trim()) return null;
 
   return (
     <Page>
@@ -51,7 +58,7 @@ export default function StudyJoinConfirmPage() {
           fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
         >
           <Suspense fallback={<Loading />}>
-            <Content token={token} />
+            <Content token={token!} />
           </Suspense>
         </ErrorBoundary>
       </Main>
