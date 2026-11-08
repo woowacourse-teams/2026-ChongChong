@@ -7,6 +7,7 @@ import noticeQueries from '../queries';
 import NoticeArticle from './NoticeArticle';
 import NoticeReadStatus from './NoticeReadStatus';
 import ReadMemberList from './ReadMemberList';
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 
 interface Props {
   studyId: number;
@@ -36,7 +37,16 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
             />
           </>
         }
-        detail={<NoticeArticle notice={notice} />}
+        detail={
+          <>
+            <NoticeArticle notice={notice} />
+            <CommentsPanel
+              key={`${studyId}-${noticeId}`}
+              target={{ type: 'notice', studyId, noticeId }}
+              title="공지 댓글"
+            />
+          </>
+        }
       />
     </>
   );

@@ -15,6 +15,7 @@ import { updateNoticeRead } from '../api';
 import noticeQueries from '../queries';
 import MemberNoticeReadState from './MemberNoticeReadState';
 import NoticeArticle from './NoticeArticle';
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import type { MemberReadStatus } from '../types';
 
 interface Props {
@@ -44,11 +45,20 @@ const readStateStyle = {
   margin: `0 calc(${tokens.layout.gutter} * -1) calc(${tokens.spacing[5]} * -1)`,
 } satisfies CSSProperties;
 
-function calculateReadProgress(content: HTMLElement) {
+function calculateReadProgress(content: HTMLElement, contentBody: HTMLElement | null) {
   const { scrollTop, scrollHeight, clientHeight } = content;
-  const scrollableHeight = scrollHeight - clientHeight;
+  // 댓글 진입 행을 포함하지 않고 기존 원문과 하단 여백까지만 읽음 범위로 계산한다.
+  const bodyHeight = contentBody
+    ? contentBody.getBoundingClientRect().bottom -
+      content.getBoundingClientRect().top +
+      scrollTop +
+      (parseFloat(getComputedStyle(content).paddingBottom) || 0)
+    : scrollHeight;
+  const scrollableHeight = bodyHeight - clientHeight;
 
-  return scrollableHeight <= 0 ? 100 : Math.round((scrollTop / scrollableHeight) * 100);
+  return scrollableHeight <= 0
+    ? 100
+    : Math.min(100, Math.round((scrollTop / scrollableHeight) * 100));
 }
 
 export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) {
@@ -103,7 +113,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
     if (!content || !contentBody) return;
 
     const updateProgress = () => {
-      const nextProgress = calculateReadProgress(content);
+      const nextProgress = calculateReadProgress(content, contentBodyRef.current);
       setReadProgress((current) => Math.max(current, nextProgress));
 
       if (nextProgress < 100 || hasRequestedReadRef.current) return;
@@ -122,7 +132,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
   }, [canMarkAsRead, markAsRead]);
 
   const updateReadProgress = (event: UIEvent<HTMLDivElement>) => {
-    const nextProgress = calculateReadProgress(event.currentTarget);
+    const nextProgress = calculateReadProgress(event.currentTarget, contentBodyRef.current);
 
     setReadProgress((current) => Math.max(current, nextProgress));
 
@@ -151,6 +161,11 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
           />
           <NoticeArticle notice={notice} />
         </div>
+        <CommentsPanel
+          key={`${studyId}-${noticeId}`}
+          target={{ type: 'notice', studyId, noticeId }}
+          title="공지 댓글"
+        />
       </div>
       {readStatus.readStatus !== 'NOT_ASSIGNED' && (
         <div css={readStateStyle}>
