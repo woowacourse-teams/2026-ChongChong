@@ -72,6 +72,8 @@ export interface BottomSheetProps {
   'aria-labelledby'?: string;
   children: ReactNode;
   onClose: () => void;
+  variant?: 'default' | 'compact';
+  maxHeight?: CSSProperties['maxHeight'];
 }
 
 export default function BottomSheet({
@@ -80,6 +82,8 @@ export default function BottomSheet({
   'aria-labelledby': ariaLabelledBy,
   children,
   onClose,
+  variant = 'default',
+  maxHeight,
 }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<DragState | null>(null);
@@ -206,7 +210,20 @@ export default function BottomSheet({
       />
       <div
         ref={sheetRef}
-        css={[sheetStyle, { transform: sheetTransform, transition }]}
+        css={[
+          sheetStyle,
+          variant === 'compact' && {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: tokens.spacing[4],
+            maxHeight: `calc(100dvh - ${tokens.spacing[5]})`,
+            padding: `${tokens.spacing[5]} ${tokens.spacing[5]} calc(${tokens.spacing[5]} + ${tokens.layout.safeBottom})`,
+            borderRadius: '16px 16px 0 0',
+            boxShadow: 'none',
+          },
+          maxHeight !== undefined && { maxHeight },
+          { transform: sheetTransform, transition },
+        ]}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
@@ -217,7 +234,16 @@ export default function BottomSheet({
         }}
       >
         <div
-          css={[handleAreaStyle, { cursor: isDragging ? 'grabbing' : 'grab' }]}
+          css={[
+            handleAreaStyle,
+            variant === 'compact' && {
+              height: '4px',
+              flexShrink: 0,
+              marginTop: 0,
+              marginBottom: 0,
+            },
+            { cursor: isDragging ? 'grabbing' : 'grab' },
+          ]}
           aria-hidden="true"
           data-testid="bottom-sheet-handle"
           onPointerDown={handleDragStart}
@@ -225,7 +251,12 @@ export default function BottomSheet({
           onPointerUp={(event) => finishDrag(event, true)}
           onPointerCancel={(event) => finishDrag(event, false)}
         >
-          <div css={handleStyle} />
+          <div
+            css={[
+              handleStyle,
+              variant === 'compact' && { width: '28px', background: 'var(--border-default)' },
+            ]}
+          />
         </div>
         {children}
       </div>
