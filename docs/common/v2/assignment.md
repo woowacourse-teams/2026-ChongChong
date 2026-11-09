@@ -4,7 +4,7 @@
 
 ## 작성과 설정
 
-리더는 제목·내용·제출 방법·마감 시각을 입력하고 제출물 공개 범위와 제출할 스터디원을 선택한다. 제출 대상 선택 API는 통합 개발 브랜치에 병합된 #638 기준이며, 웹은 기존 리더 참여 설정을 사용한다.
+리더는 제목·내용·제출 방법·마감 시각을 입력하고 제출물 공개 범위와 제출할 스터디원을 선택한다. 제출 대상 선택 API(#638)와 웹의 개별·전체 선택 폼(#653)이 연결되어 있다.
 
 | 항목 | 현재 정책 |
 | --- | --- |
@@ -15,7 +15,7 @@
 | 제출 대상 | 현재 스터디 멤버 중 한 명 이상 선택. 리더 본인도 포함 가능 |
 | 기존 요청 호환 | 생성 시 `submitterIds`가 없으면 `submissionTarget`으로 일반 멤버 전체 또는 리더 포함 여부 지정. 수정 시에는 기존 대상의 리더 참여만 변경 |
 | 공개 범위 | 비공개(`LEADER_ONLY`) 또는 전체 스터디원에게 공개(`ALL_STUDY_MEMBERS`) |
-| 웹 생성 폼 초기값 | 리더 참여, 전체 스터디원 공개 |
+| 웹 생성 폼 초기값 | 현재 멤버 전체 선택(리더 포함), 전체 스터디원 공개 |
 
 ‘제출 방법’에는 과제를 어떻게 제출하면 되는지 안내하는 글을 선택적으로 적는다. 생성 시 `submissionMethod`의 생략·null·빈 문자열·공백은 빈 문자열로 저장한다. 수정 시 생략·null은 기존 설명을 유지하고, 빈 문자열·공백은 설명을 지운다. 설명이 없으면 응답에는 빈 문자열을 반환한다. 리더가 제출할 파일 형식을 별도로 지정하는 기능은 없다. 실제 첨부는 공통 과제 첨부 정책으로 형식·크기·개수를 제한한다.
 현재 웹 폼은 제출 방법을 필수 입력으로 유지한다. 서버의 선택 입력 정책과 웹 입력 제약이 다르다.
@@ -33,7 +33,8 @@
 - 제외된 사람은 현재 제출 현황·완료 인원·미완료 과제·리마인드 수신 대상에서 빠진다. 제출 완료 목록에는 보존된 제출물이 계속 포함된다.
 
 이는 과제의 제출 대상에서 제외하는 정책이다. 과제 삭제, 스터디 탈퇴·방출, 회원 탈퇴의 기존 삭제 정책은 그대로다.
-웹의 개별·전체 선택, 대상 재설정, 제외된 제출물의 수정 제한 표시는 미연동이다. 병합된 서버 API와 웹 연동 범위를 구분한다.
+웹은 개별·전체 선택과 수정 시 기존 submitterIds의 초기 선택을 지원한다. 선택한 현재 멤버가 없으면 다음 단계로 진행할 수 없다. 내 제출 조회의 assigned=false를 반영한 제외된 제출물의 수정 제한 표시는 아직 연결되지 않았다.
+웹 수정 폼은 기존 closeAt도 전송하므로 마감 후에는 마감 시각을 미래로 변경하지 않으면 서버의 @Future 검증으로 대상·예약·첨부 수정도 거부된다. 서버는 closeAt을 생략한 부분 수정으로 마감 후 대상 변경을 허용한다.
 
 ## 과제 제출과 제출물 공개
 
@@ -77,4 +78,4 @@
 서버에는 아직 제출하지 않은 대상에게 예약 알림을 보내는 기능이 있다. 앞으로의 시각만 예약할 수 있으며, 예약 목록을 생략하거나 `null`로 보내면 기존 예약을 유지한다. 빈 배열을 보내면 아직 발송하지 않은 예약을 지운다.
 웹 작성·수정 폼에서 예약을 입력하며 상세 응답의 `remindAts`로 기존 예약을 불러와 유지·추가·삭제한다. 상세 응답은 미래의 대기 예약만 오름차순으로 반환한다. null 원소나 지난 시각을 포함한 변경 요청은 거부하고 기존 제목·예약을 보존한다.
 
-근거: [과제 모델](../../../backend/src/main/java/withoutc/chongchong/assignment/entity/Assignment.java), [제출 상태](../../../backend/src/main/java/withoutc/chongchong/assignment/entity/AssignmentSubmission.java), [제출 서비스](../../../backend/src/main/java/withoutc/chongchong/assignment/service/AssignmentSubmissionService.java), [조회·수정 권한](../../../backend/src/main/java/withoutc/chongchong/assignment/policy/AssignmentAccessPolicy.java), [웹 폼](../../../frontend/src/features/assignment/components/AssignmentForm.tsx), [일반 멤버 상세](../../../frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx), [상태 표시](../../../frontend/src/features/assignment/constants.ts).
+근거: [과제 모델](../../../backend/src/main/java/withoutc/chongchong/assignment/entity/Assignment.java), [제출 상태](../../../backend/src/main/java/withoutc/chongchong/assignment/entity/AssignmentSubmission.java), [제출 서비스](../../../backend/src/main/java/withoutc/chongchong/assignment/service/AssignmentSubmissionService.java), [조회·수정 권한](../../../backend/src/main/java/withoutc/chongchong/assignment/policy/AssignmentAccessPolicy.java), [웹 폼](../../../frontend/src/features/assignment/components/AssignmentFormFunnel.tsx), [일반 멤버 상세](../../../frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx), [상태 표시](../../../frontend/src/features/assignment/constants.ts).

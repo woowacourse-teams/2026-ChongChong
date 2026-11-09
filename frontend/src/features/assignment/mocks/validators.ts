@@ -42,10 +42,6 @@ const assignmentValidator = {
   },
 
   submissionMethod: (value) => {
-    if (value.trim().length === 0) {
-      return { code: 'REQUIRED', reason: '제출 방법은 필수입니다.' };
-    }
-
     if (value.length > ASSIGNMENT_CONTENT_LIMIT_LENGTH) {
       return {
         code: 'MAX_LENGTH',
@@ -74,9 +70,63 @@ const assignmentValidator = {
 
 const assignmentFields = Object.keys(assignmentValidator) as (keyof AssignmentInput)[];
 
-export function validateAssignment(input: Partial<AssignmentInput>): FieldError[] {
-  return assignmentFields.flatMap((field) => {
-    const error = assignmentValidator[field](input[field] ?? '');
+export interface AssignmentWriteInput extends Partial<AssignmentInput> {
+  submitterIds?: number[] | null;
+  submissionTarget?: 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER' | null;
+  submissionVisibility?: 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS' | null;
+  remindAts?: string[] | null;
+  attachmentFileIds?: number[] | null;
+}
+
+export function validateAssignment(input: AssignmentWriteInput, partial = false): FieldError[] {
+  const errors: FieldError[] = assignmentFields.flatMap((field) => {
+    if (partial && input[field] == null) return [];
+    const value = input[field] ?? '';
+    const error =
+      typeof value === 'string'
+        ? assignmentValidator[field](value)
+        : { code: 'INVALID', reason: '문자열을 입력해주세요.' };
     return error ? [{ field, ...error }] : [];
   });
+  if (
+    (!partial || input.submissionVisibility != null) &&
+    !['LEADER_ONLY', 'ALL_STUDY_MEMBERS'].includes(input.submissionVisibility ?? '')
+  ) {
+    errors.push({
+      field: 'submissionVisibility',
+      code: 'INVALID',
+      reason: '공개 범위를 선택해주세요.',
+    });
+  }
+  if (
+    input.submitterIds == null &&
+    (!partial || input.submissionTarget != null) &&
+    !['MEMBERS_ONLY', 'MEMBERS_AND_LEADER'].includes(input.submissionTarget ?? '')
+  ) {
+    errors.push({ field: 'submitterIds', code: 'REQUIRED', reason: '제출할 멤버를 선택해주세요.' });
+  }
+  if (input.remindAts != null) {
+    if (!Array.isArray(input.remindAts)) {
+      errors.push({
+        field: 'remindAts',
+        code: 'INVALID',
+        reason: '리마인드 시각 목록을 입력해주세요.',
+      });
+    } else {
+      input.remindAts.forEach((value, index) => {
+        if (
+          typeof value !== 'string' ||
+          !Number.isFinite(Date.parse(value)) ||
+          Date.parse(value) <= Date.now()
+        ) {
+          errors.push({
+            field: `remindAts[${index}]`,
+            code: 'INVALID',
+            reason: '리마인드 시각은 현재 이후만 가능해요.',
+          });
+        }
+      });
+    }
+  }
+  return errors;
 }

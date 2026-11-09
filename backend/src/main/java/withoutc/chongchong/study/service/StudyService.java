@@ -4,6 +4,7 @@ import static withoutc.chongchong.study.entity.Study.MAX_STUDY_MEMBER_COUNT;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +65,7 @@ import withoutc.chongchong.user.repository.UserRepository;
 public class StudyService {
 
     static final int MAX_JOINED_STUDY_COUNT = 50;
+    private static final int LEADER_NOTICE_VISIBLE_DAYS = 7;
 
     private final StudyRepository studyRepository;
     private final StudyImageService studyImageService;
@@ -76,6 +78,7 @@ public class StudyService {
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final NotificationService notificationService;
     private final CommentRepository commentRepository;
+    private final Clock clock;
 
     private final StudyInviteLinkGenerator studyInviteLinkGenerator;
     private final StudyInviteTokenProvider studyInviteTokenProvider;
@@ -164,13 +167,14 @@ public class StudyService {
     public MyStudyListResponse getMyStudies(Long userId) {
         List<StudyMember> studyMembers = studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
 
+        LocalDateTime noticeCreatedAfter = LocalDateTime.now(clock).minusDays(LEADER_NOTICE_VISIBLE_DAYS);
         List<MyStudyResponse> responses = new ArrayList<>();
         for (StudyMember studyMember : studyMembers) {
             Study study = studyMember.getStudy();
             String imageUrl = getImageUrl(study);
 
             int memberCount = studyMemberRepository.countByStudyId(study.getId());
-            int noticeCount = unReadNoticeCount(studyMember, study.getId());
+            int noticeCount = unReadNoticeCount(studyMember, study.getId(), noticeCreatedAfter);
             int assignmentCount = unFinishedAssignmentCount(studyMember, study.getId());
 
             responses.add(MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount,
@@ -273,7 +277,7 @@ public class StudyService {
 
     private LeaderStudyDetailResponse makeLeaderStudyDetailResponse(Study study) {
         List<LeaderNoticeSummaryProjection> noticeProjections = noticeRepository.findIncompleteNoticeSummariesByStudyId(
-                study.getId());
+                study.getId(), LocalDateTime.now(clock).minusDays(LEADER_NOTICE_VISIBLE_DAYS));
         List<LeaderAssignmentSummaryProjection> assignmentProjections = assignmentRepository.findIncompleteAssignmentSummariesByStudyId(
                 study.getId());
 
@@ -322,9 +326,9 @@ public class StudyService {
                 MemberAssignmentSummaryListResponse.from(assignmentResponses));
     }
 
-    private int unReadNoticeCount(StudyMember studyMember, Long studyId) {
+    private int unReadNoticeCount(StudyMember studyMember, Long studyId, LocalDateTime noticeCreatedAfter) {
         if (studyMember.getRole() == StudyMemberRole.LEADER) {
-            return (int) noticeRepository.countIncompleteNoticeByStudyId(studyId);
+            return (int) noticeRepository.countIncompleteNoticeByStudyId(studyId, noticeCreatedAfter);
         }
         return (int) noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(studyId, studyMember.getId());
     }

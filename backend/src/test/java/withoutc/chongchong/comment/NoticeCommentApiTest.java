@@ -62,6 +62,7 @@ class NoticeCommentApiTest {
     private static final String PATH = "/studies/{studyId}/notices/{noticeId}/comments";
     private static final String OVER_LENGTH_CONTENT_MARKER = "x";
     private static final int OVER_MAX_CONTENT_LENGTH = 1001;
+    private static final int PAGINATED_COMMENT_COUNT = 13;
     private static final String UPDATE_COMMENT_CREATED_AT_SQL = "UPDATE comments SET created_at = ? WHERE id = ?";
 
     @Autowired
@@ -140,13 +141,18 @@ class NoticeCommentApiTest {
         long id = create(author, " \t첫  줄\n둘째 줄 \n");
 
         list(reader).body("comments", hasSize(1))
+                .body("totalCount", equalTo(1))
                 .body("comments[0].id", equalTo((int) id))
                 .body("comments[0].content", equalTo("첫  줄\n둘째 줄"))
                 .body("comments[0].author.name", equalTo("바니"))
+                .body("comments[0].author.role", equalTo(StudyMemberRole.MEMBER.name()))
                 .body("comments[0].author.isDeparted", equalTo(false))
                 .body("comments[0].isEdited", equalTo(false))
+                .body("comments[0].isMine", equalTo(false))
                 .body("comments[0].canEdit", equalTo(false))
                 .body("comments[0].canDelete", equalTo(false));
+        list(author).body("comments[0].isMine", equalTo(true))
+                .body("comments[0].canEdit", equalTo(true));
         assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(leader.getId())).hasSize(1);
         assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(secondLeader.getId())).hasSize(1);
         assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(author.getId())).isEmpty();
@@ -206,6 +212,15 @@ class NoticeCommentApiTest {
     void excludeActorAndPreviousParticipants() {
         create(author, "이전 참여");
         create(leader, "리더 댓글");
+        list(leader).body("comments[0].author.role", equalTo(StudyMemberRole.MEMBER.name()))
+                .body("comments[0].isMine", equalTo(false))
+                .body("comments[0].canEdit", equalTo(false))
+                .body("comments[0].canDelete", equalTo(true))
+                .body("comments[1].author.role", equalTo(StudyMemberRole.LEADER.name()))
+                .body("comments[1].isMine", equalTo(true))
+                .body("comments[1].canEdit", equalTo(true));
+        list(reader).body("comments[1].author.role", equalTo(StudyMemberRole.LEADER.name()))
+                .body("comments[1].isMine", equalTo(false));
         assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(leader.getId())).hasSize(1);
         assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(secondLeader.getId())).hasSize(2);
         assertThat(notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(author.getId())).isEmpty();
@@ -215,7 +230,7 @@ class NoticeCommentApiTest {
     @DisplayName("ID 커서로 이어 조회하고 기준 댓글이 삭제되어도 다음 목록을 반환한다")
     void paginateAfterDeletedCursorAndFocus() {
         List<Comment> comments = new ArrayList<>();
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < PAGINATED_COMMENT_COUNT; i++) {
             comments.add(commentRepository.save(Comment.create(ResourceType.NOTICE, notice.getId(),
                     authorMember, "댓글 " + i)));
         }
@@ -223,16 +238,19 @@ class NoticeCommentApiTest {
         jdbc.update("UPDATE comments SET created_at = ? WHERE resource_type = 'NOTICE' AND resource_id = ?",
                 sameTime, notice.getId());
         long cursor = list(author).body("comments", hasSize(10)).body("hasNext", equalTo(true))
+                .body("totalCount", equalTo(PAGINATED_COMMENT_COUNT))
                 .extract().jsonPath().getLong("nextCursor");
         long anchor = comments.get(9).getId();
         assertThat(cursor).isEqualTo(anchor);
 
         request(reader).queryParam("cursor", cursor).get(PATH, study.getId(), notice.getId())
                 .then().statusCode(200).body("comments", hasSize(3))
+                .body("totalCount", equalTo(PAGINATED_COMMENT_COUNT))
                 .body("comments[0].id", equalTo(comments.get(10).getId().intValue()))
                 .body("hasNext", equalTo(false)).body("nextCursor", nullValue());
         request(reader).queryParam("focusCommentId", comments.get(5).getId()).queryParam("size", 2)
                 .get(PATH, study.getId(), notice.getId()).then().statusCode(200)
+                .body("totalCount", equalTo(PAGINATED_COMMENT_COUNT))
                 .body("comments[0].id", equalTo(comments.get(5).getId().intValue()))
                 .body("comments[1].id", equalTo(comments.get(6).getId().intValue()))
                 .body("nextCursor", equalTo(comments.get(6).getId().intValue())).body("hasNext", equalTo(true));
@@ -241,15 +259,19 @@ class NoticeCommentApiTest {
                 .body("code", equalTo("COMMENT_INVALID_PAGE_REQUEST"));
         Notice another = noticeRepository.saveAndFlush(Notice.create(study, "다른 공지", "내용"));
         request(reader).queryParam("cursor", cursor).get(PATH, study.getId(), another.getId())
-                .then().statusCode(200).body("comments", hasSize(0)).body("hasNext", equalTo(false));
+                .then().statusCode(200).body("comments", hasSize(0)).body("hasNext", equalTo(false))
+                .body("totalCount", equalTo(0));
+        commentRepository.saveAndFlush(Comment.create(ResourceType.NOTICE, another.getId(), authorMember, "다른 공지 댓글"));
         request(reader).queryParam("focusCommentId", comments.getFirst().getId())
                 .get(PATH, study.getId(), another.getId()).then().statusCode(404);
         request(reader).queryParam("cursor", Long.MAX_VALUE).get(PATH, study.getId(), notice.getId())
-                .then().statusCode(200).body("comments", hasSize(0)).body("nextCursor", nullValue());
+                .then().statusCode(200).body("comments", hasSize(0)).body("nextCursor", nullValue())
+                .body("totalCount", equalTo(PAGINATED_COMMENT_COUNT));
 
         request(author).delete(PATH + "/{id}", study.getId(), notice.getId(), anchor).then().statusCode(204);
         request(reader).queryParam("cursor", cursor).get(PATH, study.getId(), notice.getId())
                 .then().statusCode(200).body("comments", hasSize(3))
+                .body("totalCount", equalTo(PAGINATED_COMMENT_COUNT - 1))
                 .body("comments[0].id", equalTo(comments.get(10).getId().intValue()))
                 .body("hasNext", equalTo(false)).body("nextCursor", nullValue());
         request(reader).queryParam("focusCommentId", anchor).get(PATH, study.getId(), notice.getId())
@@ -322,13 +344,28 @@ class NoticeCommentApiTest {
         assertThat(notificationRepository.count()).isZero();
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("비회원의 댓글 등록은 원문 존재 여부와 관계없이 같은 접근 거부 응답을 반환한다")
+    void rejectNonMemberRegardlessOfNoticeExistence(boolean deleteNotice) {
+        User outsider = userRepository.saveAndFlush(User.create("외부인", null));
+        if (deleteNotice) {
+            noticeRepository.delete(notice);
+        }
+
+        request(outsider).body(Map.of("content", "외부 댓글")).post(PATH, study.getId(), notice.getId())
+                .then().statusCode(403).body("code", equalTo("STUDY_ACCESS_DENIED"));
+
+        assertThat(commentRepository.count()).isZero();
+        assertThat(notificationRepository.count()).isZero();
+        assertThat(deliveryRepository.count()).isZero();
+    }
+
     @Test
     @DisplayName("비회원·다른 스터디의 원문·다른 원문의 댓글을 사용한 접근을 거부한다")
     void rejectUnauthorizedAndMixedScope() {
         User outsider = userRepository.save(User.create("외부인", null));
         request(outsider).get(PATH, study.getId(), notice.getId()).then().statusCode(403);
-        request(outsider).body(Map.of("content", "외부 댓글")).post(PATH, study.getId(), notice.getId())
-                .then().statusCode(403);
         long id = create(author, "내 댓글");
         Notice another = noticeRepository.saveAndFlush(Notice.create(study, "다른 원문", "내용"));
         request(author).body(Map.of("content", "잘못된 경로"))

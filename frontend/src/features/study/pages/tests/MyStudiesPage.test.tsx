@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { createWrapper, setup, login } from '../../../../test/render';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../../../mocks/msw-node';
@@ -26,6 +26,22 @@ describe('스터디 목록 페이지 테스트', () => {
 
   afterEach(() => {
     logout();
+  });
+
+  describe('Floating UI', () => {
+    test('Floating을 열면 스터디 만들기와 참여하기, 닫기 메뉴가 보인다', async () => {
+      const { user } = setup(<MyStudiesPage />, { wrapper: createWrapper() });
+      const floating = await screen.findByRole('button', { name: '스터디 메뉴 열기' });
+
+      await user.click(floating);
+
+      const menu = within(screen.getByRole('dialog', { name: '스터디 메뉴' }));
+      await waitFor(() => expect(menu.getByRole('link', { name: /스터디 만들기/ })).toBeVisible());
+      await waitFor(() =>
+        expect(menu.getByRole('link', { name: /스터디 참여하기/ })).toBeVisible(),
+      );
+      await waitFor(() => expect(menu.getByRole('button', { name: '닫기' })).toBeVisible());
+    });
   });
 
   describe('참여 중인 스터디가 있는 경우', () => {

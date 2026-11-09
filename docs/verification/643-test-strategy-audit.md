@@ -118,3 +118,18 @@ Spring을 사용하는 서비스 테스트 9개 클래스를 확인했다. 잠�
 서비스 단위 테스트에 남긴 책임은 정책 거부 시 조회·저장·URL 발급 차단, 여러 ID의 일괄 조회, 이미지 생략 시 검증 생략, 잠금·삭제 순서, 알림 발생 조건이다. `getMyStudiesTest`의 역할별 집계는 현재 HTTP 테스트가 동일 수치까지 검증하지 않아 유지했다. 즉, 성공 테스트라는 이유만으로 일괄 삭제하지 않았다.
 
 관련 테스트 295개 통과 후 `./gradlew test bootJar --build-cache --profile -Pci`로 전체 **1,627개 통과**, 실패·오류·건너뜀 0개를 확인했다. API 커버리지 검사·JAR 빌드·`git diff --check`도 통과했다. 직전 1,650개에서 23개, 최초 1,693개 대비 누적 66개 감소했다. 로그: `/tmp/chongchong-643-service-dedup-focused.log`, `/tmp/chongchong-643-service-dedup-full.log`. 애플리케이션 코드는 변경하지 않았으며, 전체 실행 시간 개선이나 외부 운영 환경 검증 결과를 주장하지 않는다.
+
+## 2026-11-09 최신 dev 통합
+
+통합 기준은 `origin/dev`의 `70a09284`다. #655의 리더 공지 7일 정책, #658의 댓글 응답 메타데이터·등록 전 멤버십 확인, #652 캘린더 및 #653 과제 대상 선택 웹 연동을 대조했다.
+
+- `StudyServiceTest`의 충돌은 기존에 제거한 상세 응답 복사 테스트를 다시 추가하지 않는 방향으로 해결했다. 새 Clock 주입과 리더 공지 집계의 7일 기준 인자는 유지한다. `LeaderNoticeExpiryApiTest`가 경계 전·정확히 경계·경계 후, 읽음 여부, 수정·재알림 후 기간 유지와 멤버/전체 조회 보존을 실제 HTTP로 검증한다.
+- `scope.md`는 최신 기준으로 통합하고 리더 7일 정책과 이미 연결된 웹 기능을 함께 반영했다.
+- 신규 댓글 테스트의 전체 개수·본인 여부·작성자 역할 검증은 API별 연결 계약을 맡으므로 유지한다. 서비스의 잠금 전 거부·잠금 후 멤버십 재확인도 단순 HTTP 권한 검사와 다른 책임이므로 유지한다.
+- `NoticeCommentApiTest.rejectUnauthorizedAndMixedScope`의 비회원 POST 1회는 새 `rejectNonMemberRegardlessOfNoticeExistence(false)`와 동일해 제거했다. 새 테스트가 오류 코드와 댓글·알림·발송 내역 미저장까지 확인한다. 비회원 GET과 다른 스터디·원문의 접근 거부는 유지한다.
+- PRD/API 설명에 댓글 `totalCount`, `isMine`, `author.role`과 웹 캘린더·제출 대상 선택 연결을 반영했다. 삭제된 `AssignmentForm.tsx` 근거를 `AssignmentFormFunnel.tsx`로 갱신했다. 마감 후 closeAt 제약, 웹 제출 방법 필수, assigned=false 수정 제한 미연동은 남겨 두었다.
+- 프론트 파일은 직접 수정하지 않았다. `git diff origin/dev -- frontend`가 비어 있는 것으로 최신 dev와 동일함을 확인했다. 기존 원본 작업 디렉터리의 사용자 변경도 건드리지 않았다.
+
+`./gradlew test bootJar --build-cache --profile -Pci`로 전체 **1,638개 통과**, 실패·오류·건너뜀 0개를 확인했다. 별도 OpenAPI 커버리지 검사 1개와 JAR 빌드도 통과했다. 최초 실행은 Docker가 꺼져 PostgreSQL 테스트가 건너뛰어지고 성공 호출 기록이 부족해 커버리지 검사가 실패했다. Docker 실행 후 전체를 재실행한 최종 결과다. 로그: `/tmp/chongchong-643-dev-sync-full-docker.log`.
+
+API 문서 테스트 13개, lint·bundle·build와 63개 API 메타데이터 검증이 통과했다. 기존 lint 경고 3개(license, CSRF·VAPID의 4xx 응답)와 Redoc nullable/oneOf 경고 2개는 남아 있다. 로그: `/tmp/chongchong-643-dev-sync-docs.log`. `git diff --check` 및 프론트가 origin/dev와 동일함을 확인했다. 실제 브라우저·배포 환경은 검증하지 않았다.

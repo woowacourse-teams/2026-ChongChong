@@ -2,7 +2,7 @@ import { CSSProperties } from 'react';
 import { tokens } from '../../styles/global';
 import { Heading, Paragraph } from './Typography';
 
-interface TopHeaderProps {
+interface TopHeaderProps extends React.ComponentPropsWithoutRef<'header'> {
   left?: React.ReactNode;
   middle?: React.ReactNode;
   right?: React.ReactNode;
@@ -59,9 +59,9 @@ const subtitleStyle = {
   margin: 0,
 } satisfies CSSProperties;
 
-export default function TopHeader({ left, middle, right }: TopHeaderProps) {
+export default function TopHeader({ left, middle, right, ...props }: TopHeaderProps) {
   return (
-    <header css={topHeaderStyle}>
+    <header css={topHeaderStyle} {...props}>
       <div css={leftStyle}>{left}</div>
       <div css={middleStyle}>{middle}</div>
       <div css={rightStyle}>{right}</div>

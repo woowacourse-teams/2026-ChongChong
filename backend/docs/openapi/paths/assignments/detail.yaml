@@ -5,8 +5,8 @@ get:
   tags: [Assignment]
   operationId: getAssignmentDetail
   x-frontend:
-    status: needs-update
-    description: "submissionVisibility 연동은 완료됐다. 기능 추가: submitterIds를 검증하고 제출 대상 수정 폼의 초기 선택값으로 사용해야 한다."
+    status: integrated
+    description: "웹 응답 스키마가 submissionVisibility와 submitterIds를 검증하고 수정 폼의 초기 공개 범위·제출 대상으로 사용한다."
     sources:
       - frontend/src/features/assignment/responseSchemas.ts
       - frontend/src/features/assignment/components/MemberAssignmentDetailContent.tsx
@@ -35,9 +35,9 @@ patch:
   operationId: updateAssignment
   x-frontend:
     status: needs-update
-    description: "공개 범위 초기값과 수정 저장은 연결되어 있다. 기능 추가: submitterIds로 최종 제출 대상 전체 목록을 보내 추가·제외하고 최소 한 명을 유지해야 한다. 리마인드 예약 추가·변경·취소와 이미지 첨부는 연결되어 있으며 제출 방법의 선택 입력은 남아 있다. 웹 폼은 수정 시 기존 closeAt도 전송하므로 마감이 지난 과제는 마감 시각을 미래로 변경하지 않으면 서버의 @Future 검증으로 예약·첨부 수정도 거부된다."
+    description: "공개 범위 초기값과 수정 저장은 연결되어 있다. 웹 수정 폼은 submitterIds를 초기 선택으로 사용하고 최종 대상 목록을 보내며 최소 한 명 선택을 요구한다. 리마인드 예약 추가·변경·취소와 이미지 첨부는 연결되어 있으며 제출 방법의 선택 입력은 남아 있다. 웹 폼은 수정 시 기존 closeAt도 전송하므로 마감이 지난 과제는 마감 시각을 미래로 변경하지 않으면 서버의 @Future 검증으로 예약·첨부 수정도 거부된다."
     sources:
-      - frontend/src/features/assignment/components/AssignmentForm.tsx
+      - frontend/src/features/assignment/components/AssignmentFormFunnel.tsx
       - frontend/src/features/assignment/pages/EditAssignmentPage.tsx
   x-backend:
     status: done

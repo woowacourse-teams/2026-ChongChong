@@ -136,10 +136,15 @@ class AssignmentCommentApiTest {
         String path = path(onSubmission);
         long id = create(author, path, "  댓글 내용  ");
         request(reader).get(path).then().statusCode(200)
+                .body("totalCount", equalTo(1))
                 .body("comments[0].content", equalTo("댓글 내용"))
+                .body("comments[0].author.role", equalTo(StudyMemberRole.MEMBER.name()))
+                .body("comments[0].isMine", equalTo(false))
                 .body("comments[0].canEdit", equalTo(false)).body("comments[0].canDelete", equalTo(false));
         request(author).queryParam("focusCommentId", id).get(path).then().statusCode(200)
-                .body("comments[0].id", equalTo((int) id)).body("comments[0].canEdit", equalTo(true));
+                .body("totalCount", equalTo(1))
+                .body("comments[0].id", equalTo((int) id))
+                .body("comments[0].isMine", equalTo(true)).body("comments[0].canEdit", equalTo(true));
         List<Long> recipientIds = List.of(leader.getId(), secondLeader.getId());
         ResourceType resourceType = ResourceType.ASSIGNMENT;
         Long resourceId = assignment.getId();
@@ -177,9 +182,15 @@ class AssignmentCommentApiTest {
     @DisplayName("과제 댓글의 리더 작성자는 자기 알림을 받지 않고 제출자 본인 댓글은 알림을 만들지 않는다")
     void excludeAuthorFromRecipients() {
         create(leader, path(false), "리더 댓글");
+        request(leader).get(path(false)).then().statusCode(200)
+                .body("comments[0].author.role", equalTo(StudyMemberRole.LEADER.name()))
+                .body("comments[0].isMine", equalTo(true));
         assertThat(notifications.findAll()).extracting(n -> n.getRecipient().getId())
                 .containsExactly(secondLeader.getId());
         create(owner, path(true), "내 제출물 댓글");
+        request(leader).get(path(true)).then().statusCode(200)
+                .body("comments[0].author.role", equalTo(StudyMemberRole.MEMBER.name()))
+                .body("comments[0].isMine", equalTo(false));
         assertThat(notifications.count()).isEqualTo(1);
     }
 
@@ -191,8 +202,8 @@ class AssignmentCommentApiTest {
         jdbc.update(VISIBILITY_SQL, SubmissionVisibility.LEADER_ONLY.name(), assignment.getId());
         request(reader).get(path).then().statusCode(403);
         request(reader).body(Map.of("content", "거부")).post(path).then().statusCode(403);
-        request(owner).get(path).then().statusCode(200);
-        request(leader).get(path).then().statusCode(200);
+        request(owner).get(path).then().statusCode(200).body("totalCount", equalTo(1));
+        request(leader).get(path).then().statusCode(200).body("totalCount", equalTo(1));
         request(author).body(Map.of("content", "비공개 전환 후 수정")).patch(path + "/" + id)
                 .then().statusCode(204);
         request(author).delete(path + "/" + id).then().statusCode(204);
@@ -205,7 +216,8 @@ class AssignmentCommentApiTest {
     void rejectUnsubmittedTarget() {
         jdbc.update(UNSUBMIT_SQL, submission.getId());
         String path = path(true);
-        request(owner).get(path).then().statusCode(200).body("comments", hasSize(0));
+        request(owner).get(path).then().statusCode(200).body("comments", hasSize(0))
+                .body("totalCount", equalTo(0));
         request(leader).get(path).then().statusCode(200);
         request(reader).get(path).then().statusCode(403);
         for (User user : List.of(owner, leader)) {
@@ -234,17 +246,21 @@ class AssignmentCommentApiTest {
     @DisplayName("ID 커서·삭제 후 이어 조회·focus 범위와 혼합 경로 거부를 과제·제출물에 공통 적용한다")
     void paginationAndScope(boolean onSubmission) {
         String path = path(onSubmission);
+        create(author, path(!onSubmission), "다른 종류의 댓글");
         long first = create(author, path, "첫 댓글");
         long second = create(author, path, "두 번째");
         long third = create(author, path, "세 번째");
         request(reader).queryParam("size", 1).get(path).then().statusCode(200)
+                .body("totalCount", equalTo(3))
                 .body("nextCursor", equalTo((int) first)).body("hasNext", equalTo(true));
         request(author).delete(path + "/" + first).then().statusCode(204);
         request(reader).queryParam("cursor", first).get(path).then().statusCode(200)
+                .body("totalCount", equalTo(2))
                 .body("comments", hasSize(2)).body("comments[0].id", equalTo((int) second))
                 .body("comments[1].id", equalTo((int) third)).body("nextCursor", nullValue());
         request(reader).queryParam("focusCommentId", second).queryParam("size", 1).get(path)
-                .then().statusCode(200).body("comments[0].id", equalTo((int) second));
+                .then().statusCode(200).body("totalCount", equalTo(2))
+                .body("comments[0].id", equalTo((int) second));
         request(reader).queryParam("cursor", second).queryParam("focusCommentId", third).get(path)
                 .then().statusCode(400).body("code", equalTo("COMMENT_INVALID_PAGE_REQUEST"));
         request(reader).queryParam("focusCommentId", first).get(path).then().statusCode(404);
@@ -273,7 +289,10 @@ class AssignmentCommentApiTest {
         long id = create(author, path, "탈퇴 후 보존");
         memberService.leave(author.getId(), study.getId());
         request(leader).get(path).then().statusCode(200)
-                .body("comments[0].author.isDeparted", equalTo(true));
+                .body("totalCount", equalTo(1))
+                .body("comments[0].author.isDeparted", equalTo(true))
+                .body("comments[0].author.role", nullValue())
+                .body("comments[0].isMine", equalTo(false));
         request(author).get(path).then().statusCode(403);
         request(author).body(Map.of("content", "탈퇴 후 수정")).patch(path + "/" + id).then().statusCode(204);
         request(author).delete(path + "/" + id).then().statusCode(204);
@@ -290,6 +309,11 @@ class AssignmentCommentApiTest {
         assertThat(comment.getAuthorUser()).isNull();
         assertThat(comment.getAuthorMember()).isNull();
         assertThat(notifications.count()).isEqualTo(notificationCount);
+        request(leader).get(path(onSubmission)).then().statusCode(200)
+                .body("totalCount", equalTo(1))
+                .body("comments[0].author.role", nullValue())
+                .body("comments[0].isMine", equalTo(false))
+                .body("comments[0].canEdit", equalTo(false));
     }
 
     @ParameterizedTest

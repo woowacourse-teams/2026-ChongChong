@@ -36,24 +36,27 @@ get:
               value:
                 comments:
                   - id: 41
-                    author: { name: 바니, profileImageUrl: null, isDeparted: false }
+                    author: { name: 바니, profileImageUrl: null, role: LEADER, isDeparted: false }
                     createdAt: '2026-10-30T10:00:00.000000'
                     content: "일정 확인했습니다.\n다음 시간에 뵐게요."
                     isEdited: false
+                    isMine: true
                     canEdit: true
                     canDelete: true
                   - id: 42
-                    author: { name: 탈퇴한 스터디원, profileImageUrl: null, isDeparted: true }
+                    author: { name: 탈퇴한 스터디원, profileImageUrl: null, role: null, isDeparted: true }
                     createdAt: '2026-10-30T10:01:00.000000'
                     content: 감사합니다.
                     isEdited: true
+                    isMine: false
                     canEdit: false
                     canDelete: true
+                totalCount: 2
                 nextCursor: null
                 hasNext: false
             empty:
               summary: 댓글 없음
-              value: { comments: [], nextCursor: null, hasNext: false }
+              value: { comments: [], totalCount: 0, nextCursor: null, hasNext: false }
     '400': { $ref: '../../components/responses.yaml#/CommentListBadRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }

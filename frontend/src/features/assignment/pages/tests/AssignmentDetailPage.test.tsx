@@ -174,6 +174,7 @@ describe('과제 디테일 페이지 테스트', () => {
               submissionMethod: '텍스트로 제출하세요',
               closeAt: '2999-12-31T23:59:59',
               submissionTarget: 'MEMBERS_ONLY',
+              submitterIds: [2],
               submissionVisibility: 'LEADER_ONLY',
             }),
           ),
