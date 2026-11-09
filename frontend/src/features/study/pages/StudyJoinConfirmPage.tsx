@@ -93,12 +93,12 @@ const CardStyle = {
 } satisfies CSSObject;
 
 function Content({ token }: { token: string }) {
-  const { data, isFetching } = useSuspenseQuery(studyQueries.joinInfo(token));
+  const { data } = useSuspenseQuery(studyQueries.joinInfo(token));
   const { mutate: joinStudy, isPending } = useStudyJoin();
   const posthog = usePostHog();
 
   function handleJoin() {
-    if (isPending || isFetching) return;
+    if (isPending) return;
     posthog?.capture('study_join', { location: 'study_join_page' });
     joinStudy({ token });
   }
@@ -139,7 +139,7 @@ function Content({ token }: { token: string }) {
         size="large"
         css={{ marginTop: tokens.spacing[6] }}
         onClick={handleJoin}
-        disabled={isPending || isFetching}
+        disabled={isPending}
       >
         스터디 참여하기
       </Button>
