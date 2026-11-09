@@ -1,3 +1,4 @@
+import { commentTable } from './src/features/notice/mocks/commentDb';
 import '@testing-library/jest-dom';
 import { server } from './src/mocks/msw-node';
 import { userTable } from './src/features/user/mocks/db';
@@ -35,6 +36,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   server.resetHandlers();
+  commentTable.clear();
   userTable.clear();
   studyTable.clear();
   memberTable.clear();

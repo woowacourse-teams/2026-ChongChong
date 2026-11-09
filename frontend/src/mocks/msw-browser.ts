@@ -1,3 +1,4 @@
+import { createSeedComments } from '../features/notice/mocks/comments';
 import { setupWorker } from 'msw/browser';
 import { handlers } from './handlers';
 import { createSeedStudies } from '../features/study/mocks/db';
@@ -16,6 +17,7 @@ createSeedMembers();
 await createSeedAssignments();
 await createSeedSubmissions();
 createSeedNotices();
+await createSeedComments();
 createSeedNotification();
 createSeedCalendar();
 

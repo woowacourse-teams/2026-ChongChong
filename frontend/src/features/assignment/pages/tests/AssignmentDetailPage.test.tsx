@@ -757,4 +757,56 @@ describe('과제 디테일 페이지 테스트', () => {
       );
     });
   });
+
+  describe('과제 제출물 댓글 테스트', () => {
+    test.each(['바니', '이든'])(
+      '%s의 과제 댓글과 내 제출 댓글을 각각 표시하고 등록한다',
+      async (name) => {
+        login(name);
+        await markSubmissionAsSubmitted(name === '바니' ? 1 : 2, {
+          content: '완료한 제출',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
+        await user.click(await screen.findByRole('button', { name: '과제 댓글 0 열기' }));
+        await user.type(screen.getByRole('textbox', { name: '댓글 내용' }), '과제에 대한 질문');
+        await user.click(screen.getByRole('button', { name: '등록' }));
+        expect(await screen.findByText('과제에 대한 질문')).toBeVisible();
+        await user.click(screen.getByRole('button', { name: '댓글 닫기' }));
+        expect(await screen.findByRole('button', { name: '과제 댓글 1 열기' })).toBeVisible();
+        await user.click(await screen.findByRole('button', { name: '제출물 댓글 0 열기' }));
+        expect(
+          within(screen.getByRole('dialog', { name: '제출물 댓글 0' })).queryByText(
+            '과제에 대한 질문',
+          ),
+        ).not.toBeInTheDocument();
+        await user.type(screen.getByRole('textbox', { name: '댓글 내용' }), '제출물 피드백');
+        await user.click(screen.getByRole('button', { name: '등록' }));
+        expect(await screen.findByText('제출물 피드백')).toBeVisible();
+        await user.click(screen.getByRole('button', { name: '댓글 닫기' }));
+        expect(await screen.findByRole('button', { name: '제출물 댓글 1 열기' })).toBeVisible();
+        expect(screen.getByRole('button', { name: '과제 댓글 1 열기' })).toBeVisible();
+      },
+    );
+
+    test('미제출 상태에는 안내를 표시하고 제출물 댓글을 요청하지 않는다', async () => {
+      login(memberUserName);
+      const submissionComments = jest.fn(() =>
+        HttpResponse.json({ comments: [], totalCount: 0, hasNext: false, nextCursor: null }),
+      );
+      server.use(
+        http.get(
+          `${API_URL}/studies/1/assignments/1/submissions/:submissionId/comments`,
+          submissionComments,
+        ),
+      );
+      const { user } = setupAssignmentDetailPage();
+      await openDetailTab(user);
+      expect(await screen.findByText('제출 후 댓글을 남길 수 있어요')).toBeVisible();
+      expect(await screen.findByRole('button', { name: '과제 댓글 0 열기' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /제출물 댓글/ })).not.toBeInTheDocument();
+      expect(submissionComments).not.toHaveBeenCalled();
+    });
+  });
 });
