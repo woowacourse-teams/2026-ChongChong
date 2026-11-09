@@ -1,7 +1,8 @@
 import StudyProfileField from './StudyProfileField';
 import useStudyProfileImage from '../hooks/useStudyProfileImage';
 import type { StudyFormValues } from '../types';
-import { CSSProperties } from 'react';
+import { CSSProperties, useState } from 'react';
+import SwitchField from '../../../shared/widgets/SwitchField';
 import Button from '../../../shared/ui/Button';
 import InputField from '../../../shared/widgets/InputField';
 import TextAreaField from '../../../shared/widgets/TextAreaField';
@@ -19,9 +20,10 @@ const StudyFormStyle = {
 
 interface Props {
   submitLabel: string;
+  showVisibility?: boolean;
   onSubmit: (body: StudyFormValues) => void;
   isSubmitting: boolean;
-  fieldErrors: Partial<Record<'name' | 'description' | 'imageFileId', string>>;
+  fieldErrors: Partial<Record<'name' | 'description' | 'imageFileId' | 'isPublic', string>>;
   initialValues?: { name: string; description: string | null; imageUrl?: string | null };
 }
 
@@ -32,6 +34,7 @@ const defaultInitialValues: NonNullable<Props['initialValues']> = {
 
 export default function StudyForm({
   submitLabel,
+  showVisibility = false,
   onSubmit,
   isSubmitting,
   fieldErrors,
@@ -50,6 +53,7 @@ export default function StudyForm({
     },
   );
   const posthog = usePostHog();
+  const [isPublic, setIsPublic] = useState(false);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,6 +63,7 @@ export default function StudyForm({
     });
     const body: StudyFormValues = { name: nameValue, description: descriptionValue };
     if (profile.imageFileId !== undefined) body.imageFileId = profile.imageFileId;
+    if (showVisibility) body.isPublic = isPublic;
     onSubmit(body);
   }
 
@@ -94,6 +99,17 @@ export default function StudyForm({
         testId="study-description-field"
         placeholder="매주 수요일 저녁 7시, 영어로 대화해요"
       />
+      {showVisibility && (
+        <SwitchField
+          id="study-is-public"
+          label="스터디 공개 여부"
+          helpText="공개하면 누구나 스터디를 찾고 참여할 수 있어요."
+          errorText={fieldErrors.isPublic}
+          checked={isPublic}
+          onChange={(event) => setIsPublic(event.target.checked)}
+          disabled={isSubmitting}
+        />
+      )}
       <Button
         variant="brandSolid"
         size="large"

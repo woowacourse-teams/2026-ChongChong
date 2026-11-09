@@ -1,7 +1,7 @@
 import api from '../../client';
 import { ValidationError, ApiError } from '../../shared/api/error';
 import { STUDY_URLS } from './urls';
-import type { Role, StudyFormValues } from './types';
+import type { Role, StudyFormValues, StudyJoinTarget } from './types';
 import {
   isCreateStudyResponse,
   isInviteLinkResponse,
@@ -9,6 +9,7 @@ import {
   isStudyInfoResponse,
   isStudyResponse,
   isStudyJoinInfoResponse,
+  isPublicStudyListResponse,
 } from './responseSchemas';
 import { handleError } from '../../shared/api/error';
 
@@ -24,6 +25,27 @@ export async function fetchStudies() {
     return data;
   } catch (error) {
     throw new Error('스터디 목록을 불러오는데 실패했습니다.', { cause: error });
+  }
+}
+
+export async function fetchPublicStudies(cursor?: number, keyword = '') {
+  try {
+    const response = await api.get(STUDY_URLS.publicList, {
+      searchParams: {
+        ...(cursor === undefined ? {} : { cursor }),
+        ...(keyword ? { keyword } : {}),
+      },
+    });
+    const data: unknown = await response.json();
+    if (!isPublicStudyListResponse(data)) {
+      throw new Error('공개 스터디 목록 응답 형식이 올바르지 않습니다.');
+    }
+    return data;
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('공개 스터디 목록을 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -47,7 +69,9 @@ export async function fetchStudyDetail<R extends Role>(studyId: number, role: R)
 
 export async function createStudy(body: StudyFormValues): Promise<{ studyId: number }> {
   try {
-    const response = await api.post(STUDY_URLS.create, { json: { ...body, isPublic: false } });
+    const response = await api.post(STUDY_URLS.create, {
+      json: { ...body, isPublic: body.isPublic ?? false },
+    });
     const data: unknown = await response.json<{ studyId: number }>();
 
     if (!isCreateStudyResponse(data)) {
@@ -110,10 +134,10 @@ export async function fetchStudyInviteLink(studyId: number) {
   }
 }
 
-export async function fetchStudyJoinInfo(token: string, signal?: AbortSignal) {
+export async function fetchStudyJoinInfo(target: string | StudyJoinTarget, signal?: AbortSignal) {
   try {
     const response = await api.get(STUDY_URLS.joinInfo, {
-      searchParams: { token },
+      searchParams: typeof target === 'string' ? { token: target } : target,
       signal,
     });
     const data: unknown = await response.json();
@@ -131,7 +155,7 @@ export async function fetchStudyJoinInfo(token: string, signal?: AbortSignal) {
   }
 }
 
-export async function joinStudy(body: { token: string }) {
+export async function joinStudy(body: StudyJoinTarget) {
   try {
     const response = await api.post(STUDY_URLS.join, { json: body });
     const data: unknown = await response.json();

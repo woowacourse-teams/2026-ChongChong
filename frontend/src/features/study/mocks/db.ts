@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 const studySchema = z.object({
   id: z.number(),
+  isPublic: z.boolean().optional(),
   name: z.string(),
   description: z.string().nullable(),
   inviteLink: z.string(),
@@ -25,6 +26,7 @@ export const mockStudies = [
   },
   {
     id: 2,
+    isPublic: true,
     name: '농구 스터디',
     description: '2m 이든과 함께하는 농구 스터디',
     inviteLink: 'basketball',
@@ -37,6 +39,7 @@ export const mockStudies = [
   },
   {
     id: 4,
+    isPublic: true,
     name: '피즈 강의 스터디',
     description: '브론즈지만 피즈 장인 피즈의 피즈 잘하는 법 스터디',
     inviteLink: 'bronze',

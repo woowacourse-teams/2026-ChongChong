@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
+import Tabs from '../../../shared/widgets/Tabs';
+import PublicStudies from '../components/PublicStudies';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -34,15 +36,40 @@ export default function MyStudiesPage() {
       />
 
       <Main css={{ paddingBottom: `calc(${tokens.spacing[20]} + ${tokens.layout.safeBottom})` }}>
-        <ErrorBoundary
-          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
-        >
-          <Suspense fallback={<Loading />}>
-            <MyStudies />
-          </Suspense>
-        </ErrorBoundary>
+        <Tabs
+          tabs={[
+            {
+              key: 'my',
+              label: '내 스터디',
+              panel: (
+                <StudyPanel key="my">
+                  <MyStudies />
+                </StudyPanel>
+              ),
+            },
+            {
+              key: 'public',
+              label: '스터디 둘러보기',
+              panel: (
+                <StudyPanel key="public">
+                  <PublicStudies />
+                </StudyPanel>
+              ),
+            },
+          ]}
+        />
       </Main>
       <StudyFloatingActions />
     </Page>
+  );
+}
+
+function StudyPanel({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary
+      fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+    >
+      <Suspense fallback={<Loading />}>{children}</Suspense>
+    </ErrorBoundary>
   );
 }

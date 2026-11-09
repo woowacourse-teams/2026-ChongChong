@@ -19,15 +19,22 @@ import NotificationLink from '../../notification/components/NotificationLink';
 import MyIcon from '../../../shared/assets/my.webp';
 import StudyAvatar from '../components/StudyAvatar';
 import studyQueries from '../queries';
+import type { StudyJoinTarget } from '../types';
 import useStudyJoin from '../hooks/useStudyJoin';
 
 export default function StudyJoinConfirmPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const studyId = Number(searchParams.get('studyId'));
+  const target: StudyJoinTarget | null = token?.trim()
+    ? { token }
+    : Number.isSafeInteger(studyId) && studyId > 0
+      ? { studyId }
+      : null;
 
   return (
-    <RequireInviteToken token={token}>
-      {(token) => (
+    <RequireJoinTarget target={target}>
+      {(target) => (
         <Page>
           <TopHeader
             left={
@@ -50,35 +57,29 @@ export default function StudyJoinConfirmPage() {
               fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
             >
               <Suspense fallback={<Loading />}>
-                <Content token={token} />
+                <Content target={target} />
               </Suspense>
             </ErrorBoundary>
           </Main>
         </Page>
       )}
-    </RequireInviteToken>
+    </RequireJoinTarget>
   );
 }
 
-function RequireInviteToken({
-  token,
+function RequireJoinTarget({
+  target,
   children,
 }: {
-  token: string | null;
-  children: (token: string) => ReactNode;
+  target: StudyJoinTarget | null;
+  children: (target: StudyJoinTarget) => ReactNode;
 }) {
   const { move } = usePageNavigation();
-
+  const hasTarget = target !== null;
   useEffect(() => {
-    // 토큰이 없는 상태로 오면 토큰 참여 페이지로 되돌아 갑니다.
-    if (!token?.trim()) {
-      move(URL_POLICY.afterMissingInviteToken());
-    }
-  }, [token, move]);
-
-  if (!token?.trim()) return null;
-
-  return children(token);
+    if (!hasTarget) move(URL_POLICY.afterMissingInviteToken());
+  }, [hasTarget, move]);
+  return target ? children(target) : null;
 }
 
 const CardStyle = {
@@ -92,15 +93,15 @@ const CardStyle = {
   textAlign: 'center',
 } satisfies CSSObject;
 
-function Content({ token }: { token: string }) {
-  const { data } = useSuspenseQuery(studyQueries.joinInfo(token));
+function Content({ target }: { target: StudyJoinTarget }) {
+  const { data } = useSuspenseQuery(studyQueries.joinInfo(target.token ?? target));
   const { mutate: joinStudy, isPending } = useStudyJoin();
   const posthog = usePostHog();
 
   function handleJoin() {
     if (isPending) return;
     posthog?.capture('study_join', { location: 'study_join_page' });
-    joinStudy({ token });
+    joinStudy(target);
   }
 
   return (

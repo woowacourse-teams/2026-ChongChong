@@ -104,6 +104,8 @@ export const URL_POLICY = {
   toMyPage: () => push(path.myPage),
   toCreateStudy: () => push(path.createStudy),
   toJoinStudy: () => push(path.joinStudy),
+  toPublicStudyJoinInfo: (studyId: Id) =>
+    push(`${path.confirmStudyJoin}?studyId=${encodeURIComponent(studyId)}`),
   toStudyJoinInfo: (token: string) =>
     push(`${path.confirmStudyJoin}?${new URLSearchParams({ token })}`),
   toStudy: (studyId: Id) => push(path.study(studyId)),

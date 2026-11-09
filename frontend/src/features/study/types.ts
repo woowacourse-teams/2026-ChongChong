@@ -56,7 +56,17 @@ export interface StudyJoinInfo {
   memberCount: number;
 }
 
+export type StudyJoinTarget =
+  { token: string; studyId?: never } | { studyId: number; token?: never };
+
+export interface PublicStudyListResponse {
+  studies: StudyJoinInfo[];
+  hasNext: boolean;
+  nextCursor: number | null;
+}
+
 export interface StudyFormValues {
+  isPublic?: boolean;
   name: string;
   description: string;
   imageFileId?: number | null;
