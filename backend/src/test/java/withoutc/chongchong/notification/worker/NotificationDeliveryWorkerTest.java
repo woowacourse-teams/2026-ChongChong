@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -33,6 +34,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.TaskRejectedException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import withoutc.chongchong.notification.config.NotificationDeliveryExecutorConfig;
 import withoutc.chongchong.notification.config.NotificationDeliveryProperties;
@@ -354,15 +356,18 @@ class NotificationDeliveryWorkerTest {
                 new NotificationDeliveryProcessingMetrics(meterRegistry),
                 CLOCK
         );
-        when(deliveryClaimService.claimBatch(2)).thenReturn(List.of(delivery, createSecondDelivery()));
+        when(deliveryClaimService.claimBatch(2)).thenReturn(List.of(delivery, createSecondDelivery()), List.of());
 
+        // 슬롯을 모두 채우면 같은 호출 안에서 슬롯이 빌 때까지 기다리므로 별도 스레드에서 실행한다.
+        Thread processThread = new Thread(concurrentWorker::process);
         try {
-            concurrentWorker.process();
+            processThread.start();
 
             assertThat(sendsStarted.await(2, TimeUnit.SECONDS)).isTrue();
             assertThat(peakActiveSends.get()).isEqualTo(2);
         } finally {
             releaseSends.countDown();
+            processThread.join(2_000);
             executor.getThreadPoolExecutor().shutdown();
             assertThat(executor.getThreadPoolExecutor().awaitTermination(2, TimeUnit.SECONDS)).isTrue();
         }
@@ -388,7 +393,7 @@ class NotificationDeliveryWorkerTest {
                         id, "제목", "본문", "/studies/1/notices/3", LocalDateTime.now(CLOCK).minusSeconds(10)
                 ))
                 .toList();
-        when(deliveryClaimService.claimBatch(20)).thenReturn(deliveries);
+        when(deliveryClaimService.claimBatch(20)).thenReturn(deliveries, List.of());
 
         worker.process();
         runSubmittedTasks();
@@ -403,6 +408,61 @@ class NotificationDeliveryWorkerTest {
                 .tag("outcome", "success").timer().count()).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("빈 슬롯을 모두 채우면 1초를 쉬지 않고 슬롯이 빌 때마다 같은 실행 안에서 이어서 claim한다")
+    void keepsClaimingWhileBacklogRemains() {
+        when(notificationDeliveryExecutor.getMaxPoolSize()).thenReturn(2);
+        when(notificationDeliveryExecutor.getActiveCount()).thenReturn(0, 2, 0);
+        when(deliveryClaimService.claimBatch(2)).thenReturn(List.of(delivery, createSecondDelivery()), List.of(delivery));
+
+        long started = System.nanoTime();
+        worker.process();
+
+        verify(deliveryRecoveryService).recover(2);
+        verify(deliveryClaimService, times(2)).claimBatch(2);
+        assertThat(submittedTasks).hasSize(3);
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(1));
+    }
+
+    @Test
+    @DisplayName("요청한 수보다 적게 가져오면 큐가 빈 것으로 보고 바로 끝낸다")
+    void stopsWhenQueueIsDrained() {
+        configureMockExecutor(2, 0);
+        when(deliveryClaimService.claimBatch(2)).thenReturn(List.of(delivery));
+
+        worker.process();
+
+        verify(deliveryClaimService).claimBatch(2);
+        verifyNoMoreInteractions(deliveryClaimService);
+    }
+
+    @Test
+    @DisplayName("종료가 시작되면 이어서 claim하던 반복을 멈추고, 이후 실행에서도 claim하지 않는다")
+    void stopsClaimingWhenContextCloses() {
+        when(notificationDeliveryExecutor.getMaxPoolSize()).thenReturn(1);
+        when(notificationDeliveryExecutor.getActiveCount()).thenReturn(0);
+        when(deliveryClaimService.claimBatch(1)).thenAnswer(invocation -> {
+            worker.onApplicationEvent(null);
+            return List.of(delivery);
+        });
+
+        worker.process();
+        worker.process();
+
+        verify(deliveryClaimService).claimBatch(1);
+        assertThat(submittedTasks).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("발송 worker는 공용 스케줄러가 아닌 전용 스케줄러에서 돌고, 리마인더 worker는 공용 스케줄러를 쓴다")
+    void runsOnDedicatedScheduler() throws NoSuchMethodException {
+        Scheduled delivery = NotificationDeliveryWorker.class.getMethod("process").getAnnotation(Scheduled.class);
+        Scheduled reminder = NotificationReminderWorker.class.getMethod("process").getAnnotation(Scheduled.class);
+
+        assertThat(delivery.scheduler()).isEqualTo("notificationDeliveryScheduler");
+        assertThat(reminder.scheduler()).isEmpty();
+    }
+
     private void processSingleDelivery() {
         scheduleSingleDelivery();
         runSubmittedTasks();
@@ -410,7 +470,7 @@ class NotificationDeliveryWorkerTest {
 
     private void scheduleSingleDelivery() {
         configureMockExecutor(DEFAULT_AVAILABLE_SLOTS, 0);
-        when(deliveryClaimService.claimBatch(DEFAULT_AVAILABLE_SLOTS)).thenReturn(List.of(delivery));
+        when(deliveryClaimService.claimBatch(DEFAULT_AVAILABLE_SLOTS)).thenReturn(List.of(delivery), List.of());
         worker.process();
     }
 
