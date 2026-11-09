@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import type { Comment } from '../../modules/comments/responseSchemas';
 import Avatar from '../../ui/Avatar';
 import { tokens, typography } from '../../../styles/global';
@@ -35,16 +35,16 @@ function commentDate(createdAt: string) {
 
 interface Props {
   comment: Comment;
-  onEdit?: (comment: Comment) => void;
-  onDelete?: (comment: Comment) => void;
-  id?: string;
+  onEdit?: (comment: Comment, button: HTMLButtonElement | null) => void;
+  onDelete?: (comment: Comment, button: HTMLButtonElement | null) => void;
+  ref?: Ref<HTMLLIElement>;
 }
 
-export default function CommentItem({ comment, onEdit, onDelete, id }: Props) {
+export default function CommentItem({ comment, onEdit, onDelete, ref }: Props) {
   const suffix = comment.isMine ? ' · 나' : comment.author.role === 'LEADER' ? ' · 리더' : '';
 
   return (
-    <li css={rowStyle} id={id}>
+    <li css={rowStyle} ref={ref}>
       <Avatar
         size={32}
         src={comment.author.isDeparted ? null : comment.author.profileImageUrl}
@@ -67,8 +67,8 @@ export default function CommentItem({ comment, onEdit, onDelete, id }: Props) {
           {onEdit && onDelete && (comment.canEdit || comment.canDelete) && (
             <CommentMenu
               comment={comment}
-              onEdit={() => onEdit(comment)}
-              onDelete={() => onDelete(comment)}
+              onEdit={(button) => onEdit(comment, button)}
+              onDelete={(button) => onDelete(comment, button)}
             />
           )}
         </div>

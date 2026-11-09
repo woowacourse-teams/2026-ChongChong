@@ -1,3 +1,4 @@
+import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
 import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
@@ -71,6 +72,7 @@ const linkStyle = {
 } satisfies CSSObject;
 
 export default function AssignmentSubmissionDetailContent() {
+  const focusCommentId = useFocusCommentId();
   const posthog = usePostHog();
   const { studyId, assignmentId, submissionId } = useIntegerParams([
     'studyId',
@@ -135,6 +137,7 @@ export default function AssignmentSubmissionDetailContent() {
           key={`submission-${studyId}-${assignmentId}-${submissionId}`}
           target={{ type: 'submission', studyId, assignmentId, submissionId }}
           title="제출물 댓글"
+          focusCommentId={focusCommentId}
         />
       )}
     </article>

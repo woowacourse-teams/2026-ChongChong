@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useSuspenseInfiniteQuery, useIsMutating } from '@tanstack/react-query';
 import commentQueries from '../../modules/comments/queries';
 import type { CommentTarget } from '../../modules/comments/types';
@@ -20,6 +20,7 @@ type PanelState = { kind: 'closed' | 'list' } | { kind: 'edit' | 'delete'; comme
 interface Props {
   target: CommentTarget;
   title: string;
+  focusCommentId?: number | null;
 }
 
 const entryStyle = {
@@ -68,41 +69,67 @@ const scrollStyle = {
   ...typography.body,
 } satisfies CSSObject;
 
+const listContentStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: tokens.spacing[4],
+  minHeight: 0,
+  '&[hidden]': { display: 'none' },
+} satisfies CSSObject;
+
 const emptyStyle = {
   paddingBlock: tokens.spacing[4],
   color: tokens.text.secondary,
   ...typography.body,
 } satisfies CSSProperties;
 
-export default function CommentsPanel(props: Props) {
+export default function CommentsPanel({ focusCommentId = null, ...props }: Props) {
   return (
-    <CommentsQueryBoundary>
-      <PanelContent {...props} />
+    <CommentsQueryBoundary focusCommentId={focusCommentId}>
+      <PanelContent key={focusCommentId ?? 'all'} {...props} focusCommentId={focusCommentId} />
     </CommentsQueryBoundary>
   );
 }
 
-function PanelContent({ target, title }: Props) {
-  const [view, setView] = useState<PanelState>({ kind: 'closed' });
+function PanelContent({ target, title, focusCommentId = null }: Props) {
+  const [view, setView] = useState<PanelState>({
+    kind: focusCommentId ? 'list' : 'closed',
+  });
   const [createFormKey, setCreateFormKey] = useState(0);
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const focusedCommentRef = useRef<HTMLLIElement>(null);
+  const returnFocusRef = useRef<HTMLButtonElement | null>(null);
   const writesPending = useIsMutating({ mutationKey: commentQueries.target(target) }) > 0;
   const { data, hasNextPage, fetchNextPage } = useSuspenseInfiniteQuery(
-    commentQueries.list(target),
+    commentQueries.list(target, focusCommentId),
   );
   const label = `${title} ${data.totalCount}`;
 
+  useEffect(() => {
+    if (!focusCommentId) return;
+    const row = focusedCommentRef.current;
+    const container = scrollRef.current;
+    if (row && container) {
+      container.scrollTop +=
+        row.getBoundingClientRect().top - container.getBoundingClientRect().top;
+    }
+  }, [focusCommentId]);
+
+  function editComment(comment: Comment, button: HTMLButtonElement | null) {
+    returnFocusRef.current = button;
+    setView({ kind: 'edit', comment });
+  }
+
+  function deleteComment(comment: Comment, button: HTMLButtonElement | null) {
+    returnFocusRef.current = button;
+    setView({ kind: 'delete', comment });
+  }
+
   function returnToList() {
-    const commentId = 'comment' in view ? view.comment.id : null;
     setView({ kind: 'list' });
-    requestAnimationFrame(() => {
-      const button =
-        commentId === null
-          ? null
-          : document.getElementById(`${titleId}-comment-${commentId}`)?.querySelector('button');
-      (button ?? closeRef.current)?.focus();
-    });
+    requestAnimationFrame(() => (returnFocusRef.current ?? closeRef.current)?.focus());
   }
   function finishDeletion() {
     setView({ kind: 'list' });
@@ -152,17 +179,8 @@ function PanelContent({ target, title }: Props) {
             <img src={closeIcon} alt="" />
           </button>
         </header>
-        <div
-          hidden={view.kind === 'edit' || view.kind === 'delete'}
-          inert={view.kind === 'edit' || view.kind === 'delete'}
-          css={{
-            display: view.kind === 'closed' || view.kind === 'list' ? 'flex' : 'none',
-            flexDirection: 'column',
-            gap: tokens.spacing[4],
-            minHeight: 0,
-          }}
-        >
-          <div css={scrollStyle}>
+        <div hidden={view.kind === 'edit' || view.kind === 'delete'} css={listContentStyle}>
+          <div ref={scrollRef} css={scrollStyle}>
             {data.comments.length === 0 ? (
               <p css={emptyStyle}>아직 댓글이 없어요.</p>
             ) : (
@@ -171,9 +189,9 @@ function PanelContent({ target, title }: Props) {
                   <CommentItem
                     key={comment.id}
                     comment={comment}
-                    id={`${titleId}-comment-${comment.id}`}
-                    onEdit={(comment) => setView({ kind: 'edit', comment })}
-                    onDelete={(comment) => setView({ kind: 'delete', comment })}
+                    ref={comment.id === focusCommentId ? focusedCommentRef : undefined}
+                    onEdit={editComment}
+                    onDelete={deleteComment}
                   />
                 ))}
               </List>

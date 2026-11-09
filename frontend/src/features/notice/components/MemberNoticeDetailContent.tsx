@@ -1,3 +1,4 @@
+import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
 import {
   useMutation,
   useQueryClient,
@@ -62,6 +63,7 @@ function calculateReadProgress(content: HTMLElement, contentBody: HTMLElement | 
 }
 
 export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) {
+  const focusCommentId = useFocusCommentId();
   const queryClient = useQueryClient();
   const toast = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -165,6 +167,7 @@ export default function MemberNoticeDetailContent({ studyId, noticeId }: Props) 
           key={`${studyId}-${noticeId}`}
           target={{ type: 'notice', studyId, noticeId }}
           title="공지 댓글"
+          focusCommentId={focusCommentId}
         />
       </div>
       {readStatus.readStatus !== 'NOT_ASSIGNED' && (

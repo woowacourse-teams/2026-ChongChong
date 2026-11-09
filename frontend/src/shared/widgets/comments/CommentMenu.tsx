@@ -5,8 +5,8 @@ import moreIcon from '../../assets/comment-more.svg';
 
 interface Props {
   comment: Comment;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (button: HTMLButtonElement | null) => void;
+  onDelete: (button: HTMLButtonElement | null) => void;
 }
 
 const triggerStyle = {
@@ -125,7 +125,7 @@ export default function CommentMenu({ comment, onEdit, onDelete }: Props) {
               css={itemStyle}
               onClick={() => {
                 setOpen(false);
-                onEdit();
+                onEdit(triggerRef.current);
               }}
             >
               수정
@@ -142,7 +142,7 @@ export default function CommentMenu({ comment, onEdit, onDelete }: Props) {
               ]}
               onClick={() => {
                 setOpen(false);
-                onDelete();
+                onDelete(triggerRef.current);
               }}
             >
               삭제

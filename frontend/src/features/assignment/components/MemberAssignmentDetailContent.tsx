@@ -1,3 +1,4 @@
+import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
 import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function MemberAssignmentDetailContent({ studyId, userName }: Props) {
+  const focusCommentId = useFocusCommentId();
   const { assignmentId } = useIntegerParams(['assignmentId']);
   const [{ data: assignment }, { data: submission }] = useSuspenseQueries({
     queries: [
@@ -60,6 +62,7 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
               key={`assignment-${studyId}-${assignmentId}`}
               target={{ type: 'assignment', studyId, assignmentId }}
               title="과제 댓글"
+              focusCommentId={focusCommentId}
             />
             <MyAssignmentSubmission
               studyId={studyId}

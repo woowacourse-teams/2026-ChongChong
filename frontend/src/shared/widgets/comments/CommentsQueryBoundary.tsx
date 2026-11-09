@@ -1,3 +1,4 @@
+import { ApiError } from '../../api/error';
 import { Suspense, type CSSProperties, type PropsWithChildren } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
@@ -14,15 +15,19 @@ const statusStyle = {
   color: tokens.text.secondary,
 } satisfies CSSProperties;
 
-export default function CommentsQueryBoundary({ children }: PropsWithChildren) {
+export default function CommentsQueryBoundary({
+  children,
+  focusCommentId,
+}: PropsWithChildren<{ focusCommentId?: number | null }>) {
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
         <ErrorBoundary
           onReset={reset}
-          fallbackRender={({ resetErrorBoundary }) => (
+          resetKeys={[focusCommentId]}
+          fallbackRender={({ error, resetErrorBoundary }) => (
             <div role="alert" css={statusStyle}>
-              <span>댓글을 불러오지 못했어요.</span>
+              <span>{error instanceof ApiError ? error.message : '댓글을 불러오지 못했어요.'}</span>
               <button type="button" onClick={resetErrorBoundary}>
                 다시 시도
               </button>
