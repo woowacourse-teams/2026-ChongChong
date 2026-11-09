@@ -99,9 +99,21 @@ export const handlers = bases.flatMap((base) => [
     const { user, member, scope } = ctx;
     const search = new URL(request.url).searchParams;
     const cursor = Number(search.get('cursor') ?? 0);
+    const focus = search.get('focusCommentId');
     const size = Number(search.get('size') ?? 10);
     const all = commentTable.findMany((q) => q.where(scope)).sort((a, b) => a.id - b.id);
-    const remaining = all.filter((comment) => comment.id > cursor);
+    if (focus && search.has('cursor'))
+      return HttpResponse.json(
+        {
+          code: 'COMMENT_INVALID_PAGE_REQUEST',
+          message: 'cursor와 focusCommentId는 함께 지정할 수 없습니다.',
+        },
+        { status: 400 },
+      );
+    if (focus && !all.some((comment) => comment.id === Number(focus))) return notFound();
+    const remaining = all.filter((comment) =>
+      focus ? comment.id >= Number(focus) : comment.id > cursor,
+    );
     const comments = remaining.slice(0, size).map((comment) =>
       commentSchema.parse({
         ...comment,

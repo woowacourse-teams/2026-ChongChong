@@ -69,6 +69,18 @@ export const mockNotifications = [
     isRead: true,
     createdAt: '2026-09-21T12:00:00',
   },
+  {
+    id: 5,
+    userId: 1,
+    title: '[농구 스터디] 새 댓글',
+    body: '바니 스터디원이 댓글을 달았어요',
+    type: 'NEW',
+    resourceType: 'NOTICE',
+    resourceId: 12,
+    deepLink: '/studies/2/notices/12?focusCommentId=2',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+  },
 ] satisfies NotificationSchemaType[];
 
 export function createSeedNotification() {

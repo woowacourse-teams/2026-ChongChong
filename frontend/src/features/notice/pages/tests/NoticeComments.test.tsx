@@ -1,7 +1,7 @@
 import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useLocation } from 'react-router';
 import { API_URL } from '../../../../../config';
 import { server } from '../../../../mocks/msw-node';
 import { createWrapper } from '../../../../test/render';
@@ -66,13 +66,25 @@ beforeEach(async () => {
 
 afterEach(() => clearAccessToken());
 
-function renderPage() {
+function CurrentLocation() {
+  const location = useLocation();
+  return (
+    <span hidden data-testid="current-location">
+      {location.pathname + location.search + location.hash}
+    </span>
+  );
+}
+
+function renderPage(entry = '/studies/1/notices/1') {
   render(
-    <Routes>
-      <Route path="/studies/:studyId/notices/:noticeId" element={<NoticeDetailPage />} />
-    </Routes>,
+    <>
+      <Routes>
+        <Route path="/studies/:studyId/notices/:noticeId" element={<NoticeDetailPage />} />
+      </Routes>
+      <CurrentLocation />
+    </>,
     {
-      wrapper: createWrapper({ initialEntries: ['/studies/1/notices/1'] }),
+      wrapper: createWrapper({ initialEntries: [entry] }),
     },
   );
 }
@@ -131,17 +143,17 @@ describe('공지 댓글 테스트', () => {
   });
 
   test('첫 조회 실패 후 다시 시도하면 목록을 표시한다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const user = userEvent.setup();
     await addComments(1);
     server.use(
       http.get(commentsUrl, () => new HttpResponse(null, { status: 500 }), { once: true }),
     );
     renderPage();
-    await user.click(await screen.findByRole('button', { name: '공지 댓글 열기' }));
-    const dialog = screen.getByRole('dialog');
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('댓글을 불러오지 못했어요.');
-    await user.click(within(dialog).getByRole('button', { name: '다시 시도' }));
-    expect(await within(dialog).findByText('댓글 본문 1')).toBeVisible();
+    expect(await screen.findByRole('alert')).toHaveTextContent('댓글을 불러오지 못했어요.');
+    await user.click(screen.getByRole('button', { name: '다시 시도' }));
+    await user.click(await screen.findByRole('button', { name: '공지 댓글 1 열기' }));
+    expect(within(screen.getByRole('dialog')).getByText('댓글 본문 1')).toBeVisible();
   });
 
   test('멤버 상세에서도 댓글을 열 수 있고 미배정 읽음 상태는 유지한다', async () => {
@@ -210,7 +222,9 @@ describe('공지 댓글 테스트', () => {
     const field = within(dialog).getByRole('textbox', { name: '댓글 내용' });
     await user.type(field, '  새 댓글\n두 번째 줄  ');
     await user.click(within(dialog).getByRole('button', { name: '등록' }));
-    await waitFor(() => expect(field).toHaveValue(''));
+    await waitFor(() =>
+      expect(within(dialog).getByRole('textbox', { name: '댓글 내용' })).toHaveValue(''),
+    );
     expect(await within(dialog).findByRole('heading', { name: '공지 댓글 13' })).toBeVisible();
     expect(within(dialog).getAllByRole('listitem')).toHaveLength(10);
     await user.click(within(dialog).getByRole('button', { name: '댓글 10개 더 보기' }));
@@ -243,7 +257,7 @@ describe('공지 댓글 테스트', () => {
     expect(requests).toBe(1);
     await user.click(within(dialog).getByRole('button', { name: '등록' }));
     expect(await within(dialog).findByText('보존할 입력')).toBeVisible();
-    expect(field).toHaveValue('');
+    expect(within(dialog).getByRole('textbox', { name: '댓글 내용' })).toHaveValue('');
   });
 
   test('같은 원문에서 닫았다 열면 작성 초안을 유지한다', async () => {
@@ -282,12 +296,14 @@ describe('공지 댓글 테스트', () => {
     renderPage();
     const dialog = await openComments(user, 1);
     await user.type(within(dialog).getByRole('textbox', { name: '댓글 내용' }), '작성 초안');
+    const menuButton = within(dialog).getByRole('button', { name: '바니 댓글 더보기' });
     const form = await editFirstComment(user);
     await user.clear(within(form).getByRole('textbox', { name: '댓글 수정 내용' }));
     await user.type(within(form).getByRole('textbox', { name: '댓글 수정 내용' }), '버릴 수정');
     await user.click(within(form).getByRole('button', { name: '취소' }));
     expect(screen.getByRole('textbox', { name: '댓글 내용' })).toHaveValue('작성 초안');
     expect(commentTable.findFirst((q) => q.where({ id: 1 }))?.content).toBe('댓글 본문 1');
+    await waitFor(() => expect(menuButton).toHaveFocus());
   });
 
   test('수정 실패 시 편집 내용을 보존하고 원문을 바꾸지 않는다', async () => {
@@ -342,7 +358,7 @@ describe('공지 댓글 테스트', () => {
     expect(screen.queryByRole('button', { name: '준 댓글 더보기' })).not.toBeInTheDocument();
   });
 
-  test('등록 성공 뒤 조회만 실패하면 초안을 비우고 조회 재시도로 새 댓글을 표시한다', async () => {
+  test('등록 성공 뒤 조회만 실패하면 초안을 비우고 재진입 시 새 댓글을 표시한다', async () => {
     const user = userEvent.setup();
     server.use(
       http.post(commentsUrl, async () => {
@@ -367,12 +383,85 @@ describe('공지 댓글 테스트', () => {
     const field = within(dialog).getByRole('textbox', { name: '댓글 내용' });
     await user.type(field, '등록 성공 조회 실패');
     await user.click(within(dialog).getByRole('button', { name: '등록' }));
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('댓글을 불러오지 못했어요.');
-    expect(field).toHaveValue('');
+    await waitFor(() =>
+      expect(within(dialog).getByRole('textbox', { name: '댓글 내용' })).toHaveValue(''),
+    );
     expect(
       within(dialog).queryByText('댓글을 등록하지 못했어요. 다시 시도해주세요.'),
     ).not.toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: '다시 시도' }));
-    expect(await within(dialog).findByText('등록 성공 조회 실패')).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: '댓글 닫기' }));
+    await user.click(screen.getByRole('tab', { name: '현황' }));
+    await user.click(screen.getByRole('tab', { name: '내용' }));
+    await user.click(await screen.findByRole('button', { name: '공지 댓글 1 열기' }));
+    expect(
+      await within(screen.getByRole('dialog')).findByText('등록 성공 조회 실패'),
+    ).toBeVisible();
+  });
+});
+
+describe('알림 댓글 포커스', () => {
+  test('처음부터 대상 댓글까지 조회하고 이후 더 보기는 이어서 조회한다', async () => {
+    const user = userEvent.setup();
+    await addComments(25);
+    const requests: URLSearchParams[] = [];
+    const listener = ({ request }: { request: Request }) => {
+      if (request.url.startsWith(commentsUrl)) requests.push(new URL(request.url).searchParams);
+    };
+    server.events.on('request:start', listener);
+    try {
+      renderPage('/studies/1/notices/1?focusCommentId=12');
+      const panel = within(await screen.findByRole('dialog', { name: '공지 댓글 25' }));
+      expect(panel.getByText('댓글 본문 12')).toBeVisible();
+      expect(panel.getByText('댓글 본문 1')).toBeInTheDocument();
+      await user.click(panel.getByRole('button', { name: '댓글 10개 더 보기' }));
+      expect(await panel.findByText('댓글 본문 25')).toBeVisible();
+      expect(requests[0].has('focusCommentId')).toBe(false);
+      expect(requests[0].has('cursor')).toBe(false);
+      expect(requests[1].get('cursor')).toBe('10');
+      expect(requests[2].get('cursor')).toBe('20');
+      expect(requests[1].has('focusCommentId')).toBe(false);
+    } finally {
+      server.events.removeListener('request:start', listener);
+    }
+  });
+
+  test.each(['0', '-1', 'abc', '1.5', '9007199254740992'])(
+    '잘못된 focus %s는 일반 조회로 처리한다',
+    async (focus) => {
+      await addComments(1);
+      renderPage(`/studies/1/notices/1?focusCommentId=${focus}`);
+      expect(await screen.findByRole('button', { name: '공지 댓글 1 열기' })).toBeVisible();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe('알림 댓글 복구', () => {
+  test('삭제된 대상 댓글이면 목록을 표시하고 위치 이동만 생략한다', async () => {
+    await addComments(1);
+    renderPage('/studies/1/notices/1?focusCommentId=999&keep=value#content');
+    const panel = within(await screen.findByRole('dialog', { name: '공지 댓글 1' }));
+    expect(panel.getByText('댓글 본문 1')).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '전체 댓글 보기' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('current-location')).toHaveTextContent(
+      '/studies/1/notices/1?focusCommentId=999&keep=value#content',
+    );
+  });
+
+  test('조회 권한이 없으면 댓글을 숨기고 권한 안내를 표시한다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    server.use(
+      http.get(commentsUrl, () =>
+        HttpResponse.json(
+          { code: 'STUDY_ACCESS_DENIED', message: '접근 권한이 없습니다.' },
+          { status: 403 },
+        ),
+      ),
+    );
+    renderPage('/studies/1/notices/1?focusCommentId=1');
+    expect(await screen.findByRole('alert')).toHaveTextContent('접근 권한이 없습니다.');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '전체 댓글 보기' })).not.toBeInTheDocument();
   });
 });
