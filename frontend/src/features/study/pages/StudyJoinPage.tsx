@@ -48,7 +48,7 @@ export default function StudyJoinPage() {
     <Page>
       <TopHeader
         left={<PrevButton />}
-        middle={<TopHeader.Title>스터디 참여하기</TopHeader.Title>}
+        middle={<TopHeader.Title>초대링크로 스터디 참여하기</TopHeader.Title>}
       />
       <Main>
         <form css={{ margin: `${tokens.spacing[5]} 0` }} onSubmit={handleJoinStudy}>
