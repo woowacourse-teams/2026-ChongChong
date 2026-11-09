@@ -29,3 +29,10 @@ export type CommentListResponse = z.infer<typeof commentListSchema>;
 export function isCommentListResponse(data: unknown): data is CommentListResponse {
   return commentListSchema.safeParse(data).success;
 }
+
+const commentCreateSchema = z.object({ commentId: z.number().int().positive() });
+export type CommentCreateResponse = z.infer<typeof commentCreateSchema>;
+
+export function isCommentCreateResponse(data: unknown): data is CommentCreateResponse {
+  return commentCreateSchema.safeParse(data).success;
+}
