@@ -9,6 +9,7 @@ import TextAreaField from '../../../shared/widgets/TextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import { STUDY_NAME, STUDY_DESCRIPTION } from '../constants';
 import { tokens } from '../../../styles/global';
+import useBooleanState from '../../../shared/hooks/useBooleanState';
 import isBlank from '../../../shared/utils/isBlank';
 import { usePostHog } from '@posthog/react';
 
@@ -53,7 +54,7 @@ export default function StudyForm({
     },
   );
   const posthog = usePostHog();
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, { toggle }] = useBooleanState(false);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,7 +107,7 @@ export default function StudyForm({
           helpText="공개하면 누구나 스터디를 찾고 참여할 수 있어요."
           errorText={fieldErrors.isPublic}
           checked={isPublic}
-          onChange={(event) => setIsPublic(event.target.checked)}
+          onChange={toggle}
           disabled={isSubmitting}
         />
       )}
