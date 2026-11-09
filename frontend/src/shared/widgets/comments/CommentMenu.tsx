@@ -19,9 +19,7 @@ const triggerStyle = {
 } satisfies CSSProperties;
 const menuStyle = {
   position: 'absolute',
-  top: '100%',
-  right: 0,
-  marginTop: '4px',
+  margin: 0,
   zIndex: 1,
   width: '100px',
   border: tokens.border.default,
@@ -46,15 +44,30 @@ export default function CommentMenu({ comment, onEdit, onDelete }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    menuRef.current?.querySelector('button')?.focus();
+    const menu = menuRef.current;
+    const trigger = triggerRef.current;
+    const parent = menu?.offsetParent;
+    if (menu && trigger && parent instanceof HTMLElement) {
+      const triggerRect = trigger.getBoundingClientRect();
+      const parentRect = parent.getBoundingClientRect();
+      // 스크롤 목록 밖의 BottomSheet를 기준으로 배치해 입력창 위에도 표시한다.
+      menu.style.top = `${triggerRect.bottom - parentRect.top + 4}px`;
+      menu.style.right = `${parentRect.right - triggerRect.right}px`;
+    }
+    menu?.querySelector('button')?.focus({ preventScroll: true });
     const closeOutside = (event: PointerEvent) => {
       if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
         setOpen(false);
       }
     };
+    const closeOnMove = () => setOpen(false);
     document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('scroll', closeOnMove, true);
+    window.addEventListener('resize', closeOnMove);
     return () => {
       document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('scroll', closeOnMove, true);
+      window.removeEventListener('resize', closeOnMove);
     };
   }, [open]);
 
@@ -91,7 +104,7 @@ export default function CommentMenu({ comment, onEdit, onDelete }: Props) {
   }
 
   return (
-    <div ref={containerRef} css={{ position: 'relative', flexShrink: 0 }}>
+    <div ref={containerRef} css={{ flexShrink: 0 }}>
       <button
         ref={triggerRef}
         type="button"
