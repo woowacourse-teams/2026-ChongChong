@@ -70,6 +70,7 @@ function RequireInviteToken({
   const { move } = usePageNavigation();
 
   useEffect(() => {
+    // 토큰이 없는 상태로 오면 토큰 참여 페이지로 되돌아 갑니다.
     if (!token?.trim()) {
       move(URL_POLICY.afterMissingInviteToken());
     }
