@@ -40,6 +40,7 @@ export default function ConfirmDialog({
   onClose,
   closeButton,
   confirmButton,
+  closeDisabled,
 }: ConfirmDialogProps) {
   return (
     <Dialog
@@ -47,6 +48,7 @@ export default function ConfirmDialog({
       title={title}
       description={description}
       onClose={onClose}
+      closeDisabled={closeDisabled}
       actions={
         <>
           {closeButton}

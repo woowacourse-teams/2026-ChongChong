@@ -3,6 +3,7 @@ import type { Comment } from '../../modules/comments/responseSchemas';
 import Avatar from '../../ui/Avatar';
 import { tokens, typography } from '../../../styles/global';
 import defaultProfile from '../../assets/unknown-profile.svg';
+import CommentMenu from './CommentMenu';
 
 const rowStyle = {
   display: 'flex',
@@ -32,11 +33,18 @@ function commentDate(createdAt: string) {
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function CommentItem({ comment }: { comment: Comment }) {
+interface Props {
+  comment: Comment;
+  onEdit?: (comment: Comment) => void;
+  onDelete?: (comment: Comment) => void;
+  id?: string;
+}
+
+export default function CommentItem({ comment, onEdit, onDelete, id }: Props) {
   const suffix = comment.isMine ? ' · 나' : comment.author.role === 'LEADER' ? ' · 리더' : '';
 
   return (
-    <li css={rowStyle}>
+    <li css={rowStyle} id={id}>
       <Avatar
         size={32}
         src={comment.author.isDeparted ? null : comment.author.profileImageUrl}
@@ -44,10 +52,26 @@ export default function CommentItem({ comment }: { comment: Comment }) {
         fallback={<img src={defaultProfile} alt="" width={32} height={32} />}
       />
       <div css={infoStyle}>
-        <p css={{ margin: 0 }}>
-          {comment.author.name}
-          {suffix}
-        </p>
+        <div
+          css={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: tokens.spacing[2],
+          }}
+        >
+          <p css={{ margin: 0 }}>
+            {comment.author.name}
+            {suffix}
+          </p>
+          {onEdit && onDelete && (comment.canEdit || comment.canDelete) && (
+            <CommentMenu
+              comment={comment}
+              onEdit={() => onEdit(comment)}
+              onDelete={() => onDelete(comment)}
+            />
+          )}
+        </div>
         <p css={{ margin: 0, whiteSpace: 'pre-wrap' }}>{comment.content}</p>
         <time dateTime={comment.createdAt} css={timeStyle}>
           {commentDate(comment.createdAt)}

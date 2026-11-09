@@ -1,12 +1,21 @@
-import { useId, useState, type CSSProperties } from 'react';
-import { createPortal } from 'react-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useId, useRef, useState, type CSSProperties } from 'react';
+import { useSuspenseInfiniteQuery, useIsMutating } from '@tanstack/react-query';
 import commentQueries from '../../modules/comments/queries';
 import type { CommentTarget } from '../../modules/comments/types';
 import BottomSheet from '../../ui/BottomSheet';
 import { tokens, typography } from '../../../styles/global';
 import CommentItem from './CommentItem';
 import closeIcon from '../../assets/close.svg';
+import List from '../../ui/List';
+import CommentEditor from './CommentEditor';
+import type { CSSObject } from '@emotion/react';
+import { commentScrollbarStyle } from './scrollStyle';
+import CommentDeleteDialog from './CommentDeleteDialog';
+import type { Comment } from '../../modules/comments/responseSchemas';
+import CommentsQueryBoundary from './CommentsQueryBoundary';
+import CommentsLoadMore from './CommentsLoadMore';
+
+type PanelState = { kind: 'closed' | 'list' } | { kind: 'edit' | 'delete'; comment: Comment };
 
 interface Props {
   target: CommentTarget;
@@ -48,49 +57,62 @@ const closeStyle = {
   minHeight: '32px',
   margin: '-7px',
   flexShrink: 0,
+  cursor: 'pointer',
 } satisfies CSSProperties;
 
 const scrollStyle = {
+  ...commentScrollbarStyle,
   minHeight: 0,
   overflowY: 'auto',
   overscrollBehavior: 'contain',
   ...typography.body,
-} satisfies CSSProperties;
+} satisfies CSSObject;
 
-const listStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: tokens.spacing[3],
-  padding: 0,
-  margin: 0,
-  listStyle: 'none',
-} satisfies CSSProperties;
-
-const statusStyle = {
+const emptyStyle = {
   paddingBlock: tokens.spacing[4],
   color: tokens.text.secondary,
   ...typography.body,
 } satisfies CSSProperties;
 
-const moreStyle = {
-  width: '100%',
-  minHeight: '48px',
-  color: tokens.text.secondary,
-  ...typography.body,
-} satisfies CSSProperties;
+export default function CommentsPanel(props: Props) {
+  return (
+    <CommentsQueryBoundary>
+      <PanelContent {...props} />
+    </CommentsQueryBoundary>
+  );
+}
 
-export default function CommentsPanel({ target, title }: Props) {
-  const [open, setOpen] = useState(false);
+function PanelContent({ target, title }: Props) {
+  const [view, setView] = useState<PanelState>({ kind: 'closed' });
+  const [createFormKey, setCreateFormKey] = useState(0);
   const titleId = useId();
-  const query = useInfiniteQuery(commentQueries.list(target));
-  const totalCount = query.data?.pages.at(-1)?.totalCount;
-  const comments = query.data?.pages.flatMap((page) => page.comments) ?? [];
-  const label = `${title}${totalCount === undefined ? '' : ` ${totalCount}`}`;
-  const hasAccessError =
-    query.error &&
-    'status' in query.error &&
-    (query.error.status === 401 || query.error.status === 403 || query.error.status === 404);
-  const showList = query.data !== undefined && !hasAccessError;
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const writesPending = useIsMutating({ mutationKey: commentQueries.target(target) }) > 0;
+  const { data, hasNextPage, fetchNextPage } = useSuspenseInfiniteQuery(
+    commentQueries.list(target),
+  );
+  const label = `${title} ${data.totalCount}`;
+
+  function returnToList() {
+    const commentId = 'comment' in view ? view.comment.id : null;
+    setView({ kind: 'list' });
+    requestAnimationFrame(() => {
+      const button =
+        commentId === null
+          ? null
+          : document.getElementById(`${titleId}-comment-${commentId}`)?.querySelector('button');
+      (button ?? closeRef.current)?.focus();
+    });
+  }
+  function finishDeletion() {
+    setView({ kind: 'list' });
+    requestAnimationFrame(() => closeRef.current?.focus());
+  }
+
+  function closePanel() {
+    if (writesPending) return;
+    setView({ kind: 'closed' });
+  }
 
   return (
     <>
@@ -99,87 +121,95 @@ export default function CommentsPanel({ target, title }: Props) {
         css={entryStyle}
         aria-label={`${label} 열기`}
         aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
+        aria-expanded={view.kind !== 'closed'}
+        onClick={() => setView({ kind: 'list' })}
       >
-        <span>댓글{totalCount === undefined || hasAccessError ? '' : ` ${totalCount}`}</span>
-        <span css={{ ...typography.footnote, color: tokens.text.secondary }}>댓글 남기기 ›</span>
+        <span>댓글 {data.totalCount}</span>
+        <span css={{ ...typography.footnote, color: tokens.text.secondary, cursor: 'pointer' }}>
+          댓글 남기기 ›
+        </span>
       </button>
-      {createPortal(
-        <BottomSheet
-          open={open}
-          onClose={() => setOpen(false)}
-          aria-labelledby={titleId}
-          variant="compact"
-          maxHeight="50dvh"
+
+      <BottomSheet
+        open={view.kind === 'list' || view.kind === 'edit'}
+        onClose={closePanel}
+        aria-labelledby={titleId}
+        variant="compact"
+        maxHeight="50dvh"
+      >
+        <header css={headerStyle}>
+          <h2 id={titleId} css={titleStyle}>
+            {view.kind === 'edit' ? '댓글 수정' : label}
+          </h2>
+          <button
+            type="button"
+            aria-label="댓글 닫기"
+            ref={closeRef}
+            disabled={writesPending}
+            onClick={closePanel}
+            css={closeStyle}
+          >
+            <img src={closeIcon} alt="" />
+          </button>
+        </header>
+        <div
+          hidden={view.kind === 'edit' || view.kind === 'delete'}
+          inert={view.kind === 'edit' || view.kind === 'delete'}
+          css={{
+            display: view.kind === 'closed' || view.kind === 'list' ? 'flex' : 'none',
+            flexDirection: 'column',
+            gap: tokens.spacing[4],
+            minHeight: 0,
+          }}
         >
-          <header css={headerStyle}>
-            <h2 id={titleId} css={titleStyle}>
-              {hasAccessError ? title : label}
-            </h2>
-            <button
-              type="button"
-              aria-label="댓글 닫기"
-              onClick={() => setOpen(false)}
-              css={closeStyle}
-            >
-              <img src={closeIcon} alt="" />
-            </button>
-          </header>
-          <div css={scrollStyle} aria-busy={query.isFetching}>
-            {query.isPending && (
-              <p role="status" css={statusStyle}>
-                댓글을 불러오는 중이에요.
-              </p>
+          <div css={scrollStyle}>
+            {data.comments.length === 0 ? (
+              <p css={emptyStyle}>아직 댓글이 없어요.</p>
+            ) : (
+              <List aria-label="댓글 목록">
+                {data.comments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    id={`${titleId}-comment-${comment.id}`}
+                    onEdit={(comment) => setView({ kind: 'edit', comment })}
+                    onDelete={(comment) => setView({ kind: 'delete', comment })}
+                  />
+                ))}
+              </List>
             )}
-            {query.isError && !query.isFetchNextPageError && (
-              <div role="alert" css={statusStyle}>
-                <p>{query.error.message}</p>
-                <button
-                  type="button"
-                  css={moreStyle}
-                  disabled={query.isFetching}
-                  onClick={() => void query.refetch()}
-                >
-                  다시 시도
-                </button>
-              </div>
-            )}
-            {showList && (
-              <>
-                {comments.length === 0 ? (
-                  <p css={statusStyle}>아직 댓글이 없어요.</p>
-                ) : (
-                  <ol aria-label="댓글 목록" css={listStyle}>
-                    {comments.map((comment) => (
-                      <CommentItem key={comment.id} comment={comment} />
-                    ))}
-                  </ol>
-                )}
-                {query.isFetchNextPageError && (
-                  <p role="alert" css={statusStyle}>
-                    댓글을 더 불러오지 못했어요. 다시 시도해주세요.
-                  </p>
-                )}
-                {query.hasNextPage && (
-                  <button
-                    type="button"
-                    css={moreStyle}
-                    disabled={query.isFetching}
-                    onClick={() => void query.fetchNextPage()}
-                  >
-                    {query.isFetchingNextPage
-                      ? '댓글을 불러오는 중이에요.'
-                      : query.isFetchNextPageError
-                        ? '댓글 더 보기 다시 시도'
-                        : '댓글 10개 더 보기'}
-                  </button>
-                )}
-              </>
+            {hasNextPage && (
+              <CommentsLoadMore
+                onLoad={() => fetchNextPage({ cancelRefetch: false, throwOnError: true })}
+              />
             )}
           </div>
-        </BottomSheet>,
-        document.body,
+          <CommentEditor
+            key={createFormKey}
+            mode="create"
+            target={target}
+            onCreated={() => setCreateFormKey((key) => key + 1)}
+          />
+        </div>
+        {view.kind === 'edit' && (
+          <CommentEditor
+            key={view.comment.id}
+            mode="edit"
+            target={target}
+            comment={view.comment}
+            onCancel={returnToList}
+            onSaved={returnToList}
+          />
+        )}
+      </BottomSheet>
+
+      {view.kind === 'delete' && (
+        <CommentDeleteDialog
+          target={target}
+          commentId={view.comment.id}
+          onClose={returnToList}
+          onDeleted={finishDeletion}
+        />
       )}
     </>
   );

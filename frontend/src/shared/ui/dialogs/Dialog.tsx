@@ -10,6 +10,7 @@ export interface DialogProps {
   onClose: () => void;
   actions: React.ReactNode;
   role?: 'dialog' | 'alertdialog';
+  closeDisabled?: boolean;
 }
 
 const dialogStyle = {
@@ -66,6 +67,7 @@ export default function Dialog({
   onClose,
   actions,
   role = 'dialog',
+  closeDisabled = false,
 }: DialogProps) {
   const id = useId();
   const titleId = `${id}-title`;
@@ -86,6 +88,9 @@ export default function Dialog({
       aria-describedby={description ? descriptionId : undefined}
       css={dialogStyle}
       onClose={onClose}
+      onCancel={(event) => {
+        if (closeDisabled) event.preventDefault();
+      }}
     >
       <div css={bodyStyle}>
         <Heading variant="subtitle" level={2} id={titleId} css={titleStyle}>

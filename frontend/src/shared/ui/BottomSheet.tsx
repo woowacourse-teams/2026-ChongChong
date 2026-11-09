@@ -99,9 +99,11 @@ export default function BottomSheet({
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (event.key === 'Escape') onClose();
     if (event.key === 'Tab') {
-      const buttons = sheetRef.current?.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), input:not(:disabled), [tabindex="0"]',
-      );
+      const buttons = Array.from(
+        sheetRef.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
+        ) ?? [],
+      ).filter((element) => !element.closest('[hidden], [inert]'));
       const first = buttons?.[0];
       const last = buttons?.[buttons.length - 1];
       if (
@@ -217,7 +219,7 @@ export default function BottomSheet({
             flexDirection: 'column',
             gap: tokens.spacing[4],
             maxHeight: `calc(100dvh - ${tokens.spacing[5]})`,
-            padding: `${tokens.spacing[5]} ${tokens.spacing[5]} calc(${tokens.spacing[5]} + ${tokens.layout.safeBottom})`,
+            padding: `${tokens.spacing[5]} ${tokens.spacing[5]} calc(${tokens.spacing[6]} + ${tokens.layout.safeBottom})`,
             borderRadius: '16px 16px 0 0',
             boxShadow: 'none',
           },
