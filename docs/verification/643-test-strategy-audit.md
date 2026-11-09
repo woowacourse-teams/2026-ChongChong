@@ -133,3 +133,11 @@ Spring을 사용하는 서비스 테스트 9개 클래스를 확인했다. 잠�
 `./gradlew test bootJar --build-cache --profile -Pci`로 전체 **1,638개 통과**, 실패·오류·건너뜀 0개를 확인했다. 별도 OpenAPI 커버리지 검사 1개와 JAR 빌드도 통과했다. 최초 실행은 Docker가 꺼져 PostgreSQL 테스트가 건너뛰어지고 성공 호출 기록이 부족해 커버리지 검사가 실패했다. Docker 실행 후 전체를 재실행한 최종 결과다. 로그: `/tmp/chongchong-643-dev-sync-full-docker.log`.
 
 API 문서 테스트 13개, lint·bundle·build와 63개 API 메타데이터 검증이 통과했다. 기존 lint 경고 3개(license, CSRF·VAPID의 4xx 응답)와 Redoc nullable/oneOf 경고 2개는 남아 있다. 로그: `/tmp/chongchong-643-dev-sync-docs.log`. `git diff --check` 및 프론트가 origin/dev와 동일함을 확인했다. 실제 브라우저·배포 환경은 검증하지 않았다.
+
+## 2026-11-09 API 문서 경고 정리
+
+- CSRF·VAPID 공개 조회는 인증 없이 허용되지만 잘못된 Bearer 토큰을 전달하면 보안 필터가 `AUTHENTICATION_REQUIRED` 401을 반환한다. 공통 오류 응답을 명세에 추가하고 `WebCsrfSecurityTest`의 매개변수 테스트로 두 경로의 상태·오류 코드·WWW-Authenticate 헤더를 검증했다.
+- 과제 생성의 `anyOf`는 필드 존재와 null이 아님만 검사하도록 표현했다. 배열·문자열 타입과 최소 인원·enum 제약은 공통 properties에 그대로 두었다. 따라서 두 필드를 모두 보내는 요청과 한 필드만 유효한 요청은 기존처럼 허용하고, 둘 다 생략하거나 null이면 거부한다. Redoc에서 nullable 타입과 분기의 타입을 병합할 때 발생하던 경고를 제거했다.
+- 저장소에 지정된 라이선스가 없어 임의로 라이선스를 선언하지 않았다. `redocly.yaml`에서 `info-license` 권고만 제외하고 나머지 recommended 규칙은 유지한다.
+
+관련 백엔드 테스트 86개(과제 API·공개 조회 인증·OpenAPI 필터)가 실패·오류·스킵 없이 통과했다. 문서 테스트 13개, lint·63개 API 메타데이터 검사·문서 빌드도 통과했고 기존 문서 경고 5개는 더 이상 출력되지 않는다. 전체 백엔드 재실행·브라우저 화면 확인은 이번 문서 변경에서 수행하지 않았다. 프론트와 애플리케이션 코드는 변경하지 않았다. 로그: `/tmp/643-doc-warning-tests.log`, `/tmp/643-doc-warning-node-tests.log`, `/tmp/643-doc-warning.log`.
