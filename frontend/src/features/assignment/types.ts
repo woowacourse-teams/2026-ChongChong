@@ -1,5 +1,7 @@
 import type { Attachment } from '../../shared/modules/files/types';
 
+export type AssignmentTab = 'detail' | 'status';
+
 export type SubmissionStatus =
   'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED' | 'LATE_SUBMITTED' | 'MISSING';
 
