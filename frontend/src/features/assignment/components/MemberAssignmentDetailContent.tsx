@@ -1,3 +1,4 @@
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
@@ -55,6 +56,11 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
         detail={
           <>
             <AssignmentArticle assignment={assignment} />
+            <CommentsPanel
+              key={`assignment-${studyId}-${assignmentId}`}
+              target={{ type: 'assignment', studyId, assignmentId }}
+              title="과제 댓글"
+            />
             <MyAssignmentSubmission
               studyId={studyId}
               assignmentId={assignmentId}

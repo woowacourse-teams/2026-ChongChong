@@ -1,3 +1,4 @@
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import AttachmentList from '../../../shared/widgets/AttachmentList';
@@ -177,6 +178,16 @@ export default function CompletedAssignmentSubmission({
           </InfoCard>
         )}
       </div>
+
+      <CommentsPanel
+        target={{
+          type: 'submission',
+          studyId,
+          assignmentId,
+          submissionId: submission.submissionId,
+        }}
+        title="제출물 댓글"
+      />
 
       <Button
         type="button"

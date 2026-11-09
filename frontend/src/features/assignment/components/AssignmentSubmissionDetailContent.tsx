@@ -1,3 +1,4 @@
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import AttachmentList from '../../../shared/widgets/AttachmentList';
@@ -129,6 +130,13 @@ export default function AssignmentSubmissionDetailContent() {
           </InfoCard>
         )}
       </div>
+      {submission.createdAt && (
+        <CommentsPanel
+          key={`submission-${studyId}-${assignmentId}-${submissionId}`}
+          target={{ type: 'submission', studyId, assignmentId, submissionId }}
+          title="제출물 댓글"
+        />
+      )}
     </article>
   );
 }
