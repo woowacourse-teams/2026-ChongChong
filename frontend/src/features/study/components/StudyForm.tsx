@@ -1,7 +1,7 @@
 import StudyProfileField from './StudyProfileField';
 import useStudyProfileImage from '../hooks/useStudyProfileImage';
 import type { StudyFormValues } from '../types';
-import { CSSProperties, useState } from 'react';
+import { CSSProperties } from 'react';
 import SwitchField from '../../../shared/widgets/SwitchField';
 import Button from '../../../shared/ui/Button';
 import InputField from '../../../shared/widgets/InputField';

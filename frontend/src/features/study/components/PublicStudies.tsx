@@ -20,6 +20,7 @@ import { tokens, typography } from '../../../styles/global';
 import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
 import StudyContentCard from './StudyContentCard';
 import StudyAvatar from './StudyAvatar';
+import StudySearchEmptyContent from './StudySearchEmptyContent';
 
 export default function PublicStudies() {
   const [searchValue, setSearchValue] = useState('');
@@ -90,7 +91,11 @@ function PublicStudyResults({ keyword }: { keyword: string }) {
   return (
     <>
       {studies.length === 0 ? (
-        <EmptyContent message={keyword ? '검색 결과가 없어요' : '아직 공개된 스터디가 없어요'} />
+        keyword ? (
+          <StudySearchEmptyContent />
+        ) : (
+          <EmptyContent message="아직 공개된 스터디가 없어요" />
+        )
       ) : (
         <>
           <List>

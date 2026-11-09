@@ -65,7 +65,7 @@ export default function ContentActionMenu({ studyId, id, content, onDeleteSucces
   const toast = useToast();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [confirmOpen, openDialog, closeDialog] = useBooleanState();
+  const [confirmOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const deleteMutation = content === 'notice' ? deleteNotice : deleteAssignment;
   const queries = content === 'notice' ? noticeQueries : assignmentQueries;

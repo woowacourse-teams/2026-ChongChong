@@ -66,7 +66,7 @@ export default function StudyProfileField({
   onSelect,
   onReset,
 }: Props) {
-  const [open, openBottomSheet, closeBottomSheet] = useBooleanState();
+  const [open, { setTrue: openBottomSheet, setFalse: closeBottomSheet }] = useBooleanState();
   const subTextId = useId();
   const hasSubText = Boolean(errorText || helpText);
   const input = useRef<HTMLInputElement>(null);

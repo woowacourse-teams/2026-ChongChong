@@ -103,7 +103,7 @@ function Profile({ name, icon }: ProfileProps) {
 }
 
 MemberRow.Leader = function Leader({ member, studyId, ...props }: LeaderProps) {
-  const [isOpen, openDialog, closeDialog] = useBooleanState();
+  const [isOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const { mutate: kickStudyMember } = useKickStudyMember({ onError: closeDialog });
   return (
