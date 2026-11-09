@@ -790,7 +790,7 @@ describe('과제 디테일 페이지 테스트', () => {
       },
     );
 
-    test('미제출 상태에는 안내를 표시하고 제출물 댓글을 요청하지 않는다', async () => {
+    test('미제출 상태에는 제출 폼만 표시하고 제출물 댓글을 요청하지 않는다', async () => {
       login(memberUserName);
       const submissionComments = jest.fn(() =>
         HttpResponse.json({ comments: [], totalCount: 0, hasNext: false, nextCursor: null }),
@@ -803,7 +803,7 @@ describe('과제 디테일 페이지 테스트', () => {
       );
       const { user } = setupAssignmentDetailPage();
       await openDetailTab(user);
-      expect(await screen.findByText('제출 후 댓글을 남길 수 있어요')).toBeVisible();
+      expect(await screen.findByRole('button', { name: '제출하기' })).toBeVisible();
       expect(await screen.findByRole('button', { name: '과제 댓글 0 열기' })).toBeVisible();
       expect(screen.queryByRole('button', { name: /제출물 댓글/ })).not.toBeInTheDocument();
       expect(submissionComments).not.toHaveBeenCalled();
