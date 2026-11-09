@@ -37,6 +37,7 @@ export type StudyDetail<R extends Role> = R extends 'LEADER'
   : MemberStudyDetail;
 
 export interface UserStudyInfo {
+  isPublic: boolean;
   studyName: string;
   description: string | null;
   imageUrl?: string | null;

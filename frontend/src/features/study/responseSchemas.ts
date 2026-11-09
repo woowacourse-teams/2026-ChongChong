@@ -65,6 +65,7 @@ const memberStudyDetailSchema = z.object({
 }) satisfies z.ZodType<MemberStudyDetail>;
 
 const studyInfoSchema = z.object({
+  isPublic: z.boolean(),
   studyName: z.string(),
   description: z.string().nullable(),
   imageUrl: z.string().nullable().optional(),

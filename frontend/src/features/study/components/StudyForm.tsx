@@ -21,21 +21,25 @@ const StudyFormStyle = {
 
 interface Props {
   submitLabel: string;
-  showVisibility?: boolean;
   onSubmit: (body: StudyFormValues) => void;
   isSubmitting: boolean;
   fieldErrors: Partial<Record<'name' | 'description' | 'imageFileId' | 'isPublic', string>>;
-  initialValues?: { name: string; description: string | null; imageUrl?: string | null };
+  initialValues?: {
+    name: string;
+    description: string | null;
+    imageUrl?: string | null;
+    isPublic: boolean;
+  };
 }
 
 const defaultInitialValues: NonNullable<Props['initialValues']> = {
   name: '',
   description: '',
+  isPublic: false,
 };
 
 export default function StudyForm({
   submitLabel,
-  showVisibility = false,
   onSubmit,
   isSubmitting,
   fieldErrors,
@@ -54,7 +58,7 @@ export default function StudyForm({
     },
   );
   const posthog = usePostHog();
-  const [isPublic, { toggle }] = useBooleanState(false);
+  const [isPublic, { toggle }] = useBooleanState(initialValues.isPublic);
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -62,9 +66,8 @@ export default function StudyForm({
     posthog?.capture('study_form_submitted', {
       location: 'study_create_page',
     });
-    const body: StudyFormValues = { name: nameValue, description: descriptionValue };
+    const body: StudyFormValues = { name: nameValue, description: descriptionValue, isPublic };
     if (profile.imageFileId !== undefined) body.imageFileId = profile.imageFileId;
-    if (showVisibility) body.isPublic = isPublic;
     onSubmit(body);
   }
 
@@ -100,17 +103,15 @@ export default function StudyForm({
         testId="study-description-field"
         placeholder="매주 수요일 저녁 7시, 영어로 대화해요"
       />
-      {showVisibility && (
-        <SwitchField
-          id="study-is-public"
-          label="스터디 공개 여부"
-          helpText="공개하면 누구나 스터디를 찾고 참여할 수 있어요."
-          errorText={fieldErrors.isPublic}
-          checked={isPublic}
-          onChange={toggle}
-          disabled={isSubmitting}
-        />
-      )}
+      <SwitchField
+        id="study-is-public"
+        label="스터디 공개 여부"
+        helpText="공개하면 누구나 스터디를 찾고 참여할 수 있어요."
+        errorText={fieldErrors.isPublic}
+        checked={isPublic}
+        onChange={toggle}
+        disabled={isSubmitting}
+      />
       <Button
         variant="brandSolid"
         size="large"

@@ -326,6 +326,9 @@ export const handlers = [
       data(study) {
         study.name = body.name;
         study.description = body.description;
+        if (body.isPublic !== undefined) {
+          study.isPublic = body.isPublic;
+        }
         if (body.imageFileId !== undefined) {
           study.imageFileId = body.imageFileId;
           study.imageUrl = null;
@@ -389,6 +392,7 @@ export const handlers = [
     return HttpResponse.json({
       studyName: study.name,
       role: member.role,
+      isPublic: study.isPublic ?? false,
       userName: member.name,
       description: study.description,
       imageUrl: study.imageFileId
