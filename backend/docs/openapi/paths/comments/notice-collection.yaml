@@ -5,9 +5,9 @@ get:
   tags: [Comment]
   operationId: getNoticeComments
   x-backend:
-    status: review
+    status: done
     owner: wontop02
-    description: 공지 댓글 조회·권한·커서·위치 조회를 구현했다. 관련 HTTP·PostgreSQL 검증을 통과했으며 리뷰 중이다.
+    description: 공지 댓글 조회·권한·커서·위치 조회를 구현했다. 관련 HTTP·PostgreSQL 검증을 통과했고 통합 개발 브랜치에 병합됐다.
   summary: 공지 댓글 목록 조회
   description: |
     현재 해당 스터디원은 가입 전 공지를 포함해 조회·작성할 수 있다. 공지 수신자 여부는 요구하지 않는다.
@@ -65,9 +65,9 @@ post:
   tags: [Comment]
   operationId: createNoticeComment
   x-backend:
-    status: review
+    status: done
     owner: wontop02
-    description: 공지 댓글·알림·Delivery 저장과 원문 삭제·탈퇴 경합 검증을 통과했으며 리뷰 중이다.
+    description: 공지 댓글·알림·Delivery 저장과 원문 삭제·탈퇴 경합 검증을 통과했고 통합 개발 브랜치에 병합됐다.
   summary: 공지 댓글 작성
   description: |
     현재 해당 스터디원은 가입 전 공지를 포함해 조회·작성할 수 있다. 공지 수신자 여부는 요구하지 않는다.

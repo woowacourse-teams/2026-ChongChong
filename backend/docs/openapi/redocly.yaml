@@ -1,2 +1,5 @@
 extends:
   - recommended
+rules:
+  # 저장소에 배포 라이선스가 정해져 있지 않아 임의의 라이선스를 명세하지 않는다.
+  info-license: off

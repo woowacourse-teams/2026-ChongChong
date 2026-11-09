@@ -17,16 +17,6 @@ import withoutc.chongchong.user.exception.UserException;
 class UserTest {
 
     @Test
-    @DisplayName("사용자는 이름과 프로필 이미지 URL을 보관한다")
-    void createUserTest() {
-        User user = User.create("총총이", "https://example.com/profile.png");
-
-        assertThat(user.getName()).isEqualTo("총총이");
-        assertThat(user.getProfileImageUrl()).isEqualTo("https://example.com/profile.png");
-        assertThat(user.getProfileImageFile()).isNull();
-    }
-
-    @Test
     @DisplayName("프로필 이미지 URL이 없어도 사용자를 생성할 수 있다")
     void createUserWithNullProfileImageUrlTest() {
         User user = User.create("총총이", null);

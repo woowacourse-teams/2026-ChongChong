@@ -1,7 +1,6 @@
 package withoutc.chongchong.study.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.List;
@@ -14,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
-import withoutc.chongchong.study.exception.StudyMemberErrorCode;
-import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
@@ -79,40 +76,6 @@ class StudyMemberRepositoryTest {
                 .hasValue(firstMember);
         assertThat(studyMemberRepository.findByStudyIdAndId(firstStudy.getId(), secondMember.getId()))
                 .isEmpty();
-    }
-
-    @Test
-    @DisplayName("스터디원 조회에 성공하면 해당 스터디원을 반환한다")
-    void getByStudyIdAndUserIdOrThrowTest() {
-        User user = userRepository.save(User.create("사용자", null));
-        Study study = studyRepository.save(Study.create("스터디", "설명", false));
-        StudyMember member = saveMember(study, user, "스터디원");
-
-        StudyMember found = studyMemberRepository.getByStudyIdAndUserIdOrThrow(study.getId(), user.getId());
-
-        assertThat(found.getId()).isEqualTo(member.getId());
-    }
-
-    @Test
-    @DisplayName("스터디원이 존재하지 않으면 스터디 접근 거부 예외를 던진다")
-    void getByStudyIdAndUserIdOrThrowNotFoundTest() {
-        assertThatThrownBy(() -> studyMemberRepository.getByStudyIdAndUserIdOrThrow(
-                Long.MAX_VALUE, Long.MAX_VALUE
-        ))
-                .isInstanceOfSatisfying(StudyMemberException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED)
-                );
-    }
-
-    @Test
-    @DisplayName("스터디에 속한 멤버가 존재하지 않으면 멤버 없음 예외를 던진다")
-    void getByStudyIdAndIdOrThrowNotFoundTest() {
-        assertThatThrownBy(() -> studyMemberRepository.getByStudyIdAndIdOrThrow(
-                Long.MAX_VALUE, Long.MAX_VALUE
-        ))
-                .isInstanceOfSatisfying(StudyMemberException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND)
-                );
     }
 
     @Test

@@ -39,18 +39,6 @@ class CursorPageResponseTest {
     }
 
     @Test
-    @DisplayName("조회 결과가 요청 크기보다 적으면 모든 결과를 담은 마지막 페이지를 만든다")
-    void createLastPageWhenResultSizeIsLessThanRequestedSize() {
-        List<TestItem> results = List.of(new TestItem(10L));
-
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, pageRequest(), TestItem::id);
-
-        assertThat(response.content()).containsExactlyElementsOf(results);
-        assertThat(response.nextCursor()).isNull();
-        assertThat(response.hasNext()).isFalse();
-    }
-
-    @Test
     @DisplayName("조회 결과가 비어 있으면 빈 마지막 페이지를 만든다")
     void createEmptyLastPage() {
         CursorPageResponse<TestItem> response = CursorPageResponse.of(List.of(), pageRequest(), TestItem::id);

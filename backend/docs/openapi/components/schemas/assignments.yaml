@@ -6,11 +6,11 @@ AssignmentCreateRequest:
     - required: [submitterIds]
       additionalProperties: true
       properties:
-        submitterIds: { type: array, minItems: 1 }
+        submitterIds: { not: { type: 'null' } }
     - required: [submissionTarget]
       additionalProperties: true
       properties:
-        submissionTarget: { type: string }
+        submissionTarget: { not: { type: 'null' } }
   properties:
     submitterIds:
       type: [array, 'null']

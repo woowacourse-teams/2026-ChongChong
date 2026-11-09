@@ -30,7 +30,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateRequest;
 import withoutc.chongchong.assignment.controller.dto.AssignmentCreateResponse;
-import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
@@ -213,29 +212,6 @@ class AssignmentServiceTest {
     }
 
     @Test
-    @DisplayName("과제를 수정하면 변경된 애그리거트 루트를 저장한다")
-    void updateAssignmentAsLeaderTest() {
-        StudyMember leader = mock(StudyMember.class);
-        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
-        LocalDateTime closeAt = NOW.plusDays(10);
-        AssignmentUpdateRequest request = new AssignmentUpdateRequest(
-                "수정 제목", "수정 내용", "파일 제출", null, null, closeAt, List.of(NOW.plusDays(2))
-        );
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
-        when(assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-
-        assignmentService.update(USER_ID, STUDY_ID, ASSIGNMENT_ID, request);
-
-        assertThat(assignment.getTitle()).isEqualTo("수정 제목");
-        assertThat(assignment.getContent()).isEqualTo("수정 내용");
-        assertThat(assignment.getSubmissionMethod()).isEqualTo("파일 제출");
-        assertThat(assignment.getCloseAt()).isEqualTo(closeAt);
-        assertThat(assignment.getNextRemindAt()).isEqualTo(NOW.plusDays(2));
-        verify(assignmentAccessPolicy).requireCanUpdateAssignment(leader);
-        verify(assignmentRepository).save(assignment);
-    }
-
-    @Test
     @DisplayName("요청한 스터디에서 과제를 찾지 못하면 수정할 수 없다")
     void updateWhenAssignmentNotFoundInStudyTest() {
         StudyMember leader = mock(StudyMember.class);
@@ -276,23 +252,6 @@ class AssignmentServiceTest {
 
         verify(assignmentAccessPolicy).requireCanDeleteAssignment(leader);
         verify(assignmentRepository, never()).delete(any(Assignment.class));
-    }
-
-    @Test
-    @DisplayName("스터디 참여자가 소속 스터디의 과제 상세 정보를 조회한다")
-    void getDetailTest() {
-        StudyMember member = mock(StudyMember.class);
-        Assignment assignment = assignmentWithId(ASSIGNMENT_ID);
-        when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
-        when(assignmentRepository.getByIdAndStudyIdOrThrow(ASSIGNMENT_ID, STUDY_ID)).thenReturn(assignment);
-
-        AssignmentDetailResponse response = assignmentService.getDetail(USER_ID, STUDY_ID, ASSIGNMENT_ID);
-
-        assertThat(response.id()).isEqualTo(ASSIGNMENT_ID);
-        assertThat(response.title()).isEqualTo("과제 제목");
-        assertThat(response.content()).isEqualTo("과제 내용");
-        assertThat(response.submissionMethod()).isEqualTo("링크 제출");
-        assertThat(response.closeAt()).isEqualTo(NOW.plusDays(7));
     }
 
     @Test

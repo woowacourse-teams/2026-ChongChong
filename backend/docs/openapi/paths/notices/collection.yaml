@@ -4,13 +4,12 @@ post:
   tags: [Notice]
   operationId: createNotice
   x-frontend:
-    status: needs-update
+    status: integrated
     description: |
-      기능 추가: 공지 작성 시 리마인드 날짜·시간을 선택하고 remindAts로 저장해야 한다.
-      이미지 선택·S3 업로드 후 각 파일의 업로드 완료 API를 호출해야 한다.
-      완료에 성공한 fileId 목록을 표시 순서대로 attachmentFileIds에 전달하는 흐름은 미연동이다.
+      공지 작성 폼에서 리마인드 예약과 이미지를 선택한다. 공통 업로드·완료 API를 거친 fileId를 attachmentFileIds에 전달한다.
     sources:
       - frontend/src/features/notice/components/NoticeForm.tsx
+      - frontend/src/shared/modules/files/api.ts
   x-backend:
     status: done
     owner: JYL35
@@ -23,7 +22,7 @@ post:
   description: |
     스터디 리더가 공지를 생성한다. S3 업로드 후 POST /api/files/{fileId}/complete에 성공한 파일의
     식별자를 attachmentFileIds에 표시 순서대로 전달한다. 새 파일은 COMPLETED 상태·본인 소유이며
-    다른 공지·과제·제출물에 연결되지 않아야 한다. PENDING·DELETE_PENDING 또는 이미 연결된 파일은
+    다른 공지·과제·제출물·스터디 대표 이미지·홈 프로필에 연결되지 않아야 한다. PENDING·DELETE_PENDING 또는 이미 연결된 파일은
     400 FILE_NOT_ATTACHABLE로 거부한다. 기본 최대 10장·장당 5MiB·JPEG/PNG/WebP이며 빈 파일은 허용하지 않는다.
     허용 형식·용량·개수는 서버 설정으로 변경할 수 있고, 공통 업로드 용량 제한도 함께 적용된다.
     공지는 S3 조회나 완료 전환을 다시 수행하지 않는다. 공지 저장 실패 시 공지·첨부 관계·알림은 롤백되지만
