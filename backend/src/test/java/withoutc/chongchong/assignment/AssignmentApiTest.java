@@ -628,6 +628,95 @@ class AssignmentApiTest {
                 .body("assignments[0].id", equalTo(assignment.getId().intValue()));
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    @DisplayName("마감순은 마감 전·후와 같은 마감 시각 경계를 넘어 빠짐없이 이어 조회한다")
+    void getAssignmentsByDeadline(int size) {
+        Assignment near = createAssignment("가까운 마감", "내용", null, closeAt.minusDays(10), null);
+        Assignment sameDeadline = createAssignment("같은 마감", "내용", null, closeAt.minusDays(10), null);
+        Assignment expired = createAssignment("마감됨", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
+                LocalDateTime.now(CLOCK).minusDays(1), expired.getId());
+        assertSortedPages(leaderUser, "DEADLINE", size,
+                List.of(sameDeadline.getId(), near.getId(), assignment.getId(), expired.getId()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    @DisplayName("미제출순은 본인의 대상 과제만 우선하며 제출·대상 제외·미배정 과제도 이어 조회한다")
+    void getAssignmentsByUnsubmitted(int size) {
+        Assignment missing = createAssignment("마감 후 미제출", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
+                LocalDateTime.now(CLOCK).minusDays(1), missing.getId());
+        Assignment submitted = createAssignment("제출 완료", "내용", null, closeAt, null);
+        submitAssignment(memberUser, submitted, "완료", null);
+        Assignment unassigned = createAssignment("대상 제외", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignment_submissions SET assigned = false WHERE assignment_id = ? AND member_id = ?",
+                unassigned.getId(), member.getId());
+        Assignment notAssigned = assignmentRepository.saveAndFlush(Assignment.create(
+                study, "미배정", "내용", null, SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY, closeAt, LocalDateTime.now(CLOCK)));
+        assertSortedPages(memberUser, "UNSUBMITTED", size,
+                List.of(missing.getId(), assignment.getId(), notAssigned.getId(), unassigned.getId(), submitted.getId()));
+        assertSortedPages(secondMemberUser, "UNSUBMITTED", size,
+                List.of(unassigned.getId(), submitted.getId(), missing.getId(), assignment.getId(), notAssigned.getId()));
+    }
+
+    @Test
+    @DisplayName("최신순을 명시해도 기존 ID 내림차순과 숫자 커서를 유지한다")
+    void getAssignmentsByLatest() {
+        Assignment latest = createAssignment("최신", "내용", null, closeAt, null);
+        assertSortedPages(memberUser, "LATEST", 1, List.of(latest.getId(), assignment.getId()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DEADLINE", "UNSUBMITTED"})
+    @DisplayName("없는 과제와 다른 스터디의 과제를 정렬 커서로 사용하면 404를 반환한다")
+    void rejectUnavailableSortCursor(String sort) {
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
+        Assignment other = assignmentRepository.saveAndFlush(Assignment.create(
+                otherStudy, "다른 과제", "내용", null, SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY, closeAt, LocalDateTime.now(CLOCK)));
+        for (Long cursor : List.of(other.getId(), Long.MAX_VALUE)) {
+            testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                    .queryParam("sort", sort).queryParam("cursor", cursor)
+                    .when().get("/studies/{studyId}/assignments", study.getId())
+                    .then().statusCode(404);
+        }
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("sort", sort)
+                .when().get("/studies/{studyId}/assignments", otherStudy.getId())
+                .then().statusCode(403);
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 과제 정렬 값은 400으로 거부한다")
+    void rejectInvalidAssignmentSort() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("sort", "INVALID")
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(400);
+    }
+
+    private void assertSortedPages(User user, String sort, int size, List<Long> expectedIds) {
+        Long cursor = null;
+        for (int offset = 0; offset < expectedIds.size(); offset += size) {
+            var request = testAuthRequest.givenAuthenticatedUser(user.getId()).port(port)
+                    .queryParam("sort", sort).queryParam("size", size);
+            if (cursor != null) {
+                request.queryParam("cursor", cursor);
+            }
+            var response = request.when().get("/studies/{studyId}/assignments", study.getId())
+                    .then().statusCode(200).extract().jsonPath();
+            int end = Math.min(offset + size, expectedIds.size());
+            assertThat(response.getList("assignments.id", Long.class))
+                    .containsExactlyElementsOf(expectedIds.subList(offset, end));
+            assertThat(response.getBoolean("hasNext")).isEqualTo(end < expectedIds.size());
+            cursor = response.getObject("nextCursor", Long.class);
+            assertThat(cursor).isEqualTo(end < expectedIds.size() ? expectedIds.get(end - 1) : null);
+        }
+    }
+
     @Test
     @DisplayName("리더가 JSON으로 과제 수정 요청을 보내면 모든 수정 필드와 대기 리마인더를 변경한다")
     void updateAssignmentTest() {

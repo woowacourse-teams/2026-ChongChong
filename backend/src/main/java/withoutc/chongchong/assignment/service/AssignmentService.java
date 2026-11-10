@@ -23,6 +23,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.AssignmentSort;
 import withoutc.chongchong.assignment.entity.AssignmentAttachment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
@@ -167,18 +168,44 @@ public class AssignmentService {
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {
+        return getList(userId, studyId, cursor, size, AssignmentSort.LATEST);
+    }
+
+    public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size, AssignmentSort sort) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
 
         Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
-        List<Assignment> assignments = assignmentRepository.findByCursor(studyId, pageRequest.cursor(), pageable);
+        List<Assignment> assignments = findSortedAssignments(studyId, member.getId(), pageRequest.cursor(), pageable, sort);
 
         CursorPageResponse<Assignment> assignmentPage = CursorPageResponse.of(assignments, pageRequest,
                 Assignment::getId);
 
         List<AssignmentSummaryResponse> summaries = createAssignmentSummaries(member, assignmentPage.content());
         return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
+    }
+
+    private List<Assignment> findSortedAssignments(Long studyId, Long memberId, Long cursor,
+                                                   Pageable pageable, AssignmentSort sort) {
+        if (sort == AssignmentSort.LATEST) {
+            return assignmentRepository.findByCursor(studyId, cursor, pageable);
+        }
+
+        Assignment anchor = cursor == null ? null
+                : assignmentRepository.getByIdAndStudyIdOrThrow(cursor, studyId);
+        if (sort == AssignmentSort.DEADLINE) {
+            LocalDateTime now = LocalDateTime.now(clock);
+            LocalDateTime cursorCloseAt = anchor == null ? null : anchor.getCloseAt();
+            int cursorRank = cursorCloseAt != null && cursorCloseAt.isBefore(now) ? 1 : 0;
+            return assignmentRepository.findByDeadlineCursor(studyId, now, cursor, cursorRank, cursorCloseAt, pageable);
+        }
+
+        int cursorRank = anchor == null ? 0 : assignmentSubmissionRepository
+                .findByAssignmentIdAndMemberId(cursor, memberId)
+                .filter(submission -> submission.isAssigned() && submission.getSubmittedAt() == null)
+                .map(submission -> 0).orElse(1);
+        return assignmentRepository.findByUnsubmittedCursor(studyId, memberId, cursor, cursorRank, pageable);
     }
 
     private void replaceAttachments(Long userId, Assignment assignment, List<Long> fileIds) {

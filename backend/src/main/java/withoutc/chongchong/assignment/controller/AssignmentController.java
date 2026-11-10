@@ -22,6 +22,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentDetailResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentListResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
+import withoutc.chongchong.assignment.entity.AssignmentSort;
 import withoutc.chongchong.assignment.service.AssignmentService;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
@@ -64,9 +65,10 @@ public class AssignmentController {
             @RequestParam(defaultValue = "10")
             @Positive(message = "size는 양수여야 합니다.")
             @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
-            int size
+            int size,
+            @RequestParam(defaultValue = "LATEST") AssignmentSort sort
     ) {
-        AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size);
+        AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size, sort);
 
         return ResponseEntity.ok(response);
     }

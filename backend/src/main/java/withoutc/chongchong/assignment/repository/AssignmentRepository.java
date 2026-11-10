@@ -122,6 +122,44 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             Pageable pageable
     );
 
+    @Query("""
+            SELECT a FROM Assignment a
+            WHERE a.study.id = :studyId AND (
+                :cursor IS NULL
+                OR (CASE WHEN a.closeAt < :now THEN 1 ELSE 0 END) > :cursorRank
+                OR ((CASE WHEN a.closeAt < :now THEN 1 ELSE 0 END) = :cursorRank
+                    AND (a.closeAt > :cursorCloseAt OR (a.closeAt = :cursorCloseAt AND a.id < :cursor)))
+            )
+            ORDER BY CASE WHEN a.closeAt < :now THEN 1 ELSE 0 END, a.closeAt, a.id DESC
+            """)
+    List<Assignment> findByDeadlineCursor(
+            @Param("studyId") Long studyId,
+            @Param("now") LocalDateTime now,
+            @Param("cursor") Long cursor,
+            @Param("cursorRank") int cursorRank,
+            @Param("cursorCloseAt") LocalDateTime cursorCloseAt,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT a FROM Assignment a
+            LEFT JOIN AssignmentSubmission s ON s.assignment = a AND s.member.id = :memberId
+            WHERE a.study.id = :studyId AND (
+                :cursor IS NULL
+                OR (CASE WHEN s.assigned = true AND s.submittedAt IS NULL THEN 0 ELSE 1 END) > :cursorRank
+                OR ((CASE WHEN s.assigned = true AND s.submittedAt IS NULL THEN 0 ELSE 1 END) = :cursorRank
+                    AND a.id < :cursor)
+            )
+            ORDER BY CASE WHEN s.assigned = true AND s.submittedAt IS NULL THEN 0 ELSE 1 END, a.id DESC
+            """)
+    List<Assignment> findByUnsubmittedCursor(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId,
+            @Param("cursor") Long cursor,
+            @Param("cursorRank") int cursorRank,
+            Pageable pageable
+    );
+
     // 리더용
     @Query("""
             SELECT new withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection(
