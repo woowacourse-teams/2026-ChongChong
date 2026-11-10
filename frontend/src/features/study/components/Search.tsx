@@ -5,6 +5,7 @@ import Button from '../../../shared/ui/Button';
 import searchIcon from '../../../shared/assets/search.svg';
 import searchEmptyIcon from '../../../shared/assets/icons/search-empty.webp';
 import { Paragraph } from '../../../shared/ui/Typography';
+import { CSSObject } from '@emotion/react';
 
 interface SearchProps {
   onSubmit: React.SubmitEventHandler<HTMLFormElement>;
@@ -53,18 +54,17 @@ export function Search({ onSubmit, searchValue, changeSearchValue, ...props }: S
   );
 }
 
+const searchEmptyContentContainerStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: tokens.spacing[1],
+} satisfies CSSObject;
+
 export function SearchEmptyContent() {
   return (
-    <div
-      role="status"
-      css={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: tokens.spacing[1],
-      }}
-    >
+    <div role="status" css={searchEmptyContentContainerStyle}>
       <img
         src={searchEmptyIcon}
         width={300}
