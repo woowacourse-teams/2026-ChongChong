@@ -1,10 +1,8 @@
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
+import { useSubmitSearch } from '../hooks/useSubmitSearch';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
-import Input from '../../../shared/ui/inputs/Input';
-import Loading from '../../../shared/ui/Loading';
+import Spinner from '../../../shared/ui/Spinner';
 import ErrorContent from '../../../shared/ui/ErrorContent';
-import searchIcon from '../assets/search.svg';
-import { STUDY_NAME } from '../constants';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import studyQueries from '../queries';
@@ -15,72 +13,38 @@ import Button from '../../../shared/ui/Button';
 import List from '../../../shared/ui/List';
 import Badge from '../../../shared/ui/Badge';
 import ContentCard from '../../../shared/ui/card/ContentCard';
+import { Search, SearchEmptyContent } from './Search';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { tokens, typography } from '../../../styles/global';
 import rightArrowIcon from '../../../shared/assets/right-arrow.svg';
 import StudyContentCard from './StudyContentCard';
 import StudyAvatar from './StudyAvatar';
-import StudySearchEmptyContent from './StudySearchEmptyContent';
 
 export default function PublicStudies() {
-  const [searchValue, setSearchValue] = useState('');
-  const [keyword, setKeyword] = useState('');
+  const { submittedValue, searchValue, handleSearchValue, handleSubmit } = useSubmitSearch();
+
   return (
     <section aria-label="스터디 둘러보기">
-      <form
-        role="search"
-        aria-label="공개 스터디 검색"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setKeyword(searchValue.trim());
-        }}
-        css={{ display: 'flex', gap: tokens.spacing[2], marginBottom: tokens.spacing[4] }}
-      >
-        <Input
-          type="search"
-          aria-label="스터디 이름 검색"
-          placeholder="스터디 이름 검색"
-          value={searchValue}
-          onChange={(event) => {
-            setSearchValue(event.target.value);
-            if (!event.target.value) setKeyword('');
-          }}
-          maxLength={STUDY_NAME.length}
-          css={{
-            ...typography.body,
-            flex: 1,
-            minWidth: 0,
-            minHeight: 40,
-            height: 40,
-            borderRadius: 20,
-            padding: `0 ${tokens.spacing[5]}`,
-          }}
-        />
-        <Button
-          type="submit"
-          variant="brandSolid"
-          size="small"
-          aria-label="검색"
-          css={{ width: 40, height: 40, flexShrink: 0, padding: 0, borderRadius: 20 }}
-        >
-          <img src={searchIcon} alt="" width={20} height={20} />
-        </Button>
-      </form>
+      <Search
+        onSubmit={(event) => handleSubmit(event)}
+        searchValue={searchValue}
+        changeSearchValue={handleSearchValue}
+      />
       <ErrorBoundary
-        key={keyword}
+        key={submittedValue}
         fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
       >
-        <Suspense fallback={<Loading />}>
-          <PublicStudyResults keyword={keyword} />
+        <Suspense fallback={<Spinner />}>
+          <PublicStudyResults value={submittedValue} />
         </Suspense>
       </ErrorBoundary>
     </section>
   );
 }
 
-function PublicStudyResults({ keyword }: { keyword: string }) {
+function PublicStudyResults({ value }: { value: string }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } =
-    useSuspenseInfiniteQuery(studyQueries.publicList(keyword));
+    useSuspenseInfiniteQuery(studyQueries.publicList(value));
   const studies = data.pages.flatMap((page) => page.studies);
   const loadMoreRef = useInfiniteScroll({
     hasNextPage: hasNextPage && !isFetchNextPageError,
@@ -91,8 +55,8 @@ function PublicStudyResults({ keyword }: { keyword: string }) {
   return (
     <>
       {studies.length === 0 ? (
-        keyword ? (
-          <StudySearchEmptyContent />
+        value ? (
+          <SearchEmptyContent />
         ) : (
           <EmptyContent message="아직 공개된 스터디가 없어요" />
         )
