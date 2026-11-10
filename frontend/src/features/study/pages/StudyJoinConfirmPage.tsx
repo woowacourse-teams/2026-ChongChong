@@ -26,14 +26,9 @@ export default function StudyJoinConfirmPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const studyId = Number(searchParams.get('studyId'));
-  const target: StudyJoinTarget | null = token?.trim()
-    ? { token }
-    : Number.isSafeInteger(studyId) && studyId > 0
-      ? { studyId }
-      : null;
 
   return (
-    <RequireJoinTarget target={target}>
+    <RequireJoinTarget token={token} studyId={studyId}>
       {(target) => (
         <Page>
           <TopHeader
@@ -68,14 +63,24 @@ export default function StudyJoinConfirmPage() {
 }
 
 function RequireJoinTarget({
-  target,
+  token,
+  studyId,
   children,
 }: {
-  target: StudyJoinTarget | null;
+  token: string | null;
+  studyId: number;
   children: (target: StudyJoinTarget) => ReactNode;
 }) {
   const { move } = usePageNavigation();
+  const target = resolveStudyJoinTarget(token, studyId);
   const hasTarget = target !== null;
+
+  function resolveStudyJoinTarget(token: string | null, studyId: number): StudyJoinTarget | null {
+    if (token?.trim()) return { token };
+    if (Number.isSafeInteger(studyId) && studyId > 0) return { studyId };
+    return null;
+  }
+
   useEffect(() => {
     if (!hasTarget) move(URL_POLICY.afterMissingInviteToken());
   }, [hasTarget, move]);
