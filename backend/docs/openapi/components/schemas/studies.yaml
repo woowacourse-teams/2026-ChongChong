@@ -98,10 +98,10 @@ MyStudyListResponse:
 StudySummaryResponse:
   type: object
   additionalProperties: false
-  required: [studyId, studyName, description, imageUrl, memberCount]
+  required: [id, name, description, imageUrl, memberCount]
   properties:
-    studyId: { description: 스터디 식별자, type: integer, format: int64, minimum: 1, example: 21 }
-    studyName: { type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
+    id: { description: 스터디 식별자, type: integer, format: int64, minimum: 1, example: 21 }
+    name: { type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
     description: { type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
     imageUrl: { description: "스터디 이미지의 S3 서명 조회 URL. 이미지가 없으면 null이다. URL이 만료되면 목록을 다시 조회한다.", type: [string, 'null'], format: uri, example: 'https://example.com/study.png' }
     memberCount: { description: 현재 리더를 포함한 전체 스터디 인원 수, type: integer, minimum: 0, example: 5 }

@@ -1,6 +1,13 @@
 get:
   tags: [Study]
   operationId: getPublicStudies
+  x-frontend:
+    status: needs-update
+    description: "계약 수정: 공개 목록의 studies[] 항목은 id·name을 반환한다. 목록 응답의 검증·타입·화면 참조에서 기존 studyId·studyName을 변경해야 한다. 참여 전 정보 응답도 동일한 필드 이름을 사용한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/responseSchemas.ts
+      - frontend/src/features/study/types.ts
   x-backend:
     status: done
     owner: wontop02
@@ -11,6 +18,9 @@ get:
     인증된 사용자가 isPublic=true인 스터디를 생성 시각 내림차순으로 조회한다. 생성 시각이 같으면 스터디 ID 내림차순으로 정렬한다.
     리더를 포함한 현재 인원이 정원인 50명 이상인 스터디는 목록에서 제외한다.
     현재 구현은 사용자의 가입 여부로 목록을 필터링하지 않는다. 요청 본문은 사용하지 않는다.
+
+    각 스터디의 식별자와 이름은 내 스터디 목록과 동일한 id와 name으로 반환한다.
+    참여 전 정보 조회도 동일한 id와 name을 반환한다.
 
     keyword를 생략하면 전체 공개 목록을 반환하고, 전달하면 스터디 이름에 검색어가 포함된 결과만 반환한다.
     영문 대소문자는 구분하지 않고 검색어 앞뒤 공백은 제거한다. %와 _는 일반 문자로 취급한다.
@@ -46,15 +56,15 @@ get:
                 nextCursor: 17
                 hasNext: true
                 studies:
-                  - { studyId: 21, studyName: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
-                  - { studyId: 17, studyName: 알고리즘 스터디, description: 함께 문제를 풉니다., imageUrl: null, memberCount: 3 }
+                  - { id: 21, name: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
+                  - { id: 17, name: 알고리즘 스터디, description: 함께 문제를 풉니다., imageUrl: null, memberCount: 3 }
             lastPage:
               summary: 마지막 페이지
               value:
                 nextCursor: null
                 hasNext: false
                 studies:
-                  - { studyId: 4, studyName: 독서 스터디, description: null, imageUrl: null, memberCount: 1 }
+                  - { id: 4, name: 독서 스터디, description: null, imageUrl: null, memberCount: 1 }
             empty:
               summary: 조회할 공개 스터디가 없는 경우
               value: { nextCursor: null, hasNext: false, studies: [] }
@@ -64,7 +74,7 @@ get:
                 nextCursor: null
                 hasNext: false
                 studies:
-                  - { studyId: 21, studyName: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
+                  - { id: 21, name: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
     '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
     '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
     '404':
