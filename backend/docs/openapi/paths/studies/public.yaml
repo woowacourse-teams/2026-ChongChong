@@ -2,7 +2,7 @@ get:
   tags: [Study]
   operationId: getPublicStudies
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: |
       공개 스터디의 최신순 커서 조회와 선택 검색어에 따른 이름 검색을 구현했다. HTTP 인수 테스트로 필터·정렬·검색어 검증·커서 페이징과 응답 계약을 검증한다.

@@ -6,6 +6,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.core.Ordered;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -19,7 +22,13 @@ import withoutc.chongchong.notification.sender.NotificationSender;
 import withoutc.chongchong.notification.worker.dto.ClaimedDelivery;
 
 @Component
-public class NotificationDeliveryWorker {
+public class NotificationDeliveryWorker implements ApplicationListener<ContextClosedEvent>, Ordered {
+
+    // 작업이 밀려 있을 때 빈 슬롯을 확인하는 간격
+    private static final Duration BURST_POLL_INTERVAL = Duration.ofMillis(50);
+    // 작업이 밀려 있을 때 process() 한 번이 이어서 가져오기를 계속하는 최대 시간
+    // recover()는 process() 시작 시에만 돌기 때문에 중간에 끊어야 다시 실행
+    private static final Duration MAX_BURST_DURATION = Duration.ofSeconds(10);
 
     private final DeliveryClaimService deliveryClaimService;
     private final DeliveryRecoveryService deliveryRecoveryService;
@@ -29,6 +38,7 @@ public class NotificationDeliveryWorker {
     private final NotificationDeliveryLogger notificationDeliveryLogger;
     private final NotificationDeliveryProcessingMetrics notificationDeliveryProcessingMetrics;
     private final Clock clock;
+    private volatile boolean stopping;
 
     public NotificationDeliveryWorker(
             DeliveryClaimService deliveryClaimService,
@@ -50,11 +60,13 @@ public class NotificationDeliveryWorker {
         this.clock = clock;
     }
 
-    @Scheduled(fixedDelayString = "${web-push.delivery.fixed-delay-ms:1000}")
+    // 발송 전용 스케줄러가 1초 간격으로 호출. 빈 슬롯만큼 claim해서 발송 스레드에 넘김
+    @Scheduled(fixedDelayString = "${web-push.delivery.fixed-delay-ms:1000}", scheduler = "notificationDeliveryScheduler")
     public void process() {
-        int availableSlots = Math.max(
-                0,
-                notificationDeliveryExecutor.getMaxPoolSize() - notificationDeliveryExecutor.getActiveCount());
+        if (stopping) {
+            return;
+        }
+        int availableSlots = availableSlots();
 
         if (availableSlots == 0) {
             return;
@@ -62,10 +74,42 @@ public class NotificationDeliveryWorker {
 
         deliveryRecoveryService.recover(availableSlots);
 
+        // 요청한 수만큼 꽉 채워 가져오면 큐에 더 있다고 보고, 50ms마다 빈 슬롯만큼 이어서 가져옴
+        boolean backlog = dispatch(availableSlots);
+        long deadline = System.nanoTime() + MAX_BURST_DURATION.toNanos();
+        while (backlog && !stopping && System.nanoTime() < deadline) {
+            if (!pause(BURST_POLL_INTERVAL)) {
+                return;
+            }
+            int freeSlots = availableSlots();
+            if (freeSlots > 0) {
+                backlog = dispatch(freeSlots);
+            }
+        }
+    }
+
+    // 종료가 시작되면 새 작업을 가져오지 않음
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        stopping = true;
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
+    }
+
+    private int availableSlots() {
+        return Math.max(
+                0,
+                notificationDeliveryExecutor.getMaxPoolSize() - notificationDeliveryExecutor.getActiveCount());
+    }
+
+    private boolean dispatch(int slots) {
         List<ClaimedDelivery> deliveries;
         Timer.Sample claimSample = notificationDeliveryProcessingMetrics.startClaim();
         try {
-            deliveries = deliveryClaimService.claimBatch(availableSlots);
+            deliveries = deliveryClaimService.claimBatch(slots);
         } finally {
             notificationDeliveryProcessingMetrics.stopClaim(claimSample);
         }
@@ -81,8 +125,19 @@ public class NotificationDeliveryWorker {
                 );
             } catch (TaskRejectedException exception) {
                 releaseUnsubmittedDeliveries(deliveries, index, exception);
-                return;
+                return false;
             }
+        }
+        return deliveries.size() == slots;
+    }
+
+    private boolean pause(Duration duration) {
+        try {
+            Thread.sleep(duration);
+            return true;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 

@@ -1,9 +1,10 @@
 import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
 import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
+import type { AssignmentTab } from '../types';
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
-import DetailTabs from '../../../shared/widgets/DetailTabs';
+import Tabs from '../../../shared/widgets/Tabs';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import assignmentQueries from '../queries';
 import AssignmentArticle from './AssignmentArticle';
@@ -46,31 +47,41 @@ export default function MemberAssignmentDetailContent({ studyId, userName }: Pro
         dateTime={assignment.closeAt}
         meta={`${formatDateToString(assignment.closeAt)} 마감`}
       />
-      <DetailTabs
-        status={
-          <>
-            <MySubmissionStatus submission={submission} member={member} />
-            {canViewSubmissions && submissions ? (
-              <CompletedSubmissionList submissions={submissions.submissions} />
-            ) : null}
-          </>
-        }
-        detail={
-          <>
-            <AssignmentArticle assignment={assignment} />
-            <CommentsPanel
-              key={`assignment-${studyId}-${assignmentId}`}
-              target={{ type: 'assignment', studyId, assignmentId }}
-              title="과제 댓글"
-              focusCommentId={focusCommentId}
-            />
-            <MyAssignmentSubmission
-              studyId={studyId}
-              assignmentId={assignmentId}
-              submission={submission}
-            />
-          </>
-        }
+      <Tabs<AssignmentTab>
+        tabs={[
+          {
+            key: 'detail',
+            label: '내용',
+            panel: (
+              <>
+                <AssignmentArticle assignment={assignment} />
+                <CommentsPanel
+                  key={`assignment-${studyId}-${assignmentId}`}
+                  target={{ type: 'assignment', studyId, assignmentId }}
+                  title="과제 댓글"
+                  focusCommentId={focusCommentId}
+                />
+                <MyAssignmentSubmission
+                  studyId={studyId}
+                  assignmentId={assignmentId}
+                  submission={submission}
+                />
+              </>
+            ),
+          },
+          {
+            key: 'status',
+            label: '현황',
+            panel: (
+              <>
+                <MySubmissionStatus submission={submission} member={member} />
+                {canViewSubmissions && submissions ? (
+                  <CompletedSubmissionList submissions={submissions.submissions} />
+                ) : null}
+              </>
+            ),
+          },
+        ]}
       />
     </>
   );

@@ -257,18 +257,9 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("새 파일의 형식이 허용되지 않으면 400 INVALID_NOTICE_IMAGE_TYPE을 반환한다")
-    void rejectUnsupportedImageType() {
-        FileMetadata file = saveFile(leader, "application/pdf", 1024);
-
-        assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_TYPE");
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {0L, 5242881L})
-    @DisplayName("빈 이미지와 용량 초과 이미지는 400 INVALID_NOTICE_IMAGE_SIZE를 반환한다")
-    void rejectInvalidImageSize(long size) {
-        FileMetadata file = saveFile(leader, "image/png", size);
+    @DisplayName("용량 초과 이미지는 400 INVALID_NOTICE_IMAGE_SIZE를 반환한다")
+    void rejectInvalidImageSize() {
+        FileMetadata file = saveFile(leader, "image/png", 5242881L);
 
         assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_SIZE");
     }

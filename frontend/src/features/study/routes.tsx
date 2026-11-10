@@ -20,6 +20,12 @@ export const routes: RouteObject[] = [
     }),
   },
   {
+    path: '/studies/join/confirm',
+    lazy: async () => ({
+      Component: (await import('./pages/StudyJoinConfirmPage')).default,
+    }),
+  },
+  {
     path: '/studies/join',
     lazy: async () => ({
       Component: (await import('./pages/StudyJoinPage')).default,

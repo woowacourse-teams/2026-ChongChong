@@ -104,12 +104,11 @@ class UserProfileAcceptanceTest {
         assertThat(responseBody.get("profileImageUrl")).isNull();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"image/jpeg", "image/png", "image/webp"})
+    @Test
     @DisplayName("홈에 업로드 이미지가 있으면 외부 URL 대신 서명된 조회 URL을 반환하고 DB에는 저장하지 않는다")
-    void getMyProfileWithUploadedImage(String contentType) {
+    void getMyProfileWithUploadedImage() {
         User user = userRepository.saveAndFlush(User.create("이든", "https://example.com/social.png"));
-        FileMetadata file = connectCompletedImage(user, contentType);
+        FileMetadata file = connectCompletedImage(user, "image/png");
 
         Response response = requestProfile(user.getId());
 

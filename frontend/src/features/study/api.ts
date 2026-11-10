@@ -8,6 +8,7 @@ import {
   isStudyDetailResponse,
   isStudyInfoResponse,
   isStudyResponse,
+  isStudyJoinInfoResponse,
 } from './responseSchemas';
 import { handleError } from '../../shared/api/error';
 
@@ -109,10 +110,37 @@ export async function fetchStudyInviteLink(studyId: number) {
   }
 }
 
+export async function fetchStudyJoinInfo(token: string, signal?: AbortSignal) {
+  try {
+    const response = await api.get(STUDY_URLS.joinInfo, {
+      searchParams: { token },
+      signal,
+    });
+    const data: unknown = await response.json();
+
+    if (!isStudyJoinInfoResponse(data)) {
+      throw new Error('스터디 참여 정보 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('스터디 참여 정보를 불러오는데 실패했습니다.', { cause: error }),
+    });
+  }
+}
+
 export async function joinStudy(body: { token: string }) {
   try {
     const response = await api.post(STUDY_URLS.join, { json: body });
-    return await response.json<{ studyId: number }>();
+    const data: unknown = await response.json();
+
+    if (!isCreateStudyResponse(data)) {
+      throw new Error('스터디 참여 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch (error) {
     throw handleError(error, {
       mappers: [ValidationError, ApiError],

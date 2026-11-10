@@ -15,8 +15,8 @@ post:
   x-frontend:
     status: needs-update
     description: |
-      서버는 content와 link를 각각 선택 값으로 받지만 웹 폼은 content를 필수로 요구한다. 링크만 제출할 수 있도록 입력 제약을 맞추는 작업이 남아 있다.
-      각 10,000자 제한, NOT_ASSIGNED 제출 폼 제외, 마감 후 제출과 제출 상태 재조회는 반영되어 있다.
+      웹 폼도 내용·링크·첨부 중 하나 이상을 요구하여 링크만 또는 첨부만 제출할 수 있다.
+      대상 제외 후 보존된 제출물의 assigned=false를 반영해 제출·수정 동작을 제한하는 처리는 남아 있다.
     sources:
       - frontend/src/features/assignment/components/MyAssignmentSubmission.tsx
       - frontend/src/features/assignment/components/AssignmentSubmissionForm.tsx

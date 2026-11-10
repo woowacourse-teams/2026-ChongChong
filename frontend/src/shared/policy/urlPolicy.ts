@@ -9,7 +9,6 @@ export type FunnelCompletionPolicy = {
 };
 type Id = number | string;
 export type StudyTab = 'home' | 'notices' | 'assignments' | 'calendar' | 'members';
-export type ContentTab = 'detail' | 'status';
 
 const path = {
   landing: '/',
@@ -20,6 +19,7 @@ const path = {
   myPage: '/studies/mypage',
   createStudy: '/studies/new',
   joinStudy: '/studies/join',
+  confirmStudyJoin: '/studies/join/confirm',
   study: (studyId: Id) => `/studies/${studyId}`,
   management: (studyId: Id) => `/studies/${studyId}/management`,
   editStudy: (studyId: Id) => `/studies/${studyId}/edit`,
@@ -104,6 +104,8 @@ export const URL_POLICY = {
   toMyPage: () => push(path.myPage),
   toCreateStudy: () => push(path.createStudy),
   toJoinStudy: () => push(path.joinStudy),
+  toStudyJoinInfo: (token: string) =>
+    push(`${path.confirmStudyJoin}?${new URLSearchParams({ token })}`),
   toStudy: (studyId: Id) => push(path.study(studyId)),
   toStudyManagement: (studyId: Id) => push(path.management(studyId)),
   toEditStudy: (studyId: Id) => push(path.editStudy(studyId)),
@@ -150,14 +152,13 @@ export const URL_POLICY = {
           : undefined,
     };
   },
-  // 콘텐츠 내부 내용/현황 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
-  toContentTab: (
+  // 탭 전환은 기존 쿼리와 해시를 보존하며 이력을 추가하지 않는다.
+  toConvertTab: <TTab extends string>(
     location: { pathname: string; search: string; hash: string },
-    tab: ContentTab,
+    tab: TTab,
   ): LinkPolicy => {
     const params = new URLSearchParams(location.search);
-    if (tab === 'status') params.set('view', 'status');
-    else params.delete('view');
+    params.set('tab', tab);
     const search = params.toString();
     return replace(`${location.pathname}${search ? `?${search}` : ''}${location.hash}`);
   },
@@ -165,6 +166,7 @@ export const URL_POLICY = {
   // 완료한 생성/참여 화면은 뒤로가기 대상에서 제외한다.
   afterStudyCreate: (studyId: Id) => replace(path.study(studyId)),
   afterStudyJoin: (studyId: Id) => replace(path.study(studyId)),
+  afterMissingInviteToken: () => replace(path.joinStudy),
   afterNoticeCreate: (studyId: Id, noticeId: Id) => replace(path.notice(studyId, noticeId)),
   // 퍼널 완료 시 이력을 정리한 뒤 이동할 상세와 직접 진입 시 남길 목록이다.
   afterAssignmentCreate: (studyId: Id, assignmentId: Id): FunnelCompletionPolicy => ({

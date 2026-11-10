@@ -3,10 +3,11 @@ post:
   operationId: completeFileUpload
   summary: 파일 업로드 완료 확인
   x-frontend:
-    status: needs-update
-    description: S3 PUT 성공 후 fileId로 완료 요청을 보내고 204 응답을 확인한다. objectKey는 보내지 않는다.
+    status: integrated
+    description: |
+      공통 업로드 모듈이 S3 PUT 성공 후 fileId로 완료 요청을 보내고 204를 확인한 뒤 연결할 ID를 반환한다.
     sources:
-      - frontend/src/features/notice/components/NoticeForm.tsx
+      - frontend/src/shared/modules/files/api.ts
   x-backend:
     status: done
     owner: frombunny

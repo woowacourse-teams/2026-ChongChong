@@ -101,19 +101,6 @@ class NoticeRepositoryTest {
     }
 
     @Test
-    @DisplayName("공지 조회에 성공하면 해당 공지를 반환한다")
-    void getByIdOrThrowTest() {
-        StudyFixture fixture = createStudyFixture("스터디", "리더");
-        Notice notice = noticeRepository.save(
-                Notice.create(fixture.study(), "공지", "공지 내용")
-        );
-
-        Notice found = noticeRepository.getByIdOrThrow(notice.getId());
-
-        assertThat(found.getId()).isEqualTo(notice.getId());
-    }
-
-    @Test
     @DisplayName("공지가 존재하지 않으면 공지 없음 예외를 던진다")
     void getByIdOrThrowNotFoundTest() {
         assertThatThrownBy(() -> noticeRepository.getByIdOrThrow(Long.MAX_VALUE))

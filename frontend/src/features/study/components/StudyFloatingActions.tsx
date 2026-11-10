@@ -12,8 +12,8 @@ const actions = [
     destination: URL_POLICY.toCreateStudy(),
   },
   {
-    label: '스터디 참여하기',
-    description: '초대 링크로 스터디에 합류해요',
+    label: '링크로 스터디 참여하기',
+    description: '초대 코드로 스터디에 합류해요',
     icon: door,
     destination: URL_POLICY.toJoinStudy(),
   },
