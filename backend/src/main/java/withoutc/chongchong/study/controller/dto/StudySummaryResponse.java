@@ -1,8 +1,8 @@
 package withoutc.chongchong.study.controller.dto;
 
 public record StudySummaryResponse(
-        Long studyId,
-        String studyName,
+        Long id,
+        String name,
         String description,
         String imageUrl,
         int memberCount

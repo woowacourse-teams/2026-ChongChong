@@ -1,6 +1,13 @@
 get:
   tags: [Study]
   operationId: getStudyJoinInfo
+  x-frontend:
+    status: needs-update
+    description: "계약 수정: 참여 전 정보 응답의 studyId·studyName을 id·name으로 변경했다. 응답 검증·타입·화면 참조를 변경해야 한다. 요청 쿼리의 studyId와 스터디 참여 요청 필드는 기존 이름을 유지한다."
+    sources:
+      - frontend/src/features/study/api.ts
+      - frontend/src/features/study/responseSchemas.ts
+      - frontend/src/features/study/types.ts
   x-backend:
     status: done
     owner: wontop02
@@ -10,6 +17,7 @@ get:
   description: |
     인증된 사용자가 참여 전 스터디의 이름·설명·현재 인원수·이미지 조회 URL을 조회한다.
     요청 본문은 사용하지 않는다. 설명과 imageUrl은 null일 수 있다.
+    응답의 스터디 식별자와 이름은 공개 목록과 동일한 id와 name으로 반환한다.
 
     공개 탐색에서는 studyId만 전달하고, 초대 링크에서는 token만 전달할 수 있다. 둘 중 하나 이상을 전달해야 한다.
     token이 전달되면 공개 여부와 관계없이 형식·서명·3일 유효기간을 검증한다. studyId도 전달했다면 토큰의 스터디 ID와 일치해야 한다.
@@ -37,7 +45,7 @@ get:
       content:
         application/json:
           schema: { $ref: '../../components/schemas/studies.yaml#/StudySummaryResponse' }
-          example: { studyId: 21, studyName: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
+          example: { id: 21, name: 자바 스터디, description: 매주 월요일에 진행한다., imageUrl: 'https://example.com/study.png', memberCount: 5 }
     '400':
       description: 쿼리 형식·검증 오류, 조회 식별자 누락 또는 초대 토큰이 유효하지 않음
       content:

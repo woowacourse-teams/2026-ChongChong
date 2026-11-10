@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -584,9 +585,11 @@ class StudyAcceptanceTest {
                 .get("/studies/public")
                 .then()
                 .statusCode(200)
-                .body("studies.studyId",
+                .body("studies.id",
                         contains(sameTimeHigherId.getId().intValue(), sameTimeLowerId.getId().intValue()))
-                .body("studies[0].studyName", equalTo("같은 시각 큰 ID"))
+                .body("studies[0].name", equalTo("같은 시각 큰 ID"))
+                .body("studies[0]", not(hasKey("studyId")))
+                .body("studies[0]", not(hasKey("studyName")))
                 .body("studies[0].description", equalTo("공개 스터디 설명"))
                 .body("studies[0].memberCount", equalTo(1))
                 .body("studies[0].imageUrl", containsString("study-images/cover.png"))
@@ -605,7 +608,7 @@ class StudyAcceptanceTest {
                 .get("/studies/public")
                 .then()
                 .statusCode(200)
-                .body("studies.studyId", contains(olderHigherId.getId().intValue()))
+                .body("studies.id", contains(olderHigherId.getId().intValue()))
                 .body("hasNext", equalTo(false))
                 .body("nextCursor", nullValue());
     }
@@ -630,8 +633,8 @@ class StudyAcceptanceTest {
                 .get("/studies/public")
                 .then()
                 .statusCode(200)
-                .body("studies.studyId", contains(newer.getId().intValue()))
-                .body("studies[0].studyName", equalTo("실전 자바"))
+                .body("studies.id", contains(newer.getId().intValue()))
+                .body("studies[0].name", equalTo("실전 자바"))
                 .body("studies[0].description", equalTo("실전 과정"))
                 .body("studies[0].memberCount", equalTo(0))
                 .body("studies[0].imageUrl", nullValue())
@@ -648,7 +651,7 @@ class StudyAcceptanceTest {
                 .get("/studies/public")
                 .then()
                 .statusCode(200)
-                .body("studies.studyId", contains(older.getId().intValue()))
+                .body("studies.id", contains(older.getId().intValue()))
                 .body("hasNext", equalTo(false))
                 .body("nextCursor", nullValue());
     }
@@ -681,7 +684,7 @@ class StudyAcceptanceTest {
                 .get("/studies/public")
                 .then()
                 .statusCode(200)
-                .body("studies.studyId", containsInAnyOrder(matched.getId().intValue(), other.getId().intValue()))
+                .body("studies.id", containsInAnyOrder(matched.getId().intValue(), other.getId().intValue()))
                 .body("hasNext", equalTo(false))
                 .body("nextCursor", nullValue());
 
@@ -692,7 +695,7 @@ class StudyAcceptanceTest {
                 .get("/studies/public")
                 .then()
                 .statusCode(200)
-                .body("studies.studyId", contains(matched.getId().intValue()))
+                .body("studies.id", contains(matched.getId().intValue()))
                 .body("hasNext", equalTo(false))
                 .body("nextCursor", nullValue());
 
@@ -733,8 +736,8 @@ class StudyAcceptanceTest {
 
         response.then()
                 .statusCode(200)
-                .body("studyId", equalTo(study.getId().intValue()))
-                .body("studyName", equalTo("자바 스터디"))
+                .body("id", equalTo(study.getId().intValue()))
+                .body("name", equalTo("자바 스터디"))
                 .body("description", nullValue())
                 .body("memberCount", equalTo(1));
         if (withImage) {
@@ -774,8 +777,8 @@ class StudyAcceptanceTest {
                 .get("/studies/join-info")
                 .then()
                 .statusCode(200)
-                .body("studyId", equalTo(study.getId().intValue()))
-                .body("studyName", equalTo("정원이 찬 스터디"))
+                .body("id", equalTo(study.getId().intValue()))
+                .body("name", equalTo("정원이 찬 스터디"))
                 .body("memberCount", equalTo(50));
 
         testAuthRequest.givenAuthenticatedUser(viewer.getId())
@@ -880,8 +883,8 @@ class StudyAcceptanceTest {
                 .get("/studies/join-info")
                 .then()
                 .statusCode(200)
-                .body("studyId", equalTo(study.getId().intValue()))
-                .body("studyName", equalTo("초대 스터디"))
+                .body("id", equalTo(study.getId().intValue()))
+                .body("name", equalTo("초대 스터디"))
                 .body("description", equalTo("초대 설명"))
                 .body("memberCount", equalTo(1))
                 .body("imageUrl", containsString("study-images/invited.png"))

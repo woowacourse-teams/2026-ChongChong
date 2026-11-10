@@ -86,7 +86,7 @@ class StudyPublicDiscoveryTest {
 
         assertPage(firstPage, sameTimeHigherId.getId(), true);
         StudySummaryResponse summary = firstPage.studies().getFirst();
-        assertThat(summary.studyName()).isEqualTo("같은 시각 큰 ID");
+        assertThat(summary.name()).isEqualTo("같은 시각 큰 ID");
         assertThat(summary.description()).isEqualTo("설명");
         assertThat(summary.memberCount()).isEqualTo(1);
         assertThat(summary.imageUrl()).contains("study-images/cover.png", "X-Amz-Signature=");
@@ -185,11 +185,11 @@ class StudyPublicDiscoveryTest {
         entityManager.clear();
 
         assertThat(studyService.getPublicStudies(viewer.getId(), "%", null, 10).studies())
-                .extracting(StudySummaryResponse::studyId).containsExactly(percent.getId());
+                .extracting(StudySummaryResponse::id).containsExactly(percent.getId());
         assertThat(studyService.getPublicStudies(viewer.getId(), "_", null, 10).studies())
-                .extracting(StudySummaryResponse::studyId).containsExactly(underscore.getId());
+                .extracting(StudySummaryResponse::id).containsExactly(underscore.getId());
         assertThat(studyService.getPublicStudies(viewer.getId(), "java", null, 10).studies())
-                .extracting(StudySummaryResponse::studyId)
+                .extracting(StudySummaryResponse::id)
                 .containsExactly(general.getId(), percent.getId(), underscore.getId());
     }
 
@@ -210,7 +210,7 @@ class StudyPublicDiscoveryTest {
     }
 
     private void assertPage(StudyListResponse page, Long studyId, boolean hasNext) {
-        assertThat(page.studies()).extracting(StudySummaryResponse::studyId).containsExactly(studyId);
+        assertThat(page.studies()).extracting(StudySummaryResponse::id).containsExactly(studyId);
         assertThat(page.hasNext()).isEqualTo(hasNext);
         assertThat(page.nextCursor()).isEqualTo(hasNext ? studyId : null);
     }
