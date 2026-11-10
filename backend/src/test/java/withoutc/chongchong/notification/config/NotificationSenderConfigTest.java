@@ -3,6 +3,8 @@ package withoutc.chongchong.notification.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,6 +44,41 @@ class NotificationSenderConfigTest {
                     assertThat(context).hasSingleBean(WebPushClient.class);
                     assertThat(context).doesNotHaveBean(SimulatedNotificationSender.class);
                 });
+    }
+
+    @Test
+    @DisplayName("발송 executor가 먼저 종료된 뒤 Web Push client를 닫는다")
+    void closeWebPushClientAfterDeliveryExecutor() {
+        List<String> closed = new CopyOnWriteArrayList<>();
+        contextRunner
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("prod"))
+                .withPropertyValues("app.environment=prod")
+                .withBean("notificationDeliveryExecutor", ClosingResource.class,
+                        () -> new ClosingResource(() -> closed.add("executor")))
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    context.getBean(WebPushClient.class);
+                    assertThat(context.getBeanFactory().getDependentBeans("webPushClient"))
+                            .contains("notificationDeliveryExecutor");
+
+                    context.close();
+
+                    assertThat(closed).containsExactly("executor");
+                });
+    }
+
+    static class ClosingResource implements AutoCloseable {
+
+        private final Runnable onClose;
+
+        ClosingResource(Runnable onClose) {
+            this.onClose = onClose;
+        }
+
+        @Override
+        public void close() {
+            onClose.run();
+        }
     }
 
     @Test
