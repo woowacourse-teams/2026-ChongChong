@@ -2,16 +2,16 @@ import api from '../../../client';
 import { ApiError, handleError } from '../../api/error';
 import { isCommentCreateResponse, isCommentListResponse } from './responseSchemas';
 import type { CommentTarget } from './types';
+import { COMMENT_URLS } from './urls';
 
 function commentsPath(target: CommentTarget) {
-  const base = `/studies/${target.studyId}`;
   switch (target.type) {
     case 'notice':
-      return `${base}/notices/${target.noticeId}/comments`;
+      return COMMENT_URLS.notice.path(target.studyId, target.noticeId);
     case 'assignment':
-      return `${base}/assignments/${target.assignmentId}/comments`;
+      return COMMENT_URLS.assignment.path(target.studyId, target.assignmentId);
     case 'submission':
-      return `${base}/assignments/${target.assignmentId}/submissions/${target.submissionId}/comments`;
+      return COMMENT_URLS.submission.path(target.studyId, target.assignmentId, target.submissionId);
   }
 }
 

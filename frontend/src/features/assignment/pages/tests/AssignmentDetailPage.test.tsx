@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { API_URL } from '../../../../../config';
+import { COMMENT_URLS } from '../../../../shared/modules/comments/urls';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { server } from '../../../../mocks/msw-node';
 import { createWrapper, login, logout, setup } from '../../../../test/render';
@@ -795,12 +796,7 @@ describe('과제 디테일 페이지 테스트', () => {
       const submissionComments = jest.fn(() =>
         HttpResponse.json({ comments: [], totalCount: 0, hasNext: false, nextCursor: null }),
       );
-      server.use(
-        http.get(
-          `${API_URL}/studies/1/assignments/1/submissions/:submissionId/comments`,
-          submissionComments,
-        ),
-      );
+      server.use(http.get(COMMENT_URLS.submission.mock, submissionComments));
       const { user } = setupAssignmentDetailPage();
       await openDetailTab(user);
       expect(await screen.findByRole('button', { name: '제출하기' })).toBeVisible();

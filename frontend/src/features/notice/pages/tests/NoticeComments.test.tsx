@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes, useLocation } from 'react-router';
 import { API_URL } from '../../../../../config';
+import { COMMENT_URLS } from '../../../../shared/modules/comments/urls';
 import { server } from '../../../../mocks/msw-node';
 import { createWrapper } from '../../../../test/render';
 import { setAccessToken, clearAccessToken } from '../../../login/accessToken';
@@ -12,7 +13,7 @@ import { noticeTable } from '../../mocks/db';
 import { commentTable } from '../../mocks/commentDb';
 import NoticeDetailPage from '../NoticeDetailPage';
 
-const commentsUrl = `${API_URL}/studies/1/notices/1/comments`;
+const commentsUrl = `${API_URL}${COMMENT_URLS.notice.path(1, 1)}`;
 
 beforeEach(async () => {
   await userTable.create({ id: 1, name: '바니', profileImage: null });

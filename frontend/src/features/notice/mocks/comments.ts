@@ -1,5 +1,5 @@
 import { http, HttpResponse, type PathParams } from 'msw';
-import { API_URL } from '../../../../config';
+import { COMMENT_URLS } from '../../../shared/modules/comments/urls';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { memberTable, mockMembers } from '../../member/mocks/db';
 import { noticeTable, mockNotices } from './db';
@@ -8,9 +8,9 @@ import { assignmentTable, submissionTable } from '../../assignment/mocks/db';
 import { commentSchema } from '../../../shared/modules/comments/responseSchemas';
 
 const bases = [
-  `${API_URL}/studies/:studyId/notices/:noticeId/comments`,
-  `${API_URL}/studies/:studyId/assignments/:assignmentId/comments`,
-  `${API_URL}/studies/:studyId/assignments/:assignmentId/submissions/:submissionId/comments`,
+  COMMENT_URLS.notice.mock,
+  COMMENT_URLS.assignment.mock,
+  COMMENT_URLS.submission.mock,
 ];
 let nextCommentId = 1;
 
