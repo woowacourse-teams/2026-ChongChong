@@ -75,12 +75,13 @@ StudyMembersResponse:
 MyStudyResponse:
   type: object
   additionalProperties: false
-  required: [id, role, name, description, memberCount, noticeCount, assignmentCount, imageUrl]
+  required: [id, role, name, description, isPublic, memberCount, noticeCount, assignmentCount, imageUrl]
   properties:
     id: { type: integer, format: int64, example: 1 }
     role: { type: string, enum: [LEADER, MEMBER], example: MEMBER }
     name: { type: string, example: 자바 스터디 }
     description: { type: [string, 'null'], example: 매주 월요일에 진행한다. }
+    isPublic: { description: 스터디 공개 여부, type: boolean, example: true }
     memberCount: { description: 현재 리더를 포함한 전체 스터디 인원 수, type: integer, example: 5 }
     noticeCount: { description: 리더는 최초 작성 후 7일 미만이며 전체 확인이 끝나지 않은 공지 수이고 멤버는 본인이 확인 대상인 미확인 공지 수, type: integer, example: 3 }
     assignmentCount: { description: 리더는 전체 제출이 끝나지 않은 과제 수이고 멤버는 본인이 제출 대상인 미제출 과제 수, type: integer, example: 4 }
