@@ -10,17 +10,17 @@ interface Props extends Omit<ComponentProps<typeof Switch>, 'id'> {
   errorText?: string;
 }
 
+const switchContainerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: tokens.spacing[3],
+};
+
 export default function SwitchField({ id, label, helpText, errorText, ...props }: Props) {
   return (
     <Field>
-      <div
-        css={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: tokens.spacing[3],
-        }}
-      >
+      <div css={switchContainerStyle}>
         <Field.Label htmlFor={id}>{label}</Field.Label>
         <Switch {...props} id={id} aria-invalid={Boolean(errorText)} />
       </div>
