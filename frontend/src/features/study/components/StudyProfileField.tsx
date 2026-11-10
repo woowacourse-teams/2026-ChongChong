@@ -4,7 +4,7 @@ import useBooleanState from '../../../shared/hooks/useBooleanState';
 import ProfileImageActionSheet from './ProfileImageActionSheet';
 import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import { tokens } from '../../../styles/global';
-import camera from '../assets/profile-camera.svg';
+import camera from '../../../shared/assets/camera.svg';
 import StudyAvatar from './StudyAvatar';
 import { Field } from '../../../shared/ui/inputs/Field';
 
