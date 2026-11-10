@@ -47,14 +47,15 @@ function StudySearchResults({ keyword }: { keyword: string }) {
     fetchNextPage,
   });
 
+  function renderEmptyContent(keyword: string) {
+    if (keyword) return <SearchEmptyContent />;
+    else return <EmptyContent message="아직 공개된 스터디가 없어요" />;
+  }
+
   return (
     <>
       {studies.length === 0 ? (
-        keyword ? (
-          <SearchEmptyContent />
-        ) : (
-          <EmptyContent message="아직 공개된 스터디가 없어요" />
-        )
+        renderEmptyContent(keyword)
       ) : (
         <>
           <List>
