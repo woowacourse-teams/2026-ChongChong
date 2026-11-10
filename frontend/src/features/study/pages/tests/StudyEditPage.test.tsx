@@ -62,6 +62,7 @@ describe('스터디 수정 페이지 테스트', () => {
       name: '협곡 스터디',
       description: '피즈의 피즈 강의',
       inviteLink: 'bronze',
+      isPublic: true,
     });
     await memberTable.create({
       id: 1,
@@ -84,6 +85,7 @@ describe('스터디 수정 페이지 테스트', () => {
 
       expect(await findNameInput()).toHaveValue('협곡 스터디');
       expect(getDescriptionInput()).toHaveValue('피즈의 피즈 강의');
+      expect(screen.getByRole('switch', { name: '스터디 공개 여부' })).toBeChecked();
       expect(getSubmitButton()).toBeEnabled();
     });
 

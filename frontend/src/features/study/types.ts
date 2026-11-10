@@ -37,6 +37,7 @@ export type StudyDetail<R extends Role> = R extends 'LEADER'
   : MemberStudyDetail;
 
 export interface UserStudyInfo {
+  isPublic: boolean;
   studyName: string;
   description: string | null;
   imageUrl?: string | null;
@@ -56,7 +57,17 @@ export interface StudyJoinInfo {
   memberCount: number;
 }
 
+export type StudyJoinTarget =
+  { token: string; studyId?: never } | { studyId: number; token?: never };
+
+export interface PublicStudyListResponse {
+  studies: StudyJoinInfo[];
+  hasNext: boolean;
+  nextCursor: number | null;
+}
+
 export interface StudyFormValues {
+  isPublic?: boolean;
   name: string;
   description: string;
   imageFileId?: number | null;

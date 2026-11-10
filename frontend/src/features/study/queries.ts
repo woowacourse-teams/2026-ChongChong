@@ -1,7 +1,8 @@
-import { queryOptions } from '@tanstack/react-query';
-import { Role } from './types';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
+import { Role, StudyJoinTarget } from './types';
 import {
   fetchStudies,
+  fetchPublicStudies,
   fetchStudyInfo,
   fetchStudyInviteLink,
   fetchStudyDetail,
@@ -16,11 +17,19 @@ const studyQueries = {
       queryKey: [...studyQueries.lists()],
       queryFn: () => fetchStudies(),
     }),
+  publicList: (keyword = '') =>
+    infiniteQueryOptions({
+      queryKey: [...studyQueries.lists(), 'public', keyword],
+      queryFn: ({ pageParam }: { pageParam: number | null }) =>
+        fetchPublicStudies(pageParam ?? undefined, keyword),
+      initialPageParam: null,
+      getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor : undefined),
+    }),
   details: () => [...studyQueries.all(), 'detail'],
-  joinInfo: (token: string) =>
+  joinInfo: (target: string | StudyJoinTarget) =>
     queryOptions({
-      queryKey: [...studyQueries.all(), 'join-info', token],
-      queryFn: ({ signal }) => fetchStudyJoinInfo(token, signal),
+      queryKey: [...studyQueries.all(), 'join-info', target],
+      queryFn: ({ signal }) => fetchStudyJoinInfo(target, signal),
       retry: false,
     }),
   detail: <R extends Role>(studyId: number, role: R) =>

@@ -27,7 +27,7 @@ interface StudyMemberManagementListProps {
 }
 
 export function StudyLeaderManagementList({ studyId }: StudyLeaderManagementListProps) {
-  const [isOpen, openDialog, closeDialog] = useBooleanState();
+  const [isOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const { mutate: deleteStudy, isPending } = useDeleteStudy({ onError: closeDialog });
 
@@ -71,7 +71,7 @@ export function StudyLeaderManagementList({ studyId }: StudyLeaderManagementList
 }
 
 export function StudyMemberManagementList({ studyId }: StudyMemberManagementListProps) {
-  const [isOpen, openDialog, closeDialog] = useBooleanState();
+  const [isOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const { mutate: leaveStudyMember, isPending } = useLeaveStudy({ onError: closeDialog });
   return (

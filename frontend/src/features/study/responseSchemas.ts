@@ -8,6 +8,7 @@ import {
   UserStudyInfo,
   InviteLink,
   StudyJoinInfo,
+  PublicStudyListResponse,
 } from './types';
 
 const studyItemSchema = z.object({
@@ -64,6 +65,7 @@ const memberStudyDetailSchema = z.object({
 }) satisfies z.ZodType<MemberStudyDetail>;
 
 const studyInfoSchema = z.object({
+  isPublic: z.boolean(),
   studyName: z.string(),
   description: z.string().nullable(),
   imageUrl: z.string().nullable().optional(),
@@ -86,6 +88,16 @@ const studyJoinInfoSchema = z.object({
   imageUrl: z.string().nullable(),
   memberCount: z.number().int().nonnegative(),
 }) satisfies z.ZodType<StudyJoinInfo>;
+
+const publicStudyListSchema = z.object({
+  studies: z.array(studyJoinInfoSchema),
+  hasNext: z.boolean(),
+  nextCursor: z.number().int().positive().nullable(),
+}) satisfies z.ZodType<PublicStudyListResponse>;
+
+export function isPublicStudyListResponse(data: unknown): data is PublicStudyListResponse {
+  return publicStudyListSchema.safeParse(data).success;
+}
 
 export function isStudyJoinInfoResponse(data: unknown): data is StudyJoinInfo {
   return studyJoinInfoSchema.safeParse(data).success;

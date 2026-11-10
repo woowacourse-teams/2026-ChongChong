@@ -2,8 +2,9 @@ import { clearInviteLinkDraft } from './useInviteLinkState';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { joinStudy } from '../api';
+import studyQueries from '../queries';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
@@ -11,9 +12,11 @@ import StatusToast from '../../../shared/ui/toasts/StatusToast';
 export default function useStudyJoin() {
   const { move } = usePageNavigation();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { mutate, isPending, error } = useMutation({
-    mutationFn: ({ token }: { token: string }) => joinStudy({ token }),
-    onSuccess: (data) => {
+    mutationFn: joinStudy,
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: studyQueries.lists() });
       clearInviteLinkDraft();
       return move(URL_POLICY.afterStudyJoin(data.studyId));
     },

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 export default function useBooleanState(initialState: boolean | (() => boolean) = false) {
   const [booleanState, setBooleanState] = useState(initialState);
@@ -11,5 +11,11 @@ export default function useBooleanState(initialState: boolean | (() => boolean) 
     setBooleanState(false);
   }, []);
 
-  return [booleanState, setTrue, setFalse] as const;
+  const toggle = useCallback(() => {
+    setBooleanState((prev) => !prev);
+  }, []);
+
+  const actions = useMemo(() => ({ setTrue, setFalse, toggle }), [setTrue, setFalse, toggle]);
+
+  return [booleanState, actions] as const;
 }

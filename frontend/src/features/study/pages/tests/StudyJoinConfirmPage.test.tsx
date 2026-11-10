@@ -45,7 +45,7 @@ describe('스터디 참여 확인 페이지 테스트', () => {
     );
   });
 
-  test('토큰 없이 스터디 참여 확인 페이지에 접근하면 참여 입력 페이지로 이동한다', async () => {
+  test('토큰과 스터디 아이디 없이 접근하면 참여 입력 페이지로 이동한다', async () => {
     setup(<StudyJoinConfirmPage />, {
       wrapper: createWrapper({
         initialEntries: ['/studies/join/confirm'],
@@ -60,5 +60,25 @@ describe('스터디 참여 확인 페이지 테스트', () => {
 
     expect(await screen.findByRole('textbox', { name: '초대 링크' })).toBeVisible();
     expect(screen.getByRole('textbox', { name: '초대 링크' })).toHaveValue('');
+  });
+
+  test('스터디 아이디로 접근하면 해당 스터디 정보가 보인다', async () => {
+    await studyTable.create({
+      id: 1,
+      name: '리액트 스터디',
+      description: '리액트를 함께 공부합니다',
+      inviteLink: 'react',
+      imageUrl: 'http://localhost:8000/react.png',
+      isPublic: true,
+    });
+
+    setup(<StudyJoinConfirmPage />, {
+      wrapper: createWrapper({
+        initialEntries: ['/studies/join/confirm?studyId=1'],
+      }),
+    });
+
+    expect(await screen.findByRole('heading', { name: '리액트 스터디' })).toBeVisible();
+    expect(screen.getByText('리액트를 함께 공부합니다')).toBeVisible();
   });
 });

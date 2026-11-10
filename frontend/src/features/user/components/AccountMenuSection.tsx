@@ -40,7 +40,7 @@ const menuButtonStyle = {
 export default function AccountMenuSection() {
   const { move } = usePageNavigation();
   const toast = useToast();
-  const [isOpen, openDialog, closeDialog] = useBooleanState();
+  const [isOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const { mutate: requestLogout, isPending: isLoggingOut } = useMutation({
     mutationFn: async () => {

@@ -35,7 +35,7 @@ function Content() {
   const { studyId } = useIntegerParams(['studyId']);
   const { mutate: editStudy, isPending, fieldErrors } = useEditStudy(studyId);
   const {
-    data: { studyName, description, imageUrl },
+    data: { studyName, description, imageUrl, isPublic },
   } = useSuspenseQuery(studyQueries.info(studyId));
 
   return (
@@ -45,7 +45,7 @@ function Content() {
         onSubmit={editStudy}
         isSubmitting={isPending}
         fieldErrors={fieldErrors}
-        initialValues={{ name: studyName, description: description, imageUrl }}
+        initialValues={{ name: studyName, description, imageUrl, isPublic }}
       />
     </>
   );

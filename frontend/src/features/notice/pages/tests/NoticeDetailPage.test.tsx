@@ -27,6 +27,7 @@ describe('리드 공지 상세 조회 실패', () => {
       http.get(STUDY_INFO_URL, () =>
         HttpResponse.json({
           studyName: '객체지향 스터디',
+          isPublic: false,
           role: 'LEADER',
           userName: '안톨리니',
           description: '즐거운 객체지향 스터디',
@@ -101,6 +102,7 @@ describe('리드 공지 상세', () => {
       http.get(STUDY_INFO_URL, () =>
         HttpResponse.json({
           studyName: '객체지향 스터디',
+          isPublic: false,
           role: 'LEADER',
           userName: '안톨리니',
           description: '즐거운 객체지향 스터디 입니다',
@@ -217,6 +219,7 @@ describe('스터디원 공지 상세 조회 실패', () => {
       http.get(STUDY_INFO_URL, () =>
         HttpResponse.json({
           studyName: '객체지향 스터디',
+          isPublic: false,
           role: 'MEMBER',
           userName: '안톨리니',
           description: '즐거운 객체지향 스터디',
@@ -263,6 +266,7 @@ describe('리드 공지 읽음 현황 조회 실패', () => {
       http.get(STUDY_INFO_URL, () =>
         HttpResponse.json({
           studyName: '객체지향 스터디',
+          isPublic: false,
           role: 'LEADER',
           userName: '안톨리니',
           description: '즐거운 객체지향 스터디',
@@ -317,6 +321,7 @@ describe('스터디원 내 공지 읽음 상태 조회 실패', () => {
       http.get(STUDY_INFO_URL, () =>
         HttpResponse.json({
           studyName: '객체지향 스터디',
+          isPublic: false,
           role: 'MEMBER',
           userName: '안톨리니',
           description: '즐거운 객체지향 스터디',
