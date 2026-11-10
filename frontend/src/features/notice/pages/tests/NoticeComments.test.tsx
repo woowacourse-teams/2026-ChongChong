@@ -37,6 +37,7 @@ beforeEach(async () => {
     http.get(`${API_URL}/studies/1/info`, () =>
       HttpResponse.json({
         studyName: '스터디',
+        isPublic: false,
         role: 'LEADER',
         userName: '바니',
         description: '스터디',
@@ -163,6 +164,7 @@ describe('공지 댓글 테스트', () => {
       http.get(`${API_URL}/studies/1/info`, () =>
         HttpResponse.json({
           studyName: '스터디',
+          isPublic: false,
           role: 'MEMBER',
           userName: '바니',
           description: '스터디',
