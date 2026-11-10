@@ -49,6 +49,7 @@ describe('공지 읽음 처리', () => {
       http.get(`${API_URL}${STUDY_URLS.info}`, () =>
         HttpResponse.json({
           studyName: '객체지향 스터디',
+          isPublic: false,
           role: 'MEMBER',
           userName: '안톨리니',
           description: '즐거운 객체지향 스터디',
