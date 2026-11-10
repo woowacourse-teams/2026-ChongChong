@@ -48,9 +48,12 @@ function studyCreateButton() {
 
 describe('스터디 생성 페이지', () => {
   describe('입력값 검증', () => {
-    test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {
+    test('이름과 설명은 비어 있고 공개 여부는 꺼져 있으며 생성 버튼은 비활성화 된다', () => {
       setupStudyCreatePage();
 
+      expect(studyNameInput()).toHaveValue('');
+      expect(studyDescriptionInput()).toHaveValue('');
+      expect(screen.getByRole('switch', { name: '스터디 공개 여부' })).not.toBeChecked();
       expect(studyCreateButton()).toBeDisabled();
     });
 
@@ -154,6 +157,7 @@ describe('스터디 생성 페이지', () => {
           invalidInputResponse([
             { field: 'name', code: 'SOME_ERROR', reason: '이름에 문제가 있어요' },
             { field: 'description', code: 'SOME_ERROR', reason: '설명에 문제가 있어요' },
+            { field: 'isPublic', code: 'SOME_ERROR', reason: '공개 여부에 문제가 있어요' },
           ]),
         ),
       );
@@ -164,6 +168,7 @@ describe('스터디 생성 페이지', () => {
 
       expect(await screen.findByText('이름에 문제가 있어요')).toBeInTheDocument();
       expect(await screen.findByText('설명에 문제가 있어요')).toBeInTheDocument();
+      expect(await screen.findByText('공개 여부에 문제가 있어요')).toBeInTheDocument();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
