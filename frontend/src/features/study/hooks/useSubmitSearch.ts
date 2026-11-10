@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 
-const SEARCH_QUERY_KEY = 'keyword';
+export const SEARCH_QUERY_KEY = 'keyword';
 
 export function useSubmitSearch() {
   const [searchQuery, setSearchQuery] = useSearchParams();

@@ -4,7 +4,7 @@ import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import Spinner from '../../../shared/ui/Spinner';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import studyQueries from '../queries';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
 import EmptyContent from '../../../shared/ui/EmptyContent';
@@ -14,19 +14,26 @@ import { Search, SearchEmptyContent } from './Search';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { typography } from '../../../styles/global';
 import StudyContentCard from './StudyContentCard';
+import { SEARCH_QUERY_KEY } from '../hooks/useSubmitSearch';
 
 export default function PublicStudies() {
+  const [searchParams] = useSearchParams();
+  const keyword = searchParams.get(SEARCH_QUERY_KEY) ?? '';
+
+  return <PublicStudiesContent key={keyword} />;
+}
+
+function PublicStudiesContent() {
   const { searchQuery, searchValue, handleSearchValue, handleSubmit } = useSubmitSearch();
 
   return (
     <section aria-label="스터디 둘러보기">
       <Search
-        onSubmit={(event) => handleSubmit(event)}
+        onSubmit={handleSubmit}
         searchValue={searchValue}
         changeSearchValue={handleSearchValue}
       />
       <ErrorBoundary
-        key={searchQuery}
         fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
       >
         <Suspense fallback={<Spinner />}>
