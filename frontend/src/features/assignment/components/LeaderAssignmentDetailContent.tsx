@@ -1,3 +1,5 @@
+import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import type { AssignmentTab } from '../types';
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export default function LeaderAssignmentDetailContent({ studyId, userName }: Props) {
+  const focusCommentId = useFocusCommentId();
   const { assignmentId } = useIntegerParams(['assignmentId']);
 
   const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
@@ -58,6 +61,12 @@ export default function LeaderAssignmentDetailContent({ studyId, userName }: Pro
             panel: (
               <>
                 <AssignmentArticle assignment={assignment} />
+                <CommentsPanel
+                  key={`assignment-${studyId}-${assignmentId}`}
+                  target={{ type: 'assignment', studyId, assignmentId }}
+                  title="과제 댓글"
+                  focusCommentId={focusCommentId}
+                />
                 {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && mySubmission ? (
                   <MyAssignmentSubmission
                     studyId={studyId}

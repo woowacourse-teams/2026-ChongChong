@@ -1,3 +1,5 @@
+import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import type { NoticeTab } from '../types';
 import { useSuspenseQueries } from '@tanstack/react-query';
 import Tabs from '../../../shared/widgets/Tabs';
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) {
+  const focusCommentId = useFocusCommentId();
   const [{ data: notice }, { data: readStatus }] = useSuspenseQueries({
     queries: [noticeQueries.detail(studyId, noticeId), noticeQueries.readStatus(studyId, noticeId)],
   });
@@ -28,7 +31,21 @@ export default function LeaderNoticeDetailContent({ studyId, noticeId }: Props) 
       />
       <Tabs<NoticeTab>
         tabs={[
-          { key: 'detail', label: '내용', panel: <NoticeArticle notice={notice} /> },
+          {
+            key: 'detail',
+            label: '내용',
+            panel: (
+              <>
+                <NoticeArticle notice={notice} />
+                <CommentsPanel
+                  key={`${studyId}-${noticeId}`}
+                  target={{ type: 'notice', studyId, noticeId }}
+                  title="공지 댓글"
+                  focusCommentId={focusCommentId}
+                />
+              </>
+            ),
+          },
           {
             key: 'status',
             label: '현황',

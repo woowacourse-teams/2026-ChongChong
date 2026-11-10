@@ -2,6 +2,7 @@ import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { CSSObject } from '@emotion/react';
 import reminderIcon from '../../../shared/assets/remind.svg';
+import commentIcon from '../../../shared/assets/comment-green.svg';
 import notificationIcon from '../../../shared/assets/notice-green.webp';
 import { Notification } from '../types';
 import { typography, tokens } from '../../../styles/global';
@@ -53,9 +54,12 @@ const UnreadStyle = {
 // TODO: 변화에 대응할 수 있는 컴포넌트 설계하기
 export default function NotificationItem({ notification }: { notification: Notification }) {
   const isReminder = notification.type === 'REMIND';
+  const isComment = new URL(notification.deepLink, window.location.origin).searchParams.has(
+    'focusCommentId',
+  );
   return (
     <div css={NotificationItemStyle}>
-      {isReminder ? <ReminderNotificationIcon /> : <CommonNotificationIcon />}
+      {isReminder ? <ReminderNotificationIcon /> : <CommonNotificationIcon isComment={isComment} />}
       <div css={{ minWidth: 0 }}>
         <Paragraph variant="subtitle" css={TextStyle}>
           {notification.title}
@@ -88,11 +92,11 @@ function ReminderNotificationIcon() {
   );
 }
 
-function CommonNotificationIcon() {
+function CommonNotificationIcon({ isComment }: { isComment: boolean }) {
   return (
     <img
-      src={notificationIcon}
-      alt="일반 알림"
+      src={isComment ? commentIcon : notificationIcon}
+      alt={isComment ? '댓글 알림' : '일반 알림'}
       width={18}
       height={18}
       css={{ justifySelf: 'center', marginTop: tokens.spacing[2] }}
