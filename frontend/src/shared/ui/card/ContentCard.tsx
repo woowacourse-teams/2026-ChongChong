@@ -1,5 +1,5 @@
 import { Heading, Paragraph, Text } from '../Typography';
-import { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode, ComponentProps } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
 type TitleSize = 'default' | 'large';
@@ -13,8 +13,14 @@ interface ContentCardProps extends ChildrenProps {
   onClick?: () => void;
 }
 
-interface TitleProps extends ChildrenProps {
+interface TitleProps extends Omit<ComponentProps<typeof Heading>, 'variant' | 'level'> {
   size?: TitleSize;
+  level?: ComponentProps<typeof Heading>['level'];
+  truncate?: boolean;
+}
+
+interface DescriptionProps extends Omit<ComponentProps<typeof Paragraph>, 'variant'> {
+  truncate?: boolean;
 }
 
 interface FooterProps extends ChildrenProps {
@@ -53,8 +59,11 @@ const titleRowStyle = {
 
 const titleStyle = {
   margin: 0,
-  overflow: 'hidden',
   color: tokens.color.mainBlack,
+} satisfies CSSProperties;
+
+const truncatedTitleStyle = {
+  overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
@@ -86,9 +95,12 @@ const trailingStyle = {
 } satisfies CSSProperties;
 
 const descriptionStyle = {
-  display: '-webkit-box',
   margin: `${tokens.spacing[1]} 0 0`,
   color: tokens.text.muted,
+} satisfies CSSProperties;
+
+const truncatedDescriptionStyle = {
+  display: '-webkit-box',
   WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 2,
   whiteSpace: 'nowrap',
@@ -131,16 +143,27 @@ ContentCard.Badges = function Badges({ children }: ChildrenProps) {
   return <div css={badgesStyle}>{children}</div>;
 };
 
-ContentCard.TitleRow = function TitleRow({ children }: ChildrenProps) {
-  return <div css={titleRowStyle}>{children}</div>;
+ContentCard.TitleRow = function TitleRow({ children, ...props }: ComponentProps<'div'>) {
+  return (
+    <div css={titleRowStyle} {...props}>
+      {children}
+    </div>
+  );
 };
 
-ContentCard.Title = function Title({ size = 'default', children }: TitleProps) {
+ContentCard.Title = function Title({
+  size = 'default',
+  level = 3,
+  truncate = true,
+  children,
+  ...props
+}: TitleProps) {
   return (
     <Heading
-      level={3}
+      level={level}
       variant={size === 'large' ? 'title' : 'subtitle'}
-      css={[titleStyle, size === 'large' && largeTitleStyle]}
+      css={[titleStyle, size === 'large' && largeTitleStyle, truncate && truncatedTitleStyle]}
+      {...props}
     >
       {children}
     </Heading>
@@ -163,9 +186,17 @@ ContentCard.Trailing = function Trailing({ children }: ChildrenProps) {
   );
 };
 
-ContentCard.Description = function Description({ children }: ChildrenProps) {
+ContentCard.Description = function Description({
+  truncate = true,
+  children,
+  ...props
+}: DescriptionProps) {
   return (
-    <Paragraph variant="body" css={descriptionStyle}>
+    <Paragraph
+      variant="body"
+      css={[descriptionStyle, truncate && truncatedDescriptionStyle]}
+      {...props}
+    >
       {children}
     </Paragraph>
   );

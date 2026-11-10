@@ -13,7 +13,7 @@ import Badge from '../../../shared/ui/Badge';
 import { Search, SearchEmptyContent } from './Search';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { typography } from '../../../styles/global';
-import StudyContentCard from './StudyContentCard';
+import { HorizontalStudyCard } from './StudyContentCard';
 import { SEARCH_QUERY_KEY } from '../hooks/useSubmitSearch';
 
 export default function PublicStudies() {
@@ -69,8 +69,14 @@ function StudySearchResults({ keyword }: { keyword: string | undefined }) {
             {studies.map((study) => (
               <List.Item key={study.studyId}>
                 <Link {...URL_POLICY.toPublicStudyJoinInfo(study.studyId)}>
-                  <StudyContentCard>
-                    <StudyContentCard.Badges>
+                  <HorizontalStudyCard
+                    study={{
+                      name: study.studyName,
+                      imageUrl: study.imageUrl,
+                      description: study.description,
+                      memberCount: study.memberCount,
+                    }}
+                    badges={
                       <Badge
                         variant="brandSolid"
                         size="small"
@@ -78,13 +84,8 @@ function StudySearchResults({ keyword }: { keyword: string | undefined }) {
                       >
                         모집 중
                       </Badge>
-                    </StudyContentCard.Badges>
-                    <StudyContentCard.Content
-                      imageUrl={study.imageUrl}
-                      name={study.studyName}
-                      description={study.description}
-                    />
-                  </StudyContentCard>
+                    }
+                  />
                 </Link>
               </List.Item>
             ))}
