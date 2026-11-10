@@ -490,7 +490,7 @@ class StudyAcceptanceTest {
     }
 
     @Test
-    @DisplayName("내 스터디 목록 조회 요청을 보내면 가입 순서와 집계 정보를 반환한다")
+    @DisplayName("내 스터디 목록 조회 요청을 보내면 가입 순서와 공개 여부, 집계 정보를 반환한다")
     void getMyStudiesTest() {
         User user = userRepository.saveAndFlush(User.create("테스트 사용자", "profile-image-url"));
         User otherUser = userRepository.saveAndFlush(User.create("다른 사용자", "other-profile-image-url"));
@@ -498,7 +498,7 @@ class StudyAcceptanceTest {
         FileMetadata image = FileMetadata.create(user, "study.png", "study-profiles/study.png", "image/png", 1024);
         image.completeUpload();
         fileRepository.saveAndFlush(image);
-        Study newerStudy = Study.create("최근 스터디", "최근 스터디 설명", false);
+        Study newerStudy = Study.create("최근 스터디", "최근 스터디 설명", true);
         newerStudy.changeImage(image);
         newerStudy = studyRepository.saveAndFlush(newerStudy);
 
@@ -539,10 +539,12 @@ class StudyAcceptanceTest {
                 .body("studies.size()", equalTo(2))
                 .body("studies[0].id", equalTo(newerStudy.getId().intValue()))
                 .body("studies[0].role", equalTo("LEADER"))
+                .body("studies[0].isPublic", equalTo(true))
                 .body("studies[0].memberCount", equalTo(2))
                 .body("studies[0].imageUrl", containsString("study-profiles/study.png"))
                 .body("studies[1].id", equalTo(olderStudy.getId().intValue()))
                 .body("studies[1].role", equalTo("MEMBER"))
+                .body("studies[1].isPublic", equalTo(false))
                 .body("studies[1].memberCount", equalTo(2))
                 .body("studies[1].imageUrl", nullValue());
     }

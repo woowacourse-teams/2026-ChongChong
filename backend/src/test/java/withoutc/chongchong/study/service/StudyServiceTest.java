@@ -107,7 +107,7 @@ class StudyServiceTest {
     }
 
     @Test
-    @DisplayName("내가 가입한 스터디 목록을 가입 순서와 집계 정보와 함께 반환한다")
+    @DisplayName("내가 가입한 스터디 목록을 가입 순서와 공개 여부, 집계 정보와 함께 반환한다")
     void getMyStudiesTest() {
         Long userId = 1L;
         User user = User.create("사용자", "profile-image-url");
@@ -116,6 +116,7 @@ class StudyServiceTest {
         when(leaderStudy.getId()).thenReturn(1L);
         when(leaderStudy.getName()).thenReturn("리더 스터디");
         when(leaderStudy.getDescription()).thenReturn("리더 스터디 설명");
+        when(leaderStudy.isPublic()).thenReturn(true);
         FileMetadata image = mock(FileMetadata.class);
         when(leaderStudy.getImageFile()).thenReturn(image);
         when(image.getObjectKey()).thenReturn("study-profiles/image.png");
@@ -125,6 +126,7 @@ class StudyServiceTest {
         when(memberStudy.getId()).thenReturn(2L);
         when(memberStudy.getName()).thenReturn("멤버 스터디");
         when(memberStudy.getDescription()).thenReturn("멤버 스터디 설명");
+        when(memberStudy.isPublic()).thenReturn(false);
 
         StudyMember leader = StudyMember.create(
                 leaderStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER);
@@ -150,15 +152,16 @@ class StudyServiceTest {
                         MyStudyResponse::role,
                         MyStudyResponse::name,
                         MyStudyResponse::description,
+                        MyStudyResponse::isPublic,
                         MyStudyResponse::memberCount,
                         MyStudyResponse::noticeCount,
                         MyStudyResponse::assignmentCount,
                         MyStudyResponse::imageUrl
                 )
                 .containsExactly(
-                        tuple(1L, StudyMemberRole.LEADER, "리더 스터디", "리더 스터디 설명", 3, 1, 1,
+                        tuple(1L, StudyMemberRole.LEADER, "리더 스터디", "리더 스터디 설명", true, 3, 1, 1,
                                 "https://example.com/image.png"),
-                        tuple(2L, StudyMemberRole.MEMBER, "멤버 스터디", "멤버 스터디 설명", 2, 1, 1, null)
+                        tuple(2L, StudyMemberRole.MEMBER, "멤버 스터디", "멤버 스터디 설명", false, 2, 1, 1, null)
                 );
         verify(studyMemberRepository).countByStudyId(1L);
         verify(studyMemberRepository).countByStudyId(2L);
