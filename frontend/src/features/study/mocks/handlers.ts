@@ -1,6 +1,6 @@
 import { MOCK_UPLOAD_ORIGIN } from '../../../shared/modules/files/mocks/db';
 import type { StudyFormValues, StudyJoinTarget } from '../types';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { studyTable } from './db';
 import { API_URL } from '../../../../config';
 import { STUDY_URLS } from '../urls';
@@ -166,7 +166,7 @@ export const handlers = [
     return HttpResponse.json({ studies: studies.filter((study) => study !== null) });
   }),
 
-  http.get(`${API_URL}${STUDY_URLS.publicList}`, ({ request }) => {
+  http.get(`${API_URL}${STUDY_URLS.publicList}`, async ({ request }) => {
     if (!findUserFromHeader(request.headers)) return new HttpResponse(null, { status: 401 });
     const params = new URL(request.url).searchParams;
     const cursor = params.has('cursor') ? Number(params.get('cursor')) : undefined;
@@ -205,6 +205,8 @@ export const handlers = [
       .filter((study) => study.memberCount < 50);
     const page = studies.slice(0, size);
     const hasNext = studies.length > size;
+    // 다음 페이지의 로딩 Spinner를 확인하기 위한 목 응답 지연입니다.
+    if (cursor !== undefined) await delay(500);
     return HttpResponse.json({
       studies: page,
       hasNext,
