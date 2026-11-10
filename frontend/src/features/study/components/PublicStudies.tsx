@@ -16,7 +16,7 @@ import { typography } from '../../../styles/global';
 import StudyContentCard from './StudyContentCard';
 
 export default function PublicStudies() {
-  const { submittedValue, searchValue, handleSearchValue, handleSubmit } = useSubmitSearch();
+  const { searchQuery, searchValue, handleSearchValue, handleSubmit } = useSubmitSearch();
 
   return (
     <section aria-label="스터디 둘러보기">
@@ -26,18 +26,18 @@ export default function PublicStudies() {
         changeSearchValue={handleSearchValue}
       />
       <ErrorBoundary
-        key={submittedValue}
+        key={searchQuery}
         fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
       >
         <Suspense fallback={<Spinner />}>
-          <StudySearchResults keyword={submittedValue} />
+          <StudySearchResults keyword={searchQuery} />
         </Suspense>
       </ErrorBoundary>
     </section>
   );
 }
 
-function StudySearchResults({ keyword }: { keyword: string }) {
+function StudySearchResults({ keyword }: { keyword: string | undefined }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } =
     useSuspenseInfiniteQuery(studyQueries.publicList(keyword));
   const studies = data.pages.flatMap((page) => page.studies);
@@ -47,7 +47,7 @@ function StudySearchResults({ keyword }: { keyword: string }) {
     fetchNextPage,
   });
 
-  function renderEmptyContent(keyword: string) {
+  function renderEmptyContent(keyword: string | undefined) {
     if (keyword) return <SearchEmptyContent />;
     else return <EmptyContent message="아직 공개된 스터디가 없어요" />;
   }
