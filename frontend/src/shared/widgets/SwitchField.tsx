@@ -11,7 +11,6 @@ interface Props extends Omit<ComponentProps<typeof Switch>, 'id'> {
 }
 
 export default function SwitchField({ id, label, helpText, errorText, ...props }: Props) {
-  const descriptionId = `${id}-description`;
   return (
     <Field>
       <div
@@ -23,18 +22,9 @@ export default function SwitchField({ id, label, helpText, errorText, ...props }
         }}
       >
         <Field.Label htmlFor={id}>{label}</Field.Label>
-        <Switch
-          {...props}
-          id={id}
-          aria-describedby={errorText || helpText ? descriptionId : undefined}
-          aria-invalid={Boolean(errorText)}
-        />
+        <Switch {...props} id={id} aria-invalid={Boolean(errorText)} />
       </div>
-      {(errorText || helpText) && (
-        <div id={descriptionId}>
-          <Field.SubText errorText={errorText} helpText={helpText} />
-        </div>
-      )}
+      <Field.SubText errorText={errorText} helpText={helpText} />
     </Field>
   );
 }
