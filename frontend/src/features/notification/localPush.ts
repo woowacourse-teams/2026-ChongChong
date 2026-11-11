@@ -29,6 +29,19 @@ export function getOrCreateInstallationId() {
 const PUSH_SUBSCRIPTION_ID_KEY = 'chongchong:push-subscription-id';
 const PUSH_ENABLED_KEY = 'chongchong:push-enabled';
 
+export async function hasLocalPushSubscription() {
+  if (!('serviceWorker' in navigator)) return false;
+
+  const scope = new URL('/push/', window.location.origin).href;
+  const registration = await navigator.serviceWorker.getRegistration(scope);
+
+  if (registration?.scope !== scope || !registration.pushManager) {
+    return false;
+  }
+
+  return (await registration.pushManager.getSubscription()) !== null;
+}
+
 export async function clearLocalPushSubscription() {
   if ('serviceWorker' in navigator) {
     const scope = new URL('/push/', window.location.origin).href;
