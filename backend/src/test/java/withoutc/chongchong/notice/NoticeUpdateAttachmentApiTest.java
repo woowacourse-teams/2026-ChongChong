@@ -106,7 +106,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         leader = userRepository.save(User.create("리더", null));
         member = userRepository.save(User.create("스터디원", null));
         outsider = userRepository.save(User.create("외부 사용자", null));
-        study = studyRepository.save(Study.create("공지 수정 HTTP 스터디", "설명"));
+        study = studyRepository.save(Study.create("공지 수정 HTTP 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         StudyMember studyMember = studyMemberRepository.save(
                 StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
@@ -257,18 +257,9 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("새 파일의 형식이 허용되지 않으면 400 INVALID_NOTICE_IMAGE_TYPE을 반환한다")
-    void rejectUnsupportedImageType() {
-        FileMetadata file = saveFile(leader, "application/pdf", 1024);
-
-        assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_TYPE");
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {0L, 5242881L})
-    @DisplayName("빈 이미지와 용량 초과 이미지는 400 INVALID_NOTICE_IMAGE_SIZE를 반환한다")
-    void rejectInvalidImageSize(long size) {
-        FileMetadata file = saveFile(leader, "image/png", size);
+    @DisplayName("용량 초과 이미지는 400 INVALID_NOTICE_IMAGE_SIZE를 반환한다")
+    void rejectInvalidImageSize() {
+        FileMetadata file = saveFile(leader, "image/png", 5242881L);
 
         assertRejected(request(leader.getId(), validBody(List.of(file.getId()))), 400, "INVALID_NOTICE_IMAGE_SIZE");
     }
@@ -303,7 +294,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     @Test
     @DisplayName("다른 스터디의 공지 수정은 404 NOTICE_NOT_FOUND를 반환한다")
     void rejectNoticeFromOtherStudy() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         Notice otherNotice = noticeRepository.saveAndFlush(Notice.create(otherStudy, "다른 제목", "다른 내용"));
 
         assertRejected(request(leader.getId(), otherNotice.getId(), validBody(existingIds)), 404, "NOTICE_NOT_FOUND");

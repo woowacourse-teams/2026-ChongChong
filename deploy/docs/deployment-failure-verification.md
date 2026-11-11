@@ -24,7 +24,9 @@ A가 4초 동안 처리하는 요청을 시작한 뒤 새 요청의 대상을 B�
 
 실제 Nginx와 테스트용 HTTP 서버로 실험했으며, Spring 앱의 긴 요청은 시험하지 않았다. 로그에는 전환 전 서버의 준비 상태를 확인하다 잠시 연결에 실패한 기록도 남았다. 이 요청은 150건 집계에서 제외했다.
 
-현재 스크립트는 이전 앱을 즉시 종료하지 않는다. 이전 Nginx worker가 연결을 처리 중이면 다음 배포를 거절한다. 요청을 끝까지 처리할 수 있는 대신, 끝나지 않는 연결은 다음 배포를 지연시킬 수 있다. 연결을 강제로 끊는 별도의 제한 시간은 없다.
+현재 스크립트는 이전 앱을 즉시 종료하지 않는다. 이전 Nginx worker가 연결을 처리 중이면 다음 배포를 거절한다. 전환 전에 시작한 요청을 처리하도록 기다리지만, 오래 유지되는 연결은 다음 배포를 지연시킬 수 있다.
+
+현재 설정에는 이전 worker의 종료 대기 상한인 `worker_shutdown_timeout`이 없다. 다만 요청 자체에는 Nginx의 기본 프록시 timeout이 적용된다. 예를 들어 `proxy_read_timeout`은 연속된 읽기 사이의 대기 시간을 기본 60초로 제한하므로, 모든 긴 요청이 무제한으로 유지되는 것은 아니다. [worker 종료 설정](https://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout), [프록시 읽기 timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout).
 
 ## 두 서버가 같은 알림을 동시에 처리하지 않는가
 

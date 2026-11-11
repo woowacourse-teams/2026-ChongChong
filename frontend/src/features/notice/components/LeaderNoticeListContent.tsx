@@ -1,7 +1,10 @@
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { tokens } from '../../../styles/global';
-import Button from '../../../shared/ui/Button';
-import { useNavigate } from 'react-router';
+import Floating from '../../../shared/ui/Floating';
+import FloatingMenu from '../../../shared/widgets/floating/FloatingMenu';
+import plus from '../../../shared/assets/icons/plus-white.svg';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import Badge from '../../../shared/ui/Badge';
@@ -18,18 +21,10 @@ const sectionStyle = {
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
-} satisfies CSSProperties;
-
-const buttonAreaStyle = {
-  display: 'flex',
-  width: '100%',
-  justifyContent: 'center',
-  marginTop: tokens.spacing[3],
+  paddingBottom: tokens.spacing[20],
 } satisfies CSSProperties;
 
 export default function LeaderNoticeListContent({ studyId }: Props) {
-  const navigate = useNavigate();
-
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     noticeQueries.list(studyId),
   );
@@ -64,18 +59,32 @@ export default function LeaderNoticeListContent({ studyId }: Props) {
             )}
           </NoticeList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">공지를 더 불러오는 중...</p>}
+          {isFetchingNextPage && (
+            <Paragraph variant="inherited" role="status">
+              공지를 더 불러오는 중...
+            </Paragraph>
+          )}
         </>
       )}
-      <div css={buttonAreaStyle}>
-        <Button
-          variant="brandSolid"
-          size="large"
-          onClick={() => navigate(`/studies/${studyId}/notices/create`)}
-        >
-          공지 작성하기
-        </Button>
-      </div>
+      <FloatingMenu
+        aria-label="공지 메뉴"
+        bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.tabBarBottomInset} + ${tokens.spacing[4]})`}
+        trigger={({ bottom, ...props }) => (
+          <Floating
+            {...props}
+            css={{ bottom }}
+            aria-label="공지 메뉴 열기"
+            icon={<img src={plus} alt="" width={30} height={30} />}
+          />
+        )}
+      >
+        <FloatingMenu.LinkItem
+          {...URL_POLICY.toCreateNotice(studyId)}
+          icon={<img src={plus} alt="" width={22} height={22} />}
+          label="공지 작성하기"
+          description="스터디원에게 전할 소식을 작성해요"
+        />
+      </FloatingMenu>
     </section>
   );
 }

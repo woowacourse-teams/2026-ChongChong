@@ -5,7 +5,8 @@ import StatusToast from '../../../shared/ui/toasts/StatusToast';
 const COPY_SUCCESS_DURATION_MS = 1000;
 
 export default function useCopyLink() {
-  const [isCopySuccess, showCopySuccess, hideCopySuccess] = useBooleanState();
+  const [isCopySuccess, { setTrue: showCopySuccess, setFalse: hideCopySuccess }] =
+    useBooleanState();
   const toast = useToast();
 
   function copySuccessToHide() {

@@ -1,6 +1,7 @@
 package withoutc.chongchong.user.repository;
 
 import jakarta.persistence.LockModeType;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -13,6 +14,18 @@ import withoutc.chongchong.user.exception.UserException;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT targetUser FROM User targetUser WHERE targetUser.id = :userId")
+    Optional<User> findByIdForShare(@Param("userId") Long userId);
+
+    default User getByIdForShareOrThrow(Long userId) {
+        return findByIdForShare(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT targetUser FROM User targetUser WHERE targetUser.id IN :userIds ORDER BY targetUser.id")
+    List<User> findAllByIdInForShare(@Param("userIds") List<Long> userIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT targetUser FROM User targetUser WHERE targetUser.id = :userId")

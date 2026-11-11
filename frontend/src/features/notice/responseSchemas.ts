@@ -54,6 +54,7 @@ const noticeDetailSchema = z.object({
   content: z.string(),
   createdAt: z.string(),
   attachments: z.array(attachmentSchema),
+  remindAts: z.array(z.string()).nullish(),
 }) satisfies z.ZodType<NoticeDetail>;
 
 const memberSchema = z.object({

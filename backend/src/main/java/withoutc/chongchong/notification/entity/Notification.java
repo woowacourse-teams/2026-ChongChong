@@ -14,9 +14,11 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.global.persistence.BaseEntity;
 import withoutc.chongchong.notification.exception.NotificationErrorCode;
 import withoutc.chongchong.notification.exception.NotificationException;
+import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.user.entity.User;
 
 @Entity
@@ -54,6 +56,27 @@ public class Notification extends BaseEntity {
 
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    private Comment comment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipient_member_id")
+    private StudyMember recipientMember;
+
+    public static Notification createForComment(
+            Comment comment, StudyMember recipient, String title, String body, String deepLink
+    ) {
+        if (comment == null || recipient == null || recipient.getUser() == null) {
+            throw new NotificationException(NotificationErrorCode.INVALID_NOTIFICATION);
+        }
+        Notification notification = create(recipient.getUser(), title, body, NotificationType.NEW,
+                comment.getResourceId(), comment.getResourceType(), deepLink);
+        notification.comment = comment;
+        notification.recipientMember = recipient;
+        return notification;
+    }
 
     public void read() {
         isRead = true;

@@ -17,6 +17,8 @@ import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -51,6 +53,16 @@ class WebCsrfSecurityTest {
 
     @Autowired
     private TestJwtFactory testJwtFactory;
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/auth/csrf", "/api/web-push/config"})
+    @DisplayName("공개 조회도 잘못된 Bearer 토큰을 보내면 공통 인증 오류를 반환한다")
+    void rejectInvalidBearerOnPublicEndpoint(String path) throws Exception {
+        mockMvc.perform(get(path).header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
+    }
 
     @Test
     @DisplayName("Access Token 없이 마스킹된 CSRF Token과 제한된 HttpOnly Cookie를 발급받는다")

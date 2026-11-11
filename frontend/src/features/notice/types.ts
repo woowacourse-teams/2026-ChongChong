@@ -1,5 +1,7 @@
 import type { Attachment } from '../../shared/modules/files/types';
 
+export type NoticeTab = 'detail' | 'status';
+
 export interface NoticeFormValues {
   title: string;
   content: string;
@@ -69,6 +71,7 @@ export interface NoticeDetail {
   content: string;
   createdAt: string;
   attachments: Attachment[];
+  remindAts?: string[] | null;
 }
 
 export type MemberReadStatus =

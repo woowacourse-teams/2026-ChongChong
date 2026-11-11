@@ -13,7 +13,7 @@ get:
     description: |
       CSRF 토큰을 반환하고 XSRF-TOKEN 쿠키를 발급한다. 웹 인증 요청 전 토큰을 조회한다.
   summary: CSRF 토큰 조회
-  description: 웹 인증 요청에 사용할 CSRF 토큰을 조회한다. 응답과 함께 XSRF-TOKEN 쿠키가 발급된다.
+  description: 웹 인증 요청에 사용할 CSRF 토큰을 조회한다. 응답과 함께 XSRF-TOKEN 쿠키가 발급된다. 인증 없이 조회할 수 있지만 잘못된 Bearer 토큰을 보내면 401을 반환한다.
   security: []
   responses:
     '200':
@@ -26,3 +26,4 @@ get:
         application/json:
           schema: { $ref: '../../components/schemas/auth.yaml#/WebCsrfTokenResponse' }
           example: { headerName: X-XSRF-TOKEN, token: csrf-token }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }

@@ -112,6 +112,102 @@ class AssignmentApiTest {
         });
     }
 
+    @Test
+    @DisplayName("제출 대상을 제외해도 기록을 보존하고 재추가 후 수정할 수 있다")
+    void preserveSubmissionWhenChangingSubmitters() {
+        Long submissionId = submitAssignment(memberUser, assignment, "보존할 내용", "https://example.com");
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(secondMember.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(saved -> {
+            assertThat(saved.isAssigned()).isFalse();
+            assertThat(saved.getContent()).isEqualTo("보존할 내용");
+            assertThat(saved.getSubmittedAt()).isNotNull();
+        });
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("content", "변경 시도"))
+                .when().post("/studies/{studyId}/assignments/{assignmentId}/submissions", study.getId(), assignment.getId())
+                .then().statusCode(403);
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}/submissions/my", study.getId(), assignment.getId())
+                .then().statusCode(200).body("assigned", equalTo(false)).body("content", equalTo("보존할 내용"));
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(member.getId(), secondMember.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        assertThat(submitAssignment(memberUser, assignment, "수정된 내용", "https://example.com")).isEqualTo(submissionId);
+    }
+
+    @Test
+    @DisplayName("빈 대상과 다른 스터디의 멤버 지정을 거부하고 마감 후 변경은 허용한다")
+    void validateSubmittersAndAllowChangesAfterDeadline() {
+        for (List<Long> ids : List.of(List.<Long>of(), List.of(Long.MAX_VALUE), List.of(member.getId(), member.getId()))) {
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .contentType(ContentType.JSON).body(Map.of("submitterIds", ids))
+                    .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                    .then().statusCode(400);
+        }
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?", LocalDateTime.now(CLOCK).minusDays(1), assignment.getId());
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(leader.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(204);
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), assignment.getId())
+                .then().statusCode(200).body("submitterIds", hasSize(1));
+    }
+
+    @Test
+    @DisplayName("선택한 스터디원만 과제 생성 시 할당하고 일반 멤버의 대상 변경은 거부한다")
+    void createWithSelectedSubmitters() {
+        Long id = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "선택 과제", "content", "내용", "submissionTarget", "MEMBERS_AND_LEADER",
+                        "submissionVisibility", "ALL_STUDY_MEMBERS", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER),
+                        "submitterIds", List.of(member.getId())))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, member.getId())).isPresent();
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, leader.getId())).isEmpty();
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, secondMember.getId())).isEmpty();
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(Map.of("submitterIds", List.of(secondMember.getId())))
+                .when().patch("/studies/{studyId}/assignments/{assignmentId}", study.getId(), id)
+                .then().statusCode(403);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("호환용 필드 없이 대상 목록만으로 생성하며 리드 본인도 선택할 수 있다")
+    void createWithSubmitterIdsOnlyTest(boolean includeLeader) {
+        List<Long> submitterIds = includeLeader ? List.of(leader.getId(), member.getId()) : List.of(member.getId());
+        Long id = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "선택 과제", "content", "내용",
+                        "submissionVisibility", "ALL_STUDY_MEMBERS", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER),
+                        "submitterIds", submitterIds))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{assignmentId}", study.getId(), id)
+                .then().statusCode(200).body("submitterIds", hasSize(submitterIds.size()))
+                .body("submissionTarget", equalTo(includeLeader ? "MEMBERS_AND_LEADER" : "MEMBERS_ONLY"));
+        assertThat(assignmentSubmissionRepository.findByAssignmentIdAndMemberId(id, leader.getId()).isPresent())
+                .isEqualTo(includeLeader);
+    }
+
+    @Test
+    @DisplayName("과제 생성 시 제출 대상 목록과 호환용 대상 범위를 모두 생략하면 거부한다")
+    void rejectCreateWithoutSubmittersTest() {
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "선택 과제", "content", "내용",
+                        "submissionVisibility", "ALL_STUDY_MEMBERS", "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(400).body("code", equalTo("INVALID_SUBMITTER_IDS"));
+    }
+
     @BeforeEach
     void setUp() {
         databaseCleaner.clean();
@@ -119,7 +215,7 @@ class AssignmentApiTest {
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
         secondMemberUser = userRepository.save(User.create("두 번째 스터디원", null));
-        study = studyRepository.save(Study.create("자바 스터디", "설명"));
+        study = studyRepository.save(Study.create("자바 스터디", "설명", false));
         leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, "리더", "https://example.com/leader.png", StudyMemberRole.LEADER)
         );
@@ -138,6 +234,29 @@ class AssignmentApiTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = StudyMemberRole.class, names = {"LEADER", "MEMBER"})
+    @DisplayName("리더와 스터디원의 과제 목록은 각 과제의 제출물 공개 범위를 반환한다")
+    void getAssignmentsWithSubmissionVisibilityTest(StudyMemberRole role) {
+        Long publicAssignmentId = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body(Map.of("title", "공개 과제", "content", "내용", "submissionMethod", "링크",
+                        "submissionTarget", "MEMBERS_ONLY", "submissionVisibility", "ALL_STUDY_MEMBERS",
+                        "closeAt", closeAt.format(REQUEST_DATE_TIME_FORMATTER)))
+                .when().post("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(201).extract().jsonPath().getLong("assignmentId");
+        Long userId = role == StudyMemberRole.LEADER ? leaderUser.getId() : memberUser.getId();
+
+        testAuthRequest.givenAuthenticatedUser(userId).port(port)
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(200)
+                .body("assignments", hasSize(2))
+                .body("assignments[0].id", equalTo(publicAssignmentId.intValue()))
+                .body("assignments[0].submissionVisibility", equalTo("ALL_STUDY_MEMBERS"))
+                .body("assignments[1].id", equalTo(assignment.getId().intValue()))
+                .body("assignments[1].submissionVisibility", equalTo("LEADER_ONLY"));
     }
 
     @ParameterizedTest
@@ -204,6 +323,81 @@ class AssignmentApiTest {
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
                 .when().get("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
                 .then().statusCode(200).body("submissionMethod", equalTo(originalMethod));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"title\":\"수정 제목\"}", "{\"title\":\"수정 제목\",\"remindAts\":null}"})
+    @DisplayName("예약 목록을 생략하거나 null로 수정하면 기존 예약을 유지한다")
+    void preserveRemindAtsWhenOmittedOrNull(String body) {
+        String path = "/studies/{studyId}/assignments/{id}";
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(body)
+                .when().patch(path, study.getId(), assignment.getId())
+                .then().statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), assignment.getId())
+                .then().statusCode(200)
+                .body("title", equalTo("수정 제목"))
+                .body("remindAts", equalTo(List.of(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[null]", "[\"2000-01-01T00:00:00\"]"})
+    @DisplayName("null 원소나 지난 예약 시각을 포함한 수정은 거부하고 제목과 기존 예약을 보존한다")
+    void preserveAssignmentWhenReminderIsInvalid(String remindAts) {
+        String path = "/studies/{studyId}/assignments/{id}";
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body("{\"title\":\"저장되면 안 되는 제목\",\"remindAts\":" + remindAts + "}")
+                .when().patch(path, study.getId(), assignment.getId())
+                .then().statusCode(400).body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), assignment.getId())
+                .then().statusCode(200)
+                .body("title", equalTo("기존 과제"))
+                .body("remindAts", equalTo(List.of(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))));
+    }
+
+    @Test
+    @DisplayName("상세 예약을 유지·추가·개별 삭제하고 전체 삭제하면 빈 배열을 반환한다")
+    void roundTripDetailRemindAts() {
+        String path = "/studies/{studyId}/assignments/{id}";
+        String original = remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String added = remindAt.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        List<String> existing = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), assignment.getId())
+                .then().statusCode(200).body("remindAts", equalTo(List.of(original)))
+                .extract().jsonPath().getList("remindAts", String.class);
+
+        for (List<String> requested : List.of(List.of(existing.getFirst(), added), List.of(added), List.<String>of())) {
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .contentType(ContentType.JSON).body(Map.of("remindAts", requested))
+                    .when().patch(path, study.getId(), assignment.getId())
+                    .then().statusCode(204);
+
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .when().get(path, study.getId(), assignment.getId())
+                    .then().statusCode(200)
+                    .body("remindAts", equalTo(requested.stream().sorted().toList()));
+        }
+    }
+
+    @Test
+    @DisplayName("상세 응답은 처리 중·발송 완료·지난 예약을 제외한다")
+    void excludeNonEditableRemindAts() {
+        assignment.getReminders().getFirst().markAsSent();
+        LocalDateTime now = remindAt.minusDays(10);
+        assignment.addReminders(List.of(remindAt.minusDays(1)), now);
+        assignment.getReminders().getLast().markAsProcessing();
+        assignment.addReminders(List.of(LocalDateTime.of(2000, 1, 2, 0, 0)),
+                LocalDateTime.of(2000, 1, 1, 0, 0));
+        assignmentRepository.saveAndFlush(assignment);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/assignments/{id}", study.getId(), assignment.getId())
+                .then().statusCode(200).body("remindAts", equalTo(List.of()));
     }
 
     @Test
@@ -409,6 +603,7 @@ class AssignmentApiTest {
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
+                .queryParam("sort", "LATEST")
                 .queryParam("size", 2)
                 .when()
                 .get("/studies/{studyId}/assignments", study.getId())
@@ -423,6 +618,7 @@ class AssignmentApiTest {
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .queryParam("cursor", middleAssignment.getId())
+                .queryParam("sort", "LATEST")
                 .queryParam("size", 2)
                 .when()
                 .get("/studies/{studyId}/assignments", study.getId())
@@ -432,6 +628,100 @@ class AssignmentApiTest {
                 .body("nextCursor", nullValue())
                 .body("assignments", hasSize(1))
                 .body("assignments[0].id", equalTo(assignment.getId().intValue()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    @DisplayName("마감순은 마감 전·후와 같은 마감 시각 경계를 넘어 빠짐없이 이어 조회한다")
+    void getAssignmentsByDeadline(int size) {
+        Assignment near = createAssignment("가까운 마감", "내용", null, closeAt.minusDays(10), null);
+        Assignment sameDeadline = createAssignment("같은 마감", "내용", null, closeAt.minusDays(10), null);
+        Assignment expired = createAssignment("마감됨", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
+                LocalDateTime.now(CLOCK).minusDays(1), expired.getId());
+        assertSortedPages(leaderUser, "DEADLINE", size,
+                List.of(sameDeadline.getId(), near.getId(), assignment.getId(), expired.getId()));
+        assertSortedPages(leaderUser, null, size,
+                List.of(sameDeadline.getId(), near.getId(), assignment.getId(), expired.getId()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    @DisplayName("미제출순은 본인의 대상 과제만 우선하며 제출·대상 제외·미배정 과제도 이어 조회한다")
+    void getAssignmentsByUnsubmitted(int size) {
+        Assignment missing = createAssignment("마감 후 미제출", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
+                LocalDateTime.now(CLOCK).minusDays(1), missing.getId());
+        Assignment submitted = createAssignment("제출 완료", "내용", null, closeAt, null);
+        submitAssignment(memberUser, submitted, "완료", null);
+        Assignment unassigned = createAssignment("대상 제외", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignment_submissions SET assigned = false WHERE assignment_id = ? AND member_id = ?",
+                unassigned.getId(), member.getId());
+        Assignment notAssigned = assignmentRepository.saveAndFlush(Assignment.create(
+                study, "미배정", "내용", null, SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY, closeAt, LocalDateTime.now(CLOCK)));
+        assertSortedPages(memberUser, "UNSUBMITTED", size,
+                List.of(missing.getId(), assignment.getId(), notAssigned.getId(), unassigned.getId(), submitted.getId()));
+        assertSortedPages(secondMemberUser, "UNSUBMITTED", size,
+                List.of(unassigned.getId(), submitted.getId(), missing.getId(), assignment.getId(), notAssigned.getId()));
+    }
+
+    @Test
+    @DisplayName("최신순을 명시해도 기존 ID 내림차순과 숫자 커서를 유지한다")
+    void getAssignmentsByLatest() {
+        Assignment latest = createAssignment("최신", "내용", null, closeAt, null);
+        assertSortedPages(memberUser, "LATEST", 1, List.of(latest.getId(), assignment.getId()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DEADLINE", "UNSUBMITTED"})
+    @DisplayName("없는 과제와 다른 스터디의 과제를 정렬 커서로 사용하면 404를 반환한다")
+    void rejectUnavailableSortCursor(String sort) {
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
+        Assignment other = assignmentRepository.saveAndFlush(Assignment.create(
+                otherStudy, "다른 과제", "내용", null, SubmissionTarget.MEMBERS_ONLY,
+                SubmissionVisibility.LEADER_ONLY, closeAt, LocalDateTime.now(CLOCK)));
+        for (Long cursor : List.of(other.getId(), Long.MAX_VALUE)) {
+            testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                    .queryParam("sort", sort).queryParam("cursor", cursor)
+                    .when().get("/studies/{studyId}/assignments", study.getId())
+                    .then().statusCode(404);
+        }
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("sort", sort)
+                .when().get("/studies/{studyId}/assignments", otherStudy.getId())
+                .then().statusCode(403);
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 과제 정렬 값은 400으로 거부한다")
+    void rejectInvalidAssignmentSort() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("sort", "INVALID")
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(400);
+    }
+
+    private void assertSortedPages(User user, String sort, int size, List<Long> expectedIds) {
+        Long cursor = null;
+        for (int offset = 0; offset < expectedIds.size(); offset += size) {
+            var request = testAuthRequest.givenAuthenticatedUser(user.getId()).port(port)
+                    .queryParam("size", size);
+            if (sort != null) {
+                request.queryParam("sort", sort);
+            }
+            if (cursor != null) {
+                request.queryParam("cursor", cursor);
+            }
+            var response = request.when().get("/studies/{studyId}/assignments", study.getId())
+                    .then().statusCode(200).extract().jsonPath();
+            int end = Math.min(offset + size, expectedIds.size());
+            assertThat(response.getList("assignments.id", Long.class))
+                    .containsExactlyElementsOf(expectedIds.subList(offset, end));
+            assertThat(response.getBoolean("hasNext")).isEqualTo(end < expectedIds.size());
+            cursor = response.getObject("nextCursor", Long.class);
+            assertThat(cursor).isEqualTo(end < expectedIds.size() ? expectedIds.get(end - 1) : null);
+        }
     }
 
     @Test
@@ -550,7 +840,7 @@ class AssignmentApiTest {
     @Test
     @DisplayName("다른 스터디의 과제를 상세 조회하면 존재하지 않는 과제로 응답한다")
     void getAssignmentDetailFromOtherStudyTest() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "다른 스터디 리더", null, StudyMemberRole.LEADER)
         );
@@ -741,7 +1031,7 @@ class AssignmentApiTest {
     @Test
     @DisplayName("요청 경로의 스터디와 과제의 소속 스터디가 다르면 제출할 수 없다")
     void submitAssignmentFromOtherStudyTest() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "다른 스터디 리더", null, StudyMemberRole.LEADER)
         );
@@ -977,7 +1267,7 @@ class AssignmentApiTest {
     }
 
     @Test
-    @DisplayName("리더 포함을 반복해도 제출물을 유지하고 제외하면 삭제하며 다시 포함하면 빈 제출물을 만든다")
+    @DisplayName("리더 제외와 재포함 시 제출물을 보존한다")
     void changeLeaderParticipationTest() {
         updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
         Long submissionId = submitAssignment(leaderUser, assignment, "리더의 제출 내용", "https://example.com");
@@ -998,8 +1288,9 @@ class AssignmentApiTest {
                 assertThat(saved.getSubmissionTarget()).isEqualTo(SubmissionTarget.MEMBERS_AND_LEADER));
 
         updateSubmissionTarget(SubmissionTarget.MEMBERS_ONLY);
-        assertThat(assignmentSubmissionRepository.existsById(submissionId)).isFalse();
-        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(2);
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(
+                saved -> assertThat(saved.isAssigned()).isFalse());
+        assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
 
         updateSubmissionTarget(SubmissionTarget.MEMBERS_AND_LEADER);
         assertThat(countRows("assignment_submissions", assignment.getId())).isEqualTo(3);
@@ -1008,7 +1299,11 @@ class AssignmentApiTest {
                         SELECT COUNT(*) FROM assignment_submissions
                         WHERE assignment_id = ? AND member_id = ? AND id <> ?
                           AND content IS NULL AND link IS NULL AND submitted_at IS NULL
-                        """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isEqualTo(1);
+                        """, Integer.class, assignment.getId(), leader.getId(), submissionId)).isZero();
+        assertThat(assignmentSubmissionRepository.findById(submissionId)).hasValueSatisfying(saved -> {
+            assertThat(saved.isAssigned()).isTrue();
+            assertThat(saved.getContent()).isEqualTo("리더의 제출 내용");
+        });
     }
 
     @ParameterizedTest

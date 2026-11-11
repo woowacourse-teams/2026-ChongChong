@@ -1,5 +1,6 @@
-import { CSSProperties } from 'react';
 import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
+import { CSSProperties } from 'react';
 import List from '../../../shared/ui/List';
 import { tokens, typography } from '../../../styles/global';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
@@ -26,15 +27,16 @@ interface StudyMemberManagementListProps {
 }
 
 export function StudyLeaderManagementList({ studyId }: StudyLeaderManagementListProps) {
-  const [isOpen, openDialog, closeDialog] = useBooleanState();
+  const [isOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const { mutate: deleteStudy, isPending } = useDeleteStudy({ onError: closeDialog });
+
   return (
     <List>
       {/* <List.Item css={StudyManagementItemStyle}>스터디 프로필 수정 (준비 중)</List.Item> */}
       {/* TODO: 스터디 프로필 수정 페이지가 추가되면 링크를 연결합니다. */}
       <List.Item>
-        <Link css={StudyManagementItemStyle} to={`/studies/${studyId}/edit`}>
+        <Link css={StudyManagementItemStyle} {...URL_POLICY.toEditStudy(studyId)}>
           스터디 정보 수정
         </Link>
       </List.Item>
@@ -69,14 +71,14 @@ export function StudyLeaderManagementList({ studyId }: StudyLeaderManagementList
 }
 
 export function StudyMemberManagementList({ studyId }: StudyMemberManagementListProps) {
-  const [isOpen, openDialog, closeDialog] = useBooleanState();
+  const [isOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const { mutate: leaveStudyMember, isPending } = useLeaveStudy({ onError: closeDialog });
   return (
     <List>
       {/* TODO: 스터디 탈퇴를 멤버 페이지에서 옮깁니다. */}
       {/* <List.Item css={StudyManagementItemStyle}>
-        <Link to="">스터디 탈퇴</Link>
+        스터디 탈퇴
       </List.Item> */}
       <button css={{ color: tokens.text.critical }} onClick={openDialog}>
         스터디 탈퇴하기

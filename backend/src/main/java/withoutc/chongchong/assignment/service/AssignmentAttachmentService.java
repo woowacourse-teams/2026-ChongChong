@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.policy.AssignmentAttachmentPolicy;
-import withoutc.chongchong.assignment.repository.AssignmentAttachmentRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
@@ -22,8 +21,6 @@ import withoutc.chongchong.file.repository.FileMetaDataRepository;
 public class AssignmentAttachmentService {
 
     private final FileMetaDataRepository fileMetaDataRepository;
-    private final AssignmentAttachmentRepository assignmentAttachmentRepository;
-
     private final AssignmentAttachmentPolicy assignmentAttachmentPolicy;
 
     public List<FileMetadata> prepare(Long userId, List<FileMetadata> existing, List<Long> requestedIds) {
@@ -65,9 +62,7 @@ public class AssignmentAttachmentService {
 
     private void validateNewFile(FileMetadata file) {
         Long fileId = file.getId();
-        if (assignmentAttachmentRepository.existsByFileId(fileId)
-                || assignmentAttachmentRepository.existsSubmissionByFileId(fileId)
-                || assignmentAttachmentRepository.existsNoticeByFileId(fileId)) {
+        if (fileMetaDataRepository.existsAnyUsageByFileId(fileId)) {
             throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
         }
         assignmentAttachmentPolicy.validateFile(file);

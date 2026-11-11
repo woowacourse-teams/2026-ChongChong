@@ -1,10 +1,12 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import rightArrow from '../../../shared/assets/right-arrow.svg';
 import ContentCard from '../../../shared/ui/card/ContentCard';
 import List from '../../../shared/ui/List';
-import { Link } from 'react-router';
 import { Assignment } from '../types';
 import { ReactNode } from 'react';
 import { formatDateToString } from '../../../shared/utils/formatDate';
+import Badge from '../../../shared/ui/Badge';
 import LinkIcon from '../../../shared/assets/link.svg';
 
 interface AssigmentListProps<T extends Assignment> {
@@ -22,13 +24,14 @@ export default function AssigmentList<T extends Assignment>({
     <List>
       {assignments.map((assignment) => (
         <List.Item key={assignment.id}>
-          <Link
-            to={{
-              pathname: `/studies/${studyId}/assignments/${assignment.id}`,
-            }}
-          >
+          <Link {...URL_POLICY.toAssignment(studyId, assignment.id)}>
             <ContentCard>
-              <ContentCard.Badges>{children(assignment)}</ContentCard.Badges>
+              <ContentCard.Badges>
+                {children(assignment)}
+                <Badge variant="neutralSolid" size="small">
+                  {assignment.submissionVisibility === 'ALL_STUDY_MEMBERS' ? '공개' : '미공개'}
+                </Badge>
+              </ContentCard.Badges>
               <ContentCard.TitleRow>
                 <ContentCard.Title>{assignment.title}</ContentCard.Title>
 

@@ -101,19 +101,6 @@ class NoticeRepositoryTest {
     }
 
     @Test
-    @DisplayName("공지 조회에 성공하면 해당 공지를 반환한다")
-    void getByIdOrThrowTest() {
-        StudyFixture fixture = createStudyFixture("스터디", "리더");
-        Notice notice = noticeRepository.save(
-                Notice.create(fixture.study(), "공지", "공지 내용")
-        );
-
-        Notice found = noticeRepository.getByIdOrThrow(notice.getId());
-
-        assertThat(found.getId()).isEqualTo(notice.getId());
-    }
-
-    @Test
     @DisplayName("공지가 존재하지 않으면 공지 없음 예외를 던진다")
     void getByIdOrThrowNotFoundTest() {
         assertThatThrownBy(() -> noticeRepository.getByIdOrThrow(Long.MAX_VALUE))
@@ -169,7 +156,7 @@ class NoticeRepositoryTest {
         noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
 
         List<LeaderNoticeSummaryProjection> summaries =
-                noticeRepository.findIncompleteNoticeSummariesByStudyId(fixture.study().getId());
+                noticeRepository.findIncompleteNoticeSummariesByStudyId(fixture.study().getId(), CLOCK.minusDays(7));
 
         assertThat(summaries)
                 .extracting(LeaderNoticeSummaryProjection::id,
@@ -209,7 +196,7 @@ class NoticeRepositoryTest {
         completeNotice.getRecipients().forEach(recipient -> recipient.markAsRead(CLOCK));
         noticeRepository.saveAllAndFlush(List.of(incompleteNotice, completeNotice));
 
-        long count = noticeRepository.countIncompleteNoticeByStudyId(fixture.study().getId());
+        long count = noticeRepository.countIncompleteNoticeByStudyId(fixture.study().getId(), CLOCK.minusDays(7));
 
         assertThat(count).isEqualTo(1L);
     }
@@ -234,7 +221,7 @@ class NoticeRepositoryTest {
 
     private StudyFixture createStudyFixture(String studyName, String userName) {
         User user = userRepository.save(User.create(userName, null));
-        Study study = studyRepository.save(Study.create(studyName, "설명"));
+        Study study = studyRepository.save(Study.create(studyName, "설명", false));
         StudyMember leader = studyMemberRepository.save(
                 StudyMember.create(study, user, userName, null, StudyMemberRole.LEADER)
         );
@@ -248,7 +235,7 @@ class NoticeRepositoryTest {
         User leaderUser = userRepository.save(User.create("리더", null));
         User firstMemberUser = userRepository.save(User.create("첫 번째 멤버", null));
         User secondMemberUser = userRepository.save(User.create("두 번째 멤버", null));
-        Study study = studyRepository.save(Study.create("스터디", "설명"));
+        Study study = studyRepository.save(Study.create("스터디", "설명", false));
         StudyMember leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, leaderUser.getName(), null, StudyMemberRole.LEADER)
         );

@@ -22,6 +22,7 @@ ErrorResponse:
       type: string
       enum:
         - INVALID_NAME
+        - INVALID_STUDY_ID
         - INVALID_INPUT_VALUE
         - INVALID_REQUEST_PARAMETER
         - INVALID_REQUEST
@@ -38,9 +39,13 @@ ErrorResponse:
         - STUDY_LEADER_CANNOT_LEAVE
         - STUDY_LEADER_WITHDRAWAL_BLOCKED
         - STUDY_NOT_FOUND
+        - STUDY_NOT_PUBLIC
         - STUDY_MEMBER_NOT_FOUND
         - USER_NOT_FOUND
         - INVALID_USER_NAME
+        - INVALID_USER_PROFILE_IMAGE_ID
+        - INVALID_USER_PROFILE_IMAGE_TYPE
+        - INVALID_USER_PROFILE_IMAGE_SIZE
         - NOTICE_NOT_FOUND
         - NOTICE_RECIPIENT_NOT_FOUND
         - NOTIFICATION_NOT_FOUND
@@ -51,6 +56,7 @@ ErrorResponse:
         - INVALID_TITLE
         - INVALID_CONTENT
         - INVALID_LINK
+        - INVALID_SUBMITTER_IDS
         - INVALID_SUBMISSION_METHOD
         - INVALID_CLOSE_AT
         - INVALID_REMIND_AT
@@ -58,6 +64,9 @@ ErrorResponse:
         - ATTACHMENT_LIMIT_EXCEEDED
         - INVALID_NOTICE_IMAGE_TYPE
         - INVALID_NOTICE_IMAGE_SIZE
+        - INVALID_IMAGE_ID
+        - INVALID_IMAGE_TYPE
+        - INVALID_IMAGE_SIZE
         - FILE_NOT_FOUND
         - FILE_NOT_OWNED
         - FILE_NOT_ATTACHABLE
@@ -66,6 +75,11 @@ ErrorResponse:
         - STUDY_MEMBER_LIMIT_EXCEEDED
         - WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED
         - INVALID_CLICK_TOKEN
+        - COMMENT_INVALID_CONTENT
+        - COMMENT_INVALID_PAGE_REQUEST
+        - COMMENT_NOT_FOUND
+        - COMMENT_TARGET_NOT_READY
+        - COMMENT_STATE_CHANGED
     message: { type: string }
 InvalidInputValueError:
   type: object
@@ -106,6 +120,8 @@ StudyLeaderCannotBeRemovedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { pr
 StudyLeaderCannotLeaveError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_LEADER_CANNOT_LEAVE }, message: { const: 스터디 리더는 탈퇴할 수 없습니다. } } }], examples: [{ code: STUDY_LEADER_CANNOT_LEAVE, message: 스터디 리더는 탈퇴할 수 없습니다. }] }
 StudyLeaderWithdrawalBlockedError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_LEADER_WITHDRAWAL_BLOCKED }, message: { const: 리더인 스터디를 삭제한 뒤 회원 탈퇴할 수 있습니다. } } }], examples: [{ code: STUDY_LEADER_WITHDRAWAL_BLOCKED, message: 리더인 스터디를 삭제한 뒤 회원 탈퇴할 수 있습니다. }] }
 StudyNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_NOT_FOUND }, message: { const: 존재하지 않는 스터디입니다. } } }], examples: [{ code: STUDY_NOT_FOUND, message: 존재하지 않는 스터디입니다. }] }
+InvalidStudyIdError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_STUDY_ID }, message: { const: 유효하지 않은 스터디 ID입니다. } } }], examples: [{ code: INVALID_STUDY_ID, message: 유효하지 않은 스터디 ID입니다. }] }
+StudyNotPublicError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_NOT_PUBLIC }, message: { const: 공개 스터디가 아닙니다. } } }], examples: [{ code: STUDY_NOT_PUBLIC, message: 공개 스터디가 아닙니다. }] }
 StudyMemberNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: STUDY_MEMBER_NOT_FOUND }, message: { const: 존재하지 않는 스터디 멤버입니다. } } }], examples: [{ code: STUDY_MEMBER_NOT_FOUND, message: 존재하지 않는 스터디 멤버입니다. }] }
 UserNotFoundError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: USER_NOT_FOUND }, message: { const: 해당 사용자를 찾을 수 없습니다. } } }], examples: [{ code: USER_NOT_FOUND, message: 해당 사용자를 찾을 수 없습니다. }] }
 InvalidUserNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_USER_NAME }, message: { const: 사용자 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_USER_NAME, message: 사용자 이름이 올바르지 않습니다. }] }
@@ -130,6 +146,23 @@ StudyMemberLimitExceededError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { prop
 WebPushSubscriptionAlreadyRegisteredError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED }, message: { const: 다른 사용자에게 등록된 웹 푸시 구독입니다. } } }], examples: [{ code: WEB_PUSH_SUBSCRIPTION_ALREADY_REGISTERED, message: 다른 사용자에게 등록된 웹 푸시 구독입니다. }] }
 
 StudyInvalidNameError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_NAME }, message: { const: 스터디 이름이 올바르지 않습니다. } } }], examples: [{ code: INVALID_NAME, message: 스터디 이름이 올바르지 않습니다. }] }
+UserProfileImageBadRequestError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code:
+          enum: [INVALID_USER_PROFILE_IMAGE_ID, INVALID_USER_PROFILE_IMAGE_TYPE, INVALID_USER_PROFILE_IMAGE_SIZE, FILE_NOT_ATTACHABLE]
+        message: { type: string }
+  examples:
+    - { code: INVALID_USER_PROFILE_IMAGE_TYPE, message: 사용자 프로필 이미지 형식이 올바르지 않습니다. }
+    - { code: FILE_NOT_ATTACHABLE, message: 파일을 첨부할 수 없습니다. }
+StudyImageBadRequestError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code:
+          enum: [INVALID_IMAGE_ID, INVALID_IMAGE_TYPE, INVALID_IMAGE_SIZE, FILE_NOT_ATTACHABLE]
+        message: { type: string }
 
 NoticeAttachmentBadRequestError:
   allOf:
@@ -150,3 +183,9 @@ FileNotFoundError:
     - properties:
         code: { const: FILE_NOT_FOUND }
         message: { const: 존재하지 않는 파일입니다. }
+InvalidSubmitterIdsError:
+  allOf:
+    - { $ref: '#/ErrorResponseBase' }
+    - properties:
+        code: { const: INVALID_SUBMITTER_IDS }
+        message: { const: 제출할 스터디원을 한 명 이상 선택해 주세요. }

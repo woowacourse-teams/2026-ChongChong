@@ -1,7 +1,8 @@
 import { CSSProperties } from 'react';
-import { tokens, typography } from '../../styles/global';
+import { tokens } from '../../styles/global';
+import { Heading, Paragraph } from './Typography';
 
-interface TopHeaderProps {
+interface TopHeaderProps extends React.ComponentPropsWithoutRef<'header'> {
   left?: React.ReactNode;
   middle?: React.ReactNode;
   right?: React.ReactNode;
@@ -48,21 +49,19 @@ const rightStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   color: tokens.text.default,
   wordBreak: 'keep-all',
   margin: 0,
 } satisfies CSSProperties;
 
 const subtitleStyle = {
-  ...typography.footnote,
   color: tokens.text.muted,
   margin: 0,
 } satisfies CSSProperties;
 
-export default function TopHeader({ left, middle, right }: TopHeaderProps) {
+export default function TopHeader({ left, middle, right, ...props }: TopHeaderProps) {
   return (
-    <header css={topHeaderStyle}>
+    <header css={topHeaderStyle} {...props}>
       <div css={leftStyle}>{left}</div>
       <div css={middleStyle}>{middle}</div>
       <div css={rightStyle}>{right}</div>
@@ -71,9 +70,17 @@ export default function TopHeader({ left, middle, right }: TopHeaderProps) {
 }
 
 TopHeader.Title = function Title({ children }: { children: React.ReactNode }) {
-  return <h1 css={titleStyle}>{children}</h1>;
+  return (
+    <Heading level={1} variant="title" css={titleStyle}>
+      {children}
+    </Heading>
+  );
 };
 
 TopHeader.Subtitle = function Subtitle({ children }: { children: React.ReactNode }) {
-  return <p css={subtitleStyle}>{children}</p>;
+  return (
+    <Paragraph variant="footnote" css={subtitleStyle}>
+      {children}
+    </Paragraph>
+  );
 };

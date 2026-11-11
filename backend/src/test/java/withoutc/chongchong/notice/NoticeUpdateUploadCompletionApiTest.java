@@ -94,7 +94,7 @@ class NoticeUpdateUploadCompletionApiTest extends PostgresContainerTest {
     void setUp() {
         databaseCleaner.clean();
         leader = userRepository.save(User.create("리더", null));
-        study = studyRepository.save(Study.create("공지 수정 완료 연동 스터디", "설명"));
+        study = studyRepository.save(Study.create("공지 수정 완료 연동 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         existingFile = savePendingFile();
         existingFile.completeUpload();

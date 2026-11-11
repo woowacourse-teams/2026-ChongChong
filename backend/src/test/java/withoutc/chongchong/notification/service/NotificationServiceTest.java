@@ -1,6 +1,7 @@
 package withoutc.chongchong.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -9,29 +10,29 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 import withoutc.chongchong.assignment.entity.Assignment;
-import withoutc.chongchong.assignment.entity.AssignmentReminder;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.repository.AssignmentReminderRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.comment.entity.Comment;
 import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.notice.entity.NoticeReminder;
-import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
 import withoutc.chongchong.notification.entity.Notification;
 import withoutc.chongchong.notification.entity.NotificationDelivery;
 import withoutc.chongchong.notification.entity.NotificationType;
@@ -42,6 +43,7 @@ import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
+import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,9 +54,6 @@ class NotificationServiceTest {
     private static final Long USER_ID = 1L;
     private static final Long OTHER_USER_ID = 2L;
     private static final Long NOTIFICATION_ID = 300L;
-    private static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 20, 10, 0);
-    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-20T01:00:00Z"),
-            ZoneId.of("Asia/Seoul"));
 
     @Mock
     private NotificationRepository notificationRepository;
@@ -64,9 +63,6 @@ class NotificationServiceTest {
 
     @Mock
     private WebPushSubscriptionRepository webPushSubscriptionRepository;
-
-    @Mock
-    private NoticeRecipientRepository noticeRecipientRepository;
 
     @Mock
     private NoticeReminderRepository noticeReminderRepository;
@@ -85,20 +81,95 @@ class NotificationServiceTest {
 
     private NotificationService notificationService;
 
+    @Test
+    @DisplayName("공지 댓글은 작성자를 제외하고 사용자별 한 번 알림과 활성 구독 Delivery를 만든다")
+    void createNoticeCommentNotifications() {
+        Study study = Study.create("자바 스터디", "설명", false);
+        ReflectionTestUtils.setField(study, "id", 5L);
+        User authorUser = User.create("작성자", null);
+        ReflectionTestUtils.setField(authorUser, "id", USER_ID);
+        User leaderUser = User.create("리더", null);
+        ReflectionTestUtils.setField(leaderUser, "id", OTHER_USER_ID);
+        StudyMember author = StudyMember.create(study, authorUser, "작성자", null, StudyMemberRole.MEMBER);
+        StudyMember leader = StudyMember.create(study, leaderUser, "리더", null, StudyMemberRole.LEADER);
+        Notice notice = Notice.create(study, "원문 제목", "내용");
+        ReflectionTestUtils.setField(notice, "id", NOTICE_ID);
+        Comment comment = Comment.create(ResourceType.NOTICE, NOTICE_ID, author, "댓글 본문");
+        ReflectionTestUtils.setField(comment, "id", 42L);
+        WebPushSubscription subscription = mock(WebPushSubscription.class);
+        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(OTHER_USER_ID))
+                .thenReturn(List.of(subscription));
+
+        notificationService.createCommentCreatedEventNotifications(comment, notice.getStudy(), author,
+                List.of(author, leader, leader));
+
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository).save(captor.capture());
+        Notification notification = captor.getValue();
+        assertThat(notification.getTitle()).isEqualTo("[자바 스터디] 새 댓글");
+        assertThat(notification.getBody()).isEqualTo("작성자 스터디원이 댓글을 달았어요");
+        assertThat(notification.getDeepLink()).isEqualTo("/studies/5/notices/100?focusCommentId=42");
+        assertThat(notification.getComment()).isSameAs(comment);
+        assertThat(notification.getRecipientMember()).isSameAs(leader);
+        assertThat(notification.getResourceType()).isEqualTo(ResourceType.NOTICE);
+        assertThat(notification.getResourceId()).isEqualTo(NOTICE_ID);
+        verify(notificationDeliveryRepository).save(any(NotificationDelivery.class));
+        verify(webPushSubscriptionRepository, never()).findByUserIdAndIsActiveTrue(USER_ID);
+    }
+
     @BeforeEach
     void setUp() {
         notificationService = new NotificationService(
                 notificationRepository,
                 notificationDeliveryRepository,
                 webPushSubscriptionRepository,
-                noticeRecipientRepository,
                 noticeReminderRepository,
                 noticeRepository,
                 assignmentSubmissionRepository,
                 assignmentReminderRepository,
-                assignmentRepository,
-                CLOCK
+                assignmentRepository
         );
+    }
+
+    @Test
+    @DisplayName("알림은 요청 크기보다 하나 더 조회하고 마지막 반환 알림 ID를 다음 커서로 제공한다")
+    void getListWithNextPage() {
+        Long cursor = 400L;
+        PageRequest pageable = PageRequest.of(0, 3);
+        when(notificationRepository.findByCursor(USER_ID, cursor, pageable))
+                .thenReturn(List.of(createNotification(300L), createNotification(200L), createNotification(100L)));
+
+        MyNotificationListResponse response = notificationService.getList(USER_ID, cursor, 2);
+
+        assertThat(response.notifications()).hasSize(2);
+        assertThat(response.nextCursor()).isEqualTo(200L);
+        assertThat(response.hasNext()).isTrue();
+        verify(notificationRepository).findByCursor(USER_ID, cursor, pageable);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    @DisplayName("알림 수가 요청 크기 이하면 다음 페이지와 커서가 없다")
+    void getListWithoutNextPage(int notificationCount) {
+        List<Notification> notifications = List.of(createNotification(200L), createNotification(100L));
+        when(notificationRepository.findByCursor(USER_ID, null, PageRequest.of(0, 3)))
+                .thenReturn(notifications.subList(0, notificationCount));
+
+        MyNotificationListResponse response = notificationService.getList(USER_ID, null, 2);
+
+        assertThat(response.notifications()).hasSize(notificationCount);
+        assertThat(response.nextCursor()).isNull();
+        assertThat(response.hasNext()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 10", "-1, 10", "1, 0", "1, -1", "1, 101", "1, 2147483647"})
+    @DisplayName("잘못된 알림 커서나 페이지 크기는 저장소 조회 전에 거부한다")
+    void rejectInvalidPageRequest(Long cursor, int size) {
+        assertThatThrownBy(() -> notificationService.getList(USER_ID, cursor, size))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(notificationRepository);
     }
 
     @Test
@@ -159,75 +230,6 @@ class NotificationServiceTest {
         assertThat(deliveryCaptor.getValue().getWebPushSubscription()).isSameAs(recipientSubscription);
         verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(OTHER_USER_ID);
         verify(webPushSubscriptionRepository, never()).findByUserIdAndIsActiveTrue(USER_ID);
-    }
-
-    @Test
-    @DisplayName("기한이 지난 과제 리마인더는 미제출자를 조회하고 발송 완료 처리한다")
-    void createAssignmentReminderNotifications() {
-        AssignmentReminder reminder = mock(AssignmentReminder.class);
-        Assignment assignment = mock(Assignment.class);
-        Study study = mock(Study.class);
-        StudyMember recipient = mock(StudyMember.class);
-        User recipientUser = mock(User.class);
-        WebPushSubscription subscription = mock(WebPushSubscription.class);
-        when(assignmentReminderRepository.findClaimableForUpdate(NOW, 100)).thenReturn(List.of(reminder));
-        when(noticeReminderRepository.findClaimableForUpdate(NOW, 100)).thenReturn(List.of());
-        when(reminder.getAssignment()).thenReturn(assignment);
-        when(assignment.getId()).thenReturn(ASSIGNMENT_ID);
-        when(assignment.getStudy()).thenReturn(study);
-        when(assignment.getTitle()).thenReturn("과제 제목");
-        when(study.getId()).thenReturn(1L);
-        when(study.getName()).thenReturn("스터디");
-        when(recipient.getUser()).thenReturn(recipientUser);
-        when(recipientUser.getId()).thenReturn(USER_ID);
-        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(USER_ID)).thenReturn(List.of(subscription));
-        when(assignmentRepository.getByIdOrThrow(ASSIGNMENT_ID)).thenReturn(assignment);
-        when(assignmentSubmissionRepository.findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID))
-                .thenReturn(List.of(recipient));
-
-        notificationService.createScheduledRemindNotifications();
-
-        ArgumentCaptor<Notification> notificationCaptor = ArgumentCaptor.forClass(Notification.class);
-        verify(notificationRepository).save(notificationCaptor.capture());
-        assertThat(notificationCaptor.getValue().getType()).isEqualTo(NotificationType.REMIND);
-        verify(notificationDeliveryRepository).save(any(NotificationDelivery.class));
-        verify(reminder).markAsProcessing();
-        verify(reminder).markAsSent();
-        verify(assignmentSubmissionRepository).findUnsubmittedMembersByAssignmentId(ASSIGNMENT_ID);
-        verifyNoInteractions(noticeRecipientRepository);
-    }
-
-    @Test
-    @DisplayName("기한이 지난 공지 리마인더는 읽지 않은 수신자를 조회하고 발송 완료 처리한다")
-    void createNoticeReminderNotifications() {
-        NoticeReminder reminder = mock(NoticeReminder.class);
-        Notice notice = mock(Notice.class);
-        Study study = mock(Study.class);
-        StudyMember recipient = mock(StudyMember.class);
-        User recipientUser = mock(User.class);
-        when(assignmentReminderRepository.findClaimableForUpdate(NOW, 100)).thenReturn(List.of());
-        when(noticeReminderRepository.findClaimableForUpdate(NOW, 100)).thenReturn(List.of(reminder));
-        when(reminder.getNotice()).thenReturn(notice);
-        when(notice.getId()).thenReturn(NOTICE_ID);
-        when(notice.getStudy()).thenReturn(study);
-        when(notice.getTitle()).thenReturn("공지 제목");
-        when(study.getId()).thenReturn(1L);
-        when(study.getName()).thenReturn("스터디");
-        when(recipient.getUser()).thenReturn(recipientUser);
-        when(recipientUser.getId()).thenReturn(USER_ID);
-        when(webPushSubscriptionRepository.findByUserIdAndIsActiveTrue(USER_ID)).thenReturn(List.of());
-        when(noticeRepository.getByIdOrThrow(NOTICE_ID)).thenReturn(notice);
-        when(noticeRecipientRepository.findUnreadMembersByNoticeId(NOTICE_ID))
-                .thenReturn(List.of(recipient));
-
-        notificationService.createScheduledRemindNotifications();
-
-        verify(notificationRepository).save(any(Notification.class));
-        verify(notificationDeliveryRepository, never()).save(any(NotificationDelivery.class));
-        verify(reminder).markAsProcessing();
-        verify(reminder).markAsSent();
-        verify(noticeRecipientRepository).findUnreadMembersByNoticeId(NOTICE_ID);
-        verifyNoInteractions(assignmentSubmissionRepository);
     }
 
     @Test
@@ -336,15 +338,17 @@ class NotificationServiceTest {
         verify(webPushSubscriptionRepository).findByUserIdAndIsActiveTrue(USER_ID);
     }
 
-    @Test
-    @DisplayName("대상이 되는 리마인더가 없으면 알림을 생성하지 않는다")
-    void doNothingWhenNoPendingDueReminder() {
-        when(assignmentReminderRepository.findClaimableForUpdate(NOW, 100)).thenReturn(List.of());
-        when(noticeReminderRepository.findClaimableForUpdate(NOW, 100)).thenReturn(List.of());
-
-        notificationService.createScheduledRemindNotifications();
-
-        verify(notificationRepository, never()).save(any(Notification.class));
-        verifyNoInteractions(noticeRecipientRepository, assignmentSubmissionRepository);
+    private Notification createNotification(Long id) {
+        Notification notification = Notification.create(
+                User.create("수신자", null),
+                "[스터디] 새 공지",
+                "공지 내용",
+                NotificationType.NEW,
+                NOTICE_ID,
+                ResourceType.NOTICE,
+                "/studies/1/notices/100"
+        );
+        ReflectionTestUtils.setField(notification, "id", id);
+        return notification;
     }
 }

@@ -2,58 +2,6 @@ import type { CSSObject } from '@emotion/react';
 import type { CSSProperties } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
-export const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 1000,
-  display: 'flex',
-  alignItems: 'flex-end',
-  justifyContent: 'center',
-} satisfies CSSProperties;
-
-export const backdropStyle = {
-  position: 'absolute',
-  inset: 0,
-  background: tokens.bg.dim,
-  willChange: 'opacity',
-} satisfies CSSProperties;
-
-export const sheetStyle = {
-  position: 'relative',
-  zIndex: 1,
-  width: '100%',
-  maxWidth: tokens.screenSize.default,
-  maxHeight: '100dvh',
-  padding: `${tokens.spacing[2]} ${tokens.spacing[5]} calc(${tokens.spacing[8]} + 2px + ${tokens.layout.safeBottom})`,
-  borderRadius: `${tokens.spacing[6]} ${tokens.spacing[6]} ${tokens.spacing[0]} ${tokens.spacing[0]}`,
-  background: tokens.bg.default,
-  boxShadow: tokens.shadow[3],
-  color: tokens.text.default,
-  outline: 'none',
-  overscrollBehavior: 'contain',
-  willChange: 'transform',
-} satisfies CSSProperties;
-
-export const handleAreaStyle = {
-  display: 'flex',
-  width: '100%',
-  height: tokens.spacing[8],
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: `calc(${tokens.spacing[2]} * -1)`,
-  marginBottom: `calc(${tokens.spacing[2]} * -1)`,
-  cursor: 'grab',
-  touchAction: 'none',
-  userSelect: 'none',
-} satisfies CSSProperties;
-
-export const handleStyle = {
-  width: '36px',
-  height: tokens.spacing[1],
-  borderRadius: '2px',
-  background: tokens.color.optionSubFontColor55,
-} satisfies CSSProperties;
-
 export const headerStyle = {
   display: 'flex',
   width: '100%',
@@ -61,13 +9,6 @@ export const headerStyle = {
   alignItems: 'center',
   justifyContent: 'space-between',
   marginTop: tokens.spacing[2],
-} satisfies CSSProperties;
-
-export const titleStyle = {
-  ...typography.title,
-  margin: tokens.spacing[0],
-  fontFamily: tokens.fontFamily.base,
-  color: tokens.text.default,
 } satisfies CSSProperties;
 
 export const actionStyle = {

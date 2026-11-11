@@ -1,24 +1,20 @@
-import { Suspense, CSSProperties } from 'react';
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
+import { Suspense, type ReactNode } from 'react';
+import Tabs from '../../../shared/widgets/Tabs';
+import PublicStudies from '../components/PublicStudies';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { Link } from 'react-router';
 import logo from '../../../shared/assets/icons/header-icon.svg?width=120&as=webp';
 import MyStudies from '../components/MyStudies';
 import Main from '../../../shared/ui/Main';
 import { tokens } from '../../../styles/global';
-import Button from '../../../shared/ui/Button';
 import Page from '../../../shared/ui/Page';
 import Loading from '../../../shared/ui/Loading';
 import NotificationLink from '../../notification/components/NotificationLink';
 import MyIcon from '../../../shared/assets/my.webp';
-
-const actionsStyle = {
-  display: 'flex',
-  gap: tokens.spacing[3],
-  flexDirection: 'column',
-  margin: `${tokens.spacing[3]} 0`,
-} satisfies CSSProperties;
+import StudyFloatingActions from '../components/StudyFloatingActions';
 
 export default function MyStudiesPage() {
   return (
@@ -32,36 +28,48 @@ export default function MyStudiesPage() {
         right={
           <div css={{ display: 'flex', gap: tokens.spacing[5], alignItems: 'center' }}>
             <NotificationLink />
-            <Link to={'/studies/mypage'} aria-label="마이페이지">
+            <Link {...URL_POLICY.toMyPage()} aria-label="마이페이지">
               <img css={{ width: '28px', height: '28px' }} src={MyIcon} alt="" />
             </Link>
           </div>
         }
       />
 
-      <Main>
-        <ErrorBoundary
-          fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
-        >
-          <Suspense fallback={<Loading />}>
-            <MyStudies />
-
-            <div css={actionsStyle}>
-              {/* TODO: 진짜 link로 전환하는게 접근성 더 좋음, 스크린 리더 경험을 고려합니다. */}
-              <Link to="/studies/new">
-                <Button variant="brandSolid" size="large">
-                  스터디 만들기
-                </Button>
-              </Link>
-              <Link to="/studies/join">
-                <Button role="link" variant="neutralOutline" size="large">
-                  스터디 참여하기
-                </Button>
-              </Link>
-            </div>
-          </Suspense>
-        </ErrorBoundary>
+      <Main css={{ paddingBottom: `calc(${tokens.spacing[20]} + ${tokens.layout.safeBottom})` }}>
+        <Tabs
+          tabs={[
+            {
+              key: 'my',
+              label: '내 스터디',
+              panel: (
+                <StudyPanel key="my">
+                  <MyStudies />
+                </StudyPanel>
+              ),
+            },
+            {
+              key: 'public',
+              label: '스터디 둘러보기',
+              panel: (
+                <StudyPanel key="public">
+                  <PublicStudies />
+                </StudyPanel>
+              ),
+            },
+          ]}
+        />
       </Main>
+      <StudyFloatingActions />
     </Page>
+  );
+}
+
+function StudyPanel({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary
+      fallbackRender={({ error }) => <ErrorContent message={getErrorMessage(error)} />}
+    >
+      <Suspense fallback={<Loading />}>{children}</Suspense>
+    </ErrorBoundary>
   );
 }

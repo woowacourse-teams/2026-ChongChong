@@ -1,3 +1,4 @@
+import { Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import checkIcon from '../../../shared/assets/check.svg';
@@ -34,7 +35,6 @@ const guideStyle = {
 } satisfies CSSProperties;
 
 const progressStyle = {
-  ...typography.footnote,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -107,7 +107,9 @@ export default function MemberNoticeReadState({
         ) : (
           <div css={readingStyle}>
             <strong css={guideStyle}>끝까지 읽으면 읽음으로 표시돼요</strong>
-            <span css={progressStyle}>지금 {progress}% 읽었어요</span>
+            <Text variant="footnote" css={progressStyle}>
+              지금 {progress}% 읽었어요
+            </Text>
           </div>
         )}
       </footer>

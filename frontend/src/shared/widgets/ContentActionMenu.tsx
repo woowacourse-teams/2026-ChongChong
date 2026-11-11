@@ -1,6 +1,7 @@
+import { URL_POLICY } from '../policy/urlPolicy';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../hooks/usePageNavigation';
 import { tokens, typography } from '../../styles/global';
 import useBooleanState from '../hooks/useBooleanState';
 import { useToast } from '../providers/ToastProvider';
@@ -55,15 +56,16 @@ interface Props {
   studyId: number;
   id: number;
   content: 'notice' | 'assignment';
+  onDeleteSuccess: () => void;
 }
 
-export default function ContentActionMenu({ studyId, id, content }: Props) {
-  const navigate = useNavigate();
+export default function ContentActionMenu({ studyId, id, content, onDeleteSuccess }: Props) {
+  const { move } = usePageNavigation();
   const queryClient = useQueryClient();
   const toast = useToast();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [confirmOpen, openDialog, closeDialog] = useBooleanState();
+  const [confirmOpen, { setTrue: openDialog, setFalse: closeDialog }] = useBooleanState();
 
   const deleteMutation = content === 'notice' ? deleteNotice : deleteAssignment;
   const queries = content === 'notice' ? noticeQueries : assignmentQueries;
@@ -99,7 +101,12 @@ export default function ContentActionMenu({ studyId, id, content }: Props) {
         });
       }
       queryClient.invalidateQueries({ queryKey: queries.lists(studyId) });
-      navigate(`/studies/${studyId}/${content}s`);
+      onDeleteSuccess();
+      move(
+        content === 'notice'
+          ? URL_POLICY.afterNoticeDelete(studyId)
+          : URL_POLICY.afterAssignmentDelete(studyId),
+      );
     },
     onError: (error) => {
       closeDialog();
@@ -131,7 +138,11 @@ export default function ContentActionMenu({ studyId, id, content }: Props) {
             css={menuButtonStyle}
             onClick={() => {
               setMenuOpen(false);
-              navigate(`/studies/${studyId}/${content}s/${id}/edit`);
+              move(
+                content === 'notice'
+                  ? URL_POLICY.toEditNotice(studyId, id)
+                  : URL_POLICY.toEditAssignment(studyId, id),
+              );
             }}
           >
             {domain} 수정

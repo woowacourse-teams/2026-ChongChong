@@ -180,7 +180,7 @@ public class UserWithdrawalAcceptanceTest {
         User leaderUser = userRepository.saveAndFlush(User.create("리더", null));
         User withdrawingUser = userRepository.saveAndFlush(User.create("탈퇴할 멤버", null));
         User remainingUser = userRepository.saveAndFlush(User.create("남는 멤버", null));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         StudyMember leader = studyMemberRepository.saveAndFlush(StudyMember.create(
                 study, leaderUser, leaderUser.getName(), null, StudyMemberRole.LEADER
         ));
@@ -316,7 +316,7 @@ public class UserWithdrawalAcceptanceTest {
     @Test
     void cannotWithdrawWhileLeadingStudy() {
         User user = userRepository.saveAndFlush(User.create("스터디 리더", null));
-        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명"));
+        Study study = studyRepository.saveAndFlush(Study.create("자바 스터디", "설명", false));
         StudyMember leader = studyMemberRepository.saveAndFlush(
                 StudyMember.create(
                         study, user, user.getName(), user.getProfileImageUrl(),

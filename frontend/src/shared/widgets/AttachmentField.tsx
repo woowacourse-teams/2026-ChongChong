@@ -1,3 +1,4 @@
+import { Text } from '../ui/Typography';
 import { useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties } from 'react';
 import { Field } from '../ui/inputs/Field';
@@ -198,9 +199,9 @@ function AttachmentPreview({
   const [failed, setFailed] = useState(false);
 
   return failed ? (
-    <span css={{ ...typography.footnote, width: 80, flexShrink: 0 }}>
+    <Text variant="footnote" css={{ width: 80, flexShrink: 0 }}>
       이미지를 불러오지 못했어요.
-    </span>
+    </Text>
   ) : (
     <button
       type="button"

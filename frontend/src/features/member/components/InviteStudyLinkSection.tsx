@@ -1,7 +1,8 @@
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import CopyIcon from '../../../shared/assets/copy.svg';
 import CopySuccessIcon from '../../../shared/assets/check.svg';
 import studyQueries from '../../study/queries';
@@ -20,7 +21,6 @@ interface InviteStudyLinkSectionFallbackProps {
 }
 
 const inviteDescriptionStyle = {
-  ...typography.paragraph,
   margin: `${tokens.spacing[2]} 0`,
   color: tokens.text.muted,
 } satisfies CSSProperties;
@@ -36,7 +36,6 @@ const inviteLinkBlockStyle = {
 } satisfies CSSProperties;
 
 const inviteLinkStyle = {
-  ...typography.paragraph,
   overflow: 'hidden',
   color: tokens.text.secondary,
   textOverflow: 'ellipsis',
@@ -57,9 +56,13 @@ export function InviteStudyLinkSection({ studyId }: InviteStudyLinkSectionProps)
 
   return (
     <section>
-      <h2 css={typography.subtitle}>초대 링크</h2>
+      <Heading level={2} variant="subtitle">
+        초대 링크
+      </Heading>
       <InviteLinkBox inviteLink={inviteLink} />
-      <p css={inviteDescriptionStyle}>링크를 통해 새로운 스터디원을 초대해요</p>
+      <Paragraph variant="paragraph" css={inviteDescriptionStyle}>
+        링크를 통해 새로운 스터디원을 초대해요
+      </Paragraph>
     </section>
   );
 }
@@ -77,7 +80,9 @@ export function InviteLinkBox({ inviteLink }: InviteLinkBoxProps) {
 
   return (
     <div css={inviteLinkBlockStyle}>
-      <span css={inviteLinkStyle}>{inviteLink}</span>
+      <Text variant="paragraph" css={inviteLinkStyle}>
+        {inviteLink}
+      </Text>
       <button
         css={[copyButtonStyle, isCopySuccess && { cursor: 'default' }]}
         type="button"
@@ -94,11 +99,13 @@ export function InviteLinkBox({ inviteLink }: InviteLinkBoxProps) {
 export function InviteStudyLinkSectionFallback({ message }: InviteStudyLinkSectionFallbackProps) {
   return (
     <section>
-      <h2 css={typography.subtitle}>초대 링크</h2>
+      <Heading level={2} variant="subtitle">
+        초대 링크
+      </Heading>
       <div css={inviteLinkBlockStyle}>
-        <span css={inviteLinkStyle} role="alert">
+        <Text variant="paragraph" css={inviteLinkStyle} role="alert">
           {message ?? '초대링크를 가져오지 못했어요'}
-        </span>
+        </Text>
         <button
           css={[copyButtonStyle, { cursor: 'default', opacity: 0.5 }]}
           type="button"

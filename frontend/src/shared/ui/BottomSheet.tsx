@@ -1,0 +1,267 @@
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type { CSSProperties } from 'react';
+import { tokens } from '../../styles/global';
+
+const overlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  zIndex: 1000,
+  display: 'flex',
+  alignItems: 'flex-end',
+  justifyContent: 'center',
+} satisfies CSSProperties;
+
+const backdropStyle = {
+  position: 'absolute',
+  inset: 0,
+  background: tokens.bg.dim,
+  willChange: 'opacity',
+} satisfies CSSProperties;
+
+const sheetStyle = {
+  position: 'relative',
+  zIndex: 1,
+  width: '100%',
+  maxWidth: tokens.screenSize.default,
+  maxHeight: '100dvh',
+  padding: `${tokens.spacing[2]} ${tokens.spacing[5]} calc(${tokens.spacing[8]} + 2px + ${tokens.layout.safeBottom})`,
+  borderRadius: `${tokens.spacing[6]} ${tokens.spacing[6]} ${tokens.spacing[0]} ${tokens.spacing[0]}`,
+  background: tokens.bg.default,
+  boxShadow: tokens.shadow[3],
+  color: tokens.text.default,
+  outline: 'none',
+  overscrollBehavior: 'contain',
+  willChange: 'transform',
+} satisfies CSSProperties;
+
+const handleAreaStyle = {
+  display: 'flex',
+  width: '100%',
+  height: tokens.spacing[8],
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: `calc(${tokens.spacing[2]} * -1)`,
+  marginBottom: `calc(${tokens.spacing[2]} * -1)`,
+  cursor: 'grab',
+  touchAction: 'none',
+  userSelect: 'none',
+} satisfies CSSProperties;
+
+const handleStyle = {
+  width: '36px',
+  height: tokens.spacing[1],
+  borderRadius: '2px',
+  background: tokens.color.optionSubFontColor55,
+} satisfies CSSProperties;
+
+const ANIMATION_DURATION_MS = 280;
+const CLOSE_VELOCITY = 0.6;
+
+interface DragState {
+  pointerId: number;
+  startY: number;
+  lastY: number;
+  lastTime: number;
+  velocity: number;
+}
+
+export interface BottomSheetProps {
+  open: boolean;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+  children: ReactNode;
+  onClose: () => void;
+  variant?: 'default' | 'compact';
+  maxHeight?: CSSProperties['maxHeight'];
+}
+
+export default function BottomSheet({
+  open,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  children,
+  onClose,
+  variant = 'default',
+  maxHeight,
+}: BottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef<DragState | null>(null);
+  const dragOffsetRef = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  const updateDragOffset = (offset: number) => {
+    dragOffsetRef.current = offset;
+    setDragOffset(offset);
+  };
+
+  const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (event.key === 'Escape') onClose();
+    if (event.key === 'Tab') {
+      const buttons = Array.from(
+        sheetRef.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
+        ) ?? [],
+      ).filter((element) => !element.closest('[hidden], [inert]'));
+      const first = buttons?.[0];
+      const last = buttons?.[buttons.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first || document.activeElement === sheetRef.current)
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    sheetRef.current?.focus();
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+  }, [open]);
+
+  const handleDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!open || event.button !== 0) return;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      lastY: event.clientY,
+      lastTime: event.timeStamp,
+      velocity: 0,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const elapsed = Math.max(event.timeStamp - dragState.lastTime, 1);
+    dragState.velocity = (event.clientY - dragState.lastY) / elapsed;
+    dragState.lastY = event.clientY;
+    dragState.lastTime = event.timeStamp;
+    updateDragOffset(Math.max(0, event.clientY - dragState.startY));
+  };
+
+  const finishDrag = (event: ReactPointerEvent<HTMLDivElement>, allowClose: boolean) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    const sheetHeight = sheetRef.current?.offsetHeight ?? 0;
+    const closeThreshold = Math.min(160, Math.max(80, sheetHeight * 0.3));
+    const shouldClose =
+      allowClose &&
+      (dragOffsetRef.current >= closeThreshold || dragState.velocity >= CLOSE_VELOCITY);
+
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    dragStateRef.current = null;
+    setIsDragging(false);
+
+    if (shouldClose) {
+      onClose();
+    } else {
+      updateDragOffset(0);
+    }
+  };
+
+  const sheetTransform = open ? `translate3d(0, ${dragOffset}px, 0)` : 'translate3d(0, 100%, 0)';
+  const backdropOpacity = open ? Math.max(0, 1 - dragOffset / 320) : 0;
+  const transition = isDragging
+    ? 'none'
+    : `transform ${ANIMATION_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+
+  return (
+    <div
+      css={[
+        overlayStyle,
+        {
+          visibility: open ? 'visible' : 'hidden',
+          transition: open ? 'visibility 0s' : `visibility 0s linear ${ANIMATION_DURATION_MS}ms`,
+        },
+      ]}
+      aria-hidden={!open}
+      inert={!open}
+    >
+      <div
+        css={[
+          backdropStyle,
+          {
+            opacity: backdropOpacity,
+            transition: isDragging ? 'none' : `opacity ${ANIMATION_DURATION_MS}ms ease`,
+          },
+        ]}
+        data-testid="bottom-sheet-backdrop"
+        onClick={onClose}
+      />
+      <div
+        ref={sheetRef}
+        css={[
+          sheetStyle,
+          variant === 'compact' && {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: tokens.spacing[4],
+            maxHeight: `calc(100dvh - ${tokens.spacing[5]})`,
+            padding: `${tokens.spacing[5]} ${tokens.spacing[5]} calc(${tokens.spacing[6]} + ${tokens.layout.safeBottom})`,
+            borderRadius: '16px 16px 0 0',
+            boxShadow: 'none',
+          },
+          maxHeight !== undefined && { maxHeight },
+          { transform: sheetTransform, transition },
+        ]}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        tabIndex={-1}
+        onTransitionEnd={(event) => {
+          if (!open && event.propertyName === 'transform') updateDragOffset(0);
+        }}
+      >
+        <div
+          css={[
+            handleAreaStyle,
+            variant === 'compact' && {
+              height: '4px',
+              flexShrink: 0,
+              marginTop: 0,
+              marginBottom: 0,
+            },
+            { cursor: isDragging ? 'grabbing' : 'grab' },
+          ]}
+          aria-hidden="true"
+          data-testid="bottom-sheet-handle"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={(event) => finishDrag(event, true)}
+          onPointerCancel={(event) => finishDrag(event, false)}
+        >
+          <div
+            css={[
+              handleStyle,
+              variant === 'compact' && { width: '28px', background: 'var(--border-default)' },
+            ]}
+          />
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}

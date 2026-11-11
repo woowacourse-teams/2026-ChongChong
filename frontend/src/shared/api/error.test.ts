@@ -95,6 +95,30 @@ describe('ErrorResponse.from 테스트', () => {
 });
 
 describe('ValidationError 테스트', () => {
+  test.each(['remindAts[0]', 'remindAts[0].<list element>'])(
+    '%s 오류를 리마인드 필드로 묶고 첫 번째 메시지를 유지한다',
+    (field) => {
+      const cause = createHTTPError({
+        code: 'INVALID_INPUT_VALUE',
+        message: '입력값이 올바르지 않습니다.',
+        errors: [
+          { code: 'REQUEST_VALIDATION_FUTURE', field, reason: '미래 시각을 선택해주세요' },
+          {
+            code: 'REQUEST_VALIDATION_NOT_NULL',
+            field: 'remindAts[1]',
+            reason: '시각은 필수입니다',
+          },
+          { code: 'REQUIRED', field: 'title', reason: '제목은 필수입니다' },
+        ],
+      });
+
+      expect(ValidationError.tryFrom(cause)?.fieldErrors).toEqual({
+        remindAts: '미래 시각을 선택해주세요',
+        title: '제목은 필수입니다',
+      });
+    },
+  );
+
   test('필드 에러 목록을 필드명과 이유를 객체로 변환한다', () => {
     const error = new ValidationError({
       message: 'some error',

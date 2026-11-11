@@ -95,7 +95,6 @@ class AssignmentRequestValidationTest {
                 .containsExactlyInAnyOrder(
                         "title",
                         "content",
-                        "submissionTarget",
                         "submissionVisibility",
                         "closeAt",
                         "remindAts[0].<list element>"
@@ -104,7 +103,6 @@ class AssignmentRequestValidationTest {
                 .containsExactlyInAnyOrder(
                         "제목은 필수 값입니다.",
                         "내용은 필수 값입니다.",
-                        "리더 제출 여부는 필수 값입니다.",
                         "제출물 공개 범위는 필수 값입니다.",
                         "마감 시각은 필수 값입니다.",
                         "리마인드 시각은 필수 값입니다."
@@ -129,14 +127,6 @@ class AssignmentRequestValidationTest {
                         "마감 시각은 현재보다 미래여야 합니다.",
                         "리마인드 시각은 현재보다 미래여야 합니다."
                 );
-    }
-
-    @Test
-    @DisplayName("과제 수정 요청은 모든 필드를 생략할 수 있다")
-    void validateEmptyUpdateRequestTest() {
-        AssignmentUpdateRequest request = new AssignmentUpdateRequest(null, null, null, null, null, null, null);
-
-        assertThat(validator.validate(request)).isEmpty();
     }
 
     @Test

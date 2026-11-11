@@ -1,11 +1,14 @@
+import { saveLoginReturnPath } from './src/features/login/loginReturnPath';
+import { URL_POLICY } from './src/shared/policy/urlPolicy';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { createBrowserRouter, matchRoutes, RouterProvider } from 'react-router';
+import { createBrowserRouter, matchRoutes, Outlet, RouterProvider } from 'react-router';
 import { StrictMode } from 'react';
 import { Global } from '@emotion/react';
 import { globalStyles } from './src/styles/global';
 import { routes as noticeRoutes } from './src/features/notice/routes/route';
 import { routes as studiesRoutes } from './src/features/study/routes';
+import { routes as calenderRoutes } from './src/features/calendar/routes';
 import { routes as AssignmentRoutes } from './src/features/assignment/routes/route';
 import { routes as memberRoutes } from './src/features/member/routes';
 import { routes as loginRoutes } from './src/features/login/routes/routes';
@@ -16,6 +19,7 @@ import { PostHogProvider } from '@posthog/react';
 import { ToastProvider } from './src/shared/providers/ToastProvider';
 import * as Sentry from '@sentry/react';
 import RouteLoading from './src/shared/ui/RouteLoading';
+import { FunnelNavigationProvider } from './src/shared/providers/FunnelNavigationProvider';
 
 const appRoutes = [
   {
@@ -25,6 +29,7 @@ const appRoutes = [
     }),
   },
   ...studiesRoutes,
+  ...calenderRoutes,
   ...noticeRoutes,
   ...AssignmentRoutes,
   ...memberRoutes,
@@ -60,7 +65,11 @@ async function enableMocking() {
 
 const queryClient = new QueryClient();
 
-const publicPaths = new Set(['/', '/login', '/auth/kakao/callback']);
+const publicPaths = new Set([
+  URL_POLICY.toLanding().to,
+  URL_POLICY.toLogin().to,
+  URL_POLICY.toKakaoCallback().to,
+]);
 
 async function restoreSession() {
   if (publicPaths.has(window.location.pathname)) return false;
@@ -69,7 +78,8 @@ async function restoreSession() {
     await refreshAccessToken();
     return false;
   } catch {
-    window.history.replaceState({}, document.title, '/login');
+    saveLoginReturnPath();
+    window.history.replaceState({}, document.title, URL_POLICY.afterSessionExpired().to);
     return true;
   }
 }
@@ -92,9 +102,17 @@ async function bootstrap() {
     throw new Error('Root element "#root" was not found.');
   }
 
-  const router = createBrowserRouter(
-    appRoutes.map((route) => ({ ...route, HydrateFallback: RouteLoading })),
-  );
+  const router = createBrowserRouter([
+    {
+      element: (
+        <FunnelNavigationProvider>
+          <Outlet />
+        </FunnelNavigationProvider>
+      ),
+      HydrateFallback: RouteLoading,
+      children: appRoutes,
+    },
+  ]);
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker

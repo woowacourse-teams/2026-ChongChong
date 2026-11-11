@@ -1,3 +1,4 @@
+import { Text } from '../Typography';
 import { useState } from 'react';
 import { tokens } from '../../../styles/global';
 import {
@@ -76,9 +77,9 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
         >
           ‹
         </button>
-        <span>
+        <Text variant="inherited">
           {viewDate.getFullYear()}년 {viewDate.getMonth() + 1}월
-        </span>
+        </Text>
         <button
           type="button"
           css={monthButtonStyle}
@@ -96,9 +97,13 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
 
       <div css={weekdayRowStyle} aria-hidden="true">
         {WEEKDAYS.map((weekday, index) => (
-          <span key={weekday} css={index === 0 ? { color: tokens.text.critical } : {}}>
+          <Text
+            variant="inherited"
+            key={weekday}
+            css={index === 0 ? { color: tokens.text.critical } : {}}
+          >
             {weekday}
-          </span>
+          </Text>
         ))}
       </div>
 
@@ -118,7 +123,8 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
               onClick={() => selectDate(date)}
             >
               {isCurrentMonth ? (
-                <span
+                <Text
+                  variant="inherited"
                   css={
                     isSelected
                       ? selectedDayStyle
@@ -129,7 +135,7 @@ export default function DatePicker({ value, minDate = new Date(), onChange }: Da
                   }
                 >
                   {date.getDate()}
-                </span>
+                </Text>
               ) : null}
             </button>
           );

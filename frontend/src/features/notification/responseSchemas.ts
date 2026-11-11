@@ -1,5 +1,5 @@
 import z from 'zod';
-import { Notification } from './types';
+import { NotificationListResponse } from './types';
 
 const notificationSchema = z.object({
   id: z.number(),
@@ -15,8 +15,10 @@ const notificationSchema = z.object({
 
 const notificationListSchema = z.object({
   notifications: z.array(notificationSchema),
+  nextCursor: z.number().nullable(),
+  hasNext: z.boolean(),
 });
 
-export function isNotificationResponse(data: unknown): data is { notifications: Notification[] } {
+export function isNotificationResponse(data: unknown): data is NotificationListResponse {
   return notificationListSchema.safeParse(data).success;
 }

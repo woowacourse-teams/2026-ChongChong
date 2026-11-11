@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +40,7 @@ import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusPro
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @ExtendWith(MockitoExtension.class)
 class NoticeReadServiceTest {
@@ -61,6 +63,9 @@ class NoticeReadServiceTest {
     @Mock
     private NoticeAccessPolicy noticeAccessPolicy;
 
+    @Mock
+    private UserProfileImageUrlResolver profileImageUrlResolver;
+
     private NoticeReadService noticeReadService;
 
     @BeforeEach
@@ -71,7 +76,8 @@ class NoticeReadServiceTest {
                 noticeRepository,
                 noticeRecipientRepository,
                 noticeAccessPolicy,
-                clock
+                clock,
+                profileImageUrlResolver
         );
     }
 
@@ -130,6 +136,8 @@ class NoticeReadServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
         when(noticeRecipientRepository.findAllReadStatusesByNoticeId(NOTICE_ID)).thenReturn(statuses);
+        when(profileImageUrlResolver.resolveForMembers(List.of(21L, 22L, 23L))).thenReturn(Map.of(
+                21L, "https://example.com/current-read.png", 22L, "https://example.com/current-unread.png"));
 
         NoticeReadStatusesResponse response = noticeReadService.getAllReadStatuses(USER_ID, STUDY_ID, NOTICE_ID);
 
@@ -139,13 +147,14 @@ class NoticeReadServiceTest {
         assertThat(response.readCount()).isEqualTo(1);
         assertThat(response.remindAt()).isEqualTo(remindAt);
         assertThat(response.readMembers()).containsExactly(
-                new NoticeReadStatusesResponse.ReadMember(21L, "읽은 멤버", "https://example.com/read.png", NOW)
+                new NoticeReadStatusesResponse.ReadMember(21L, "읽은 멤버", "https://example.com/current-read.png", NOW)
         );
         assertThat(response.unreadMembers()).containsExactly(
-                new NoticeReadStatusesResponse.UnreadMember(22L, "리마인드 받은 멤버", "https://example.com/unread.png",
+                new NoticeReadStatusesResponse.UnreadMember(22L, "리마인드 받은 멤버", "https://example.com/current-unread.png",
                         lastRemindAt),
                 new NoticeReadStatusesResponse.UnreadMember(23L, "리마인드 없는 멤버", null, null)
         );
+        verify(profileImageUrlResolver).resolveForMembers(List.of(21L, 22L, 23L));
     }
 
     @Test
@@ -161,7 +170,7 @@ class NoticeReadServiceTest {
                 .extracting(exception -> ((AuthException) exception).getErrorCode())
                 .isEqualTo(AuthErrorCode.ACCESS_DENIED);
 
-        verifyNoInteractions(noticeRepository, noticeRecipientRepository);
+        verifyNoInteractions(noticeRepository, noticeRecipientRepository, profileImageUrlResolver);
     }
 
     @Test
@@ -173,7 +182,7 @@ class NoticeReadServiceTest {
                 .thenThrow(new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
         assertNoticeNotFound(() -> noticeReadService.getAllReadStatuses(USER_ID, STUDY_ID, NOTICE_ID));
-        verifyNoInteractions(noticeRecipientRepository);
+        verifyNoInteractions(noticeRecipientRepository, profileImageUrlResolver);
     }
 
     @Test
@@ -220,7 +229,7 @@ class NoticeReadServiceTest {
     }
 
     private Notice noticeWithId(Long noticeId, Long studyId) {
-        Study study = Study.create("자바 스터디", "설명");
+        Study study = Study.create("자바 스터디", "설명", false);
         ReflectionTestUtils.setField(study, "id", studyId);
         Notice notice = Notice.create(study, "공지 제목", "공지 내용");
         ReflectionTestUtils.setField(notice, "id", noticeId);

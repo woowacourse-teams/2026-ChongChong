@@ -1,5 +1,6 @@
 package withoutc.chongchong.user.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.http.WebRefreshCookie;
 import withoutc.chongchong.auth.http.WebRefreshCookieWriter;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.user.controller.dto.UserProfileImageUpdateRequest;
 import withoutc.chongchong.user.controller.dto.UserProfileNameUpdateRequest;
 import withoutc.chongchong.user.controller.dto.UserProfileResponse;
 import withoutc.chongchong.user.service.UserService;
@@ -46,5 +48,19 @@ public class UserController {
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.headerValue())
                 .build();
+    }
+
+    @PatchMapping("/me/profile-image")
+    public ResponseEntity<UserProfileResponse> updateMyProfileImage(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @Valid @RequestBody UserProfileImageUpdateRequest request
+    ) {
+        return ResponseEntity.ok(userService.updateMyProfileImage(user.id(), request));
+    }
+
+    @DeleteMapping("/me/profile-image")
+    public ResponseEntity<Void> resetMyProfileImage(@AuthenticationPrincipal AuthenticatedUser user) {
+        userService.resetMyProfileImage(user.id());
+        return ResponseEntity.noContent().build();
     }
 }

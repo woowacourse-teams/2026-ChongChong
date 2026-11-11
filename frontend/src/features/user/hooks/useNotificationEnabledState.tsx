@@ -14,8 +14,11 @@ export default function useNotificationEnabledState() {
   const statusQuery = notificationQueries.pushStatus(installationId);
   const { data, isPending, isError, isFetching, refetch } = useQuery(statusQuery);
   const isEnabled =
-    data?.isActive === true && 'Notification' in window && Notification.permission === 'granted';
-  const [changing, startChanging, endChanging] = useBooleanState();
+    data?.isActive === true &&
+    data?.hasLocalSubscription === true &&
+    'Notification' in window &&
+    Notification.permission === 'granted';
+  const [changing, { setTrue: startChanging, setFalse: endChanging }] = useBooleanState();
 
   async function disableNotifications() {
     try {

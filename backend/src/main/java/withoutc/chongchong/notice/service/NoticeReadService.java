@@ -3,6 +3,7 @@ package withoutc.chongchong.notice.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.notice.repository.projection.NoticeRecipientStatusProjection;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -32,6 +34,7 @@ public class NoticeReadService {
 
     private final NoticeAccessPolicy noticeAccessPolicy;
     private final Clock clock;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     public NoticeReadStatusesResponse getAllReadStatuses(Long userId, Long studyId, Long noticeId) {
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
@@ -41,22 +44,26 @@ public class NoticeReadService {
 
         List<NoticeRecipientStatusProjection> statuses = noticeRecipientRepository.findAllReadStatusesByNoticeId(
                 noticeId);
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(
+                statuses.stream().map(NoticeRecipientStatusProjection::memberId).toList());
 
         return NoticeReadStatusesResponse.of(noticeId, notice.getNextRemindAt(),
-                toReadMembers(statuses), toUnreadMembers(statuses));
+                toReadMembers(statuses, imageUrls), toUnreadMembers(statuses, imageUrls));
     }
 
-    private List<ReadMember> toReadMembers(List<NoticeRecipientStatusProjection> statuses) {
+    private List<ReadMember> toReadMembers(List<NoticeRecipientStatusProjection> statuses, Map<Long, String> imageUrls) {
         return statuses.stream()
                 .filter(NoticeRecipientStatusProjection::isRead)
-                .map(status -> ReadMember.of(status.memberId(), status.name(), status.profileImageUrl(), status.readAt()))
+                .map(status -> ReadMember.of(status.memberId(), status.name(), imageUrls.get(status.memberId()),
+                        status.readAt()))
                 .toList();
     }
 
-    private List<UnreadMember> toUnreadMembers(List<NoticeRecipientStatusProjection> statuses) {
+    private List<UnreadMember> toUnreadMembers(List<NoticeRecipientStatusProjection> statuses,
+                                              Map<Long, String> imageUrls) {
         return statuses.stream()
                 .filter(status -> !status.isRead())
-                .map(status -> UnreadMember.of(status.memberId(), status.name(), status.profileImageUrl(),
+                .map(status -> UnreadMember.of(status.memberId(), status.name(), imageUrls.get(status.memberId()),
                         status.lastRemindAt()))
                 .toList();
     }

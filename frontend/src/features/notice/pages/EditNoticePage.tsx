@@ -1,10 +1,12 @@
+import calendarQueries from '../../calendar/queries';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { usePostHog } from '@posthog/react';
 import TopHeader from '../../../shared/ui/TopHeader';
 import NoticeForm from '../components/NoticeForm';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import { PrevButton } from '../../../shared/widgets/PrevButton';
-import { useNavigate } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import noticeQueries from '../queries';
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -39,7 +41,7 @@ export default function EditNoticePage() {
 function Content() {
   const { studyId, noticeId } = useIntegerParams(['studyId', 'noticeId']);
   const { data: notice } = useSuspenseQuery(noticeQueries.detail(studyId, noticeId));
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const queryClient = useQueryClient();
   const toast = useToast();
   const posthog = usePostHog();
@@ -61,7 +63,9 @@ function Content() {
         queryKey: noticeQueries.detail(studyId, noticeId).queryKey,
       });
 
-      await navigate(`/studies/${studyId}/notices/${noticeId}`);
+      queryClient.invalidateQueries({ queryKey: calendarQueries.months(studyId) });
+
+      await move(URL_POLICY.afterNoticeEdit(studyId, noticeId));
     },
 
     onError: (error) => {
@@ -84,6 +88,7 @@ function Content() {
       initialValues={{
         title: notice.title,
         content: notice.content,
+        remindAts: notice.remindAts,
       }}
     />
   );

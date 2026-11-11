@@ -1,6 +1,10 @@
+import { consumeLoginReturnPath } from '../loginReturnPath';
 import { keyframes, type CSSObject } from '@emotion/react';
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import usePageNavigation from '../../../shared/hooks/usePageNavigation';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import chongchongCharacter from '../../../shared/assets/icons/header-icon.svg?width=360&as=webp';
 import Page from '../../../shared/ui/Page';
 import { tokens, typography } from '../../../styles/global';
@@ -70,7 +74,6 @@ const characterStyle = {
 } satisfies CSSObject;
 
 const errorBadgeStyle = {
-  ...typography.bodyStrong,
   display: 'flex',
   position: 'absolute',
   right: '4px',
@@ -86,13 +89,11 @@ const errorBadgeStyle = {
 } satisfies CSSObject;
 
 const titleStyle = {
-  ...typography.headline,
   margin: `${tokens.spacing[6]} 0 0`,
   color: tokens.text.primary,
 } satisfies CSSObject;
 
 const descriptionStyle = {
-  ...typography.body,
   maxWidth: '270px',
   margin: `${tokens.spacing[2]} 0 0`,
   color: tokens.text.secondary,
@@ -150,7 +151,7 @@ const retryLinkStyle = {
 
 export default function KakaoCallbackPage() {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { move } = usePageNavigation();
   const startedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const posthog = usePostHog();
@@ -166,14 +167,14 @@ export default function KakaoCallbackPage() {
         // TODO: 아래와 같이 전환할경우 Posthog에서 유저 식별 필터링이 용이해진다. (논의필요)
         // posthog.identify(String(userId), { username: '안톨리니', email: 'some@example.com' });
         posthog.identify(String(userId));
-        navigate('/studies', { replace: true });
+        await move(URL_POLICY.afterLogin(consumeLoginReturnPath()));
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : '카카오 로그인에 실패했습니다.');
       }
     };
 
     void completeLogin();
-  }, [location.search, navigate, posthog]);
+  }, [location.search, move, posthog]);
 
   return (
     <Page>
@@ -181,21 +182,33 @@ export default function KakaoCallbackPage() {
         <section css={statusContentStyle}>
           <div css={characterBackdropStyle}>
             <img css={characterStyle} src={chongchongCharacter} alt="" />
-            {errorMessage ? <span css={errorBadgeStyle}>!</span> : null}
+            {errorMessage ? (
+              <Text variant="bodyStrong" css={errorBadgeStyle}>
+                !
+              </Text>
+            ) : null}
           </div>
 
           {errorMessage ? (
             <>
-              <h1 css={titleStyle}>로그인을 완료하지 못했어요</h1>
-              <p css={descriptionStyle}>{errorMessage}</p>
-              <Link css={retryLinkStyle} to="/login">
+              <Heading variant="headline" level={1} css={titleStyle}>
+                로그인을 완료하지 못했어요
+              </Heading>
+              <Paragraph variant="body" css={descriptionStyle}>
+                {errorMessage}
+              </Paragraph>
+              <Link css={retryLinkStyle} {...URL_POLICY.toLogin()}>
                 다시 로그인하기
               </Link>
             </>
           ) : (
             <>
-              <h1 css={titleStyle}>총총으로 이동 중이에요</h1>
-              <p css={descriptionStyle}>카카오 계정을 확인하고 스터디를 준비하고 있어요.</p>
+              <Heading variant="headline" level={1} css={titleStyle}>
+                총총으로 이동 중이에요
+              </Heading>
+              <Paragraph variant="body" css={descriptionStyle}>
+                카카오 계정을 확인하고 스터디를 준비하고 있어요.
+              </Paragraph>
               <div css={loadingStatusStyle} role="status">
                 <span css={loadingDotsStyle} aria-hidden="true">
                   <span css={loadingDotStyle} />

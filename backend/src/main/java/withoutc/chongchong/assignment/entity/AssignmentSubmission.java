@@ -56,6 +56,9 @@ public class AssignmentSubmission extends BaseEntity {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String link;
 
+    @Column(nullable = false)
+    private boolean assigned = true;
+
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
@@ -65,6 +68,14 @@ public class AssignmentSubmission extends BaseEntity {
 
     public static AssignmentSubmission create(StudyMember member, Assignment assignment) {
         return new AssignmentSubmission(member, assignment, null, null, null);
+    }
+
+    public void assign() {
+        assigned = true;
+    }
+
+    public void unassign() {
+        assigned = false;
     }
 
     public void addAttachments(List<FileMetadata> files) {
@@ -102,20 +113,7 @@ public class AssignmentSubmission extends BaseEntity {
     }
 
     public SubmissionStatus submissionStatus(LocalDateTime now) {
-        LocalDateTime closeAt = assignment.getCloseAt();
-
-        if (submittedAt == null) {
-            if (now.isAfter(closeAt)) {
-                return SubmissionStatus.MISSING;
-            }
-            return SubmissionStatus.NOT_SUBMITTED;
-        }
-
-        if (submittedAt.isAfter(closeAt)) {
-            return SubmissionStatus.LATE_SUBMITTED;
-        }
-
-        return SubmissionStatus.SUBMITTED;
+        return SubmissionStatus.from(submittedAt, assignment.getCloseAt(), now);
     }
 
     private AssignmentSubmission(StudyMember member, Assignment assignment, String content, String link,

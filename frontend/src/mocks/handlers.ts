@@ -1,3 +1,5 @@
+import { handlers as commentHandlers } from '../features/notice/mocks/comments';
+import { handlers as calendarHandlers } from '../features/calendar/mocks/handlers';
 import { handlers as studiesHandlers } from '../features/study/mocks/handlers';
 import { handlers as assignmentsHandlers } from '../features/assignment/mocks/handlers';
 import { handlers as memberHandlers } from '../features/member/mocks/handlers';
@@ -8,6 +10,8 @@ import { handlers as notificationHandlers } from '../features/notification/mocks
 import { handlers as fileHandlers } from '../shared/modules/files/mocks/handlers';
 
 export const handlers = [
+  ...commentHandlers,
+  ...calendarHandlers,
   ...fileHandlers,
   ...studiesHandlers,
   ...noticeHandlers,

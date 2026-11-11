@@ -1,5 +1,6 @@
+import { Text } from '../ui/Typography';
 import type { Attachment } from '../modules/files/types';
-import { tokens, typography } from '../../styles/global';
+import { tokens } from '../../styles/global';
 import type { CSSObject } from '@emotion/react';
 import ImageGallery from './ImageGallery';
 
@@ -27,7 +28,8 @@ function FileDetails({ file }: { file: Attachment }) {
 
   return (
     <>
-      <span
+      <Text
+        variant="inherited"
         css={{
           flex: 1,
           minWidth: 0,
@@ -36,19 +38,21 @@ function FileDetails({ file }: { file: Attachment }) {
           gap: tokens.spacing[1],
         }}
       >
-        <span css={{ ...typography.body, overflowWrap: 'anywhere' }}>{file.originalFileName}</span>
-        <span css={{ ...typography.caption, color: tokens.text.muted }}>
+        <Text variant="body" css={{ overflowWrap: 'anywhere' }}>
+          {file.originalFileName}
+        </Text>
+        <Text variant="caption" css={{ color: tokens.text.muted }}>
           {type} {formatFileSize(file.size)}
-        </span>
-      </span>
+        </Text>
+      </Text>
       {file.downloadUrl ? (
-        <span css={{ ...typography.caption, color: tokens.text.brand, flexShrink: 0 }}>
+        <Text variant="caption" css={{ color: tokens.text.brand, flexShrink: 0 }}>
           다운로드
-        </span>
+        </Text>
       ) : (
-        <span css={{ ...typography.caption, color: tokens.text.placeholder, flexShrink: 0 }}>
+        <Text variant="caption" css={{ color: tokens.text.placeholder, flexShrink: 0 }}>
           다운로드 불가
-        </span>
+        </Text>
       )}
     </>
   );

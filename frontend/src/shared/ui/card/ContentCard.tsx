@@ -1,4 +1,5 @@
-import { CSSProperties, ReactNode } from 'react';
+import { Heading, Paragraph, Text } from '../Typography';
+import { CSSProperties, ReactNode, ComponentProps } from 'react';
 import { tokens, typography } from '../../../styles/global';
 
 type TitleSize = 'default' | 'large';
@@ -12,8 +13,14 @@ interface ContentCardProps extends ChildrenProps {
   onClick?: () => void;
 }
 
-interface TitleProps extends ChildrenProps {
+interface TitleProps extends Omit<ComponentProps<typeof Heading>, 'variant' | 'level'> {
   size?: TitleSize;
+  level?: ComponentProps<typeof Heading>['level'];
+  truncate?: boolean;
+}
+
+interface DescriptionProps extends Omit<ComponentProps<typeof Paragraph>, 'variant'> {
+  truncate?: boolean;
 }
 
 interface FooterProps extends ChildrenProps {
@@ -51,21 +58,21 @@ const titleRowStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.subtitle,
   margin: 0,
-  overflow: 'hidden',
   color: tokens.color.mainBlack,
+} satisfies CSSProperties;
+
+const truncatedTitleStyle = {
+  overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 } satisfies CSSProperties;
 
 const largeTitleStyle = {
-  ...typography.title,
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
 const accessoryStyle = {
-  ...typography.label,
   display: 'inline-flex',
   flex: '0 0 auto',
   alignItems: 'center',
@@ -88,10 +95,12 @@ const trailingStyle = {
 } satisfies CSSProperties;
 
 const descriptionStyle = {
-  ...typography.body,
-  display: '-webkit-box',
   margin: `${tokens.spacing[1]} 0 0`,
   color: tokens.text.muted,
+} satisfies CSSProperties;
+
+const truncatedDescriptionStyle = {
+  display: '-webkit-box',
   WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 2,
   whiteSpace: 'nowrap',
@@ -134,28 +143,63 @@ ContentCard.Badges = function Badges({ children }: ChildrenProps) {
   return <div css={badgesStyle}>{children}</div>;
 };
 
-ContentCard.TitleRow = function TitleRow({ children }: ChildrenProps) {
-  return <div css={titleRowStyle}>{children}</div>;
+ContentCard.TitleRow = function TitleRow({ children, ...props }: ComponentProps<'div'>) {
+  return (
+    <div css={titleRowStyle} {...props}>
+      {children}
+    </div>
+  );
 };
 
-ContentCard.Title = function Title({ size = 'default', children }: TitleProps) {
-  return <h3 css={{ ...titleStyle, ...(size === 'large' ? largeTitleStyle : {}) }}>{children}</h3>;
+ContentCard.Title = function Title({
+  size = 'default',
+  level = 3,
+  truncate = true,
+  children,
+  ...props
+}: TitleProps) {
+  return (
+    <Heading
+      level={level}
+      variant={size === 'large' ? 'title' : 'subtitle'}
+      css={[titleStyle, size === 'large' && largeTitleStyle, truncate && truncatedTitleStyle]}
+      {...props}
+    >
+      {children}
+    </Heading>
+  );
 };
 
 ContentCard.Accessory = function Accessory({ children }: ChildrenProps) {
-  return <span css={accessoryStyle}>{children}</span>;
+  return (
+    <Text variant="label" css={accessoryStyle}>
+      {children}
+    </Text>
+  );
 };
 
 ContentCard.Trailing = function Trailing({ children }: ChildrenProps) {
   return (
-    <span css={trailingStyle} aria-hidden="true">
+    <Text variant="inherited" css={trailingStyle} aria-hidden="true">
       {children}
-    </span>
+    </Text>
   );
 };
 
-ContentCard.Description = function Description({ children }: ChildrenProps) {
-  return <p css={descriptionStyle}>{children}</p>;
+ContentCard.Description = function Description({
+  truncate = true,
+  children,
+  ...props
+}: DescriptionProps) {
+  return (
+    <Paragraph
+      variant="body"
+      css={[descriptionStyle, truncate && truncatedDescriptionStyle]}
+      {...props}
+    >
+      {children}
+    </Paragraph>
+  );
 };
 
 ContentCard.Footer = function Footer({ direction = 'row', children }: FooterProps) {
@@ -174,9 +218,14 @@ ContentCard.Footer = function Footer({ direction = 'row', children }: FooterProp
 
 ContentCard.Meta = function Meta({ tone = 'muted', icon, children }: MetaProps) {
   return (
-    <span css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}>
+    <Text
+      variant="inherited"
+      css={{ ...metaStyle, color: tone === 'brand' ? tokens.text.brand : tokens.text.muted }}
+    >
       {icon && <>{icon}</>}
-      <span css={metaTextStyle}>{children}</span>
-    </span>
+      <Text variant="inherited" css={metaTextStyle}>
+        {children}
+      </Text>
+    </Text>
   );
 };

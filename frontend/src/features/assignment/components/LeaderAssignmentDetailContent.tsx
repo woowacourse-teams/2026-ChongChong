@@ -1,6 +1,9 @@
+import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentId';
+import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
+import type { AssignmentTab } from '../types';
 import { useQuery, useSuspenseQueries } from '@tanstack/react-query';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
-import DetailTabs from '../../../shared/widgets/DetailTabs';
+import Tabs from '../../../shared/widgets/Tabs';
 import IncompleteMemberList from '../../../shared/widgets/IncompleteMemberList';
 import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
@@ -18,6 +21,7 @@ interface Props {
 }
 
 export default function LeaderAssignmentDetailContent({ studyId, userName }: Props) {
+  const focusCommentId = useFocusCommentId();
   const { assignmentId } = useIntegerParams(['assignmentId']);
 
   const [{ data: assignment }, { data: submitStatusResponse }, { data: submissions }] =
@@ -49,30 +53,48 @@ export default function LeaderAssignmentDetailContent({ studyId, userName }: Pro
         dateTime={assignment.closeAt}
         meta={`${formatDateToString(assignment.closeAt)} 마감`}
       />
-      <DetailTabs
-        status={
-          <>
-            <SubmitStatus status={submitStatusResponse} />
-            {mySubmission ? <MySubmissionStatus submission={mySubmission} member={member} /> : null}
-            <CompletedSubmissionList submissions={submissions.submissions} />
-            <IncompleteMemberList
-              title={`미제출 ${submitStatusResponse.incompleteCount}명`}
-              members={submitStatusResponse.incompleteMembers}
-            />
-          </>
-        }
-        detail={
-          <>
-            <AssignmentArticle assignment={assignment} />
-            {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && mySubmission ? (
-              <MyAssignmentSubmission
-                studyId={studyId}
-                assignmentId={assignmentId}
-                submission={mySubmission}
-              />
-            ) : null}
-          </>
-        }
+      <Tabs<AssignmentTab>
+        tabs={[
+          {
+            key: 'detail',
+            label: '내용',
+            panel: (
+              <>
+                <AssignmentArticle assignment={assignment} />
+                <CommentsPanel
+                  key={`assignment-${studyId}-${assignmentId}`}
+                  target={{ type: 'assignment', studyId, assignmentId }}
+                  title="과제 댓글"
+                  focusCommentId={focusCommentId}
+                />
+                {assignment.submissionTarget === 'MEMBERS_AND_LEADER' && mySubmission ? (
+                  <MyAssignmentSubmission
+                    studyId={studyId}
+                    assignmentId={assignmentId}
+                    submission={mySubmission}
+                  />
+                ) : null}
+              </>
+            ),
+          },
+          {
+            key: 'status',
+            label: '현황',
+            panel: (
+              <>
+                <SubmitStatus status={submitStatusResponse} />
+                {mySubmission ? (
+                  <MySubmissionStatus submission={mySubmission} member={member} />
+                ) : null}
+                <CompletedSubmissionList submissions={submissions.submissions} />
+                <IncompleteMemberList
+                  title={`미제출 ${submitStatusResponse.incompleteCount}명`}
+                  members={submitStatusResponse.incompleteMembers}
+                />
+              </>
+            ),
+          },
+        ]}
       />
     </>
   );

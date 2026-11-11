@@ -60,7 +60,7 @@ describe('과제 제출물 상세 페이지 테스트', () => {
       login(memberUserName);
     });
 
-    test('링크가 null인 제출 정보를 정상적으로 표시하고 링크 영역은 표시하지 않는다', async () => {
+    test('링크가 null인 제출 정보를 표시하고 제출물 댓글을 작성한다', async () => {
       await assignmentTable.create({
         id: 1,
         studyId: 1,
@@ -80,12 +80,18 @@ describe('과제 제출물 상세 페이지 테스트', () => {
         content: '링크 없이 제출한 내용',
         link: null,
       });
-      setupAssignmentSubmissionDetailPage();
+      const { user } = setupAssignmentSubmissionDetailPage();
 
       const main = within(screen.getByRole('main'));
       expect(await main.findByText('링크 없이 제출한 내용')).toBeVisible();
       expect(main.getByRole('heading', { name: memberUserName })).toBeVisible();
       expect(main.queryByRole('link')).not.toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: '제출물 댓글 0 열기' }));
+      await user.type(screen.getByRole('textbox', { name: '댓글 내용' }), '제출 내용 확인했습니다');
+      await user.click(screen.getByRole('button', { name: '등록' }));
+      expect(await screen.findByText('제출 내용 확인했습니다')).toBeVisible();
+      await user.click(screen.getByRole('button', { name: '댓글 닫기' }));
+      expect(await screen.findByRole('button', { name: '제출물 댓글 1 열기' })).toBeVisible();
     });
 
     test.each([

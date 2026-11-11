@@ -1,0 +1,107 @@
+import { useId, type CSSProperties, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
+import { useLocation } from 'react-router';
+import { tokens, typography } from '../../styles/global';
+import usePageNavigation from '../hooks/usePageNavigation';
+import { URL_POLICY } from '../policy/urlPolicy';
+
+type TabItem<TTab extends string> = { key: TTab; label: string; panel: ReactNode };
+
+type TabItemList<TTab extends string> = readonly [TabItem<TTab>, ...TabItem<TTab>[]];
+
+interface Props<TTab extends string> {
+  tabs: TabItemList<TTab>;
+}
+
+const tabListStyle = {
+  display: 'flex',
+  marginTop: tokens.spacing[5],
+  borderBottom: tokens.border.neutral,
+} satisfies CSSProperties;
+
+const tabStyle = {
+  ...typography.body,
+  position: 'relative',
+  flex: '1 0 auto',
+  minWidth: 80,
+  whiteSpace: 'nowrap',
+  minHeight: 44,
+  padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
+  border: 0,
+  background: 'transparent',
+  color: tokens.text.placeholder,
+  cursor: 'pointer',
+} satisfies CSSProperties;
+
+const selectedTabStyle = {
+  color: tokens.text.brand,
+  boxShadow: `inset 0 -2px 0 ${tokens.bg.brand}`,
+} satisfies CSSProperties;
+
+const panelStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  paddingTop: tokens.spacing[5],
+} satisfies CSSProperties;
+
+const TAB_QUERY_NAME = 'tab';
+
+function useQueryTabs<TTab extends string>(tabs: TabItemList<TTab>) {
+  const location = useLocation();
+  const defaultTab = tabs[0];
+  const [searchParams] = useSearchParams({
+    tab: defaultTab.key,
+  });
+  const requestedTab = searchParams.get(TAB_QUERY_NAME);
+  const { move } = usePageNavigation();
+
+  const selectTab = (key: TTab) => {
+    move(URL_POLICY.toConvertTab<TTab>(location, key));
+  };
+
+  const activeTab = tabs.find(({ key }) => key === requestedTab) ?? defaultTab;
+  return { activeTab, selectTab };
+}
+
+export default function Tabs<TTab extends string>({ tabs }: Props<TTab>) {
+  const { activeTab, selectTab } = useQueryTabs<TTab>(tabs);
+  const id = useId();
+
+  return (
+    <>
+      <div
+        role="tablist"
+        aria-label="콘텐츠 정보"
+        css={{
+          ...tabListStyle,
+        }}
+      >
+        {tabs.map(({ key, label }) => {
+          const isActive = activeTab.key === key;
+          return (
+            <button
+              id={`${id}-${key}-tab`}
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`${id}-${key}-panel`}
+              css={{ ...tabStyle, ...(isActive ? selectedTabStyle : {}) }}
+              onClick={() => selectTab(key)}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        id={`${id}-${activeTab.key}-panel`}
+        role="tabpanel"
+        aria-labelledby={`${id}-${activeTab.key}-tab`}
+        css={panelStyle}
+      >
+        {activeTab.panel}
+      </div>
+    </>
+  );
+}

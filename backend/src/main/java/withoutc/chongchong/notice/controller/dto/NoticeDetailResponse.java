@@ -9,15 +9,18 @@ public record NoticeDetailResponse(
         String title,
         String content,
         LocalDateTime createdAt,
-        List<NoticeAttachmentResponse> attachments
+        List<NoticeAttachmentResponse> attachments,
+        List<LocalDateTime> remindAts
 ) {
-    public static NoticeDetailResponse from(Notice notice, List<NoticeAttachmentResponse> attachments) {
+    public static NoticeDetailResponse from(Notice notice, List<NoticeAttachmentResponse> attachments,
+                                            LocalDateTime now) {
         return new NoticeDetailResponse(
                 notice.getId(),
                 notice.getTitle(),
                 notice.getContent(),
                 notice.getCreatedAt(),
-                attachments
+                attachments,
+                notice.getPendingRemindAts(now)
         );
     }
 }

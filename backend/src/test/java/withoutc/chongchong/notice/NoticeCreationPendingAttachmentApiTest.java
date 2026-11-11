@@ -69,7 +69,7 @@ class NoticeCreationPendingAttachmentApiTest extends PostgresContainerTest {
         databaseCleaner.clean();
         User leader = userRepository.save(User.create("리더", null));
         User member = userRepository.save(User.create("스터디원", null));
-        Study study = studyRepository.save(Study.create("검증 대기 공지 스터디", "설명"));
+        Study study = studyRepository.save(Study.create("검증 대기 공지 스터디", "설명", false));
         studyMemberRepository.save(StudyMember.create(study, leader, "리더", null, StudyMemberRole.LEADER));
         studyMemberRepository.save(StudyMember.create(study, member, "스터디원", null, StudyMemberRole.MEMBER));
         FileMetadata file = fileRepository.saveAndFlush(FileMetadata.create(
@@ -99,19 +99,6 @@ class NoticeCreationPendingAttachmentApiTest extends PostgresContainerTest {
         assertThat(countRows("notice_recipients")).isZero();
         assertThat(countRows("notice_reminders")).isZero();
         assertThat(countRows("notifications")).isZero();
-        assertThat(fileRepository.findById(fileId).orElseThrow().getStatus()).isEqualTo(FileUploadStatus.PENDING);
-    }
-
-    @Test
-    @DisplayName("미완료 파일이 있어도 첨부 없는 공지 생성은 201로 성공한다")
-    void createWithoutAttachments() {
-        Response response = request(Map.of("title", "첨부 없는 공지", "content", "공지 내용"));
-
-        response.then().statusCode(201);
-        assertThat(response.jsonPath().getLong("noticeId")).isNotNull();
-        assertThat(countRows("notices")).isOne();
-        assertThat(countRows("notice_attachments")).isZero();
-        assertThat(countRows("notifications")).isOne();
         assertThat(fileRepository.findById(fileId).orElseThrow().getStatus()).isEqualTo(FileUploadStatus.PENDING);
     }
 

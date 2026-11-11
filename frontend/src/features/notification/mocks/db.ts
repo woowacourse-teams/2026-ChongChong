@@ -69,6 +69,30 @@ export const mockNotifications = [
     isRead: true,
     createdAt: '2026-09-21T12:00:00',
   },
+  {
+    id: 5,
+    userId: 1,
+    title: '[농구 스터디] 새 댓글',
+    body: '바니 스터디원이 댓글을 달았어요',
+    type: 'NEW',
+    resourceType: 'NOTICE',
+    resourceId: 12,
+    deepLink: '/studies/2/notices/12?focusCommentId=2',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+  },
+  ...Array.from({ length: 15 }, (_, index): NotificationSchemaType => ({
+    id: index + 6,
+    userId: 1,
+    title: `[농구 스터디] 알림 ${String(index + 6).padStart(2, '0')}`,
+    body: `스터디 공지를 확인해 주세요. ${index + 6}번째 알림입니다.`,
+    type: index % 2 === 0 ? 'NEW' : 'REMIND',
+    resourceType: 'NOTICE',
+    resourceId: 12,
+    deepLink: '/studies/2/notices/12',
+    isRead: index % 3 === 0,
+    createdAt: new Date(Date.now() - (15 - index) * 60 * 1000).toISOString(),
+  })),
 ] satisfies NotificationSchemaType[];
 
 export function createSeedNotification() {

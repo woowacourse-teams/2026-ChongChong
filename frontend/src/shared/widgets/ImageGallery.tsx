@@ -1,3 +1,4 @@
+import { Paragraph } from '../ui/Typography';
 import { useRef, useState, type CSSProperties } from 'react';
 import errorImage from '../assets/icons/image-load-error.webp';
 import type { Attachment } from '../modules/files/types';
@@ -144,7 +145,9 @@ function GalleryImage({
       {failed ? (
         <div css={galleryErrorStyle(single)}>
           <img src={errorImage} alt="이미지를 불러오지 못했어요." width={80} height={80} />
-          <p aria-hidden="true">이미지를 불러오지 못했어요.</p>
+          <Paragraph variant="inherited" aria-hidden="true">
+            이미지를 불러오지 못했어요.
+          </Paragraph>
         </div>
       ) : (
         <button

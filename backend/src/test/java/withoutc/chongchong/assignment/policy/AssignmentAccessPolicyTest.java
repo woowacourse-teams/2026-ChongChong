@@ -54,6 +54,7 @@ class AssignmentAccessPolicyTest {
         StudyMember owner = mock(StudyMember.class);
         AssignmentSubmission submission = mock(AssignmentSubmission.class);
         when(submission.isOwnedBy(owner)).thenReturn(true);
+        when(submission.isAssigned()).thenReturn(true);
 
         assertThatCode(() -> policy.requireCanUpdateSubmission(owner, submission))
                 .doesNotThrowAnyException();
@@ -66,6 +67,24 @@ class AssignmentAccessPolicyTest {
         AssignmentSubmission submission = mock(AssignmentSubmission.class);
 
         assertAccessDenied(() -> policy.requireCanUpdateSubmission(actor, submission));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true, true, true", "true, false, false", "false, true, false", "false, false, false"})
+    @DisplayName("제출과 수정은 현재 제출 대상인 소유자만 허용한다")
+    void requireAssignedOwnerTest(boolean assigned, boolean owner, boolean allowed) {
+        StudyMember actor = mock(StudyMember.class);
+        AssignmentSubmission submission = mock(AssignmentSubmission.class);
+        when(submission.isAssigned()).thenReturn(assigned);
+        when(submission.isOwnedBy(actor)).thenReturn(owner);
+
+        if (allowed) {
+            assertThatCode(() -> policy.requireCanSubmitAssignment(actor, submission)).doesNotThrowAnyException();
+            assertThatCode(() -> policy.requireCanUpdateSubmission(actor, submission)).doesNotThrowAnyException();
+        } else {
+            assertAccessDenied(() -> policy.requireCanSubmitAssignment(actor, submission));
+            assertAccessDenied(() -> policy.requireCanUpdateSubmission(actor, submission));
+        }
     }
 
     private static Stream<Arguments> leaderOnlyActions() {
@@ -100,7 +119,7 @@ class AssignmentAccessPolicyTest {
     void readSubmissionPermissions(SubmissionVisibility visibility, boolean submitted, String actorType,
                                    boolean allowed) {
         LocalDateTime now = LocalDateTime.of(2026, 9, 30, 10, 0);
-        Study study = Study.create("스터디", "설명");
+        Study study = Study.create("스터디", "설명", false);
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
                 visibility, now.plusDays(1), now);
         StudyMember owner = member(study, 1L, StudyMemberRole.MEMBER);
@@ -135,7 +154,7 @@ class AssignmentAccessPolicyTest {
     @DisplayName("공개 과제 목록은 일반 멤버도 조회하고 비공개 목록은 리더만 조회한다")
     void readSubmissionListPermissions(SubmissionVisibility visibility, StudyMemberRole role, boolean allowed) {
         LocalDateTime now = LocalDateTime.of(2026, 9, 30, 10, 0);
-        Study study = Study.create("스터디", "설명");
+        Study study = Study.create("스터디", "설명", false);
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
                 visibility, now.plusDays(1), now);
         StudyMember actor = member(study, 1L, role);
@@ -153,7 +172,7 @@ class AssignmentAccessPolicyTest {
     @DisplayName("지각 제출물도 공개 범위에 따라 일반 멤버의 상세 조회 권한을 적용한다")
     void readLateSubmissionPermissions(SubmissionVisibility visibility, boolean allowed) {
         LocalDateTime now = LocalDateTime.of(2026, 10, 3, 10, 0);
-        Study study = Study.create("스터디", "설명");
+        Study study = Study.create("스터디", "설명", false);
         Assignment assignment = Assignment.create(study, "과제", "내용", "링크", SubmissionTarget.MEMBERS_ONLY,
                 visibility, now.plusDays(1), now);
         AssignmentSubmission submission = AssignmentSubmission.create(

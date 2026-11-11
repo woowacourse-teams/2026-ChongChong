@@ -3,16 +3,19 @@ package withoutc.chongchong.notification.worker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import withoutc.chongchong.notification.service.NotificationService;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.notification.service.NotificationReminderService;
 
 @Component
 @RequiredArgsConstructor
 public class NotificationReminderWorker {
 
-    private final NotificationService notificationService;
+    private final NotificationReminderService notificationReminderService;
 
     @Scheduled(fixedDelayString = "${notification.reminder.fixed-delay-ms:60000}")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void process() {
-        notificationService.createScheduledRemindNotifications();
+        notificationReminderService.findCandidates().forEach(notificationReminderService::process);
     }
 }

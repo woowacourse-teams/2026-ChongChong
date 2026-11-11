@@ -1,6 +1,7 @@
 package withoutc.chongchong.notice.repository;
 
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -12,8 +13,26 @@ import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
+import withoutc.chongchong.notice.repository.projection.NoticeCalendarProjection;
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
+    @Query("""
+            SELECT new withoutc.chongchong.notice.repository.projection.NoticeCalendarProjection(
+                notice.id, notice.title, notice.createdAt, recipient.id, recipient.readAt
+            )
+            FROM Notice notice
+            LEFT JOIN NoticeRecipient recipient
+              ON recipient.notice = notice AND recipient.member.id = :memberId
+            WHERE notice.study.id = :studyId
+              AND notice.createdAt >= :startAt AND notice.createdAt < :endAt
+            """)
+    List<NoticeCalendarProjection> findCalendarNotices(
+            @Param("studyId") Long studyId,
+            @Param("memberId") Long memberId,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt
+    );
+
     @Query("""
             SELECT n
             FROM Notice n
@@ -47,6 +66,30 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
                 .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT notice FROM Notice notice WHERE notice.study.id = :studyId ORDER BY notice.id")
+    List<Notice> findAllByStudyIdForUpdate(@Param("studyId") Long studyId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT notice FROM Notice notice WHERE EXISTS (
+                SELECT comment.id FROM Comment comment
+                WHERE comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.NOTICE
+                  AND comment.resourceId = notice.id AND comment.authorMember.id = :memberId
+            ) ORDER BY notice.id
+            """)
+    List<Notice> findAllByCommentAuthorMemberIdForUpdate(@Param("memberId") Long memberId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT notice FROM Notice notice WHERE EXISTS (
+                SELECT comment.id FROM Comment comment
+                WHERE comment.resourceType = withoutc.chongchong.notification.entity.ResourceType.NOTICE
+                  AND comment.resourceId = notice.id AND comment.authorUser.id = :userId
+            ) ORDER BY notice.id
+            """)
+    List<Notice> findAllByCommentAuthorUserIdForUpdate(@Param("userId") Long userId);
+
     // 리더용
     @Query("""
             SELECT new withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection(
@@ -59,12 +102,14 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             JOIN NoticeRecipient nr
               ON nr.notice = n
             WHERE n.study.id = :studyId
+              AND n.createdAt > :createdAfter
             GROUP BY n.id, n.title, n.createdAt
             HAVING COUNT(nr.readAt) < COUNT(nr.id)
             ORDER BY n.createdAt DESC
             """)
     List<LeaderNoticeSummaryProjection> findIncompleteNoticeSummariesByStudyId(
-            @Param("studyId") Long studyId
+            @Param("studyId") Long studyId,
+            @Param("createdAfter") LocalDateTime createdAfter
     );
 
     // 스터디원용
@@ -90,6 +135,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             SELECT count(n.id)
             FROM Notice n
             WHERE n.study.id = :studyId
+              AND n.createdAt > :createdAfter
             AND EXISTS (
             SELECT nr.id
             FROM NoticeRecipient nr
@@ -97,7 +143,8 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             )
             """)
     long countIncompleteNoticeByStudyId(
-            @Param("studyId") Long studyId
+            @Param("studyId") Long studyId,
+            @Param("createdAfter") LocalDateTime createdAfter
     );
 
     // 스터디원용

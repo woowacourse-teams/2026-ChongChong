@@ -5,9 +5,14 @@ public record CursorPageRequest(
         int size
 ) {
     public static final int MAX_SIZE = 100;
+    private static final int MIN_SIZE = 1;
+    private static final int NEXT_PAGE_LOOKAHEAD = 1;
+    private static final long MIN_ID_CURSOR = 1;
+    private static final String INVALID_CURSOR_MESSAGE = "커서는 양수여야 합니다.";
+    private static final String INVALID_SIZE_MESSAGE = "페이지 크기는 1 이상 100 이하여야 합니다.";
 
     public CursorPageRequest {
-        validateCursor(cursor);
+        validateIdCursor(cursor);
         validateSize(size);
     }
 
@@ -16,18 +21,18 @@ public record CursorPageRequest(
     }
 
     public int fetchSize() {
-        return Math.addExact(size, 1);
+        return Math.addExact(size, NEXT_PAGE_LOOKAHEAD);
     }
 
-    private static void validateCursor(Long cursor) {
-        if (cursor != null && cursor < 1) {
-            throw new IllegalArgumentException("커서는 양수여야 합니다.");
+    private static void validateIdCursor(Long cursor) {
+        if (cursor != null && cursor < MIN_ID_CURSOR) {
+            throw new IllegalArgumentException(INVALID_CURSOR_MESSAGE);
         }
     }
 
     private static void validateSize(int size) {
-        if (size < 1 || size > MAX_SIZE) {
-            throw new IllegalArgumentException("페이지 크기는 1 이상 100 이하여야 합니다.");
+        if (size < MIN_SIZE || size > MAX_SIZE) {
+            throw new IllegalArgumentException(INVALID_SIZE_MESSAGE);
         }
     }
 }

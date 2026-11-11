@@ -1,3 +1,4 @@
+import { Heading, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import List from '../../../shared/ui/List';
@@ -16,7 +17,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -45,7 +45,6 @@ const memberStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   overflow: 'hidden',
   color: tokens.text.primary,
   textOverflow: 'ellipsis',
@@ -60,9 +59,9 @@ const dateStyle = {
 export default function ReadMemberList({ members }: Props) {
   return (
     <section css={sectionStyle} aria-labelledby="read-member-list-title">
-      <h2 id="read-member-list-title" css={titleStyle}>
+      <Heading variant="title" level={2} id="read-member-list-title" css={titleStyle}>
         확인 {members.length}명
-      </h2>
+      </Heading>
       <List>
         {members.map((member) => (
           <List.Item key={member.id} css={itemStyle}>
@@ -73,7 +72,9 @@ export default function ReadMemberList({ members }: Props) {
               css={profileStyle}
             />
             <div css={memberStyle}>
-              <span css={nameStyle}>{member.name}</span>
+              <Text variant="body" css={nameStyle}>
+                {member.name}
+              </Text>
               {member.readAt ? (
                 <time css={dateStyle} dateTime={member.readAt}>
                   {formatReadAt(member.readAt)}

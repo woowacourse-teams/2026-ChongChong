@@ -7,7 +7,7 @@ get:
     sources:
       - frontend/src/features/notification/push.ts
   x-backend:
-    status: review
+    status: done
     owner: wontop02
     description: "인증된 사용자의 installationId에 해당하는 구독 상태와 식별자를 반환한다."
   summary: 내 Web Push 구독 상태 조회

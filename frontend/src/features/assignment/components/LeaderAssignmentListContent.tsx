@@ -1,8 +1,11 @@
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
-import Button from '../../../shared/ui/Button';
-import { useNavigate } from 'react-router';
+import Floating from '../../../shared/ui/Floating';
+import FloatingMenu from '../../../shared/widgets/floating/FloatingMenu';
+import plus from '../../../shared/assets/icons/plus-white.svg';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
@@ -20,18 +23,10 @@ const sectionStyle = {
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
-} satisfies CSSProperties;
-
-const buttonAreaStyle = {
-  display: 'flex',
-  width: '100%',
-  justifyContent: 'center',
-  marginTop: tokens.spacing[3],
+  paddingBottom: tokens.spacing[20],
 } satisfies CSSProperties;
 
 export default function LeaderAssignmentListContent({ studyId }: Props) {
-  const navigate = useNavigate();
-
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
     assignmentQueries.list(studyId),
   );
@@ -73,18 +68,32 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
             )}
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">과제를 더 불러오는 중...</p>}
+          {isFetchingNextPage && (
+            <Paragraph variant="inherited" role="status">
+              과제를 더 불러오는 중...
+            </Paragraph>
+          )}
         </>
       )}
-      <div css={buttonAreaStyle}>
-        <Button
-          variant="brandSolid"
-          size="large"
-          onClick={() => navigate(`/studies/${studyId}/assignments/create`)}
-        >
-          과제 추가하기
-        </Button>
-      </div>
+      <FloatingMenu
+        aria-label="과제 메뉴"
+        bottom={`calc(${tokens.layout.tabBarHeight} + ${tokens.layout.tabBarBottomInset} + ${tokens.spacing[4]})`}
+        trigger={({ bottom, ...props }) => (
+          <Floating
+            {...props}
+            css={{ bottom }}
+            aria-label="과제 메뉴 열기"
+            icon={<img src={plus} alt="" width={30} height={30} />}
+          />
+        )}
+      >
+        <FloatingMenu.LinkItem
+          {...URL_POLICY.toCreateAssignment(studyId)}
+          icon={<img src={plus} alt="" width={22} height={22} />}
+          label="과제 추가하기"
+          description="함께 진행할 과제를 추가해요"
+        />
+      </FloatingMenu>
     </section>
   );
 }

@@ -3,7 +3,9 @@ package withoutc.chongchong.assignment.service;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,9 @@ import withoutc.chongchong.notification.service.NotificationService;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberIdentityProjection;
+import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @Service
 @Transactional(readOnly = true)
@@ -39,20 +44,26 @@ public class AssignmentSubmissionService {
     private final NotificationService notificationService;
     private final AssignmentAttachmentService assignmentAttachmentService;
     private final FileUrlGenerator fileUrlGenerator;
+    private final UserRepository userRepository;
 
     private final AssignmentAttachmentPolicy assignmentAttachmentPolicy;
     private final AssignmentAccessPolicy assignmentAccessPolicy;
     private final Clock clock;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
     public AssignmentSubmitResponse submit(Long userId, Long studyId, Long assignmentId,
                                            AssignmentSubmitRequest request) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
+        List<StudyMemberIdentityProjection> candidates = studyMemberRepository.findIdentitiesByStudyId(studyId);
+        userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
+                .map(StudyMemberIdentityProjection::userId)).distinct().sorted().toList());
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
+        assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
+        assignmentAccessPolicy.requireCanSubmitAssignment(actor, submission);
         LocalDateTime now = LocalDateTime.now(clock);
         boolean isFirstSubmit = !submission.isSubmit(now);
 
@@ -65,6 +76,7 @@ public class AssignmentSubmissionService {
         if (isFirstSubmit) {
             List<StudyMember> leaders = studyMemberRepository.findAllByStudyIdAndRole(studyId, StudyMemberRole.LEADER)
                     .stream()
+                    .filter(member -> candidates.stream().anyMatch(candidate -> candidate.matches(member)))
                     .filter(leader -> !leader.getId().equals(actor.getId()))
                     .toList();
             notificationService.createAssignmentSubmissionSubmittedEventNotifications(submission, leaders);
@@ -76,11 +88,11 @@ public class AssignmentSubmissionService {
     @Transactional
     public void updateSubmission(Long userId, Long studyId, Long assignmentId, Long submissionId,
                                  AssignmentSubmitRequest request) {
+        userRepository.getByIdForShareOrThrow(userId);
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
+        assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
 
-        assignmentRepository.getByIdAndStudyIdOrThrow(assignmentId, studyId);
-
-        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdOrThrow(submissionId,
+        AssignmentSubmission submission = assignmentSubmissionRepository.getByIdAndAssignmentIdForUpdateOrThrow(submissionId,
                 assignmentId);
         assignmentAccessPolicy.requireCanUpdateSubmission(actor, submission);
 
@@ -103,16 +115,7 @@ public class AssignmentSubmissionService {
         }
 
         AssignmentSubmission submission = foundSubmission.get();
-        List<AssignmentAttachmentResponse> attachments = submission.getAttachments().stream()
-                .map(attachment -> {
-                    FileMetadata file = attachment.getFile();
-                    String imageUrl = fileUrlGenerator.generateImageUrl(
-                            file.getObjectKey(), file.getContentType());
-                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
-                            file.getObjectKey(), file.getOriginalFileName());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
-                })
-                .toList();
+        List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(submission);
         return MySubmissionDetailResponse.of(LocalDateTime.now(clock), submission, attachments);
     }
 
@@ -125,17 +128,12 @@ public class AssignmentSubmissionService {
                 assignmentId);
         assignmentAccessPolicy.requireCanReadSubmission(actor, assignment, submission);
 
-        List<AssignmentAttachmentResponse> attachments = submission.getAttachments().stream()
-                .map(attachment -> {
-                    FileMetadata file = attachment.getFile();
-                    String imageUrl = fileUrlGenerator.generateImageUrl(
-                            file.getObjectKey(), file.getContentType());
-                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
-                            file.getObjectKey(), file.getOriginalFileName());
-                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
-                })
-                .toList();
-        return SubmissionDetailResponse.of(submission, submission.getMember(), attachments);
+        List<AssignmentAttachmentResponse> attachments = createAttachmentResponses(submission);
+        StudyMember submitter = submission.getMember();
+        String profileImageUrl = profileImageUrlResolver.resolveForMembers(List.of(submitter.getId()))
+                .get(submitter.getId());
+        return new SubmissionDetailResponse(submission.getId(), submitter.getName(), profileImageUrl,
+                submission.getSubmittedAt(), submission.getContent(), submission.getLink(), attachments);
     }
 
     public SubmissionListResponse getSubmissionList(Long userId, Long studyId, Long assignmentId) {
@@ -145,10 +143,27 @@ public class AssignmentSubmissionService {
 
         List<AssignmentSubmission> submissions = assignmentSubmissionRepository
                 .findAllByAssignmentIdAndSubmittedAtIsNotNull(assignmentId);
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(
+                submissions.stream().map(submission -> submission.getMember().getId()).toList());
 
         LocalDateTime now = LocalDateTime.now(clock);
         return SubmissionListResponse.from(submissions.stream().map(
-                submission -> SubmissionSummary.of(now, submission)).toList());
+                submission -> new SubmissionSummary(submission.getId(), submission.getMember().getName(),
+                        imageUrls.get(submission.getMember().getId()), submission.submissionStatus(now),
+                        submission.getSubmittedAt())).toList());
+    }
+
+    private List<AssignmentAttachmentResponse> createAttachmentResponses(AssignmentSubmission submission) {
+        return submission.getAttachments().stream()
+                .map(attachment -> {
+                    FileMetadata file = attachment.getFile();
+                    String imageUrl = fileUrlGenerator.generateImageUrl(
+                            file.getObjectKey(), file.getContentType());
+                    String downloadUrl = fileUrlGenerator.generateDownloadUrl(
+                            file.getObjectKey(), file.getOriginalFileName());
+                    return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
+                })
+                .toList();
     }
 
     private List<FileMetadata> prepareAttachments(Long userId, AssignmentSubmission submission,

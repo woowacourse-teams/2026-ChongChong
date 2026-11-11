@@ -1,4 +1,12 @@
-import { screen, fireEvent } from '@testing-library/react';
+import { invalidImageFileCases } from './fixtures/invalidImageFiles';
+import userEvent from '@testing-library/user-event';
+import rabbit from '../../../../shared/assets/icons/header-icon.svg?width=210&as=webp';
+import {
+  mockImageUpload,
+  PROFILE_PREVIEW_URL,
+  setupImageBrowserMocks,
+} from './fixtures/imageUpload';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { createWrapper, setup, login } from '../../../../test/render';
@@ -40,9 +48,12 @@ function studyCreateButton() {
 
 describe('스터디 생성 페이지', () => {
   describe('입력값 검증', () => {
-    test('입력이 유효하지 않으면 버튼은 비활성화 된다', () => {
+    test('이름과 설명은 비어 있고 공개 여부는 꺼져 있으며 생성 버튼은 비활성화 된다', () => {
       setupStudyCreatePage();
 
+      expect(studyNameInput()).toHaveValue('');
+      expect(studyDescriptionInput()).toHaveValue('');
+      expect(screen.getByRole('switch', { name: '스터디 공개 여부' })).not.toBeChecked();
       expect(studyCreateButton()).toBeDisabled();
     });
 
@@ -146,6 +157,7 @@ describe('스터디 생성 페이지', () => {
           invalidInputResponse([
             { field: 'name', code: 'SOME_ERROR', reason: '이름에 문제가 있어요' },
             { field: 'description', code: 'SOME_ERROR', reason: '설명에 문제가 있어요' },
+            { field: 'isPublic', code: 'SOME_ERROR', reason: '공개 여부에 문제가 있어요' },
           ]),
         ),
       );
@@ -156,6 +168,7 @@ describe('스터디 생성 페이지', () => {
 
       expect(await screen.findByText('이름에 문제가 있어요')).toBeInTheDocument();
       expect(await screen.findByText('설명에 문제가 있어요')).toBeInTheDocument();
+      expect(await screen.findByText('공개 여부에 문제가 있어요')).toBeInTheDocument();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
@@ -189,6 +202,113 @@ describe('스터디 생성 페이지', () => {
       expect(toast).toHaveTextContent(message);
       expect(toast).toBeVisible();
       expect(studyNameInput()).toHaveValue('치킨');
+    });
+  });
+
+  describe('스터디 프로필 이미지', () => {
+    setupImageBrowserMocks();
+
+    test('이미지가 없으면 바텀시트에 이미지 선택과 취소만 보인다', async () => {
+      const { user } = setupStudyCreatePage();
+
+      await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+
+      const sheet = within(screen.getByRole('dialog', { name: '프로필 이미지' }));
+      expect(sheet.getByRole('button', { name: '프로필 이미지 선택' })).toBeVisible();
+      expect(sheet.getByRole('button', { name: '취소' })).toBeVisible();
+    });
+
+    test('이미지를 선택했을때는 바텀시트에 다른 액션들도 보인다', async () => {
+      mockImageUpload();
+      const { user } = setupStudyCreatePage();
+      const file = new File(['profile-image'], 'profile.png', { type: 'image/png' });
+
+      await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+      await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
+      await user.upload(screen.getByLabelText('프로필 이미지 파일'), file);
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '스터디 프로필 이미지 변경' })).toBeEnabled();
+      });
+      await user.click(screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }));
+
+      const sheet = within(screen.getByRole('dialog', { name: '프로필 이미지' }));
+      expect(sheet.getByRole('button', { name: '프로필 이미지 선택' })).toBeVisible();
+      expect(sheet.getByRole('button', { name: '기본 프로필 이미지 사용' })).toBeVisible();
+      expect(sheet.getByRole('button', { name: '취소' })).toBeVisible();
+    });
+
+    test('프로필 이미지가 없으면 기본 프로필 이미지가 보인다', async () => {
+      setupStudyCreatePage();
+
+      const profile = await screen.findByRole('img', { name: '스터디 프로필' });
+      expect(profile).toHaveAttribute('src', rabbit);
+      expect(profile).toBeVisible();
+    });
+
+    test('프로필 이미지를 변경하면 선택한 프로필 이미지가 보인다', async () => {
+      mockImageUpload();
+      const { user } = setupStudyCreatePage();
+      const file = new File(['profile-image'], 'profile.png', { type: 'image/png' });
+
+      await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+      await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
+      await user.upload(screen.getByLabelText('프로필 이미지 파일'), file);
+
+      await waitFor(() => {
+        expect(screen.getByRole('img', { name: '스터디 프로필' })).toHaveAttribute(
+          'src',
+          PROFILE_PREVIEW_URL,
+        );
+      });
+      expect(screen.getByRole('img', { name: '스터디 프로필' })).toBeVisible();
+    });
+
+    test.each(invalidImageFileCases)(
+      '$title을 선택하면 프로필 아래에 에러가 보이고 기존 이미지를 유지한다',
+      async ({ createFile, message }) => {
+        setupStudyCreatePage();
+        // accept 필터를 통과시켜 애플리케이션의 실제 파일 검증을 실행합니다.
+        const user = userEvent.setup({ applyAccept: false });
+
+        await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+        await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
+        await user.upload(screen.getByLabelText('프로필 이미지 파일'), createFile());
+
+        const error = await screen.findByRole('alert');
+        expect(error.textContent).toBe(message);
+        expect(error).toBeVisible();
+        expect(
+          screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }),
+        ).toHaveAccessibleDescription(error.textContent ?? '');
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        expect(screen.getByRole('img', { name: '스터디 프로필' })).toHaveAttribute('src', rabbit);
+      },
+    );
+
+    test('프로필 이미지 업로드에 실패하면 프로필 아래에 에러 메시지가 보인다', async () => {
+      mockImageUpload();
+      server.use(
+        http.post(`${API_URL}/files/100/complete`, () =>
+          HttpResponse.json(
+            { code: 'FILE_UPLOAD_NOT_FOUND', message: '업로드한 파일을 찾을 수 없습니다.' },
+            { status: 409 },
+          ),
+        ),
+      );
+      const { user } = setupStudyCreatePage();
+      const file = new File(['profile-image'], 'profile.png', { type: 'image/png' });
+
+      await user.click(await screen.findByRole('button', { name: '스터디 프로필 이미지 변경' }));
+      await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
+      await user.upload(screen.getByLabelText('프로필 이미지 파일'), file);
+
+      const error = await screen.findByRole('alert');
+      expect(error).toHaveTextContent('업로드한 파일을 찾을 수 없습니다.');
+      expect(error).toBeVisible();
+      expect(
+        screen.getByRole('button', { name: '스터디 프로필 이미지 변경' }),
+      ).toHaveAccessibleDescription(error.textContent ?? '');
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
 });

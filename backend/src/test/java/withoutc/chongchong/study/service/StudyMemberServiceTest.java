@@ -11,18 +11,18 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notification.service.NotificationService;
-import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
-import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
+import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
@@ -34,16 +34,30 @@ import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @ExtendWith(MockitoExtension.class)
 class StudyMemberServiceTest {
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
+
+    @Mock
+    private NoticeRepository noticeRepository;
+    @Mock
+    private AssignmentRepository assignmentRepository;
+    @Mock
+    private AssignmentSubmissionRepository assignmentSubmissionRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Mock
     private StudyRepository studyRepository;
@@ -57,39 +71,60 @@ class StudyMemberServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private UserProfileImageUrlResolver profileImageUrlResolver;
+
     @InjectMocks
     private StudyMemberService studyMemberService;
 
     @Test
-    @DisplayName("유효한 초대 토큰으로 스터디에 참여하고 멤버를 생성한다")
-    void joinTest() {
+    @DisplayName("비공개 스터디는 ID만으로 참여할 수 없다")
+    void joinPrivateStudyByIdTest() {
         Long userId = 1L;
         Long studyId = 2L;
-        String token = "invite-token";
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(userId);
-        when(user.getName()).thenReturn("사용자");
-        when(user.getProfileImageUrl()).thenReturn("profile-image-url");
+        User user = User.create("사용자", null);
         Study study = mock(Study.class);
-        when(study.getId()).thenReturn(studyId);
-        StudyInviteTokenRequest request = new StudyInviteTokenRequest(token);
-        ArgumentCaptor<StudyMember> captor = ArgumentCaptor.forClass(StudyMember.class);
+        when(study.isPublic()).thenReturn(false);
         when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
-        when(studyInviteTokenProvider.verifyAndExtractStudyId(token)).thenReturn(studyId);
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
-        when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
-        when(studyMemberRepository.countByStudyId(studyId)).thenReturn(1);
-        when(studyMemberRepository.save(any(StudyMember.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        StudyMemberJoinResponse response = studyMemberService.join(userId, request);
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(studyId, null)))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.STUDY_NOT_PUBLIC);
 
-        verify(studyMemberRepository).save(captor.capture());
-        StudyMember studyMember = captor.getValue();
-        assertThat(response.studyId()).isEqualTo(studyId);
-        assertThat(studyMember.getStudy()).isSameAs(study);
-        assertThat(studyMember.getUser()).isSameAs(user);
-        assertThat(studyMember.getRole()).isEqualTo(StudyMemberRole.MEMBER);
+        verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰이 다른 스터디를 가리키면 참여할 수 없다")
+    void joinWithMismatchedTokenTest() {
+        Long userId = 1L;
+        User user = User.create("사용자", null);
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(user);
+        when(studyInviteTokenProvider.verifyAndExtractStudyId("invite-token")).thenReturn(3L);
+
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(2L, "invite-token")))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN);
+
+        verify(studyRepository, never()).getByIdForUpdateOrThrow(any());
+        verify(studyMemberRepository, never()).save(any(StudyMember.class));
+    }
+
+    @Test
+    @DisplayName("스터디 ID와 초대 토큰을 모두 생략하면 참여할 수 없다")
+    void joinWithoutIdentifierTest() {
+        Long userId = 1L;
+        when(userRepository.getByIdForUpdateOrThrow(userId)).thenReturn(User.create("사용자", null));
+
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, null)))
+                .isInstanceOf(StudyException.class)
+                .extracting(exception -> ((StudyException) exception).getErrorCode())
+                .isEqualTo(StudyErrorCode.INVALID_STUDY_ID);
+
+        verify(studyRepository, never()).getByIdForUpdateOrThrow(any());
     }
 
     @Test
@@ -109,7 +144,7 @@ class StudyMemberServiceTest {
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, "invite-token")))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.ALREADY_JOINED_STUDY);
@@ -132,7 +167,7 @@ class StudyMemberServiceTest {
         when(studyMemberRepository.findByStudyIdAndUserId(studyId, userId)).thenReturn(Optional.empty());
         when(studyMemberRepository.countByStudyId(studyId)).thenReturn(50);
 
-        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invite-token")))
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, "invite-token")))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
                 .isEqualTo(StudyMemberErrorCode.STUDY_MEMBER_LIMIT_EXCEEDED);
@@ -149,7 +184,7 @@ class StudyMemberServiceTest {
         when(studyMemberRepository.countByUserId(userId)).thenReturn(50);
 
         assertThatThrownBy(() -> studyMemberService.join(
-                userId, new StudyInviteTokenRequest("invite-token")
+                userId, new StudyJoinRequest(null, "invite-token")
         ))
                 .isInstanceOf(StudyMemberException.class)
                 .extracting(exception -> ((StudyMemberException) exception).getErrorCode())
@@ -168,7 +203,7 @@ class StudyMemberServiceTest {
         when(studyInviteTokenProvider.verifyAndExtractStudyId("invalid-token"))
                 .thenThrow(new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN));
 
-        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyInviteTokenRequest("invalid-token")))
+        assertThatThrownBy(() -> studyMemberService.join(userId, new StudyJoinRequest(null, "invalid-token")))
                 .isInstanceOf(StudyException.class)
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.INVALID_INVITE_TOKEN);
@@ -202,13 +237,18 @@ class StudyMemberServiceTest {
         when(studyRepository.getByIdOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);
         when(studyMemberRepository.findAllSummariesByStudyId(studyId)).thenReturn(projections);
+        when(profileImageUrlResolver.resolveForMembers(List.of(10L, 11L)))
+                .thenReturn(Map.of(10L, "current-home-image-url"));
 
         StudyMembersResponse response = studyMemberService.getAllStudyMembers(userId, studyId);
 
         assertThat(response.maxMemberCount()).isEqualTo(50);
         assertThat(response.nowMemberCount()).isEqualTo(2);
         assertThat(response.members())
-                .containsExactly(StudyMemberResponse.from(projection1), StudyMemberResponse.from(projection2));
+                .containsExactly(
+                        new StudyMemberResponse(10L, "리더", "current-home-image-url", StudyMemberRole.LEADER),
+                        StudyMemberResponse.from(projection2));
+        verify(profileImageUrlResolver).resolveForMembers(List.of(10L, 11L));
     }
 
     @Test
@@ -227,7 +267,7 @@ class StudyMemberServiceTest {
                 .extracting(exception -> ((StudyException) exception).getErrorCode())
                 .isEqualTo(StudyErrorCode.STUDY_NOT_FOUND);
 
-        verifyNoInteractions(studyMemberRepository);
+        verifyNoInteractions(studyMemberRepository, profileImageUrlResolver);
     }
 
     @Test
@@ -247,6 +287,7 @@ class StudyMemberServiceTest {
                 .isEqualTo(StudyMemberErrorCode.STUDY_ACCESS_DENIED);
 
         verify(studyMemberRepository, never()).findAllSummariesByStudyId(studyId);
+        verifyNoInteractions(profileImageUrlResolver);
     }
 
     @Test
@@ -255,6 +296,7 @@ class StudyMemberServiceTest {
         Long userId = 1L;
         Long studyId = 2L;
         Long memberId = 3L;
+        Long targetUserId = 4L;
         StudyMember leader = mock(StudyMember.class);
         StudyMember target = mock(StudyMember.class);
         when(leader.isLeader()).thenReturn(true);
@@ -262,9 +304,18 @@ class StudyMemberServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
         when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(target);
 
+        when(studyMemberRepository.getUserIdByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(targetUserId);
+
         studyMemberService.expel(userId, studyId, memberId);
 
-        InOrder inOrder = inOrder(notificationService, studyMemberRepository);
+        InOrder inOrder = inOrder(userRepository, noticeRepository, assignmentRepository,
+                assignmentSubmissionRepository, commentRepository, notificationService, studyMemberRepository);
+        inOrder.verify(userRepository).getByIdForUpdateOrThrow(targetUserId);
+        inOrder.verify(noticeRepository).findAllByCommentAuthorMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentRepository).findAllAffectedByMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentSubmissionRepository).findAllByMemberIdForUpdate(memberId);
+        inOrder.verify(studyMemberRepository).getByStudyIdAndIdOrThrow(studyId, memberId);
+        inOrder.verify(commentRepository).deleteAllForMemberSubmissions(memberId);
         inOrder.verify(notificationService).deleteNotificationsForStudyMember(memberId);
         inOrder.verify(studyMemberRepository).delete(target);
     }
@@ -358,9 +409,17 @@ class StudyMemberServiceTest {
         when(member.isLeader()).thenReturn(false);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(member);
 
+        when(studyMemberRepository.getIdByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(memberId);
+
         studyMemberService.leave(userId, studyId);
 
-        InOrder inOrder = inOrder(notificationService, studyMemberRepository);
+        InOrder inOrder = inOrder(userRepository, noticeRepository, assignmentRepository,
+                assignmentSubmissionRepository, commentRepository, notificationService, studyMemberRepository);
+        inOrder.verify(userRepository).getByIdForUpdateOrThrow(userId);
+        inOrder.verify(noticeRepository).findAllByCommentAuthorMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentRepository).findAllAffectedByMemberIdForUpdate(memberId);
+        inOrder.verify(assignmentSubmissionRepository).findAllByMemberIdForUpdate(memberId);
+        inOrder.verify(commentRepository).deleteAllForMemberSubmissions(memberId);
         inOrder.verify(notificationService).deleteNotificationsForStudyMember(memberId);
         inOrder.verify(studyMemberRepository).delete(member);
     }

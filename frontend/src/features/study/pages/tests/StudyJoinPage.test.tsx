@@ -5,15 +5,16 @@ import { server } from '../../../../mocks/msw-node';
 import { API_URL } from '../../../../../config';
 import StudyJoinPage from '../StudyJoinPage';
 import { STUDY_URLS } from '../../urls';
-import { studyTable } from '../../mocks/db';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { userTable } from '../../../user/mocks/db';
-import { memberTable } from '../../../member/mocks/db';
 import { clearAccessToken as logout } from '../../../login/accessToken';
 
-const STUDY_JOIN_URL = `${API_URL}${STUDY_URLS.join}`;
+const STUDY_JOIN_INFO_URL = `${API_URL}${STUDY_URLS.joinInfo}`;
 
 describe('스터디 참가 폼 테스트', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
   afterEach(() => {
     logout();
   });
@@ -41,6 +42,17 @@ describe('스터디 참가 폼 테스트', () => {
 
     await user.type(inviteLinkInput(), '씨없는팀으로 초대합니다');
     expect(studyJoinButton()).toBeEnabled();
+  });
+
+  test('입력한 링크에 토큰이 없으면 입력 오류를 표시한다', async () => {
+    const { user } = setup(<StudyJoinPage />, { wrapper: createWrapper() });
+
+    await user.type(inviteLinkInput(), 'https://chongchong.app/studies/join');
+    await user.click(studyJoinButton());
+
+    expect(screen.getByText('유효한 초대 링크를 입력해 주세요.')).toBeVisible();
+    await user.type(inviteLinkInput(), '?token=typescript');
+    expect(screen.queryByText('유효한 초대 링크를 입력해 주세요.')).not.toBeInTheDocument();
   });
 
   // E2E 테스트로 전환합니다.
@@ -97,7 +109,37 @@ describe('스터디 참가 폼 테스트', () => {
     },
   );
 
-  describe('스터디에 참여한다', () => {
+  test('로그인 후 같은 주소로 돌아오면 직접 입력한 초대 링크를 복원한다', async () => {
+    const path = '/studies/join?token=original-token';
+    const { user, unmount } = setup(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: [path] }),
+    });
+    await user.clear(inviteLinkInput());
+    const typedLink = createInviteLink('edited-token');
+    await user.type(inviteLinkInput(), typedLink);
+    unmount();
+
+    setup(<StudyJoinPage />, { wrapper: createWrapper({ initialEntries: [path] }) });
+
+    expect(inviteLinkInput()).toHaveValue(typedLink);
+  });
+
+  test('다른 초대 링크로 진입하면 이전 입력 대신 새 초대 링크를 표시한다', async () => {
+    const { user, unmount } = setup(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: ['/studies/join?token=first'] }),
+    });
+    await user.clear(inviteLinkInput());
+    await user.type(inviteLinkInput(), createInviteLink('edited-token'));
+    unmount();
+
+    setup(<StudyJoinPage />, {
+      wrapper: createWrapper({ initialEntries: ['/studies/join?token=second'] }),
+    });
+
+    expect(inviteLinkInput()).toHaveValue(createInviteLink('second'));
+  });
+
+  describe('초대 정보를 검증한다', () => {
     const userId = 1;
 
     beforeEach(async () => {
@@ -109,16 +151,19 @@ describe('스터디 참가 폼 테스트', () => {
       login('벤지');
     });
 
-    test('참여 요청이 진행 중이면 버튼은 비활성화 된다', async () => {
+    test('초대 정보 조회 중이면 버튼은 비활성화 된다', async () => {
       let finishJoin: () => void;
       const blocker = new Promise<void>((resolve) => {
         finishJoin = resolve;
       });
 
       server.use(
-        http.post(STUDY_JOIN_URL, async () => {
+        http.get(STUDY_JOIN_INFO_URL, async () => {
           await blocker;
-          return HttpResponse.json({ studyId: 10000 });
+          return HttpResponse.json(
+            { code: 'INVALID_INVITE_TOKEN', message: '만료된 초대 링크입니다.' },
+            { status: 400 },
+          );
         }),
       );
 
@@ -135,38 +180,19 @@ describe('스터디 참가 폼 테스트', () => {
       await waitFor(() => expect(button).toBeEnabled());
     });
 
-    test('이미 참여한 스터디를 참여하려고 하면 Toast 에러 메시지가 렌더링 된다', async () => {
-      const study = await studyTable.create({
-        id: 1,
-        name: '탄자니아 스터디',
-        description: '이미 참여한 스터디입니다',
-        inviteLink: 'tanzania',
-      });
-      await memberTable.create({
-        id: 1,
-        studyId: study.id,
-        userId,
-        name: '벤지',
-        profileImage: 'http://localhost:8000',
-        role: 'LEADER',
-      });
-
+    test('유효하지 않은 초대 토큰이면 입력 아래에 오류를 표시한다', async () => {
       const { user } = setup(<StudyJoinPage />, { wrapper: createWrapper() });
-
-      const linkInput = inviteLinkInput();
-      const inviteLink = createInviteLink(study.inviteLink);
-      await user.type(linkInput, inviteLink);
+      const link = createInviteLink('invalid-token');
+      await user.type(inviteLinkInput(), link);
       await user.click(studyJoinButton());
 
-      const toast = await screen.findByRole('status');
-      expect(toast).toHaveTextContent('해당 스터디에 이미 가입되어 있습니다.');
-      expect(toast).toBeVisible();
-      expect(linkInput).toHaveValue(inviteLink);
+      expect(await screen.findByText('초대 코드가 올바르지 않거나 만료되었습니다.')).toBeVisible();
+      expect(inviteLinkInput()).toHaveValue(link);
     });
 
     test('필드 에러가 발생하면 에러메시지가 표시 된다', async () => {
       server.use(
-        http.post(STUDY_JOIN_URL, () =>
+        http.get(STUDY_JOIN_INFO_URL, () =>
           invalidInputResponse([
             { field: 'token', code: 'SOME_ERROR', reason: '토큰값이 문제가 있어요' },
           ]),
@@ -180,17 +206,15 @@ describe('스터디 참가 폼 테스트', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
-    test('네트워크 오류가 발생하면 Toast 에러 메시지가 렌더링 된다', async () => {
-      server.use(http.post(STUDY_JOIN_URL, () => HttpResponse.error()));
+    test('네트워크 오류가 발생하면 입력 아래에 오류가 표시된다', async () => {
+      server.use(http.get(STUDY_JOIN_INFO_URL, () => HttpResponse.error()));
       const { user } = setup(<StudyJoinPage />, { wrapper: createWrapper() });
 
       const linkInput = inviteLinkInput();
       await user.type(linkInput, 'https://www.naver.com?token=안녕하세요 저 안톨리니입니다.');
       await user.click(studyJoinButton());
 
-      const toast = await screen.findByRole('status');
-      expect(toast).toHaveTextContent('스터디 참여에 실패했습니다.');
-      expect(toast).toBeVisible();
+      expect(await screen.findByText('스터디 참여 정보를 불러오는데 실패했습니다.')).toBeVisible();
       expect(linkInput).toHaveValue('https://www.naver.com?token=안녕하세요 저 안톨리니입니다.');
     });
   });

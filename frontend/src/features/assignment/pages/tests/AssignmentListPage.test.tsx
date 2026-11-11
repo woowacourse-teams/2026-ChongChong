@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { API_URL } from '../../../../../config';
@@ -69,6 +69,76 @@ describe('과제 목록 페이지 테스트', () => {
   afterEach(() => {
     logout();
   });
+
+  describe('Floating UI', () => {
+    test('스터디원이 과제 목록에 들어오면 Floating 메뉴가 보이지 않는다', async () => {
+      login(memberUserName);
+      setupAssignmentListPage();
+
+      expect(await screen.findByText('아직 과제가 없어요')).toBeVisible();
+      expect(screen.queryByRole('button', { name: '과제 메뉴 열기' })).not.toBeInTheDocument();
+    });
+
+    test('리드가 Floating을 열면 과제 추가하기와 닫기 메뉴가 보인다', async () => {
+      login(leaderUserName);
+      const { user } = setupAssignmentListPage();
+
+      const floating = await screen.findByRole('button', { name: '과제 메뉴 열기' });
+
+      await user.click(floating);
+
+      const menu = within(screen.getByRole('dialog', { name: '과제 메뉴' }));
+      await waitFor(() => expect(menu.getByRole('link', { name: /과제 추가하기/ })).toBeVisible());
+      await waitFor(() => expect(menu.getByRole('button', { name: '닫기' })).toBeVisible());
+    });
+  });
+
+  test.each([
+    { userName: leaderUserName, visibility: 'LEADER_ONLY', label: '미공개' },
+    { userName: leaderUserName, visibility: 'ALL_STUDY_MEMBERS', label: '공개' },
+    { userName: memberUserName, visibility: 'LEADER_ONLY', label: '미공개' },
+    { userName: memberUserName, visibility: 'ALL_STUDY_MEMBERS', label: '공개' },
+  ])(
+    '$userName 목록에서 기존 뱃지 오른쪽에 $label 뱃지를 표시한다',
+    async ({ userName, visibility, label }) => {
+      login(userName);
+      const isLeader = userName === leaderUserName;
+      server.use(
+        http.get(ASSIGNMENT_LIST_URL, () =>
+          HttpResponse.json({
+            nextCursor: null,
+            hasNext: false,
+            assignments: [
+              {
+                id: 1,
+                title: '공개 여부 확인 과제',
+                content: '과제 내용',
+                submissionMethod: '링크 제출',
+                closeAt: '2026-10-05T23:59:59',
+                submissionStatus: 'SUBMITTED',
+                submissionVisibility: visibility,
+                ...(isLeader ? { memberCount: 2, completeCount: 2, isComplete: true } : {}),
+              },
+            ],
+          }),
+        ),
+      );
+      const detailRequest = jest.fn();
+      server.use(
+        http.get(`${ASSIGNMENT_LIST_URL}/:assignmentId`, () => {
+          detailRequest();
+          return new HttpResponse(null, { status: 500 });
+        }),
+      );
+      setupAssignmentListPage();
+
+      const assignment = await screen.findByRole('link', { name: /공개 여부 확인 과제/ });
+      await within(assignment).findByText(label);
+      const statusBadge = within(assignment).getByText(isLeader ? '모두 제출' : '제출 완료');
+      expect(statusBadge.nextElementSibling).toBe(within(assignment).getByText(label));
+      expect(detailRequest).not.toHaveBeenCalled();
+    },
+  );
 
   describe('기본 정보 조회 실패', () => {
     beforeEach(() => {
@@ -181,6 +251,7 @@ describe('과제 목록 페이지 테스트', () => {
                   submissionMethod: '링크 제출',
                   closeAt: '2026-10-05T23:59:59',
                   submissionStatus,
+                  submissionVisibility: 'LEADER_ONLY',
                 },
               ],
             }),

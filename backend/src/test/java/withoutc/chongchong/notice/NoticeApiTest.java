@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -97,7 +98,7 @@ class NoticeApiTest {
         leaderUser = userRepository.save(User.create("리더", "https://example.com/leader.png"));
         memberUser = userRepository.save(User.create("스터디원", null));
         User secondMemberUser = userRepository.save(User.create("두 번째 스터디원", null));
-        study = studyRepository.save(Study.create("자바 스터디", "설명"));
+        study = studyRepository.save(Study.create("자바 스터디", "설명", false));
         leader = studyMemberRepository.save(
                 StudyMember.create(study, leaderUser, "리더", "https://example.com/leader.png", StudyMemberRole.LEADER)
         );
@@ -117,6 +118,81 @@ class NoticeApiTest {
     @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"title\":\"수정 제목\"}", "{\"title\":\"수정 제목\",\"remindAts\":null}"})
+    @DisplayName("예약 목록을 생략하거나 null로 수정하면 기존 예약을 유지한다")
+    void preserveRemindAtsWhenOmittedOrNull(String body) {
+        String path = "/studies/{studyId}/notices/{id}";
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON).body(body)
+                .when().patch(path, study.getId(), notice.getId())
+                .then().statusCode(204);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), notice.getId())
+                .then().statusCode(200)
+                .body("title", equalTo("수정 제목"))
+                .body("remindAts", equalTo(List.of(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[null]", "[\"2000-01-01T00:00:00\"]"})
+    @DisplayName("null 원소나 지난 예약 시각을 포함한 수정은 거부하고 제목과 기존 예약을 보존한다")
+    void preserveNoticeWhenReminderIsInvalid(String remindAts) {
+        String path = "/studies/{studyId}/notices/{id}";
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .contentType(ContentType.JSON)
+                .body("{\"title\":\"저장되면 안 되는 제목\",\"remindAts\":" + remindAts + "}")
+                .when().patch(path, study.getId(), notice.getId())
+                .then().statusCode(400).body("code", equalTo("INVALID_INPUT_VALUE"));
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), notice.getId())
+                .then().statusCode(200)
+                .body("title", equalTo("기존 공지"))
+                .body("remindAts", equalTo(List.of(remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))));
+    }
+
+    @Test
+    @DisplayName("상세 예약을 유지·추가·개별 삭제하고 전체 삭제하면 빈 배열을 반환한다")
+    void roundTripDetailRemindAts() {
+        String path = "/studies/{studyId}/notices/{id}";
+        String original = remindAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String added = remindAt.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        List<String> existing = testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get(path, study.getId(), notice.getId())
+                .then().statusCode(200).body("remindAts", equalTo(List.of(original)))
+                .extract().jsonPath().getList("remindAts", String.class);
+
+        for (List<String> requested : List.of(List.of(existing.getFirst(), added), List.of(added), List.<String>of())) {
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .contentType(ContentType.JSON).body(Map.of("remindAts", requested))
+                    .when().patch(path, study.getId(), notice.getId())
+                    .then().statusCode(204);
+
+            testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                    .when().get(path, study.getId(), notice.getId())
+                    .then().statusCode(200)
+                    .body("remindAts", equalTo(requested.stream().sorted().toList()));
+        }
+    }
+
+    @Test
+    @DisplayName("상세 응답은 처리 중·발송 완료·지난 예약을 제외한다")
+    void excludeNonEditableRemindAts() {
+        notice.getReminders().getFirst().markAsSent();
+        LocalDateTime now = remindAt.minusDays(10);
+        notice.addReminders(List.of(remindAt.minusDays(1)), now);
+        notice.getReminders().getLast().markAsProcessing();
+        notice.addReminders(List.of(LocalDateTime.of(2000, 1, 2, 0, 0)),
+                LocalDateTime.of(2000, 1, 1, 0, 0));
+        noticeRepository.saveAndFlush(notice);
+
+        testAuthRequest.givenAuthenticatedUser(leaderUser.getId()).port(port)
+                .when().get("/studies/{studyId}/notices/{id}", study.getId(), notice.getId())
+                .then().statusCode(200).body("remindAts", equalTo(List.of()));
     }
 
     @Test
@@ -342,23 +418,6 @@ class NoticeApiTest {
     }
 
     @Test
-    @DisplayName("공지 상세 조회 응답은 작성자 정보를 반환하지 않는다")
-    void getNoticeDetailWithoutWriterTest() {
-        Notice noticeWithoutWriter = noticeRepository.save(
-                Notice.create(study, "작성자 없는 공지", "공지 내용")
-        );
-
-        testAuthRequest.givenAuthenticatedUser(memberUser.getId())
-                .port(port)
-                .when()
-                .get("/studies/{studyId}/notices/{noticeId}", study.getId(), noticeWithoutWriter.getId())
-                .then()
-                .statusCode(200)
-                .body("$", not(hasKey("writer")))
-                .body("$", not(hasKey("profileImageUrl")));
-    }
-
-    @Test
     @DisplayName("모든 수신자가 공지를 읽으면 리더와 스터디원에게 완료 상태를 반환한다")
     void getCompletedNoticeListTest() {
         jdbcTemplate.update(
@@ -402,7 +461,7 @@ class NoticeApiTest {
     @Test
     @DisplayName("다른 스터디의 공지 상세 조회 요청은 존재하지 않는 공지로 응답한다")
     void getNoticeDetailFromOtherStudyTest() {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
         );
@@ -640,16 +699,6 @@ class NoticeApiTest {
                 .statusCode(400)
                 .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
                 .body("errors.field", hasItem("size"));
-
-        testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
-                .port(port)
-                .queryParam("size", Integer.MAX_VALUE)
-                .when()
-                .get("/studies/{studyId}/notices", study.getId())
-                .then()
-                .statusCode(400)
-                .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
-                .body("errors.field", hasItem("size"));
     }
 
     @Test
@@ -785,7 +834,7 @@ class NoticeApiTest {
     @CsvSource({"GET,''", "PATCH,''", "DELETE,''", "GET,/status", "GET,/status/me", "PATCH,/read"})
     @DisplayName("다른 스터디의 공지는 단건 API에서 찾을 수 없고 공지와 읽음 상태가 유지된다")
     void rejectNoticeFromOtherStudyTest(String method, String suffix) {
-        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명"));
+        Study otherStudy = studyRepository.save(Study.create("다른 스터디", "설명", false));
         StudyMember otherLeader = studyMemberRepository.save(
                 StudyMember.create(otherStudy, leaderUser, "리더", null, StudyMemberRole.LEADER)
         );

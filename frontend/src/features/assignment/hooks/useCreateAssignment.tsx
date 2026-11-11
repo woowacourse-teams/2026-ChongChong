@@ -1,8 +1,9 @@
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AssignmentFormValues } from '../types';
+import { CreateAssignmentFormValues } from '../types';
 import { createAssignment } from '../api';
-import { useNavigate } from 'react-router';
+import { useCompleteFunnel } from '../../../shared/providers/FunnelNavigationProvider';
 import { ValidationError } from '../../../shared/api/error';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import { usePostHog } from '@posthog/react';
@@ -15,13 +16,13 @@ interface Params {
 
 export default function useCreateAssignment({ studyId }: Params) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const completeFunnel = useCompleteFunnel();
   const toast = useToast();
   const posthog = usePostHog();
 
   const { mutate, isPending, error } = useMutation({
-    mutationFn: (body: AssignmentFormValues) => createAssignment(studyId, body),
-    onSuccess: async ({ assignmentId }, body) => {
+    mutationFn: (body: CreateAssignmentFormValues) => createAssignment(studyId, body),
+    onSuccess: ({ assignmentId }, body) => {
       queryClient.invalidateQueries({
         queryKey: assignmentQueries.lists(studyId),
       });
@@ -31,7 +32,7 @@ export default function useCreateAssignment({ studyId }: Params) {
         attachment_count: body.attachmentFileIds?.length ?? 0,
       });
 
-      await navigate(`/studies/${studyId}/assignments/${assignmentId}`);
+      completeFunnel(URL_POLICY.afterAssignmentCreate(studyId, assignmentId));
     },
     onError: (error) => {
       if (error instanceof ValidationError) return;

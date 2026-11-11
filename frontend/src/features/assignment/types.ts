@@ -1,5 +1,7 @@
 import type { Attachment } from '../../shared/modules/files/types';
 
+export type AssignmentTab = 'detail' | 'status';
+
 export type SubmissionStatus =
   'NOT_ASSIGNED' | 'NOT_SUBMITTED' | 'SUBMITTED' | 'LATE_SUBMITTED' | 'MISSING';
 
@@ -10,6 +12,7 @@ interface AssignmentSummaryBase {
   submissionMethod: string;
   closeAt: string;
   submissionStatus: SubmissionStatus;
+  submissionVisibility: SubmissionVisibility;
 }
 
 export interface LeaderAssignmentSummary extends AssignmentSummaryBase {
@@ -50,6 +53,7 @@ export interface AssignmentSubmitStatus {
 }
 
 export interface AssignmentDetail {
+  submitterIds: number[];
   attachments?: Attachment[];
   id: number;
   title: string;
@@ -58,17 +62,21 @@ export interface AssignmentDetail {
   closeAt: string;
   submissionTarget: SubmissionTarget;
   submissionVisibility: SubmissionVisibility;
+  remindAts?: string[] | null;
 }
 
 export type SubmissionTarget = 'MEMBERS_ONLY' | 'MEMBERS_AND_LEADER';
 export type SubmissionVisibility = 'LEADER_ONLY' | 'ALL_STUDY_MEMBERS';
 
-export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments'> & {
-  remindAts?: string[] | null;
+export type AssignmentFormValues = Omit<AssignmentDetail, 'id' | 'attachments' | 'submitterIds'> & {
   attachmentFileIds?: number[];
 };
 
-export type UpdateAssignmentFormValues = Partial<AssignmentFormValues>;
+export type CreateAssignmentFormValues = Omit<AssignmentFormValues, 'submissionTarget'> & {
+  submitterIds: number[];
+};
+
+export type UpdateAssignmentFormValues = Partial<CreateAssignmentFormValues>;
 
 interface SubmissionBase {
   id: number;

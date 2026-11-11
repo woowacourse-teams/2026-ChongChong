@@ -6,7 +6,7 @@ info:
     총총 서비스의 사전 설계 API 계약이다. 이 파일과 `paths/`, `components/`의 YAML 파일이 명세의 원본이며,
     구현 코드와 분리해 관리한다. 모든 응답 객체는 명시된 필드 외의 추가 필드를 허용하지 않는다.
 
-    2026-10-19 기준 커밋 c9884a248113b56b0db84adbea31d36d0a3a136e의 구현과 대조했다.
+    2026-11-09 통합 개발 브랜치의 70a09284 구현과 63개 API 계약을 대조했다.
     웹 미연동 기능과 입력·응답 제약 차이는 API별 프론트 안내에 표시한다. 구현 상태는 운영 배포 여부를 뜻하지 않는다.
 
     [백엔드 개발 보드](board.html)에서 API별 진행 상태, 담당자와 개발 설명을 확인할 수 있다.
@@ -20,6 +20,7 @@ tags:
   - { name: Notice, description: 공지 API }
   - { name: Assignment, description: 과제 API }
   - { name: Assignment Submission, description: 과제 제출물 API }
+  - { name: Comment, description: 공지·과제·제출물 댓글 API. 대상별 구현 상태는 각 operation의 x-backend를 따른다. }
   - { name: Web Push, description: Web Push 구독 API }
   - { name: Notification, description: 알림 API }
   - { name: File, description: 파일 업로드 API }
@@ -39,14 +40,22 @@ paths:
     $ref: './paths/auth/logout.yaml'
   /api/users/me:
     $ref: './paths/users/me.yaml'
+  /api/users/me/profile-image:
+    $ref: './paths/users/profile-image.yaml'
   /api/studies:
     $ref: './paths/studies/collection.yaml'
   /api/studies/{studyId}:
     $ref: './paths/studies/detail.yaml'
   /api/studies/{studyId}/info:
     $ref: './paths/studies/info.yaml'
+  /api/studies/{studyId}/calendar:
+    $ref: './paths/studies/calendar.yaml'
   /api/studies/me:
     $ref: './paths/studies/my-studies.yaml'
+  /api/studies/public:
+    $ref: './paths/studies/public.yaml'
+  /api/studies/join-info:
+    $ref: './paths/studies/join-info.yaml'
   /api/studies/{studyId}/invite-link:
     $ref: './paths/studies/invite-link.yaml'
   /api/studies/join:
@@ -61,6 +70,10 @@ paths:
     $ref: './paths/notices/collection.yaml'
   /api/studies/{studyId}/notices/{noticeId}:
     $ref: './paths/notices/detail.yaml'
+  /api/studies/{studyId}/notices/{noticeId}/comments:
+    $ref: './paths/comments/notice-collection.yaml'
+  /api/studies/{studyId}/notices/{noticeId}/comments/{commentId}:
+    $ref: './paths/comments/notice-detail.yaml'
   /api/studies/{studyId}/notices/{noticeId}/status:
     $ref: './paths/notices/status.yaml'
   /api/studies/{studyId}/notices/{noticeId}/read:
@@ -71,6 +84,10 @@ paths:
     $ref: './paths/assignments/collection.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}:
     $ref: './paths/assignments/detail.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/comments:
+    $ref: './paths/comments/assignment-collection.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/comments/{commentId}:
+    $ref: './paths/comments/assignment-detail.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}/status:
     $ref: './paths/assignments/status.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}/submissions:
@@ -79,6 +96,10 @@ paths:
     $ref: './paths/assignment-submissions/my-submission.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}:
     $ref: './paths/assignment-submissions/detail.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}/comments:
+    $ref: './paths/comments/submission-collection.yaml'
+  /api/studies/{studyId}/assignments/{assignmentId}/submissions/{submissionId}/comments/{commentId}:
+    $ref: './paths/comments/submission-detail.yaml'
   /api/web-push-subscriptions:
     $ref: './paths/web-push-subscriptions/collection.yaml'
   /api/web-push-subscriptions/me:

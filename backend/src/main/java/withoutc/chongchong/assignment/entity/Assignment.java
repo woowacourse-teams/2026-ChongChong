@@ -86,6 +86,15 @@ public class Assignment extends BaseEntity {
                 now);
     }
 
+    public static Assignment create(Study study, String title, String content, String submissionMethod,
+                                    SubmissionTarget submissionTarget, SubmissionVisibility submissionVisibility,
+                                    LocalDateTime closeAt, LocalDateTime now, List<StudyMember> submitters) {
+        Assignment assignment = create(study, title, content, submissionMethod, submissionTarget,
+                submissionVisibility, closeAt, now);
+        assignment.replaceSubmitters(submitters);
+        return assignment;
+    }
+
     public void addAttachments(List<FileMetadata> files) {
         for (int i = 0; i < files.size(); i++) {
             attachments.add(AssignmentAttachment.create(this, files.get(i), i));
@@ -130,15 +139,7 @@ public class Assignment extends BaseEntity {
         }
 
         if (submissionTarget != null) {
-            this.submissionTarget = submissionTarget;
-
-            if (submissionTarget == SubmissionTarget.MEMBERS_ONLY) {
-                submissions.removeIf(submission -> submission.getMember().isLeader());
-            }
-
-            if (submissionTarget == SubmissionTarget.MEMBERS_AND_LEADER) {
-                initializeSubmissions(List.of(leader));
-            }
+            updateSubmissionTarget(leader, submissionTarget);
         }
 
         if (submissionVisibility != null) {
@@ -160,12 +161,22 @@ public class Assignment extends BaseEntity {
     }
 
     public int getSubmissionCount() {
-        return this.submissions.size();
+        return Math.toIntExact(this.submissions.stream().filter(AssignmentSubmission::isAssigned).count());
     }
 
     public int getSubmittedCount(LocalDateTime now) {
         return Math.toIntExact(this.submissions.stream()
+                .filter(AssignmentSubmission::isAssigned)
                 .filter(submission -> submission.isSubmit(now)).count());
+    }
+
+    public List<LocalDateTime> getPendingRemindAts(LocalDateTime now) {
+        return reminders.stream()
+                .filter(AssignmentReminder::isPending)
+                .map(AssignmentReminder::getRemindAt)
+                .filter(remindAt -> remindAt.isAfter(now))
+                .sorted()
+                .toList();
     }
 
     public LocalDateTime getNextRemindAt() {
@@ -185,6 +196,26 @@ public class Assignment extends BaseEntity {
                 .forEach(this.submissions::add);
     }
 
+    public void replaceSubmitters(List<StudyMember> members) {
+        if (members.isEmpty() || members.stream().anyMatch(member -> member == null || member.getId() == null)) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
+        }
+        Set<Long> memberIds = members.stream().map(StudyMember::getId).collect(Collectors.toSet());
+        submissions.stream().filter(submission -> !memberIds.contains(submission.getMember().getId()))
+                .forEach(AssignmentSubmission::unassign);
+        assignSubmitters(members, memberIds);
+        if (members.stream().anyMatch(StudyMember::isLeader)) {
+            submissionTarget = SubmissionTarget.MEMBERS_AND_LEADER;
+        } else {
+            submissionTarget = SubmissionTarget.MEMBERS_ONLY;
+        }
+    }
+
+    public List<Long> getSubmitterIds() {
+        return submissions.stream().filter(AssignmentSubmission::isAssigned)
+                .map(submission -> submission.getMember().getId()).toList();
+    }
+
     public void addReminders(List<LocalDateTime> remindAts, LocalDateTime now) {
         if (remindAts == null) {
             return;
@@ -194,6 +225,24 @@ public class Assignment extends BaseEntity {
                 .distinct()
                 .map(remindAt -> AssignmentReminder.create(this, remindAt, now))
                 .forEach(this.reminders::add);
+    }
+
+    private void updateSubmissionTarget(StudyMember leader, SubmissionTarget submissionTarget) {
+        List<StudyMember> members = submissions.stream()
+                .filter(AssignmentSubmission::isAssigned)
+                .map(AssignmentSubmission::getMember)
+                .filter(member -> submissionTarget.requiresLeaderSubmission() || !member.isLeader())
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (submissionTarget.requiresLeaderSubmission()) {
+            members.add(leader);
+        }
+        replaceSubmitters(members);
+    }
+
+    private void assignSubmitters(List<StudyMember> members, Set<Long> memberIds) {
+        submissions.stream().filter(submission -> memberIds.contains(submission.getMember().getId()))
+                .forEach(AssignmentSubmission::assign);
+        initializeSubmissions(members);
     }
 
     private static void validateTitle(String title) {

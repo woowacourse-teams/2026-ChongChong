@@ -3,7 +3,9 @@ package withoutc.chongchong.notice.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -27,7 +29,6 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.notice.repository.NoticeAttachmentRepository;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
@@ -43,16 +44,13 @@ class NoticeAttachmentServiceTest {
     @Mock
     private FileMetaDataRepository fileRepository;
 
-    @Mock
-    private NoticeAttachmentRepository attachmentRepository;
-
     private NoticeAttachmentService attachmentService;
     private NoticeAttachmentPolicy attachmentPolicy;
 
     @BeforeEach
     void setUp() {
         attachmentPolicy = new NoticeAttachmentPolicy(10, 5242880, List.of("image/jpeg", "image/png", "image/webp"));
-        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository, attachmentPolicy);
+        attachmentService = new NoticeAttachmentService(fileRepository, attachmentPolicy);
     }
 
     @Test
@@ -61,7 +59,7 @@ class NoticeAttachmentServiceTest {
         assertThat(attachmentService.prepareForCreate(USER_ID, null)).isEmpty();
         assertThat(attachmentService.prepareForCreate(USER_ID, List.of())).isEmpty();
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     @Test
@@ -74,10 +72,10 @@ class NoticeAttachmentServiceTest {
         List<FileMetadata> files = attachmentService.prepareForCreate(USER_ID, List.of(31L, 7L));
 
         assertThat(files).containsExactly(second, first);
-        InOrder verificationOrder = inOrder(fileRepository, attachmentRepository);
+        InOrder verificationOrder = inOrder(fileRepository);
         verificationOrder.verify(fileRepository).findAllByIdForUpdate(List.of(7L, 31L));
-        verificationOrder.verify(attachmentRepository).existsAnyByFileId(31L);
-        verificationOrder.verify(attachmentRepository).existsAnyByFileId(7L);
+        verificationOrder.verify(fileRepository).existsAnyUsageByFileId(31L);
+        verificationOrder.verify(fileRepository).existsAnyUsageByFileId(7L);
         assertThat(files).allMatch(file -> file.getStatus() == FileUploadStatus.COMPLETED);
     }
 
@@ -92,7 +90,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_FOUND);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @Test
@@ -106,7 +104,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_OWNED);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @ParameterizedTest
@@ -122,7 +120,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @Test
@@ -170,7 +168,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.ATTACHMENT_LIMIT_EXCEEDED);
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     @Test
@@ -184,7 +182,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_TYPE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @ParameterizedTest
@@ -199,7 +197,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_NOTICE_IMAGE_SIZE);
 
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     @Test
@@ -208,8 +206,8 @@ class NoticeAttachmentServiceTest {
         FileMetadata first = createFile(7L, USER_ID);
         FileMetadata second = createFile(31L, USER_ID);
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(first, second));
-        when(attachmentRepository.existsAnyByFileId(7L)).thenReturn(false);
-        when(attachmentRepository.existsAnyByFileId(31L)).thenReturn(true);
+        when(fileRepository.existsAnyUsageByFileId(7L)).thenReturn(false);
+        when(fileRepository.existsAnyUsageByFileId(31L)).thenReturn(true);
 
         assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L, 31L)))
                 .isInstanceOf(FileException.class)
@@ -225,7 +223,7 @@ class NoticeAttachmentServiceTest {
     void rejectAlreadyAttachedFile() {
         FileMetadata file = createFile(7L, USER_ID);
         when(fileRepository.findAllByIdForUpdate(List.of(7L))).thenReturn(List.of(file));
-        when(attachmentRepository.existsAnyByFileId(7L)).thenReturn(true);
+        when(fileRepository.existsAnyUsageByFileId(7L)).thenReturn(true);
 
         assertThatThrownBy(() -> attachmentService.prepareForCreate(USER_ID, List.of(7L)))
                 .isInstanceOf(FileException.class)
@@ -242,7 +240,7 @@ class NoticeAttachmentServiceTest {
 
         attachmentService.prepareForDelete(notice);
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     @Test
@@ -253,13 +251,13 @@ class NoticeAttachmentServiceTest {
         FileMetadata second = createFile(31L, 2L, "application/pdf", 0);
         notice.addAttachments(List.of(second, first));
         when(fileRepository.findAllByIdForUpdate(List.of(7L, 31L))).thenReturn(List.of(first, second));
-        attachmentService = new NoticeAttachmentService(fileRepository, attachmentRepository,
+        attachmentService = new NoticeAttachmentService(fileRepository,
                 new NoticeAttachmentPolicy(1, 1, List.of("image/jpeg")));
 
         attachmentService.prepareForDelete(notice);
 
         verify(fileRepository).findAllByIdForUpdate(List.of(7L, 31L));
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
         assertThat(notice.getAttachments()).hasSize(2);
         assertThat(List.of(first, second)).extracting(FileMetadata::getStatus)
                 .containsOnly(FileUploadStatus.COMPLETED);
@@ -281,7 +279,7 @@ class NoticeAttachmentServiceTest {
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
 
         assertThat(file.getStatus()).isEqualTo(status);
-        verifyNoInteractions(attachmentRepository);
+        verify(fileRepository, never()).existsAnyUsageByFileId(anyLong());
     }
 
     private void assertInvalidIds(List<Long> fileIds) {
@@ -290,7 +288,7 @@ class NoticeAttachmentServiceTest {
                 .extracting(exception -> ((NoticeException) exception).getErrorCode())
                 .isEqualTo(NoticeErrorCode.INVALID_ATTACHMENT_IDS);
 
-        verifyNoInteractions(fileRepository, attachmentRepository);
+        verifyNoInteractions(fileRepository);
     }
 
     private FileMetadata createFile(Long fileId, Long ownerId) {

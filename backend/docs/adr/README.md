@@ -21,6 +21,9 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0059](0059-query-calendar-events-from-current-content.md) | 캘린더는 원본 콘텐츠의 현재 상태를 월간 이벤트로 조회한다 |
+| [0058](0058-preserve-study-profile-images-with-home-inheritance.md) | 홈 프로필 이미지 변경을 모든 참여 스터디 조회에 함께 반영한다 |
+| [0057](0057-reference-comment-resources-by-type-and-id.md) | 댓글 원문을 resourceType과 resourceId로 참조한다 |
 | [0056](0056-issue-notice-image-urls-after-access-check.md) | 공지 첨부 조회 URL은 조회 권한 확인 후 발급한다 |
 | [0055](0055-connect-completed-files-to-notices.md) | 공지 첨부는 업로드 완료 파일의 연결로 처리한다 |
 | [0054](0054-separate-upload-verification-from-database-transactions.md) | 업로드 검증의 S3 호출과 DB 트랜잭션을 분리한다 |

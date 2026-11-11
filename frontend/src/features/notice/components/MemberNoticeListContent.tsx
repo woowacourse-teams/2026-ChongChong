@@ -1,3 +1,4 @@
+import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
@@ -49,7 +50,11 @@ export default function MemberNoticeListContent({ studyId }: Props) {
             }}
           </NoticeList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <p role="status">공지를 더 불러오는 중...</p>}
+          {isFetchingNextPage && (
+            <Paragraph variant="inherited" role="status">
+              공지를 더 불러오는 중...
+            </Paragraph>
+          )}
         </>
       )}
     </section>

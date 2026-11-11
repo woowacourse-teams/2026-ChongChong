@@ -1,10 +1,12 @@
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
+import { Link, useLocation } from 'react-router';
+import { Heading, Paragraph, Text } from '../../../shared/ui/Typography';
 import type { CSSProperties } from 'react';
-import { Link } from 'react-router';
 import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { formatSubmittedAt } from '../../../shared/utils/formatDate';
 import { tokens, typography } from '../../../styles/global';
 import { isCompletedAssignment } from '../submissionStatus';
-import type { Submission, UserAssignmentSubmitDetail } from '../types';
+import type { AssignmentTab, Submission, UserAssignmentSubmitDetail } from '../types';
 import Badge from '../../../shared/ui/Badge';
 
 interface Props {
@@ -19,13 +21,11 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
 const emptyStyle = {
-  ...typography.footnote,
   margin: `${tokens.spacing[5]} 0`,
   color: tokens.text.muted,
   textAlign: 'center',
@@ -62,7 +62,6 @@ const nameRowStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   color: tokens.text.primary,
 } satisfies CSSProperties;
 
@@ -80,18 +79,21 @@ const detailLinkStyle = {
 } satisfies CSSProperties;
 
 export default function MySubmissionStatus({ submission, member }: Props) {
+  const location = useLocation();
   if (submission.submissionStatus === 'NOT_ASSIGNED') return null;
 
   const isCompleted = isCompletedAssignment(submission);
 
   return (
     <section css={sectionStyle} aria-labelledby="my-submission-status-title">
-      <h2 id="my-submission-status-title" css={titleStyle}>
+      <Heading variant="title" level={2} id="my-submission-status-title" css={titleStyle}>
         내 제출
-      </h2>
+      </Heading>
 
       {!isCompleted ? (
-        <p css={emptyStyle}>아직 과제를 제출하지 않았어요</p>
+        <Paragraph variant="footnote" css={emptyStyle}>
+          아직 과제를 제출하지 않았어요
+        </Paragraph>
       ) : (
         <div css={cardStyle}>
           <img
@@ -102,7 +104,9 @@ export default function MySubmissionStatus({ submission, member }: Props) {
           />
           <div css={memberStyle}>
             <div css={nameRowStyle}>
-              <span css={nameStyle}>{member.name} (나)</span>
+              <Text variant="body" css={nameStyle}>
+                {member.name} (나)
+              </Text>
               {submission.submissionStatus === 'LATE_SUBMITTED' && (
                 <Badge variant="warningSolid" size="status">
                   지각 제출
@@ -113,7 +117,10 @@ export default function MySubmissionStatus({ submission, member }: Props) {
               {formatSubmittedAt(submission.createdAt)}
             </time>
           </div>
-          <Link css={detailLinkStyle} to="?view=detail">
+          <Link
+            css={detailLinkStyle}
+            {...URL_POLICY.toConvertTab<AssignmentTab>(location, 'detail')}
+          >
             상세 보기
           </Link>
         </div>

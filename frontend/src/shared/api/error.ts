@@ -87,7 +87,8 @@ export class ValidationError extends Error {
 
   private toFieldErrors() {
     return this.errors?.reduce<Record<string, string>>((fieldErrors, { field, reason }) => {
-      if (!(field in fieldErrors)) fieldErrors[field] = reason;
+      const fieldName = field.startsWith('remindAts[') ? 'remindAts' : field;
+      if (!(fieldName in fieldErrors)) fieldErrors[fieldName] = reason;
 
       return fieldErrors;
     }, {});

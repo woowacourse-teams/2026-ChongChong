@@ -1,13 +1,15 @@
 import api from '../../client';
 import { ValidationError, ApiError } from '../../shared/api/error';
 import { STUDY_URLS } from './urls';
-import type { Role } from './types';
+import type { Role, StudyFormValues, StudyJoinTarget } from './types';
 import {
   isCreateStudyResponse,
   isInviteLinkResponse,
   isStudyDetailResponse,
   isStudyInfoResponse,
   isStudyResponse,
+  isStudyJoinInfoResponse,
+  isPublicStudyListResponse,
 } from './responseSchemas';
 import { handleError } from '../../shared/api/error';
 
@@ -23,6 +25,27 @@ export async function fetchStudies() {
     return data;
   } catch (error) {
     throw new Error('스터디 목록을 불러오는데 실패했습니다.', { cause: error });
+  }
+}
+
+export async function fetchPublicStudies(cursor?: number, keyword = '') {
+  try {
+    const response = await api.get(STUDY_URLS.publicList, {
+      searchParams: {
+        ...(cursor === undefined ? {} : { cursor }),
+        ...(keyword ? { keyword } : {}),
+      },
+    });
+    const data: unknown = await response.json();
+    if (!isPublicStudyListResponse(data)) {
+      throw new Error('공개 스터디 목록 응답 형식이 올바르지 않습니다.');
+    }
+    return data;
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('공개 스터디 목록을 불러오는데 실패했습니다.', { cause: error }),
+    });
   }
 }
 
@@ -44,12 +67,11 @@ export async function fetchStudyDetail<R extends Role>(studyId: number, role: R)
   }
 }
 
-export async function createStudy(body: {
-  name: string;
-  description: string;
-}): Promise<{ studyId: number }> {
+export async function createStudy(body: StudyFormValues): Promise<{ studyId: number }> {
   try {
-    const response = await api.post(STUDY_URLS.create, { json: body });
+    const response = await api.post(STUDY_URLS.create, {
+      json: { ...body, isPublic: body.isPublic ?? false },
+    });
     const data: unknown = await response.json<{ studyId: number }>();
 
     if (!isCreateStudyResponse(data)) {
@@ -65,7 +87,7 @@ export async function createStudy(body: {
   }
 }
 
-export async function editStudy(studyId: number, body: { name: string; description: string }) {
+export async function editStudy(studyId: number, body: StudyFormValues) {
   try {
     await api.patch(`/studies/${studyId}`, { json: body });
   } catch (error) {
@@ -112,10 +134,37 @@ export async function fetchStudyInviteLink(studyId: number) {
   }
 }
 
-export async function joinStudy(body: { token: string }) {
+export async function fetchStudyJoinInfo(target: string | StudyJoinTarget, signal?: AbortSignal) {
+  try {
+    const response = await api.get(STUDY_URLS.joinInfo, {
+      searchParams: typeof target === 'string' ? { token: target } : target,
+      signal,
+    });
+    const data: unknown = await response.json();
+
+    if (!isStudyJoinInfoResponse(data)) {
+      throw new Error('스터디 참여 정보 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ValidationError, ApiError],
+      fallback: new Error('스터디 참여 정보를 불러오는데 실패했습니다.', { cause: error }),
+    });
+  }
+}
+
+export async function joinStudy(body: StudyJoinTarget) {
   try {
     const response = await api.post(STUDY_URLS.join, { json: body });
-    return await response.json<{ studyId: number }>();
+    const data: unknown = await response.json();
+
+    if (!isCreateStudyResponse(data)) {
+      throw new Error('스터디 참여 응답 형식이 올바르지 않습니다.');
+    }
+
+    return data;
   } catch (error) {
     throw handleError(error, {
       mappers: [ValidationError, ApiError],

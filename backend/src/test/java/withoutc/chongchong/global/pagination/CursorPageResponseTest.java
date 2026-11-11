@@ -39,18 +39,6 @@ class CursorPageResponseTest {
     }
 
     @Test
-    @DisplayName("조회 결과가 요청 크기보다 적으면 모든 결과를 담은 마지막 페이지를 만든다")
-    void createLastPageWhenResultSizeIsLessThanRequestedSize() {
-        List<TestItem> results = List.of(new TestItem(10L));
-
-        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, pageRequest(), TestItem::id);
-
-        assertThat(response.content()).containsExactlyElementsOf(results);
-        assertThat(response.nextCursor()).isNull();
-        assertThat(response.hasNext()).isFalse();
-    }
-
-    @Test
     @DisplayName("조회 결과가 비어 있으면 빈 마지막 페이지를 만든다")
     void createEmptyLastPage() {
         CursorPageResponse<TestItem> response = CursorPageResponse.of(List.of(), pageRequest(), TestItem::id);
@@ -72,6 +60,21 @@ class CursorPageResponseTest {
         assertThat(response.content()).first().isEqualTo(originalFirstItem);
         assertThatThrownBy(() -> response.content().add(new TestItem(8L)))
                 .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    @DisplayName("마지막 페이지에서는 다음 커서를 생성하지 않는다")
+    void omitCursorOnLastPage() {
+        List<TestItem> results = List.of(new TestItem(8L));
+        CursorPageRequest request = CursorPageRequest.of(9L, 2);
+
+        CursorPageResponse<TestItem> response = CursorPageResponse.of(results, request, item -> {
+            throw new AssertionError("마지막 페이지에서는 다음 커서를 만들면 안 됩니다.");
+        });
+
+        assertThat(response.content()).containsExactlyElementsOf(results);
+        assertThat(response.nextCursor()).isNull();
+        assertThat(response.hasNext()).isFalse();
     }
 
     private CursorPageRequest pageRequest() {

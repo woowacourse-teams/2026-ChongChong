@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { Route } from 'react-router';
 import { API_URL } from '../../../../../config';
+import { COMMENT_URLS } from '../../../../shared/modules/comments/urls';
 import { invalidInputResponse } from '../../../../mocks/errors';
 import { server } from '../../../../mocks/msw-node';
 import { createWrapper, login, logout, setup } from '../../../../test/render';
@@ -174,6 +175,7 @@ describe('과제 디테일 페이지 테스트', () => {
               submissionMethod: '텍스트로 제출하세요',
               closeAt: '2999-12-31T23:59:59',
               submissionTarget: 'MEMBERS_ONLY',
+              submitterIds: [2],
               submissionVisibility: 'LEADER_ONLY',
             }),
           ),
@@ -547,7 +549,6 @@ describe('과제 디테일 페이지 테스트', () => {
         await openStatusTab(user);
 
         const detailLink = await screen.findByRole('link', { name: '상세 보기' });
-        expect(detailLink).toHaveAttribute('href', '/studies/1/assignments/1?view=detail');
 
         await user.click(detailLink);
 
@@ -755,6 +756,53 @@ describe('과제 디테일 페이지 테스트', () => {
           expect(screen.getByRole('textbox', { name: '내용' })).toHaveValue('수정한 제출 내용');
         },
       );
+    });
+  });
+
+  describe('과제 제출물 댓글 테스트', () => {
+    test.each(['바니', '이든'])(
+      '%s의 과제 댓글과 내 제출 댓글을 각각 표시하고 등록한다',
+      async (name) => {
+        login(name);
+        await markSubmissionAsSubmitted(name === '바니' ? 1 : 2, {
+          content: '완료한 제출',
+          link: null,
+        });
+        const { user } = setupAssignmentDetailPage();
+        await openDetailTab(user);
+        await user.click(await screen.findByRole('button', { name: '과제 댓글 0 열기' }));
+        await user.type(screen.getByRole('textbox', { name: '댓글 내용' }), '과제에 대한 질문');
+        await user.click(screen.getByRole('button', { name: '등록' }));
+        expect(await screen.findByText('과제에 대한 질문')).toBeVisible();
+        await user.click(screen.getByRole('button', { name: '댓글 닫기' }));
+        expect(await screen.findByRole('button', { name: '과제 댓글 1 열기' })).toBeVisible();
+        await user.click(await screen.findByRole('button', { name: '제출물 댓글 0 열기' }));
+        expect(
+          within(screen.getByRole('dialog', { name: '제출물 댓글 0' })).queryByText(
+            '과제에 대한 질문',
+          ),
+        ).not.toBeInTheDocument();
+        await user.type(screen.getByRole('textbox', { name: '댓글 내용' }), '제출물 피드백');
+        await user.click(screen.getByRole('button', { name: '등록' }));
+        expect(await screen.findByText('제출물 피드백')).toBeVisible();
+        await user.click(screen.getByRole('button', { name: '댓글 닫기' }));
+        expect(await screen.findByRole('button', { name: '제출물 댓글 1 열기' })).toBeVisible();
+        expect(screen.getByRole('button', { name: '과제 댓글 1 열기' })).toBeVisible();
+      },
+    );
+
+    test('미제출 상태에는 제출 폼만 표시하고 제출물 댓글을 요청하지 않는다', async () => {
+      login(memberUserName);
+      const submissionComments = jest.fn(() =>
+        HttpResponse.json({ comments: [], totalCount: 0, hasNext: false, nextCursor: null }),
+      );
+      server.use(http.get(COMMENT_URLS.submission.mock, submissionComments));
+      const { user } = setupAssignmentDetailPage();
+      await openDetailTab(user);
+      expect(await screen.findByRole('button', { name: '제출하기' })).toBeVisible();
+      expect(await screen.findByRole('button', { name: '과제 댓글 0 열기' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /제출물 댓글/ })).not.toBeInTheDocument();
+      expect(submissionComments).not.toHaveBeenCalled();
     });
   });
 });

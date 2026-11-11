@@ -6,6 +6,7 @@
 - 관련 ADR: [0029. 스터디 멤버십 상한을 행 잠금과 트랜잭션으로 보호한다](0029-protect-study-membership-limits-with-row-locks.md),
   [0046. 사용자 이름 수정 제한을 소셜 프로필 초기화 제한과 구분한다](0046-separate-user-name-edit-limit-from-social-initialization.md)
 - 변경하는 계약: #423의 `PATCH /api/users/me` 명세 중 기존 스터디 멤버 이름을 변경하지 않던 정책
+- 이미지 정책 후속: [ADR-0058](0058-preserve-study-profile-images-with-home-inheritance.md)에서 홈 이미지 변경의 전체 참여 스터디 반영을 다룬다. 스터디별 이미지 수정과 선택 방식은 별도 논의로 남기며, 이 문서의 이름 동기화 결정은 유지한다.
 
 ## 배경
 

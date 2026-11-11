@@ -75,3 +75,17 @@ Size:
   description: 페이지 크기
   schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
   example: 10
+CommentId:
+  name: commentId
+  in: path
+  required: true
+  description: 경로의 원문에 속한 댓글 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 42
+CommentFocusId:
+  name: focusCommentId
+  in: query
+  required: false
+  description: 같은 원문의 해당 댓글을 포함하여 이후 댓글을 조회한다. cursor와 함께 지정할 수 없다.
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 42

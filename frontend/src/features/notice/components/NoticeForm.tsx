@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, memo, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
@@ -12,6 +12,9 @@ import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import type { Attachment } from '../../../shared/modules/files/types';
 import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
+import ReminderField from '../../../shared/widgets/ReminderField';
+
+const MemoizedReminderField = memo(ReminderField);
 
 const formStyle = {
   display: 'flex',
@@ -26,7 +29,7 @@ interface NoticeFormProps {
   submitLabel: string;
   isSubmitting?: boolean;
   onSubmit: (values: NoticeFormValues) => void;
-  fieldErrors?: Partial<Record<'title' | 'content' | 'attachmentFileIds', string>>;
+  fieldErrors?: Partial<Record<'title' | 'content' | 'attachmentFileIds' | 'remindAts', string>>;
 }
 
 const emptyValues: NoticeFormValues = {
@@ -60,6 +63,7 @@ export default function NoticeForm({
     },
   );
   const posthog = usePostHog();
+  const [remindAts, setRemindAts] = useState(initialValues.remindAts);
 
   const submitNotice: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -69,7 +73,7 @@ export default function NoticeForm({
       location: 'notice_create_page',
     });
 
-    onSubmit({ title, content, attachmentFileIds: attachments.attachmentFileIds });
+    onSubmit({ title, content, attachmentFileIds: attachments.attachmentFileIds, remindAts });
   };
 
   return (
@@ -99,6 +103,15 @@ export default function NoticeForm({
         isRequired
         testId="notice-content-field"
         css={{ overflowY: 'hidden' }}
+      />
+
+      <MemoizedReminderField
+        id="notice-reminders"
+        value={remindAts}
+        onChange={setRemindAts}
+        disabled={isSubmitting}
+        helpText="설정한 시각마다 읽지 않은 스터디원에게 알림을 보내드릴게요"
+        errorText={fieldErrors.remindAts}
       />
 
       <AttachmentField

@@ -14,21 +14,25 @@ public record MyStudyListResponse(
             StudyMemberRole role,
             String name,
             String description,
+            boolean isPublic,
             int memberCount,
             int noticeCount,
-            int assignmentCount
+            int assignmentCount,
+            String imageUrl
     ) {
 
         public static MyStudyResponse from(Study study, StudyMemberRole role, int memberCount, int noticeCount,
-                                           int assignmentCount) {
+                                           int assignmentCount, String imageUrl) {
             return new MyStudyResponse(
                     study.getId(),
                     role,
                     study.getName(),
                     study.getDescription(),
+                    study.isPublic(),
                     memberCount,
                     noticeCount,
-                    assignmentCount
+                    assignmentCount,
+                    imageUrl
             );
         }
     }

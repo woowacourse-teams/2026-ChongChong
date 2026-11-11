@@ -2,6 +2,7 @@ package withoutc.chongchong.notification.repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,11 +14,39 @@ import withoutc.chongchong.notification.exception.NotificationException;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
+    @Modifying
+    @Query(value = """
+            DELETE FROM notifications
+            WHERE resource_type = 'ASSIGNMENT_SUBMISSION'
+              AND EXISTS (
+                  SELECT 1
+                  FROM assignment_submissions AS submissions
+                  JOIN study_members AS members ON members.id = submissions.member_id
+                  WHERE submissions.id = notifications.resource_id
+                    AND submissions.assignment_id = :assignmentId
+                    AND members.role = 'LEADER'
+              )
+            """, nativeQuery = true)
+    void deleteAllForLeaderSubmissions(@Param("assignmentId") Long assignmentId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Notification notification WHERE notification.recipient.id = :userId")
     int deleteAllByRecipientId(@Param("userId") Long userId);
 
     List<Notification> findAllByRecipientIdOrderByCreatedAtDesc(Long userId);
+
+    @Query("""
+            SELECT notification
+            FROM Notification notification
+            WHERE notification.recipient.id = :userId
+              AND (:cursor IS NULL OR notification.id < :cursor)
+            ORDER BY notification.id DESC
+            """)
+    List<Notification> findByCursor(
+            @Param("userId") Long userId,
+            @Param("cursor") Long cursor,
+            Pageable pageable
+    );
 
     @Query("""
             SELECT notification

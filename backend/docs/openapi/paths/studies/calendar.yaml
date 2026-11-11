@@ -1,0 +1,108 @@
+get:
+  tags: [Study]
+  operationId: getStudyCalendar
+  x-frontend:
+    status: integrated
+    description: "웹 월간 캘린더와 날짜별 목록이 API 이벤트를 조회하고 공지·과제 상세로 연결한다. readStatus·submissionStatus는 응답 스키마로 검증하지만 일정 항목에 별도 표시하지 않는다."
+    sources:
+      - frontend/src/features/calendar/api.ts
+      - frontend/src/features/calendar/components/StudyCalendar.tsx
+      - frontend/src/features/calendar/components/CalendarEventItem.tsx
+      - frontend/src/features/calendar/responseSchemas.ts
+  x-backend:
+    status: done
+    owner: JYL35
+    description: |
+      #639의 월간 조회 컨트롤러·서비스·projection과 본인 상태 응답을 구현하고 전체 회귀 검증을 마쳤다.
+      공지는 가입 전·후 전체, 과제는 #638의 assigned=true 조건으로 현재 본인 지정 항목만 반환한다.
+      캘린더 HTTP 테스트 32개는 실제 마이그레이션이 적용된 PostgreSQL에서 실행한다.
+      검증 결과와 테스트 정리 범위는 docs/verification/643-test-strategy-audit.md에 기록한다.
+      PR #640으로 병합됐으며 실행 환경의 Postman 기능 테스트는 별도 확인 대상이다. 배포 완료 상태를 뜻하지 않는다.
+  summary: 스터디 홈 월간 일정 조회
+  description: |
+    현재 스터디 멤버가 선택한 월의 공지 생성·과제 생성·과제 제출 마감 이벤트를 조회한다.
+    리더와 스터디원에게 같은 조회 조건과 응답 형태를 적용한다.
+
+    **조회 범위**
+
+    - 공지는 가입 전·후 및 확인 대상 여부와 관계없이 해당 스터디의 모든 공지를 조회한다.
+    - 과제는 본인이 현재 제출 대상으로 지정된 것만 조회한다. 리더도 본인이 지정되지 않았다면 제외한다.
+      대상 제외 후 제출 기록이 보존되어 있어도 반환하지 않으며 재지정 시 다시 포함한다.
+    - 읽은 공지와 제출 완료·마감된 지정 과제도 제외하지 않는다.
+    - Asia/Seoul 기준 선택 월 1일 00:00 이상, 다음 달 1일 00:00 미만의 이벤트만 반환한다.
+      과거 월도 조회할 수 있고 앞뒤 달 날짜의 이벤트는 포함하지 않는다.
+    - 공지와 과제의 생성 시각, 과제의 현재 마감 시각을 각각 판단한다. 같은 과제의 생성과 마감이
+      같은 날짜여도 별도 이벤트이며 다른 월이면 각 월 조회에 해당 이벤트만 포함한다.
+    - 조회 월의 모든 대상 이벤트를 한 번에 반환하며 cursor나 size를 받지 않는다.
+
+    **현재 원본과 본인 상태**
+
+    제목과 마감일 변경은 현재 원본을 반영한다. 마감일이 다른 월로 이동하면 이전 월 마감 이벤트는 사라지고
+    새 월 조회에 포함된다. 삭제된 원본의 생성·마감 이벤트는 반환하지 않으며 과거 이력은 보존하지 않는다.
+    readStatus와 submissionStatus는 조회 시점의 본인 상태이며 과거 이벤트 시점의 상태나 전체 대상자 집계가 아니다.
+    한 요청에서는 같은 기준 시각으로 상태를 판단한다. 프론트가 상태 필드를 사용하지 않아도 조회할 수 있다.
+
+    eventAt은 기존 LocalDateTime과 같은 오프셋 없는 한국 기준 시각이다. UTC로 해석해 날짜를 이동하지 않는다.
+    이벤트는 eventAt 오름차순, 동률이면 NOTICE_CREATED → ASSIGNMENT_CREATED → ASSIGNMENT_DUE,
+    같은 종류이면 resourceId 오름차순이다. eventType·resourceType·resourceId 조합으로 이벤트를 식별한다.
+    원본 종류와 ID로 기존 공지·과제 상세 API에 연결할 수 있다. 별도 일정 등록이나 기타 일정은 지원하지 않는다.
+
+    **오류**
+
+    studyId는 양수, year는 1~9998, month는 1~12 정수이며 두 쿼리 파라미터는 필수다.
+    범위 위반은 INVALID_REQUEST_PARAMETER(400), 누락·정수 변환 실패는 INVALID_REQUEST(400)다.
+    미인증은 401, 존재하는 스터디의 비멤버·탈퇴·방출된 멤버는 STUDY_ACCESS_DENIED(403),
+    존재하지 않는 스터디는 STUDY_NOT_FOUND(404)다. 입력·인증 검증 뒤 스터디 존재와 현재 멤버십을 확인하고
+    이벤트를 조회한다. 공개 스터디라도 비멤버에게 일정을 공개하지 않는다.
+  security: [{ bearerAuth: [] }]
+  parameters:
+    - { $ref: '../../components/parameters.yaml#/StudyId' }
+    - name: year
+      in: query
+      required: true
+      description: 한국 시간 기준 조회 연도. 생략할 수 없다.
+      schema: { $ref: '../../components/schemas/study-calendar.yaml#/CalendarYear' }
+      example: 2026
+    - name: month
+      in: query
+      required: true
+      description: 조회 월. 생략할 수 없다.
+      schema: { $ref: '../../components/schemas/study-calendar.yaml#/CalendarMonth' }
+      example: 11
+  responses:
+    '200':
+      description: 월간 일정 조회 성공. 일정이 없으면 events는 빈 배열이다.
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/study-calendar.yaml#/StudyCalendarResponse' }
+          examples:
+            events:
+              summary: 가입 전 공지와 본인 지정 과제의 생성·마감
+              description: 2026-11-04 조회 예시. 가입 전 확인 대상이 아닌 공지도 포함하고 지정 과제는 마감 전 미제출 상태다.
+              value:
+                year: 2026
+                month: 11
+                events:
+                  - { eventType: NOTICE_CREATED, resourceType: NOTICE, resourceId: 15, title: 스터디 진행 안내, eventAt: '2026-11-01T09:00:00', readStatus: NOT_ASSIGNED }
+                  - { eventType: ASSIGNMENT_CREATED, resourceType: ASSIGNMENT, resourceId: 21, title: 알고리즘 과제, eventAt: '2026-11-02T10:00:00', submissionStatus: NOT_SUBMITTED }
+                  - { eventType: NOTICE_CREATED, resourceType: NOTICE, resourceId: 16, title: 이번 주 공지, eventAt: '2026-11-03T09:00:00', readStatus: UNREAD }
+                  - { eventType: ASSIGNMENT_DUE, resourceType: ASSIGNMENT, resourceId: 21, title: 알고리즘 과제, eventAt: '2026-11-09T23:59:00', submissionStatus: NOT_SUBMITTED }
+            completedAndMissing:
+              summary: 읽음·제출 완료 항목도 포함하며 지각 제출과 미제출을 구분
+              description: 2026-11-04 조회 예시. 과제 22의 생성·마감 이벤트에는 같은 현재 제출 상태를 반환한다.
+              value:
+                year: 2026
+                month: 11
+                events:
+                  - { eventType: NOTICE_CREATED, resourceType: NOTICE, resourceId: 17, title: 확인한 공지, eventAt: '2026-11-01T09:00:00', readStatus: READ }
+                  - { eventType: ASSIGNMENT_CREATED, resourceType: ASSIGNMENT, resourceId: 22, title: 제출한 과제, eventAt: '2026-11-01T10:00:00', submissionStatus: SUBMITTED }
+                  - { eventType: ASSIGNMENT_DUE, resourceType: ASSIGNMENT, resourceId: 23, title: 지각 제출한 과제, eventAt: '2026-11-02T23:59:00', submissionStatus: LATE_SUBMITTED }
+                  - { eventType: ASSIGNMENT_DUE, resourceType: ASSIGNMENT, resourceId: 24, title: 마감 후 미제출 과제, eventAt: '2026-11-02T23:59:00', submissionStatus: MISSING }
+                  - { eventType: ASSIGNMENT_DUE, resourceType: ASSIGNMENT, resourceId: 22, title: 제출한 과제, eventAt: '2026-11-03T23:59:00', submissionStatus: SUBMITTED }
+            empty:
+              summary: 조회 월에 반환할 이벤트가 없는 경우
+              value: { year: 2026, month: 11, events: [] }
+    '400': { $ref: '../../components/responses.yaml#/InvalidParameterAndRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessDenied' }
+    '404': { $ref: '../../components/responses.yaml#/StudyNotFound' }

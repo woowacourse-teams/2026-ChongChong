@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { recordNotificationDeliveryClick } from './api';
+import { URL_POLICY } from '../../shared/policy/urlPolicy';
 export {};
 
 declare const self: ServiceWorkerGlobalScope;
@@ -32,7 +33,7 @@ self.addEventListener('notificationclick', (event) => {
       recordNotificationDeliveryClick(deliveryId, clickToken),
       // TODO: deepLink또한 무조건 전달될지에 대한 보장이 판단되지 않습니다
       // fallback이 필요할 수 있으며 응답 타입에 대한 정확한 파악이 필요합니다
-      self.clients.openWindow(deepLink),
+      self.clients.openWindow(URL_POLICY.toDeepLink(deepLink).to),
     ]),
   );
 });

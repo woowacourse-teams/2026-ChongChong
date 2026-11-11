@@ -42,7 +42,7 @@ process_uptime_seconds{environment="dev",service="chongchong-backend"}
 원본 결과의 **@resource.service.instance.id**에서 A/B의 IP:8080을 각각 찾는다. 최근 시각까지 값이 들어오면 양쪽 수집이 정상이다.
 
 > [!NOTE]
-> 앱을 아직 띄우지 않은 새 B는 결과에 나오지 않는다. 첫 A/B 배포로 B가 실행된 뒤 다시 조회한다.
+> 앱을 아직 띄우지 않은 새 B는 결과에 나오지 않는다. 첫 블루그린 배포로 B가 실행된 뒤 다시 조회한다.
 
 한쪽이 없으면 edge에서 해당 앱의 Prometheus 응답을 확인한다.
 
@@ -93,7 +93,7 @@ sudo tail -n 50 /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.lo
 
 CloudWatch Logs에서 /chongchong/dev/backend 또는 /chongchong/prod/backend를 열고 backend-a·backend-b 스트림을 선택한다.
 
-서버 터미널에서는 다음 명령으로 최근 로그를 본다.
+**실행 위치: 확인할 백엔드 A 또는 B.** 다음 명령으로 해당 앱의 최근 로그를 본다.
 
 ~~~bash
 sudo docker logs --since 10m chongchong-backend

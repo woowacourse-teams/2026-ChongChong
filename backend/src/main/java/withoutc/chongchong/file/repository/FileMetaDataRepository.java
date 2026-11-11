@@ -19,9 +19,10 @@ public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long
                 file.objectKey,
                 file.size,
                 file.status,
-                file.owner.id
+                owner.id
             )
             FROM FileMetadata file
+            LEFT JOIN file.owner owner
             WHERE file.id = :id
             """)
     Optional<FileUploadSnapshotProjection> findUploadSnapshotById(@Param("id") Long id);
@@ -39,4 +40,28 @@ public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT file FROM FileMetadata file WHERE file.id IN :ids ORDER BY file.id")
     List<FileMetadata> findAllByIdForUpdate(@Param("ids") List<Long> ids);
+
+    @Query("SELECT COUNT(a) > 0 FROM NoticeAttachment a WHERE a.file.id = :fileId")
+    boolean existsNoticeAttachmentByFileId(@Param("fileId") Long fileId);
+
+    @Query("SELECT COUNT(a) > 0 FROM AssignmentAttachment a WHERE a.file.id = :fileId")
+    boolean existsAssignmentAttachmentByFileId(@Param("fileId") Long fileId);
+
+    @Query("SELECT COUNT(a) > 0 FROM SubmissionAttachment a WHERE a.file.id = :fileId")
+    boolean existsSubmissionAttachmentByFileId(@Param("fileId") Long fileId);
+
+    @Query("SELECT COUNT(study) > 0 FROM Study study WHERE study.imageFile.id = :fileId")
+    boolean existsStudyImageByFileId(@Param("fileId") Long fileId);
+
+    @Query("SELECT COUNT(owner) > 0 FROM User owner WHERE owner.profileImageFile.id = :fileId")
+    boolean existsUserProfileImageByFileId(@Param("fileId") Long fileId);
+
+    // 신규 연결 전에 파일 행 잠금을 획득한 트랜잭션에서 호출한다.
+    default boolean existsAnyUsageByFileId(Long fileId) {
+        return existsNoticeAttachmentByFileId(fileId)
+                || existsAssignmentAttachmentByFileId(fileId)
+                || existsSubmissionAttachmentByFileId(fileId)
+                || existsStudyImageByFileId(fileId)
+                || existsUserProfileImageByFileId(fileId);
+    }
 }

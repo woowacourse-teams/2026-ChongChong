@@ -1,7 +1,9 @@
+import { Link } from 'react-router';
+import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { CSSProperties, useMemo } from 'react';
 import { useSuspenseQueries, useSuspenseQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
+import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import noticeIcon from '../../../shared/assets/notice-green.webp';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import List from '../../../shared/ui/List';
@@ -25,7 +27,6 @@ const StatusCardListStyle = {
 } satisfies CSSProperties;
 
 const SectionLabelStyle = {
-  ...typography.sectionLabel,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.default,
 } satisfies CSSProperties;
@@ -43,13 +44,11 @@ const StatusCardStyle = {
 } satisfies CSSProperties;
 
 const StatusCountStyle = {
-  ...typography.headline,
   margin: 0,
   color: tokens.text.default,
 } satisfies CSSProperties;
 
 const StatusLabelStyle = {
-  ...typography.body,
   margin: 0,
   color: tokens.text.default,
 } satisfies CSSProperties;
@@ -92,14 +91,12 @@ const CompletedImageStyle = {
 } satisfies CSSProperties;
 
 const CompletedTitleStyle = {
-  ...typography.title,
   margin: 0,
   color: tokens.text.default,
   fontWeight: tokens.fontWeight.semibold,
 } satisfies CSSProperties;
 
 const CompletedDescriptionStyle = {
-  ...typography.body,
   margin: 0,
   color: tokens.text.muted,
 } satisfies CSSProperties;
@@ -130,39 +127,53 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
   return (
     <div css={DetailContentStyle}>
       {nowMemberCount === 1 ? (
-        <InviteMemberBanner studyId={studyId} invitePageLink={`/studies/${studyId}/members`} />
+        <InviteMemberBanner studyId={studyId} invitePageLink={URL_POLICY.toMembers(studyId).to} />
       ) : (
         <CheeringBanner username={username} />
       )}
       <section css={SectionStyle}>
-        <h2 css={SectionLabelStyle}>스터디 현황</h2>
+        <Heading variant="sectionLabel" level={2} css={SectionLabelStyle}>
+          스터디 현황
+        </Heading>
         <div css={StatusCardListStyle}>
-          <Link to="notices" css={StatusCardStyle}>
+          <Link {...URL_POLICY.toNotices(studyId)} css={StatusCardStyle}>
             <div>
               <img src={noticeIcon} alt="" css={IconStyle} />
-              <p css={StatusCountStyle}>{notices.count}</p>
-              <p css={StatusLabelStyle}>안내 중인 공지</p>
+              <Paragraph variant="headline" css={StatusCountStyle}>
+                {notices.count}
+              </Paragraph>
+              <Paragraph variant="body" css={StatusLabelStyle}>
+                안내 중인 공지
+              </Paragraph>
             </div>
           </Link>
-          <Link to="assignments" css={StatusCardStyle}>
+          <Link {...URL_POLICY.toAssignments(studyId)} css={StatusCardStyle}>
             <div>
               <img src={assignmentIcon} alt="" css={IconStyle} />
-              <p css={StatusCountStyle}>{assignments.count}</p>
-              <p css={StatusLabelStyle}>진행 중인 과제</p>
+              <Paragraph variant="headline" css={StatusCountStyle}>
+                {assignments.count}
+              </Paragraph>
+              <Paragraph variant="body" css={StatusLabelStyle}>
+                진행 중인 과제
+              </Paragraph>
             </div>
           </Link>
         </div>
         {activeContentCount === 0 ? (
           <div css={CompletedContentStyle}>
             <img src={WritingLogo} alt="" css={CompletedImageStyle} />
-            <h2 css={CompletedTitleStyle}>아직 진행 중인 공지나 과제가 없어요!</h2>
-            <p css={CompletedDescriptionStyle}>새로운 공지나 과제를 작성하러 가볼까요?</p>
+            <Heading variant="title" level={2} css={CompletedTitleStyle}>
+              아직 진행 중인 공지나 과제가 없어요!
+            </Heading>
+            <Paragraph variant="body" css={CompletedDescriptionStyle}>
+              새로운 공지나 과제를 작성하러 가볼까요?
+            </Paragraph>
           </div>
         ) : (
           <List aria-label="진행 중인 공지와 과제">
             {notices.items.map((notice) => (
               <List.Item key={`notice-${notice.id}`}>
-                <Link to={`notices/${notice.id}`}>
+                <Link {...URL_POLICY.toNotice(studyId, notice.id)}>
                   <LeaderActiveNoticeCard
                     title={notice.title}
                     memberCount={notice.memberCount}
@@ -173,7 +184,7 @@ export function LeaderStudyDetailContent({ username }: { username: string }) {
             ))}
             {assignments.items.map((assignment) => (
               <List.Item key={`assignment-${assignment.id}`}>
-                <Link to={`assignments/${assignment.id}`}>
+                <Link {...URL_POLICY.toAssignment(studyId, assignment.id)}>
                   <LeaderActiveAssignmentCard
                     title={assignment.title}
                     memberCount={assignment.memberCount}
@@ -201,22 +212,26 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
         {todoCount === 0 ? (
           <section css={CompletedContentStyle}>
             <img src={SleepIcon} alt="" css={CompletedImageStyle} />
-            <h2 css={CompletedTitleStyle}>오늘 할 일을 모두 마쳤어요!</h2>
-            <p css={CompletedDescriptionStyle}>
+            <Heading variant="title" level={2} css={CompletedTitleStyle}>
+              오늘 할 일을 모두 마쳤어요!
+            </Heading>
+            <Paragraph variant="body" css={CompletedDescriptionStyle}>
               모든 공지를 확인했고, 제출할 과제도 없어요.
               <br />
               잠깐 쉬어가는건 어떨까요 ?
-            </p>
+            </Paragraph>
           </section>
         ) : (
           <>
             {data.notices.items.length !== 0 && (
               <section css={SectionStyle}>
-                <h2 css={SectionLabelStyle}>읽지 않은 공지</h2>
+                <Heading variant="sectionLabel" level={2} css={SectionLabelStyle}>
+                  읽지 않은 공지
+                </Heading>
                 <List>
                   {data.notices.items.map((notice) => (
                     <List.Item key={`notice-${notice.id}`}>
-                      <Link to={`notices/${notice.id}`}>
+                      <Link {...URL_POLICY.toNotice(studyId, notice.id)}>
                         <MemberActiveNoticeCard title={notice.title} />
                       </Link>
                     </List.Item>
@@ -226,11 +241,13 @@ export function MemberStudyDetailContent({ username }: { username: string }) {
             )}
             {data.assignments.items.length !== 0 && (
               <section css={SectionStyle}>
-                <h2 css={SectionLabelStyle}>제출하지 않은 과제</h2>
+                <Heading variant="sectionLabel" level={2} css={SectionLabelStyle}>
+                  제출하지 않은 과제
+                </Heading>
                 <List>
                   {data.assignments.items.map((assignment) => (
                     <List.Item key={`assignment-${assignment.id}`}>
-                      <Link to={`assignments/${assignment.id}`}>
+                      <Link {...URL_POLICY.toAssignment(studyId, assignment.id)}>
                         <MemberActiveAssignmentCard title={assignment.title} />
                       </Link>
                     </List.Item>

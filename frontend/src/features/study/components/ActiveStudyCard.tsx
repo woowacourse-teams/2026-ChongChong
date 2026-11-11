@@ -1,7 +1,8 @@
+import { Heading, Text } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import assignmentLogo from '../../../shared/assets/assign-green.webp';
 import noticeLogo from '../../../shared/assets/notice-green.webp';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 
 interface ActiveStudyCardProps {
   icon: string;
@@ -46,7 +47,6 @@ const IconStyle = {
 } satisfies CSSProperties;
 
 const TitleStyle = {
-  ...typography.body,
   flex: 1,
   margin: 0,
   color: tokens.text.primary,
@@ -56,7 +56,6 @@ const TitleStyle = {
 } satisfies CSSProperties;
 
 const StatusStyle = {
-  ...typography.footnote,
   color: tokens.text.muted,
 } satisfies CSSProperties;
 
@@ -64,7 +63,9 @@ function ActiveStudyCard({ icon, title, status }: ActiveStudyCardProps) {
   return (
     <div css={ActiveStudyCardStyle}>
       <img css={IconStyle} src={icon} alt="" />
-      <h3 css={TitleStyle}>{title}</h3>
+      <Heading variant="body" level={3} css={TitleStyle}>
+        {title}
+      </Heading>
       {status}
     </div>
   );
@@ -79,7 +80,9 @@ export function LeaderActiveNoticeCard({
     <ActiveStudyCard
       icon={noticeLogo}
       title={title}
-      status={<span css={StatusStyle}>{`${completeCount}/${memberCount} 읽음`}</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>{`${completeCount}/${memberCount} 읽음`}</Text>
+      }
     />
   );
 }
@@ -93,7 +96,9 @@ export function LeaderActiveAssignmentCard({
     <ActiveStudyCard
       icon={assignmentLogo}
       title={title}
-      status={<span css={StatusStyle}>{`${completeCount}/${memberCount} 제출`}</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>{`${completeCount}/${memberCount} 제출`}</Text>
+      }
     />
   );
 }
@@ -103,7 +108,11 @@ export function MemberActiveNoticeCard({ title }: MemberActiveNoticeCardProps) {
     <ActiveStudyCard
       icon={noticeLogo}
       title={title}
-      status={<span css={StatusStyle}>읽지 않음</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>
+          읽지 않음
+        </Text>
+      }
     />
   );
 }
@@ -113,7 +122,11 @@ export function MemberActiveAssignmentCard({ title }: MemberActiveAssignmentCard
     <ActiveStudyCard
       icon={assignmentLogo}
       title={title}
-      status={<span css={StatusStyle}>미제출</span>}
+      status={
+        <Text variant="footnote" css={StatusStyle}>
+          미제출
+        </Text>
+      }
     />
   );
 }

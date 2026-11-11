@@ -1,47 +1,64 @@
 package withoutc.chongchong.study.service;
 
+import static withoutc.chongchong.study.entity.Study.MAX_STUDY_MEMBER_COUNT;
 import static withoutc.chongchong.study.service.StudyService.MAX_JOINED_STUDY_COUNT;
 
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import withoutc.chongchong.assignment.repository.AssignmentRepository;
+import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.notification.service.NotificationService;
-import withoutc.chongchong.study.controller.dto.StudyInviteTokenRequest;
+import withoutc.chongchong.study.controller.dto.StudyJoinRequest;
 import withoutc.chongchong.study.controller.dto.StudyMemberJoinResponse;
+import withoutc.chongchong.study.controller.dto.StudyMemberResponse;
 import withoutc.chongchong.study.controller.dto.StudyMembersResponse;
 import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
+import withoutc.chongchong.study.exception.StudyErrorCode;
+import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
+import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
+import withoutc.chongchong.user.service.UserProfileImageUrlResolver;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class StudyMemberService {
 
-    private static final int MAX_STUDY_MEMBER_COUNT = 50;
-
     private final StudyMemberRepository studyMemberRepository;
     private final StudyRepository studyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final CommentRepository commentRepository;
+    private final NoticeRepository noticeRepository;
+    private final AssignmentRepository assignmentRepository;
+    private final AssignmentSubmissionRepository assignmentSubmissionRepository;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
+    private final UserProfileImageUrlResolver profileImageUrlResolver;
 
     @Transactional
-    public StudyMemberJoinResponse join(Long userId, StudyInviteTokenRequest request) {
+    public StudyMemberJoinResponse join(Long userId, StudyJoinRequest request) {
         User user = userRepository.getByIdForUpdateOrThrow(userId);
         validateStudyCountLimit(userId);
 
-        Long studyId = studyInviteTokenProvider.verifyAndExtractStudyId(request.token());
-
+        Long studyId = resolveStudyId(request);
         Study study = studyRepository.getByIdForUpdateOrThrow(studyId);
+        if (!study.isPublic() && request.token() == null) {
+            throw new StudyException(StudyErrorCode.STUDY_NOT_PUBLIC);
+        }
 
         validateJoin(study.getId(), user.getId());
 
@@ -51,35 +68,72 @@ public class StudyMemberService {
         return StudyMemberJoinResponse.from(studyMemberRepository.save(studyMember));
     }
 
+    private Long resolveStudyId(StudyJoinRequest request) {
+        if (request.token() == null) {
+            if (request.studyId() == null) {
+                throw new StudyException(StudyErrorCode.INVALID_STUDY_ID);
+            }
+            return request.studyId();
+        }
+
+        Long invitedStudyId = studyInviteTokenProvider.verifyAndExtractStudyId(request.token());
+        if (request.studyId() != null && !request.studyId().equals(invitedStudyId)) {
+            throw new StudyException(StudyErrorCode.INVALID_INVITE_TOKEN);
+        }
+        return invitedStudyId;
+    }
+
     public StudyMembersResponse getAllStudyMembers(Long userId, Long studyId) {
         studyRepository.getByIdOrThrow(studyId);
         studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        return StudyMembersResponse.from(MAX_STUDY_MEMBER_COUNT,
-                studyMemberRepository.findAllSummariesByStudyId(studyId));
+        List<StudyMemberSummaryProjection> summaries = studyMemberRepository.findAllSummariesByStudyId(studyId);
+        Map<Long, String> imageUrls = profileImageUrlResolver.resolveForMembers(
+                summaries.stream().map(StudyMemberSummaryProjection::id).toList());
+        List<StudyMemberResponse> members = summaries.stream()
+                .map(member -> new StudyMemberResponse(member.id(), member.name(), imageUrls.get(member.id()),
+                        member.role()))
+                .toList();
+        return new StudyMembersResponse(MAX_STUDY_MEMBER_COUNT, members.size(), members);
     }
 
     @Transactional
     public void expel(Long userId, Long studyId, Long memberId) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
         StudyMember requester = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         validateLeader(requester);
 
+        Long targetUserId = studyMemberRepository.getUserIdByStudyIdAndIdOrThrow(studyId, memberId);
+        userRepository.getByIdForUpdateOrThrow(targetUserId);
+        lockMemberResources(memberId);
         StudyMember target = studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId);
         if (target.isLeader()) {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_BE_REMOVED);
         }
+        commentRepository.deleteAllForMemberSubmissions(memberId);
         notificationService.deleteNotificationsForStudyMember(memberId);
         studyMemberRepository.delete(target);
     }
 
     @Transactional
     public void leave(Long userId, Long studyId) {
+        studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
+        userRepository.getByIdForUpdateOrThrow(userId);
+        Long memberId = studyMemberRepository.getIdByStudyIdAndUserIdOrThrow(studyId, userId);
+        lockMemberResources(memberId);
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         if (member.isLeader()) {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_LEADER_CANNOT_LEAVE);
         }
 
+        commentRepository.deleteAllForMemberSubmissions(member.getId());
         notificationService.deleteNotificationsForStudyMember(member.getId());
         studyMemberRepository.delete(member);
+    }
+
+    private void lockMemberResources(Long memberId) {
+        noticeRepository.findAllByCommentAuthorMemberIdForUpdate(memberId);
+        assignmentRepository.findAllAffectedByMemberIdForUpdate(memberId);
+        assignmentSubmissionRepository.findAllByMemberIdForUpdate(memberId);
     }
 
     private void validateStudyCountLimit(Long userId) {

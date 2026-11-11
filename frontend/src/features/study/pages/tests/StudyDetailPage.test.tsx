@@ -4,6 +4,9 @@ import { Route } from 'react-router';
 import { createWrapper, setup, login } from '../../../../test/render';
 import { server } from '../../../../mocks/msw-node';
 import StudyDetailPage from '../StudyDetailPage';
+import NoticeListPage from '../../../notice/pages/NoticeListPage';
+import AssignmentListPage from '../../../assignment/pages/AssignmentListPage';
+import MemberListPage from '../../../member/pages/MemberListPage';
 import { API_URL } from '../../../../../config';
 import { STUDY_URLS } from '../../urls';
 import { userTable } from '../../../user/mocks/db';
@@ -78,6 +81,59 @@ describe('스터디 상세 페이지', () => {
   afterEach(() => {
     logout();
   });
+
+  test.each([
+    {
+      tab: '홈',
+      path: '/studies/1',
+      Component: StudyDetailPage,
+      to: '/studies',
+      title: '스터디 목록',
+    },
+    {
+      tab: '공지',
+      path: '/studies/1/notices',
+      Component: NoticeListPage,
+      to: '/studies/1',
+      title: '스터디 상세',
+    },
+    {
+      tab: '과제',
+      path: '/studies/1/assignments',
+      Component: AssignmentListPage,
+      to: '/studies/1',
+      title: '스터디 상세',
+    },
+    {
+      tab: '멤버',
+      path: '/studies/1/members',
+      Component: MemberListPage,
+      to: '/studies/1',
+      title: '스터디 상세',
+    },
+  ])(
+    '$tab 탭에 직접 진입하면 기본 상위 화면으로 이동한다',
+    async ({ path, Component, to, title }) => {
+      jest.spyOn(window.history, 'state', 'get').mockReturnValue({ idx: 0 });
+      login('리드임');
+      const { user } = setup(<Component />, {
+        wrapper: createWrapper({
+          initialEntries: [path],
+          routes: (element) => (
+            <>
+              <Route path={path} element={element} />
+              <Route path={to} element={<h1>{title}</h1>} />
+              <Route path="/notifications" element={<h1>알림 목록</h1>} />
+            </>
+          ),
+        }),
+      });
+
+      await user.click(await screen.findByRole('button', { name: '뒤로 가기' }));
+
+      expect(await screen.findByRole('heading', { name: title })).toBeVisible();
+    },
+  );
 
   describe('리드의 진행 현황 조회', () => {
     beforeEach(() => {

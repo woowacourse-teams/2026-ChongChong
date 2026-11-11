@@ -1,7 +1,8 @@
+import { Heading, Text } from '../ui/Typography';
 import type { CSSProperties } from 'react';
 import profileIcon from '../assets/unknown-profile.svg';
 import List from '../ui/List';
-import { tokens, typography } from '../../styles/global';
+import { tokens } from '../../styles/global';
 
 interface Member {
   id: number;
@@ -21,7 +22,6 @@ const sectionStyle = {
 } satisfies CSSProperties;
 
 const titleStyle = {
-  ...typography.title,
   margin: `0 0 ${tokens.spacing[3]}`,
   color: tokens.text.primary,
 } satisfies CSSProperties;
@@ -43,7 +43,6 @@ const profileStyle = {
 } satisfies CSSProperties;
 
 const nameStyle = {
-  ...typography.body,
   minWidth: 0,
   marginLeft: tokens.spacing[3],
   overflow: 'hidden',
@@ -55,7 +54,9 @@ const nameStyle = {
 export default function IncompleteMemberList({ title, members }: Props) {
   return (
     <section css={sectionStyle} aria-label={title}>
-      <h2 css={titleStyle}>{title}</h2>
+      <Heading variant="title" level={2} css={titleStyle}>
+        {title}
+      </Heading>
       <List>
         {members.map((member) => (
           <List.Item key={member.id} css={itemStyle}>
@@ -65,7 +66,9 @@ export default function IncompleteMemberList({ title, members }: Props) {
               aria-hidden="true"
               css={profileStyle}
             />
-            <span css={nameStyle}>{member.name}</span>
+            <Text variant="body" css={nameStyle}>
+              {member.name}
+            </Text>
           </List.Item>
         ))}
       </List>

@@ -2,12 +2,33 @@ package withoutc.chongchong.notice.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.notice.entity.NoticeReminder;
+import withoutc.chongchong.notification.repository.projection.ReminderCandidateProjection;
 
 public interface NoticeReminderRepository extends JpaRepository<NoticeReminder, Long> {
+
+    @Query("""
+            SELECT new withoutc.chongchong.notification.repository.projection.ReminderCandidateProjection(
+                withoutc.chongchong.notification.entity.ResourceType.NOTICE,
+                reminder.id, reminder.notice.id, reminder.notice.study.id)
+            FROM NoticeReminder reminder
+            WHERE reminder.status = withoutc.chongchong.notice.entity.NoticeReminderStatus.PENDING
+              AND reminder.remindAt <= :now
+            ORDER BY reminder.id
+            """)
+    List<ReminderCandidateProjection> findDueCandidates(@Param("now") LocalDateTime now, Pageable pageable);
+
+    @Query(value = """
+            SELECT * FROM notice_reminders
+            WHERE id = :reminderId AND status = 'PENDING' AND remind_at <= :now
+            FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<NoticeReminder> findClaimableByIdForUpdate(@Param("reminderId") Long reminderId,
+                                                  @Param("now") LocalDateTime now);
 
     @Query(value = """
             SELECT *

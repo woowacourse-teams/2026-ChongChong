@@ -1,3 +1,4 @@
+import { URL_POLICY } from '../../shared/policy/urlPolicy';
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize';
 const KAKAO_OAUTH_STATE_KEY = 'kakao_oauth_state';
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY ?? '';
@@ -10,7 +11,7 @@ export function startKakaoLogin() {
   const state = crypto.randomUUID();
   sessionStorage.setItem(KAKAO_OAUTH_STATE_KEY, state);
 
-  const redirectUri = new URL('/auth/kakao/callback', window.location.origin).toString();
+  const redirectUri = new URL(URL_POLICY.toKakaoCallback().to, window.location.origin).toString();
 
   const searchParams = new URLSearchParams({
     response_type: 'code',
@@ -30,7 +31,11 @@ export function consumeKakaoCallback(search: string) {
   const error = searchParams.get('error');
 
   sessionStorage.removeItem(KAKAO_OAUTH_STATE_KEY);
-  window.history.replaceState({}, document.title, '/auth/kakao/callback');
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    URL_POLICY.toKakaoCallback().to,
+  );
 
   if (error) {
     throw new Error('카카오 로그인이 취소되었습니다.');
