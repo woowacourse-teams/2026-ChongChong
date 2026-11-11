@@ -603,6 +603,7 @@ class AssignmentApiTest {
 
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
+                .queryParam("sort", "LATEST")
                 .queryParam("size", 2)
                 .when()
                 .get("/studies/{studyId}/assignments", study.getId())
@@ -617,6 +618,7 @@ class AssignmentApiTest {
         testAuthRequest.givenAuthenticatedUser(leaderUser.getId())
                 .port(port)
                 .queryParam("cursor", middleAssignment.getId())
+                .queryParam("sort", "LATEST")
                 .queryParam("size", 2)
                 .when()
                 .get("/studies/{studyId}/assignments", study.getId())
@@ -638,6 +640,8 @@ class AssignmentApiTest {
         jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
                 LocalDateTime.now(CLOCK).minusDays(1), expired.getId());
         assertSortedPages(leaderUser, "DEADLINE", size,
+                List.of(sameDeadline.getId(), near.getId(), assignment.getId(), expired.getId()));
+        assertSortedPages(leaderUser, null, size,
                 List.of(sameDeadline.getId(), near.getId(), assignment.getId(), expired.getId()));
     }
 
@@ -702,7 +706,10 @@ class AssignmentApiTest {
         Long cursor = null;
         for (int offset = 0; offset < expectedIds.size(); offset += size) {
             var request = testAuthRequest.givenAuthenticatedUser(user.getId()).port(port)
-                    .queryParam("sort", sort).queryParam("size", size);
+                    .queryParam("size", size);
+            if (sort != null) {
+                request.queryParam("sort", sort);
+            }
             if (cursor != null) {
                 request.queryParam("cursor", cursor);
             }

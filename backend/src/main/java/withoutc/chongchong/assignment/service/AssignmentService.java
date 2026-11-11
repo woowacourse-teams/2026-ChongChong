@@ -168,7 +168,7 @@ public class AssignmentService {
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {
-        return getList(userId, studyId, cursor, size, AssignmentSort.LATEST);
+        return getList(userId, studyId, cursor, size, AssignmentSort.DEADLINE);
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size, AssignmentSort sort) {

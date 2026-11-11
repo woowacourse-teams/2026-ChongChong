@@ -35,6 +35,7 @@ import withoutc.chongchong.assignment.controller.dto.AssignmentSubmissionStatusR
 import withoutc.chongchong.assignment.controller.dto.AssignmentSummaryResponse;
 import withoutc.chongchong.assignment.controller.dto.AssignmentUpdateRequest;
 import withoutc.chongchong.assignment.entity.Assignment;
+import withoutc.chongchong.assignment.entity.AssignmentSort;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionStatus;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
@@ -290,7 +291,7 @@ class AssignmentServiceTest {
         when(assignmentRepository.findByCursor(STUDY_ID, null, PageRequest.of(0, 3)))
                 .thenReturn(List.of(firstAssignment, secondAssignment, nextPageAssignment));
 
-        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 2);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 2, AssignmentSort.LATEST);
 
         assertThat(response.hasNext()).isTrue();
         assertThat(response.nextCursor()).isEqualTo(200L);
@@ -382,7 +383,7 @@ class AssignmentServiceTest {
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
         )).thenReturn(statuses);
 
-        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10, AssignmentSort.LATEST);
 
         assertThat(response.hasNext()).isFalse();
         assertThat(response.nextCursor()).isNull();
@@ -406,7 +407,7 @@ class AssignmentServiceTest {
                 STUDY_ID, null, PageRequest.of(0, 11)
         )).thenReturn(List.of());
 
-        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10, AssignmentSort.LATEST);
 
         assertThat(response.assignments()).isEmpty();
         verifyNoInteractions(assignmentSubmissionRepository);
@@ -416,7 +417,7 @@ class AssignmentServiceTest {
     @ValueSource(ints = {101, Integer.MAX_VALUE})
     @DisplayName("페이지 크기가 최대값을 초과하면 과제 목록 조회를 수행하지 않는다")
     void rejectPageSizeOverMaximumTest(int size) {
-        assertThatThrownBy(() -> assignmentService.getList(USER_ID, STUDY_ID, null, size))
+        assertThatThrownBy(() -> assignmentService.getList(USER_ID, STUDY_ID, null, size, AssignmentSort.LATEST))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("페이지 크기는 1 이상 100 이하여야 합니다.");
 

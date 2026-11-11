@@ -66,7 +66,7 @@ public class AssignmentController {
             @Positive(message = "size는 양수여야 합니다.")
             @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
             int size,
-            @RequestParam(defaultValue = "LATEST") AssignmentSort sort
+            @RequestParam(defaultValue = "DEADLINE") AssignmentSort sort
     ) {
         AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size, sort);
 
