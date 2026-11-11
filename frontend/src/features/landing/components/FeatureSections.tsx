@@ -325,13 +325,6 @@ export function LandingFooter() {
             <WebStartLink className="" position="footer">
               웹 서비스
             </WebStartLink>
-            <a
-              href="https://github.com/woowacourse-teams/2026-ChongChong"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
-            </a>
           </div>
         </div>
         <p className="footer-info">안톨리니 · 디움 · 바니 · 이든 · 피즈</p>
