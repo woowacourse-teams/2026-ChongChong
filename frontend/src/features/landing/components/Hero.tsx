@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import chongchongLogo from '../assets/chongchong-logo.png';
 import checkMascot from '../assets/mascots/check-icon.webp';
 import megaphoneMascot from '../assets/mascots/footer-icon.webp';
@@ -75,7 +75,8 @@ export default function Hero() {
   const reducedMotion = usePrefersReducedMotion();
 
   // 폰이 처음엔 버튼 아래에서 시작하도록, 화면 높이에 맞춰 밀어둘 거리를 계산해요.
-  useEffect(() => {
+  // 첫 화면이 그려지기 전에 재야 새로고침 때 폰이 제목 위에 잠깐 겹쳐 보이지 않아요.
+  useLayoutEffect(() => {
     const layout = () => {
       const copy = copyRef.current;
       const stage = stageRef.current;
@@ -94,6 +95,8 @@ export default function Hero() {
     };
     cssDrivenRef.current = supportsScrollTimeline();
     layout();
+    // 글꼴이 늦게 받아져 제목 높이가 바뀌면 다시 재요.
+    document.fonts?.ready.then(layout);
     window.addEventListener('resize', onResize);
     window.addEventListener('load', layout);
     return () => {
