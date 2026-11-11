@@ -3,11 +3,9 @@ import { Suspense, useEffect, type ReactNode } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { usePostHog } from '@posthog/react';
-import type { CSSObject } from '@emotion/react';
 import Button from '../../../shared/ui/Button';
 import Loading from '../../../shared/ui/Loading';
 import ErrorContent from '../../../shared/ui/ErrorContent';
-import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
@@ -17,7 +15,7 @@ import { tokens } from '../../../styles/global';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import NotificationLink from '../../notification/components/NotificationLink';
 import MyIcon from '../../../shared/assets/my.webp';
-import StudyAvatar from '../components/StudyAvatar';
+import { VerticalStudyCard } from '../components/StudyContentCard';
 import studyQueries from '../queries';
 import type { StudyJoinTarget } from '../types';
 import useStudyJoin from '../hooks/useStudyJoin';
@@ -87,17 +85,6 @@ function RequireJoinTarget({
   return target ? children(target) : null;
 }
 
-const CardStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  border: tokens.border.default,
-  borderRadius: tokens.radius.lg,
-  minHeight: 168,
-  padding: `19px ${tokens.spacing[5]} ${tokens.spacing[4]}`,
-  textAlign: 'center',
-} satisfies CSSObject;
-
 function Content({ target }: { target: StudyJoinTarget }) {
   const { data } = useSuspenseQuery(studyQueries.joinInfo(target.token ?? target));
   const { mutate: joinStudy, isPending } = useStudyJoin();
@@ -111,35 +98,13 @@ function Content({ target }: { target: StudyJoinTarget }) {
 
   return (
     <>
-      <section aria-labelledby="study-join-name" css={CardStyle}>
-        <StudyAvatar
-          imageUrl={data.imageUrl}
-          size={68}
-          variant="management"
-          alt={`${data.studyName} 프로필`}
-        />
-        <Heading
-          id="study-join-name"
-          level={2}
-          variant="title"
-          css={{
-            margin: `${tokens.spacing[4]} 0 0 0`,
-          }}
-        >
-          {data.studyName}
-        </Heading>
-        {data.description && (
-          <Paragraph
-            variant="body"
-            css={{
-              color: tokens.text.muted,
-              margin: `${tokens.spacing[1]} 0 0`,
-            }}
-          >
-            {data.description}
-          </Paragraph>
-        )}
-      </section>
+      <VerticalStudyCard
+        study={{
+          name: data.name,
+          imageUrl: data.imageUrl,
+          description: data.description,
+        }}
+      />
       <Button
         variant="brandSolid"
         size="large"

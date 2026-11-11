@@ -119,8 +119,8 @@ function toStudySummary(study: {
   imageUrl?: string | null;
 }) {
   return {
-    studyId: study.id,
-    studyName: study.name,
+    id: study.id,
+    name: study.name,
     description: study.description,
     imageUrl: study.imageFileId
       ? `${MOCK_UPLOAD_ORIGIN}/images/${study.imageFileId}`
@@ -210,7 +210,7 @@ export const handlers = [
     return HttpResponse.json({
       studies: page,
       hasNext,
-      nextCursor: hasNext ? page[page.length - 1].studyId : null,
+      nextCursor: hasNext ? page[page.length - 1].id : null,
     });
   }),
 

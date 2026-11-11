@@ -3,7 +3,7 @@ import studyQueries from '../queries';
 import List from '../../../shared/ui/List';
 import { Link } from 'react-router';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
-import StudyContentCard from './StudyContentCard';
+import { HorizontalStudyCard } from './StudyContentCard';
 import Badge from '../../../shared/ui/Badge';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { CSSProperties } from 'react';
@@ -47,26 +47,24 @@ export default function MyStudies() {
           {studies.map((study) => (
             <List.Item key={study.id}>
               <Link {...URL_POLICY.toStudy(study.id)}>
-                <StudyContentCard>
-                  <StudyContentCard.Badges>
-                    <Badge variant="brandSolid" size="small" css={RoleBadgeStyle}>
-                      {study.role === 'LEADER' ? '스터디 리드' : '스터디원'}
-                    </Badge>
-                    <Badge variant="neutralSolid" size="small" css={CountBadgeStyle}>
-                      <img src={noticeIcon} alt="" width={12} height={12} />
-                      공지 {study.noticeCount}
-                    </Badge>
-                    <Badge variant="neutralSolid" size="small" css={CountBadgeStyle}>
-                      <img src={assignIcon} alt="" width={12} height={12} />
-                      과제 {study.assignmentCount}
-                    </Badge>
-                  </StudyContentCard.Badges>
-                  <StudyContentCard.Content
-                    imageUrl={study.imageUrl}
-                    name={study.name}
-                    description={study.description}
-                  />
-                </StudyContentCard>
+                <HorizontalStudyCard
+                  study={study}
+                  badges={
+                    <>
+                      <Badge variant="brandSolid" size="small" css={RoleBadgeStyle}>
+                        {study.role === 'LEADER' ? '스터디 리드' : '스터디원'}
+                      </Badge>
+                      <Badge variant="neutralSolid" size="small" css={CountBadgeStyle}>
+                        <img src={noticeIcon} alt="" width={12} height={12} />
+                        공지 {study.noticeCount}
+                      </Badge>
+                      <Badge variant="neutralSolid" size="small" css={CountBadgeStyle}>
+                        <img src={assignIcon} alt="" width={12} height={12} />
+                        과제 {study.assignmentCount}
+                      </Badge>
+                    </>
+                  }
+                />
               </Link>
             </List.Item>
           ))}

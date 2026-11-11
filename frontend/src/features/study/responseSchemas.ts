@@ -82,8 +82,8 @@ const createStudySchema = z.object({
 });
 
 const studyJoinInfoSchema = z.object({
-  studyId: z.number().int().positive(),
-  studyName: z.string(),
+  id: z.number().int().positive(),
+  name: z.string(),
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   memberCount: z.number().int().nonnegative(),
