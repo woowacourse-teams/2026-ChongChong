@@ -91,7 +91,7 @@ function StudySearchResults({ keyword }: { keyword: string | undefined }) {
             ))}
           </List>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <Spinner size={24} label="스터디를 더 불러오는 중" />}
+          {isFetchingNextPage && <Spinner size={24} ariaLabel="스터디를 더 불러오는 중" />}
         </>
       )}
     </>
