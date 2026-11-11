@@ -1,13 +1,15 @@
 import { Link } from 'react-router';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import hasNotificationLogo from '../../../shared/assets/notification-green.webp';
 import notificationLogo from '../../../shared/assets/notification.webp';
 import notificationQueries from '../queries';
 
 export default function NotificationLink() {
-  const { data: notificationData } = useQuery(notificationQueries.list());
-  const hasUnreadNotification = notificationData?.some((data) => data.isRead === false);
+  const { data: notificationData } = useInfiniteQuery(notificationQueries.list());
+  const hasUnreadNotification = notificationData?.pages.some((page) =>
+    page.notifications.some((notification) => !notification.isRead),
+  );
 
   return (
     <Link
