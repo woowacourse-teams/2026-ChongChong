@@ -1,8 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { Route } from 'react-router';
 import { createWrapper, login, logout, setup } from '../../../../test/render';
 import { userTable } from '../../../user/mocks/db';
 import { studyTable } from '../../mocks/db';
+import { memberTable } from '../../../member/mocks/db';
 import StudyJoinConfirmPage from '../StudyJoinConfirmPage';
 import StudyJoinPage from '../StudyJoinPage';
 
@@ -30,6 +31,14 @@ describe('스터디 참여 확인 페이지 테스트', () => {
       inviteLink: 'typescript',
       imageUrl: 'http://localhost:8000/study.png',
     });
+    await memberTable.create({
+      id: 1,
+      studyId: 1,
+      userId: 2,
+      name: '스터디 리더',
+      profileImage: null,
+      role: 'LEADER',
+    });
 
     setup(<StudyJoinConfirmPage />, {
       wrapper: createWrapper({
@@ -39,6 +48,8 @@ describe('스터디 참여 확인 페이지 테스트', () => {
 
     expect(await screen.findByRole('heading', { name: '타입스크립트 스터디' })).toBeVisible();
     expect(screen.getByText('타입스크립트를 함께 공부합니다')).toBeVisible();
+    const card = within(screen.getByRole('region', { name: '타입스크립트 스터디' }));
+    expect(card.getByText('1명')).toBeVisible();
     expect(screen.getByRole('img', { name: '타입스크립트 스터디 프로필' })).toHaveAttribute(
       'src',
       'http://localhost:8000/study.png',
@@ -80,5 +91,7 @@ describe('스터디 참여 확인 페이지 테스트', () => {
 
     expect(await screen.findByRole('heading', { name: '리액트 스터디' })).toBeVisible();
     expect(screen.getByText('리액트를 함께 공부합니다')).toBeVisible();
+    const card = within(screen.getByRole('region', { name: '리액트 스터디' }));
+    expect(card.getByText('0명')).toBeVisible();
   });
 });
