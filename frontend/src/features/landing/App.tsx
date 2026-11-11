@@ -12,13 +12,14 @@ import Hero from './components/Hero';
 import LandingHeader from './components/LandingHeader';
 import Statement from './components/Statement';
 import { LANDING_STYLES } from './landing.styles';
-import { usePrefersReducedMotion, useReveal } from './useLandingMotion';
+import { useKeepScrollOnReload, usePrefersReducedMotion, useReveal } from './useLandingMotion';
 
 // BrowserRouter / RouterProvider는 기존 프로젝트의 설정을 그대로 사용합니다.
 export default function App() {
   const rootRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   useReveal(rootRef, reducedMotion);
+  useKeepScrollOnReload();
 
   useEffect(() => {
     const previousTitle = document.title;
