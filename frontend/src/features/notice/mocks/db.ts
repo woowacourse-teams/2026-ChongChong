@@ -147,7 +147,7 @@ export const mockNoticeRecipients = [
   { id: 31, noticeId: 10, memberId: 12, readAt: null, lastRemindAt: null },
   ...Array.from({ length: 30 }, (_, index) => ({
     id: 32 + index,
-    noticeId: 14 + index,
+    noticeId: 1000 + index,
     memberId: 17,
     readAt: null,
     lastRemindAt: null,

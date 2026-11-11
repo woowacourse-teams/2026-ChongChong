@@ -68,7 +68,7 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
             )}
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && <Spinner size={24} ariaLabel="공지를 더 불러오는 중" />}
+          {isFetchingNextPage && <Spinner size={24} ariaLabel="과제를 더 불러오는 중" />}
         </>
       )}
       <FloatingMenu
