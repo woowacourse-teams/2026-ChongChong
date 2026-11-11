@@ -108,6 +108,10 @@ AssignmentListResponse:
   additionalProperties: false
   required: [nextCursor, hasNext, assignments]
   properties:
-    nextCursor: { type: [integer, 'null'], format: int64, example: 10 }
+    nextCursor:
+      type: [integer, 'null']
+      format: int64
+      description: 다음 페이지가 있으면 현재 페이지 마지막 과제의 ID. 같은 sort와 함께 cursor로 전달하며, 다음 페이지가 없으면 null이다.
+      example: 10
     hasNext: { type: boolean, example: false }
     assignments: { type: array, items: { $ref: '#/AssignmentSummaryResponse' } }
