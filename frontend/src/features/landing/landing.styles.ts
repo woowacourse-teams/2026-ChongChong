@@ -1,17 +1,8 @@
-const pretendardFont = new URL('./assets/PretendardVariable.woff2', import.meta.url).href;
-
 /**
  * 랜딩 전용 스타일. 모든 규칙은 `.cc-landing` 아래로 한정해 다른 화면에 새지 않게 했어요.
  * 스크롤 연동 값(--p 등)과 애니메이션 상태 클래스(is-in, chips-on 등)는 컴포넌트가 붙여요.
  */
 export const LANDING_STYLES = `
-@font-face {
-  font-family: "Chongchong Pretendard";
-  src: url("${pretendardFont}") format("woff2-variations");
-  font-style: normal;
-  font-weight: 45 920;
-  font-display: swap;
-}
 body:has(.cc-landing) { display: block; min-width: 0; margin: 0; padding: 0; overflow: visible; background: #fff; }
 #root:has(.cc-landing), #app:has(.cc-landing) { width: 100%; max-width: none; margin: 0; padding: 0; text-align: initial; }
 .cc-landing {
@@ -38,7 +29,7 @@ html:has(.cc-landing) { -webkit-text-size-adjust: 100%; scroll-behavior: smooth;
     margin: 0;
     color: var(--grey-900);
     background: #fff;
-    font-family: "Chongchong Pretendard", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", sans-serif;
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", sans-serif;
     line-height: 1.5;
     letter-spacing: -.02em;
     word-break: keep-all;

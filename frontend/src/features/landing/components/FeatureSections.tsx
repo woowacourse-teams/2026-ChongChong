@@ -334,11 +334,7 @@ export function LandingFooter() {
             </a>
           </div>
         </div>
-        <p className="footer-info">
-          총총 · 우아한테크코스 2026 프로젝트
-          <br />
-          안톨리니 · 디움 · 바니 · 이든 · 피즈
-        </p>
+        <p className="footer-info">안톨리니 · 디움 · 바니 · 이든 · 피즈</p>
       </div>
     </footer>
   );

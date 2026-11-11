@@ -2,9 +2,6 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import App from './App';
 
-// jest에서는 import.meta가 빈 객체라 폰트 URL을 만들 수 없어서 스타일 문자열만 바꿔 둬요.
-jest.mock('./landing.styles', () => ({ LANDING_STYLES: '' }));
-
 const mockCapture = jest.fn();
 jest.mock('@posthog/react', () => ({ usePostHog: () => ({ capture: mockCapture }) }));
 
