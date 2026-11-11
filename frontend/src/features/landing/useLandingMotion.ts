@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore, type RefObject } from 'react';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
@@ -119,4 +119,45 @@ export function useReveal(rootRef: RefObject<HTMLElement | null>, reducedMotion:
     targets.forEach((target) => observer.observe(target));
     return () => observer.disconnect();
   }, [rootRef, reducedMotion]);
+}
+
+const SCROLL_KEY = 'cc-landing-scroll';
+
+/**
+ * 새로고침하면 보던 위치에서 다시 시작해요.
+ * 랜딩 코드를 받는 동안엔 페이지가 짧아서 브라우저가 엉뚱한 위치(캘린더 쪽 등)로 되돌리기 때문에,
+ * 떠나기 직전 위치를 저장해 두었다가 랜딩이 그려지기 전에 직접 옮겨요.
+ */
+export function useKeepScrollOnReload() {
+  useLayoutEffect(() => {
+    const { history } = window;
+    const previousRestoration = history.scrollRestoration;
+    history.scrollRestoration = 'manual';
+
+    let saved: string | null = null;
+    try {
+      saved = sessionStorage.getItem(SCROLL_KEY);
+      sessionStorage.removeItem(SCROLL_KEY);
+    } catch {
+      // 저장소를 못 쓰면 맨 위에서 시작해요.
+    }
+    const navigation = performance.getEntriesByType?.('navigation')[0] as
+      PerformanceNavigationTiming | undefined;
+    if (saved && navigation?.type === 'reload') {
+      window.scrollTo({ top: Number(saved), behavior: 'instant' });
+    }
+
+    const save = () => {
+      try {
+        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+      } catch {
+        // 저장소를 못 쓰면 저장하지 않아요.
+      }
+    };
+    window.addEventListener('pagehide', save);
+    return () => {
+      window.removeEventListener('pagehide', save);
+      history.scrollRestoration = previousRestoration;
+    };
+  }, []);
 }
