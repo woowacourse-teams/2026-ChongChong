@@ -18,6 +18,11 @@ import Phone from './Phone';
 import RemindFlow from './RemindFlow';
 import WebStartLink from './WebStartLink';
 
+/** 앱 설정 화면(AccountMenuSection)과 같은 개인정보처리방침·지원 메일이에요. */
+const PRIVACY_POLICY_URL =
+  'https://glittery-cobweb-ac6.notion.site/3b9842e631298049903cec2633a4fab7?pvs=74';
+const SUPPORT_EMAIL = 'chongwithoutc@gmail.com';
+
 const delay = (seconds: number) => ({ '--d': `${seconds}s` }) as CSSProperties;
 const noop = () => {};
 
@@ -325,9 +330,16 @@ export function LandingFooter() {
             <WebStartLink className="" position="footer">
               웹 서비스
             </WebStartLink>
+            <a href={PRIVACY_POLICY_URL} target="_blank" rel="noreferrer">
+              개인정보처리방침
+            </a>
+            <a href={`mailto:${SUPPORT_EMAIL}`}>문의하기</a>
           </div>
         </div>
-        <p className="footer-info">안톨리니 · 디움 · 바니 · 이든 · 피즈</p>
+        <p className="footer-info">
+          안톨리니 · 디움 · 바니 · 이든 · 피즈
+          <br />© 2026 총총
+        </p>
       </div>
     </footer>
   );

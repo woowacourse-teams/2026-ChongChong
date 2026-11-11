@@ -186,7 +186,7 @@ html:has(.cc-landing) { -webkit-text-size-adjust: 100%; scroll-behavior: smooth;
 .cc-landing .footer { padding: 56px 0 72px; background: var(--grey-50); color: var(--grey-600); font-size: 14px; }
 .cc-landing .footer-top { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .cc-landing .footer .brand img { width: 64px; filter: grayscale(1); opacity: .55; }
-.cc-landing .footer-links { display: flex; gap: 24px; font-weight: 500; }
+.cc-landing .footer-links { display: flex; flex-wrap: wrap; gap: 12px 24px; font-weight: 500; }
 .cc-landing .footer-links a:hover { color: var(--grey-900); }
 .cc-landing .footer-info { margin-top: 28px; color: var(--grey-500); font-size: 13px; line-height: 1.8; }
 .cc-landing .sec-head { text-align: center; }
