@@ -67,11 +67,11 @@ function StudySearchResults({ keyword }: { keyword: string | undefined }) {
         <>
           <List>
             {studies.map((study) => (
-              <List.Item key={study.studyId}>
-                <Link {...URL_POLICY.toPublicStudyJoinInfo(study.studyId)}>
+              <List.Item key={study.id}>
+                <Link {...URL_POLICY.toPublicStudyJoinInfo(study.id)}>
                   <HorizontalStudyCard
                     study={{
-                      name: study.studyName,
+                      name: study.name,
                       imageUrl: study.imageUrl,
                       description: study.description,
                       memberCount: study.memberCount,

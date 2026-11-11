@@ -100,7 +100,7 @@ function Content({ target }: { target: StudyJoinTarget }) {
     <>
       <VerticalStudyCard
         study={{
-          name: data.studyName,
+          name: data.name,
           imageUrl: data.imageUrl,
           description: data.description,
         }}
