@@ -103,8 +103,12 @@ describe('스터디 목록 페이지 테스트', () => {
 
       expect(await screen.findAllByRole('listitem')).toHaveLength(2);
 
-      expect(screen.getByText('탄자니아 스터디')).toBeInTheDocument();
-      expect(screen.getByText('농구 스터디')).toBeInTheDocument();
+      const tanzaniaCard = within(screen.getByRole('link', { name: /탄자니아 스터디/ }));
+      expect(tanzaniaCard.getByText('탄자니아 스터디')).toBeInTheDocument();
+      expect(
+        tanzaniaCard.getByText('탄자니아 출신 벤지와 함께하는 탄자니아 치안'),
+      ).toBeInTheDocument();
+      expect(tanzaniaCard.getByText('1명')).toBeInTheDocument();
     });
 
     test('스터디 역할에 따라 다른 뱃지를 렌더링 한다', async () => {
