@@ -379,6 +379,23 @@ html:has(.cc-landing) { -webkit-text-size-adjust: 100%; scroll-behavior: smooth;
   0%, 5% { transform: translate3d(-50%, var(--shift, 0px), 0) scale(.92); }
   70%, 100% { transform: translate3d(-50%, 0, 0) scale(1); }
 }
+/* 움직임 줄이기: 스크롤 연동 움직임은 끄고, Hero.tsx가 제목·폰을 단계별로(이동 없이) 바꿔요. */
+@media (prefers-reduced-motion: reduce) {
+  .cc-landing .hero-copy, .cc-landing .hero-stage { animation: none; }
+}
+/* 높이가 낮은 화면(가로로 눕힌 폰 등): 첫 화면을 고정하지 않고 제목·버튼 아래에 폰을 그대로 둬요. */
+@media (max-height: 560px) {
+  .cc-landing .hero { height: auto; }
+  .cc-landing .hero-sticky { position: relative; height: auto; overflow: visible; padding-bottom: 32px; }
+  .cc-landing .hero-copy {
+    animation: none; opacity: 1 !important; transform: none !important; visibility: visible !important; }
+  .cc-landing .hero-stage {
+    --phone: min(260px, 60vw);
+    position: relative; left: auto; bottom: auto;
+    width: max-content; margin: 48px auto 0;
+    animation: none; transform: none !important; }
+  .cc-landing .hero-stage .chip { opacity: 1; transform: none; animation: none; }
+}
 
 /* ---------- 앱 설치 버튼과 안내 창 (InstallAppButton) ---------- */
 .cc-landing .cc-app-button { gap: 8px; border: 0; }

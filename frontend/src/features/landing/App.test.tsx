@@ -76,3 +76,21 @@ test('리마인드 단계를 누르면 그 단계 설명으로 바뀐다', () =>
     'show',
   );
 });
+
+test('움직임 줄이기 설정에서도 리마인드 단계를 누르면 그 단계로 바뀐다', () => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: () => ({ matches: true, addEventListener: () => {}, removeEventListener: () => {} }),
+  });
+  renderLanding();
+
+  const flow = screen.getByRole('list', { name: '리마인드 3단계 흐름' });
+  ['과제 등록', '마감'].forEach((title) => {
+    const button = within(flow).getByRole('button', { name: new RegExp(title) });
+    act(() => fireEvent.click(button));
+    expect(button).toHaveAttribute('aria-current', 'step');
+  });
+  expect(screen.getByText('마감 후에는 누가 냈는지 바로 확인해요').parentElement).toHaveClass(
+    'show',
+  );
+});

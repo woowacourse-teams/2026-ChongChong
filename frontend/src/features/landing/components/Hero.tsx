@@ -3,7 +3,13 @@ import chongchongLogo from '../assets/chongchong-logo.png';
 import checkMascot from '../assets/mascots/check-icon.webp';
 import megaphoneMascot from '../assets/mascots/footer-icon.webp';
 import homeLeaderScreen from '../assets/screens/home-leader.webp';
-import { clamp01, stableViewportHeight, trackProgress, useScrollFrame } from '../useLandingMotion';
+import {
+  clamp01,
+  stableViewportHeight,
+  trackProgress,
+  usePrefersReducedMotion,
+  useScrollFrame,
+} from '../useLandingMotion';
 import InstallAppButton from './InstallAppButton';
 import Phone from './Phone';
 import WebStartLink from './WebStartLink';
@@ -66,6 +72,7 @@ export default function Hero() {
   const shiftRef = useRef(0);
   const cssDrivenRef = useRef(false);
   const [chipsOn, setChipsOn] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   // 폰이 처음엔 버튼 아래에서 시작하도록, 화면 높이에 맞춰 밀어둘 거리를 계산해요.
   useEffect(() => {
@@ -104,11 +111,25 @@ export default function Hero() {
     ({ progress, motion }) => {
       if (progress > motion.chipsShow) setChipsOn(true);
       else if (progress < motion.chipsHide) setChipsOn(false);
+
+      const copy = copyRef.current;
+      const stage = stageRef.current;
+      if (reducedMotion) {
+        // 움직임 줄이기: 이동·확대 없이 폰이 다 올라온 위치를 기준으로 두 상태만 바꿔요.
+        const raised = progress > motion.riseStart + 0.5 / motion.riseSpeed;
+        if (copy) {
+          copy.style.opacity = raised ? '0' : '1';
+          copy.style.transform = 'none';
+          copy.style.visibility = raised ? 'hidden' : '';
+        }
+        if (stage) {
+          stage.style.transform = `translate3d(-50%, ${raised ? 0 : shiftRef.current}px, 0)`;
+        }
+        return;
+      }
       if (cssDrivenRef.current) return;
 
       // 스크롤 연동 애니메이션을 지원하지 않는 브라우저에서만 JS로 움직여요.
-      const copy = copyRef.current;
-      const stage = stageRef.current;
       if (copy) {
         copy.style.opacity = String(clamp01(1 - progress * motion.fade));
         copy.style.transform = `translate3d(0, ${(-motion.lift * progress).toFixed(1)}px, 0)`;

@@ -6,7 +6,6 @@ import { usePrefersReducedMotion } from '../useLandingMotion';
 
 const STEP_MS = 1500;
 const LAST_STEP_EXTRA_MS = 500;
-const RESUME_AFTER_CLICK_MS = STEP_MS + 1500;
 const FILL = [0, 0.5, 1];
 
 const steps = [
@@ -69,13 +68,16 @@ function StepVisual({ step }: { step: number }) {
   );
 }
 
-/** 과제 등록 → 리마인드 → 마감을 화면에 보이는 동안 자동으로 반복해요. 단계를 누르면 그 단계로 넘어가요. */
+/**
+ * 과제 등록 → 리마인드 → 마감을 화면에 보이는 동안 자동으로 반복해요.
+ * 단계를 직접 누르면 그 단계에 멈춰서 자동 전환을 끝내요. 움직임 줄이기 설정이면 처음부터 자동 전환하지 않아요.
+ */
 export default function RemindFlow() {
   const reducedMotion = usePrefersReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [pausedUntil, setPausedUntil] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -88,17 +90,14 @@ export default function RemindFlow() {
   }, []);
 
   useEffect(() => {
-    if (reducedMotion || !visible) return;
-    const base = step === 2 ? STEP_MS + LAST_STEP_EXTRA_MS : STEP_MS;
-    const delay = Math.max(base, pausedUntil - Date.now());
+    if (reducedMotion || !autoPlay || !visible) return;
+    const delay = step === 2 ? STEP_MS + LAST_STEP_EXTRA_MS : STEP_MS;
     const timer = window.setTimeout(
       () => setStep((current) => (current + 1) % steps.length),
       delay,
     );
     return () => window.clearTimeout(timer);
-  }, [step, visible, reducedMotion, pausedUntil]);
-
-  const current = reducedMotion ? 1 : step;
+  }, [step, visible, reducedMotion, autoPlay]);
 
   return (
     <div
@@ -110,25 +109,25 @@ export default function RemindFlow() {
       <ol
         className="timeline"
         aria-label="리마인드 3단계 흐름"
-        style={{ '--fill': FILL[current] } as CSSProperties}
+        style={{ '--fill': FILL[step] } as CSSProperties}
       >
         {steps.map((item, index) => (
           <li
             key={item.title}
             className={[
               index === 1 ? 'bell' : '',
-              index === current ? 'active' : '',
-              index < current ? 'done' : '',
+              index === step ? 'active' : '',
+              index < step ? 'done' : '',
             ]
               .filter(Boolean)
               .join(' ')}
           >
             <button
               type="button"
-              aria-current={index === current ? 'step' : undefined}
+              aria-current={index === step ? 'step' : undefined}
               onClick={() => {
                 setStep(index);
-                setPausedUntil(Date.now() + RESUME_AFTER_CLICK_MS);
+                setAutoPlay(false);
               }}
             >
               <span className="dot">
@@ -153,8 +152,8 @@ export default function RemindFlow() {
         {steps.map((item, index) => (
           <div
             key={item.title}
-            className={'flow-slide' + (index === current ? ' show' : '')}
-            aria-hidden={index !== current}
+            className={'flow-slide' + (index === step ? ' show' : '')}
+            aria-hidden={index !== step}
           >
             <p className="flow-cap">{item.caption}</p>
             <StepVisual step={index} />
