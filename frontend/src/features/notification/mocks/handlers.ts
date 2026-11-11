@@ -1,4 +1,4 @@
-import { http, HttpResponse, passthrough } from 'msw';
+import { delay, http, HttpResponse, passthrough } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { notificationTable, webPushSubscriptionTable } from './db';
@@ -10,10 +10,22 @@ export const handlers = [
     const notifications = await notificationTable.findMany((q) =>
       q.where({ userId: Number(user.id) }),
     );
+    const searchParams = new URL(request.url).searchParams;
+    const cursor = searchParams.get('cursor');
+    const size = Number(searchParams.get('size') ?? 10);
+    const sortedNotifications = notifications
+      .filter((notification) => cursor === null || notification.id < Number(cursor))
+      .sort((a, b) => b.id - a.id);
+    const page = sortedNotifications.slice(0, size);
+    const hasNext = sortedNotifications.length > size;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const notificationsResponse = notifications.map(({ userId, ...rest }) => rest);
+    const notificationsResponse = page.map(({ userId, ...rest }) => rest);
+    // 다음 페이지의 로딩 UI를 확인하기 위한 목 응답 지연입니다.
+    if (cursor !== null) await delay(500);
     return HttpResponse.json({
       notifications: notificationsResponse,
+      nextCursor: hasNext ? page[page.length - 1].id : null,
+      hasNext,
     });
   }),
 

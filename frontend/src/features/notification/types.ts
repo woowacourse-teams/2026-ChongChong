@@ -1,5 +1,11 @@
 type NotificationType = 'NEW' | 'REMIND';
 
+export interface NotificationListResponse {
+  notifications: Notification[];
+  nextCursor: number | null;
+  hasNext: boolean;
+}
+
 type NotificationResourceType = 'NOTICE' | 'ASSIGNMENT' | 'ASSIGNMENT_SUBMISSION';
 
 export interface Notification {
