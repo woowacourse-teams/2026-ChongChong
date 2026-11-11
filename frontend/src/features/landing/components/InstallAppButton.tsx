@@ -1,5 +1,5 @@
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { usePostHog } from '@posthog/react';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';
 import chongchongLogo from '../assets/chongchong-logo.png';
@@ -43,6 +43,10 @@ export default function InstallAppButton({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { move } = usePageNavigation();
   const posthog = usePostHog();
+  // 랜딩에 버튼이 두 개(첫 화면·마지막 CTA)라 안내 창 id가 겹치지 않게 해요.
+  const dialogId = useId();
+  const titleId = `${dialogId}-title`;
+  const descriptionId = `${dialogId}-description`;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -68,27 +72,25 @@ export default function InstallAppButton({
     <>
       <button
         ref={buttonRef}
-        className="cc-destination cc-app-button"
+        className="btn btn-ghost cc-app-button"
         type="button"
         aria-haspopup="dialog"
         aria-busy={isPrompting}
         disabled={isPrompting}
         onClick={startApp}
       >
-        <svg className="cc-destination-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <rect x="6" y="2" width="12" height="20" rx="3" stroke="currentColor" strokeWidth="1.8" />
           <path d="M10 5h4M11 19h2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
-        <span className="cc-destination-copy">
-          <span className="cc-destination-name">앱으로 시작하기</span>
-        </span>
+        앱으로 시작하기
       </button>
 
       <dialog
         ref={dialogRef}
         className="cc-install-dialog"
-        aria-labelledby="cc-install-dialog-title"
-        aria-describedby="cc-install-dialog-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         onClose={() => {
           setGuideOpen(false);
           onActiveChange(false);
@@ -118,8 +120,8 @@ export default function InstallAppButton({
             <img src={chongchongLogo} alt="" width={232} height={256} />
           </span>
           <p className="cc-install-dialog-label">총총 앱</p>
-          <h2 id="cc-install-dialog-title">총총을 앱으로 만나요</h2>
-          <p className="cc-install-dialog-description" id="cc-install-dialog-description">
+          <h2 id={titleId}>총총을 앱으로 만나요</h2>
+          <p className="cc-install-dialog-description" id={descriptionId}>
             브라우저에서 직접 추가할 수 있어요.
             <br />
             이미 추가했다면 총총 앱 아이콘으로 시작해 주세요.
