@@ -93,7 +93,7 @@ export function HorizontalStudyCard({ study, badges }: HorizontalStudyCardProps)
 }
 
 interface VerticalStudyCardProps {
-  study: Pick<StudyCardData, 'imageUrl' | 'name' | 'description'>;
+  study: StudyCardData;
 }
 
 export function VerticalStudyCard({ study }: VerticalStudyCardProps) {
@@ -107,15 +107,21 @@ export function VerticalStudyCard({ study }: VerticalStudyCardProps) {
         variant="management"
         alt={`${study.name} 프로필`}
       />
-      <ContentCard.Title
-        id={titleId}
-        level={2}
-        size="large"
-        truncate={false}
-        css={{ marginTop: tokens.spacing[4] }}
+      <div
+        css={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: tokens.spacing[2],
+          marginTop: tokens.spacing[4],
+        }}
       >
-        {study.name}
-      </ContentCard.Title>
+        <ContentCard.Title id={titleId} level={2} size="large" truncate={false}>
+          {study.name}
+        </ContentCard.Title>
+        <StudyContentCard.MemberCount count={study.memberCount} />
+      </div>
+
       {study.description && (
         <ContentCard.Description truncate={false}>{study.description}</ContentCard.Description>
       )}

@@ -103,6 +103,7 @@ function Content({ target }: { target: StudyJoinTarget }) {
           name: data.name,
           imageUrl: data.imageUrl,
           description: data.description,
+          memberCount: data.memberCount,
         }}
       />
       <Button
