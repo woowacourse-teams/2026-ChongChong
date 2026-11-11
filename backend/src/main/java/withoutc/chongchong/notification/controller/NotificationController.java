@@ -1,5 +1,6 @@
 package withoutc.chongchong.notification.controller;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,8 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.notification.controller.dto.MyNotificationListResponse;
 import withoutc.chongchong.notification.service.NotificationService;
 
@@ -22,9 +25,16 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<MyNotificationListResponse> getMyNotifications(
-            @AuthenticationPrincipal AuthenticatedUser user
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false)
+            @Positive(message = "cursor는 양수여야 합니다.")
+            Long cursor,
+            @RequestParam(defaultValue = "10")
+            @Positive(message = "size는 양수여야 합니다.")
+            @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
+            int size
     ) {
-        MyNotificationListResponse response = notificationService.getMyNotifications(user.id());
+        MyNotificationListResponse response = notificationService.getList(user.id(), cursor, size);
 
         return ResponseEntity.ok(response);
     }

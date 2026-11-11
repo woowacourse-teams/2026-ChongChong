@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.entity.Assignment;
@@ -12,6 +14,8 @@ import withoutc.chongchong.assignment.repository.AssignmentReminderRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
 import withoutc.chongchong.comment.entity.Comment;
+import withoutc.chongchong.global.pagination.CursorPageRequest;
+import withoutc.chongchong.global.pagination.CursorPageResponse;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeReminderRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
@@ -47,10 +51,15 @@ public class NotificationService {
     private final AssignmentReminderRepository assignmentReminderRepository;
     private final AssignmentRepository assignmentRepository;
 
-    public MyNotificationListResponse getMyNotifications(Long userId) {
-        List<Notification> notifications = notificationRepository.findAllByRecipientIdOrderByCreatedAtDesc(userId);
+    public MyNotificationListResponse getList(Long userId, Long cursor, int size) {
+        CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
+        Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
+        List<Notification> notifications = notificationRepository.findByCursor(userId, pageRequest.cursor(), pageable);
 
-        return MyNotificationListResponse.from(notifications);
+        CursorPageResponse<Notification> notificationPage = CursorPageResponse.of(
+                notifications, pageRequest, Notification::getId);
+
+        return MyNotificationListResponse.from(notificationPage);
     }
 
     @Transactional

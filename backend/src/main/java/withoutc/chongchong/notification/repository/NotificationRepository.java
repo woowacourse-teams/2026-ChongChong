@@ -2,6 +2,7 @@ package withoutc.chongchong.notification.repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,6 +34,19 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     int deleteAllByRecipientId(@Param("userId") Long userId);
 
     List<Notification> findAllByRecipientIdOrderByCreatedAtDesc(Long userId);
+
+    @Query("""
+            SELECT notification
+            FROM Notification notification
+            WHERE notification.recipient.id = :userId
+              AND (:cursor IS NULL OR notification.id < :cursor)
+            ORDER BY notification.id DESC
+            """)
+    List<Notification> findByCursor(
+            @Param("userId") Long userId,
+            @Param("cursor") Long cursor,
+            Pageable pageable
+    );
 
     @Query("""
             SELECT notification
