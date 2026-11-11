@@ -1,4 +1,4 @@
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, memo, useState } from 'react';
 import type { SubmitEventHandler } from 'react';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
@@ -13,6 +13,8 @@ import type { Attachment } from '../../../shared/modules/files/types';
 import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import ReminderField from '../../../shared/widgets/ReminderField';
+
+const MemoizedReminderField = memo(ReminderField);
 
 const formStyle = {
   display: 'flex',
@@ -103,7 +105,7 @@ export default function NoticeForm({
         css={{ overflowY: 'hidden' }}
       />
 
-      <ReminderField
+      <MemoizedReminderField
         id="notice-reminders"
         value={remindAts}
         onChange={setRemindAts}
