@@ -15,7 +15,7 @@ public class StudyUpdateRequest {
     private final String name;
 
     @JsonProperty
-    @Size(max = 30, message = "스터디 설명은 {max}자 이내여야 합니다.")
+    @Size(max = 100, message = "스터디 설명은 {max}자 이내여야 합니다.")
     private final String description;
 
     @JsonProperty

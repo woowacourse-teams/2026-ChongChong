@@ -31,10 +31,10 @@ class StudyTest {
     }
 
     @Test
-    @DisplayName("스터디 설명은 30자까지 허용하고 30자를 초과하면 거부한다")
+    @DisplayName("스터디 설명은 100자까지 허용하고 100자를 초과하면 거부한다")
     void validateDescriptionLengthTest() {
-        String maxLengthDescription = "가".repeat(30);
-        String overLengthDescription = "가".repeat(31);
+        String maxLengthDescription = "가".repeat(100);
+        String overLengthDescription = "가".repeat(101);
 
         assertThatCode(() -> Study.create("자바 스터디", maxLengthDescription, false))
                 .doesNotThrowAnyException();

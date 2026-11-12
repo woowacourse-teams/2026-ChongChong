@@ -4,7 +4,7 @@ StudyCreateRequest:
   required: [name, isPublic]
   properties:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 생성할 스터디 이름.", type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
-    description: { description: "스터디의 목적이나 진행 방식을 소개하는 짧은 설명.", type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
+    description: { description: "스터디의 목적이나 진행 방식을 소개하는 짧은 설명.", type: [string, 'null'], maxLength: 100, example: 매주 월요일에 진행한다. }
     isPublic: { description: "스터디 공개 여부. 반드시 true 또는 false를 전송한다.", type: boolean, example: true }
     imageFileId: { description: "업로드를 완료한 본인 소유·미연결 이미지 파일 ID. 기본 허용 형식은 JPEG·PNG·WebP, 최대 크기는 5 MiB이다. 생략하거나 null이면 이미지 없이 생성한다.", type: [integer, 'null'], format: int64, minimum: 1, example: 101 }
 StudyUpdateRequest:
@@ -12,7 +12,7 @@ StudyUpdateRequest:
   additionalProperties: false
   properties:
     name: { description: "빈 문자열이나 공백만 있는 값은 허용하지 않는다. 변경할 스터디 이름. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], minLength: 1, maxLength: 15, example: 수정된 스터디 }
-    description: { description: "변경할 스터디 소개. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 30, example: 매주 화요일에 진행한다. }
+    description: { description: "변경할 스터디 소개. 생략하거나 null이면 기존 값을 유지한다.", type: [string, 'null'], maxLength: 100, example: 매주 화요일에 진행한다. }
     isPublic: { description: "변경할 공개 여부. 생략하거나 null이면 기존 값을 유지한다.", type: [boolean, 'null'], example: true }
     imageFileId: { description: "교체할 이미지 파일 ID. 새 파일은 업로드 완료·본인 소유·미연결 상태여야 하며, 기본 허용 형식은 JPEG·PNG·WebP, 최대 크기는 5 MiB이다. 생략하면 기존 이미지를 유지하고, null이면 이미지 연결을 해제해 기본 이미지로 변경한다.", type: [integer, 'null'], format: int64, minimum: 1, example: 102 }
 StudyCreateResponse:
@@ -102,7 +102,7 @@ StudySummaryResponse:
   properties:
     id: { description: 스터디 식별자, type: integer, format: int64, minimum: 1, example: 21 }
     name: { type: string, minLength: 1, maxLength: 15, example: 자바 스터디 }
-    description: { type: [string, 'null'], maxLength: 30, example: 매주 월요일에 진행한다. }
+    description: { type: [string, 'null'], maxLength: 100, example: 매주 월요일에 진행한다. }
     imageUrl: { description: "스터디 이미지의 S3 서명 조회 URL. 이미지가 없으면 null이다. URL이 만료되면 목록을 다시 조회한다.", type: [string, 'null'], format: uri, example: 'https://example.com/study.png' }
     memberCount: { description: 현재 리더를 포함한 전체 스터디 인원 수, type: integer, minimum: 0, example: 5 }
 StudyListResponse:
