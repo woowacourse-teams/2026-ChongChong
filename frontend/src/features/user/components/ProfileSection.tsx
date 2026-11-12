@@ -1,12 +1,13 @@
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import profileIcon from '../../../shared/assets/unknown-profile.svg';
 import { Field } from '../../../shared/ui/inputs/Field';
 import Input from '../../../shared/ui/inputs/Input';
 import Button from '../../../shared/ui/Button';
 import { tokens } from '../../../styles/global';
 import myPageQueries from '../queries';
+import UserProfileField from './UserProfileField';
+import useUpdateProfileImage from '../hooks/useUpdateProfileImage';
 import ProfileNameForm from './ProfileNameForm';
 import useUpdateProfileName from '../hooks/useUpdateProfileName';
 
@@ -15,17 +16,9 @@ const profileSectionStyle = {
   flexDirection: 'column',
 } satisfies CSSProperties;
 
-const profileImageStyle = {
-  width: '70px',
-  height: '70px',
-  alignSelf: 'center',
-  marginBottom: '28px',
-  borderRadius: tokens.radius.full,
-  objectFit: 'cover',
-} satisfies CSSProperties;
-
 export default function ProfileSection() {
   const { data: profile } = useSuspenseQuery(myPageQueries.profile());
+  const image = useUpdateProfileImage();
   const [isEditing, setIsEditing] = useState(false);
   const { mutate, isPending, errorText, reset } = useUpdateProfileName({
     onSuccess: () => setIsEditing(false),
@@ -43,10 +36,13 @@ export default function ProfileSection() {
 
   return (
     <section css={profileSectionStyle} aria-label="프로필">
-      <img
-        src={profile.profileImageUrl ?? profileIcon}
-        alt={`${profile.name}님의 프로필 사진`}
-        css={profileImageStyle}
+      <UserProfileField
+        name={profile.name}
+        imageUrl={profile.profileImageUrl}
+        disabled={image.isPending || isEditing}
+        errorText={image.error?.message}
+        onSelect={(file) => image.mutate(file)}
+        onReset={() => image.mutate(null)}
       />
 
       {isEditing ? (
@@ -70,6 +66,7 @@ export default function ProfileSection() {
             variant="brandSolid"
             size="large"
             css={{ marginTop: tokens.spacing[5] }}
+            disabled={image.isPending}
             onClick={startEditing}
           >
             프로필 수정하기
