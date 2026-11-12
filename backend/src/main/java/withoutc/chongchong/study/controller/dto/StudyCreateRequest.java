@@ -10,7 +10,7 @@ public record StudyCreateRequest(
         @Size(max = 15, message = "스터디 이름은 {max}자 이내여야 합니다.")
         String name,
 
-        @Size(max = 30, message = "스터디 설명은 {max}자 이내여야 합니다.")
+        @Size(max = 100, message = "스터디 설명은 {max}자 이내여야 합니다.")
         String description,
 
         @NotNull(message = "스터디 공개 여부는 필수입니다.")
