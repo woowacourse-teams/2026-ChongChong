@@ -176,7 +176,7 @@ export default function CommentEditor(props: Props) {
             )}
           </div>
           <p id={`${id}-hint`} css={[hintStyle, { textAlign: 'right' }]}>
-            {`${normalized.length} / 1,000`}
+            {`${normalized.length} / 1000`}
           </p>
           {mutation.error && (
             <p role="alert" css={[hintStyle, { color: tokens.text.critical }]}>

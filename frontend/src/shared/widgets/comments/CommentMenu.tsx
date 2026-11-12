@@ -15,8 +15,10 @@ const triggerStyle = {
   width: '28px',
   height: '28px',
   margin: '-4px',
+  cursor: 'pointer',
   flexShrink: 0,
 } satisfies CSSProperties;
+
 const menuStyle = {
   position: 'absolute',
   margin: 0,
@@ -28,12 +30,14 @@ const menuStyle = {
   boxShadow: tokens.shadow[2],
   overflow: 'hidden',
 } satisfies CSSProperties;
+
 const itemStyle = {
   ...typography.body,
   display: 'block',
   width: '100%',
   minHeight: '40px',
   color: tokens.text.primary,
+  cursor: 'pointer',
 } satisfies CSSProperties;
 
 export default function CommentMenu({ comment, onEdit, onDelete }: Props) {
