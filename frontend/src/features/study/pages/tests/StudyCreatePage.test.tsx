@@ -91,19 +91,19 @@ describe('스터디 생성 페이지', () => {
       expect(nameInput).toHaveValue(insertedValue);
     });
 
-    test('빈 설명에 30자를 초과한 값이 전달되면 입력을 막는다', () => {
+    test('빈 설명에 100자를 초과한 값이 전달되면 입력을 막는다', () => {
       setupStudyCreatePage();
       const descriptionInput = studyDescriptionInput();
 
-      fireEvent.change(descriptionInput, { target: { value: createTextWithLength(31) } });
+      fireEvent.change(descriptionInput, { target: { value: createTextWithLength(101) } });
 
       expect(descriptionInput).toHaveValue('');
     });
 
-    test('설명이 30자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
+    test('설명이 100자일 때 중간에 글자를 삽입해도 기존 값을 유지한다', () => {
       setupStudyCreatePage();
       const descriptionInput = studyDescriptionInput();
-      const originalValue = createTextWithLength(30);
+      const originalValue = createTextWithLength(100);
 
       fireEvent.change(descriptionInput, { target: { value: originalValue } });
       expect(descriptionInput).toHaveValue(originalValue);
@@ -113,10 +113,10 @@ describe('스터디 생성 페이지', () => {
       expect(descriptionInput).toHaveValue(originalValue);
     });
 
-    test('설명의 중간 삽입 결과가 30자 이하면 입력을 반영한다', () => {
+    test('설명의 중간 삽입 결과가 100자 이하면 입력을 반영한다', () => {
       setupStudyCreatePage();
       const descriptionInput = studyDescriptionInput();
-      const originalValue = createTextWithLength(29);
+      const originalValue = createTextWithLength(99);
 
       fireEvent.change(descriptionInput, { target: { value: originalValue } });
       expect(descriptionInput).toHaveValue(originalValue);

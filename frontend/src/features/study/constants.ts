@@ -3,5 +3,5 @@ export const STUDY_NAME = {
 };
 
 export const STUDY_DESCRIPTION = {
-  length: 30,
+  length: 100,
 };
