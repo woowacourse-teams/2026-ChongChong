@@ -1,6 +1,6 @@
 import type { MockStudy } from './db';
 
-// 기존 공개 스터디 2개와 추가 23개로 10 → 10 → 5개 페이징을 확인합니다.
+// 기존 공개 스터디 2개와 추가 24개로 10 → 10 → 6개 페이징을 확인합니다.
 export const mockStudies = [
   {
     id: 1,
@@ -63,6 +63,14 @@ export const mockStudies = [
     name: '공지와 과제가 많은 스터디',
     description: '공지와 과제가 각각 30개 있는 무한 스크롤 확인용 스터디',
     inviteLink: 'infinite-scroll',
+  },
+  {
+    id: 33,
+    isPublic: true,
+    name: '함께 성장할 프론트엔드 모임',
+    description:
+      '이 설명은 스터디 설명의 최대 길이인 100자를 채우기 위한 목데이터 이 설명은 스터디 설명의 최대 길이인 100자를 채우기 위한 목데이터 이 설명은 스터디 설명의 최대 길이인 1',
+    inviteLink: 'public-study-max-length',
   },
   ...Array.from({ length: 23 }, (_, index) => ({
     id: index + 1000,

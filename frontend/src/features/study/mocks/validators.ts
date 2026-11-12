@@ -1,7 +1,7 @@
 import type { FieldError } from '../../../shared/api/error';
 
 const STUDY_NAME_LIMIT_LENGTH = 15;
-const STUDY_DESCRIPTION_LIMIT_LENGTH = 30;
+const STUDY_DESCRIPTION_LIMIT_LENGTH = 100;
 
 interface StudyInput {
   name: string;

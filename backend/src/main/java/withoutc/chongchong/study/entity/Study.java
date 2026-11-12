@@ -26,7 +26,7 @@ public class Study extends BaseEntity {
     public static final int MAX_STUDY_MEMBER_COUNT = 50;
 
     private static final int MAX_STUDY_NAME_SIZE = 15;
-    private static final int MAX_STUDY_DESCRIPTION_SIZE = 30;
+    private static final int MAX_STUDY_DESCRIPTION_SIZE = 100;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
