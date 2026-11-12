@@ -1,6 +1,6 @@
-import { Paragraph } from '../../../shared/ui/Typography';
 import { CSSProperties } from 'react';
 import EmptyContent from '../../../shared/ui/EmptyContent';
+import Spinner from '../../../shared/ui/Spinner';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import Badge from '../../../shared/ui/Badge';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
@@ -50,11 +50,7 @@ export default function MemberNoticeListContent({ studyId }: Props) {
             }}
           </NoticeList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && (
-            <Paragraph variant="inherited" role="status">
-              공지를 더 불러오는 중...
-            </Paragraph>
-          )}
+          {isFetchingNextPage && <Spinner size={24} ariaLabel="공지를 더 불러오는 중" />}
         </>
       )}
     </section>

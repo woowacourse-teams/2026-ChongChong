@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { invalidInputResponse } from '../../../mocks/errors';
@@ -30,7 +30,7 @@ function findRecipient(noticeId: number, memberId: number) {
 }
 
 export const handlers = [
-  http.get(`${API_URL}/studies/:studyId/notices`, ({ request, params }) => {
+  http.get(`${API_URL}/studies/:studyId/notices`, async ({ request, params }) => {
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
@@ -42,6 +42,8 @@ export const handlers = [
       query.where({ studyId }),
     );
     const searchParams = new URL(request.url).searchParams;
+    // 로딩 Spinner를 확인하기 위한 지연입니다.
+    if (searchParams.has('cursor')) await delay(500);
     const requestedSize = Number(searchParams.get('size'));
     const pageSize = requestedSize > 0 ? requestedSize : undefined;
     const { page, nextCursor, hasNext } = paginateByCursor(studyNotices, searchParams, pageSize);

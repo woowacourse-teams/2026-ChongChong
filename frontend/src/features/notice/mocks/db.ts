@@ -104,6 +104,13 @@ export const mockNotices = [
     content: '신규 멤버에게는 보이지만 확인 대상에는 포함되지 않습니다.',
     createdAt: '2026-07-01T10:00:00',
   },
+  ...Array.from({ length: 30 }, (_, index) => ({
+    id: 1000 + index,
+    studyId: 10,
+    title: `무한 스크롤 확인용 공지 ${index + 1}`,
+    content: '목록 아래로 스크롤하며 로딩 컴포넌트를 확인해주세요.',
+    createdAt: '2026-11-11T09:00:00',
+  })),
 ] satisfies NoticeSchemaType[];
 
 export const mockNoticeRecipients = [
@@ -138,6 +145,13 @@ export const mockNoticeRecipients = [
   { id: 29, noticeId: 9, memberId: 4, readAt: null, lastRemindAt: null },
   { id: 30, noticeId: 9, memberId: 7, readAt: null, lastRemindAt: null },
   { id: 31, noticeId: 10, memberId: 12, readAt: null, lastRemindAt: null },
+  ...Array.from({ length: 30 }, (_, index) => ({
+    id: 32 + index,
+    noticeId: 1000 + index,
+    memberId: 17,
+    readAt: null,
+    lastRemindAt: null,
+  })),
 ] satisfies NoticeRecipientSchemaType[];
 
 export function createSeedNotices() {

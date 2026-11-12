@@ -59,6 +59,12 @@ export const mockStudies = [
     inviteLink: 'assignment-visibility-preview',
   },
   {
+    id: 10,
+    name: '공지와 과제가 많은 스터디',
+    description: '공지와 과제가 각각 30개 있는 무한 스크롤 확인용 스터디',
+    inviteLink: 'infinite-scroll',
+  },
+  {
     id: 33,
     isPublic: true,
     name: '함께 성장할 프론트엔드 모임',
@@ -67,7 +73,7 @@ export const mockStudies = [
     inviteLink: 'public-study-max-length',
   },
   ...Array.from({ length: 23 }, (_, index) => ({
-    id: index + 10,
+    id: index + 1000,
     isPublic: true,
     name: `공개 스터디 ${String(index + 1).padStart(2, '0')}`,
     description: `함께 공부하는 공개 스터디 ${index + 1}입니다.`,

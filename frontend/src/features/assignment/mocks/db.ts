@@ -202,6 +202,16 @@ export const mockAssigments: AssignmentSchemaInput[] = [
     remindAts: ['2099-12-30T10:00:00'],
     completeUserIds: [],
   },
+  ...Array.from({ length: 30 }, (_, index): AssignmentSchemaInput => ({
+    id: 1000 + index,
+    studyId: 10,
+    title: `무한 스크롤 확인용 과제 ${index + 1}`,
+    content: '목록 아래로 스크롤하며 로딩 컴포넌트를 확인해주세요.',
+    submissionMethod: '텍스트로 제출해주세요.',
+    closeAt: '2099-12-31T23:59:00',
+    submissionTarget: 'MEMBERS_AND_LEADER',
+    completeUserIds: [],
+  })),
 ] satisfies AssignmentSchemaInput[];
 
 export async function createSeedAssignments() {
