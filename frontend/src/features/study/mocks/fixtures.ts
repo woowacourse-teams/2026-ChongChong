@@ -63,7 +63,7 @@ export const mockStudies = [
     isPublic: true,
     name: '함께 성장할 프론트엔드 모임',
     description:
-      '매주 함께 모여 리액트와 타입스크립트를 공부하고 작은 프로젝트를 만들어요. 코드 리뷰로 각자 경험을 나누며 꾸준히 성장해요. 초보자도 환영하며 계속 함께할 동료를 기다리고 있어요.',
+      '이 설명은 스터디 설명의 최대 길이인 100자를 채우기 위한 목데이터 이 설명은 스터디 설명의 최대 길이인 100자를 채우기 위한 목데이터 이 설명은 스터디 설명의 최대 길이인 1',
     inviteLink: 'public-study-max-length',
   },
   ...Array.from({ length: 23 }, (_, index) => ({
