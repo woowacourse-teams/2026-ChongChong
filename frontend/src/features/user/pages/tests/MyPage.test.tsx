@@ -1,17 +1,21 @@
+import { File } from 'node:buffer';
+import profileIcon from '../../../../shared/assets/unknown-profile.svg';
+import { userTable } from '../../mocks/db';
+import { fileTable, MOCK_UPLOAD_ORIGIN } from '../../../../shared/modules/files/mocks/db';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { HttpResponse, http } from 'msw';
 import { API_URL } from '../../../../../config';
 import { clearAccessToken, setAccessToken } from '../../../login/accessToken';
-import { createWrapper } from '../../../../test/render';
+import { createWrapper, login, logout } from '../../../../test/render';
 import { server } from '../../../../mocks/msw-node';
 import { USER_URLS } from '../../urls';
 import MyPage from '../MyPage';
 
 function renderMyPage() {
   const user = userEvent.setup();
-  render(
+  const view = render(
     <Routes>
       <Route path="/studies/mypage" element={<MyPage />} />
       <Route path="/login" element={<h1>로그인 페이지</h1>} />
@@ -19,7 +23,7 @@ function renderMyPage() {
     { wrapper: createWrapper({ initialEntries: ['/studies/mypage'] }) },
   );
 
-  return { user };
+  return { user, ...view };
 }
 
 describe('프로필', () => {
@@ -86,79 +90,75 @@ describe('프로필', () => {
 });
 
 describe('프로필 이미지 변경', () => {
-  beforeEach(() => {
-    setAccessToken('1');
-    server.use(
-      http.get(`${API_URL}${USER_URLS.me}`, () =>
-        HttpResponse.json({ name: '이든', profileImageUrl: 'https://example.com/old.png' }),
-      ),
-    );
-  });
-  afterEach(() => clearAccessToken());
+  const originalImageUrl = 'https://example.com/old.png';
 
-  test('업로드 완료 후 파일 ID로 이미지를 변경한다', async () => {
-    const steps: string[] = [];
-    server.use(
-      http.post(`${API_URL}/files/presigned-url`, () => {
-        steps.push('presign');
-        return HttpResponse.json({
-          fileId: 123,
-          expiresAt: '2026-11-12T12:00:00Z',
-          uploadUrl: 'https://upload.example.com/avatar',
-        });
-      }),
-      http.put('https://upload.example.com/avatar', () => {
-        steps.push('upload');
-        return new HttpResponse(null, { status: 200 });
-      }),
-      http.post(`${API_URL}/files/123/complete`, () => {
-        steps.push('complete');
-        return new HttpResponse(null, { status: 204 });
-      }),
-      http.patch(`${API_URL}/users/me/profile-image`, async ({ request }) => {
-        expect(await request.json()).toEqual({ fileId: 123 });
-        steps.push('profile');
-        return HttpResponse.json({ name: '이든', profileImageUrl: 'https://example.com/new.png' });
-      }),
-    );
-    const { user } = renderMyPage();
-    await screen.findByRole('button', { name: '내 프로필 이미지 변경' });
-    await user.upload(
-      screen.getByLabelText('프로필 이미지 파일'),
-      new File(['image'], 'avatar.png', { type: 'image/png' }),
-    );
-    await screen.findByRole('img', { name: '이든님의 프로필 사진' });
-    await waitFor(() =>
+  beforeEach(async () => {
+    await userTable.create({ id: 1, name: '이든', profileImage: originalImageUrl });
+    login('이든');
+  });
+  afterEach(() => logout());
+
+  async function selectProfileImage(user, file: File) {
+    await user.click(await screen.findByRole('button', { name: '내 프로필 이미지 변경' }));
+    await user.click(screen.getByRole('button', { name: '프로필 이미지 선택' }));
+    await user.upload(screen.getByLabelText('프로필 이미지 파일'), file);
+  }
+
+  test('이미지를 선택하면 업로드한 이미지가 저장되고 다시 방문해도 표시된다', async () => {
+    const { user, unmount } = renderMyPage();
+    const file = new File(['profile-image'], 'avatar.png', { type: 'image/png' });
+
+    await selectProfileImage(user, file);
+
+    await waitFor(() => {
+      const savedUser = userTable.findFirst((q) => q.where({ id: 1 }));
+      expect(savedUser?.profileImage).not.toBe(originalImageUrl);
       expect(screen.getByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
         'src',
-        'https://example.com/new.png',
-      ),
+        savedUser?.profileImage,
+      );
+    });
+    const uploadedFile = fileTable.findFirst((q) => q.where({ originalFileName: file.name }));
+    expect(uploadedFile).toMatchObject({
+      status: 'COMPLETED',
+      ownerUserId: 1,
+      uploadedSize: file.size,
+    });
+    const imageUrl = `${MOCK_UPLOAD_ORIGIN}/images/${uploadedFile!.id}`;
+    expect(userTable.findFirst((q) => q.where({ id: 1 }))?.profileImage).toBe(imageUrl);
+
+    unmount();
+    renderMyPage();
+    expect(await screen.findByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
+      'src',
+      imageUrl,
     );
-    expect(steps).toEqual(['presign', 'upload', 'complete', 'profile']);
   });
 
-  test('기본 이미지 선택 시 DELETE 요청 후 기본 이미지를 표시한다', async () => {
-    server.use(
-      http.delete(
-        `${API_URL}/users/me/profile-image`,
-        () => new HttpResponse(null, { status: 204 }),
-      ),
-    );
-    const { user } = renderMyPage();
+  test('기본 이미지를 선택하면 저장된 이미지가 초기화되고 다시 방문해도 유지된다', async () => {
+    const { user, unmount } = renderMyPage();
     await user.click(await screen.findByRole('button', { name: '내 프로필 이미지 변경' }));
     await user.click(screen.getByRole('button', { name: '기본 프로필 이미지 사용' }));
     await waitFor(() =>
       expect(screen.getByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
         'src',
-        'test-file-stub',
+        profileIcon,
       ),
+    );
+    expect(userTable.findFirst((q) => q.where({ id: 1 }))?.profileImage).toBeNull();
+
+    unmount();
+    renderMyPage();
+    expect(await screen.findByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
+      'src',
+      profileIcon,
     );
   });
 
   test('초기화 실패 시 기존 이미지를 유지하고 오류를 표시한다', async () => {
     server.use(
       http.delete(
-        `${API_URL}/users/me/profile-image`,
+        `${API_URL}${USER_URLS.profileImage}`,
         () => new HttpResponse(null, { status: 500 }),
       ),
     );
@@ -170,43 +170,55 @@ describe('프로필 이미지 변경', () => {
     ).toBeVisible();
     expect(screen.getByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
       'src',
-      'https://example.com/old.png',
+      originalImageUrl,
     );
+    expect(userTable.findFirst((q) => q.where({ id: 1 }))?.profileImage).toBe(originalImageUrl);
   });
+
   test('5MB 초과 이미지는 업로드하지 않고 기존 이미지를 유지한다', async () => {
-    const presign = jest.fn(() => new HttpResponse(null, { status: 500 }));
-    server.use(http.post(`${API_URL}/files/presigned-url`, presign));
     const { user } = renderMyPage();
-    await screen.findByRole('button', { name: '내 프로필 이미지 변경' });
-    await user.upload(
-      screen.getByLabelText('프로필 이미지 파일'),
+    await selectProfileImage(
+      user,
       new File([new Uint8Array(5_242_881)], 'large.png', { type: 'image/png' }),
     );
     expect(await screen.findByText('파일당 최대 5MB까지 첨부할 수 있어요.')).toBeVisible();
-    expect(presign).not.toHaveBeenCalled();
+    expect(fileTable.findMany((q) => q.where({ ownerUserId: 1 }))).toHaveLength(0);
     expect(screen.getByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
       'src',
-      'https://example.com/old.png',
+      originalImageUrl,
     );
+    expect(userTable.findFirst((q) => q.where({ id: 1 }))?.profileImage).toBe(originalImageUrl);
   });
 
-  test('업로드 실패 시 기존 이미지를 유지하고 다시 선택할 수 있다', async () => {
+  test('업로드 실패 시 기존 이미지를 유지하고 다시 선택하면 저장된다', async () => {
     server.use(
-      http.post(`${API_URL}/files/presigned-url`, () => new HttpResponse(null, { status: 500 })),
+      http.post(`${API_URL}/files/presigned-url`, () => new HttpResponse(null, { status: 500 }), {
+        once: true,
+      }),
     );
     const { user } = renderMyPage();
-    await screen.findByRole('button', { name: '내 프로필 이미지 변경' });
-    await user.upload(
-      screen.getByLabelText('프로필 이미지 파일'),
-      new File(['image'], 'avatar.png', { type: 'image/png' }),
-    );
+    const file = new File(['profile-image'], 'avatar.png', { type: 'image/png' });
+    await selectProfileImage(user, file);
     expect(
       await screen.findByText('파일 업로드에 실패했어요. 삭제 후 다시 선택해주세요.'),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: '내 프로필 이미지 변경' })).toBeEnabled();
     expect(screen.getByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
       'src',
-      'https://example.com/old.png',
+      originalImageUrl,
     );
+
+    await selectProfileImage(user, file);
+    await waitFor(() => {
+      const savedUser = userTable.findFirst((q) => q.where({ id: 1 }));
+      expect(savedUser?.profileImage).not.toBe(originalImageUrl);
+      expect(screen.getByRole('img', { name: '이든님의 프로필 사진' })).toHaveAttribute(
+        'src',
+        savedUser?.profileImage,
+      );
+    });
+    expect(
+      screen.queryByText('파일 업로드에 실패했어요. 삭제 후 다시 선택해주세요.'),
+    ).not.toBeInTheDocument();
   });
 });
