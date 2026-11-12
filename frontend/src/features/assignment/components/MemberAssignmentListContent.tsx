@@ -1,10 +1,10 @@
-import { Paragraph } from '../../../shared/ui/Typography';
 import AssignmentList from './AssignmentList';
 import { CSSProperties } from 'react';
 import EmptyContent from '../../../shared/ui/EmptyContent';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import assignmentQueries from '../queries';
 import Badge from '../../../shared/ui/Badge';
+import Spinner from '../../../shared/ui/Spinner';
 import useInfiniteScroll from '../../../shared/hooks/useInfiniteScroll';
 import type { MemberAssignmentSummary } from '../types';
 import { submissionStatusBadge } from '../constants';
@@ -50,11 +50,7 @@ export default function MemberAssignmentListContent({ studyId }: Props) {
             }}
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && (
-            <Paragraph variant="inherited" role="status">
-              과제를 더 불러오는 중...
-            </Paragraph>
-          )}
+          {isFetchingNextPage && <Spinner size={24} ariaLabel="과제를 더 불러오는 중" />}
         </>
       )}
     </section>

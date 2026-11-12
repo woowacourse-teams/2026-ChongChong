@@ -1,5 +1,5 @@
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
-import { Paragraph } from '../../../shared/ui/Typography';
+import Spinner from '../../../shared/ui/Spinner';
 import { CSSProperties } from 'react';
 import AssignmentList from './AssignmentList';
 import { tokens } from '../../../styles/global';
@@ -68,11 +68,7 @@ export default function LeaderAssignmentListContent({ studyId }: Props) {
             )}
           </AssignmentList>
           <div ref={loadMoreRef} css={{ minHeight: '1px' }} aria-hidden="true" />
-          {isFetchingNextPage && (
-            <Paragraph variant="inherited" role="status">
-              과제를 더 불러오는 중...
-            </Paragraph>
-          )}
+          {isFetchingNextPage && <Spinner size={24} ariaLabel="과제를 더 불러오는 중" />}
         </>
       )}
       <FloatingMenu

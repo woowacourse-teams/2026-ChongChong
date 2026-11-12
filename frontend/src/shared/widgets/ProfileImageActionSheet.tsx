@@ -1,8 +1,8 @@
 import { useId, ComponentProps, ReactNode } from 'react';
 import type { CSSObject } from '@emotion/react';
-import BottomSheet from '../../../shared/ui/BottomSheet';
-import { Heading } from '../../../shared/ui/Typography';
-import { tokens } from '../../../styles/global';
+import BottomSheet from '../ui/BottomSheet';
+import { Heading } from '../ui/Typography';
+import { tokens } from '../../styles/global';
 
 type Actions = {
   onSelect: () => void;

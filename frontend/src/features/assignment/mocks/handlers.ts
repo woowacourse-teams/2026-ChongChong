@@ -1,6 +1,6 @@
 import { fileAttachments } from '../../../shared/modules/files/mocks/attachments';
 import { validateAssignmentAttachments } from './attachments';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { API_URL } from '../../../../config';
 import { findUserFromHeader } from '../../../mocks/auth';
 import { paginateByCursor } from '../../../mocks/pagination';
@@ -74,7 +74,7 @@ function pendingReminders(assignment: AssignmentSchemaType) {
 }
 
 export const handlers = [
-  http.get(`${API_URL}/studies/:studyId/assignments`, ({ request, params }) => {
+  http.get(`${API_URL}/studies/:studyId/assignments`, async ({ request, params }) => {
     const user = findUserFromHeader(request.headers);
     if (!user) return new HttpResponse(null, { status: 401 });
 
@@ -86,10 +86,10 @@ export const handlers = [
     const studyAssignments: AssignmentSchemaType[] = assignmentTable.findMany((q) =>
       q.where({ studyId }),
     );
-    const { page, nextCursor, hasNext } = paginateByCursor(
-      studyAssignments,
-      new URL(request.url).searchParams,
-    );
+    const searchParams = new URL(request.url).searchParams;
+    // 로딩 Spinner를 확인하기 위한 지연입니다.
+    if (searchParams.has('cursor')) await delay(500);
+    const { page, nextCursor, hasNext } = paginateByCursor(studyAssignments, searchParams);
 
     const isLeader = member.role === 'LEADER';
 

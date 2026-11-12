@@ -154,10 +154,10 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "자바 스터디",
-                          "description": "매주 월요일에 진행한다.",
+                          "description": "%s",
                           "isPublic": true
                         }
-                        """)
+                        """.formatted("가".repeat(100)))
                 .when()
                 .post("/studies")
                 .then()
@@ -166,7 +166,7 @@ class StudyAcceptanceTest {
 
         assertThat(studyRepository.findAll())
                 .extracting(Study::getName, Study::getDescription, Study::isPublic)
-                .contains(tuple("자바 스터디", "매주 월요일에 진행한다.", true));
+                .contains(tuple("자바 스터디", "가".repeat(100), true));
 
         assertThat(studyMemberRepository.findAll())
                 .hasSize(1)
@@ -247,10 +247,10 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "",
-                          "description": "1234567890123456789012345678901",
+                          "description": "%s",
                           "isPublic": false
                         }
-                        """)
+                        """.formatted("가".repeat(101)))
                 .when()
                 .post("/studies")
                 .then()
@@ -259,7 +259,7 @@ class StudyAcceptanceTest {
                 .body("errors.field", containsInAnyOrder("name", "description"))
                 .body("errors.reason", containsInAnyOrder(
                         "스터디 이름은 필수입니다.",
-                        "스터디 설명은 30자 이내여야 합니다."
+                        "스터디 설명은 100자 이내여야 합니다."
                 ));
     }
 
@@ -279,10 +279,10 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "수정 스터디",
-                          "description": "수정 설명",
+                          "description": "%s",
                           "isPublic": true
                         }
-                        """)
+                        """.formatted("가".repeat(100)))
                 .when()
                 .patch("/studies/{studyId}", study.getId())
                 .then()
@@ -292,7 +292,7 @@ class StudyAcceptanceTest {
                 .get()
                 .satisfies(updatedStudy -> {
                     assertThat(updatedStudy.getName()).isEqualTo("수정 스터디");
-                    assertThat(updatedStudy.getDescription()).isEqualTo("수정 설명");
+                    assertThat(updatedStudy.getDescription()).isEqualTo("가".repeat(100));
                     assertThat(updatedStudy.isPublic()).isTrue();
                 });
     }
@@ -469,9 +469,9 @@ class StudyAcceptanceTest {
                 .body("""
                         {
                           "name": "1234567890123456",
-                          "description": "1234567890123456789012345678901"
+                          "description": "%s"
                         }
-                        """)
+                        """.formatted("가".repeat(101)))
                 .when()
                 .patch("/studies/{studyId}", study.getId())
                 .then()
@@ -479,7 +479,7 @@ class StudyAcceptanceTest {
                 .body("code", equalTo("INVALID_REQUEST_PARAMETER"))
                 .body("errors.reason", containsInAnyOrder(
                         "스터디 이름은 15자 이내여야 합니다.",
-                        "스터디 설명은 30자 이내여야 합니다."
+                        "스터디 설명은 100자 이내여야 합니다."
                 ));
 
         assertThat(studyRepository.findById(study.getId()))

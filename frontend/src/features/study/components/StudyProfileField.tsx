@@ -1,7 +1,7 @@
 import { useId, useRef } from 'react';
 import type { CSSObject } from '@emotion/react';
 import useBooleanState from '../../../shared/hooks/useBooleanState';
-import ProfileImageActionSheet from './ProfileImageActionSheet';
+import ProfileImageActionSheet from '../../../shared/widgets/ProfileImageActionSheet';
 import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import { tokens } from '../../../styles/global';
 import camera from '../../../shared/assets/camera.svg';

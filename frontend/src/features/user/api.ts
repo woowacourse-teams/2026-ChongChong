@@ -55,3 +55,30 @@ export async function updateProfileName(name: string) {
     });
   }
 }
+
+export async function updateProfileImage(fileId: number) {
+  try {
+    const response = await api.patch(USER_URLS.profileImage, { json: { fileId }, retry: 0 });
+    return parseProfile(await response.json());
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('프로필 이미지를 변경하지 못했어요. 다시 시도해주세요.', {
+        cause: error,
+      }),
+    });
+  }
+}
+
+export async function resetProfileImage() {
+  try {
+    await api.delete(USER_URLS.profileImage, { retry: 0 });
+  } catch (error) {
+    throw handleError(error, {
+      mappers: [ApiError],
+      fallback: new Error('프로필 이미지를 초기화하지 못했어요. 다시 시도해주세요.', {
+        cause: error,
+      }),
+    });
+  }
+}

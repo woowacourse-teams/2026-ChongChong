@@ -1,5 +1,5 @@
 import { ChangeEventHandler } from 'react';
-import { tokens, typography } from '../../../styles/global';
+import { tokens } from '../../../styles/global';
 import Input from '../../../shared/ui/inputs/Input';
 import Button from '../../../shared/ui/Button';
 import searchIcon from '../../../shared/assets/search.svg';
@@ -20,7 +20,6 @@ const formStyle = {
 };
 
 const inputStyle = {
-  ...typography.body,
   minHeight: 40,
   height: 40,
   borderRadius: 20,
