@@ -25,9 +25,8 @@ export default function useUpdateProfileImage() {
         userQueries.profile().queryKey,
         (previous) => profile ?? (previous ? { ...previous, profileImageUrl: null } : previous),
       );
-      // 참여 스터디의 작성자·멤버 이미지도 다음 조회부터 새 프로필을 사용한다.
-      void queryClient.invalidateQueries({ queryKey: studyQueries.all() });
-      void queryClient.invalidateQueries({ queryKey: commentQueries.all() });
+      queryClient.invalidateQueries({ queryKey: studyQueries.all() });
+      queryClient.invalidateQueries({ queryKey: commentQueries.all() });
     },
   });
 }
