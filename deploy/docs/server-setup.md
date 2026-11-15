@@ -491,3 +491,7 @@ bash /opt/chongchong/deploy/scripts/setup/check-server-setup.sh backend
 DNS 방식으로 별도 갱신 작업을 구성했다면 검사는 저장소의 webroot timer가 없다고 표시할 수 있다. 이 경우 선택한 DNS 갱신 작업의 실행 상태와 갱신 시험 결과를 확인한다.
 
 새 B의 앱은 첫 블루그린 배포에서 실행된다. 기존 서버를 B로 편입할 때도 외부 요청이 새 edge로 옮겨진 뒤 첫 블루그린 배포를 실행한다.
+
+## 기존 AL2023 AMI의 실행 의존성 확인
+
+준비된 Amazon Linux 2023 ARM64 서버는 `sudo bash deploy/scripts/setup/check-al2023.sh backend` 또는 `edge`로 검사한다. Python 3.9 이상·Docker·Compose 및 역할별 서비스의 실행/자동 시작만 확인하며 패키지 설치나 서버 변경은 하지 않는다. 완전히 빈 AMI 설치·실제 health·IAM·DB 연결 검증을 대신하지 않는다. AL2023의 SSH 사용자는 `ec2-user`이며 주소·host key는 실제 서버에 맞춘다. 위 Ubuntu 신규 설치 절차를 그대로 적용하지 않는다.
