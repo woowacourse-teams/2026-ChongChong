@@ -85,6 +85,29 @@ class FailoverControllerTest(unittest.TestCase):
         self.assertEqual(state.active, "b")
         self.assertFalse(state.slots["a"].eligible)
 
+    def test_reload_delay_retries_verification_before_accepting_failover(self) -> None:
+        self.ops.health["a"] = False
+        with patch.object(self.ops, "verify", side_effect=[False, True]) as verify, patch("edge_control.time.sleep"):
+            for _ in range(3):
+                self.controller.monitor()
+        state = self.controller.status()
+        self.assertEqual(state.active, "b")
+        self.assertFalse(state.hold)
+        self.assertIsNone(state.pending)
+        self.assertEqual(verify.call_count, 2)
+
+    def test_persistent_verification_failure_stops_after_bounded_retries(self) -> None:
+        self.ops.health["a"] = False
+        with patch.object(self.ops, "verify", return_value=False) as verify, patch("edge_control.time.sleep"):
+            with self.assertRaises(ControlError):
+                for _ in range(3):
+                    self.controller.monitor()
+        state = self.controller.status()
+        self.assertEqual(verify.call_count, 3)
+        self.assertTrue(state.hold)
+        self.assertEqual(state.phase, "recovery")
+        self.assertIsNotNone(state.pending)
+
     def test_recovered_old_active_does_not_cause_automatic_failback(self) -> None:
         # Given: failover already selected B.
         self.ops.health["a"] = False

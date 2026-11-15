@@ -37,8 +37,10 @@ def save(path, records):
 
 def retain(root, expected, clean=False):
     directory = root / "releases"
-    with (directory / "deploy.lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with (directory / "deploy.lock").open("a") as lock, (directory / "retention.lock").open("a") as retention_lock:
+        # 이미지 조회의 shared lock은 허용하고 실제 배포의 exclusive lock은 막는다.
+        fcntl.flock(lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        fcntl.flock(retention_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         current = (root / "current-backend-release").resolve(strict=True)
         if current.parent != directory.resolve() or current.is_symlink():
             raise ValueError("릴리스 경로 오류")

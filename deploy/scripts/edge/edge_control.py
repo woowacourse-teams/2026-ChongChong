@@ -57,6 +57,15 @@ class Controller:
         except (ControlError, ValueError, KeyError, TypeError):
             return False
 
+    def verify_switch(self, slot: str) -> bool:
+        """reload 반영을 최대 세 번 확인한다. 요청당 timeout 6초와 대기 2초로 제한한다."""
+        for attempt in range(3):
+            if self.ops.verify(slot):
+                return True
+            if attempt < 2:
+                time.sleep(1)
+        return False
+
     def switch(self, state: State, target: str, phase: str) -> None:
         """호출자가 routing 잠금을 보유한다. intent를 먼저 저장해 재시작 시 조정한다."""
         previous = state.active
@@ -66,12 +75,12 @@ class Controller:
         self.store.write(state)
         try:
             self.ops.replace(target)
-            if not self.ops.verify(target):
+            if not self.verify_switch(target):
                 raise ControlError("전환 후 edge 응답을 검증할 수 없습니다")
         except ControlError:
             if state.slots[previous].eligible and self.ops.ready(previous) and self.matches(state, previous):
                 self.ops.replace(previous)
-                if self.ops.verify(previous):
+                if self.verify_switch(previous):
                     state.pending = None
                     state.phase = "degraded"
                     self.store.write(state)
@@ -128,7 +137,9 @@ class Controller:
                 self.store.write(state)
                 return
             failed = state.active
-            reverting = state.slots[target].release != state.slots[failed].release
+            candidate, current = state.slots[target], state.slots[failed]
+            reverting = (candidate.release, candidate.image, candidate.reference) != (
+                current.release, current.image, current.reference)
             if reverting and (not state.automatic_rollback or target != state.previous or
                               state.slots[target].release != state.compatibility.get("previous_release") or
                               state.slots[target].reference != state.compatibility.get("previous_image")):
@@ -151,11 +162,16 @@ class Controller:
             allowed = {state.active}
             if state.pending:
                 allowed = {slot for slot in (state.pending["from"], state.pending["to"]) if state.slots[slot].eligible}
-            if routed not in allowed or not self.matches(state, routed) or not self.ops.ready(routed):
+            keeping_active = (state.pending is not None and routed == state.active == state.pending["from"]
+                              and self.verify_switch(routed))
+            if (routed not in allowed and not keeping_active) or not self.matches(state, routed) or not self.ops.ready(routed):
                 raise ControlError("실제 routing과 릴리스를 확인할 수 없어 수동 복구가 필요합니다")
-            self.ops.replace(routed)
-            if not self.ops.verify(routed):
-                raise ControlError("edge 응답 확인 실패")
+            # 설정 파일뿐 아니라 실제 edge가 기존 서버를 계속 가리키면 재승격하지 않는다.
+            if not keeping_active:
+                self.ops.replace(routed)
+                if not self.verify_switch(routed):
+                    raise ControlError("edge 응답 확인 실패")
+            state.slots[routed].eligible = True
             state.active = routed
             state.pending = None
             state.phase = "degraded"
@@ -199,7 +215,8 @@ class Controller:
             target = state.previous
             if state.pending or not target or target == state.active or not state.automatic_rollback:
                 raise ControlError("승인된 이전 릴리스로 되돌릴 수 없습니다")
-            if state.slots[target].release != state.compatibility.get("previous_release"):
+            if (state.slots[target].release != state.compatibility.get("previous_release") or
+                    state.slots[target].reference != state.compatibility.get("previous_image")):
                 raise ControlError("이전 서버가 이미 동기화되었습니다. 보존 bundle로 별도 재배포해야 합니다")
             state.hold = True
             self.switch(state, target, "degraded")

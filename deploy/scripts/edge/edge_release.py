@@ -69,6 +69,31 @@ def finish_failure(controller: "Controller", operation: str, target: str) -> Non
         controller.store.write(state)
 
 
+def retention_state_matches(current: State, expected: State) -> bool:
+    """정상 probe의 카운터 변경은 허용하되 전환·hold·릴리스 변경은 거절한다."""
+    return (current.active, current.phase, current.hold, current.pending, current.operation,
+            current.slots, current.rollback_bundle) == (
+                expected.active, expected.phase, expected.hold, expected.pending, expected.operation,
+                expected.slots, expected.rollback_bundle)
+
+
+def retain_successful(controller: "Controller", expected: State, clean: bool = False) -> None:
+    """호출자는 deploy 잠금을 유지한다. 원격 정리는 routing 잠금 없이 실행한다."""
+    protected = [(Path(expected.rollback_bundle) / "image-pin").read_text().strip()] if clean else []
+    for slot in ("a", "b"):
+        value = expected.slots[slot]
+        if not value.eligible:
+            continue
+        with controller.store.lock("routing"):
+            if not retention_state_matches(controller.store.read(), expected):
+                raise ControlError("이미지 작업 중 제어 상태 변경; 나머지 정리 중단")
+        if not controller.ops.ready(slot) or not controller.matches(expected, slot):
+            raise ControlError("이미지 작업 전 backend 재검증 실패")
+        # backend도 자체 배포 잠금 아래 identity를 재검증하고 사용 중·복구 이미지를 보호한다.
+        controller.ops.retain(slot, Identity(value.release, value.image, value.reference),
+                              clean=clean, protected=protected)
+
+
 def deploy(controller: "Controller", artifact: Path, approval: Optional[Path] = None) -> None:
     with controller.store.lock("deploy", False):
         restoring = approval is not None
@@ -94,11 +119,15 @@ def deploy(controller: "Controller", artifact: Path, approval: Optional[Path] = 
                 raise ControlError("복구 작업은 결함 버전으로 자동 복귀할 수 없습니다")
             if not controller.ops.drained():
                 raise ControlError("이전 Nginx worker가 아직 연결을 처리 중입니다")
-            if state.phase == "stable":
-                for slot in ("a", "b"):
-                    value = state.slots[slot]
-                    if value.eligible and controller.ops.ready(slot) and controller.matches(state, slot):
-                        controller.ops.retain(slot, Identity(value.release, value.image, value.reference))
+            before_retention = state
+        if before_retention.phase == "stable":
+            retain_successful(controller, before_retention)
+        with controller.store.lock("routing"):
+            state = controller.store.read()
+            if not retention_state_matches(state, before_retention):
+                raise ControlError("이미지 보존 중 제어 상태 변경; 배포 중단")
+            if not controller.ops.ready(state.active) or not controller.matches(state, state.active):
+                raise ControlError("이미지 보존 후 활성 backend 재검증 실패")
             state.restoring = restoring
             state.hold = False
             target = other(state.active)
@@ -171,19 +200,16 @@ def finalize(controller: "Controller") -> None:
                 state.restoring = False
                 state.phase, state.operation, state.reason = "stable", "", "동일 릴리스 대기 복구 완료"
                 controller.store.write(state)
-                try:
-                    for slot in (active, target):
-                        value = state.slots[slot]
-                        controller.ops.retain(slot, Identity(value.release, value.image, value.reference))
-                    for slot in (active, target):
-                        if not controller.ops.ready(slot) or not controller.matches(state, slot):
-                            raise ControlError("정리 전 backend 재검증 실패")
-                        value = state.slots[slot]
-                        controller.ops.retain(slot, Identity(value.release, value.image, value.reference), clean=True,
-                                              protected=[(Path(state.rollback_bundle) / "image-pin").read_text().strip()])
-                except (ControlError, OSError, ValueError):
-                    state.reason = "동기화 성공; 이미지 정리 실패, 서비스 유지 및 운영자 확인 필요"
-                    controller.store.write(state)
+                completed = state
+            try:
+                retain_successful(controller, completed)
+                retain_successful(controller, completed, clean=True)
+            except (ControlError, OSError, ValueError):
+                with controller.store.lock("routing"):
+                    state = controller.store.read()
+                    if retention_state_matches(state, completed):
+                        state.reason = "동기화 성공; 이미지 정리 실패, 서비스 유지 및 운영자 확인 필요"
+                        controller.store.write(state)
         except (ControlError, OSError, ValueError, KeyError, TypeError):
             finish_failure(controller, operation, target)
             raise

@@ -100,6 +100,25 @@ class RetentionTest(unittest.TestCase):
                     retention.retain(self.root, self.current, clean=True)
         self.assertEqual(self.removed, [])
 
+    def test_retention_allows_identity_reads_but_excludes_deploy_and_other_cleanup(self):
+        observed = []
+
+        def inspect_locks(*args):
+            if args == ('inspect', 'chongchong-backend'):
+                with (self.root / 'releases/deploy.lock').open('a') as reader:
+                    fcntl.flock(reader, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                    observed.append('identity can read')
+                with (self.root / 'releases/deploy.lock').open('a') as deployer:
+                    with self.assertRaises(BlockingIOError):
+                        fcntl.flock(deployer, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self.assertRaises(BlockingIOError):
+                    retention.retain(self.root, self.current, clean=True)
+            return self.docker(*args)
+
+        with patch.object(retention, 'docker', side_effect=inspect_locks):
+            retention.retain(self.root, self.current, clean=True)
+        self.assertEqual(observed, ['identity can read'])
+
     def test_deletion_failure_preserves_success_history_for_retry(self):
         self.failed_removal = True
         with patch.object(retention, 'docker', side_effect=self.docker):

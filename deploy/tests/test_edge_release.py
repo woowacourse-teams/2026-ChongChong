@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import pathlib
 import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor
 import time
 import unittest
 from typing import Callable, Optional
@@ -11,7 +13,7 @@ from unittest.mock import patch
 
 from test_edge_failover import TestOperations
 from edge_control import Controller
-from edge_io import FILES, fingerprint
+from edge_io import FILES, Operations, fingerprint
 from edge_state import ControlError, Identity
 
 
@@ -106,6 +108,61 @@ class ReleaseControllerTest(unittest.TestCase):
             "allow_automatic_rollback": False,
         }))
         return saved, approval
+
+    def assert_failover_during_retention(self, before_deploy: bool, clean: bool) -> None:
+        if not before_deploy:
+            self.controller.deploy(self.next_artifact)
+            self.complete_soak()
+        active = self.controller.status().active
+        paused, resume, monitored = threading.Event(), threading.Event(), threading.Event()
+        original = self.ops.retain
+
+        def delayed_retain(slot, identity, clean=False, protected=()):
+            if clean == pause_clean and not paused.is_set():
+                paused.set()
+                if not resume.wait(5):
+                    raise ControlError("테스트 정리 작업 대기 시간 초과")
+            original(slot, identity, clean, protected)
+
+        def monitor_failure() -> None:
+            self.ops.health[active] = False
+            for _ in range(3):
+                Controller(self.root, self.ops).monitor()
+            monitored.set()
+
+        pause_clean = clean
+        action = (lambda: self.controller.deploy(self.next_artifact)) if before_deploy else self.controller.finalize
+        with patch.object(self.ops, "retain", side_effect=delayed_retain), ThreadPoolExecutor(max_workers=2) as workers:
+            work = workers.submit(action)
+            try:
+                self.assertTrue(paused.wait(3))
+                monitor = workers.submit(monitor_failure)
+                self.assertTrue(monitored.wait(1), "이미지 작업이 끝나기 전에 장애 전환해야 한다")
+                monitor.result(timeout=1)
+                self.assertNotEqual(self.ops.routed_slot(), active)
+            finally:
+                resume.set()
+            if before_deploy:
+                with self.assertRaises(ControlError):
+                    work.result(timeout=3)
+            else:
+                work.result(timeout=3)
+        state = self.controller.status()
+        self.assertEqual(state.phase, "degraded")
+        self.assertNotEqual(state.active, active)
+        self.assertIn("장애로 전환", state.reason)
+        self.assertFalse(state.slots[active].eligible)
+        if before_deploy:
+            self.assertEqual(self.ops.releases, [])
+
+    def test_predeploy_retention_does_not_block_failover(self) -> None:
+        self.assert_failover_during_retention(before_deploy=True, clean=False)
+
+    def test_final_retention_does_not_block_failover(self) -> None:
+        self.assert_failover_during_retention(before_deploy=False, clean=False)
+
+    def test_cleanup_does_not_block_failover_or_overwrite_its_state(self) -> None:
+        self.assert_failover_during_retention(before_deploy=False, clean=True)
 
     def test_cleanup_only_after_successful_sync_and_failure_does_not_rollback(self):
         self.controller.deploy(self.next_artifact)
@@ -280,6 +337,76 @@ class ReleaseControllerTest(unittest.TestCase):
         self.assertTrue(state.hold)
         self.assertEqual(state.phase, "recovery")
         self.assertIsNotNone(state.pending)
+
+    def test_reconcile_keeps_verified_old_route_after_nginx_check_failure(self) -> None:
+        # 실제 replace의 nginx -t 실패는 파일을 A로 되돌리고 reload하지 않는다.
+        with patch.object(self.ops, "replace", side_effect=lambda slot: Operations.replace(self.ops, slot)), \
+                patch("edge_io.command", side_effect=ControlError("nginx -t failed")):
+            with self.assertRaises(ControlError):
+                self.controller.deploy(self.next_artifact)
+        self.assertEqual(self.ops.routed_slot(), "a")
+        self.assertFalse(self.controller.status().slots["a"].eligible)
+        with patch.object(self.ops, "replace", side_effect=AssertionError("기존 라우팅을 다시 변경하면 안 된다")):
+            Controller(self.root, self.ops).reconcile()
+        state = self.controller.status()
+        self.assertEqual(state.active, "a")
+        self.assertIsNone(state.pending)
+        self.assertTrue(state.hold)
+        self.assertTrue(state.slots["a"].eligible)
+        self.assertFalse(state.slots["b"].eligible)
+
+    def test_reconcile_rejects_old_route_file_without_matching_live_response(self) -> None:
+        with patch.object(self.ops, "replace", side_effect=ControlError("reload result unknown")):
+            with self.assertRaises(ControlError):
+                self.controller.deploy(self.next_artifact)
+        with patch.object(self.ops, "verify", return_value=False), \
+                patch.object(self.ops, "replace", side_effect=AssertionError("승인 없는 재전환 금지")), \
+                patch("edge_control.time.sleep"):
+            with self.assertRaises(ControlError):
+                self.controller.reconcile()
+        self.assertIsNotNone(self.controller.status().pending)
+
+    def deploy_same_tag_rebuild(self) -> None:
+        (self.next_artifact / "image.env").write_text((self.old_artifact / "image.env").read_text())
+        self.manifest(True)
+        self.controller.deploy(self.next_artifact)
+        state = self.controller.status()
+        self.assertEqual(state.slots["a"].release, state.slots["b"].release)
+        self.assertNotEqual(state.slots["a"].image, state.slots["b"].image)
+
+    def test_same_tag_rebuild_automatic_rollback_holds_after_switch(self) -> None:
+        self.deploy_same_tag_rebuild()
+        self.ops.health["b"] = False
+        for _ in range(3):
+            self.controller.monitor()
+        state = self.controller.status()
+        self.assertEqual(state.active, "a")
+        self.assertTrue(state.hold)
+        self.assertIn("자동 롤백 완료", state.reason)
+
+    def test_same_tag_rebuild_cannot_bypass_previous_image_approval(self) -> None:
+        self.deploy_same_tag_rebuild()
+        state = self.controller.status()
+        state.compatibility["previous_image"] = "test/app@sha256:" + "9" * 64
+        self.controller.store.write(state)
+        self.ops.health["b"] = False
+        for _ in range(3):
+            self.controller.monitor()
+        self.assertEqual(self.controller.status().active, "b")
+
+    def test_same_tag_rebuild_manual_rollback_rejects_synchronized_new_image(self) -> None:
+        self.deploy_same_tag_rebuild()
+        self.complete_soak()
+        self.controller.finalize()
+        with self.assertRaisesRegex(ControlError, "보존 bundle"):
+            self.controller.rollback()
+        self.assertEqual(self.controller.status().active, "b")
+
+    def test_same_tag_rebuild_manual_rollback_accepts_retained_old_image(self) -> None:
+        self.deploy_same_tag_rebuild()
+        self.controller.rollback()
+        self.assertEqual(self.controller.status().active, "a")
+        self.assertTrue(self.controller.status().hold)
 
     def test_operator_hold_during_release_prevents_traffic_switch(self) -> None:
         # Given: the operator holds the system while the remote release runs.
