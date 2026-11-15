@@ -1,0 +1,11 @@
+[Unit]
+Description=ChongChong backend failover probe
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/chongchong/edge-state/failover.json
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/bin/bash /opt/chongchong/edge-runtime/current/edge-control.sh monitor
+TimeoutStartSec=120

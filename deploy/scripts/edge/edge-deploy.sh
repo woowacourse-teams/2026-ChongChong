@@ -3,6 +3,9 @@
 set -Eeuo pipefail
 umask 077
 DEPLOY="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [[ -e "${CHONGCHONG_APP_ROOT:-/opt/chongchong}/edge-state/failover.json" || -L "${CHONGCHONG_APP_ROOT:-/opt/chongchong}/edge-state/failover.json" ]]; then
+    exec bash "${CHONGCHONG_APP_ROOT:-/opt/chongchong}/edge-runtime/current/edge-control.sh" deploy "$DEPLOY"
+fi
 source "$DEPLOY/scripts/edge/edge-runtime.sh"
 edge_initialize
 # 미완료 전환은 새 배포로 덮지 않고 이전 라우팅부터 복구한다.
@@ -50,6 +53,11 @@ cp "$UPSTREAM" "$work/previous-upstream.conf"
 install -m 600 "$ROOT/config/backend.env" "$work/backend.env"
 install -m 600 "$DEPLOY/image.env" "$work/image.env"
 cp "$DEPLOY/config/docker-compose.yml" "$DEPLOY/config/docker-compose.backend.yml" "$work/"
+pin="$(cat "$DEPLOY/image-pin")"
+[[ "$pin" =~ ^[A-Za-z0-9._:/-]+@sha256:[a-f0-9]{64}$ ]] || {
+    echo 'Valid image-pin is required; rebuild the deployment artifact' >&2; exit 1;
+}
+install -m 600 "$DEPLOY/image-pin" "$work/image-pin"
 ssh_args=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10
     -o ServerAliveInterval=15 -o ServerAliveCountMax=3
     -o "UserKnownHostsFile=$SSH_KNOWN_HOSTS" -i "$SSH_KEY")
@@ -58,7 +66,7 @@ ssh "${ssh_args[@]}" "$remote" 'sudo -n install -d -m 700 /opt/chongchong/deploy
 ssh "${ssh_args[@]}" "$remote" 'sudo -n tee /opt/chongchong/deploy-control/backend-release.sh >/dev/null' < "$DEPLOY/scripts/backend/backend-release.sh"
 # 대기 슬롯을 덮어쓰기 전에 그 슬롯을 직전 버전으로 간주한 롤백 기록을 무효화한다.
 rm -f "$STATE/previous-upstream.conf"
-tar -C "$work" -cf - backend.env image.env docker-compose.yml docker-compose.backend.yml |
+tar -C "$work" -cf - backend.env image.env image-pin docker-compose.yml docker-compose.backend.yml |
     timeout 240 ssh "${ssh_args[@]}" "$remote" "sudo -n bash /opt/chongchong/deploy-control/backend-release.sh $slot $target"
 is_ready=false
 for attempt in {1..30}; do

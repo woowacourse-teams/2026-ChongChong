@@ -29,6 +29,7 @@ phases:
   post_build:
     commands:
       - docker push "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}"
+      - bash deploy/scripts/edge/record-image-pin.sh "${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}" deploy/image-pin
       - printf 'BACKEND_IMAGE=%s\nBACKEND_IMAGE_TAG=%s\n' "${DOCKERHUB_REPOSITORY}" "${IMAGE_TAG}" > deploy/image.env
       - |
         case "${DEPLOYMENT_MODE:-legacy}" in

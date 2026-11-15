@@ -17,7 +17,9 @@ failure = os.environ.get('FAIL_AT', '')
 with (root / 'calls').open('a') as f: f.write(json.dumps([name, *args]) + '\n')
 if name == 'ssh':
     if failure == 'ssh': sys.exit(1)
-    sys.stdin.buffer.read()
+    data = sys.stdin.buffer.read()
+    if 'backend-release.sh ' in args[-1]:
+        (root / 'sent-release.tar').write_bytes(data)
 elif name == 'timeout':
     os.execvp(args[1], args[1:])
 elif name == 'flock':
@@ -63,6 +65,7 @@ class EdgeDeployTest(unittest.TestCase):
             root = pathlib.Path(directory)
             shutil.copytree(DEPLOY, root / 'deploy')
             (root / 'deploy/image.env').write_text('BACKEND_IMAGE=test/app\nBACKEND_IMAGE_TAG=new\n')
+            (root / 'deploy/image-pin').write_text('test/app@sha256:' + 'a' * 64 + '\n')
             (root / 'config').mkdir()
             (root / 'key').touch()
             (root / 'known_hosts').touch()
@@ -95,6 +98,27 @@ class EdgeDeployTest(unittest.TestCase):
             if inspect_state:
                 inspect_state(root)
             return result, calls, routing, original, (root / 'edge-state/pending-upstream.conf').exists()
+
+    def test_digest_is_transferred_to_backend(self):
+        def inspect(root):
+            with tarfile.open(root / 'sent-release.tar') as bundle:
+                self.assertEqual(bundle.extractfile('image-pin').read(),
+                                 ('test/app@sha256:' + 'a' * 64 + '\n').encode())
+        result, _, _, _, _ = self.exercise(inspect_state=inspect)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_missing_or_invalid_digest_prevents_remote_mutation(self):
+        for value in (None, 'test/app:latest'):
+            def prepare(root):
+                pin = root / 'deploy/image-pin'
+                if value is None:
+                    pin.unlink()
+                else:
+                    pin.write_text(value)
+            result, calls, routing, original, _ = self.exercise(prepare=prepare)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(routing, original)
+            self.assertFalse(any(call[0] == 'ssh' for call in calls))
 
     def seed_snapshots(self, root):
         state = root / 'edge-state'
@@ -248,7 +272,7 @@ class EdgeDeployTest(unittest.TestCase):
 
 
 class BackendReleaseTest(unittest.TestCase):
-    def exercise(self, failure='', prepare=None, inspect_state=None):
+    def exercise(self, failure='', prepare=None, inspect_state=None, image_pin=None):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
             if prepare:
@@ -265,6 +289,8 @@ class BackendReleaseTest(unittest.TestCase):
                 'docker-compose.yml': (DEPLOY / 'config/docker-compose.yml').read_text(),
                 'docker-compose.backend.yml': (DEPLOY / 'config/docker-compose.backend.yml').read_text(),
             }
+            if image_pin is not None:
+                files['image-pin'] = image_pin
             with tarfile.open(fileobj=bundle, mode='w') as archive:
                 for name, contents in files.items():
                     data = contents.encode()
@@ -317,6 +343,32 @@ class BackendReleaseTest(unittest.TestCase):
         starts = [call for call in calls if 'up' in call]
         self.assertEqual(len(starts), 1)
         self.assertEqual(starts[0][-4:], ['up', '-d', '--no-deps', 'backend'])
+
+    def test_immutable_image_override_is_used_for_pull_and_start(self):
+        # Given: a release bundle pins a digest independently of its mutable tag.
+        pin = 'test/app@sha256:' + 'a' * 64
+
+        def inspect_state(root):
+            override = root / 'current-backend-release/docker-compose.pinned.yml'
+            self.assertEqual(override.read_text(), 'services:\n  backend:\n    image: "' + pin + '"\n')
+
+        # When: the backend release command processes the bundle.
+        result, calls, current = self.exercise(image_pin=pin + '\n', inspect_state=inspect_state)
+        # Then: both image retrieval and container creation use the pinned override.
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(current)
+        for action in ('pull', 'up'):
+            call = next(call for call in calls if action in call)
+            self.assertTrue(any(value.endswith('/docker-compose.pinned.yml') for value in call))
+
+    def test_invalid_image_pin_fails_before_changing_backend(self):
+        # Given: the bundle contains a tag rather than an immutable digest.
+        # When: the backend release command validates it.
+        result, calls, current = self.exercise(image_pin='test/app:latest\n')
+        # Then: no Docker operation can pull, stop, or recreate the application.
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(current)
+        self.assertFalse(any(call[0] == 'docker' for call in calls))
 
 
 if __name__ == '__main__':
