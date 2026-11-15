@@ -77,7 +77,8 @@ def retention_state_matches(current: State, expected: State) -> bool:
                 expected.slots, expected.rollback_bundle)
 
 
-def retain_successful(controller: "Controller", expected: State, clean: bool = False) -> None:
+def retain_successful(controller: "Controller", expected: State, clean: bool = False,
+                      allow_unready_standby: bool = False) -> None:
     """호출자는 deploy 잠금을 유지한다. 원격 정리는 routing 잠금 없이 실행한다."""
     protected = [(Path(expected.rollback_bundle) / "image-pin").read_text().strip()] if clean else []
     for slot in ("a", "b"):
@@ -87,7 +88,12 @@ def retain_successful(controller: "Controller", expected: State, clean: bool = F
         with controller.store.lock("routing"):
             if not retention_state_matches(controller.store.read(), expected):
                 raise ControlError("이미지 작업 중 제어 상태 변경; 나머지 정리 중단")
-        if not controller.ops.ready(slot) or not controller.matches(expected, slot):
+        if not controller.ops.ready(slot):
+            # 배포 전에는 고장 난 대기를 새로 배포할 수 있다. 활성 서버와 정리 검사는 완화하지 않는다.
+            if allow_unready_standby and not clean and slot != expected.active:
+                continue
+            raise ControlError("이미지 작업 전 backend 재검증 실패")
+        if not controller.matches(expected, slot):
             raise ControlError("이미지 작업 전 backend 재검증 실패")
         # backend도 자체 배포 잠금 아래 identity를 재검증하고 사용 중·복구 이미지를 보호한다.
         controller.ops.retain(slot, Identity(value.release, value.image, value.reference),
@@ -121,7 +127,7 @@ def deploy(controller: "Controller", artifact: Path, approval: Optional[Path] = 
                 raise ControlError("이전 Nginx worker가 아직 연결을 처리 중입니다")
             before_retention = state
         if before_retention.phase == "stable":
-            retain_successful(controller, before_retention)
+            retain_successful(controller, before_retention, allow_unready_standby=True)
         with controller.store.lock("routing"):
             state = controller.store.read()
             if not retention_state_matches(state, before_retention):

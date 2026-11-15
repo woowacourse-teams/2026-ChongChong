@@ -164,6 +164,38 @@ class ReleaseControllerTest(unittest.TestCase):
     def test_cleanup_does_not_block_failover_or_overwrite_its_state(self) -> None:
         self.assert_failover_during_retention(before_deploy=False, clean=True)
 
+    def test_stopped_standby_can_be_redeployed_after_preserving_active_image(self) -> None:
+        self.ops.health["b"] = False
+        self.controller.monitor()
+
+        def recover_standby() -> None:
+            self.assertEqual(self.ops.routed_slot(), "a")
+            self.assertFalse(self.controller.status().slots["b"].eligible)
+            self.assertEqual([slot for slot, _, _ in self.ops.retained], ["a"])
+            self.ops.health["b"] = True
+
+        self.ops.on_release = recover_standby
+        self.controller.deploy(self.next_artifact)
+        self.assertEqual(self.ops.releases, ["b"])
+        self.assertEqual(self.controller.status().active, "b")
+        self.assertEqual(self.controller.status().phase, "soaking")
+
+    def test_stopped_standby_stays_excluded_if_redeployment_is_unhealthy(self) -> None:
+        self.ops.health["b"] = False
+        with patch("edge_release.time.sleep"), self.assertRaises(ControlError):
+            self.controller.deploy(self.next_artifact)
+        self.assertEqual(self.ops.releases, ["b"])
+        self.assertEqual(self.ops.routed_slot(), "a")
+        self.assertFalse(self.controller.status().slots["b"].eligible)
+
+    def test_stopped_standby_does_not_bypass_active_image_preservation_failure(self) -> None:
+        self.ops.health["b"] = False
+        with patch.object(self.ops, "retain", side_effect=ControlError("active image record failed")):
+            with self.assertRaises(ControlError):
+                self.controller.deploy(self.next_artifact)
+        self.assertEqual(self.ops.releases, [])
+        self.assertEqual(self.ops.routed_slot(), "a")
+
     def test_cleanup_only_after_successful_sync_and_failure_does_not_rollback(self):
         self.controller.deploy(self.next_artifact)
         self.assertFalse(any(clean for _, clean, _ in self.ops.retained))
