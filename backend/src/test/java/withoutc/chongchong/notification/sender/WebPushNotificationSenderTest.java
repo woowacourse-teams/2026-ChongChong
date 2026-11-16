@@ -67,7 +67,7 @@ class WebPushNotificationSenderTest {
                 LocalDateTime.now(CLOCK)
         );
         when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
-                .thenReturn(new WebPushClient.WebPushResponse(201, ""));
+                .thenReturn(new WebPushClient.WebPushResponse(201));
 
         WebPushSendResult result = sender.send(delivery);
 
@@ -95,7 +95,7 @@ class WebPushNotificationSenderTest {
     void classifyProviderResponse(int status, String expectedResult) {
         WebPushNotificationSender sender = createSender();
         when(webPushClient.send(eq(ENDPOINT), eq(P256DH), eq(AUTH), anyString()))
-                .thenReturn(new WebPushClient.WebPushResponse(status, ""));
+                .thenReturn(new WebPushClient.WebPushResponse(status));
 
         WebPushSendResult result = sender.send(createDelivery());
 

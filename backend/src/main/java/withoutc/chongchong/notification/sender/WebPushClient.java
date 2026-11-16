@@ -22,8 +22,6 @@ import withoutc.chongchong.notification.exception.WebPushException;
 // 동시에 나가는 요청 수는 발송 스레드 수(web-push.delivery.concurrency)를 넘지 않는다. 각 스레드가 응답을 기다리기 때문이다.
 public class WebPushClient implements AutoCloseable {
 
-    private static final int MAX_RESPONSE_BODY_LENGTH = 2_000;
-
     private final WebPushRequestFactory requestFactory;
     private final HttpClient httpClient;
     private final Duration sendTimeout;
@@ -62,11 +60,12 @@ public class WebPushClient implements AutoCloseable {
     public WebPushResponse send(String endpoint, String p256dh, String auth, String payload) {
         // 암호화와 서명은 제한 시간을 재기 전에 끝낸다. 제한 시간은 전송과 응답 대기에만 쓴다.
         HttpRequest request = createRequest(endpoint, p256dh, auth, payload);
-        Future<HttpResponse<String>> responseFuture = null;
+        Future<HttpResponse<Void>> responseFuture = null;
         try {
-            responseFuture = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            HttpResponse<String> response = responseFuture.get(sendTimeout.toMillis(), TimeUnit.MILLISECONDS);
-            return new WebPushResponse(response.statusCode(), truncate(response.body()));
+            // 결과는 상태 코드로만 판단한다. 응답 본문은 메모리에 모으지 않고 버린다.
+            responseFuture = httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding());
+            HttpResponse<Void> response = responseFuture.get(sendTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            return new WebPushResponse(response.statusCode());
         } catch (ExecutionException exception) {
             throw new WebPushException(WebPushErrorCode.WEB_PUSH_TRANSPORT_FAILED);
         } catch (TimeoutException exception) {
@@ -113,16 +112,6 @@ public class WebPushClient implements AutoCloseable {
         }
     }
 
-    private String truncate(String responseBody) {
-        if (responseBody == null) {
-            return "";
-        }
-        if (responseBody.length() <= MAX_RESPONSE_BODY_LENGTH) {
-            return responseBody;
-        }
-        return responseBody.substring(0, MAX_RESPONSE_BODY_LENGTH);
-    }
-
     // 새 요청은 받지 않고, 이미 보낸 요청은 제한 시간만큼 응답을 기다린 뒤 연결을 닫는다.
     @Override
     public void close() {
@@ -137,6 +126,6 @@ public class WebPushClient implements AutoCloseable {
         }
     }
 
-    public record WebPushResponse(int status, String responseBody) {
+    public record WebPushResponse(int status) {
     }
 }

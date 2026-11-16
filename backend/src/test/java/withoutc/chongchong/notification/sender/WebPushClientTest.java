@@ -103,7 +103,6 @@ class WebPushClientTest {
             WebPushClient.WebPushResponse response = client.send(endpoint, P256DH, AUTH, "payload");
 
             assertThat(response.status()).isEqualTo(201);
-            assertThat(response.responseBody()).isEqualTo("created");
             assertThat(receivedRequests).singleElement().satisfies(request -> {
                 assertThat(request.method()).isEqualTo("POST");
                 assertThat(request.urgency()).isEqualTo("high");
@@ -129,16 +128,15 @@ class WebPushClientTest {
     }
 
     @Test
-    @DisplayName("Push 서비스의 오류 응답은 상태 코드를 그대로 돌려주고, 긴 응답 본문은 2,000자로 자른다")
-    void returnsErrorStatusWithTruncatedBody() {
+    @DisplayName("응답 본문이 커도 모으지 않고 버리며, 오류 응답의 상태 코드는 그대로 돌려준다")
+    void discardsLargeBodyAndReturnsErrorStatus() {
         try (WebPushClient client = new WebPushClient(VAPID, Duration.ofSeconds(2))) {
             responseStatus = 410;
-            responseBody = "x".repeat(3_000);
+            responseBody = "x".repeat(5_000_000);
 
             WebPushClient.WebPushResponse response = client.send(endpoint, P256DH, AUTH, "payload");
 
             assertThat(response.status()).isEqualTo(410);
-            assertThat(response.responseBody()).hasSize(2_000);
         }
     }
 
