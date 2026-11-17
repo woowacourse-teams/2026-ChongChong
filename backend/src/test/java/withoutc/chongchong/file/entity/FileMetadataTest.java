@@ -3,6 +3,7 @@ package withoutc.chongchong.file.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,15 +58,42 @@ class FileMetadataTest {
     }
 
     @Test
-    @DisplayName("업로드 대기 파일은 첨부 제거를 위한 삭제 대기로 전환할 수 없다")
-    void rejectDeletingPendingFile() {
+    @DisplayName("업로드를 완료하지 않은 파일도 삭제 대기로 전환하고 이후 완료할 수 없다")
+    void markPendingFileForDeletion() {
         FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
 
-        assertThatThrownBy(file::markForDeletion)
+        file.markForDeletion();
+
+        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.DELETE_PENDING);
+        assertThatThrownBy(file::completeUpload)
                 .isInstanceOf(FileException.class)
                 .extracting(exception -> ((FileException) exception).getErrorCode())
                 .isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE);
-        assertThat(file.getStatus()).isEqualTo(FileUploadStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("삭제를 선점할 때마다 선점 시각을 기록하고 시도 횟수를 늘린다")
+    void claimDeletion() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+        file.markForDeletion();
+        LocalDateTime firstClaimedAt = LocalDateTime.of(2026, 11, 16, 10, 0);
+
+        file.claimDeletion(firstClaimedAt);
+        file.claimDeletion(firstClaimedAt.plusMinutes(10));
+
+        assertThat(file.getDeleteClaimedAt()).isEqualTo(firstClaimedAt.plusMinutes(10));
+        assertThat(file.getDeleteAttempts()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("삭제 대기가 아닌 파일은 삭제를 선점할 수 없다")
+    void rejectClaimingDeletionOfActiveFile() {
+        FileMetadata file = FileMetadata.create(owner, "image.png", "uploads/image", "image/png", 1024);
+        file.completeUpload();
+
+        assertThatThrownBy(() -> file.claimDeletion(LocalDateTime.of(2026, 11, 16, 10, 0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(file.getDeleteAttempts()).isZero();
     }
 
     @Test

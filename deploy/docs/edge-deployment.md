@@ -204,3 +204,9 @@ bash /opt/chongchong/deploy/scripts/edge/edge-deploy.sh
 앱 배포는 Nginx·ADOT를 재생성하지 않는다. 수집기 설정 변경은 [모니터링 문서](monitoring.md)의 적용 명령을 사용한다. Nginx의 `worker_connections` 같은 설정은 해당 파일을 반영한 뒤 reload로 적용할 수 있지만, 컨테이너의 `ulimits`나 마운트 변경에는 재생성이 필요하다. `edge.conf.template`은 컨테이너 시작 때 실제 설정으로 변환되므로 템플릿 수정만으로는 실행 중인 설정이 바뀌지 않는다. 이런 변경은 일상적인 백엔드 전환과 별도로 적용·검증한다.
 
 edge의 배포 사본은 기본 3개를 보관한다. EDGE_DEPLOYMENT_RETENTION_COUNT로 개수를 바꿀 수 있다. 마지막 성공 사본과 복구 중인 자료는 보존한다. 백엔드의 과거 release 디렉터리와 edge의 rollback.* 진단 디렉터리는 자동 정리하지 않는다.
+
+## 선택적 자동 장애 전환과 이미지 보존
+
+[controller 설치·초기화](edge-failover.md)를 수행한 환경에서만 상시 감시와 안정화 후 대기 동기화를 사용한다. 설치만으로 타이머를 활성화하지 않는다. [릴리스 보존·복구 정책](release-retention-and-restore.md)을 함께 확인한다.
+
+빌드는 `deploy/image-pin`을 생성하고 기존 edge 경로도 이를 백엔드에 전달한다. digest가 없는 과거 artifact는 새 buildspec으로 다시 빌드해야 한다.

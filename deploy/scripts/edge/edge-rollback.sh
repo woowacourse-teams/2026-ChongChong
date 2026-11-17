@@ -2,6 +2,9 @@
 # edge에서 이전 백엔드로 라우팅만 복원한다. 이미지와 앱 설정은 다시 배포하지 않는다.
 set -Eeuo pipefail
 umask 077
+if [[ -e "${CHONGCHONG_APP_ROOT:-/opt/chongchong}/edge-state/failover.json" || -L "${CHONGCHONG_APP_ROOT:-/opt/chongchong}/edge-state/failover.json" ]]; then
+    exec bash "${CHONGCHONG_APP_ROOT:-/opt/chongchong}/edge-runtime/current/edge-control.sh" rollback
+fi
 source "$(dirname -- "${BASH_SOURCE[0]}")/edge-runtime.sh"
 edge_initialize
 previous="$STATE/previous-upstream.conf"

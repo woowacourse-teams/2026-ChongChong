@@ -21,7 +21,9 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
-| [0061](0061-aggregate-leader-list-progress-in-query.md) | 리더 공지·과제 목록의 진행 상황을 집계 쿼리로 조회한다 |
+| [0062](0062-aggregate-leader-list-progress-in-query.md) | 리더 공지·과제 목록의 진행 상황을 집계 쿼리로 조회한다 |
+| [0061](0061-clean-up-orphan-files-with-mark-and-sweep.md) | 고아 파일을 표시 후 수거 방식의 배치로 정리한다 (초안) |
+| [0060](0060-preserve-database-compatibility-for-application-rollback.md) | 앱 롤백 시 DB를 유지하고 이전 앱과 호환되게 마이그레이션한다 |
 | [0059](0059-query-calendar-events-from-current-content.md) | 캘린더는 원본 콘텐츠의 현재 상태를 월간 이벤트로 조회한다 |
 | [0058](0058-preserve-study-profile-images-with-home-inheritance.md) | 홈 프로필 이미지 변경을 모든 참여 스터디 조회에 함께 반영한다 |
 | [0057](0057-reference-comment-resources-by-type-and-id.md) | 댓글 원문을 resourceType과 resourceId로 참조한다 |

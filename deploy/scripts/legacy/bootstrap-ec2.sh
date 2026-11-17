@@ -10,6 +10,10 @@ fi
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly DEPLOY_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+source /etc/os-release
+if [[ "${ID:-}" == amzn && "${VERSION_ID:-}" == 2023 ]]; then
+    exec bash "${SCRIPT_DIR}/../setup/check-al2023.sh" "${1:?AL2023 requires role: edge or backend}"
+fi
 readonly APP_ROOT="/opt/chongchong"
 readonly APP_ENV="${APP_ROOT}/.env"
 

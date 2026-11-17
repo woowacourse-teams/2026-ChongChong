@@ -30,6 +30,17 @@ aws:
 file:
   upload:
     max-size-bytes: ${FILE_UPLOAD_MAX_SIZE_BYTES:5242880}
+  cleanup:
+    enabled: ${FILE_CLEANUP_ENABLED:false}
+    dry-run: ${FILE_CLEANUP_DRY_RUN:true}
+    fixed-delay: ${FILE_CLEANUP_FIXED_DELAY:10m}
+    initial-delay: ${FILE_CLEANUP_INITIAL_DELAY:1m}
+    batch-size: ${FILE_CLEANUP_BATCH_SIZE:100}
+    max-batches-per-run: ${FILE_CLEANUP_MAX_BATCHES_PER_RUN:20}
+    pending-grace: ${FILE_CLEANUP_PENDING_GRACE:1h}
+    unreferenced-grace: ${FILE_CLEANUP_UNREFERENCED_GRACE:24h}
+    delete-lease: ${FILE_CLEANUP_DELETE_LEASE:10m}
+    max-attempts: ${FILE_CLEANUP_MAX_ATTEMPTS:5}
 
 app:
   environment: ${CLOUD_WATCH_APP_ENV:local}
