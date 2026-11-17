@@ -14,8 +14,25 @@ import withoutc.chongchong.notice.exception.NoticeErrorCode;
 import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.repository.projection.LeaderNoticeSummaryProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeCalendarProjection;
+import withoutc.chongchong.notice.repository.projection.NoticeProgressProjection;
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
+
+    // 리더 공지 목록: 컬렉션을 올리지 않고 수신자 수, 읽은 수신자 수, 다음 리마인드 시각을 한 번에 집계한다.
+    @Query("""
+            SELECT new withoutc.chongchong.notice.repository.projection.NoticeProgressProjection(
+                n.id,
+                (SELECT COUNT(r.id) FROM NoticeRecipient r WHERE r.notice = n),
+                (SELECT COUNT(r.id) FROM NoticeRecipient r WHERE r.notice = n AND r.readAt IS NOT NULL),
+                (SELECT MIN(rm.remindAt) FROM NoticeReminder rm
+                 WHERE rm.notice = n
+                   AND rm.status = withoutc.chongchong.notice.entity.NoticeReminderStatus.PENDING)
+            )
+            FROM Notice n
+            WHERE n.id IN :noticeIds
+            """)
+    List<NoticeProgressProjection> findProgressByIdIn(@Param("noticeIds") List<Long> noticeIds);
+
     @Query("""
             SELECT new withoutc.chongchong.notice.repository.projection.NoticeCalendarProjection(
                 notice.id, notice.title, notice.createdAt, recipient.id, recipient.readAt
