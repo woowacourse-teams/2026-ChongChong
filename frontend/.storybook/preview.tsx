@@ -16,7 +16,7 @@ const preview: Preview = {
     (Story) => (
       <>
         <Global styles={globalStyles} />
-        <div css={{ width: '100%', maxWidth: 390, margin: '0 auto' }}>
+        <div css={{ width: '100%', maxWidth: 448, margin: '0 auto' }}>
           <Story />
         </div>
       </>
