@@ -10,11 +10,6 @@ pnpm install --frozen-lockfile
 pnpm storybook
 ```
 
-[로컬 Storybook](http://localhost:6006)에서 `UI/Button`의 Canvas·Docs를 열고
-Controls로 색상·크기·문구·비활성화를 변경할 수 있습니다. 클릭은 Actions에 기록됩니다.
-Canvas 상단의 Viewport 메뉴에서 320px·390px·448px 화면 폭을 선택할 수 있습니다.
-현재는 Button의 대표 상태만 제공하며 다른 공용 UI는 순차적으로 추가합니다.
-
 개발 서버는 한 터미널에서만 실행합니다. 6006 포트 사용 중 오류가 나면 기존 서버를
 `Ctrl+C`로 종료한 뒤 다시 실행합니다. HMR 업데이트 파일 오류로 새로고침이 반복되면
 개발 서버를 재시작한 뒤 브라우저 페이지를 새로고침합니다.
