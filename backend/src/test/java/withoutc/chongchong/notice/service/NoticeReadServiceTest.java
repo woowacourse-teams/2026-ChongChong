@@ -90,7 +90,8 @@ class NoticeReadServiceTest {
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
         when(noticeRepository.getByIdAndStudyIdOrThrow(NOTICE_ID, STUDY_ID)).thenReturn(notice);
-        when(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(NOTICE_ID, MEMBER_ID)).thenReturn(recipient);
+        when(noticeRecipientRepository.getByNoticeIdAndMemberIdForUpdateOrThrow(NOTICE_ID, MEMBER_ID))
+                .thenReturn(recipient);
 
         NoticeReadResponse response = noticeReadService.markAsRead(USER_ID, STUDY_ID, NOTICE_ID);
 
@@ -209,7 +210,8 @@ class NoticeReadServiceTest {
         NoticeRecipient recipient = recipientOf(noticeWithId(NOTICE_ID), firstReadAt);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(member);
         when(member.getId()).thenReturn(MEMBER_ID);
-        when(noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(NOTICE_ID, MEMBER_ID)).thenReturn(recipient);
+        when(noticeRecipientRepository.getByNoticeIdAndMemberIdForUpdateOrThrow(NOTICE_ID, MEMBER_ID))
+                .thenReturn(recipient);
 
         NoticeReadResponse response = noticeReadService.markAsRead(USER_ID, STUDY_ID, NOTICE_ID);
 

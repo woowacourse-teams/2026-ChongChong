@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0063](0063-protect-first-notice-read-at-with-row-lock.md) | 공지 최초 읽음 시각을 수신자 행 잠금으로 보존한다 |
 | [0062](0062-aggregate-leader-list-progress-in-query.md) | 리더 공지·과제 목록의 진행 상황을 집계 쿼리로 조회한다 |
 | [0061](0061-clean-up-orphan-files-with-mark-and-sweep.md) | 고아 파일을 표시 후 수거 방식의 배치로 정리한다 (초안) |
 | [0060](0060-preserve-database-compatibility-for-application-rollback.md) | 앱 롤백 시 DB를 유지하고 이전 앱과 호환되게 마이그레이션한다 |
@@ -59,7 +60,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 | [0016](0016-establish-backend-ci-cd-pipeline.md)                              | AWS 관리형 서비스로 백엔드 CI/CD 파이프라인을 구성한다 |
 | [0017](0017-use-personal-aws-account-for-temporary-development-deployment.md) | 개인 AWS 계정에 임시 개발 배포 환경을 구성한다 |
 | [0018](0018-define-rn-social-login-http-contract.md)                          | RN 소셜 로그인 HTTP 계약을 정의한다 |
-| [0019](0019-defer-notice-read-concurrency-strategy.md)                        | 공지 읽음 시각의 동시성 보장 방식을 후속 결정으로 유보한다 |
+| [0019](0019-defer-notice-read-concurrency-strategy.md)                        | 공지 읽음 시각의 동시성 보장 방식을 후속 결정으로 유보한다 (0063으로 대체) |
 | [0020](0020-establish-web-authentication-token-boundary.md)                   | 웹 인증 토큰 전달 경계를 구성한다 |
 | [0021](0021-establish-kakao-authorization-code-adapter-boundary.md)           | Kakao Authorization Code Adapter 경계를 구성한다 |
 | [0022](0022-explicitly-delete-study-member-dependencies.md)                   | 스터디 멤버 제거 시 종속 데이터를 명시적으로 삭제한다 |
