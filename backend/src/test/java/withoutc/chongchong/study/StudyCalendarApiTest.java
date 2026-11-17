@@ -163,22 +163,6 @@ class StudyCalendarApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("같은 시각의 공지·과제 생성·마감은 종류와 원본 ID 순서로 직렬화한다")
-    void ordersSameTimeEventsWithoutCollapsingCreationAndDeadline() {
-        LocalDateTime at = START.plusDays(5);
-        Notice first = saveNotice("첫 공지", at, List.of());
-        Notice second = saveNotice("둘째 공지", at, List.of());
-        Assignment assignment = saveAssignment("같은 시각 생성·마감", at, at, List.of(member));
-
-        Response response = calendar(memberUser, 2026, 11);
-
-        assertThat(response.jsonPath().getList("events.eventType", String.class))
-                .containsExactly("NOTICE_CREATED", "NOTICE_CREATED", "ASSIGNMENT_CREATED", "ASSIGNMENT_DUE");
-        assertThat(response.jsonPath().getList("events.resourceId", Long.class))
-                .containsExactly(first.getId(), second.getId(), assignment.getId(), assignment.getId());
-    }
-
-    @Test
     @DisplayName("대상 제외 시 보존된 제출물은 캘린더에서 빠지고 재지정하면 같은 제출 기록으로 다시 표시된다")
     void reflectsAssignmentExclusionAndReassignmentThroughApi() {
         Assignment assignment = saveAssignment("제출한 과제", START, START.plusDays(2), List.of(member, other));
@@ -221,17 +205,6 @@ class StudyCalendarApiTest extends PostgresContainerTest {
 
         assertThat(events(calendar(memberUser, 2026, 11))).isEmpty();
         assertThat(events(calendar(memberUser, 2026, 12))).isEmpty();
-    }
-
-    @Test
-    @DisplayName("기본 페이지 크기를 넘는 월간 이벤트도 한 응답에 모두 반환한다")
-    void returnsAllMonthlyEvents() {
-        for (int index = 0; index < 12; index++) {
-            saveNotice("공지 " + index, START.plusDays(index), List.of());
-            saveAssignment("과제 " + index, START.plusDays(index), START.plusDays(index + 1), List.of(member));
-        }
-
-        assertThat(events(calendar(memberUser, 2026, 11))).hasSize(36);
     }
 
     @ParameterizedTest

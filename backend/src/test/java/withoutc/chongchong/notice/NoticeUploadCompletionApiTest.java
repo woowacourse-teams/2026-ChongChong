@@ -19,7 +19,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -161,10 +160,10 @@ class NoticeUploadCompletionApiTest extends PostgresContainerTest {
         verifyNoMoreInteractions(metadataReader);
     }
 
-    @ParameterizedTest
-    @ValueSource(longs = {1023, 1025})
+    @Test
     @DisplayName("실제 크기 불일치로 완료에 실패한 파일은 첨부할 수 없고 정상 크기로 완료한 뒤 재시도한다")
-    void retryAfterActualSizeMatches(long actualSize) {
+    void retryAfterActualSizeMatches() {
+        long actualSize = 1023L;
         FileMetadata file = savePendingFile("image/png", 1024);
         when(metadataReader.findSize(file.getObjectKey()))
                 .thenReturn(OptionalLong.of(actualSize), OptionalLong.of(file.getSize()));

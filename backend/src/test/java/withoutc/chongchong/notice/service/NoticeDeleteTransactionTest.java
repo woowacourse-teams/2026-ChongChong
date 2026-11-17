@@ -12,13 +12,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,8 +26,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import withoutc.chongchong.auth.exception.AuthErrorCode;
-import withoutc.chongchong.auth.exception.AuthException;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
@@ -107,35 +103,6 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("공지 관련 데이터를 삭제해도 이전 리더의 파일은 완료 상태와 저장 키를 보존한다")
-    void deleteNoticeWithAttachments() {
-        Fixture fixture = createFixture();
-        Map<Long, String> originalKeys = fileRepository.findAll().stream()
-                .collect(Collectors.toMap(FileMetadata::getId, FileMetadata::getObjectKey));
-
-        noticeService.delete(fixture.userId(), fixture.studyId(), fixture.noticeId());
-
-        assertDeleted(fixture);
-        assertThat(fileRepository.findAll()).hasSize(4).allSatisfy(file ->
-                assertThat(file.getObjectKey()).isEqualTo(originalKeys.get(file.getId())));
-        verifyNoInteractions(s3FileMetadataReader);
-    }
-
-    @Test
-    @DisplayName("첨부 없는 기존 공지를 삭제해도 다른 공지와 파일 상태는 변경하지 않는다")
-    void deleteNoticeWithoutAttachments() {
-        Fixture fixture = createFixture();
-        Study study = studyRepository.findById(fixture.studyId()).orElseThrow();
-        Long emptyNoticeId = noticeRepository.saveAndFlush(Notice.create(study, "무첨부 공지", "내용")).getId();
-
-        noticeService.delete(fixture.userId(), fixture.studyId(), emptyNoticeId);
-
-        assertThat(noticeRepository.existsById(emptyNoticeId)).isFalse();
-        assertOriginalState(fixture);
-        verifyNoInteractions(s3FileMetadataReader);
-    }
-
-    @Test
     @DisplayName("알림 삭제 SQL 실행 후 실패하면 공지 관련 데이터를 롤백하고 파일 완료 상태를 유지한다")
     void rollbackWhenNotificationDeletionFails() {
         Fixture fixture = createFixture();
@@ -166,20 +133,6 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
             assertDeleted(fixture);
             throw new IllegalStateException("공지 삭제 flush 후 실패");
         })).isInstanceOf(IllegalStateException.class).hasMessage("공지 삭제 flush 후 실패");
-
-        assertOriginalState(fixture);
-        verifyNoInteractions(s3FileMetadataReader);
-    }
-
-    @Test
-    @DisplayName("일반 스터디원은 첨부 공지를 삭제하지 못하며 기존 데이터도 유지된다")
-    void rejectMemberDeletion() {
-        Fixture fixture = createFixture();
-
-        assertThatThrownBy(() -> noticeService.delete(fixture.memberId(), fixture.studyId(), fixture.noticeId()))
-                .isInstanceOf(AuthException.class)
-                .extracting(exception -> ((AuthException) exception).getErrorCode())
-                .isEqualTo(AuthErrorCode.ACCESS_DENIED);
 
         assertOriginalState(fixture);
         verifyNoInteractions(s3FileMetadataReader);

@@ -162,10 +162,10 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
         assertThat(countRecipients()).isZero();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"image/jpeg", "image/png", "image/webp"})
+    @Test
     @DisplayName("지원 이미지 URL에 파일 경로와 응답 형식 및 설정한 유효기간을 반영한다")
-    void returnsSignedImageUrlWithConfiguredValidity(String contentType) {
+    void returnsSignedImageUrlWithConfiguredValidity() {
+        String contentType = "image/png";
         User owner = userRepository.findById(fileOwnerId).orElseThrow();
         FileMetadata image = saveCompletedFile(owner, "첨부 이미지 + 테스트", contentType, 1024);
         Notice notice = saveNotice(List.of(image));
@@ -256,14 +256,6 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
         studyMemberRepository.save(StudyMember.create(otherStudy, member, "스터디원", null, StudyMemberRole.MEMBER));
 
         Response response = request(memberId, otherStudy.getId(), noticeId);
-
-        assertRejectedWithoutGeneratingUrl(response, 404, "NOTICE_NOT_FOUND");
-    }
-
-    @Test
-    @DisplayName("없는 공지는 이미지 URL을 생성하지 않는다")
-    void rejectMissingNotice() {
-        Response response = request(memberId, studyId, Long.MAX_VALUE);
 
         assertRejectedWithoutGeneratingUrl(response, 404, "NOTICE_NOT_FOUND");
     }

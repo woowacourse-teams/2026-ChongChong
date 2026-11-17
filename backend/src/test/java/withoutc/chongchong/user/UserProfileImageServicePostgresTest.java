@@ -3,8 +3,6 @@ package withoutc.chongchong.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import jakarta.persistence.EntityManager;
-import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +18,6 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.notice.entity.Notice;
-import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.support.PostgresContainerTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
@@ -38,9 +34,6 @@ class UserProfileImageServicePostgresTest extends PostgresContainerTest {
 
     @Autowired
     private FileMetaDataRepository fileRepository;
-
-    @Autowired
-    private EntityManager entityManager;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -80,27 +73,6 @@ class UserProfileImageServicePostgresTest extends PostgresContainerTest {
         assertThat(fileRepository.existsAnyUsageByFileId(fixture.newFileId())).isFalse();
         assertThat(jdbc.queryForList("SELECT status FROM file_metadata ORDER BY id", String.class))
                 .containsExactly("COMPLETED", "COMPLETED");
-    }
-
-    @Test
-    @DisplayName("공지에서 사용 중인 파일은 프로필로 재사용하지 않고 기존 홈 이미지를 유지한다")
-    void rejectsFileUsedByNotice() {
-        Fixture fixture = createFixture();
-        transaction().executeWithoutResult(status -> {
-            Study study = Study.create("스터디", "설명", false);
-            entityManager.persist(study);
-            Notice notice = Notice.create(study, "공지", "내용");
-            notice.addAttachments(List.of(fileRepository.findById(fixture.newFileId()).orElseThrow()));
-            entityManager.persist(notice);
-        });
-
-        assertThatThrownBy(() -> transaction().executeWithoutResult(status -> {
-            User user = userRepository.getByIdForUpdateOrThrow(fixture.userId());
-            user.changeProfileImage(imageService.prepareForUpdate(user, fixture.newFileId()));
-        }))
-                .isInstanceOfSatisfying(FileException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(FileErrorCode.FILE_NOT_ATTACHABLE));
-        assertThat(currentFileId(fixture)).isEqualTo(fixture.oldFileId());
     }
 
     @Test

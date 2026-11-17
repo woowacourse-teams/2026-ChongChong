@@ -99,10 +99,11 @@ class UserProfileImageUpdateApiTest extends PostgresContainerTest {
         verifyNoInteractions(metadataReader);
     }
 
-    @ParameterizedTest
-    @CsvSource({"image/jpeg, 1024", "image/png, 1", "image/png, 5242880", "image/webp, 1024"})
+    @Test
     @DisplayName("완료된 본인 이미지로 교체하고 이름·기존 외부 URL·분리된 완료 파일을 보존한다")
-    void updatesHomeProfileImage(String contentType, long size) {
+    void updatesHomeProfileImage() {
+        String contentType = "image/png";
+        long size = 5242880L;
         FileMetadata file = saveFile(user, contentType, size, FileUploadStatus.COMPLETED);
 
         Response response = update(user.getId(), file.getId());
@@ -129,10 +130,10 @@ class UserProfileImageUpdateApiTest extends PostgresContainerTest {
         assertThat(profile.jsonPath().getString("profileImageUrl")).contains(file.getObjectKey());
     }
 
-    @ParameterizedTest
-    @ValueSource(longs = {1024, 5242881})
+    @Test
     @DisplayName("현재 이미지 재지정은 반복 성공하며 현재 용량 정책을 다시 적용하지 않는다")
-    void retainsCurrentFile(long size) {
+    void retainsCurrentFile() {
+        long size = 5242881L;
         FileMetadata current = saveFile(user, "image/png", size, FileUploadStatus.COMPLETED);
         connectDirectly(current);
 

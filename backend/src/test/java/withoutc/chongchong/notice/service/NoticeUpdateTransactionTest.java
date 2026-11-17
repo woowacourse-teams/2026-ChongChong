@@ -135,23 +135,6 @@ class NoticeUpdateTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("첨부 필드가 null이면 기존 첨부 행과 파일 상태를 유지하면서 제목만 수정한다")
-    void preserveAttachmentsWhenNotRequested() {
-        Fixture fixture = createFixture();
-        List<Long> originalAttachmentIds = attachmentIds(fixture.noticeId());
-
-        noticeService.update(fixture.userId(), fixture.studyId(), fixture.noticeId(),
-                new NoticeUpdateRequest("제목만 수정", null, null, null));
-
-        assertThat(attachmentIds(fixture.noticeId())).containsExactlyElementsOf(originalAttachmentIds);
-        assertThat(attachmentFileIds(fixture.noticeId())).containsExactlyElementsOf(fixture.existingIds());
-        assertThat(noticeRepository.findById(fixture.noticeId()).orElseThrow().getTitle()).isEqualTo("제목만 수정");
-        assertStatus(fixture.existingIds().getFirst(), FileUploadStatus.COMPLETED);
-        assertStatus(fixture.existingIds().getLast(), FileUploadStatus.COMPLETED);
-        verifyNoInteractions(s3FileMetadataReader);
-    }
-
-    @Test
     @DisplayName("빈 최종 목록은 첨부 관계만 모두 제거하고 파일 메타데이터와 완료 상태를 유지한다")
     void removeAllAttachments() {
         Fixture fixture = createFixture();

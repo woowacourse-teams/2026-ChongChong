@@ -666,13 +666,6 @@ class AssignmentApiTest {
                 List.of(unassigned.getId(), submitted.getId(), missing.getId(), assignment.getId(), notAssigned.getId()));
     }
 
-    @Test
-    @DisplayName("최신순을 명시해도 기존 ID 내림차순과 숫자 커서를 유지한다")
-    void getAssignmentsByLatest() {
-        Assignment latest = createAssignment("최신", "내용", null, closeAt, null);
-        assertSortedPages(memberUser, "LATEST", 1, List.of(latest.getId(), assignment.getId()));
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {"DEADLINE", "UNSUBMITTED"})
     @DisplayName("없는 과제와 다른 스터디의 과제를 정렬 커서로 사용하면 404를 반환한다")

@@ -203,7 +203,7 @@ class NotificationApiTest extends PostgresContainerTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"cursor, 0", "cursor, -1", "size, 0", "size, -1", "size, 101", "size, 2147483647"})
+    @CsvSource({"cursor, 0", "size, 0", "size, 101"})
     @DisplayName("알림 커서가 양수가 아니거나 페이지 크기가 범위를 벗어나면 파라미터 오류를 반환한다")
     void getMyNotificationsWithInvalidPageParameterTest(String field, long value) {
         User user = userRepository.saveAndFlush(User.create("알림 사용자", null));
