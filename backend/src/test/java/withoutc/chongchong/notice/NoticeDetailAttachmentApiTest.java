@@ -123,9 +123,8 @@ class NoticeDetailAttachmentApiTest extends PostgresContainerTest {
     }
 
     @AfterEach
-    void cleanDatabase() {
+    void verifyMetadataReaderInteractions() {
         verifyNoInteractions(metadataReader);
-        databaseCleaner.clean();
     }
 
     @Test

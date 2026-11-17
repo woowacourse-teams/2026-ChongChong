@@ -13,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,7 +78,6 @@ class AssignmentSubmissionConcurrencyTest extends PostgresContainerTest {
     private TestDatabaseCleaner databaseCleaner;
 
     @BeforeEach
-    @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
     }

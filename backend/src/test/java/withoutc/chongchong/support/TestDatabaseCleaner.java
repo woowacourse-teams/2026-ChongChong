@@ -1,6 +1,7 @@
 package withoutc.chongchong.support;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 public class TestDatabaseCleaner {
 
     private final JdbcTemplate jdbcTemplate;
+    // 컨텍스트 시작 시 Flyway가 스키마를 확정하고 테스트 중 테이블을 추가·삭제하지 않으므로 한 번만 만든다.
+    private volatile String postgreSqlTruncateStatement;
 
     public TestDatabaseCleaner(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -40,7 +43,23 @@ public class TestDatabaseCleaner {
     }
 
     private void cleanPostgreSql() {
-        findPostgreSqlTableNames().forEach(this::truncateAndRestartIdentity);
+        String statement = postgreSqlTruncateStatement;
+        if (statement == null) {
+            statement = createPostgreSqlTruncateStatement();
+            postgreSqlTruncateStatement = statement;
+        }
+        jdbcTemplate.execute(statement);
+    }
+
+    private String createPostgreSqlTruncateStatement() {
+        List<String> tableNames = findPostgreSqlTableNames();
+        if (tableNames.isEmpty()) {
+            throw new IllegalStateException("정리할 PostgreSQL 테이블이 없습니다.");
+        }
+        // 테이블마다 TRUNCATE를 실행하면 문장마다 잠금·커밋 비용이 들어 한 문장으로 모두 정리한다.
+        return tableNames.stream()
+                .map(this::quoteIdentifier)
+                .collect(Collectors.joining(", ", "TRUNCATE TABLE ", " RESTART IDENTITY CASCADE"));
     }
 
     private String databaseProductName() {
@@ -71,10 +90,6 @@ public class TestDatabaseCleaner {
 
     private void truncate(String tableName) {
         jdbcTemplate.execute("TRUNCATE TABLE " + quoteIdentifier(tableName));
-    }
-
-    private void truncateAndRestartIdentity(String tableName) {
-        jdbcTemplate.execute("TRUNCATE TABLE " + quoteIdentifier(tableName) + " RESTART IDENTITY CASCADE");
     }
 
     private String quoteIdentifier(String identifier) {

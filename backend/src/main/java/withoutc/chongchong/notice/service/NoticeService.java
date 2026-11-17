@@ -29,6 +29,7 @@ import withoutc.chongchong.notice.entity.NoticeReadStatus;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notice.repository.projection.NoticeProgressProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
@@ -159,11 +160,17 @@ public class NoticeService {
             return List.of();
         }
 
-        if (member.isLeader()) {
-            return notices.stream().map(NoticeSummaryResponse::forLeader).toList();
-        }
-
         List<Long> noticeIds = notices.stream().map(Notice::getId).toList();
+
+        if (member.isLeader()) {
+            Map<Long, NoticeProgressProjection> progressByNoticeId = noticeRepository.findProgressByIdIn(noticeIds)
+                    .stream().collect(Collectors.toMap(NoticeProgressProjection::noticeId, progress -> progress));
+            return notices.stream().map(notice -> {
+                NoticeProgressProjection progress = progressByNoticeId.get(notice.getId());
+                return NoticeSummaryResponse.forLeader(notice, Math.toIntExact(progress.recipientCount()),
+                        Math.toIntExact(progress.readRecipientCount()), progress.nextRemindAt());
+            }).toList();
+        }
 
         Map<Long, NoticeReadStatus> readStatusByNoticeId = noticeRecipientRepository.findMyReadStatusesByNoticeIdsAndMemberId(
                 noticeIds, member.getId()).stream().collect(

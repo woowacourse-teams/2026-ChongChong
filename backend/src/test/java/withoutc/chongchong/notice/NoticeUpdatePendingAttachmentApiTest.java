@@ -8,7 +8,6 @@ import io.restassured.response.Response;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -97,11 +96,6 @@ class NoticeUpdatePendingAttachmentApiTest extends PostgresContainerTest {
         newFileId = added.getId();
         originalAttachmentIds = jdbcTemplate.queryForList(
                 "SELECT id FROM notice_attachments WHERE notice_id = ? ORDER BY sort_order", Long.class, noticeId);
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        databaseCleaner.clean();
     }
 
     @Test

@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -110,11 +109,6 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
         ownerId = transaction.execute(status -> userRepository.save(User.create("파일 소유자", null)).getId());
         now = LocalDateTime.now(clock);
         givenS3DeletesEveryKey();
-    }
-
-    @AfterEach
-    void tearDown() {
-        databaseCleaner.clean();
     }
 
     @Test

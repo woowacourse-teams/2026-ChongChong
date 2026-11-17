@@ -131,10 +131,9 @@ class NoticeDeleteAttachmentReuseApiTest extends PostgresContainerTest {
     }
 
     @AfterEach
-    void cleanDatabase() {
+    void verifyMetadataReaderInteractions() {
         verify(metadataReader).findSize(file.getObjectKey());
         verifyNoMoreInteractions(metadataReader);
-        databaseCleaner.clean();
     }
 
     @ParameterizedTest

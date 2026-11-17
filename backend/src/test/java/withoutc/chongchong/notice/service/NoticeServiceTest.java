@@ -48,6 +48,7 @@ import withoutc.chongchong.notice.exception.NoticeException;
 import withoutc.chongchong.notice.policy.NoticeAccessPolicy;
 import withoutc.chongchong.notice.repository.NoticeRecipientRepository;
 import withoutc.chongchong.notice.repository.NoticeRepository;
+import withoutc.chongchong.notice.repository.projection.NoticeProgressProjection;
 import withoutc.chongchong.notice.repository.projection.NoticeReadStatusProjection;
 import withoutc.chongchong.notification.entity.ResourceType;
 import withoutc.chongchong.notification.service.NotificationService;
@@ -250,6 +251,9 @@ class NoticeServiceTest {
         when(leader.isLeader()).thenReturn(true);
         when(noticeRepository.findByCursor(STUDY_ID, null, PageRequest.of(0, 3)))
                 .thenReturn(List.of(firstNotice, secondNotice, nextPageNotice));
+        when(noticeRepository.findProgressByIdIn(List.of(300L, 200L))).thenReturn(List.of(
+                new NoticeProgressProjection(300L, 3, 1, NOW.plusDays(1)),
+                new NoticeProgressProjection(200L, 0, 0, null)));
 
         NoticeListResponse response = noticeService.getList(USER_ID, STUDY_ID, null, 2);
 
@@ -258,10 +262,11 @@ class NoticeServiceTest {
         assertThat(response.notices())
                 .extracting(NoticeSummaryResponse::id)
                 .containsExactly(300L, 200L);
-        assertThat(response.notices().getFirst().recipientCount()).isZero();
-        assertThat(response.notices().getFirst().readRecipientCount()).isZero();
-        assertThat(response.notices().getFirst().remindAt()).isNull();
-        assertThat(response.notices().getFirst().isComplete()).isTrue();
+        assertThat(response.notices().getFirst().recipientCount()).isEqualTo(3);
+        assertThat(response.notices().getFirst().readRecipientCount()).isEqualTo(1);
+        assertThat(response.notices().getFirst().remindAt()).isEqualTo(NOW.plusDays(1));
+        assertThat(response.notices().getFirst().isComplete()).isFalse();
+        assertThat(response.notices().getLast().isComplete()).isTrue();
         verify(noticeRepository).findByCursor(
                 STUDY_ID,
                 null,

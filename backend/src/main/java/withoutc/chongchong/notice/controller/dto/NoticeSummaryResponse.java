@@ -17,11 +17,8 @@ public record NoticeSummaryResponse(
         NoticeReadStatus readStatus,
         Boolean isComplete
 ) {
-    public static NoticeSummaryResponse forLeader(Notice notice) {
-
-        int recipientCount = notice.getRecipientCount();
-        int readRecipientCount = notice.getReadRecipientCount();
-
+    public static NoticeSummaryResponse forLeader(Notice notice, int recipientCount, int readRecipientCount,
+                                                  LocalDateTime nextRemindAt) {
         boolean isComplete = (recipientCount == readRecipientCount);
 
         return new NoticeSummaryResponse(
@@ -31,7 +28,7 @@ public record NoticeSummaryResponse(
                 notice.getCreatedAt(),
                 recipientCount,
                 readRecipientCount,
-                notice.getNextRemindAt(),
+                nextRemindAt,
                 null,
                 isComplete
         );

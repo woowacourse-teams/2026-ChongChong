@@ -15,7 +15,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -98,11 +97,6 @@ class StudyCalendarApiTest extends PostgresContainerTest {
         leader = saveMember(leaderUser, StudyMemberRole.LEADER);
         member = saveMember(memberUser, StudyMemberRole.MEMBER);
         other = saveMember(otherUser, StudyMemberRole.MEMBER);
-    }
-
-    @AfterEach
-    void clean() {
-        cleaner.clean();
     }
 
     @Test

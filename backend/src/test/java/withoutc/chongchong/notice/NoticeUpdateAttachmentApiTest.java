@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -124,11 +123,6 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         existingIds = List.of(first.getId(), second.getId());
         originalAttachmentIds = attachmentIds();
         originalReminderIds = reminderIds();
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        databaseCleaner.clean();
     }
 
     @Test

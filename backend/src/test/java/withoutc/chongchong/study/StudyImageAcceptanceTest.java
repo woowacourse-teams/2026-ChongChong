@@ -8,7 +8,6 @@ import static org.hamcrest.Matchers.nullValue;
 import io.restassured.http.ContentType;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,7 +62,6 @@ class StudyImageAcceptanceTest extends PostgresContainerTest {
     private int port;
 
     @BeforeEach
-    @AfterEach
     void cleanDatabase() {
         databaseCleaner.clean();
     }
