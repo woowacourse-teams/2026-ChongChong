@@ -1,0 +1,10 @@
+[Unit]
+Description=Synchronize standby after verified stabilization
+After=docker.service network-online.target
+ConditionPathExists=/opt/chongchong/edge-state/failover.json
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/bin/bash /opt/chongchong/edge-runtime/current/edge-control.sh finalize
+TimeoutStartSec=600

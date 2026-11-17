@@ -1,0 +1,7 @@
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+PASS: syntax, worker limits, JSON proxy log, runtime variables, recreation (/var/folders/p8/n69ygp1s59n5ts4x2bck9k1m0000gn/T/tmp.fitMDHhYqX)

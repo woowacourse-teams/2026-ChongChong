@@ -39,6 +39,14 @@ done
 compose=(docker compose --project-name chongchong-backend
     --env-file "$release/backend.env" --env-file "$release/image.env"
     -f "$release/docker-compose.backend.yml")
+if [[ -f "$release/image-pin" ]]; then
+    pin="$(cat "$release/image-pin")"
+    [[ "$pin" =~ ^[A-Za-z0-9._:/-]+@sha256:[a-f0-9]{64}$ ]] || {
+        echo 'Invalid immutable image reference' >&2; exit 1;
+    }
+    printf 'services:\n  backend:\n    image: "%s"\n' "$pin" > "$release/docker-compose.pinned.yml"
+    compose+=(-f "$release/docker-compose.pinned.yml")
+fi
 "${compose[@]}" config --quiet
 printf '%s' "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
 "${compose[@]}" pull backend

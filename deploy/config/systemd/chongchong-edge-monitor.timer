@@ -1,0 +1,10 @@
+[Unit]
+Description=Probe backend readiness periodically
+
+[Timer]
+OnBootSec=10s
+OnUnitInactiveSec=5s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
