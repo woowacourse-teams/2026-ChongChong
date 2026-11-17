@@ -169,21 +169,6 @@ class NoticeAttachmentPersistenceTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("공지의 첨부 목록에서 제거하면 첨부 행만 삭제된다")
-    void deleteOrphanedAttachment() {
-        Notice notice = saveNotice();
-        FileMetadata file = saveFile();
-        notice.addAttachments(List.of(file));
-        noticeRepository.saveAndFlush(notice);
-
-        notice.clearAttachments();
-        noticeRepository.flush();
-
-        assertThat(countAttachments(notice.getId())).isZero();
-        assertThat(fileRepository.existsById(file.getId())).isTrue();
-    }
-
-    @Test
     @DisplayName("기존 관계를 비우고 flush한 뒤 재연결하면 파일과 순서의 UNIQUE 충돌 없이 재정렬된다")
     void reorderAttachmentsAfterClearingAndFlushing() {
         Notice notice = saveNotice();

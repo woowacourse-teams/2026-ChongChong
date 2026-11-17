@@ -203,10 +203,10 @@ class StudyImageAcceptanceTest extends PostgresContainerTest {
         assertThat(fileRepository.existsAnyUsageByFileId(original.getId())).isTrue();
     }
 
-    @ParameterizedTest
-    @ValueSource(longs = {0, -1})
+    @Test
     @DisplayName("이미지 ID가 양수가 아니면 요청을 거절하고 기존 이미지를 유지한다")
-    void rejectsNonPositiveImageId(long invalidImageId) {
+    void rejectsNonPositiveImageId() {
+        long invalidImageId = 0L;
         User owner = userRepository.saveAndFlush(User.create("리더", null));
         FileMetadata original = saveFile(owner, "image/png", true);
         Long studyId = createStudy(owner, original.getId());

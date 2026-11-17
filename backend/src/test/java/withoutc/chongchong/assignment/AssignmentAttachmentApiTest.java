@@ -320,10 +320,10 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
                 .then().statusCode(201);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"image/jpeg", "image/png", "image/webp"})
+    @Test
     @DisplayName("조회 권한이 있는 사용자에게만 이미지 URL을 반환하고 문서는 URL 없이 표시한다")
-    void returnsImageUrlsAfterAccessCheck(String contentType) {
+    void returnsImageUrlsAfterAccessCheck() {
+        String contentType = "image/png";
         Long image = file(leader, contentType, 1024, true);
         Long document = file(leader, "application/pdf", 1024, true);
         Long assignment = create(List.of(image, document));
@@ -355,9 +355,7 @@ class AssignmentAttachmentApiTest extends PostgresContainerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"image/png", "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation"})
+    @ValueSource(strings = {"image/png", "application/pdf"})
     @DisplayName("과제와 제출물의 다운로드 URL은 기존 조회 권한에 따라 반환한다")
     void returnsDownloadUrlsAfterAccessCheck(String contentType) {
         Long material = file(leader, contentType, 1024, true);

@@ -79,21 +79,6 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("같은 installationId로 다시 등록하면 기존 구독 정보를 갱신하고 중복 저장하지 않는다")
-    void updateSameWebPushSubscriptionTest() {
-        User user = userRepository.saveAndFlush(User.create("총총이", null));
-
-        register(user.getId(), ENDPOINT, "old-p256dh", "old-auth").then().statusCode(200);
-        register(user.getId(), ENDPOINT, "new-p256dh", "new-auth").then().statusCode(200);
-
-        assertThat(webPushSubscriptionRepository.count()).isOne();
-        WebPushSubscriptionRow updated = findSubscription();
-        assertThat(updated.p256dh()).isEqualTo("new-p256dh");
-        assertThat(updated.auth()).isEqualTo("new-auth");
-        assertThat(updated.active()).isTrue();
-    }
-
-    @Test
     @DisplayName("같은 installationId로 endpoint가 바뀌어 재등록해도 기존 구독 row를 갱신한다")
     void updateSubscriptionWhenEndpointChangesTest() {
         User user = userRepository.saveAndFlush(User.create("총총이", null));

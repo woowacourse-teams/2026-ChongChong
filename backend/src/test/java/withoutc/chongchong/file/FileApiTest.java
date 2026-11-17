@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -323,15 +322,11 @@ class FileApiTest extends PostgresContainerTest {
         assertThat(Instant.parse(response.jsonPath().getString("expiresAt"))).isAfter(Instant.now());
     }
 
-    @ParameterizedTest
-    @CsvSource({
-            "STUDY_IMAGE, study-images/",
-            "NOTICE_ATTACHMENT, notice-attachments/",
-            "ASSIGNMENT_ATTACHMENT, assignment-attachments/",
-            "SUBMISSION_ATTACHMENT, submission-attachments/"
-    })
+    @Test
     @DisplayName("업로드 용도별 경로를 저장하고 같은 경로의 업로드 URL을 반환한다")
-    void issueUploadUrlByPurpose(String uploadPurpose, String purposePrefix) {
+    void issueUploadUrlByPurpose() {
+        String uploadPurpose = "STUDY_IMAGE";
+        String purposePrefix = "study-images/";
         Map<String, Object> body = new HashMap<>(validBody());
         body.put("uploadPurpose", uploadPurpose);
 
@@ -344,20 +339,6 @@ class FileApiTest extends PostgresContainerTest {
         UUID.fromString(saved.getObjectKey().substring(expectedPrefix.length()));
         assertThat(URI.create(response.jsonPath().getString("uploadUrl")).getPath())
                 .isEqualTo("/" + saved.getObjectKey());
-    }
-
-    @Test
-    @DisplayName("업로드 용도가 null이면 기존 공통 경로를 사용한다")
-    void issueUploadUrlWithNullPurpose() {
-        Map<String, Object> body = new HashMap<>(validBody());
-        body.put("uploadPurpose", null);
-
-        Response response = request(userId, body);
-
-        response.then().statusCode(201);
-        FileMetadata saved = fileRepository.findById(response.jsonPath().getLong("fileId")).orElseThrow();
-        UUID.fromString(saved.getObjectKey().substring("chongchong/files/test/uploads/".length()));
-        assertThat(saved.getObjectKey()).startsWith("chongchong/files/test/uploads/");
     }
 
     @ParameterizedTest

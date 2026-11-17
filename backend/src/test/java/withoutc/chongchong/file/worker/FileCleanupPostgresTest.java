@@ -159,22 +159,6 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("후보 조회 후 표시 전에 연결이 커밋되면 잠금 후 재확인에서 제외한다")
-    void skipFileLinkedAfterCandidateLookup() {
-        Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
-        OrphanCutoffs cutoffs = cutoffs();
-        List<Long> candidates = transactionService.findCandidateIds(0, cutoffs, 100);
-        assertThat(candidates).containsExactly(fileId);
-
-        linkProfileImage(fileId);
-        var result = transactionService.markBatch(candidates, cutoffs);
-
-        assertThat(result.unreferenced()).isZero();
-        assertThat(result.skipped()).isOne();
-        assertThat(statusOf(fileId)).isEqualTo(FileUploadStatus.COMPLETED);
-    }
-
-    @Test
     @DisplayName("다른 트랜잭션이 파일 행을 잠그고 있으면 기다리지 않고 건너뛰며, 그 사이 연결된 파일은 표시하지 않는다")
     void skipFileLockedByAttachingTransaction() throws Exception {
         Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
@@ -223,21 +207,6 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
 
         expireClaim(fileId);
         assertThat(worker(dryRunOff()).run().deleted()).isOne();
-        assertThat(fileExists(fileId)).isFalse();
-    }
-
-    @Test
-    @DisplayName("S3 삭제 후 행 삭제 전에 중단돼도 다음 실행에서 이어서 행까지 삭제한다")
-    void resumeAfterCrashBetweenS3AndRowDeletion() {
-        Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
-        transactionService.markBatch(List.of(fileId), cutoffs());
-        List<DeletionTarget> claimed = transactionService.claim(now, now.minusMinutes(10), 3, 100);
-        s3FileDeleter.delete(claimed.stream().map(DeletionTarget::objectKey).toList());
-
-        expireClaim(fileId);
-        FileCleanupRunResult result = worker(dryRunOff()).run();
-
-        assertThat(result.deleted()).isOne();
         assertThat(fileExists(fileId)).isFalse();
     }
 

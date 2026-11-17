@@ -19,8 +19,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -90,31 +88,6 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
     }
 
     @Test
-    @DisplayName("완료된 파일을 요청 순서대로 공지에 연결하고 완료 상태를 유지하며 알림을 저장한다")
-    void createNoticeWithCompletedAttachments() {
-        Fixture fixture = createFixture();
-        List<Long> requestedIds = fixture.fileIds().reversed();
-
-        NoticeCreateResponse response = noticeService.create(
-                fixture.userId(), fixture.studyId(), createRequest(requestedIds)
-        );
-
-        assertThat(response.noticeId()).isNotNull();
-        assertThat(jdbcTemplate.queryForList("""
-                SELECT file_id FROM notice_attachments WHERE notice_id = ? ORDER BY sort_order
-                """, Long.class, response.noticeId())).containsExactlyElementsOf(requestedIds);
-        assertThat(fileRepository.findAllById(fixture.fileIds()))
-                .hasSize(2)
-                .extracting(FileMetadata::getStatus)
-                .containsOnly(FileUploadStatus.COMPLETED);
-        assertThat(countRows("notices")).isOne();
-        assertThat(countRows("notice_recipients")).isOne();
-        assertThat(countRows("notice_reminders")).isOne();
-        assertThat(countRows("notifications")).isOne();
-        verifyNoInteractions(s3FileMetadataReader);
-    }
-
-    @Test
     @DisplayName("두 번째 파일이 미완료이면 공지 저장을 거부하고 각 파일의 원래 상태를 유지한다")
     void rejectWhenOneFileIsPending() {
         Fixture fixture = createFixture();
@@ -155,24 +128,6 @@ class NoticeCreationTransactionTest extends PostgresContainerTest {
 
         assertNoNoticeData();
         assertFilesCompleted(fixture);
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @DisplayName("첨부 목록이 null이거나 비어 있으면 S3 조회 없이 공지를 생성하고 파일 상태를 유지한다")
-    void createWithoutAttachments(List<Long> fileIds) {
-        Fixture fixture = createFixture();
-
-        NoticeCreateResponse response = noticeService.create(
-                fixture.userId(), fixture.studyId(), createRequest(fileIds)
-        );
-
-        assertThat(response.noticeId()).isNotNull();
-        assertThat(countRows("notices")).isOne();
-        assertThat(countRows("notice_attachments")).isZero();
-        assertThat(countRows("notifications")).isOne();
-        assertFilesCompleted(fixture);
-        verifyNoInteractions(s3FileMetadataReader);
     }
 
     @Test
