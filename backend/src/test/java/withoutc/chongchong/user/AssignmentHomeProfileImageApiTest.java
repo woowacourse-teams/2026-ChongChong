@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -101,11 +100,6 @@ class AssignmentHomeProfileImageApiTest extends PostgresContainerTest {
         submitted.submit("제출 내용", "https://example.com/result", LocalDateTime.now(clock).minusMinutes(1));
         submissionRepository.saveAndFlush(submitted);
         pending = submissionRepository.saveAndFlush(AssignmentSubmission.create(otherMember, assignment));
-    }
-
-    @AfterEach
-    void tearDown() {
-        databaseCleaner.clean();
     }
 
     @Test

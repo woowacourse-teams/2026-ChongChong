@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -104,11 +103,6 @@ class NoticeDeleteTransactionTest extends PostgresContainerTest {
 
     @BeforeEach
     void cleanBeforeTest() {
-        databaseCleaner.clean();
-    }
-
-    @AfterEach
-    void cleanAfterTest() {
         databaseCleaner.clean();
     }
 

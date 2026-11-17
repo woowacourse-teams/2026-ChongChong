@@ -97,7 +97,6 @@ class UserProfileImageUpdateApiTest extends PostgresContainerTest {
     @AfterEach
     void tearDown() {
         verifyNoInteractions(metadataReader);
-        databaseCleaner.clean();
     }
 
     @ParameterizedTest

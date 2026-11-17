@@ -38,6 +38,9 @@
 - 데이터 격리는 컨테이너 재생성 대신 각 테스트의 초기화에서 `TestDatabaseCleaner`로 수행한다. PostgreSQL에서는
   `TRUNCATE ... RESTART IDENTITY CASCADE`로 행과 식별자 상태를 정리하며 `flyway_schema_history`는 보존한다.
   DB 정리는 트랜잭션 테스트에서는 `@BeforeTransaction`, 그 밖에는 `@BeforeEach`에서 수행한다. 트랜잭션 테스트의 변경은 롤백한다.
+- (2026-11-17 보완, [#533](https://github.com/woowacourse-teams/2026-ChongChong/issues/533)) PostgreSQL 정리는 모든 테이블을
+  한 문장의 `TRUNCATE TABLE a, b, ... RESTART IDENTITY CASCADE`로 수행하며, 테이블 목록은 Flyway가 스키마를 확정한 뒤
+  컨텍스트마다 한 번만 조회한다. 각 테스트가 시작 전에 정리하므로 `@AfterEach`에서 다시 정리하지 않는다.
 - 공통 기반 클래스는 각 테스트 전에 `TestNotificationSender`의 기록도 초기화한다. 그 밖의 Fake 상태는 사용하는
   테스트가 정리해야 한다.
 - 공유 데이터베이스를 사용하는 테스트 클래스·메서드는 병렬 실행하지 않는다. 동시성 테스트 내부에서 생성한 작업은

@@ -42,4 +42,17 @@ class TestDatabaseCleanerPostgresTest extends PostgresContainerTest {
         flyway.validate();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
     }
+
+    @Test
+    @DisplayName("반복 정리해도 매번 행과 식별자 시퀀스를 초기화한다")
+    void restartsIdentityOnEveryClean() {
+        databaseCleaner.clean();
+        userRepository.saveAndFlush(User.create("첫 번째", null));
+        userRepository.saveAndFlush(User.create("두 번째", null));
+
+        databaseCleaner.clean();
+
+        assertThat(userRepository.count()).isZero();
+        assertThat(userRepository.saveAndFlush(User.create("정리 후", null)).getId()).isEqualTo(1L);
+    }
 }

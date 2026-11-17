@@ -7,7 +7,6 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,11 +77,6 @@ class NoticeCreationPendingAttachmentApiTest extends PostgresContainerTest {
         leaderId = leader.getId();
         studyId = study.getId();
         fileId = file.getId();
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        databaseCleaner.clean();
     }
 
     @Test

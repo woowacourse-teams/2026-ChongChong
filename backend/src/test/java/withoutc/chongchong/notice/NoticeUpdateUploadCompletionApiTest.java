@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -104,11 +103,6 @@ class NoticeUpdateUploadCompletionApiTest extends PostgresContainerTest {
         notice.addReminders(List.of(REMIND_AT), LocalDateTime.of(2026, 1, 1, 0, 0));
         noticeRepository.saveAndFlush(notice);
         originalAttachmentIds = attachmentIds();
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        databaseCleaner.clean();
     }
 
     @Test

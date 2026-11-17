@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -111,11 +110,6 @@ class NoticeAttachmentCrossDomainApiTest extends PostgresContainerTest {
                 "submissionVisibility", "LEADER_ONLY", "closeAt", "2099-12-31T23:59:00"));
         assignment.then().statusCode(201);
         assignmentId = assignment.jsonPath().getLong("assignmentId");
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        databaseCleaner.clean();
     }
 
     @ParameterizedTest

@@ -92,7 +92,6 @@ class UserProfileImageConcurrencyTest extends PostgresContainerTest {
     @AfterEach
     void tearDown() {
         verifyNoInteractions(metadataReader);
-        databaseCleaner.clean();
     }
 
     @Test
