@@ -33,6 +33,7 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.assignment.repository.projection.AssignmentProgressProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.comment.repository.CommentRepository;
 import withoutc.chongchong.file.entity.FileMetadata;
@@ -305,10 +306,17 @@ public class AssignmentService {
                         submission -> getAssignmentListSubmissionStatus(submission, now)));
 
         if (member.isLeader()) {
-            return assignments.stream().map(assignment ->
-                            AssignmentSummaryResponse.forLeader(now, assignment,
-                                    submissionStatusByAssignmentId.getOrDefault(assignment.getId(),
-                                            SubmissionStatus.NOT_ASSIGNED)))
+            Map<Long, AssignmentProgressProjection> progressByAssignmentId = assignmentRepository
+                    .findProgressByIdIn(assignmentIds).stream()
+                    .collect(Collectors.toMap(AssignmentProgressProjection::assignmentId, progress -> progress));
+            return assignments.stream().map(assignment -> {
+                        AssignmentProgressProjection progress = progressByAssignmentId.get(assignment.getId());
+                        return AssignmentSummaryResponse.forLeader(assignment,
+                                Math.toIntExact(progress.memberCount()), Math.toIntExact(progress.completeCount()),
+                                progress.nextRemindAt(),
+                                submissionStatusByAssignmentId.getOrDefault(assignment.getId(),
+                                        SubmissionStatus.NOT_ASSIGNED));
+                    })
                     .toList();
         }
 

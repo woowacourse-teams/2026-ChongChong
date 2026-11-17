@@ -13,6 +13,7 @@ import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
 import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.repository.projection.AssignmentCalendarProjection;
+import withoutc.chongchong.assignment.repository.projection.AssignmentProgressProjection;
 import withoutc.chongchong.assignment.repository.projection.LeaderAssignmentSummaryProjection;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
@@ -159,6 +160,23 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             @Param("cursorRank") int cursorRank,
             Pageable pageable
     );
+
+    // 리더 과제 목록: 컬렉션을 올리지 않고 제출 대상 수, 제출 완료 수, 다음 리마인드 시각을 한 번에 집계한다.
+    @Query("""
+            SELECT new withoutc.chongchong.assignment.repository.projection.AssignmentProgressProjection(
+                a.id,
+                (SELECT COUNT(s.id) FROM AssignmentSubmission s
+                 WHERE s.assignment = a AND s.assigned = true),
+                (SELECT COUNT(s.id) FROM AssignmentSubmission s
+                 WHERE s.assignment = a AND s.assigned = true AND s.submittedAt IS NOT NULL),
+                (SELECT MIN(r.remindAt) FROM AssignmentReminder r
+                 WHERE r.assignment = a
+                   AND r.status = withoutc.chongchong.assignment.entity.AssignmentReminderStatus.PENDING)
+            )
+            FROM Assignment a
+            WHERE a.id IN :assignmentIds
+            """)
+    List<AssignmentProgressProjection> findProgressByIdIn(@Param("assignmentIds") List<Long> assignmentIds);
 
     // 리더용
     @Query("""

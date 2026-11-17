@@ -45,6 +45,7 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
 import withoutc.chongchong.assignment.repository.AssignmentSubmissionRepository;
+import withoutc.chongchong.assignment.repository.projection.AssignmentProgressProjection;
 import withoutc.chongchong.assignment.repository.projection.AssignmentSubmitterStatusProjection;
 import withoutc.chongchong.assignment.support.AssignmentTestFixture;
 import withoutc.chongchong.auth.exception.AuthErrorCode;
@@ -283,13 +284,16 @@ class AssignmentServiceTest {
     @DisplayName("리더가 과제 목록을 조회하면 제출 인원과 완료 인원을 반환하고 다음 cursor를 계산한다")
     void getListForLeaderTest() {
         StudyMember leader = mock(StudyMember.class);
-        Assignment firstAssignment = assignmentSummaryMock(300L, 3, 2);
-        Assignment secondAssignment = assignmentSummaryMock(200L, 2, 2);
+        Assignment firstAssignment = assignmentSummaryMock(300L);
+        Assignment secondAssignment = assignmentSummaryMock(200L);
         Assignment nextPageAssignment = mock(Assignment.class);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(STUDY_ID, USER_ID)).thenReturn(leader);
         when(leader.isLeader()).thenReturn(true);
         when(assignmentRepository.findByCursor(STUDY_ID, null, PageRequest.of(0, 3)))
                 .thenReturn(List.of(firstAssignment, secondAssignment, nextPageAssignment));
+        when(assignmentRepository.findProgressByIdIn(List.of(300L, 200L))).thenReturn(List.of(
+                new AssignmentProgressProjection(300L, 3, 2, NOW.plusDays(1)),
+                new AssignmentProgressProjection(200L, 2, 2, null)));
 
         AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 2, AssignmentSort.LATEST);
 
@@ -300,6 +304,7 @@ class AssignmentServiceTest {
         assertThat(response.assignments().getFirst().memberCount()).isEqualTo(3);
         assertThat(response.assignments().getFirst().completeCount()).isEqualTo(2);
         assertThat(response.assignments().getFirst().isComplete()).isFalse();
+        assertThat(response.assignments().getFirst().remindAt()).isEqualTo(NOW.plusDays(1));
         assertThat(response.assignments().getLast().isComplete()).isTrue();
         verify(assignmentSubmissionRepository).findAllByAssignmentIdInAndMemberId(
                 List.of(300L, 200L), leader.getId());
@@ -425,15 +430,13 @@ class AssignmentServiceTest {
         verifyNoInteractions(assignmentRepository, assignmentSubmissionRepository);
     }
 
-    private Assignment assignmentSummaryMock(Long assignmentId, int memberCount, int completeCount) {
+    private Assignment assignmentSummaryMock(Long assignmentId) {
         Assignment assignment = mock(Assignment.class);
         when(assignment.getId()).thenReturn(assignmentId);
         when(assignment.getTitle()).thenReturn("과제 제목");
         when(assignment.getContent()).thenReturn("과제 내용");
         when(assignment.getSubmissionMethod()).thenReturn("링크 제출");
         when(assignment.getCloseAt()).thenReturn(NOW.plusDays(7));
-        when(assignment.getSubmissionCount()).thenReturn(memberCount);
-        when(assignment.getSubmittedCount(NOW)).thenReturn(completeCount);
         return assignment;
     }
 
