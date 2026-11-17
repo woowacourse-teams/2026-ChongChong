@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
-import BottomTab from '../../../shared/widgets/BottomTab';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import BottomTab from '../../../shared/widgets/navigation/BottomTab';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import Loading from '../../../shared/ui/Loading';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';

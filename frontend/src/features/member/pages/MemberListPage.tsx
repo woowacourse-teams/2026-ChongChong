@@ -4,14 +4,14 @@ import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import { MemberListSection, MemberListSectionFallback } from '../components/MemberListSection';
 import {
   InviteStudyLinkSection,
   InviteStudyLinkSectionFallback,
 } from '../components/InviteStudyLinkSection';
-import BottomTab from '../../../shared/widgets/BottomTab';
+import BottomTab from '../../../shared/widgets/navigation/BottomTab';
 import Loading from '../../../shared/ui/Loading';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';

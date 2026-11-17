@@ -1,14 +1,14 @@
-import { Text } from '../ui/Typography';
+import { Text } from '../../ui/Typography';
 import { useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties } from 'react';
-import { Field } from '../ui/inputs/Field';
-import { tokens, typography } from '../../styles/global';
-import imageIcon from '../assets/image-upload.svg';
-import deleteIcon from '../assets/image-upload-delete.svg';
-import addIcon from '../assets/add.svg';
-import type { AttachmentItem } from '../modules/files/types';
-import { usePreviewUrls } from '../hooks/usePreviewUrls';
-import ExpandedImage, { type ExpandableImage } from './ExpandedImage';
+import { Field } from '../../ui/inputs/Field';
+import { tokens, typography } from '../../../styles/global';
+import imageIcon from '../../assets/image-upload.svg';
+import deleteIcon from '../../assets/image-upload-delete.svg';
+import addIcon from '../../assets/add.svg';
+import type { AttachmentItem } from '../../modules/files/types';
+import { usePreviewUrls } from '../../hooks/usePreviewUrls';
+import ExpandedImage, { type ExpandableImage } from '../images/ExpandedImage';
 
 interface AttachmentFieldProps {
   id: string;

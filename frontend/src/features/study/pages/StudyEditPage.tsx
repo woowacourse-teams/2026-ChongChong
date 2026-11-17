@@ -4,7 +4,7 @@ import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import StudyForm from '../components/StudyForm';
 import useEditStudy from '../hooks/useEditStudy';

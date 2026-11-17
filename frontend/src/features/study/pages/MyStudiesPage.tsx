@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { Suspense, type ReactNode } from 'react';
-import Tabs from '../../../shared/widgets/Tabs';
+import Tabs from '../../../shared/widgets/navigation/Tabs';
 import PublicStudies from '../components/PublicStudies';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import ErrorContent from '../../../shared/ui/ErrorContent';

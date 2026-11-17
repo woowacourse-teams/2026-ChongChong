@@ -2,12 +2,12 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import studyQueries from '../queries';
 import Main from '../../../shared/ui/Main';
-import BottomTab from '../../../shared/widgets/BottomTab';
+import BottomTab from '../../../shared/widgets/navigation/BottomTab';
 import TopHeader from '../../../shared/ui/TopHeader';
 import useIntegerParam from '../../../shared/hooks/useIntegerParams';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import Page from '../../../shared/ui/Page';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import {
   LeaderStudyDetailContent,
   MemberStudyDetailContent,

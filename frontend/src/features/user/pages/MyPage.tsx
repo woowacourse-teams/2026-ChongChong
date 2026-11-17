@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { ErrorBoundary, getErrorMessage } from 'react-error-boundary';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Page from '../../../shared/ui/Page';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import AccountMenuSection from '../components/AccountMenuSection';
 import ProfileSection from '../components/ProfileSection';
 import Main from '../../../shared/ui/Main';

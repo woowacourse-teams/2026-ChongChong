@@ -8,7 +8,7 @@ import {
 import type { CSSProperties, UIEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { formatDateToString, formatRelativeTime } from '../../../shared/utils/formatDate';
-import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
+import ContentDetailHeader from '../../../shared/widgets/content/ContentDetailHeader';
 import { useToast } from '../../../shared/providers/ToastProvider';
 import StatusToast from '../../../shared/ui/toasts/StatusToast';
 import { tokens } from '../../../styles/global';

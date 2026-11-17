@@ -1,7 +1,7 @@
 import AssignmentStepLayout from './AssignmentStepLayout';
 import { useState } from 'react';
-import CloseAtField from '../../../../shared/widgets/CloseAtField';
-import ReminderField from '../../../../shared/widgets/ReminderField';
+import CloseAtField from '../../../../shared/widgets/fields/CloseAtField';
+import ReminderField from '../../../../shared/widgets/fields/ReminderField';
 import { validateAssignmentSchedule } from '../../validation';
 import Button from '../../../../shared/ui/Button';
 

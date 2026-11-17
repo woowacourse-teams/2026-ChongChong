@@ -1,5 +1,31 @@
 # 총총 Frontend
 
+## Storybook
+
+`.nvmrc`의 Node 버전과 `package.json`의 pnpm 버전을 사용합니다.
+`frontend/`에서 아래 명령을 실행합니다. 백엔드·로그인·서비스 환경 변수는 필요하지 않습니다.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm storybook
+```
+
+개발 서버는 한 터미널에서만 실행합니다. 6006 포트 사용 중 오류가 나면 기존 서버를
+`Ctrl+C`로 종료한 뒤 다시 실행합니다. HMR 업데이트 파일 오류로 새로고침이 반복되면
+개발 서버를 재시작한 뒤 브라우저 페이지를 새로고침합니다.
+
+```sh
+pnpm build-storybook
+```
+
+정적 결과는 `storybook-static/`에 생성됩니다. 정적 HTTP 서버로 해당 폴더를 제공하면
+브라우저에서 확인할 수 있습니다. 서비스 `dist/`와 분리하며 Git에는 추가하지 않습니다.
+
+설정은 `.storybook/`, 스토리는 대상 옆의 `<Component>.stories.tsx`에 둡니다.
+기존 `Button.stories.tsx`처럼 CSF 객체 형식의 `Meta`·`StoryObj`, 기본 `args`,
+속성 설명과 `argTypes`를 작성합니다. `tags: ['autodocs']`로 Docs를 생성합니다.
+전역 스타일·폰트는 공통 preview 설정을 사용하고 서비스 진입점은 import하지 않습니다.
+
 ## 이미지 최적화
 
 배포 빌드(`build:development`, `build:production`)에서 사용하는 PNG는 무손실 압축하고,

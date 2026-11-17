@@ -11,7 +11,7 @@ import NotificationListPage from '../NotificationListPage';
 import { createWrapper, setup } from '../../../../test/render';
 import * as notificationApi from '../../api';
 import { Route } from 'react-router';
-import { PrevButton } from '../../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../../shared/widgets/navigation/PrevButton';
 
 describe('알림 목록 페이지 테스트', () => {
   const testerId = 1;

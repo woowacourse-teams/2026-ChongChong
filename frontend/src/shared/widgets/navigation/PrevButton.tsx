@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
-import usePageNavigation from '../hooks/usePageNavigation';
-import backIcon from '../assets/left-arrow.svg';
+import usePageNavigation from '../../hooks/usePageNavigation';
+import backIcon from '../../assets/left-arrow.svg';
 
 const backButtonStyle = {
   display: 'grid',

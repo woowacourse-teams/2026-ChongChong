@@ -1,9 +1,9 @@
-import type { ComponentPropsWithoutRef } from 'react';
-import { Field } from '../ui/inputs/Field';
-import Input from '../ui/inputs/Input';
+import type { ComponentPropsWithRef } from 'react';
+import { Field } from '../../ui/inputs/Field';
+import TextArea from '../../ui/inputs/TextArea';
 
-interface InputFieldProps extends Omit<
-  ComponentPropsWithoutRef<typeof Input>,
+export interface TextAreaFieldProps extends Omit<
+  ComponentPropsWithRef<typeof TextArea>,
   'id' | 'required' | 'value' | 'maxLength'
 > {
   id: string;
@@ -16,7 +16,7 @@ interface InputFieldProps extends Omit<
   maxLength: number;
 }
 
-export default function InputField({
+export default function TextAreaField({
   id,
   label,
   value,
@@ -25,8 +25,8 @@ export default function InputField({
   errorText,
   testId,
   maxLength,
-  ...inputProps
-}: InputFieldProps) {
+  ...textAreaProps
+}: TextAreaFieldProps) {
   const hasSubText = Boolean(errorText || helpText);
 
   return (
@@ -34,7 +34,13 @@ export default function InputField({
       <Field.Label htmlFor={id} isRequired={isRequired}>
         {label}
       </Field.Label>
-      <Input {...inputProps} id={id} value={value} maxLength={maxLength} required={isRequired} />
+      <TextArea
+        {...textAreaProps}
+        id={id}
+        value={value}
+        maxLength={maxLength}
+        required={isRequired}
+      />
 
       <div css={{ display: 'flex', justifyContent: hasSubText ? 'space-between' : 'flex-end' }}>
         {hasSubText && <Field.SubText errorText={errorText} helpText={helpText} />}

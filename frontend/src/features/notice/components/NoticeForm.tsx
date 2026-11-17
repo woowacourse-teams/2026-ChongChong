@@ -5,14 +5,14 @@ import { tokens } from '../../../styles/global';
 import { NOTICE_TITLE, NOTICE_CONTENT } from '../constants';
 import type { NoticeFormValues } from '../types';
 import { usePostHog } from '@posthog/react';
-import InputField from '../../../shared/widgets/InputField';
-import AttachmentField from '../../../shared/widgets/AttachmentField';
+import InputField from '../../../shared/widgets/fields/InputField';
+import AttachmentField from '../../../shared/widgets/attachments/AttachmentField';
 import { useAttachments } from '../../../shared/modules/files/useAttachments';
 import { IMAGE_ACCEPT } from '../../../shared/modules/files/validation';
 import type { Attachment } from '../../../shared/modules/files/types';
-import AutoResizeTextAreaField from '../../../shared/widgets/AutoResizeTextAreaField';
+import AutoResizeTextAreaField from '../../../shared/widgets/fields/AutoResizeTextAreaField';
 import { useInputState } from '../../../shared/hooks/useInputState';
-import ReminderField from '../../../shared/widgets/ReminderField';
+import ReminderField from '../../../shared/widgets/fields/ReminderField';
 
 const MemoizedReminderField = memo(ReminderField);
 

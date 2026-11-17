@@ -2,9 +2,9 @@ import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentI
 import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import type { NoticeTab } from '../types';
 import { useSuspenseQueries } from '@tanstack/react-query';
-import Tabs from '../../../shared/widgets/Tabs';
+import Tabs from '../../../shared/widgets/navigation/Tabs';
 import IncompleteMemberList from '../../../shared/widgets/IncompleteMemberList';
-import ContentDetailHeader from '../../../shared/widgets/ContentDetailHeader';
+import ContentDetailHeader from '../../../shared/widgets/content/ContentDetailHeader';
 import { formatDateToString } from '../../../shared/utils/formatDate';
 import noticeQueries from '../queries';
 import NoticeArticle from './NoticeArticle';

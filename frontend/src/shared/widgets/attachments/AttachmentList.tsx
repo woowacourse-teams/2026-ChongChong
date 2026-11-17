@@ -1,8 +1,8 @@
-import { Text } from '../ui/Typography';
-import type { Attachment } from '../modules/files/types';
-import { tokens } from '../../styles/global';
+import { Text } from '../../ui/Typography';
+import type { Attachment } from '../../modules/files/types';
+import { tokens } from '../../../styles/global';
 import type { CSSObject } from '@emotion/react';
-import ImageGallery from './ImageGallery';
+import ImageGallery from '../images/ImageGallery';
 
 const rowStyle = {
   display: 'flex',
@@ -21,8 +21,8 @@ function formatFileSize(bytes: number) {
 }
 
 function FileDetails({ file }: { file: Attachment }) {
-  const extension = file.originalFileName.includes('.')
-    ? file.originalFileName.split('.').at(-1)?.toUpperCase()
+  const extension = file.originalFileName.includes('..')
+    ? file.originalFileName.split('..').at(-1)?.toUpperCase()
     : undefined;
   const type = extension && extension.length <= 8 ? extension : '파일';
 

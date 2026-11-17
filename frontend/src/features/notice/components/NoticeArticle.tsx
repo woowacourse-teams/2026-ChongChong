@@ -2,7 +2,7 @@ import { Paragraph } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
 import type { CSSProperties } from 'react';
 import { tokens } from '../../../styles/global';
-import ImageGallery from '../../../shared/widgets/ImageGallery';
+import ImageGallery from '../../../shared/widgets/images/ImageGallery';
 import type { NoticeDetail } from '../types';
 
 interface Props {

@@ -5,7 +5,7 @@ import { CSSProperties, Suspense } from 'react';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import { tokens } from '../../../styles/global';
 import studyQueries from '../queries';
 import { Heading, Paragraph } from '../../../shared/ui/Typography';
