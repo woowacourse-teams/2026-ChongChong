@@ -10,6 +10,9 @@ edge_initialize() {
     exec 9>"$STATE/deploy.lock"
     # 배포와 수동 롤백이 같은 잠금을 쓴다. CodeDeploy 파일 복사는 이 잠금의 범위 밖이다.
     flock -n 9 || { echo 'Another edge operation is running' >&2; return 1; }
+    [[ ! -e "$STATE/failover.json" && ! -L "$STATE/failover.json" ]] || {
+        echo 'Failover mode was initialized; retry through edge-control.sh' >&2; return 1;
+    }
     source "$ROOT/config/edge.env"
     EDGE_DEPLOYMENT_RETENTION_COUNT="${EDGE_DEPLOYMENT_RETENTION_COUNT:-3}"
     [[ "$EDGE_DEPLOYMENT_RETENTION_COUNT" =~ ^[1-9][0-9]*$ ]] || {

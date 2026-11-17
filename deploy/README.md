@@ -63,6 +63,8 @@ flowchart LR
 | 서버를 새로 준비하거나 빠진 설정을 찾기 | [서버 준비와 역할별 검사](docs/server-setup.md) |
 | 새 버전 배포, 앱 설정 변경, 실패 복구 | [블루그린 배포 운영 절차](docs/edge-deployment.md) |
 | A/B 메트릭과 로그 확인, 부하 테스트 분석 | [모니터링 확인](docs/monitoring.md) |
+| 자동 장애 전환·대기 동기화 설정 | [옵트인 controller](docs/edge-failover.md) |
+| 이미지 보존·정리와 이전 릴리스 복구 | [보존·복구 정책](docs/release-retention-and-restore.md) |
 | 기존 단일 서버 환경을 관리하기 | [legacy 배포 참고](docs/legacy-deployment.md) |
 | Nginx 연결 한도를 정한 배경 확인 | [과거 실험 기록](docs/nginx-limits-and-observability.md) |
 

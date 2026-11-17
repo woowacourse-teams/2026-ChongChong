@@ -1,0 +1,10 @@
+[Unit]
+Description=Check whether standby synchronization is due
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=15s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

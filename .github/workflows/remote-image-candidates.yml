@@ -1,0 +1,29 @@
+name: Remote image candidates
+on:
+  schedule:
+    - cron: '23 18 * * *' # 매일 03:23 KST, 실행 지연 가능
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: remote-image-candidates
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: List candidates without deleting images
+        env:
+          DOCKERHUB_READ_USER: ${{ secrets.DOCKERHUB_READ_USER }}
+          DOCKERHUB_READ_TOKEN: ${{ secrets.DOCKERHUB_READ_TOKEN }}
+          REPOSITORY: ${{ vars.DOCKERHUB_REPOSITORY }}
+          PROTECTED_TAGS: ${{ vars.DOCKERHUB_PROTECTED_TAGS }}
+        run: |
+          test -n "$REPOSITORY"
+          test -n "$PROTECTED_TAGS"
+          python3 deploy/scripts/edge/remote_image_candidates.py \
+            --repository "$REPOSITORY" --protected-tags "$PROTECTED_TAGS"
