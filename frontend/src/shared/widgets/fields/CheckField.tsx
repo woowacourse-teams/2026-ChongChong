@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, CSSProperties } from 'react';
 import type { CSSObject } from '@emotion/react';
-import { Field } from '../ui/inputs/Field';
-import { tokens, typography } from '../../styles/global';
+import { Field } from '../../ui/inputs/Field';
+import { tokens, typography } from '../../../styles/global';
 
 interface CheckFieldProps extends Omit<
   ComponentPropsWithoutRef<'input'>,

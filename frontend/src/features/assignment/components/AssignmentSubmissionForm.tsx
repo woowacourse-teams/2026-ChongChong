@@ -1,13 +1,13 @@
 import { Heading, Paragraph } from '../../../shared/ui/Typography';
 import { useState } from 'react';
-import AttachmentField from '../../../shared/widgets/AttachmentField';
+import AttachmentField from '../../../shared/widgets/attachments/AttachmentField';
 import { useAttachments } from '../../../shared/modules/files/useAttachments';
 import type { Attachment } from '../../../shared/modules/files/types';
 import type { CSSProperties, SubmitEventHandler } from 'react';
 import { useInputState } from '../../../shared/hooks/useInputState';
 import Button from '../../../shared/ui/Button';
-import InputField from '../../../shared/widgets/InputField';
-import TextAreaField from '../../../shared/widgets/TextAreaField';
+import InputField from '../../../shared/widgets/fields/InputField';
+import TextAreaField from '../../../shared/widgets/fields/TextAreaField';
 import { tokens } from '../../../styles/global';
 import { ASSIGNMENT_SUBMISSION_CONTENT, ASSIGNMENT_SUBMISSION_LINK } from '../constants';
 import type { AssignmentSubmissionValue } from '../types';

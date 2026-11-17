@@ -1,9 +1,9 @@
-import { Text } from '../ui/Typography';
+import { Text } from '../../ui/Typography';
 import type { CSSProperties } from 'react';
-import deleteIcon from '../assets/delete.svg';
-import modifyIcon from '../assets/modify.svg';
-import Button from '../ui/Button';
-import { tokens } from '../../styles/global';
+import deleteIcon from '../../assets/delete.svg';
+import modifyIcon from '../../assets/modify.svg';
+import Button from '../../ui/Button';
+import { tokens } from '../../../styles/global';
 
 interface DetailActionsProps {
   onEdit: () => void;

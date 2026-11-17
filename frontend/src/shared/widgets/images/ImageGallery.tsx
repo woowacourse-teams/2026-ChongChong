@@ -1,8 +1,8 @@
-import { Paragraph } from '../ui/Typography';
+import { Paragraph } from '../../ui/Typography';
 import { useRef, useState, type CSSProperties } from 'react';
-import errorImage from '../assets/icons/image-load-error.webp';
-import type { Attachment } from '../modules/files/types';
-import { tokens } from '../../styles/global';
+import errorImage from '../../assets/icons/image-load-error.webp';
+import type { Attachment } from '../../modules/files/types';
+import { tokens } from '../../../styles/global';
 import type { CSSObject } from '@emotion/react';
 import ExpandedImage, { type ExpandableImage } from './ExpandedImage';
 

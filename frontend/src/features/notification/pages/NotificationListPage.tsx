@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import Page from '../../../shared/ui/Page';
 import Main from '../../../shared/ui/Main';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import Loading from '../../../shared/ui/Loading';
 import EmptyContent from '../../../shared/ui/EmptyContent';

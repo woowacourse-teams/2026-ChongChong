@@ -1,7 +1,7 @@
 import { tokens } from '../../../styles/global';
 import TopHeader from '../../../shared/ui/TopHeader';
 import Main from '../../../shared/ui/Main';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import Page from '../../../shared/ui/Page';
 import useCreateStudy from '../hooks/useCreateStudy';
 

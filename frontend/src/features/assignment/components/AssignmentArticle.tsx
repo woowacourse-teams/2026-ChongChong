@@ -1,5 +1,5 @@
 import { usePostHog } from '@posthog/react';
-import ImageGallery from '../../../shared/widgets/ImageGallery';
+import ImageGallery from '../../../shared/widgets/images/ImageGallery';
 import type { CSSProperties } from 'react';
 import assignmentIcon from '../../../shared/assets/assign-green.webp';
 import { tokens } from '../../../styles/global';

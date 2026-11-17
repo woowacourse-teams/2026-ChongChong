@@ -1,6 +1,6 @@
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import AssignmentFormFunnel from '../components/AssignmentFormFunnel';
 import Main from '../../../shared/ui/Main';
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';

@@ -9,7 +9,7 @@ import ErrorContent from '../../../shared/ui/ErrorContent';
 import Main from '../../../shared/ui/Main';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import { URL_POLICY } from '../../../shared/policy/urlPolicy';
 import { tokens } from '../../../styles/global';
 import usePageNavigation from '../../../shared/hooks/usePageNavigation';

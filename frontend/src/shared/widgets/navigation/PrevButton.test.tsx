@@ -1,8 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, BrowserRouter, Route, Routes } from 'react-router';
-import usePageNavigation from '../hooks/usePageNavigation';
-import { URL_POLICY } from '../policy/urlPolicy';
+import usePageNavigation from '../../hooks/usePageNavigation';
+import { URL_POLICY } from '../../policy/urlPolicy';
 import { PrevButton } from './PrevButton';
 
 function DetailPage() {

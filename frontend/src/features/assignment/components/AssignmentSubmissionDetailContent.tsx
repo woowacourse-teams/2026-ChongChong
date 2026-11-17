@@ -2,7 +2,7 @@ import useFocusCommentId from '../../../shared/modules/comments/useFocusCommentI
 import CommentsPanel from '../../../shared/widgets/comments/CommentsPanel';
 import { Heading } from '../../../shared/ui/Typography';
 import { usePostHog } from '@posthog/react';
-import AttachmentList from '../../../shared/widgets/AttachmentList';
+import AttachmentList from '../../../shared/widgets/attachments/AttachmentList';
 import type { CSSProperties } from 'react';
 import { CSSObject } from '@emotion/react';
 import { useSuspenseQuery } from '@tanstack/react-query';

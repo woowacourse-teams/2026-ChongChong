@@ -1,6 +1,6 @@
-import { Heading } from '../ui/Typography';
+import { Heading } from '../../ui/Typography';
 import type { CSSProperties } from 'react';
-import { tokens, typography } from '../../styles/global';
+import { tokens, typography } from '../../../styles/global';
 
 interface Props {
   title: string;

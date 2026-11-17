@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { CSSObject } from '@emotion/react';
-import { Field } from '../ui/inputs/Field';
-import { tokens, typography } from '../../styles/global';
+import { Field } from '../../ui/inputs/Field';
+import { tokens, typography } from '../../../styles/global';
 
 interface RadioOption<T extends string> {
   label: string;

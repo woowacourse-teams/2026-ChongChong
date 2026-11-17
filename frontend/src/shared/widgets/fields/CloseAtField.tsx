@@ -1,6 +1,6 @@
-import { Field } from '../ui/inputs/Field';
-import DateTimePicker from '../ui/date-time-picker/DateTimePicker';
-import { formatDateToString, toLocalDateTime } from '../utils/formatDate';
+import { Field } from '../../ui/inputs/Field';
+import DateTimePicker from '../../ui/date-time-picker/DateTimePicker';
+import { formatDateToString, toLocalDateTime } from '../../utils/formatDate';
 
 interface CloseAtFieldProps {
   id: string;

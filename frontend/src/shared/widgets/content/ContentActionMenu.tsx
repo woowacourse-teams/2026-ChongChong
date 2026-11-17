@@ -1,16 +1,16 @@
-import { URL_POLICY } from '../policy/urlPolicy';
+import { URL_POLICY } from '../../policy/urlPolicy';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import usePageNavigation from '../hooks/usePageNavigation';
-import { tokens, typography } from '../../styles/global';
-import useBooleanState from '../hooks/useBooleanState';
-import { useToast } from '../providers/ToastProvider';
-import ConfirmDialog from '../ui/dialogs/ConfirmDialog';
-import StatusToast from '../ui/toasts/StatusToast';
-import { deleteNotice } from '../../features/notice/api';
-import { deleteAssignment } from '../../features/assignment/api';
-import noticeQueries from '../../features/notice/queries';
-import assignmentQueries from '../../features/assignment/queries';
+import usePageNavigation from '../../hooks/usePageNavigation';
+import { tokens, typography } from '../../../styles/global';
+import useBooleanState from '../../hooks/useBooleanState';
+import { useToast } from '../../providers/ToastProvider';
+import ConfirmDialog from '../../ui/dialogs/ConfirmDialog';
+import StatusToast from '../../ui/toasts/StatusToast';
+import { deleteNotice } from '../../../features/notice/api';
+import { deleteAssignment } from '../../../features/assignment/api';
+import noticeQueries from '../../../features/notice/queries';
+import assignmentQueries from '../../../features/assignment/queries';
 
 const containerStyle = { position: 'relative' } satisfies CSSProperties;
 

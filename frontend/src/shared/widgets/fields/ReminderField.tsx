@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react';
-import { Field } from '../ui/inputs/Field';
-import DateTimePicker from '../ui/date-time-picker/DateTimePicker';
-import { formatDateToString, toLocalDateTime } from '../utils/formatDate';
-import { tokens, typography } from '../../styles/global';
-import addIcon from '../assets/add.svg';
-import deleteIcon from '../assets/image-upload-delete.svg';
+import { Field } from '../../ui/inputs/Field';
+import DateTimePicker from '../../ui/date-time-picker/DateTimePicker';
+import { formatDateToString, toLocalDateTime } from '../../utils/formatDate';
+import { tokens, typography } from '../../../styles/global';
+import addIcon from '../../assets/add.svg';
+import deleteIcon from '../../assets/image-upload-delete.svg';
 
 interface ReminderFieldProps {
   id: string;

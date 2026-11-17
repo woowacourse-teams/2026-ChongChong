@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
-import Switch from '../ui/Switch';
-import { Field } from '../ui/inputs/Field';
-import { tokens } from '../../styles/global';
+import Switch from '../../ui/Switch';
+import { Field } from '../../ui/inputs/Field';
+import { tokens } from '../../../styles/global';
 
 interface Props extends Omit<ComponentProps<typeof Switch>, 'id'> {
   id: string;

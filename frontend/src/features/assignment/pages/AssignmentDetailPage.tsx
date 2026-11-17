@@ -7,13 +7,13 @@ import MemberAssignmentDetailContent from '../components/MemberAssignmentDetailC
 import useIntegerParams from '../../../shared/hooks/useIntegerParams';
 import Page from '../../../shared/ui/Page';
 import TopHeader from '../../../shared/ui/TopHeader';
-import { PrevButton } from '../../../shared/widgets/PrevButton';
+import { PrevButton } from '../../../shared/widgets/navigation/PrevButton';
 import Main from '../../../shared/ui/Main';
 import Loading from '../../../shared/ui/Loading';
-import BottomTab from '../../../shared/widgets/BottomTab';
+import BottomTab from '../../../shared/widgets/navigation/BottomTab';
 import ErrorContent from '../../../shared/ui/ErrorContent';
 import studyQueries from '../../study/queries';
-import ContentActionMenu from '../../../shared/widgets/ContentActionMenu';
+import ContentActionMenu from '../../../shared/widgets/content/ContentActionMenu';
 
 export default function AssignmentDetailPage() {
   return (

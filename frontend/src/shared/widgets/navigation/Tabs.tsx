@@ -1,9 +1,9 @@
 import { useId, type CSSProperties, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { useLocation } from 'react-router';
-import { tokens, typography } from '../../styles/global';
-import usePageNavigation from '../hooks/usePageNavigation';
-import { URL_POLICY } from '../policy/urlPolicy';
+import { tokens, typography } from '../../../styles/global';
+import usePageNavigation from '../../hooks/usePageNavigation';
+import { URL_POLICY } from '../../policy/urlPolicy';
 
 type TabItem<TTab extends string> = { key: TTab; label: string; panel: ReactNode };
 
