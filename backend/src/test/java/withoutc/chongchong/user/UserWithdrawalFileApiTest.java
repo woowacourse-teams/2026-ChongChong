@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -110,11 +109,6 @@ class UserWithdrawalFileApiTest extends PostgresContainerTest {
         profile = saveFile(owner, FileUploadStatus.COMPLETED);
         owner.changeProfileImage(profile);
         userRepository.saveAndFlush(owner);
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        cleaner.clean();
     }
 
     @ParameterizedTest

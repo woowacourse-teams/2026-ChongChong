@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.LongStream;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -92,11 +91,6 @@ class NoticeCreationAttachmentApiTest extends PostgresContainerTest {
         firstFile = saveFile(leader, "image/jpeg", 5242880);
         secondFile = saveFile(leader, "image/webp", 1024);
         memberFile = saveFile(member, "image/png", 1024);
-    }
-
-    @AfterEach
-    void cleanDatabase() {
-        databaseCleaner.clean();
     }
 
     @Test

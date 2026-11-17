@@ -132,9 +132,8 @@ class NoticeDeleteAttachmentApiTest extends PostgresContainerTest {
     }
 
     @AfterEach
-    void cleanDatabase() {
+    void verifyMetadataReaderInteractions() {
         verifyNoInteractions(s3FileMetadataReader);
-        databaseCleaner.clean();
     }
 
     @Test

@@ -8,7 +8,6 @@ import static withoutc.chongchong.global.config.ApiPathConfig.API_PREFIX;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.util.Locale;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,11 +51,6 @@ class WebPushSubscriptionApiTest extends PostgresContainerTest {
 
     @BeforeEach
     void setUp() {
-        databaseCleaner.clean();
-    }
-
-    @AfterEach
-    void cleanDatabase() {
         databaseCleaner.clean();
     }
 

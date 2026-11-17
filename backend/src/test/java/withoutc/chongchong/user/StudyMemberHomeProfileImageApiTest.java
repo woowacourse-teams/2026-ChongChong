@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -111,11 +110,6 @@ class StudyMemberHomeProfileImageApiTest extends PostgresContainerTest {
         recipientRepository.saveAndFlush(read);
         recipientRepository.saveAndFlush(NoticeRecipient.create(otherMember, firstNotice));
         recipientRepository.saveAndFlush(NoticeRecipient.create(secondMember, secondNotice));
-    }
-
-    @AfterEach
-    void tearDown() {
-        databaseCleaner.clean();
     }
 
     @Test
