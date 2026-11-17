@@ -20,12 +20,9 @@ public record AssignmentSummaryResponse(
         SubmissionStatus submissionStatus,
         SubmissionVisibility submissionVisibility
 ) {
-    public static AssignmentSummaryResponse forLeader(LocalDateTime now, Assignment assignment,
+    public static AssignmentSummaryResponse forLeader(Assignment assignment, int memberCount, int completeCount,
+                                                      LocalDateTime nextRemindAt,
                                                       SubmissionStatus submissionStatus) {
-
-        int memberCount = assignment.getSubmissionCount();
-        int completeCount = assignment.getSubmittedCount(now);
-
         boolean isComplete = (memberCount == completeCount);
 
         return new AssignmentSummaryResponse(
@@ -37,7 +34,7 @@ public record AssignmentSummaryResponse(
                 memberCount,
                 completeCount,
                 isComplete,
-                assignment.getNextRemindAt(),
+                nextRemindAt,
                 submissionStatus,
                 assignment.getSubmissionVisibility()
         );
