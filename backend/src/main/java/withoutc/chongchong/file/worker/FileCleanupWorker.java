@@ -2,8 +2,9 @@ package withoutc.chongchong.file.worker;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,21 +13,19 @@ import withoutc.chongchong.file.config.FileCleanupProperties;
 import withoutc.chongchong.file.logging.FileCleanupLogger;
 import withoutc.chongchong.file.metrics.FileCleanupMetrics;
 import withoutc.chongchong.file.repository.FileCleanupRepository.DeletionBacklog;
-import withoutc.chongchong.file.service.cleanup.FileCleanupDeleteService;
-import withoutc.chongchong.file.service.cleanup.FileCleanupDeleteService.DeletionTarget;
-import withoutc.chongchong.file.service.cleanup.FileCleanupMarkService;
-import withoutc.chongchong.file.service.cleanup.FileCleanupMarkService.MarkResult;
-import withoutc.chongchong.file.service.cleanup.FileCleanupMarkService.OrphanCutoffs;
-import withoutc.chongchong.file.service.cleanup.S3FileDeleter;
-import withoutc.chongchong.file.service.cleanup.S3FileDeleter.DeleteResult;
+import withoutc.chongchong.file.service.FileCleanupTransactionService;
+import withoutc.chongchong.file.service.FileCleanupTransactionService.DeletionTarget;
+import withoutc.chongchong.file.service.FileCleanupTransactionService.MarkResult;
+import withoutc.chongchong.file.service.FileCleanupTransactionService.OrphanCutoffs;
+import withoutc.chongchong.file.service.S3FileDeleter;
+import withoutc.chongchong.file.service.S3FileDeleter.DeleteResult;
 
 @Component
 @RequiredArgsConstructor
 public class FileCleanupWorker {
 
     private final FileCleanupProperties properties;
-    private final FileCleanupMarkService markService;
-    private final FileCleanupDeleteService deleteService;
+    private final FileCleanupTransactionService transactionService;
     private final S3FileDeleter s3FileDeleter;
     private final FileCleanupMetrics metrics;
     private final FileCleanupLogger logger;
@@ -62,7 +61,7 @@ public class FileCleanupWorker {
             metrics.updateDryRunCandidates(counter.candidates);
         } else {
             delete(now, counter);
-            DeletionBacklog backlog = deleteService.findBacklog(properties.maxAttempts());
+            DeletionBacklog backlog = transactionService.findBacklog(properties.maxAttempts());
             metrics.updateBacklog(backlog.retryable(), backlog.exhausted());
         }
 
@@ -75,27 +74,28 @@ public class FileCleanupWorker {
     private void mark(OrphanCutoffs cutoffs, RunCounter counter) {
         long afterId = 0;
         for (int batch = 0; batch < properties.maxBatchesPerRun(); batch++) {
-            List<Long> candidateIds = markService.findCandidateIds(afterId, cutoffs, properties.batchSize());
+            List<Long> candidateIds = transactionService.findCandidateIds(afterId, cutoffs, properties.batchSize());
             if (candidateIds.isEmpty()) {
                 return;
             }
             afterId = candidateIds.getLast();
-            counter.candidates += candidateIds.size();
-            if (properties.dryRun()) {
-                continue;
+            counter.addCandidates(candidateIds.size());
+            if (!properties.dryRun()) {
+                markBatch(candidateIds, cutoffs, counter);
             }
-            MarkResult result = markService.markBatch(candidateIds, cutoffs);
-            counter.markedPendingExpired += result.pendingExpired();
-            counter.markedUnreferenced += result.unreferenced();
-            counter.markSkipped += result.skipped();
-            metrics.recordMarked(result.pendingExpired(), result.unreferenced());
         }
+    }
+
+    private void markBatch(List<Long> candidateIds, OrphanCutoffs cutoffs, RunCounter counter) {
+        MarkResult result = transactionService.markBatch(candidateIds, cutoffs);
+        counter.addMarked(result);
+        metrics.recordMarked(result.pendingExpired(), result.unreferenced());
     }
 
     private void delete(LocalDateTime now, RunCounter counter) {
         LocalDateTime leaseCutoff = now.minus(properties.deleteLease());
         for (int batch = 0; batch < properties.maxBatchesPerRun(); batch++) {
-            List<DeletionTarget> targets = deleteService.claim(
+            List<DeletionTarget> targets = transactionService.claim(
                     now, leaseCutoff, properties.maxAttempts(), properties.batchSize());
             if (targets.isEmpty()) {
                 return;
@@ -106,17 +106,11 @@ public class FileCleanupWorker {
 
     private void deleteBatch(List<DeletionTarget> targets, RunCounter counter) {
         DeleteResult result = s3FileDeleter.delete(targets.stream().map(DeletionTarget::objectKey).toList());
+        Map<Boolean, List<DeletionTarget>> byObjectDeleted = targets.stream()
+                .collect(Collectors.partitioningBy(target -> result.isDeleted(target.objectKey())));
 
-        List<DeletionTarget> objectDeleted = new ArrayList<>();
-        for (DeletionTarget target : targets) {
-            if (result.deletedKeys().contains(target.objectKey())) {
-                objectDeleted.add(target);
-                continue;
-            }
-            String error = result.failures().getOrDefault(target.objectKey(), "Unknown");
-            recordFailure(target, error, counter);
-        }
-        deleteRows(objectDeleted, counter);
+        byObjectDeleted.get(false).forEach(target -> recordFailure(target, result.errorOf(target.objectKey()), counter));
+        deleteRows(byObjectDeleted.get(true), counter);
     }
 
     private void deleteRows(List<DeletionTarget> targets, RunCounter counter) {
@@ -124,9 +118,7 @@ public class FileCleanupWorker {
             return;
         }
         try {
-            int deleted = deleteService.deleteRows(targets.stream().map(DeletionTarget::id).toList());
-            counter.deleted += deleted;
-            metrics.recordDeleted(deleted);
+            recordDeleted(transactionService.deleteRows(targets.stream().map(DeletionTarget::id).toList()), counter);
         } catch (DataIntegrityViolationException exception) {
             targets.forEach(target -> deleteRowIsolated(target, counter));
         }
@@ -134,18 +126,21 @@ public class FileCleanupWorker {
 
     private void deleteRowIsolated(DeletionTarget target, RunCounter counter) {
         try {
-            int deleted = deleteService.deleteRows(List.of(target.id()));
-            counter.deleted += deleted;
-            metrics.recordDeleted(deleted);
+            recordDeleted(transactionService.deleteRows(List.of(target.id())), counter);
         } catch (DataIntegrityViolationException exception) {
             logger.referenceViolation(target.id(), target.objectKey(), exception);
-            counter.deleteFailed++;
+            counter.addDeleteFailed();
             metrics.recordDeleteFailed("ReferenceViolation");
         }
     }
 
+    private void recordDeleted(int deleted, RunCounter counter) {
+        counter.addDeleted(deleted);
+        metrics.recordDeleted(deleted);
+    }
+
     private void recordFailure(DeletionTarget target, String error, RunCounter counter) {
-        counter.deleteFailed++;
+        counter.addDeleteFailed();
         metrics.recordDeleteFailed(error);
         logger.deleteFailed(target.id(), target.objectKey(), target.attempts(), error);
     }
@@ -157,6 +152,24 @@ public class FileCleanupWorker {
         private int markSkipped;
         private int deleted;
         private int deleteFailed;
+
+        private void addCandidates(int count) {
+            candidates += count;
+        }
+
+        private void addMarked(MarkResult result) {
+            markedPendingExpired += result.pendingExpired();
+            markedUnreferenced += result.unreferenced();
+            markSkipped += result.skipped();
+        }
+
+        private void addDeleted(int count) {
+            deleted += count;
+        }
+
+        private void addDeleteFailed() {
+            deleteFailed++;
+        }
 
         private FileCleanupRunResult toResult(boolean dryRun, long durationMillis) {
             return new FileCleanupRunResult(dryRun, candidates, markedPendingExpired, markedUnreferenced,

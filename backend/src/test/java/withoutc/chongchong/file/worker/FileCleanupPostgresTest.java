@@ -39,11 +39,10 @@ import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.logging.FileCleanupLogger;
 import withoutc.chongchong.file.metrics.FileCleanupMetrics;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.cleanup.FileCleanupDeleteService;
-import withoutc.chongchong.file.service.cleanup.FileCleanupDeleteService.DeletionTarget;
-import withoutc.chongchong.file.service.cleanup.FileCleanupMarkService;
-import withoutc.chongchong.file.service.cleanup.FileCleanupMarkService.OrphanCutoffs;
-import withoutc.chongchong.file.service.cleanup.S3FileDeleter;
+import withoutc.chongchong.file.service.FileCleanupTransactionService;
+import withoutc.chongchong.file.service.FileCleanupTransactionService.DeletionTarget;
+import withoutc.chongchong.file.service.FileCleanupTransactionService.OrphanCutoffs;
+import withoutc.chongchong.file.service.S3FileDeleter;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -62,10 +61,7 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     private S3Client s3Client;
 
     @Autowired
-    private FileCleanupMarkService markService;
-
-    @Autowired
-    private FileCleanupDeleteService deleteService;
+    private FileCleanupTransactionService transactionService;
 
     @Autowired
     private S3FileDeleter s3FileDeleter;
@@ -167,11 +163,11 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     void skipFileLinkedAfterCandidateLookup() {
         Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
         OrphanCutoffs cutoffs = cutoffs();
-        List<Long> candidates = markService.findCandidateIds(0, cutoffs, 100);
+        List<Long> candidates = transactionService.findCandidateIds(0, cutoffs, 100);
         assertThat(candidates).containsExactly(fileId);
 
         linkProfileImage(fileId);
-        var result = markService.markBatch(candidates, cutoffs);
+        var result = transactionService.markBatch(candidates, cutoffs);
 
         assertThat(result.unreferenced()).isZero();
         assertThat(result.skipped()).isOne();
@@ -183,7 +179,7 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     void skipFileLockedByAttachingTransaction() throws Exception {
         Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
         OrphanCutoffs cutoffs = cutoffs();
-        List<Long> candidates = markService.findCandidateIds(0, cutoffs, 100);
+        List<Long> candidates = transactionService.findCandidateIds(0, cutoffs, 100);
         CountDownLatch locked = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -196,10 +192,10 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
             }));
             assertThat(locked.await(10, TimeUnit.SECONDS)).isTrue();
 
-            var whileLocked = markService.markBatch(candidates, cutoffs);
+            var whileLocked = transactionService.markBatch(candidates, cutoffs);
             release.countDown();
             attaching.get(10, TimeUnit.SECONDS);
-            var afterCommit = markService.markBatch(candidates, cutoffs);
+            var afterCommit = transactionService.markBatch(candidates, cutoffs);
 
             assertThat(whileLocked.skipped()).isOne();
             assertThat(afterCommit.skipped()).isOne();
@@ -234,8 +230,8 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     @DisplayName("S3 삭제 후 행 삭제 전에 중단돼도 다음 실행에서 이어서 행까지 삭제한다")
     void resumeAfterCrashBetweenS3AndRowDeletion() {
         Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
-        markService.markBatch(List.of(fileId), cutoffs());
-        List<DeletionTarget> claimed = deleteService.claim(now, now.minusMinutes(10), 3, 100);
+        transactionService.markBatch(List.of(fileId), cutoffs());
+        List<DeletionTarget> claimed = transactionService.claim(now, now.minusMinutes(10), 3, 100);
         s3FileDeleter.delete(claimed.stream().map(DeletionTarget::objectKey).toList());
 
         expireClaim(fileId);
@@ -257,31 +253,31 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
         }
 
         assertThat(deleteAttemptsOf(fileId)).isEqualTo(PROPERTIES.maxAttempts());
-        assertThat(deleteService.claim(now, now.plusDays(1), PROPERTIES.maxAttempts(), 100)).isEmpty();
-        assertThat(deleteService.findBacklog(PROPERTIES.maxAttempts()).exhausted()).isOne();
+        assertThat(transactionService.claim(now, now.plusDays(1), PROPERTIES.maxAttempts(), 100)).isEmpty();
+        assertThat(transactionService.findBacklog(PROPERTIES.maxAttempts()).exhausted()).isOne();
     }
 
     @Test
     @DisplayName("한 워커가 선점 중인 파일은 다른 워커가 중복 선점하지 않는다")
     void concurrentWorkersDoNotClaimSameFile() throws Exception {
         Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));
-        markService.markBatch(List.of(fileId), cutoffs());
+        transactionService.markBatch(List.of(fileId), cutoffs());
         CompletableFuture<Void> firstClaimed = new CompletableFuture<>();
         CountDownLatch release = new CountDownLatch(1);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             Future<List<DeletionTarget>> first = executor.submit(() -> transaction.execute(status -> {
-                List<DeletionTarget> targets = deleteService.claim(now, now.minusMinutes(10), 3, 100);
+                List<DeletionTarget> targets = transactionService.claim(now, now.minusMinutes(10), 3, 100);
                 firstClaimed.complete(null);
                 await(release);
                 return targets;
             }));
             firstClaimed.get(10, TimeUnit.SECONDS);
 
-            List<DeletionTarget> secondWhileLocked = deleteService.claim(now, now.minusMinutes(10), 3, 100);
+            List<DeletionTarget> secondWhileLocked = transactionService.claim(now, now.minusMinutes(10), 3, 100);
             release.countDown();
             List<DeletionTarget> firstTargets = first.get(10, TimeUnit.SECONDS);
-            List<DeletionTarget> secondAfterCommit = deleteService.claim(now, now.minusMinutes(10), 3, 100);
+            List<DeletionTarget> secondAfterCommit = transactionService.claim(now, now.minusMinutes(10), 3, 100);
 
             assertThat(firstTargets).extracting(DeletionTarget::id).containsExactly(fileId);
             assertThat(secondWhileLocked).isEmpty();
@@ -293,7 +289,7 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     }
 
     private FileCleanupWorker worker(FileCleanupProperties properties) {
-        return new FileCleanupWorker(properties, markService, deleteService, s3FileDeleter, metrics, logger, clock);
+        return new FileCleanupWorker(properties, transactionService, s3FileDeleter, metrics, logger, clock);
     }
 
     private FileCleanupProperties dryRunOff() {

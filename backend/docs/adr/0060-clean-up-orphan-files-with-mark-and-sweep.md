@@ -206,7 +206,7 @@ CASCADE까지 포착할 수 있다. 다만 업무 규칙이 DB 트리거에 숨�
 
 1. 마이그레이션 `V34`: 선점 컬럼과 부분 인덱스 추가
 2. `FileMetadata.markForDeletion()`의 `PENDING` 허용, `claimDeletion()` 추가
-3. `FileCleanupMarkService`, `FileCleanupDeleteService`, `S3FileDeleter`, `FileCleanupWorker`, 설정 프로퍼티와 시작 시 검증 구현
+3. `FileCleanupTransactionService`, `S3FileDeleter`, `FileCleanupWorker`, 설정 프로퍼티와 시작 시 검증 구현
 4. Testcontainers 테스트 (`FileCleanupPostgresTest`, `FileReferencesCatalogTest`)
    - 유예 시간 경계
    - 첨부 연결과 표시의 경합 (양쪽 순서 모두, 두 연결과 래치 사용)

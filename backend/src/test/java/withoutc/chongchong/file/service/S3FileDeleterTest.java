@@ -1,4 +1,4 @@
-package withoutc.chongchong.file.service.cleanup;
+package withoutc.chongchong.file.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,7 +20,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.DeletedObject;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Error;
-import withoutc.chongchong.file.service.cleanup.S3FileDeleter.DeleteResult;
+import withoutc.chongchong.file.service.S3FileDeleter.DeleteResult;
 
 class S3FileDeleterTest {
 
@@ -40,8 +40,8 @@ class S3FileDeleterTest {
     void rejectKeysOutsideUploadPrefix() {
         DeleteResult result = deleter.delete(List.of("other/secret"));
 
-        assertThat(result.deletedKeys()).isEmpty();
-        assertThat(result.failures()).containsEntry("other/secret", S3FileDeleter.OUTSIDE_UPLOAD_PREFIX);
+        assertThat(result.isDeleted("other/secret")).isFalse();
+        assertThat(result.errorOf("other/secret")).isEqualTo(S3FileDeleter.OUTSIDE_UPLOAD_PREFIX);
         verify(s3Client, never()).deleteObjects(any(DeleteObjectsRequest.class));
     }
 
@@ -58,10 +58,11 @@ class S3FileDeleterTest {
 
         DeleteResult result = deleter.delete(List.of(deleted, denied, missing));
 
-        assertThat(result.deletedKeys()).containsExactly(deleted);
-        assertThat(result.failures())
-                .containsEntry(denied, "AccessDenied")
-                .containsEntry(missing, S3FileDeleter.MISSING_RESULT);
+        assertThat(result.isDeleted(deleted)).isTrue();
+        assertThat(result.isDeleted(denied)).isFalse();
+        assertThat(result.isDeleted(missing)).isFalse();
+        assertThat(result.errorOf(denied)).isEqualTo("AccessDenied");
+        assertThat(result.errorOf(missing)).isEqualTo(S3FileDeleter.MISSING_RESULT);
 
         ArgumentCaptor<DeleteObjectsRequest> request = ArgumentCaptor.forClass(DeleteObjectsRequest.class);
         verify(s3Client).deleteObjects(request.capture());
@@ -79,7 +80,7 @@ class S3FileDeleterTest {
 
         DeleteResult result = deleter.delete(List.of(key));
 
-        assertThat(result.deletedKeys()).isEmpty();
-        assertThat(result.failures()).containsEntry(key, S3FileDeleter.CLIENT_ERROR);
+        assertThat(result.isDeleted(key)).isFalse();
+        assertThat(result.errorOf(key)).isEqualTo(S3FileDeleter.CLIENT_ERROR);
     }
 }
