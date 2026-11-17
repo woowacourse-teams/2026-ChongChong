@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,6 +54,11 @@ public class FileMetadata extends BaseEntity {
     @Column(nullable = false, length = 20)
     private FileUploadStatus status;
 
+    @Column(name = "delete_claimed_at")
+    private LocalDateTime deleteClaimedAt;
+
+    @Column(name = "delete_attempts", nullable = false)
+    private int deleteAttempts;
 
     public static FileMetadata create(User owner, String originalFileName, String objectKey, String contentType,
                                       long size) {
@@ -80,10 +86,18 @@ public class FileMetadata extends BaseEntity {
     }
 
     public void markForDeletion() {
-        if (status != FileUploadStatus.COMPLETED) {
+        if (status == FileUploadStatus.DELETE_PENDING) {
             throw new FileException(FileErrorCode.FILE_NOT_ATTACHABLE);
         }
         status = FileUploadStatus.DELETE_PENDING;
+    }
+
+    public void claimDeletion(LocalDateTime claimedAt) {
+        if (status != FileUploadStatus.DELETE_PENDING) {
+            throw new IllegalStateException("삭제 대기 상태의 파일만 삭제를 선점할 수 있습니다.");
+        }
+        deleteClaimedAt = claimedAt;
+        deleteAttempts++;
     }
 
     private FileMetadata(User owner, String originalFileName, String objectKey, String contentType, long size,
