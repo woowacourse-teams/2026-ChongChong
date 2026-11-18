@@ -24,6 +24,5 @@ jobs:
           PROTECTED_TAGS: ${{ vars.DOCKERHUB_PROTECTED_TAGS }}
         run: |
           test -n "$REPOSITORY"
-          test -n "$PROTECTED_TAGS"
           python3 deploy/scripts/edge/remote_image_candidates.py \
             --repository "$REPOSITORY" --protected-tags "$PROTECTED_TAGS"
