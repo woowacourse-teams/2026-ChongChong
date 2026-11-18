@@ -1,8 +1,10 @@
 package withoutc.chongchong.notice.repository;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -54,6 +56,20 @@ public interface NoticeRecipientRepository extends JpaRepository<NoticeRecipient
 
     default NoticeRecipient getByNoticeIdAndMemberIdOrThrow(Long noticeId, Long memberId) {
         return findByNoticeIdAndMemberId(noticeId, memberId).orElseThrow(
+                () -> new NoticeException(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND)
+        );
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT recipient FROM NoticeRecipient recipient
+            WHERE recipient.notice.id = :noticeId AND recipient.member.id = :memberId
+            """)
+    Optional<NoticeRecipient> findByNoticeIdAndMemberIdForUpdate(@Param("noticeId") Long noticeId,
+                                                                 @Param("memberId") Long memberId);
+
+    default NoticeRecipient getByNoticeIdAndMemberIdForUpdateOrThrow(Long noticeId, Long memberId) {
+        return findByNoticeIdAndMemberIdForUpdate(noticeId, memberId).orElseThrow(
                 () -> new NoticeException(NoticeErrorCode.NOTICE_RECIPIENT_NOT_FOUND)
         );
     }

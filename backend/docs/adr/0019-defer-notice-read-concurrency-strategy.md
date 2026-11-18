@@ -2,6 +2,7 @@
 
 - 날짜: 2026-08-24
 - 관련 이슈: [#88](https://github.com/woowacourse-teams/2026-ChongChong/issues/88)
+- 대체됨: [0063. 공지 최초 읽음 시각을 수신자 행 잠금으로 보존한다](0063-protect-first-notice-read-at-with-row-lock.md)에서 동시성 보장 방식을 결정한다.
 
 ## 배경
 

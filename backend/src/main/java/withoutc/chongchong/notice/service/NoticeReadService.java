@@ -73,7 +73,8 @@ public class NoticeReadService {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
         noticeRepository.getByIdAndStudyIdOrThrow(noticeId, studyId);
 
-        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdOrThrow(noticeId, member.getId());
+        NoticeRecipient recipient = noticeRecipientRepository.getByNoticeIdAndMemberIdForUpdateOrThrow(noticeId,
+                member.getId());
         LocalDateTime now = LocalDateTime.now(clock);
         recipient.markAsRead(now);
 
