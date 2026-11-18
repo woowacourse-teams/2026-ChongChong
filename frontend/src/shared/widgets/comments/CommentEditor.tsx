@@ -137,6 +137,16 @@ export default function CommentEditor(props: Props) {
     mutation.mutate(normalized);
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key !== 'Enter' || event.shiftKey) return;
+
+    event.preventDefault();
+    if (event.repeat) return;
+
+    event.currentTarget.form?.requestSubmit();
+  }
+
   return (
     <form
       aria-label={props.mode === 'edit' ? '댓글 수정' : '댓글 작성'}
@@ -162,6 +172,7 @@ export default function CommentEditor(props: Props) {
                 mutation.reset();
               }}
               css={[textAreaStyle, props.mode === 'edit' && { height: '62px', minHeight: '62px' }]}
+              onKeyDown={handleKeyDown}
             />
             {props.mode === 'create' && (
               <button
