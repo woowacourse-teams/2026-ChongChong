@@ -100,11 +100,11 @@ PY
 저장소 설정:
 
 - Variables `DOCKERHUB_REPOSITORY`: `namespace/repository` (registry 접두사 없음)
-- Variables `DOCKERHUB_PROTECTED_TAGS`: 예를 들어 `dev-current,dev-rollback,prod-current,prod-rollback`
+- Variables `DOCKERHUB_PROTECTED_TAGS` (선택): 추가로 보호할 태그. 예: `dev-current,dev-rollback`. 현재 빌드는 커밋 SHA 태그만 만들므로 비워 두면 최근 10개·90일 규칙만 적용한다
 - Secrets `DOCKERHUB_READ_USER`, `DOCKERHUB_READ_TOKEN`: 대상 repository를 조회할 수 있는 최소 읽기 권한 계정/OAT 식별자와 토큰
 
 환경별 repository를 따로 쓰면 해당 repository의 보호 태그만 지정하고 조회 작업도 repository별로 구성한다.
-현재 workflow는 설정한 repository 하나를 조회한다. 보호 태그가 하나라도 없으면 전체 후보 조회를 실패시킨다.
+현재 workflow는 설정한 repository 하나를 조회한다. 보호 태그를 지정했는데 하나라도 없으면 전체 후보 조회를 실패시킨다.
 보호 태그 생성·갱신은 이 조회 작업이 수행하지 않는다. **운영자가 최신 current/rollback 태그를 확인한 후 사용한다.**
 
 후보는 이 빌드의 40자리 소문자 커밋 SHA 태그만 대상으로 한다. 다른 이름의 수동 태그는 보호한다.

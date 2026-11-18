@@ -51,8 +51,6 @@ def fetch_tags(repository, token, get=request):
 
 def candidates(tags, required, now=None):
     now = now or datetime.now(timezone.utc)
-    if not required:
-        raise ValueError("보호 태그를 지정해야 합니다")
     parsed = {}
     for tag in tags:
         name = tag["name"]
@@ -97,7 +95,7 @@ def candidates(tags, required, now=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", required=True)
-    parser.add_argument("--protected-tags", required=True, help="쉼표로 구분한 환경별 current,rollback 태그")
+    parser.add_argument("--protected-tags", default="", help="쉼표로 구분한 추가 보호 태그(선택). 지정한 태그는 반드시 존재해야 한다")
     parser.add_argument("--input", type=Path, help="오프라인 검증용 태그 배열 JSON")
     args = parser.parse_args()
     if args.input:

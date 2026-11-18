@@ -31,8 +31,13 @@ class CandidateTest(unittest.TestCase):
         tags += [tag(12, 400, 'prod-current'), tag(11, 400, 'manual-keep')]
         self.assertEqual(candidates(tags, ['prod-current'], NOW), [])
 
+    def test_without_protected_tags_keeps_recent_and_manual_tags(self):
+        tags = [tag(i, 100 + i) for i in range(1, 14)] + [tag(50, 400, 'manual-keep')]
+        rows = candidates(tags, [], NOW)
+        self.assertEqual([r['tag'] for r in rows], [format(i, '040x') for i in (11, 12, 13)])
+
     def test_unknown_metadata_missing_protection_and_duplicate_tags_fail_closed(self):
-        for tags, required in (([tag(1, 1)], ['missing']), ([tag(1, 1)], []),
+        for tags, required in (([tag(1, 1)], ['missing']),
                                ([tag(1, 1), tag(1, 1)], ['prod-current']),
                                ([{'name': 'prod-current', 'tag_last_pushed': NOW.isoformat()}], ['prod-current'])):
             with self.subTest(tags=tags):
