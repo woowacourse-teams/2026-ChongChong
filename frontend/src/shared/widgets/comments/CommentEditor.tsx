@@ -71,6 +71,7 @@ const submitStyle = {
   color: tokens.text.brand,
   padding: '17px 0 17px 12px',
   flexShrink: 0,
+  cursor: 'pointer',
 } satisfies CSSProperties;
 
 const hintStyle = {
