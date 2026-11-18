@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,7 +61,6 @@ class NoticeReadConcurrencyTest extends PostgresContainerTest {
     private JdbcTemplate jdbc;
 
     @BeforeEach
-    @AfterEach
     void clean() {
         cleaner.clean();
     }
