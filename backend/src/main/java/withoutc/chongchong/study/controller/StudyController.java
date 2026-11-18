@@ -1,5 +1,6 @@
 package withoutc.chongchong.study.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Pattern;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import withoutc.chongchong.auth.security.AuthenticatedUser;
+import withoutc.chongchong.global.logging.RequestLoggingContext;
 import withoutc.chongchong.global.pagination.CursorPageRequest;
 import withoutc.chongchong.study.controller.dto.MyStudyListResponse;
 import withoutc.chongchong.study.controller.dto.StudyCreateRequest;
@@ -105,9 +107,11 @@ public class StudyController {
 
     @GetMapping("/me")
     public ResponseEntity<MyStudyListResponse> getMyStudies(
-            @AuthenticationPrincipal AuthenticatedUser user
+            @AuthenticationPrincipal AuthenticatedUser user,
+            HttpServletRequest request
     ) {
         MyStudyListResponse response = studyService.getMyStudies(user.id());
+        RequestLoggingContext.recordStudyCount(request, response.studyCount());
 
         return ResponseEntity
                 .ok(response);

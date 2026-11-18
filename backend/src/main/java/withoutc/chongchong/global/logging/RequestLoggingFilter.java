@@ -41,11 +41,13 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         response.setHeader(RequestLoggingContext.REQUEST_ID_HEADER, requestId);
         MDC.put(RequestLoggingContext.MDC_REQUEST_ID_KEY, requestId);
 
+        boolean completed = false;
         try {
             filterChain.doFilter(request, response);
+            completed = true;
         } finally {
             try {
-                logRequest(request, response);
+                logRequest(request, response, completed);
             } finally {
                 MDC.remove(RequestLoggingContext.MDC_REQUEST_ID_KEY);
             }
@@ -61,7 +63,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return UUID.randomUUID().toString();
     }
 
-    private void logRequest(HttpServletRequest request, HttpServletResponse response) {
+    private void logRequest(HttpServletRequest request, HttpServletResponse response, boolean completed) {
         long startTime = (long) request.getAttribute(RequestLoggingContext.START_TIME_ATTRIBUTE);
         long durationMs = Duration.ofNanos(System.nanoTime() - startTime).toMillis();
 
@@ -80,6 +82,11 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
                 .addKeyValue("status", status)
                 .addKeyValue("duration_ms", durationMs)
                 .addKeyValue("error_code", errorCode);
+
+        if (completed && status == HttpServletResponse.SC_OK
+                && request.getAttribute(RequestLoggingContext.STUDY_COUNT_ATTRIBUTE) instanceof Integer studyCount) {
+            eventBuilder.addKeyValue("study_count", studyCount);
+        }
 
         if (status >= 500) {
             eventBuilder.log("request failed");
