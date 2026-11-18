@@ -71,6 +71,7 @@ const submitStyle = {
   color: tokens.text.brand,
   padding: '17px 0 17px 12px',
   flexShrink: 0,
+  cursor: 'pointer',
 } satisfies CSSProperties;
 
 const hintStyle = {
@@ -136,6 +137,17 @@ export default function CommentEditor(props: Props) {
     mutation.mutate(normalized);
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Safari의 IME 확정 Enter도 제출에서 제외
+    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
+    if (event.key !== 'Enter' || event.shiftKey) return;
+
+    event.preventDefault();
+    if (event.repeat) return;
+
+    event.currentTarget.form?.requestSubmit();
+  }
+
   return (
     <form
       aria-label={props.mode === 'edit' ? '댓글 수정' : '댓글 작성'}
@@ -161,6 +173,7 @@ export default function CommentEditor(props: Props) {
                 mutation.reset();
               }}
               css={[textAreaStyle, props.mode === 'edit' && { height: '62px', minHeight: '62px' }]}
+              onKeyDown={handleKeyDown}
             />
             {props.mode === 'create' && (
               <button
