@@ -138,7 +138,8 @@ export default function CommentEditor(props: Props) {
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.nativeEvent.isComposing) return;
+    // Safari의 IME 확정 Enter도 제출에서 제외
+    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
     if (event.key !== 'Enter' || event.shiftKey) return;
 
     event.preventDefault();
