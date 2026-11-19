@@ -506,7 +506,7 @@ class StudyAcceptanceTest {
         StudyMember olderMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(olderStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER)
         );
-        studyMemberRepository.saveAndFlush(
+        StudyMember olderPeer = studyMemberRepository.saveAndFlush(
                 StudyMember.create(
                         olderStudy,
                         otherUser,
@@ -518,7 +518,7 @@ class StudyAcceptanceTest {
         StudyMember newerMember = studyMemberRepository.saveAndFlush(
                 StudyMember.create(newerStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER)
         );
-        studyMemberRepository.saveAndFlush(
+        StudyMember newerPeer = studyMemberRepository.saveAndFlush(
                 StudyMember.create(
                         newerStudy,
                         otherUser,
@@ -527,8 +527,28 @@ class StudyAcceptanceTest {
                         StudyMemberRole.MEMBER
                 )
         );
+        User secondPeer = userRepository.saveAndFlush(User.create("두 번째 멤버", null));
+        StudyMember newerSecondPeer = studyMemberRepository.saveAndFlush(
+                StudyMember.create(newerStudy, secondPeer, secondPeer.getName(), null, StudyMemberRole.MEMBER));
         setCreatedAt(olderMember.getId(), LocalDateTime.of(2026, 1, 1, 0, 0));
         setCreatedAt(newerMember.getId(), LocalDateTime.of(2026, 1, 2, 0, 0));
+
+        LocalDateTime noticeBoundary = LocalDateTime.now(clock).minusDays(7);
+        Notice memberNotice = saveListNotice(olderStudy, "예전 내 공지", List.of(olderMember, olderPeer));
+        saveListNotice(olderStudy, "다른 멤버 공지", List.of(olderPeer));
+        Notice expiredLeaderNotice = saveListNotice(
+                newerStudy, "예전 리더 공지", List.of(newerPeer, newerSecondPeer));
+        Notice recentLeaderNotice = saveListNotice(
+                newerStudy, "최근 리더 공지", List.of(newerPeer, newerSecondPeer));
+        setNoticeCreatedAt(memberNotice.getId(), noticeBoundary.minusHours(1));
+        setNoticeCreatedAt(expiredLeaderNotice.getId(), noticeBoundary.minusHours(1));
+        setNoticeCreatedAt(recentLeaderNotice.getId(), noticeBoundary.plusHours(1));
+
+        saveListAssignment(newerStudy, "리더 집계용 과제", List.of(newerPeer, newerSecondPeer));
+        saveListAssignment(olderStudy, "내게 배정된 과제", List.of(olderMember));
+        Assignment excluded = saveListAssignment(olderStudy, "대상에서 제외된 과제", List.of(olderMember, olderPeer));
+        excluded.replaceSubmitters(List.of(olderPeer));
+        assignmentRepository.saveAndFlush(excluded);
 
         testAuthRequest.givenAuthenticatedUser(user.getId())
                 .port(port)
@@ -541,13 +561,32 @@ class StudyAcceptanceTest {
                 .body("studies[0].id", equalTo(newerStudy.getId().intValue()))
                 .body("studies[0].role", equalTo("LEADER"))
                 .body("studies[0].isPublic", equalTo(true))
-                .body("studies[0].memberCount", equalTo(2))
+                .body("studies[0].memberCount", equalTo(3))
+                .body("studies[0].noticeCount", equalTo(1))
+                .body("studies[0].assignmentCount", equalTo(1))
                 .body("studies[0].imageUrl", containsString("study-profiles/study.png"))
                 .body("studies[1].id", equalTo(olderStudy.getId().intValue()))
                 .body("studies[1].role", equalTo("MEMBER"))
                 .body("studies[1].isPublic", equalTo(false))
                 .body("studies[1].memberCount", equalTo(2))
+                .body("studies[1].noticeCount", equalTo(1))
+                .body("studies[1].assignmentCount", equalTo(1))
                 .body("studies[1].imageUrl", nullValue());
+    }
+
+    @Test
+    @DisplayName("가입 스터디가 없으면 내 스터디 목록이 비어 있다")
+    void getMyStudiesWhenUserHasNoStudiesTest() {
+        User user = userRepository.saveAndFlush(User.create("신규 사용자", null));
+
+        testAuthRequest.givenAuthenticatedUser(user.getId())
+                .port(port)
+                .when()
+                .get("/studies/me")
+                .then()
+                .statusCode(200)
+                .body("studyCount", equalTo(0))
+                .body("studies.size()", equalTo(0));
     }
 
     @Test
@@ -1358,6 +1397,22 @@ class StudyAcceptanceTest {
                 Timestamp.valueOf(createdAt),
                 studyId
         );
+    }
+
+    private Notice saveListNotice(Study study, String title, List<StudyMember> recipients) {
+        Notice notice = Notice.create(study, title, "내용");
+        notice.addRecipients(recipients);
+        return noticeRepository.saveAndFlush(notice);
+    }
+
+    private Assignment saveListAssignment(Study study, String title, List<StudyMember> submitters) {
+        return assignmentRepository.saveAndFlush(Assignment.create(
+                study, title, "내용", "링크", SubmissionTarget.MEMBERS_ONLY, SubmissionVisibility.LEADER_ONLY,
+                ASSIGNMENT_NOW.plusDays(1), ASSIGNMENT_NOW, submitters));
+    }
+
+    private void setNoticeCreatedAt(Long noticeId, LocalDateTime createdAt) {
+        jdbcTemplate.update("UPDATE notices SET created_at = ? WHERE id = ?", Timestamp.valueOf(createdAt), noticeId);
     }
 
     private void setCreatedAt(Long studyMemberId, LocalDateTime createdAt) {

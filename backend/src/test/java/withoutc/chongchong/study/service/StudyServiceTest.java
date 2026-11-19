@@ -48,6 +48,8 @@ import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.repository.MyStudyQueryRepository;
+import withoutc.chongchong.study.repository.MyStudyQueryRepository.MyStudyRow;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
@@ -77,6 +79,9 @@ class StudyServiceTest {
 
     @Mock
     private StudyMemberRepository studyMemberRepository;
+
+    @Mock
+    private MyStudyQueryRepository myStudyQueryRepository;
 
     @Mock
     private NoticeRepository noticeRepository;
@@ -110,38 +115,15 @@ class StudyServiceTest {
     @DisplayName("내가 가입한 스터디 목록을 가입 순서와 공개 여부, 집계 정보와 함께 반환한다")
     void getMyStudiesTest() {
         Long userId = 1L;
-        User user = User.create("사용자", "profile-image-url");
-        Study leaderStudy = mock(Study.class);
-        Study memberStudy = mock(Study.class);
-        when(leaderStudy.getId()).thenReturn(1L);
-        when(leaderStudy.getName()).thenReturn("리더 스터디");
-        when(leaderStudy.getDescription()).thenReturn("리더 스터디 설명");
-        when(leaderStudy.isPublic()).thenReturn(true);
-        FileMetadata image = mock(FileMetadata.class);
-        when(leaderStudy.getImageFile()).thenReturn(image);
-        when(image.getObjectKey()).thenReturn("study-profiles/image.png");
-        when(image.getContentType()).thenReturn("image/png");
+        when(myStudyQueryRepository.findByUserId(userId, LocalDateTime.of(2026, 10, 30, 10, 0)))
+                .thenReturn(List.of(
+                        new MyStudyRow(1L, StudyMemberRole.LEADER, "리더 스터디", "리더 스터디 설명",
+                                true, 3, 1, 1, "study-profiles/image.png", "image/png"),
+                        new MyStudyRow(2L, StudyMemberRole.MEMBER, "멤버 스터디", "멤버 스터디 설명",
+                                false, 2, 1, 1, null, null)
+                ));
         when(fileUrlGenerator.generateImageUrl("study-profiles/image.png", "image/png"))
                 .thenReturn("https://example.com/image.png");
-        when(memberStudy.getId()).thenReturn(2L);
-        when(memberStudy.getName()).thenReturn("멤버 스터디");
-        when(memberStudy.getDescription()).thenReturn("멤버 스터디 설명");
-        when(memberStudy.isPublic()).thenReturn(false);
-
-        StudyMember leader = StudyMember.create(
-                leaderStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.LEADER);
-        StudyMember member = StudyMember.create(
-                memberStudy, user, user.getName(), user.getProfileImageUrl(), StudyMemberRole.MEMBER);
-        when(studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId))
-                .thenReturn(List.of(leader, member));
-        when(studyMemberRepository.countByStudyId(1L)).thenReturn(3);
-        when(studyMemberRepository.countByStudyId(2L)).thenReturn(2);
-        when(noticeRepository.countIncompleteNoticeByStudyId(1L, LocalDateTime.of(2026, 10, 30, 10, 0))).thenReturn(1L);
-        when(assignmentRepository.countIncompleteAssignmentByStudyId(1L)).thenReturn(1L);
-        when(noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(2L, member.getId()))
-                .thenReturn(1L);
-        when(assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(2L, member.getId()))
-                .thenReturn(1L);
 
         MyStudyListResponse response = studyService.getMyStudies(userId);
 
@@ -163,8 +145,7 @@ class StudyServiceTest {
                                 "https://example.com/image.png"),
                         tuple(2L, StudyMemberRole.MEMBER, "멤버 스터디", "멤버 스터디 설명", false, 2, 1, 1, null)
                 );
-        verify(studyMemberRepository).countByStudyId(1L);
-        verify(studyMemberRepository).countByStudyId(2L);
+        verifyNoInteractions(studyMemberRepository, noticeRepository, assignmentRepository);
     }
 
     @Test
