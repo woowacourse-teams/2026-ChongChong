@@ -1,7 +1,6 @@
 package withoutc.chongchong.study.controller.dto;
 
 import java.util.List;
-import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 
 public record MyStudyListResponse(
@@ -21,19 +20,5 @@ public record MyStudyListResponse(
             String imageUrl
     ) {
 
-        public static MyStudyResponse from(Study study, StudyMemberRole role, int memberCount, int noticeCount,
-                                           int assignmentCount, String imageUrl) {
-            return new MyStudyResponse(
-                    study.getId(),
-                    role,
-                    study.getName(),
-                    study.getDescription(),
-                    study.isPublic(),
-                    memberCount,
-                    noticeCount,
-                    assignmentCount,
-                    imageUrl
-            );
-        }
     }
 }

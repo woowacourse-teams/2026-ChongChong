@@ -2,7 +2,6 @@ package withoutc.chongchong.study.repository;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -73,9 +72,6 @@ public interface StudyMemberRepository extends JpaRepository<StudyMember, Long> 
         return findByStudyIdAndId(studyId, memberId)
                 .orElseThrow(() -> new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
     }
-
-    @EntityGraph(attributePaths = {"study", "study.imageFile"})
-    List<StudyMember> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<StudyMember> findAllByUserId(Long userId);
 

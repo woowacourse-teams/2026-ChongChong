@@ -6,7 +6,8 @@ logging:
 
 spring:
   datasource:
-    url: jdbc:h2:mem:chongchong-test-${random.uuid};MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    # H2 can reuse CTE results from the previous execution of a parameterized query.
+    url: jdbc:h2:mem:chongchong-test-${random.uuid};MODE=PostgreSQL;DB_CLOSE_DELAY=-1;QUERY_CACHE_SIZE=0
     driver-class-name: org.h2.Driver
     username: sa
     password:

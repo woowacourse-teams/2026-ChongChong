@@ -53,6 +53,7 @@ import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.repository.MyStudyQueryRepository;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.study.token.StudyInviteTokenProvider;
@@ -73,6 +74,7 @@ public class StudyService {
 
     private final UserRepository userRepository;
     private final StudyMemberRepository studyMemberRepository;
+    private final MyStudyQueryRepository myStudyQueryRepository;
     private final NoticeRepository noticeRepository;
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
@@ -165,21 +167,22 @@ public class StudyService {
     }
 
     public MyStudyListResponse getMyStudies(Long userId) {
-        List<StudyMember> studyMembers = studyMemberRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
-
         LocalDateTime noticeCreatedAfter = LocalDateTime.now(clock).minusDays(LEADER_NOTICE_VISIBLE_DAYS);
-        List<MyStudyResponse> responses = new ArrayList<>();
-        for (StudyMember studyMember : studyMembers) {
-            Study study = studyMember.getStudy();
-            String imageUrl = getImageUrl(study);
-
-            int memberCount = studyMemberRepository.countByStudyId(study.getId());
-            int noticeCount = unReadNoticeCount(studyMember, study.getId(), noticeCreatedAfter);
-            int assignmentCount = unFinishedAssignmentCount(studyMember, study.getId());
-
-            responses.add(MyStudyResponse.from(study, studyMember.getRole(), memberCount, noticeCount, assignmentCount,
-                    imageUrl));
-        }
+        List<MyStudyResponse> responses = myStudyQueryRepository.findByUserId(userId, noticeCreatedAfter).stream()
+                .map(study -> new MyStudyResponse(
+                        study.id(),
+                        study.role(),
+                        study.name(),
+                        study.description(),
+                        study.isPublic(),
+                        study.memberCount(),
+                        study.noticeCount(),
+                        study.assignmentCount(),
+                        study.imageObjectKey() == null
+                                ? null
+                                : fileUrlGenerator.generateImageUrl(study.imageObjectKey(), study.imageContentType())
+                ))
+                .toList();
 
         return new MyStudyListResponse(responses.size(), responses);
     }
@@ -324,20 +327,6 @@ public class StudyService {
 
         return new MemberStudyDetailResponse(totalCount, MemberNoticeSummaryListResponse.from(noticeResponses),
                 MemberAssignmentSummaryListResponse.from(assignmentResponses));
-    }
-
-    private int unReadNoticeCount(StudyMember studyMember, Long studyId, LocalDateTime noticeCreatedAfter) {
-        if (studyMember.getRole() == StudyMemberRole.LEADER) {
-            return (int) noticeRepository.countIncompleteNoticeByStudyId(studyId, noticeCreatedAfter);
-        }
-        return (int) noticeRepository.countIncompleteNoticeByStudyIdAndMemberId(studyId, studyMember.getId());
-    }
-
-    private int unFinishedAssignmentCount(StudyMember studyMember, Long studyId) {
-        if (studyMember.getRole() == StudyMemberRole.LEADER) {
-            return (int) assignmentRepository.countIncompleteAssignmentByStudyId(studyId);
-        }
-        return (int) assignmentRepository.countIncompleteAssignmentByStudyIdAndMemberId(studyId, studyMember.getId());
     }
 
     private String getImageUrl(Study study) {
