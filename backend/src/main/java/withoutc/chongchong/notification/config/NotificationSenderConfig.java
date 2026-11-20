@@ -2,6 +2,7 @@ package withoutc.chongchong.notification.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,8 @@ public class NotificationSenderConfig {
 
     private static final Profiles LOAD_TEST_PROFILE = Profiles.of("load-test");
     private static final Profiles PROD_PROFILE = Profiles.of("prod");
+    private static final String WEB_PUSH_CLIENT_BEAN = "webPushClient";
+    private static final String DELIVERY_EXECUTOR_BEAN = "notificationDeliveryExecutor";
 
     private final NotificationSenderProperties properties;
 
@@ -75,8 +78,12 @@ public class NotificationSenderConfig {
     @ConditionalOnProperty(prefix = "web-push.sender", name = "mode", havingValue = "real", matchIfMissing = true)
     WebPushClient webPushClient(
             WebPushVapidProperties vapidProperties,
-            NotificationDeliveryProperties deliveryProperties
+            NotificationDeliveryProperties deliveryProperties,
+            ConfigurableListableBeanFactory beanFactory
     ) {
+        // 종료할 때 발송 executor가 진행 중인 발송을 다 끝낸 뒤에 HTTP 클라이언트를 닫도록,
+        // executor를 이 client에 의존하는 bean으로 등록한다. 의존하는 bean이 먼저 종료된다.
+        beanFactory.registerDependentBean(WEB_PUSH_CLIENT_BEAN, DELIVERY_EXECUTOR_BEAN);
         return new WebPushClient(vapidProperties, deliveryProperties.sendTimeout());
     }
 }
