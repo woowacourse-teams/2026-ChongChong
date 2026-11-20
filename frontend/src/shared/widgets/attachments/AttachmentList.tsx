@@ -82,10 +82,6 @@ export default function AttachmentList({ attachments, onDownloadClick }: Props) 
               <a
                 href={file.downloadUrl}
                 onClick={() => onDownloadClick?.(file)}
-                download={file.originalFileName}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${file.originalFileName} 다운로드`}
                 css={{
                   ...rowStyle,
                   '&:hover': { opacity: 0.7 },

@@ -1,6 +1,7 @@
 import { Collection } from '@msw/data';
 import { z } from 'zod';
 import { memberTable } from '../../member/mocks/db';
+import { createSeedAssignmentFiles } from './files';
 
 const assignmentSchema = z.object({
   id: z.number(),
@@ -201,6 +202,17 @@ export const mockAssigments: AssignmentSchemaInput[] = [
     submitterIds: [6],
     remindAts: ['2099-12-30T10:00:00'],
     completeUserIds: [],
+  },
+  {
+    id: 18,
+    studyId: 2,
+    title: '농구 경기 분석 보고서',
+    content: '농구 경기의 공격 전술과 수비 전략을 분석하고 텍스트 보고서로 제출해주세요.',
+    submissionMethod: 'TXT 파일을 첨부해서 제출해주세요.',
+    closeAt: '2026-11-25T23:59:59',
+    submissionTarget: 'MEMBERS_AND_LEADER',
+    submissionVisibility: 'ALL_STUDY_MEMBERS',
+    completeUserIds: [1, 5],
   },
   ...Array.from({ length: 30 }, (_, index): AssignmentSchemaInput => ({
     id: 1000 + index,
@@ -468,9 +480,26 @@ export const mockSubmissions = [
     link: 'https://example.com/bunny-submission',
     createdAt: '2026-10-02T09:00:00',
   },
+  {
+    id: 28,
+    assignmentId: 18,
+    userId: 1,
+    content: '공격 전술과 스크린 활용을 분석한 보고서입니다.',
+    attachmentFileIds: [1001],
+    createdAt: '2026-11-18T10:00:00',
+  },
+  {
+    id: 29,
+    assignmentId: 18,
+    userId: 5,
+    content: '수비 로테이션과 리바운드 전략을 분석한 보고서입니다.',
+    attachmentFileIds: [1002],
+    createdAt: '2026-11-18T11:00:00',
+  },
 ] satisfies SubmissionSchemaInput[];
 
 export async function createSeedSubmissions() {
+  await createSeedAssignmentFiles();
   for (const mockSubmission of mockSubmissions) {
     await submissionTable.create(mockSubmission);
   }
