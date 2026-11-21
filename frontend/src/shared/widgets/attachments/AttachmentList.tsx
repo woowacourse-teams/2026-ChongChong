@@ -3,6 +3,7 @@ import type { Attachment } from '../../modules/files/types';
 import { tokens } from '../../../styles/global';
 import type { CSSObject } from '@emotion/react';
 import ImageGallery from '../images/ImageGallery';
+import { isIOS, isPWA, shareAttachment } from './shareAttachment';
 
 const rowStyle = {
   display: 'flex',
@@ -81,7 +82,12 @@ export default function AttachmentList({ attachments, onDownloadClick }: Props) 
             {file.downloadUrl ? (
               <a
                 href={file.downloadUrl}
-                onClick={() => onDownloadClick?.(file)}
+                onClick={(event) => {
+                  onDownloadClick?.(file);
+                  if (!isIOS() || !isPWA()) return;
+                  event.preventDefault();
+                  void shareAttachment(file).catch(console.error);
+                }}
                 css={{
                   ...rowStyle,
                   '&:hover': { opacity: 0.7 },
