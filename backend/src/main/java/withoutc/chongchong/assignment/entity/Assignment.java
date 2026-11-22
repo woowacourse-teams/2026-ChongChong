@@ -55,7 +55,7 @@ public class Assignment extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "submission_method")
+    @Column(name = "submission_method", columnDefinition = "TEXT")
     private String submissionMethod;
 
     @Enumerated(EnumType.STRING)

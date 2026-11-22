@@ -50,7 +50,7 @@ class AssignmentRecurrencePostgresMigrationTest {
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
                 .cleanDisabled(false)
-                .target(MigrationVersion.fromVersion("35"))
+                .target(MigrationVersion.fromVersion("36"))
                 .load();
         flyway.clean();
         flyway.migrate();
@@ -110,6 +110,19 @@ class AssignmentRecurrencePostgresMigrationTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
         assertThatThrownBy(() -> insertRecurrence("RANGE", "MEMBERS_ONLY", 5))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("과제 제출 방법은 255자를 넘어도 저장된다")
+    void storesLongSubmissionMethod() {
+        long assignmentId = insertOccurrence(recurrenceId, OCCURRENCE_DATE);
+        String submissionMethod = "가".repeat(10000);
+
+        jdbcTemplate.update("UPDATE assignments SET submission_method = ? WHERE id = ?", submissionMethod, assignmentId);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT submission_method FROM assignments WHERE id = ?", String.class, assignmentId))
+                .isEqualTo(submissionMethod);
     }
 
     private long insertRecurrence(String submitterMode, String submissionTarget, int intervalWeeks) {
