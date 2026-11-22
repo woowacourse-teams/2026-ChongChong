@@ -1,0 +1,49 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+  - { $ref: '../../components/parameters.yaml#/AssignmentRecurrenceId' }
+patch:
+  tags: [Assignment]
+  operationId: updateAssignmentRecurrence
+  x-backend:
+    status: in-progress
+    owner: frombunny
+    description: |
+      이후 생성되는 회차에만 적용한다. 이미 생성된 회차는 일반 과제 수정 API로 고친다(ADR-0064).
+  summary: 반복 과제 수정
+  description: 스터디 리더가 반복 과제를 부분 수정한다. 이미 생성된 회차는 바뀌지 않는다. 일정을 바꾸려면 nextCloseAt을 보내고, 간격을 바꾸려면 intervalWeeks와 nextCloseAt을 함께 보낸다. 입력·형식 및 도메인 값 오류(400), 인증 실패(401), 접근·수정 권한 없음(403), 반복 과제 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/assignment-recurrences.yaml#/AssignmentRecurrenceUpdateRequest' }
+        examples:
+          content:
+            summary: 내용만 수정
+            value: { content: 다음 회차부터 문제 수를 늘려요. }
+          schedule:
+            summary: 다음 회차부터 격주 목요일로 변경
+            value: { nextCloseAt: '2099-12-10T23:59:00', intervalWeeks: 2, remindAts: ['2099-12-09T23:59:00'] }
+  responses:
+    '204': { description: 반복 과제 수정 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/AssignmentRecurrenceWriteBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentRecurrenceNotFound' }
+delete:
+  tags: [Assignment]
+  operationId: deleteAssignmentRecurrence
+  x-backend:
+    status: in-progress
+    owner: frombunny
+    description: |
+      반복 규칙만 삭제한다. 생성된 회차와 제출물은 남고 규칙과의 연결만 끊긴다(ADR-0064).
+  summary: 반복 과제 삭제
+  description: 스터디 리더가 반복 과제를 삭제해 이후 회차 생성을 멈춘다. 이미 생성된 회차 과제와 제출물은 삭제하지 않는다. 형식 오류(400), 인증 실패(401), 접근·삭제 권한 없음(403), 반복 과제 없음(404)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '204': { description: 반복 과제 삭제 성공. 응답 본문 없음. }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+    '404': { $ref: '../../components/responses.yaml#/AssignmentRecurrenceNotFound' }

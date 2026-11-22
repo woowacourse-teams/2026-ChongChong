@@ -19,6 +19,13 @@ AssignmentId:
   description: 과제 식별자
   schema: { type: integer, format: int64, minimum: 1 }
   example: 1
+AssignmentRecurrenceId:
+  name: recurrenceId
+  in: path
+  required: true
+  description: 반복 과제 식별자
+  schema: { type: integer, format: int64, minimum: 1 }
+  example: 1
 SubmissionId:
   name: submissionId
   in: path

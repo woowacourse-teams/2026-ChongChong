@@ -1,0 +1,57 @@
+parameters:
+  - { $ref: '../../components/parameters.yaml#/StudyId' }
+post:
+  tags: [Assignment]
+  operationId: createAssignmentRecurrence
+  x-backend:
+    status: in-progress
+    owner: frombunny
+    description: |
+      반복 규칙을 저장하고 첫 회차 과제를 같은 Transaction에서 생성한다(ADR-0064).
+      이후 회차는 직전 회차가 마감될 때 워커가 생성한다.
+  summary: 반복 과제 등록
+  description: 스터디 리더가 반복 과제를 등록하고 첫 회차 과제를 함께 생성한다. 첨부파일은 받지 않는다. submissionTarget(범위 지정)과 submitterIds(직접 선택) 중 하나만 보낸다. 입력·형식 및 제목·내용·제출 방법·마감·리마인드·반복 간격 값 오류(400), 인증 실패(401), 접근·작성 권한 없음(403)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: { $ref: '../../components/schemas/assignment-recurrences.yaml#/AssignmentRecurrenceCreateRequest' }
+        examples:
+          range:
+            summary: 매주 화요일 마감, 스터디원 전체
+            value: { title: 알고리즘 풀이, content: 이번 주 문제를 풀고 링크를 제출해주세요., submissionMethod: 링크 제출, submissionTarget: MEMBERS_ONLY, submissionVisibility: LEADER_ONLY, closeAt: '2099-12-01T23:59:00', intervalWeeks: 1, remindAts: ['2099-11-30T23:59:00', '2099-12-01T22:59:00'] }
+          selected:
+            summary: 격주 마감, 멤버 직접 선택
+            value: { title: 발표 준비, content: 발표 자료를 제출해주세요., submitterIds: [2, 3], submissionVisibility: ALL_STUDY_MEMBERS, closeAt: '2099-12-03T21:00:00', intervalWeeks: 2 }
+  responses:
+    '201':
+      description: 반복 과제 등록 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/assignment-recurrences.yaml#/AssignmentRecurrenceCreateResponse' }
+          example: { recurrenceId: 1, assignmentId: 10 }
+    '400': { $ref: '../../components/responses.yaml#/AssignmentRecurrenceWriteBadRequest' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }
+get:
+  tags: [Assignment]
+  operationId: getAssignmentRecurrences
+  x-backend:
+    status: in-progress
+    owner: frombunny
+    description: |
+      스터디의 반복 과제 전체를 등록 순으로 반환한다. 수정 화면에 필요한 값을 모두 포함하며 페이지네이션하지 않는다.
+  summary: 반복 과제 목록 조회
+  description: 스터디 리더가 반복 과제 목록을 조회한다. 일정과 리마인드는 다음에 생성할 회차 기준이다. 형식 오류(400), 인증 실패(401), 접근 권한 없음(403)을 반환할 수 있다.
+  security: [{ bearerAuth: [] }]
+  responses:
+    '200':
+      description: 반복 과제 목록 조회 성공
+      content:
+        application/json:
+          schema: { $ref: '../../components/schemas/assignment-recurrences.yaml#/AssignmentRecurrenceListResponse' }
+          example: { recurrences: [{ id: 1, title: 알고리즘 풀이, content: 이번 주 문제를 풀고 링크를 제출해주세요., submissionMethod: 링크 제출, submissionVisibility: LEADER_ONLY, submissionTarget: MEMBERS_ONLY, submitterIds: [], intervalWeeks: 1, dayOfWeek: TUESDAY, closeTime: '23:59:00', nextCloseAt: '2099-12-08T23:59:00', remindAts: ['2099-12-07T23:59:00', '2099-12-08T22:59:00'] }] }
+    '400': { $ref: '../../components/responses.yaml#/InvalidRequestOnly' }
+    '401': { $ref: '../../components/responses.yaml#/AuthenticationRequired' }
+    '403': { $ref: '../../components/responses.yaml#/StudyAccessOrActionDenied' }

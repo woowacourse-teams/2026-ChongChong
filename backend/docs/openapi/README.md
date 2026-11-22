@@ -47,6 +47,10 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 | 과제 수정 | `PATCH /api/studies/{studyId}/assignments/{assignmentId}` | [paths/assignments/detail.yaml](paths/assignments/detail.yaml) |
 | 과제 삭제 | `DELETE /api/studies/{studyId}/assignments/{assignmentId}` | [paths/assignments/detail.yaml](paths/assignments/detail.yaml) |
 | 과제 제출 현황 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/status` | [paths/assignments/status.yaml](paths/assignments/status.yaml) |
+| 반복 과제 등록 | `POST /api/studies/{studyId}/assignment-recurrences` | [paths/assignment-recurrences/collection.yaml](paths/assignment-recurrences/collection.yaml) |
+| 반복 과제 목록 조회 | `GET /api/studies/{studyId}/assignment-recurrences` | [paths/assignment-recurrences/collection.yaml](paths/assignment-recurrences/collection.yaml) |
+| 반복 과제 수정 | `PATCH /api/studies/{studyId}/assignment-recurrences/{recurrenceId}` | [paths/assignment-recurrences/detail.yaml](paths/assignment-recurrences/detail.yaml) |
+| 반복 과제 삭제 | `DELETE /api/studies/{studyId}/assignment-recurrences/{recurrenceId}` | [paths/assignment-recurrences/detail.yaml](paths/assignment-recurrences/detail.yaml) |
 | 과제 제출 | `POST /api/studies/{studyId}/assignments/{assignmentId}/submissions` | [paths/assignment-submissions/collection.yaml](paths/assignment-submissions/collection.yaml) |
 | 과제 제출 목록 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions` | [paths/assignment-submissions/collection.yaml](paths/assignment-submissions/collection.yaml) |
 | 내 과제 제출 조회 | `GET /api/studies/{studyId}/assignments/{assignmentId}/submissions/my` | [paths/assignment-submissions/my-submission.yaml](paths/assignment-submissions/my-submission.yaml) |
@@ -83,7 +87,7 @@ API를 수정할 때는 아래 표에서 파일을 찾아 설명·파라미터·
 - [오류 스키마](components/schemas/errors.yaml): 오류 코드·메시지·필드 오류 구조
 - [공통 타입](components/schemas/common.yaml): 서버 날짜·시간
 - [스터디 캘린더](components/schemas/study-calendar.yaml): 월간 조회 범위, 공지·과제 이벤트와 본인 상태
-- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [제출물](components/schemas/assignment-submissions.yaml), [Web Push](components/schemas/web-push-subscriptions.yaml), [알림](components/schemas/notifications.yaml)
+- 도메인별 요청·응답 스키마: [인증](components/schemas/auth.yaml), [스터디·멤버](components/schemas/studies.yaml), [공지](components/schemas/notices.yaml), [과제](components/schemas/assignments.yaml), [반복 과제](components/schemas/assignment-recurrences.yaml), [제출물](components/schemas/assignment-submissions.yaml), [Web Push](components/schemas/web-push-subscriptions.yaml), [알림](components/schemas/notifications.yaml)
 
 공통 정의를 바꾸면 이를 참조하는 여러 API에 적용된다. 특정 API만 달라져야 한다면 해당 API에 맞는 정의를 분리한다.
 `$ref` 경로는 작성 중인 파일 기준 상대경로이며, 아래 검증 명령으로 참조가 정상인지 확인한다.
