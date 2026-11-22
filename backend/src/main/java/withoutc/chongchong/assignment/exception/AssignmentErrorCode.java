@@ -23,6 +23,8 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     INVALID_REMIND_AT(HttpStatus.BAD_REQUEST, "INVALID_REMIND_AT", "리마인드 시각이 올바르지 않습니다."),
 
+    INVALID_RECURRENCE_INTERVAL(HttpStatus.BAD_REQUEST, "INVALID_RECURRENCE_INTERVAL", "반복 간격은 1주에서 4주 사이여야 합니다."),
+
     ASSIGNMENT_SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_SUBMISSION_NOT_FOUND", "존재하지 않는 제출물입니다."),
 
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "존재하지 않는 과제입니다."),

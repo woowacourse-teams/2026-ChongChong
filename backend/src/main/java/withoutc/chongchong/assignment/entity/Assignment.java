@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -69,6 +70,12 @@ public class Assignment extends BaseEntity {
     @Column(name = "close_at", nullable = false)
     private LocalDateTime closeAt;
 
+    @Column(name = "recurrence_id")
+    private Long recurrenceId;
+
+    @Column(name = "occurrence_date")
+    private LocalDate occurrenceDate;
+
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<AssignmentReminder> reminders = new ArrayList<>();
 
@@ -93,6 +100,11 @@ public class Assignment extends BaseEntity {
                 submissionVisibility, closeAt, now);
         assignment.replaceSubmitters(submitters);
         return assignment;
+    }
+
+    public void linkRecurrence(Long recurrenceId, LocalDate occurrenceDate) {
+        this.recurrenceId = recurrenceId;
+        this.occurrenceDate = occurrenceDate;
     }
 
     public void addAttachments(List<FileMetadata> files) {
