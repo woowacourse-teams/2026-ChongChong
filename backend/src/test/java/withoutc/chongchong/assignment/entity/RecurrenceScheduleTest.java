@@ -60,6 +60,29 @@ class RecurrenceScheduleTest {
         assertThat(schedule.getNextOccurrenceDate()).isEqualTo(LocalDate.of(2026, 12, 8));
     }
 
+    @Test
+    @DisplayName("일정을 바꾸면 다음 회차부터 새 요일·시각·간격을 쓰고 다음 생성 시각은 유지한다")
+    void reschedule() {
+        RecurrenceSchedule schedule = RecurrenceSchedule.startAfter(FIRST_CLOSE_AT, 1);
+
+        schedule.reschedule(LocalDateTime.of(2026, 12, 10, 21, 0), 2);
+
+        assertThat(schedule.nextCloseAt()).isEqualTo(LocalDateTime.of(2026, 12, 10, 21, 0));
+        assertThat(schedule.getIntervalWeeks()).isEqualTo(2);
+        assertThat(schedule.getNextPublishAt()).isEqualTo(FIRST_CLOSE_AT);
+    }
+
+    @Test
+    @DisplayName("다음 회차 마감은 지금 열린 회차의 마감보다 뒤여야 한다")
+    void rejectRescheduleBeforeOpenOccurrenceCloses() {
+        RecurrenceSchedule schedule = RecurrenceSchedule.startAfter(FIRST_CLOSE_AT, 1);
+
+        assertThatThrownBy(() -> schedule.reschedule(FIRST_CLOSE_AT, 1))
+                .isInstanceOf(AssignmentException.class)
+                .extracting("errorCode")
+                .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
+    }
+
     @ParameterizedTest
     @ValueSource(ints = {0, 5})
     @DisplayName("반복 간격은 1주에서 4주 사이만 허용한다")

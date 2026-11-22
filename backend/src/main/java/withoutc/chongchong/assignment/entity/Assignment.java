@@ -102,9 +102,9 @@ public class Assignment extends BaseEntity {
         return assignment;
     }
 
-    public void linkRecurrence(Long recurrenceId, LocalDate occurrenceDate) {
+    public void linkRecurrence(Long recurrenceId) {
         this.recurrenceId = recurrenceId;
-        this.occurrenceDate = occurrenceDate;
+        this.occurrenceDate = closeAt.toLocalDate();
     }
 
     public void addAttachments(List<FileMetadata> files) {
@@ -257,25 +257,25 @@ public class Assignment extends BaseEntity {
         initializeSubmissions(members);
     }
 
-    private static void validateTitle(String title) {
+    static void validateTitle(String title) {
         if (title == null || title.isBlank() || title.length() > MAX_TITLE_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_TITLE);
         }
     }
 
-    private static void validateContent(String content) {
+    static void validateContent(String content) {
         if (content == null || content.isBlank() || content.length() > MAX_CONTENT_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
         }
     }
 
-    private static void validateSubmissionMethod(String submissionMethod) {
+    static void validateSubmissionMethod(String submissionMethod) {
         if (submissionMethod != null && submissionMethod.length() > MAX_SUBMISSION_METHOD_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
         }
     }
 
-    private static String normalizeSubmissionMethod(String submissionMethod) {
+    static String normalizeSubmissionMethod(String submissionMethod) {
         if (submissionMethod == null || submissionMethod.isBlank()) {
             return "";
         }

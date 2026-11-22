@@ -58,6 +58,17 @@ public class RecurrenceSchedule {
         nextOccurrenceDate = nextOccurrenceDate.plusWeeks(intervalWeeks);
     }
 
+    // 다음 회차부터 새 일정을 적용한다. 지금 열린 회차가 마감될 때 다음 회차를 만드는 시각은 그대로 둔다.
+    public void reschedule(LocalDateTime nextCloseAt, int intervalWeeks) {
+        validateIntervalWeeks(intervalWeeks);
+        if (!nextCloseAt.isAfter(nextPublishAt)) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_CLOSE_AT);
+        }
+        this.closeTime = nextCloseAt.toLocalTime();
+        this.intervalWeeks = intervalWeeks;
+        this.nextOccurrenceDate = nextCloseAt.toLocalDate();
+    }
+
     public boolean allowsRemindOffset(long minutesBeforeClose) {
         return minutesBeforeClose > 0 && minutesBeforeClose < intervalWeeks * MINUTES_PER_WEEK;
     }

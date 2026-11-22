@@ -29,6 +29,8 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "존재하지 않는 과제입니다."),
 
+    ASSIGNMENT_RECURRENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_RECURRENCE_NOT_FOUND", "존재하지 않는 반복 과제입니다."),
+
     EMPTY_SUBMISSION(HttpStatus.BAD_REQUEST, "EMPTY_SUBMISSION", "내용, 링크 또는 첨부파일을 제출해 주세요."),
 
     INVALID_ATTACHMENT_IDS(HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_IDS", "첨부파일 식별자가 올바르지 않습니다."),

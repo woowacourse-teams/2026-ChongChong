@@ -86,6 +86,42 @@ class AssignmentRecurrenceTest {
         assertThat(occurrence.getPendingRemindAts(lateNow)).containsExactly(LocalDateTime.of(2026, 12, 8, 22, 59));
     }
 
+    @Test
+    @DisplayName("다음 회차 기준 리마인드 시각을 마감 기준 상대 시간으로 교체한다")
+    void replaceRemindAts() {
+        AssignmentRecurrence recurrence = startedRecurrence();
+
+        recurrence.replaceRemindAts(List.of(LocalDateTime.of(2026, 12, 8, 20, 59)));
+
+        assertThat(recurrence.getRemindOffsets()).containsExactly(180);
+        assertThat(recurrence.nextRemindAts()).containsExactly(LocalDateTime.of(2026, 12, 8, 20, 59));
+    }
+
+    @Test
+    @DisplayName("간격만 보내고 다음 회차 마감을 보내지 않으면 일정을 바꾸지 않고 거부한다")
+    void rejectIntervalWithoutNextCloseAt() {
+        AssignmentRecurrence recurrence = startedRecurrence();
+
+        assertThatThrownBy(() -> recurrence.reschedule(null, 2))
+                .isInstanceOf(AssignmentException.class)
+                .extracting("errorCode")
+                .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
+    }
+
+    @Test
+    @DisplayName("직접 선택과 범위 지정을 오가면 반대 방식의 값을 비운다")
+    void switchSubmitterMode() {
+        AssignmentRecurrence recurrence = startedRecurrence();
+
+        recurrence.selectSubmitters(List.of(2L));
+        assertThat(recurrence.getSubmissionTarget()).isNull();
+        assertThat(recurrence.getSubmitterIds()).containsExactly(2L);
+
+        recurrence.useRange(SubmissionTarget.MEMBERS_AND_LEADER);
+        assertThat(recurrence.selectsSubmitters()).isFalse();
+        assertThat(recurrence.getSubmitterIds()).isEmpty();
+    }
+
     private AssignmentRecurrence startedRecurrence() {
         AssignmentRecurrence recurrence = AssignmentRecurrence.startWith(firstOccurrence(FIRST_REMIND_ATS), 1,
                 SubmitterMode.RANGE);
