@@ -88,8 +88,16 @@
 
 ### 워커는 유저 → 스터디 → 규칙 순서로 잠근 뒤 회차 하나를 만든다
 
-`AssignmentRecurrenceWorker`는 각 인스턴스에서 `@Scheduled(fixedDelay)`로 실행된다. 기본 주기는 1분, 배치 크기는 100이며
-설정값으로 바꿀 수 있다. 두 값은 부하 테스트 결과에 따라 조정한다.
+`AssignmentRecurrenceWorker`는 각 인스턴스에서 `@Scheduled(fixedDelay)`로 실행된다. 설정은 `assignment.recurrence.*`에 둔다.
+
+| 설정 | 기본값 | 설명 |
+| --- | --- | --- |
+| `enabled` | `true` | 워커를 끄는 스위치. 회차를 잘못 만드는 문제가 생기면 배포 없이 멈춘다 |
+| `fixed-delay` | `1m` | 실행 주기. 다음 회차는 일주일 동안 열리므로 1분 지연은 무시할 수 있다 |
+| `batch-size` | `100` | 한 번에 처리하는 규칙 수 (1~1000) |
+| `retry-delay` | `10m` | 생성에 실패한 규칙을 다시 시도하기까지 기다리는 시간 |
+
+값이 범위를 벗어나면 애플리케이션이 시작되지 않는다. 주기와 배치 크기는 부하 테스트 결과에 따라 조정한다.
 
 ```text
 1. 후보 조회 (잠금 없음)
@@ -109,14 +117,42 @@
    Commit
 ```
 
-- 잠금 순서는 기존 과제 생성(`AssignmentService.create`)과 스터디 삭제(`StudyService.deleteStudy`)가 따르는
-  "부모 먼저" 순서와 같다. 규칙을 먼저 잠그면 스터디 삭제(스터디 `FOR UPDATE` → CASCADE로 규칙 삭제)와 교착 상태가 생길 수 있다.
+- 후보는 잠금 없이 먼저 읽는다. 후보 조회에서 바로 잠그면 규칙을 먼저 잠그게 되어 아래 잠금 순서가 깨진다.
+- 잠금 순서는 유저 → 스터디 → 규칙이다. 스터디 삭제(스터디 `FOR UPDATE` → CASCADE로 규칙 삭제)와 가입(유저 → 스터디 `FOR UPDATE`)이
+  같은 방향으로 잠그므로, 규칙을 먼저 잠그면 이들과 교착 상태가 생길 수 있다.
+- 규칙마다 Transaction을 따로 연다. 규칙 사이에는 함께 성공하거나 실패해야 할 불변식이 없고, 배치 전체를 묶으면
+  여러 스터디의 유저·스터디 잠금을 배치가 끝날 때까지 쥐어 탈퇴·삭제를 막으며 한 규칙의 실패로 전체가 롤백된다.
+- 반복과 예외 처리는 워커가, 규칙 하나의 생성 Transaction은 `AssignmentRecurrenceGenerationService`가 맡는다.
+  `@Transactional`은 다른 빈을 거쳐 호출할 때만 적용되기 때문이다. 리더 API 서비스와는 권한 검사와 잠금 범위가 달라 분리한다.
+- 제출 대상은 잠금 전에 읽은 멤버 중 유저를 잠근 멤버로 한정한다. 명단을 읽은 뒤 잠그기 전에 가입한 멤버는 다음 회차부터 포함된다.
+  다시 읽어도 그 직후의 가입은 막을 수 없으므로 명단을 읽은 시점을 기준선으로 삼는다. 스터디를 잠근 뒤에는 가입이 대기한다.
 - 스터디와 유저는 `FOR SHARE`이므로 두 인스턴스가 동시에 잡아도 서로 막지 않는다. 생성 주체는 규칙의 `SKIP LOCKED`가 정한다.
 - Transaction 안에서는 DB 작업만 한다. 푸시 발송 같은 외부 호출을 넣지 않는다. 생성 알림은 논리 알림 행만 저장하고
   발송은 `NotificationDeliveryWorker`가 맡는다([0038](0038-separate-logical-notifications-and-web-push-delivery.md)).
 - `UNIQUE(recurrence_id, occurrence_date)` 위반은 "이미 생성됨"으로 본다. 위반으로 Transaction이 중단되므로,
   새 Transaction에서 규칙을 다시 잠그고 `next_publish_at`과 `next_occurrence_date`를 그 회차 다음으로 옮긴 뒤 경고 로그를 남긴다.
-- 리더 API와 워커는 권한 검사 이후의 회차 생성 로직을 공유한다. 리더 API는 기존처럼 권한 검사 후 이 로직을 호출한다.
+- 첫 회차는 리더 요청이므로 일반 과제 생성 경로(`AssignmentService.createAssignment`)로 만들고 잘못된 입력을 400으로 돌려준다.
+  이후 회차는 시스템이 만들므로 문제가 있으면 건너뛰고 로그를 남긴다. 두 경로는 검증 실패와 생성 알림의 의미가 달라 분리한다.
+
+### 생성에 실패한 규칙은 미루고, 계속 실패하면 사람이 알게 한다
+
+- 유니크 위반 외의 예외로 생성에 실패하면 새 Transaction에서 `next_publish_at`을 지금 + `retry-delay`로 미룬다.
+  미루지 않으면 실패한 규칙이 매 주기 후보 앞자리를 차지해, 그런 규칙이 배치 크기만큼 쌓였을 때 정상 규칙이 처리되지 않는다.
+- 시도 횟수에 상한을 두지 않는다. 계속되는 실패는 대부분 코드나 데이터 결함이고, 고쳐 배포하면 다음 시도에서 생성이 재개된다.
+  상한을 두면 고친 뒤 사람이 다시 켜야 하고 그동안 회차가 빠진다.
+- 실패마다 `assignment.recurrence.generation.failed` 카운터를 올린다. 알람은 인프라 후속 작업으로 붙인다. 리더에게는 알리지 않는다.
+
+### 로그는 전용 로거로 남긴다
+
+`AssignmentRecurrenceLogger`가 모든 이벤트에 `service`, `environment`, `component`, `recurrence_id`를 붙인다.
+
+| 이벤트 | 레벨 | 의미 |
+| --- | --- | --- |
+| `assignment_recurrence_occurrence_created` | INFO | 회차 생성. `assignment_id`, `occurrence_date` 포함 |
+| `assignment_recurrence_occurrences_skipped` | WARN | 마감이 지난 회차를 건너뜀. 사용자에게는 과제가 빠진 것이다 |
+| `assignment_recurrence_no_submitters` | INFO | 대상이 0명이라 건너뜀. 정상 상황이다 |
+| `assignment_recurrence_occurrence_exists` | WARN | 유니크 위반. 잠금이 정상이면 생기지 않아야 한다 |
+| `assignment_recurrence_generation_failed` | ERROR | 생성 실패. 실패 카운터도 함께 올린다 |
 
 ### 자동 생성 회차의 생성 알림은 리더도 받는다
 
@@ -135,6 +171,8 @@
 ### API
 
 [0028](0028-adopt-spec-first-api-contracts.md)에 따라 OpenAPI 명세를 먼저 작성한다. 리더만 호출할 수 있다.
+범위 지정(`submissionTarget`)과 직접 선택(`submitterIds`)은 하나만 보낸다. 둘 다 보내거나 둘 다 생략하면
+`INVALID_SUBMITTER_CHOICE`(400)를 돌려준다. 목록은 최근 등록순이며 수정 화면에 필요한 값을 모두 담고 페이지네이션하지 않는다.
 
 | 메서드 | 경로 | 설명 |
 | --- | --- | --- |
@@ -177,6 +215,19 @@
 회차마다 S3 객체를 복사하면 복사 실패와 고아 파일 정리가 얽힌다. `UNIQUE(file_id)`를 풀면
 [0061](0061-clean-up-orphan-files-with-mark-and-sweep.md)의 참조 판단을 바꿔야 한다. 반복 과제는 회차마다 자료가 다른 경우가 많아 1차 범위에서 제외한다.
 
+### 배치 전체를 한 Transaction으로 처리
+
+커밋 횟수는 줄지만 여러 스터디의 잠금을 배치가 끝날 때까지 쥐고, 한 규칙의 실패가 배치 전체를 롤백한다.
+
+### 한 인스턴스만 실행 (ShedLock 등)
+
+중복은 막지만 라이브러리와 잠금 테이블이 늘고 병렬 처리가 사라진다. 규칙 행의 `SKIP LOCKED`가 더 작은 단위로 같은 보장을 한다.
+
+### 실패 횟수 컬럼과 점점 길어지는 재시도 간격
+
+계속되는 실패에 쓰는 자원과 로그가 줄지만, 마이그레이션과 상한 초과 후의 재개 절차가 필요하다.
+일주일 주기 작업에서는 고정 간격 재시도로 충분하다.
+
 ### 밀린 회차를 모두 생성
 
 서버가 멈춰 있던 동안의 회차를 모두 만들면 이미 마감된 과제와 알림이 한꺼번에 생긴다. 지난 회차는 제출할 수도 없다.
@@ -196,6 +247,9 @@
 - 회차 생성 Transaction에 외부 호출이 추가되면 잠금 시간이 길어진다. 리뷰에서 이 규칙을 확인해야 한다.
 - 워커 주기만큼 다음 회차 생성이 늦어질 수 있다. 기본 1분이면 직전 회차 마감 후 최대 약 1분 뒤에 생성된다.
 - `SELECTED` 규칙은 새로 들어온 멤버를 자동으로 포함하지 않는다.
+- 회차가 만들어지는 순간에 가입한 멤버는 그 회차에서 빠진다. 리더가 해당 회차의 제출 대상을 수정해 추가할 수 있다.
+- 계속 실패하는 규칙은 `retry-delay`마다 재시도하고 ERROR 로그를 남긴다.
+- H2 테스트 스키마는 엔티티로 만들어져 FK의 `ON DELETE SET NULL`이 없다. 이 동작은 PostgreSQL 마이그레이션 테스트로 검증한다.
 
 ### 마이그레이션 호환성 ([0060](0060-preserve-database-compatibility-for-application-rollback.md))
 
@@ -210,10 +264,6 @@
 
 ## 후속 작업
 
-- Flyway 마이그레이션 추가: 새 테이블 3개, `assignments` 컬럼과 유니크 제약, `next_publish_at` 인덱스
-- OpenAPI 명세 작성 후 반복 규칙 등록·목록·수정·삭제 API 구현
-- 회차 생성 로직을 `AssignmentService.create`에서 분리해 리더 API와 워커가 공유
-- `AssignmentRecurrenceWorker` 구현
 - 부하 테스트로 워커 주기와 배치 크기 검증 후 기본값 조정
-- Testcontainers 테스트: 두 Transaction 동시 실행 시 회차 하나만 생성, 스터디 삭제와 워커 동시 실행 시 교착 상태 없음,
-  밀린 회차 건너뛰기, 대상 0명 건너뛰기, KST 마감·리마인드 계산, 규칙 삭제 후 회차와 제출물 보존
+- `assignment.recurrence.generation.failed` 메트릭에 CloudWatch 알람 연결
+- 과제 제목·내용·제출 방법을 값 객체로 분리해 과제와 반복 규칙이 함께 쓰는 리팩터링 (현재는 `Assignment`의 검증 메서드를 공유)

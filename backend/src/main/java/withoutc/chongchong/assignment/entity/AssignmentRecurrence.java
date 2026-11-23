@@ -92,6 +92,13 @@ public class AssignmentRecurrence extends BaseEntity {
         return submitterMode == SubmitterMode.SELECTED;
     }
 
+    public boolean includes(StudyMember member) {
+        if (selectsSubmitters()) {
+            return submitterIds.contains(member.getId());
+        }
+        return submissionTarget.requiresLeaderSubmission() || !member.isLeader();
+    }
+
     public Assignment createOccurrence(List<StudyMember> submitters, LocalDateTime now) {
         LocalDateTime closeAt = schedule.nextCloseAt();
         Assignment occurrence = Assignment.create(study, title, content, submissionMethod, submissionTarget,
@@ -107,6 +114,10 @@ public class AssignmentRecurrence extends BaseEntity {
 
     public void advance() {
         schedule.advance();
+    }
+
+    public void postponeGeneration(LocalDateTime until) {
+        schedule.postponeGeneration(until);
     }
 
     public List<LocalDateTime> nextRemindAts() {

@@ -69,6 +69,10 @@ public class RecurrenceSchedule {
         this.nextOccurrenceDate = nextCloseAt.toLocalDate();
     }
 
+    public void postponeGeneration(LocalDateTime until) {
+        nextPublishAt = until;
+    }
+
     public boolean allowsRemindOffset(long minutesBeforeClose) {
         return minutesBeforeClose > 0 && minutesBeforeClose < intervalWeeks * MINUTES_PER_WEEK;
     }

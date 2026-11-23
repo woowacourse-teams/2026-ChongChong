@@ -82,6 +82,12 @@ public class NotificationService {
         recipients = recipients.stream()
                 .filter(recipient -> !recipient.getUser().getId().equals(userId))
                 .toList();
+        createAssignmentCreatedEventNotifications(assignment, recipients);
+    }
+
+    // 반복 과제 워커가 만든 회차처럼 만든 사람이 없을 때는 수신자 전체에게 보낸다.
+    @Transactional
+    public void createAssignmentCreatedEventNotifications(Assignment assignment, List<StudyMember> recipients) {
         saveNotifications(assignment.getStudy(), recipients, NotificationType.NEW, assignment.getId(),
                 ResourceType.ASSIGNMENT);
     }
