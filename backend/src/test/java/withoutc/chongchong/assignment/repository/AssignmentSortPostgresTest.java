@@ -75,13 +75,13 @@ class AssignmentSortPostgresTest extends PostgresContainerTest {
         assignmentRepository.flush();
 
         assertThat(assignmentRepository.findByUnsubmittedCursor(study.getId(), member.getId(), null, 0,
-                PageRequest.of(0, 1))).extracting(Assignment::getId).containsExactly(pending.getId());
+                NOW, PageRequest.of(0, 1))).extracting(Assignment::getId).containsExactly(pending.getId());
         assertThat(assignmentRepository.findByUnsubmittedCursor(study.getId(), member.getId(), pending.getId(), 0,
-                PageRequest.of(0, 1))).extracting(Assignment::getId).containsExactly(unassigned.getId());
+                NOW, PageRequest.of(0, 1))).extracting(Assignment::getId).containsExactly(unassigned.getId());
         assertThat(assignmentRepository.findByUnsubmittedCursor(study.getId(), member.getId(), unassigned.getId(), 1,
-                PageRequest.of(0, 1))).extracting(Assignment::getId).containsExactly(submitted.getId());
+                NOW, PageRequest.of(0, 1))).extracting(Assignment::getId).containsExactly(submitted.getId());
         assertThat(assignmentRepository.findByUnsubmittedCursor(study.getId(), member.getId(), submitted.getId(), 1,
-                PageRequest.of(0, 1))).isEmpty();
+                NOW, PageRequest.of(0, 1))).isEmpty();
     }
 
     private Assignment saveAssignment(LocalDateTime closeAt) {

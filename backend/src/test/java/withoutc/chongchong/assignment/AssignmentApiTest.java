@@ -687,6 +687,77 @@ class AssignmentApiTest {
     }
 
     @Test
+    @DisplayName("마감순 다음 페이지는 페이지 사이에 마감된 과제가 있어도 첫 페이지 조회 시각 기준으로 이어 조회한다")
+    void getDeadlinePageAsOfFirstPage() {
+        LocalDateTime asOf = LocalDateTime.now(CLOCK).minusMinutes(2);
+        Assignment closedAfterAsOf = createAssignment("첫 조회 후 마감", "내용", null, closeAt, null);
+        Assignment expired = createAssignment("첫 조회 전 마감", "내용", null, closeAt, null);
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
+                asOf.plusMinutes(1), closedAfterAsOf.getId());
+        jdbcTemplate.update("UPDATE assignments SET close_at = ? WHERE id = ?",
+                asOf.minusDays(1), expired.getId());
+
+        assertThat(getAssignmentIds(memberUser, "DEADLINE", closedAfterAsOf.getId(), asOf))
+                .containsExactly(assignment.getId(), expired.getId());
+        assertThat(getAssignmentIds(memberUser, "DEADLINE", assignment.getId(), asOf))
+                .containsExactly(expired.getId());
+    }
+
+    @Test
+    @DisplayName("미제출순 다음 페이지는 페이지 사이에 제출한 과제가 있어도 첫 페이지 조회 시각 기준으로 이어 조회한다")
+    void getUnsubmittedPageAsOfFirstPage() {
+        LocalDateTime asOf = LocalDateTime.now(CLOCK).minusMinutes(1);
+        Assignment submittedAfterAsOf = createAssignment("첫 조회 후 제출", "내용", null, closeAt, null);
+        Assignment submittedBeforeAsOf = createAssignment("첫 조회 전 제출", "내용", null, closeAt, null);
+        submitAssignment(memberUser, submittedBeforeAsOf, "완료", null);
+        jdbcTemplate.update("UPDATE assignment_submissions SET submitted_at = ? WHERE assignment_id = ? AND member_id = ?",
+                asOf.minusDays(1), submittedBeforeAsOf.getId(), member.getId());
+        submitAssignment(memberUser, submittedAfterAsOf, "완료", null);
+
+        assertThat(getAssignmentIds(memberUser, "UNSUBMITTED", submittedAfterAsOf.getId(), asOf))
+                .containsExactly(assignment.getId(), submittedBeforeAsOf.getId());
+        assertThat(getAssignmentIds(memberUser, "UNSUBMITTED", assignment.getId(), asOf))
+                .containsExactly(submittedBeforeAsOf.getId());
+    }
+
+    @Test
+    @DisplayName("첫 페이지는 조회 시각을 asOf로 반환하고 다음 페이지는 요청한 asOf를 그대로 반환한다")
+    void returnAsOf() {
+        LocalDateTime before = LocalDateTime.now(CLOCK);
+        LocalDateTime ignoredAsOf = before.minusDays(1);
+        String firstPageAsOf = testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("asOf", ignoredAsOf.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(200).extract().jsonPath().getString("asOf");
+        assertThat(LocalDateTime.parse(firstPageAsOf)).isAfterOrEqualTo(before);
+
+        LocalDateTime asOf = before.minusMinutes(1);
+        String nextPageAsOf = testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("cursor", assignment.getId()).queryParam("asOf", asOf.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(200).extract().jsonPath().getString("asOf");
+        assertThat(LocalDateTime.parse(nextPageAsOf)).isEqualTo(asOf);
+    }
+
+    @Test
+    @DisplayName("미래 시각을 asOf로 보내면 400으로 거부한다")
+    void rejectFutureAsOf() {
+        testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)
+                .queryParam("cursor", assignment.getId())
+                .queryParam("asOf", LocalDateTime.now(CLOCK).plusMinutes(1)
+                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(400);
+    }
+
+    private List<Long> getAssignmentIds(User user, String sort, Long cursor, LocalDateTime asOf) {
+        return testAuthRequest.givenAuthenticatedUser(user.getId()).port(port)
+                .queryParam("sort", sort).queryParam("cursor", cursor).queryParam("asOf", asOf.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .when().get("/studies/{studyId}/assignments", study.getId())
+                .then().statusCode(200).extract().jsonPath().getList("assignments.id", Long.class);
+    }
+
+    @Test
     @DisplayName("지원하지 않는 과제 정렬 값은 400으로 거부한다")
     void rejectInvalidAssignmentSort() {
         testAuthRequest.givenAuthenticatedUser(memberUser.getId()).port(port)

@@ -2,8 +2,11 @@ package withoutc.chongchong.assignment.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -66,9 +69,14 @@ public class AssignmentController {
             @Positive(message = "size는 양수여야 합니다.")
             @Max(value = CursorPageRequest.MAX_SIZE, message = "size는 100 이하여야 합니다.")
             int size,
-            @RequestParam(defaultValue = "DEADLINE") AssignmentSort sort
+            @RequestParam(defaultValue = "DEADLINE") AssignmentSort sort,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @PastOrPresent(message = "asOf는 현재 시각 이후일 수 없습니다.")
+            LocalDateTime asOf
     ) {
-        AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size, sort);
+        AssignmentListResponse response = assignmentService.getList(currentUser.id(), studyId, cursor, size, sort,
+                asOf);
 
         return ResponseEntity.ok(response);
     }

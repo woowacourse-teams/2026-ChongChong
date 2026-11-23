@@ -150,17 +150,20 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             LEFT JOIN AssignmentSubmission s ON s.assignment = a AND s.member.id = :memberId
             WHERE a.study.id = :studyId AND (
                 :cursor IS NULL
-                OR (CASE WHEN s.assigned = true AND s.submittedAt IS NULL THEN 0 ELSE 1 END) > :cursorRank
-                OR ((CASE WHEN s.assigned = true AND s.submittedAt IS NULL THEN 0 ELSE 1 END) = :cursorRank
-                    AND a.id < :cursor)
+                OR (CASE WHEN s.assigned = true AND (s.submittedAt IS NULL OR s.submittedAt > :asOf)
+                    THEN 0 ELSE 1 END) > :cursorRank
+                OR ((CASE WHEN s.assigned = true AND (s.submittedAt IS NULL OR s.submittedAt > :asOf)
+                    THEN 0 ELSE 1 END) = :cursorRank AND a.id < :cursor)
             )
-            ORDER BY CASE WHEN s.assigned = true AND s.submittedAt IS NULL THEN 0 ELSE 1 END, a.id DESC
+            ORDER BY CASE WHEN s.assigned = true AND (s.submittedAt IS NULL OR s.submittedAt > :asOf)
+                THEN 0 ELSE 1 END, a.id DESC
             """)
     List<Assignment> findByUnsubmittedCursor(
             @Param("studyId") Long studyId,
             @Param("memberId") Long memberId,
             @Param("cursor") Long cursor,
             @Param("cursorRank") int cursorRank,
+            @Param("asOf") LocalDateTime asOf,
             Pageable pageable
     );
 

@@ -102,12 +102,12 @@ class AssignmentListQueryCountPostgresTest extends PostgresContainerTest {
             long loadedEntities = statistics.getEntityLoadCount();
 
             for (int i = 0; i < 300; i++) {
-                assignmentService.getList(leaderUserId, studyId, null, PAGE_SIZE, AssignmentSort.DEADLINE);
+                assignmentService.getList(leaderUserId, studyId, null, PAGE_SIZE, AssignmentSort.DEADLINE, null);
             }
             long[] elapsed = new long[500];
             for (int i = 0; i < elapsed.length; i++) {
                 long start = System.nanoTime();
-                assignmentService.getList(leaderUserId, studyId, null, PAGE_SIZE, AssignmentSort.DEADLINE);
+                assignmentService.getList(leaderUserId, studyId, null, PAGE_SIZE, AssignmentSort.DEADLINE, null);
                 elapsed[i] = System.nanoTime() - start;
             }
             Arrays.sort(elapsed);
@@ -119,7 +119,7 @@ class AssignmentListQueryCountPostgresTest extends PostgresContainerTest {
 
     private long countQueries(Long userId, int size, AssignmentSort sort) {
         statistics.clear();
-        AssignmentListResponse response = assignmentService.getList(userId, studyId, null, size, sort);
+        AssignmentListResponse response = assignmentService.getList(userId, studyId, null, size, sort, null);
         assertThat(response.assignments()).hasSize(size);
         return statistics.getPrepareStatementCount();
     }
