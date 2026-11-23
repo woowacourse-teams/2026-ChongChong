@@ -44,12 +44,7 @@ import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
 @Import(TestS3PresignerConfiguration.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "file.upload.max-size-bytes=5242880",
-        "notice.attachments.max-count=10",
-        "notice.attachments.max-size-bytes=5242880",
-        "notice.attachments.allowed-content-types=image/jpeg,image/png,image/webp"
-})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class NoticeUploadCompletionApiTest extends PostgresContainerTest {
 
     @Autowired

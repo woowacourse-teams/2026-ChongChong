@@ -28,6 +28,16 @@ aws:
     upload-prefix: chongchong/files/test/uploads/
     url-validity: 3m
 
+file:
+  upload:
+    max-size-bytes: 5242880
+
+notice:
+  attachments:
+    max-count: 10
+    max-size-bytes: 5242880
+    allowed-content-types: image/jpeg,image/png,image/webp
+
 jwt:
   study-invite-secret: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
 
