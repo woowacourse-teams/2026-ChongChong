@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import withoutc.chongchong.auth.support.TestAuthRequest;
@@ -28,17 +27,12 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "notice.attachments.max-count=10",
-        "notice.attachments.max-size-bytes=5242880",
-        "notice.attachments.allowed-content-types=image/jpeg,image/png,image/webp"
-})
-class NoticeUpdatePendingAttachmentApiTest extends PostgresContainerTest {
+class NoticeUpdatePendingAttachmentApiTest extends PostgresApiTest {
 
     @Autowired
     private UserRepository userRepository;

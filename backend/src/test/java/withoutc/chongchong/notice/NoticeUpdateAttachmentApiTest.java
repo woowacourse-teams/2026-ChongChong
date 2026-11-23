@@ -23,16 +23,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -40,19 +36,12 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
-import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@Import(TestS3PresignerConfiguration.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "notice.attachments.max-count=10",
-        "notice.attachments.max-size-bytes=5242880",
-        "notice.attachments.allowed-content-types=image/jpeg,image/png,image/webp"
-})
-class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
+class NoticeUpdateAttachmentApiTest extends PostgresApiTest {
 
     private static final LocalDateTime REMIND_AT = LocalDateTime.of(2099, 1, 1, 0, 0);
     private static final LocalDateTime READ_AT = LocalDateTime.of(2026, 1, 1, 0, 0);
@@ -80,9 +69,6 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @MockitoBean
-    private S3FileMetadataReader s3FileMetadataReader;
 
     @LocalServerPort
     private int port;
@@ -147,7 +133,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         assertStatus(secondNewFile.getId(), FileUploadStatus.COMPLETED);
         assertThat(remindAt()).isEqualTo(REMIND_AT.plusDays(1));
         assertReadStateUnchanged();
-        verifyNoInteractions(s3FileMetadataReader);
+        verifyNoInteractions(metadataReader);
     }
 
     @ParameterizedTest
@@ -158,7 +144,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
 
         assertThat(noticeRepository.findById(notice.getId()).orElseThrow().getTitle()).isEqualTo("수정 제목");
         assertAttachmentsUnchanged();
-        verifyNoInteractions(s3FileMetadataReader);
+        verifyNoInteractions(metadataReader);
     }
 
     @Test
@@ -172,7 +158,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         assertStatus(existingIds.getFirst(), FileUploadStatus.COMPLETED);
         assertStatus(existingIds.getLast(), FileUploadStatus.COMPLETED);
         assertReadStateUnchanged();
-        verifyNoInteractions(s3FileMetadataReader);
+        verifyNoInteractions(metadataReader);
     }
 
     @Test
@@ -187,7 +173,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
         assertThat(attachmentFileIds()).containsExactlyElementsOf(finalIds);
         assertThat(fileRepository.findAllById(finalIds)).hasSize(10).extracting(FileMetadata::getStatus)
                 .containsOnly(FileUploadStatus.COMPLETED);
-        verifyNoInteractions(s3FileMetadataReader);
+        verifyNoInteractions(metadataReader);
     }
 
     @Test
@@ -304,7 +290,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
 
         response.then().statusCode(400).body("code", equalTo("INVALID_NOTICE_IMAGE_TYPE"));
         assertOriginalState();
-        verifyNoInteractions(s3FileMetadataReader);
+        verifyNoInteractions(metadataReader);
     }
 
     private Response request(Long userId, Object body) {
@@ -359,7 +345,7 @@ class NoticeUpdateAttachmentApiTest extends PostgresContainerTest {
     private void assertRejected(Response response, int status, String code) {
         response.then().statusCode(status).body("code", equalTo(code));
         assertOriginalState();
-        verifyNoInteractions(s3FileMetadataReader);
+        verifyNoInteractions(metadataReader);
     }
 
     private void assertOriginalState() {
