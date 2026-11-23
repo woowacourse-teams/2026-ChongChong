@@ -295,7 +295,8 @@ class AssignmentServiceTest {
                 new AssignmentProgressProjection(300L, 3, 2, NOW.plusDays(1)),
                 new AssignmentProgressProjection(200L, 2, 2, null)));
 
-        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 2, AssignmentSort.LATEST);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 2, AssignmentSort.LATEST,
+                null);
 
         assertThat(response.hasNext()).isTrue();
         assertThat(response.nextCursor()).isEqualTo(200L);
@@ -388,7 +389,8 @@ class AssignmentServiceTest {
                 List.of(ASSIGNMENT_ID, 200L), MEMBER_ID
         )).thenReturn(statuses);
 
-        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10, AssignmentSort.LATEST);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10, AssignmentSort.LATEST,
+                null);
 
         assertThat(response.hasNext()).isFalse();
         assertThat(response.nextCursor()).isNull();
@@ -412,7 +414,8 @@ class AssignmentServiceTest {
                 STUDY_ID, null, PageRequest.of(0, 11)
         )).thenReturn(List.of());
 
-        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10, AssignmentSort.LATEST);
+        AssignmentListResponse response = assignmentService.getList(USER_ID, STUDY_ID, null, 10, AssignmentSort.LATEST,
+                null);
 
         assertThat(response.assignments()).isEmpty();
         verifyNoInteractions(assignmentSubmissionRepository);
@@ -422,7 +425,8 @@ class AssignmentServiceTest {
     @ValueSource(ints = {101, Integer.MAX_VALUE})
     @DisplayName("페이지 크기가 최대값을 초과하면 과제 목록 조회를 수행하지 않는다")
     void rejectPageSizeOverMaximumTest(int size) {
-        assertThatThrownBy(() -> assignmentService.getList(USER_ID, STUDY_ID, null, size, AssignmentSort.LATEST))
+        assertThatThrownBy(() -> assignmentService.getList(USER_ID, STUDY_ID, null, size, AssignmentSort.LATEST,
+                null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("페이지 크기는 1 이상 100 이하여야 합니다.");
 

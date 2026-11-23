@@ -174,25 +174,29 @@ public class AssignmentService {
     }
 
     public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size) {
-        return getList(userId, studyId, cursor, size, AssignmentSort.DEADLINE);
+        return getList(userId, studyId, cursor, size, AssignmentSort.DEADLINE, null);
     }
 
-    public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size, AssignmentSort sort) {
+    // 페이지 사이에 마감·제출로 정렬 그룹이 바뀌지 않도록 다음 페이지는 첫 페이지 조회 시각(asOf) 기준으로 정렬한다.
+    public AssignmentListResponse getList(Long userId, Long studyId, Long cursor, int size, AssignmentSort sort,
+                                          LocalDateTime asOf) {
         StudyMember member = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
 
         CursorPageRequest pageRequest = CursorPageRequest.of(cursor, size);
+        LocalDateTime sortAsOf = cursor == null || asOf == null ? LocalDateTime.now(clock) : asOf;
 
         Pageable pageable = PageRequest.of(0, pageRequest.fetchSize());
-        List<Assignment> assignments = findSortedAssignments(studyId, member.getId(), pageRequest.cursor(), pageable, sort);
+        List<Assignment> assignments = findSortedAssignments(studyId, member.getId(), pageRequest.cursor(), sortAsOf,
+                pageable, sort);
 
         CursorPageResponse<Assignment> assignmentPage = CursorPageResponse.of(assignments, pageRequest,
                 Assignment::getId);
 
         List<AssignmentSummaryResponse> summaries = createAssignmentSummaries(member, assignmentPage.content());
-        return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), summaries);
+        return AssignmentListResponse.of(assignmentPage.nextCursor(), assignmentPage.hasNext(), sortAsOf, summaries);
     }
 
-    private List<Assignment> findSortedAssignments(Long studyId, Long memberId, Long cursor,
+    private List<Assignment> findSortedAssignments(Long studyId, Long memberId, Long cursor, LocalDateTime asOf,
                                                    Pageable pageable, AssignmentSort sort) {
         if (sort == AssignmentSort.LATEST) {
             return assignmentRepository.findByCursor(studyId, cursor, pageable);
@@ -201,17 +205,17 @@ public class AssignmentService {
         Assignment anchor = cursor == null ? null
                 : assignmentRepository.getByIdAndStudyIdOrThrow(cursor, studyId);
         if (sort == AssignmentSort.DEADLINE) {
-            LocalDateTime now = LocalDateTime.now(clock);
             LocalDateTime cursorCloseAt = anchor == null ? null : anchor.getCloseAt();
-            int cursorRank = cursorCloseAt != null && cursorCloseAt.isBefore(now) ? 1 : 0;
-            return assignmentRepository.findByDeadlineCursor(studyId, now, cursor, cursorRank, cursorCloseAt, pageable);
+            int cursorRank = cursorCloseAt != null && cursorCloseAt.isBefore(asOf) ? 1 : 0;
+            return assignmentRepository.findByDeadlineCursor(studyId, asOf, cursor, cursorRank, cursorCloseAt, pageable);
         }
 
         int cursorRank = anchor == null ? 0 : assignmentSubmissionRepository
                 .findByAssignmentIdAndMemberId(cursor, memberId)
-                .filter(submission -> submission.isAssigned() && submission.getSubmittedAt() == null)
+                .filter(submission -> submission.isAssigned()
+                        && (submission.getSubmittedAt() == null || submission.getSubmittedAt().isAfter(asOf)))
                 .map(submission -> 0).orElse(1);
-        return assignmentRepository.findByUnsubmittedCursor(studyId, memberId, cursor, cursorRank, pageable);
+        return assignmentRepository.findByUnsubmittedCursor(studyId, memberId, cursor, cursorRank, asOf, pageable);
     }
 
     private void replaceAttachments(Long userId, Assignment assignment, List<Long> fileIds) {
