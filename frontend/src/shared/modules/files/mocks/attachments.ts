@@ -76,6 +76,22 @@ export function validateFileAttachments(
 
 export function fileAttachments(ids: number[] = [], withDownloadUrl = false) {
   return ids.flatMap((fileId, sortOrder) => {
+    // lab-1: 외부 Chrome에서도 받을 수 있는 실제 HTTP PDF 테스트 파일.
+    if (browserFilePreviews && fileId === 1001) {
+      return [
+        {
+          fileId,
+          originalFileName: 'sample.pdf',
+          contentType: 'application/pdf',
+          size: 2975,
+          sortOrder,
+          imageUrl: null,
+          ...(withDownloadUrl
+            ? { downloadUrl: new URL('/lab-1/sample.pdf', window.location.origin).href }
+            : {}),
+        },
+      ];
+    }
     const file = fileTable.findFirst((q) => q.where({ id: fileId }));
     return file
       ? [
