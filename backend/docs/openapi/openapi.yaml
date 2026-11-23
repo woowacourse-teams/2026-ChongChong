@@ -82,6 +82,10 @@ paths:
     $ref: './paths/notices/my-status.yaml'
   /api/studies/{studyId}/assignments:
     $ref: './paths/assignments/collection.yaml'
+  /api/studies/{studyId}/assignment-recurrences:
+    $ref: './paths/assignment-recurrences/collection.yaml'
+  /api/studies/{studyId}/assignment-recurrences/{recurrenceId}:
+    $ref: './paths/assignment-recurrences/detail.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}:
     $ref: './paths/assignments/detail.yaml'
   /api/studies/{studyId}/assignments/{assignmentId}/comments:

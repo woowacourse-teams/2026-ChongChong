@@ -1,6 +1,7 @@
 package withoutc.chongchong.assignment.repository;
 
 import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +54,8 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     );
 
     Optional<Assignment> findByIdAndStudyId(Long id, Long studyId);
+
+    boolean existsByRecurrenceIdAndOccurrenceDate(Long recurrenceId, LocalDate occurrenceDate);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

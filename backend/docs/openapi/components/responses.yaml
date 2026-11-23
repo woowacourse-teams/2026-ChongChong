@@ -128,6 +128,11 @@ AssignmentWriteBadRequest:
   content:
     application/json:
       schema: { oneOf: [{ $ref: './schemas/assignment-attachments.yaml#/AttachmentBadRequest' }, { $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidTitleError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidSubmissionMethodError' }, { $ref: './schemas/errors.yaml#/InvalidSubmitterIdsError' }, { $ref: './schemas/errors.yaml#/InvalidCloseAtError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }] }
+AssignmentRecurrenceWriteBadRequest:
+  description: 입력값 검증 실패, 요청 형식 오류 또는 반복 과제 필드 도메인 규칙 위반
+  content:
+    application/json:
+      schema: { oneOf: [{ $ref: './schemas/errors.yaml#/InvalidInputValueError' }, { $ref: './schemas/errors.yaml#/InvalidRequestError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidTitleError' }, { $ref: './schemas/errors.yaml#/AssignmentInvalidContentError' }, { $ref: './schemas/errors.yaml#/InvalidSubmissionMethodError' }, { $ref: './schemas/errors.yaml#/InvalidSubmitterIdsError' }, { $ref: './schemas/errors.yaml#/InvalidCloseAtError' }, { $ref: './schemas/errors.yaml#/InvalidRemindAtError' }, { $ref: './schemas/errors.yaml#/InvalidRecurrenceIntervalError' }, { $ref: './schemas/errors.yaml#/InvalidSubmitterChoiceError' }] }
 SubmissionWriteBadRequest:
   description: 입력값 검증 실패, 요청 형식 오류 또는 제출 내용·링크 도메인 규칙 위반
   content:
@@ -231,6 +236,9 @@ NoticeOrRecipientNotFound:
 AssignmentNotFound:
   description: 과제가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AssignmentNotFoundError' } } }
+AssignmentRecurrenceNotFound:
+  description: 반복 과제가 존재하지 않음
+  content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AssignmentRecurrenceNotFoundError' } } }
 AssignmentSubmissionNotFound:
   description: 제출물 또는 현재 사용자의 제출 정보가 존재하지 않음
   content: { application/json: { schema: { $ref: './schemas/errors.yaml#/AssignmentSubmissionNotFoundError' } } }

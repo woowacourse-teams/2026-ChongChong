@@ -22,6 +22,10 @@ public class AssignmentAccessPolicy {
         requireLeader(actor);
     }
 
+    public void requireCanManageAssignmentRecurrence(StudyMember actor) {
+        requireLeader(actor);
+    }
+
     public void requireCanReadAssignmentSubmissionStatus(StudyMember actor) {
         requireLeader(actor);
     }

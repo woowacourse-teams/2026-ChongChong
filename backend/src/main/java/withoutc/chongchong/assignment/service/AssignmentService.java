@@ -71,6 +71,11 @@ public class AssignmentService {
 
     @Transactional
     public AssignmentCreateResponse create(Long userId, Long studyId, AssignmentCreateRequest request) {
+        return AssignmentCreateResponse.from(createAssignment(userId, studyId, request));
+    }
+
+    @Transactional
+    public Assignment createAssignment(Long userId, Long studyId, AssignmentCreateRequest request) {
         studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
         List<StudyMemberIdentityProjection> candidates = studyMemberRepository.findIdentitiesByStudyId(studyId);
         userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
@@ -91,7 +96,7 @@ public class AssignmentService {
         assignmentRepository.save(assignment);
         notificationService.createAssignmentCreatedEventNotifications(assignment, submitters, userId);
 
-        return AssignmentCreateResponse.from(assignment);
+        return assignment;
     }
 
     @Transactional

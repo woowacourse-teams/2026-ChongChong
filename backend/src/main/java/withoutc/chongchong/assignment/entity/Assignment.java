@@ -14,6 +14,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,7 +34,13 @@ import withoutc.chongchong.study.entity.Study;
 import withoutc.chongchong.study.entity.StudyMember;
 
 @Entity
-@Table(name = "assignments")
+@Table(
+        name = "assignments",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_assignments_recurrence_occurrence",
+                columnNames = {"recurrence_id", "occurrence_date"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Assignment extends BaseEntity {
@@ -55,7 +63,7 @@ public class Assignment extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "submission_method")
+    @Column(name = "submission_method", columnDefinition = "TEXT")
     private String submissionMethod;
 
     @Enumerated(EnumType.STRING)
@@ -68,6 +76,12 @@ public class Assignment extends BaseEntity {
 
     @Column(name = "close_at", nullable = false)
     private LocalDateTime closeAt;
+
+    @Column(name = "recurrence_id")
+    private Long recurrenceId;
+
+    @Column(name = "occurrence_date")
+    private LocalDate occurrenceDate;
 
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<AssignmentReminder> reminders = new ArrayList<>();
@@ -93,6 +107,11 @@ public class Assignment extends BaseEntity {
                 submissionVisibility, closeAt, now);
         assignment.replaceSubmitters(submitters);
         return assignment;
+    }
+
+    public void linkRecurrence(Long recurrenceId) {
+        this.recurrenceId = recurrenceId;
+        this.occurrenceDate = closeAt.toLocalDate();
     }
 
     public void addAttachments(List<FileMetadata> files) {
@@ -245,25 +264,25 @@ public class Assignment extends BaseEntity {
         initializeSubmissions(members);
     }
 
-    private static void validateTitle(String title) {
+    static void validateTitle(String title) {
         if (title == null || title.isBlank() || title.length() > MAX_TITLE_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_TITLE);
         }
     }
 
-    private static void validateContent(String content) {
+    static void validateContent(String content) {
         if (content == null || content.isBlank() || content.length() > MAX_CONTENT_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CONTENT);
         }
     }
 
-    private static void validateSubmissionMethod(String submissionMethod) {
+    static void validateSubmissionMethod(String submissionMethod) {
         if (submissionMethod != null && submissionMethod.length() > MAX_SUBMISSION_METHOD_LENGTH) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMISSION_METHOD);
         }
     }
 
-    private static String normalizeSubmissionMethod(String submissionMethod) {
+    static String normalizeSubmissionMethod(String submissionMethod) {
         if (submissionMethod == null || submissionMethod.isBlank()) {
             return "";
         }

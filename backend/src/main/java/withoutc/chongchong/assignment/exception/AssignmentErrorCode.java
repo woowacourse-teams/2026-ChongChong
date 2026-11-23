@@ -11,6 +11,8 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     INVALID_SUBMITTER_IDS(HttpStatus.BAD_REQUEST, "INVALID_SUBMITTER_IDS", "제출할 스터디원을 한 명 이상 선택해 주세요."),
 
+    INVALID_SUBMITTER_CHOICE(HttpStatus.BAD_REQUEST, "INVALID_SUBMITTER_CHOICE", "제출 대상 범위와 멤버 선택 중 하나만 보내 주세요."),
+
     INVALID_TITLE(HttpStatus.BAD_REQUEST, "INVALID_TITLE", "과제 제목이 올바르지 않습니다."),
 
     INVALID_CONTENT(HttpStatus.BAD_REQUEST, "INVALID_CONTENT", "과제 내용이 올바르지 않습니다."),
@@ -23,9 +25,13 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     INVALID_REMIND_AT(HttpStatus.BAD_REQUEST, "INVALID_REMIND_AT", "리마인드 시각이 올바르지 않습니다."),
 
+    INVALID_RECURRENCE_INTERVAL(HttpStatus.BAD_REQUEST, "INVALID_RECURRENCE_INTERVAL", "반복 간격은 1주에서 4주 사이여야 합니다."),
+
     ASSIGNMENT_SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_SUBMISSION_NOT_FOUND", "존재하지 않는 제출물입니다."),
 
     ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_NOT_FOUND", "존재하지 않는 과제입니다."),
+
+    ASSIGNMENT_RECURRENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ASSIGNMENT_RECURRENCE_NOT_FOUND", "존재하지 않는 반복 과제입니다."),
 
     EMPTY_SUBMISSION(HttpStatus.BAD_REQUEST, "EMPTY_SUBMISSION", "내용, 링크 또는 첨부파일을 제출해 주세요."),
 
