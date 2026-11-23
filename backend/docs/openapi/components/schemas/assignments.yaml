@@ -106,12 +106,13 @@ AssignmentSummaryResponse:
 AssignmentListResponse:
   type: object
   additionalProperties: false
-  required: [nextCursor, hasNext, assignments]
+  required: [nextCursor, hasNext, asOf, assignments]
   properties:
     nextCursor:
       type: [integer, 'null']
       format: int64
-      description: 다음 페이지가 있으면 현재 페이지 마지막 과제의 ID. 같은 sort와 함께 cursor로 전달하며, 다음 페이지가 없으면 null이다.
+      description: 다음 페이지가 있으면 현재 페이지 마지막 과제의 ID. 같은 sort와 asOf와 함께 cursor로 전달하며, 다음 페이지가 없으면 null이다.
       example: 10
     hasNext: { type: boolean, example: false }
+    asOf: { description: "정렬 기준 시각. 첫 페이지는 조회 시각이고, 다음 페이지는 요청한 asOf이다. 다음 페이지 요청에 그대로 전달한다.", $ref: './common.yaml#/LocalDateTime' }
     assignments: { type: array, items: { $ref: '#/AssignmentSummaryResponse' } }
