@@ -1,7 +1,7 @@
 # 0065. OSIV를 끄고 DB 연결을 트랜잭션이 끝날 때 반납한다
 
 - 날짜: 2026-11-24
-- 관련 이슈: 없음
+- 관련 이슈: [#728](https://github.com/woowacourse-teams/2026-ChongChong/issues/728)
 - 관련 결정: [ADR-0054](0054-separate-upload-verification-from-database-transactions.md)의 S3 호출과 트랜잭션 분리,
   [ADR-0031](0031-run-postgresql-specific-tests-with-testcontainers.md)의 PostgreSQL 전용 테스트
 
