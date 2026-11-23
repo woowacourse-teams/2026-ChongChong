@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import withoutc.chongchong.notification.entity.Notification;
@@ -29,13 +28,12 @@ import withoutc.chongchong.notification.repository.NotificationDeliveryRepositor
 import withoutc.chongchong.notification.repository.NotificationRepository;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
 import withoutc.chongchong.notification.token.WebPushNotificationClickTokenProvider;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class NotificationDeliveryApiTest extends PostgresContainerTest {
+class NotificationDeliveryApiTest extends PostgresApiTest {
 
     private static final String INSTALLATION_ID = "notification-click-test-installation";
     private static final String ENDPOINT = "https://push.example.com/subscription";

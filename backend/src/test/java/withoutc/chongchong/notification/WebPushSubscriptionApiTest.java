@@ -12,19 +12,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.notification.repository.WebPushSubscriptionRepository;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class WebPushSubscriptionApiTest extends PostgresContainerTest {
+class WebPushSubscriptionApiTest extends PostgresApiTest {
 
     private static final String INSTALLATION_ID = "4c2f0b3f-0a57-4a37-bb15-8ad7f4f3c2a1";
     private static final String ENDPOINT = "https://push.example.com/subscription";

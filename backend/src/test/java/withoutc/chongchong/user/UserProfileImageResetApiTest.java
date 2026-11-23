@@ -19,29 +19,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.FileUrlGenerator;
-import withoutc.chongchong.file.service.S3FileMetadataReader;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
-import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestS3PresignerConfiguration.class)
-class UserProfileImageResetApiTest extends PostgresContainerTest {
+class UserProfileImageResetApiTest extends PostgresApiTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -60,12 +51,6 @@ class UserProfileImageResetApiTest extends PostgresContainerTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
-
-    @MockitoSpyBean
-    private FileUrlGenerator urlGenerator;
-
-    @MockitoBean
-    private S3FileMetadataReader metadataReader;
 
     @LocalServerPort
     private int port;

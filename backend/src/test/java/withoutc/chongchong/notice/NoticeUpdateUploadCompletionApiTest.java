@@ -19,16 +19,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import withoutc.chongchong.auth.support.TestAuthRequest;
 import withoutc.chongchong.file.entity.FileMetadata;
 import withoutc.chongchong.file.entity.FileUploadStatus;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
-import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -36,15 +32,12 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
-import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 
-@Import(TestS3PresignerConfiguration.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class NoticeUpdateUploadCompletionApiTest extends PostgresContainerTest {
+class NoticeUpdateUploadCompletionApiTest extends PostgresApiTest {
 
     private static final LocalDateTime REMIND_AT = LocalDateTime.of(2099, 1, 1, 0, 0);
 
@@ -71,9 +64,6 @@ class NoticeUpdateUploadCompletionApiTest extends PostgresContainerTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @MockitoBean
-    private S3FileMetadataReader metadataReader;
 
     @LocalServerPort
     private int port;

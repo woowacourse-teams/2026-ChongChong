@@ -19,10 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionTarget;
@@ -36,7 +33,6 @@ import withoutc.chongchong.file.exception.FileErrorCode;
 import withoutc.chongchong.file.exception.FileException;
 import withoutc.chongchong.file.repository.FileMetaDataRepository;
 import withoutc.chongchong.file.service.FileUploadTransactionService;
-import withoutc.chongchong.file.service.S3FileMetadataReader;
 import withoutc.chongchong.notice.entity.Notice;
 import withoutc.chongchong.notice.repository.NoticeRepository;
 import withoutc.chongchong.study.entity.Study;
@@ -44,16 +40,13 @@ import withoutc.chongchong.study.entity.StudyMember;
 import withoutc.chongchong.study.entity.StudyMemberRole;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
-import withoutc.chongchong.support.PostgresContainerTest;
+import withoutc.chongchong.support.PostgresApiTest;
 import withoutc.chongchong.support.TestDatabaseCleaner;
-import withoutc.chongchong.support.TestS3PresignerConfiguration;
 import withoutc.chongchong.user.entity.User;
 import withoutc.chongchong.user.repository.UserRepository;
 import withoutc.chongchong.user.service.UserService;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestS3PresignerConfiguration.class)
-class UserWithdrawalFileApiTest extends PostgresContainerTest {
+class UserWithdrawalFileApiTest extends PostgresApiTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -90,9 +83,6 @@ class UserWithdrawalFileApiTest extends PostgresContainerTest {
 
     @Autowired
     private Clock clock;
-
-    @MockitoBean
-    private S3FileMetadataReader metadataReader;
 
     @LocalServerPort
     private int port;
