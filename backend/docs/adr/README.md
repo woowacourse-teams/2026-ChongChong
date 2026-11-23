@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0065](0065-disable-open-session-in-view.md) | OSIV를 끄고 DB 연결을 트랜잭션이 끝날 때 반납한다 |
 | [0063](0063-protect-first-notice-read-at-with-row-lock.md) | 공지 최초 읽음 시각을 수신자 행 잠금으로 보존한다 |
 | [0062](0062-aggregate-leader-list-progress-in-query.md) | 리더 공지·과제 목록의 진행 상황을 집계 쿼리로 조회한다 |
 | [0061](0061-clean-up-orphan-files-with-mark-and-sweep.md) | 고아 파일을 표시 후 수거 방식의 배치로 정리한다 (초안) |
