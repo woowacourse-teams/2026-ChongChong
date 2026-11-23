@@ -11,6 +11,8 @@ public enum AssignmentErrorCode implements ErrorCode {
 
     INVALID_SUBMITTER_IDS(HttpStatus.BAD_REQUEST, "INVALID_SUBMITTER_IDS", "제출할 스터디원을 한 명 이상 선택해 주세요."),
 
+    INVALID_SUBMITTER_CHOICE(HttpStatus.BAD_REQUEST, "INVALID_SUBMITTER_CHOICE", "제출 대상 범위와 멤버 선택 중 하나만 보내 주세요."),
+
     INVALID_TITLE(HttpStatus.BAD_REQUEST, "INVALID_TITLE", "과제 제목이 올바르지 않습니다."),
 
     INVALID_CONTENT(HttpStatus.BAD_REQUEST, "INVALID_CONTENT", "과제 내용이 올바르지 않습니다."),

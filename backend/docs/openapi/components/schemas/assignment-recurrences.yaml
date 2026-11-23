@@ -22,7 +22,7 @@ AssignmentRecurrenceCreateRequest:
     submissionTarget:
       type: string
       enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER]
-      description: 범위 지정. 회차를 만들 때마다 그 시점의 스터디 멤버로 제출 대상을 정하므로 이후 가입한 멤버도 포함된다. submitterIds와 함께 보낼 수 없다.
+      description: 범위 지정. 회차를 만들 때마다 그 시점의 스터디 멤버로 제출 대상을 정하므로 이후 가입한 멤버도 포함된다. submitterIds와 함께 보낼 수 없으며 둘 다 보내거나 둘 다 생략하면 INVALID_SUBMITTER_CHOICE로 거부한다.
     submitterIds:
       type: array
       description: 직접 선택한 스터디 멤버 ID 목록. 이후 가입한 멤버는 포함되지 않고, 스터디를 떠난 멤버는 자동으로 빠진다. submissionTarget과 함께 보낼 수 없다.
@@ -59,7 +59,7 @@ AssignmentRecurrenceUpdateRequest:
     submissionTarget:
       type: [string, 'null']
       enum: [MEMBERS_ONLY, MEMBERS_AND_LEADER, null]
-      description: 보내면 범위 지정으로 바꾼다. submitterIds와 함께 보낼 수 없다.
+      description: 보내면 범위 지정으로 바꾼다. submitterIds와 함께 보내면 INVALID_SUBMITTER_CHOICE로 거부한다.
     submitterIds:
       type: [array, 'null']
       description: 보내면 직접 선택으로 바꾸고 목록 전체를 교체한다. submissionTarget과 함께 보낼 수 없다.
@@ -81,7 +81,7 @@ AssignmentRecurrenceListResponse:
   properties:
     recurrences:
       type: array
-      description: 스터디의 반복 과제 전체. 등록한 순서로 정렬하며 페이지네이션하지 않는다.
+      description: 스터디의 반복 과제 전체. 최근에 등록한 순서로 정렬하며 페이지네이션하지 않는다.
       items: { $ref: '#/AssignmentRecurrenceResponse' }
 AssignmentRecurrenceResponse:
   type: object

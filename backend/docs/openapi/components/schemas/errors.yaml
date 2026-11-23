@@ -58,6 +58,7 @@ ErrorResponse:
         - INVALID_CONTENT
         - INVALID_LINK
         - INVALID_SUBMITTER_IDS
+        - INVALID_SUBMITTER_CHOICE
         - INVALID_SUBMISSION_METHOD
         - INVALID_CLOSE_AT
         - INVALID_REMIND_AT
@@ -193,3 +194,4 @@ InvalidSubmitterIdsError:
     - properties:
         code: { const: INVALID_SUBMITTER_IDS }
         message: { const: 제출할 스터디원을 한 명 이상 선택해 주세요. }
+InvalidSubmitterChoiceError: { allOf: [{ $ref: '#/ErrorResponseBase' }, { properties: { code: { const: INVALID_SUBMITTER_CHOICE }, message: { const: 제출 대상 범위와 멤버 선택 중 하나만 보내 주세요. } } }], examples: [{ code: INVALID_SUBMITTER_CHOICE, message: 제출 대상 범위와 멤버 선택 중 하나만 보내 주세요. }] }

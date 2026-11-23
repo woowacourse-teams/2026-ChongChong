@@ -136,16 +136,38 @@ class AssignmentRecurrenceApiTest {
     }
 
     @Test
-    @DisplayName("제출 대상 범위와 멤버 선택을 함께 보내면 거부한다")
-    void rejectBothSubmitterChoices() {
-        Map<String, Object> body = createBody();
-        body.put("submissionTarget", "MEMBERS_ONLY");
-        body.put("submitterIds", List.of(member.getId()));
+    @DisplayName("제출 대상 범위와 멤버 선택을 둘 다 보내거나 둘 다 생략하면 거부한다")
+    void rejectAmbiguousSubmitterChoice() {
+        Map<String, Object> both = createBody();
+        both.put("submissionTarget", "MEMBERS_ONLY");
+        both.put("submitterIds", List.of(member.getId()));
 
-        givenLeader().contentType(ContentType.JSON).body(body)
+        givenLeader().contentType(ContentType.JSON).body(both)
                 .when().post(COLLECTION_PATH, study.getId())
                 .then().statusCode(400)
-                .body("code", equalTo("INVALID_SUBMITTER_IDS"));
+                .body("code", equalTo("INVALID_SUBMITTER_CHOICE"));
+        givenLeader().contentType(ContentType.JSON).body(createBody())
+                .when().post(COLLECTION_PATH, study.getId())
+                .then().statusCode(400)
+                .body("code", equalTo("INVALID_SUBMITTER_CHOICE"));
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM assignments", Integer.class)).isZero();
+    }
+
+    @Test
+    @DisplayName("반복 과제 목록은 최근에 등록한 것부터 보여 준다")
+    void listLatestFirst() {
+        Map<String, Object> first = createBody();
+        first.put("title", "먼저 등록");
+        first.put("submissionTarget", "MEMBERS_ONLY");
+        createRecurrence(first);
+        Map<String, Object> second = createBody();
+        second.put("title", "나중 등록");
+        second.put("submissionTarget", "MEMBERS_ONLY");
+        createRecurrence(second);
+
+        givenLeader().when().get(COLLECTION_PATH, study.getId())
+                .then().statusCode(200)
+                .body("recurrences.title", contains("나중 등록", "먼저 등록"));
     }
 
     @Test

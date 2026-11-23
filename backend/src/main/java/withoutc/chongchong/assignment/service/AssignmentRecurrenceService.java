@@ -50,7 +50,7 @@ public class AssignmentRecurrenceService {
     public AssignmentRecurrenceListResponse getList(Long userId, Long studyId) {
         requireLeader(userId, studyId);
         List<AssignmentRecurrenceResponse> recurrences = assignmentRecurrenceRepository
-                .findAllByStudyIdOrderByIdAsc(studyId).stream()
+                .findAllByStudyIdOrderByIdDesc(studyId).stream()
                 .map(AssignmentRecurrenceResponse::from)
                 .toList();
 
@@ -87,7 +87,7 @@ public class AssignmentRecurrenceService {
 
     private SubmitterMode submitterModeOf(SubmissionTarget submissionTarget, List<Long> submitterIds) {
         if ((submissionTarget == null) == (submitterIds == null)) {
-            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_IDS);
+            throw new AssignmentException(AssignmentErrorCode.INVALID_SUBMITTER_CHOICE);
         }
         if (submitterIds != null) {
             return SubmitterMode.SELECTED;

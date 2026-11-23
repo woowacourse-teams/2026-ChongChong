@@ -15,7 +15,7 @@ import withoutc.chongchong.assignment.exception.AssignmentException;
 public interface AssignmentRecurrenceRepository extends JpaRepository<AssignmentRecurrence, Long> {
 
     @EntityGraph(attributePaths = {"remindOffsets", "submitterIds"})
-    List<AssignmentRecurrence> findAllByStudyIdOrderByIdAsc(Long studyId);
+    List<AssignmentRecurrence> findAllByStudyIdOrderByIdDesc(Long studyId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
