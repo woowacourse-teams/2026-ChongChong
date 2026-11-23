@@ -83,6 +83,19 @@ class RecurrenceScheduleTest {
                 .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
     }
 
+    @Test
+    @DisplayName("다음 회차 마감은 열린 회차 마감 다음 날 이후여야 한다")
+    void rejectSameDateAsOpenOccurrence() {
+        RecurrenceSchedule schedule = RecurrenceSchedule.startAfter(LocalDateTime.of(2026, 12, 1, 12, 0), 1);
+
+        assertThatThrownBy(() -> schedule.reschedule(LocalDateTime.of(2026, 12, 1, 18, 0), 1))
+                .isInstanceOf(AssignmentException.class)
+                .extracting("errorCode")
+                .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
+        assertThatCode(() -> schedule.reschedule(LocalDateTime.of(2026, 12, 2, 9, 0), 1))
+                .doesNotThrowAnyException();
+    }
+
     @ParameterizedTest
     @ValueSource(ints = {0, 5})
     @DisplayName("반복 간격은 1주에서 4주 사이만 허용한다")

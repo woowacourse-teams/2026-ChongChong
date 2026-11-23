@@ -91,7 +91,7 @@ class AssignmentRecurrenceTest {
     void replaceRemindAts() {
         AssignmentRecurrence recurrence = startedRecurrence();
 
-        recurrence.replaceRemindAts(List.of(LocalDateTime.of(2026, 12, 8, 20, 59)));
+        recurrence.changeSchedule(null, null, List.of(LocalDateTime.of(2026, 12, 8, 20, 59)));
 
         assertThat(recurrence.getRemindOffsets()).containsExactly(180);
         assertThat(recurrence.nextRemindAts()).containsExactly(LocalDateTime.of(2026, 12, 8, 20, 59));
@@ -102,10 +102,35 @@ class AssignmentRecurrenceTest {
     void rejectIntervalWithoutNextCloseAt() {
         AssignmentRecurrence recurrence = startedRecurrence();
 
-        assertThatThrownBy(() -> recurrence.reschedule(null, 2))
+        assertThatThrownBy(() -> recurrence.changeSchedule(null, 2, null))
                 .isInstanceOf(AssignmentException.class)
                 .extracting("errorCode")
                 .isEqualTo(AssignmentErrorCode.INVALID_CLOSE_AT);
+    }
+
+    @Test
+    @DisplayName("간격과 리마인드를 함께 줄이면 바뀐 최종 상태를 기준으로 검사한다")
+    void shrinkIntervalWithReminders() {
+        AssignmentRecurrence recurrence = AssignmentRecurrence.startWith(
+                firstOccurrence(List.of(FIRST_CLOSE_AT.minusDays(10))), 4, SubmitterMode.RANGE);
+        LocalDateTime nextCloseAt = LocalDateTime.of(2026, 12, 8, 23, 59);
+
+        recurrence.changeSchedule(nextCloseAt, 1, List.of(nextCloseAt.minusDays(1)));
+
+        assertThat(recurrence.getSchedule().getIntervalWeeks()).isEqualTo(1);
+        assertThat(recurrence.getRemindOffsets()).containsExactly(24 * 60);
+    }
+
+    @Test
+    @DisplayName("간격만 줄여 기존 리마인드가 새 간격을 넘으면 거부한다")
+    void rejectShrinkIntervalKeepingLongReminder() {
+        AssignmentRecurrence recurrence = AssignmentRecurrence.startWith(
+                firstOccurrence(List.of(FIRST_CLOSE_AT.minusDays(10))), 4, SubmitterMode.RANGE);
+
+        assertThatThrownBy(() -> recurrence.changeSchedule(LocalDateTime.of(2026, 12, 8, 23, 59), 1, null))
+                .isInstanceOf(AssignmentException.class)
+                .extracting("errorCode")
+                .isEqualTo(AssignmentErrorCode.INVALID_REMIND_AT);
     }
 
     @Test

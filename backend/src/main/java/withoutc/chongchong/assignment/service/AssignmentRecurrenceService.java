@@ -66,8 +66,7 @@ public class AssignmentRecurrenceService {
         recurrence.changeTemplate(request.title(), request.content(), request.submissionMethod());
         recurrence.changeSubmissionVisibility(request.submissionVisibility());
         changeSubmitters(studyId, recurrence, request);
-        recurrence.reschedule(request.nextCloseAt(), request.intervalWeeks());
-        recurrence.replaceRemindAts(request.remindAts());
+        recurrence.changeSchedule(request.nextCloseAt(), request.intervalWeeks(), request.remindAts());
     }
 
     // 이미 생성된 회차는 남기고 규칙만 지운다. 회차의 recurrence_id는 DB가 NULL로 바꾼다.

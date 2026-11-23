@@ -67,7 +67,7 @@ AssignmentRecurrenceUpdateRequest:
       uniqueItems: true
       items: { type: integer, format: int64, minimum: 1 }
     nextCloseAt:
-      description: 일정을 바꿀 때 다음에 생성할 회차의 마감 시각. 이 시각의 요일과 시각이 새 반복 일정이 되며, 현재 열린 회차의 규칙상 마감보다 뒤여야 한다. 다음 회차는 지금처럼 열린 회차가 마감될 때 생성된다.
+      description: 일정을 바꿀 때 다음에 생성할 회차의 마감 시각. 이 시각의 요일과 시각이 새 반복 일정이 되며, 현재 열린 회차 규칙상 마감 날짜의 다음 날 이후여야 한다. 다음 회차는 지금처럼 열린 회차가 마감될 때 생성된다.
       oneOf: [{ $ref: './common.yaml#/LocalDateTime' }, { type: 'null' }]
     intervalWeeks: { description: "반복 간격(주). 보내면 nextCloseAt도 함께 보내야 한다.", type: [integer, 'null'], minimum: 1, maximum: 4, example: 2 }
     remindAts:

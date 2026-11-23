@@ -59,9 +59,10 @@ public class RecurrenceSchedule {
     }
 
     // 다음 회차부터 새 일정을 적용한다. 지금 열린 회차가 마감될 때 다음 회차를 만드는 시각은 그대로 둔다.
+    // 다음 회차는 열린 회차 마감 다음 날 이후여야 한다. 같은 날이면 회차 날짜가 겹쳐 유니크 제약에 걸린다.
     public void reschedule(LocalDateTime nextCloseAt, int intervalWeeks) {
         validateIntervalWeeks(intervalWeeks);
-        if (!nextCloseAt.isAfter(nextPublishAt)) {
+        if (!nextCloseAt.toLocalDate().isAfter(nextPublishAt.toLocalDate())) {
             throw new AssignmentException(AssignmentErrorCode.INVALID_CLOSE_AT);
         }
         this.closeTime = nextCloseAt.toLocalTime();

@@ -161,25 +161,12 @@ public class AssignmentRecurrence extends BaseEntity {
         submitterIds.addAll(memberIds);
     }
 
-    // 간격을 생략하면 기존 간격을 유지한다. 줄어든 간격에도 기존 리마인드가 맞는지 다시 확인한다.
-    public void reschedule(LocalDateTime nextCloseAt, Integer intervalWeeks) {
-        if (nextCloseAt == null && intervalWeeks == null) {
-            return;
-        }
-        if (nextCloseAt == null) {
-            throw new AssignmentException(AssignmentErrorCode.INVALID_CLOSE_AT);
-        }
-        schedule.reschedule(nextCloseAt, Objects.requireNonNullElse(intervalWeeks, schedule.getIntervalWeeks()));
+    // 일정과 리마인드를 모두 적용한 최종 상태에서 리마인드가 회차 생성과 마감 사이에 있는지 확인한다.
+    // 중간 상태에서 검사하면 간격과 리마인드를 함께 줄이는 올바른 요청도 거부된다.
+    public void changeSchedule(LocalDateTime nextCloseAt, Integer intervalWeeks, List<LocalDateTime> remindAts) {
+        reschedule(nextCloseAt, intervalWeeks);
+        replaceRemindAts(remindAts);
         remindOffsets.forEach(this::validateRemindOffset);
-    }
-
-    // 다음 회차 기준 절대 시각을 받아 마감 기준 상대 시간으로 교체한다.
-    public void replaceRemindAts(List<LocalDateTime> remindAts) {
-        if (remindAts == null) {
-            return;
-        }
-        remindOffsets.clear();
-        addRemindOffsets(remindAts, schedule.nextCloseAt());
     }
 
     private AssignmentRecurrence(Assignment firstOccurrence, SubmitterMode submitterMode,
@@ -194,6 +181,26 @@ public class AssignmentRecurrence extends BaseEntity {
         if (submitterMode == SubmitterMode.RANGE) {
             this.submissionTarget = firstOccurrence.getSubmissionTarget();
         }
+    }
+
+    // 간격을 생략하면 기존 간격을 유지한다.
+    private void reschedule(LocalDateTime nextCloseAt, Integer intervalWeeks) {
+        if (nextCloseAt == null && intervalWeeks == null) {
+            return;
+        }
+        if (nextCloseAt == null) {
+            throw new AssignmentException(AssignmentErrorCode.INVALID_CLOSE_AT);
+        }
+        schedule.reschedule(nextCloseAt, Objects.requireNonNullElse(intervalWeeks, schedule.getIntervalWeeks()));
+    }
+
+    // 다음 회차 기준 절대 시각을 받아 마감 기준 상대 시간으로 교체한다.
+    private void replaceRemindAts(List<LocalDateTime> remindAts) {
+        if (remindAts == null) {
+            return;
+        }
+        remindOffsets.clear();
+        addRemindOffsets(remindAts, schedule.nextCloseAt());
     }
 
     private void addRemindOffsets(List<LocalDateTime> remindAts, LocalDateTime closeAt) {
