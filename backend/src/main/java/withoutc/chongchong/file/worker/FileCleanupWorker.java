@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,7 +24,7 @@ import withoutc.chongchong.file.service.S3FileDeleter.DeleteResult;
 
 @Component
 @RequiredArgsConstructor
-public class FileCleanupWorker {
+public class FileCleanupWorker implements ApplicationListener<ContextClosedEvent> {
 
     private final FileCleanupProperties properties;
     private final FileCleanupTransactionService transactionService;
@@ -30,6 +32,7 @@ public class FileCleanupWorker {
     private final FileCleanupMetrics metrics;
     private final FileCleanupLogger logger;
     private final Clock clock;
+    private volatile boolean stopping;
 
     @Scheduled(
             fixedDelayString = "${file.cleanup.fixed-delay:10m}",
@@ -71,9 +74,15 @@ public class FileCleanupWorker {
         return result;
     }
 
+    // 종료가 시작되면 지금 배치만 마치고 새 배치를 집지 않는다. 남은 파일은 다음 실행이 이어서 정리한다.
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        stopping = true;
+    }
+
     private void mark(OrphanCutoffs cutoffs, RunCounter counter) {
         long afterId = 0;
-        for (int batch = 0; batch < properties.maxBatchesPerRun(); batch++) {
+        for (int batch = 0; batch < properties.maxBatchesPerRun() && !stopping; batch++) {
             List<Long> candidateIds = transactionService.findCandidateIds(afterId, cutoffs, properties.batchSize());
             if (candidateIds.isEmpty()) {
                 return;
@@ -94,7 +103,7 @@ public class FileCleanupWorker {
 
     private void delete(LocalDateTime now, RunCounter counter) {
         LocalDateTime leaseCutoff = now.minus(properties.deleteLease());
-        for (int batch = 0; batch < properties.maxBatchesPerRun(); batch++) {
+        for (int batch = 0; batch < properties.maxBatchesPerRun() && !stopping; batch++) {
             List<DeletionTarget> targets = transactionService.claim(
                     now, leaseCutoff, properties.maxAttempts(), properties.batchSize());
             if (targets.isEmpty()) {

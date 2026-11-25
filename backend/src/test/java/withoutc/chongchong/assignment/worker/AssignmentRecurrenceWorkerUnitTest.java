@@ -3,6 +3,7 @@ package withoutc.chongchong.assignment.worker;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,6 +60,22 @@ class AssignmentRecurrenceWorkerUnitTest {
 
         verify(generationService).skipExistingOccurrence(FIRST);
         verify(generationService, never()).postpone(any(), any());
+    }
+
+    @Test
+    @DisplayName("종료가 시작되면 지금 규칙만 마치고 남은 규칙은 다음 실행에 맡긴다")
+    void stopAfterCurrentRecurrenceWhenContextCloses() {
+        AssignmentRecurrenceWorker worker = worker(true);
+        when(generationService.findDueCandidates(100)).thenReturn(List.of(FIRST, SECOND));
+        doAnswer(invocation -> {
+            worker.onApplicationEvent(null);
+            return null;
+        }).when(generationService).generate(FIRST);
+
+        worker.process();
+
+        verify(generationService).generate(FIRST);
+        verify(generationService, never()).generate(SECOND);
     }
 
     @Test

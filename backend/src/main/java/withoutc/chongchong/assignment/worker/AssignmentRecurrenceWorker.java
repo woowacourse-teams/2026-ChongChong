@@ -1,6 +1,8 @@
 package withoutc.chongchong.assignment.worker;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,11 +15,12 @@ import withoutc.chongchong.assignment.service.AssignmentRecurrenceGenerationServ
 
 @Component
 @RequiredArgsConstructor
-public class AssignmentRecurrenceWorker {
+public class AssignmentRecurrenceWorker implements ApplicationListener<ContextClosedEvent> {
 
     private final AssignmentRecurrenceGenerationService generationService;
     private final AssignmentRecurrenceProperties properties;
     private final AssignmentRecurrenceLogger logger;
+    private volatile boolean stopping;
 
     @Scheduled(fixedDelayString = "${assignment.recurrence.fixed-delay:1m}")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -25,7 +28,18 @@ public class AssignmentRecurrenceWorker {
         if (!properties.enabled()) {
             return;
         }
-        generationService.findDueCandidates(properties.batchSize()).forEach(this::generate);
+        for (AssignmentRecurrenceCandidate candidate : generationService.findDueCandidates(properties.batchSize())) {
+            if (stopping) {
+                return;
+            }
+            generate(candidate);
+        }
+    }
+
+    // 종료가 시작되면 지금 규칙만 마치고 남은 규칙은 다음 실행에 맡긴다. 생성 시각이 지난 규칙은 다시 대상이 된다.
+    @Override
+    public void onApplicationEvent(ContextClosedEvent event) {
+        stopping = true;
     }
 
     // 한 규칙의 실패가 같은 배치의 다른 규칙을 막지 않도록 규칙마다 따로 처리한다.
