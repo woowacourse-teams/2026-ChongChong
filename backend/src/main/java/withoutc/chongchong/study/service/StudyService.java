@@ -53,6 +53,7 @@ import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.policy.StudyAccessPolicy;
 import withoutc.chongchong.study.repository.MyStudyQueryRepository;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
@@ -75,6 +76,7 @@ public class StudyService {
     private final UserRepository userRepository;
     private final StudyMemberRepository studyMemberRepository;
     private final MyStudyQueryRepository myStudyQueryRepository;
+    private final StudyAccessPolicy studyAccessPolicy;
     private final NoticeRepository noticeRepository;
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
@@ -112,7 +114,7 @@ public class StudyService {
         Study study = studyRepository.getByIdForUpdateOrThrow(studyId);
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        validateLeaderRole(studyMember);
+        studyAccessPolicy.requireCanUpdateStudy(studyMember);
 
         FileMetadata file = study.getImageFile();
         if (request.hasImageFileId()) {
@@ -128,7 +130,7 @@ public class StudyService {
         Study study = studyRepository.getByIdForDeleteOrThrow(studyId);
 
         StudyMember studyMember = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        validateLeaderRole(studyMember);
+        studyAccessPolicy.requireCanDeleteStudy(studyMember);
 
         noticeRepository.findAllByStudyIdForUpdate(studyId);
         assignmentRepository.findAllByStudyIdForUpdate(studyId);
@@ -269,12 +271,6 @@ public class StudyService {
     private void validateStudyCountLimit(Long userId) {
         if (studyMemberRepository.countByUserId(userId) >= MAX_JOINED_STUDY_COUNT) {
             throw new StudyMemberException(StudyMemberErrorCode.JOINED_STUDY_LIMIT_EXCEEDED);
-        }
-    }
-
-    private void validateLeaderRole(StudyMember studyMember) {
-        if (studyMember.getRole() != StudyMemberRole.LEADER) {
-            throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
         }
     }
 

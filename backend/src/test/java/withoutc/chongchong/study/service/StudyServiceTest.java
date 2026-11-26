@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -48,6 +49,7 @@ import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.policy.StudyAccessPolicy;
 import withoutc.chongchong.study.repository.MyStudyQueryRepository;
 import withoutc.chongchong.study.repository.MyStudyQueryRepository.MyStudyRow;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
@@ -82,6 +84,9 @@ class StudyServiceTest {
 
     @Mock
     private MyStudyQueryRepository myStudyQueryRepository;
+
+    @Mock
+    private StudyAccessPolicy studyAccessPolicy;
 
     @Mock
     private NoticeRepository noticeRepository;
@@ -261,6 +266,7 @@ class StudyServiceTest {
 
         studyService.updateStudy(userId, studyId, new StudyUpdateRequest("수정 스터디", null, null));
 
+        verify(studyAccessPolicy).requireCanUpdateStudy(leader);
         assertThat(study.getName()).isEqualTo("수정 스터디");
         assertThat(study.getImageFile()).isSameAs(image);
         verifyNoInteractions(studyImageService);
@@ -317,6 +323,8 @@ class StudyServiceTest {
         when(studyRepository.getByIdForUpdateOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
+        doThrow(new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER))
+                .when(studyAccessPolicy).requireCanUpdateStudy(studyMember);
 
         assertThatThrownBy(() -> studyService.updateStudy(userId, studyId, request))
                 .isInstanceOf(StudyMemberException.class)
@@ -343,9 +351,10 @@ class StudyServiceTest {
 
         studyService.deleteStudy(userId, studyId);
 
-        InOrder inOrder = inOrder(studyRepository, noticeRepository, assignmentRepository,
+        InOrder inOrder = inOrder(studyRepository, studyAccessPolicy, noticeRepository, assignmentRepository,
                 assignmentSubmissionRepository, entityManager, commentRepository, studyImageService, notificationService);
         inOrder.verify(studyRepository).getByIdForDeleteOrThrow(studyId);
+        inOrder.verify(studyAccessPolicy).requireCanDeleteStudy(studyMember);
         inOrder.verify(noticeRepository).findAllByStudyIdForUpdate(studyId);
         inOrder.verify(assignmentRepository).findAllByStudyIdForUpdate(studyId);
         inOrder.verify(assignmentSubmissionRepository).findAllByStudyIdForUpdate(studyId);
@@ -404,6 +413,8 @@ class StudyServiceTest {
         when(studyRepository.getByIdForDeleteOrThrow(studyId)).thenReturn(study);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId))
                 .thenReturn(studyMember);
+        doThrow(new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER))
+                .when(studyAccessPolicy).requireCanDeleteStudy(studyMember);
 
         assertThatThrownBy(() -> studyService.deleteStudy(userId, studyId))
                 .isInstanceOf(StudyMemberException.class)
