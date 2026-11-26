@@ -1,7 +1,7 @@
 # 0070. 과제 제출의 과제 행 잠금 대기를 3초로 제한한다
 
 - 날짜: 2026-11-26
-- 관련 이슈: 없음 (측정 기록 "과제 제출의 잠금 대기 상한 재현")
+- 관련 이슈: [#736](https://github.com/woowacourse-teams/2026-ChongChong/issues/736)
 - 관련 결정: [ADR-0054](0054-separate-upload-verification-from-database-transactions.md)의 업로드 완료 잠금 대기 3초,
   [ADR-0065](0065-disable-open-session-in-view.md)의 OSIV 끄기,
   [ADR-0031](0031-run-postgresql-specific-tests-with-testcontainers.md)의 PostgreSQL 전용 테스트
