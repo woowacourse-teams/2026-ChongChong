@@ -1,6 +1,7 @@
 package withoutc.chongchong.assignment.repository;
 
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
@@ -66,6 +68,20 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     default Assignment getByIdAndStudyIdForUpdateOrThrow(Long id, Long studyId) {
         return findByIdAndStudyIdForUpdate(id, studyId)
+                .orElseThrow(() -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
+    }
+
+    // 같은 과제 제출이 몰릴 때 요청이 연결을 쥔 채 무한정 기다리지 않도록 이 조회에만 잠금 대기 상한을 둔다.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
+    @Query("""
+            SELECT assignment FROM Assignment assignment
+            WHERE assignment.id = :id AND assignment.study.id = :studyId
+            """)
+    Optional<Assignment> findByIdAndStudyIdForSubmit(@Param("id") Long id, @Param("studyId") Long studyId);
+
+    default Assignment getByIdAndStudyIdForSubmitOrThrow(Long id, Long studyId) {
+        return findByIdAndStudyIdForSubmit(id, studyId)
                 .orElseThrow(() -> new AssignmentException(AssignmentErrorCode.ASSIGNMENT_NOT_FOUND));
     }
 
