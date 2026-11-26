@@ -1,7 +1,7 @@
 # 0067. 앱 종료에 걸리는 시간을 docker stop 대기 시간 안으로 줄인다
 
 - 날짜: 2026-11-25
-- 관련 이슈: 없음
+- 관련 이슈: [#733](https://github.com/woowacourse-teams/2026-ChongChong/issues/733)
 - 관련 결정: [ADR-0061](0061-clean-up-orphan-files-with-mark-and-sweep.md)의 고아 파일 정리 배치
 
 ## 배경
