@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import withoutc.chongchong.assignment.controller.dto.AssignmentAttachmentResponse;
@@ -19,6 +20,8 @@ import withoutc.chongchong.assignment.controller.dto.SubmissionListResponse;
 import withoutc.chongchong.assignment.entity.Assignment;
 import withoutc.chongchong.assignment.entity.AssignmentSubmission;
 import withoutc.chongchong.assignment.entity.SubmissionAttachment;
+import withoutc.chongchong.assignment.exception.AssignmentErrorCode;
+import withoutc.chongchong.assignment.exception.AssignmentException;
 import withoutc.chongchong.assignment.policy.AssignmentAccessPolicy;
 import withoutc.chongchong.assignment.policy.AssignmentAttachmentPolicy;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -59,7 +62,7 @@ public class AssignmentSubmissionService {
         userRepository.findAllByIdInForShare(Stream.concat(Stream.of(userId), candidates.stream()
                 .map(StudyMemberIdentityProjection::userId)).distinct().sorted().toList());
         StudyMember actor = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        assignmentRepository.getByIdAndStudyIdForUpdateOrThrow(assignmentId, studyId);
+        lockAssignmentForSubmit(assignmentId, studyId);
 
         AssignmentSubmission submission = assignmentSubmissionRepository.getWithLockByAssignmentIdAndMemberIdOrThrow(
                 assignmentId, actor.getId());
@@ -164,6 +167,14 @@ public class AssignmentSubmissionService {
                     return AssignmentAttachmentResponse.of(file, attachment.getSortOrder(), imageUrl, downloadUrl);
                 })
                 .toList();
+    }
+
+    private void lockAssignmentForSubmit(Long assignmentId, Long studyId) {
+        try {
+            assignmentRepository.getByIdAndStudyIdForSubmitOrThrow(assignmentId, studyId);
+        } catch (PessimisticLockingFailureException e) {
+            throw new AssignmentException(AssignmentErrorCode.ASSIGNMENT_SUBMISSION_BUSY, e);
+        }
     }
 
     private List<FileMetadata> prepareAttachments(Long userId, AssignmentSubmission submission,
