@@ -221,6 +221,34 @@ class FileCleanupPostgresTest extends PostgresContainerTest {
     }
 
     @Test
+    @DisplayName("종료가 시작되면 지금 삭제 배치만 마치고 새 배치를 선점하지 않는다")
+    void stopClaimingNewBatchWhenContextCloses() {
+        List<Long> fileIds = List.of(
+                insertFile(FileUploadStatus.COMPLETED, now.minusDays(2)),
+                insertFile(FileUploadStatus.COMPLETED, now.minusDays(2)),
+                insertFile(FileUploadStatus.COMPLETED, now.minusDays(2)));
+        FileCleanupWorker worker = worker(new FileCleanupProperties(
+                true, false, 1, 20, Duration.ofHours(1), Duration.ofHours(24), Duration.ofMinutes(10), 3));
+        willAnswer(invocation -> {
+            worker.onApplicationEvent(null);
+            DeleteObjectsRequest request = invocation.getArgument(0);
+            return DeleteObjectsResponse.builder()
+                    .deleted(DeletedObject.builder().key(request.delete().objects().getFirst().key()).build())
+                    .build();
+        }).given(s3Client).deleteObjects(any(DeleteObjectsRequest.class));
+
+        FileCleanupRunResult result = worker.run();
+
+        assertThat(result.deleted()).isOne();
+        assertThat(fileIds.stream().filter(this::fileExists))
+                .hasSize(2)
+                .allSatisfy(fileId -> {
+                    assertThat(statusOf(fileId)).isEqualTo(FileUploadStatus.DELETE_PENDING);
+                    assertThat(deleteAttemptsOf(fileId)).isZero();
+                });
+    }
+
+    @Test
     @DisplayName("한 워커가 선점 중인 파일은 다른 워커가 중복 선점하지 않는다")
     void concurrentWorkersDoNotClaimSameFile() throws Exception {
         Long fileId = insertFile(FileUploadStatus.COMPLETED, now.minusDays(2));

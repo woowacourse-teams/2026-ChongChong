@@ -10,7 +10,7 @@ services:
         ${BACKEND_JAVA_TOOL_OPTIONS:--Xmx320m}
         -Dmanagement.endpoint.health.probes.enabled=true
         -Dserver.shutdown=graceful
-        -Dspring.lifecycle.timeout-per-shutdown-phase=30s
+        -Dspring.lifecycle.timeout-per-shutdown-phase=15s
         -Dmanagement.metrics.distribution.percentiles-histogram.hikaricp.connections.acquire=true
         -Dmanagement.metrics.distribution.percentiles-histogram.hikaricp.connections.creation=true
         -Dmanagement.metrics.distribution.percentiles-histogram.hikaricp.connections.usage=true

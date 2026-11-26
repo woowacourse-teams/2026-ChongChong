@@ -21,6 +21,7 @@ ADR은 코드가 무엇을 하는지만 설명하지 않고, 당시 어떤 대�
 
 | 번호 | 제목 |
 | --- | --- |
+| [0067](0067-fit-graceful-shutdown-within-docker-stop-timeout.md) | 앱 종료에 걸리는 시간을 docker stop 대기 시간 안으로 줄인다 |
 | [0066](0066-fix-assignment-list-order-with-first-page-time.md) | 과제 목록 무한 스크롤의 정렬 기준 시각을 첫 페이지 조회 시각으로 고정한다 |
 | [0065](0065-disable-open-session-in-view.md) | OSIV를 끄고 DB 연결을 트랜잭션이 끝날 때 반납한다 |
 | [0063](0063-protect-first-notice-read-at-with-row-lock.md) | 공지 최초 읽음 시각을 수신자 행 잠금으로 보존한다 |

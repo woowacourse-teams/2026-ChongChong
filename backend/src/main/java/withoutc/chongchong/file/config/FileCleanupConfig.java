@@ -25,8 +25,7 @@ public class FileCleanupConfig {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(1);
         scheduler.setThreadNamePrefix("file-cleanup-");
-        scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationMillis(Duration.ofSeconds(30).toMillis());
+        // 종료 때 하던 배치는 기본 스케줄러와 같은 종료 단계에서 함께 기다린다. 따로 기다리면 종료 시간에 그만큼 더해진다.
         return scheduler;
     }
 }
