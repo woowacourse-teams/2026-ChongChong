@@ -24,6 +24,7 @@ import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.policy.StudyAccessPolicy;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.study.repository.projection.StudyMemberSummaryProjection;
@@ -45,6 +46,7 @@ public class StudyMemberService {
     private final NoticeRepository noticeRepository;
     private final AssignmentRepository assignmentRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
+    private final StudyAccessPolicy studyAccessPolicy;
 
     private final StudyInviteTokenProvider studyInviteTokenProvider;
     private final UserProfileImageUrlResolver profileImageUrlResolver;
@@ -100,7 +102,7 @@ public class StudyMemberService {
     public void expel(Long userId, Long studyId, Long memberId) {
         studyMemberRepository.requireExistsByStudyIdAndUserId(studyId, userId);
         StudyMember requester = studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId);
-        validateLeader(requester);
+        studyAccessPolicy.requireCanExpelMember(requester);
 
         Long targetUserId = studyMemberRepository.getUserIdByStudyIdAndIdOrThrow(studyId, memberId);
         userRepository.getByIdForUpdateOrThrow(targetUserId);
@@ -149,12 +151,6 @@ public class StudyMemberService {
 
         if (studyMemberRepository.countByStudyId(studyId) >= MAX_STUDY_MEMBER_COUNT) {
             throw new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_LIMIT_EXCEEDED);
-        }
-    }
-
-    private void validateLeader(StudyMember member) {
-        if (!member.isLeader()) {
-            throw new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER);
         }
     }
 }

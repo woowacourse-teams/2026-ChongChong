@@ -3,6 +3,7 @@ package withoutc.chongchong.study.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -32,6 +33,7 @@ import withoutc.chongchong.study.exception.StudyErrorCode;
 import withoutc.chongchong.study.exception.StudyException;
 import withoutc.chongchong.study.exception.StudyMemberErrorCode;
 import withoutc.chongchong.study.exception.StudyMemberException;
+import withoutc.chongchong.study.policy.StudyAccessPolicy;
 import withoutc.chongchong.study.repository.StudyMemberRepository;
 import withoutc.chongchong.study.repository.StudyRepository;
 import withoutc.chongchong.assignment.repository.AssignmentRepository;
@@ -73,6 +75,9 @@ class StudyMemberServiceTest {
 
     @Mock
     private UserProfileImageUrlResolver profileImageUrlResolver;
+
+    @Mock
+    private StudyAccessPolicy studyAccessPolicy;
 
     @InjectMocks
     private StudyMemberService studyMemberService;
@@ -299,7 +304,6 @@ class StudyMemberServiceTest {
         Long targetUserId = 4L;
         StudyMember leader = mock(StudyMember.class);
         StudyMember target = mock(StudyMember.class);
-        when(leader.isLeader()).thenReturn(true);
         when(target.isLeader()).thenReturn(false);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
         when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(target);
@@ -308,8 +312,9 @@ class StudyMemberServiceTest {
 
         studyMemberService.expel(userId, studyId, memberId);
 
-        InOrder inOrder = inOrder(userRepository, noticeRepository, assignmentRepository,
+        InOrder inOrder = inOrder(studyAccessPolicy, userRepository, noticeRepository, assignmentRepository,
                 assignmentSubmissionRepository, commentRepository, notificationService, studyMemberRepository);
+        inOrder.verify(studyAccessPolicy).requireCanExpelMember(leader);
         inOrder.verify(userRepository).getByIdForUpdateOrThrow(targetUserId);
         inOrder.verify(noticeRepository).findAllByCommentAuthorMemberIdForUpdate(memberId);
         inOrder.verify(assignmentRepository).findAllAffectedByMemberIdForUpdate(memberId);
@@ -345,8 +350,9 @@ class StudyMemberServiceTest {
         Long studyId = 2L;
         Long memberId = 3L;
         StudyMember requester = mock(StudyMember.class);
-        when(requester.isLeader()).thenReturn(false);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);
+        doThrow(new StudyMemberException(StudyMemberErrorCode.NOT_STUDY_LEADER))
+                .when(studyAccessPolicy).requireCanExpelMember(requester);
 
         assertThatThrownBy(() -> studyMemberService.expel(userId, studyId, memberId))
                 .isInstanceOf(StudyMemberException.class)
@@ -364,7 +370,6 @@ class StudyMemberServiceTest {
         Long studyId = 2L;
         Long memberId = 3L;
         StudyMember leader = mock(StudyMember.class);
-        when(leader.isLeader()).thenReturn(true);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(leader);
         when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId))
                 .thenThrow(new StudyMemberException(StudyMemberErrorCode.STUDY_MEMBER_NOT_FOUND));
@@ -385,7 +390,6 @@ class StudyMemberServiceTest {
         Long memberId = 3L;
         StudyMember requester = mock(StudyMember.class);
         StudyMember targetLeader = mock(StudyMember.class);
-        when(requester.isLeader()).thenReturn(true);
         when(targetLeader.isLeader()).thenReturn(true);
         when(studyMemberRepository.getByStudyIdAndUserIdOrThrow(studyId, userId)).thenReturn(requester);
         when(studyMemberRepository.getByStudyIdAndIdOrThrow(studyId, memberId)).thenReturn(targetLeader);
